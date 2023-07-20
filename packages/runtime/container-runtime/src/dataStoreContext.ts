@@ -3,15 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	FluidObject,
+	IRequest,
+	IResponse,
+	IFluidHandle,
+	ITelemetryProperties,
+} from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -53,10 +60,9 @@ import {
 	packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
+	createChildMonitoringContext,
 	generateStack,
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
 	TelemetryDataTag,
@@ -309,9 +315,10 @@ export abstract class FluidDataStoreContext
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(this.logger, "FluidDataStoreContext"),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "FluidDataStoreContext",
+		});
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
 			this.mc.logger,
@@ -390,7 +397,7 @@ export abstract class FluidDataStoreContext
 					packageName: packagePathToTelemetryProperty(this.pkg),
 				});
 				this.channelDeferred?.reject(errorWrapped);
-				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
 		}
 		return this.channelDeferred.promise;
@@ -780,7 +787,7 @@ export abstract class FluidDataStoreContext
 			this.channelDeferred.resolve(this.channel);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
-			this.logger.sendErrorEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
 					fluidDataStoreId: {

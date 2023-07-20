@@ -125,6 +125,11 @@ interface MutableSchemaData extends SchemaData {
 	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
+/**
+ * Helper for getting a global {@link FieldSchema} from a stored schema.
+ * Defaults to the FieldSchema defined with a stored schema policy.
+ * @alpha
+ */
 export function lookupGlobalFieldSchema(
 	data: SchemaDataAndPolicy,
 	identifier: GlobalFieldKey,
@@ -132,6 +137,11 @@ export function lookupGlobalFieldSchema(
 	return data.globalFieldSchema.get(identifier) ?? data.policy.defaultGlobalFieldSchema;
 }
 
+/**
+ * Helper for getting a {@link TreeSchema} from a stored schema.
+ * Defaults to the TreeSchema defined with a stored schema policy.
+ * @alpha
+ */
 export function lookupTreeSchema(
 	data: SchemaDataAndPolicy,
 	identifier: TreeSchemaIdentifier,

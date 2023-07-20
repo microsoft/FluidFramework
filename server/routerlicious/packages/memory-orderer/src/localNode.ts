@@ -294,13 +294,13 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 					this.databaseManager,
 					this.timeoutLength,
 				);
-				updateP.then(
-					(newNode) => {
+				updateP
+					.then((newNode) => {
 						// Debug(`Successfully renewed expiration for ${this.node._id}`);
 						this.node = newNode;
 						this.scheduleHeartbeat();
-					},
-					(error) => {
+					})
+					.catch((error) => {
 						// Try again immediately.
 						debug(`Failed to renew expiration for ${this.node._id}`, error);
 						Lumberjack.error(
@@ -309,8 +309,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 							error,
 						);
 						this.scheduleHeartbeat();
-					},
-				);
+					});
 			}, delta);
 		}
 	}

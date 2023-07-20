@@ -36,6 +36,7 @@ import {
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
+import { useLogger } from "../TelemetryUtils";
 import { ThemeContext } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
 
@@ -47,6 +48,7 @@ const DEFAULT_PAGE_SIZE = 100;
 const useTelemetryViewStyles = makeStyles({
 	root: {
 		...shorthands.gap("10px"),
+		boxSizing: "border-box",
 		alignItems: "start",
 		display: "flex",
 		flexDirection: "column",
@@ -65,6 +67,7 @@ const useTelemetryViewStyles = makeStyles({
  */
 export function TelemetryView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
+	const usageLogger = useLogger();
 
 	const styles = useTelemetryViewStyles();
 
@@ -164,6 +167,7 @@ export function TelemetryView(): React.ReactElement {
 		// Update bufferedEvents to remove the events just moved to telemetryEvents
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
 		setBufferedEvents(remainingBuffer);
+		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
 	};
 
 	return (
@@ -174,18 +178,16 @@ export function TelemetryView(): React.ReactElement {
 			/>
 			<div className={styles.menu}>
 				<div>
-					<div style={{ marginLeft: "6px" }}>
-						{bufferedEvents.length > 0 ? (
-							<>
-								<CounterBadge size="large" color="brand">
-									{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
-								</CounterBadge>
-								<> {` Newer telemetry events received.`}</>
-							</>
-						) : (
-							<> {`You're up to date!`} </>
-						)}
-					</div>
+					{bufferedEvents.length > 0 ? (
+						<>
+							<CounterBadge size="large" color="brand">
+								{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
+							</CounterBadge>
+							<> {` Newer telemetry events received.`}</>
+						</>
+					) : (
+						<> {`You're up to date!`} </>
+					)}
 				</div>
 				<div>
 					<Button onClick={handleLoadMore} size="small">
@@ -226,6 +228,7 @@ interface ListLengthSelectionProps {
  */
 function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElement {
 	const { currentLimit, onChangeSelection } = props;
+	const usageLogger = useLogger();
 
 	// Options formatted for the Fluent Dropdown component
 	const dropdownOptions: { key: number; text: string }[] = [
@@ -237,29 +240,33 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 
 	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (event, data) => {
 		onChangeSelection(Number(data.optionText));
+		usageLogger?.sendTelemetryEvent({
+			eventName: "MaxTelemetryEventsUpdated",
+			details: {
+				maxEvents: data.optionText,
+			},
+		});
 	};
 
 	return (
 		<div>
-			<div style={{ marginLeft: "6px" }}>
-				Show &nbsp;
-				<Dropdown
-					placeholder="Select an option"
-					size="small"
-					style={{ minWidth: "30px", zIndex: "1" }}
-					defaultValue={currentLimit.toString()}
-					// change the number of logs displayed on the page
-					onOptionSelect={handleMaxEventChange}
-				>
-					{dropdownOptions.map((option) => {
-						return (
-							<Option style={{ minWidth: "30px" }} key={option.key}>
-								{option.text}
-							</Option>
-						);
-					})}
-				</Dropdown>
-			</div>
+			Show &nbsp;
+			<Dropdown
+				placeholder="Select an option"
+				size="small"
+				style={{ minWidth: "30px", zIndex: "1" }}
+				defaultValue={currentLimit.toString()}
+				// change the number of logs displayed on the page
+				onOptionSelect={handleMaxEventChange}
+			>
+				{dropdownOptions.map((option) => {
+					return (
+						<Option style={{ minWidth: "30px" }} key={option.key}>
+							{option.text}
+						</Option>
+					);
+				})}
+			</Dropdown>
 		</div>
 	);
 }
@@ -285,6 +292,7 @@ interface FilteredTelemetryViewProps {
 
 function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
 	const { telemetryEvents, setIndex, index } = props;
+	const usageLogger = useLogger();
 	const [selectedCategory, setSelectedCategory] = useState("");
 	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
@@ -375,6 +383,14 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
 		const category = data.optionText !== undefined ? data.optionText : "";
 		setSelectedCategory(category);
+		const categories: string[] = [];
+		categories.push(category);
+		usageLogger?.sendTelemetryEvent({
+			eventName: "TelemetryEventCategoryChanged",
+			details: {
+				categories,
+			},
+		});
 	};
 
 	/**
@@ -424,6 +440,9 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		if (matchingOption) {
 			const search = data.optionText !== undefined ? data.optionText : "";
 			setCustomSearch(search);
+			usageLogger?.sendTelemetryEvent({
+				eventName: "TelemetryEventNameFilter",
+			});
 		} else {
 			setCustomSearch("");
 		}
@@ -538,6 +557,9 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			style={{
 				position: "relative",
 				borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
+				paddingTop: "10px",
+				width: "100%",
+				overflowX: "scroll",
 			}}
 			pane1Style={{ overflowY: "auto" }}
 			pane2Style={{ margin: "10px" }}
@@ -582,6 +604,9 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 							onClick={(): void => {
 								setIndex(Number(rowId));
 								setSelectedEvent(item);
+								usageLogger?.sendTelemetryEvent({
+									eventName: "TelemetryEventClicked",
+								});
 							}}
 						>
 							{({ renderCell }): JSX.Element => (
@@ -595,12 +620,11 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				style={{
 					position: "relative",
 					height: "100%",
-					fontSize: "10px",
 				}}
 			>
 				<h4 style={{ margin: 0, fontSize: 14 }}>Event Information</h4>
 				{selectedEvent === undefined ? (
-					<h5>Select an event from the table to get started</h5>
+					"Select an event from the table to get started"
 				) : (
 					<pre> {selectedEvent?.information} </pre>
 				)}

@@ -11,14 +11,15 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -56,8 +57,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		profile: string;
 		runId: number | undefined;
 	}) {
-		return ChildLogger.create(await this.loggerP, undefined, {
-			all: dimensions,
+		return createChildLogger({
+			logger: await this.loggerP,
+			properties: {
+				all: dimensions,
+			},
 		});
 	}
 

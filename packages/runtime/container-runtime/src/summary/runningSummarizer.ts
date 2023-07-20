@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
 	isFluidError,
-	loggerToMonitoringContext,
 	MonitoringContext,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
@@ -170,11 +169,13 @@ export class RunningSummarizer implements IDisposable {
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
 		};
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(baseLogger, "Running", {
+		this.mc = createChildMonitoringContext({
+			logger: baseLogger,
+			namespace: "Running",
+			properties: {
 				all: telemetryProps,
-			}),
-		);
+			},
+		});
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -610,8 +611,6 @@ export class RunningSummarizer implements IDisposable {
 					throw new UsageError("Invalid number of attempts.");
 				}
 
-				let lastResult: { message: string; error: any } | undefined;
-
 				for (let summaryAttemptPhase = 0; summaryAttemptPhase < totalAttempts; ) {
 					if (this.cancellationToken.cancelled) {
 						return;
@@ -655,7 +654,6 @@ export class RunningSummarizer implements IDisposable {
 						summaryAttemptPhase++;
 						summaryAttemptsPerPhase = 0;
 					}
-					lastResult = result;
 
 					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
@@ -669,16 +667,6 @@ export class RunningSummarizer implements IDisposable {
 						await delay(delaySeconds * 1000);
 					}
 				}
-
-				// If all attempts failed, log error (with last attempt info) and close the summarizer container
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: "FailToSummarize",
-						reason,
-						message: lastResult?.message,
-					},
-					lastResult?.error,
-				);
 
 				this.stopSummarizerCallback("failToSummarize");
 			},

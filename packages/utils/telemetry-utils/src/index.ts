@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 export {
+	createChildMonitoringContext,
 	MonitoringContext,
 	IConfigProviderBase,
 	sessionStorageConfigProvider,
@@ -11,7 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
-export { DebugLogger } from "./debugLogger";
+export { DebugLogger, createDebugLogger } from "./debugLogger";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
@@ -43,6 +44,8 @@ export {
 export {
 	BaseTelemetryNullLogger,
 	ChildLogger,
+	createChildLogger,
+	createMultiSinkLogger,
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,

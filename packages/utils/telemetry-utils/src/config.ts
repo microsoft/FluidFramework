@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { Lazy } from "@fluidframework/common-utils";
-import { TelemetryDataTag } from "./logger";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { Lazy } from "@fluidframework/core-utils";
+import { TelemetryDataTag, createChildLogger } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -286,4 +286,10 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
 	const maybeConfig = obj as Partial<IConfigProviderBase> | undefined;
 	return typeof maybeConfig?.getRawConfig === "function";
+}
+
+export function createChildMonitoringContext(
+	props: Parameters<typeof createChildLogger>[0],
+): MonitoringContext {
+	return loggerToMonitoringContext(createChildLogger(props));
 }

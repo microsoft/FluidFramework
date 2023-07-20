@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import {
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -107,8 +108,12 @@ export class SummaryManager implements IDisposable {
 		}: Readonly<Partial<ISummaryManagerConfig>> = {},
 		private readonly disableHeuristics?: boolean,
 	) {
-		this.logger = ChildLogger.create(parentLogger, "SummaryManager", {
-			all: { clientId: () => this.latestClientId },
+		this.logger = createChildLogger({
+			logger: parentLogger,
+			namespace: "SummaryManager",
+			properties: {
+				all: { clientId: () => this.latestClientId },
+			},
 		});
 
 		this.connectedState.on("connected", this.handleConnected);

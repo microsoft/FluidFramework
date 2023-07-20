@@ -33,7 +33,7 @@ const logger = new DevtoolsLogger();
 const client = new TinyliciousClient({ logger });
 
 // Initialize Devtools
-const devtools = initializeDevtools({ logger: logger });
+const devtools = initializeDevtools({ logger });
 
 // Initialize the CollaborativeText
 const text = await getCollaborativeText(client);

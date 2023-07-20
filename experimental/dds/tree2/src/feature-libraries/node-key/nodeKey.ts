@@ -5,10 +5,7 @@
 
 import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import { Brand, Opaque, brand } from "../../util";
-import { TreeSchemaIdentifier, ValueSchema } from "../../core";
-import { GlobalFieldSchema, SchemaBuilder, SchemaLibrary } from "../modular-schema";
-import { FieldKinds, NodeKeyFieldKind } from "../defaultFieldKinds";
-
+import { TreeSchemaIdentifier } from "../../core";
 /**
  * A key which uniquely identifies a node in the tree within this session.
  * @remarks {@link LocalNodeKey}s must not be serialized and stored as data without first being converted into a {@link StableNodeKey}.
@@ -41,24 +38,18 @@ export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 |
 }
 
 /**
- * Create a schema library for working with {@link StableNodeKey}s in a tree.
- * Node keys are added to nodes via a global field.
- * @param key - the string used as the global field key as well as the node type for node keys.
- * Defaults to a string that is unlikely to collide with user/application keys.
- * @returns the type of node key nodes in the schema,
- * the schema for the global field under which keys reside,
- * and a schema library containing the above.
+ * The key for the special field for {@link LocalNodeKey}s,
+ * which allows nodes to be given keys that can be used to find the nodes via the node key index.
  * @alpha
+ * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for fields defined by the system.
+ * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
  */
-export function buildNodeKeySchema(key: string): {
-	schema: SchemaLibrary;
-	field: GlobalFieldSchema<NodeKeyFieldKind>;
-	type: TreeSchemaIdentifier;
-} {
-	const builder = new SchemaBuilder("Node Key Schema");
-	const field = builder.globalField(
-		key,
-		SchemaBuilder.field(FieldKinds.nodeKey, builder.primitive(key, ValueSchema.String)),
-	);
-	return { schema: builder.intoLibrary(), field, type: brand(key) };
-}
+export const nodeKeyFieldKey = "__n_id__";
+
+/**
+ * The TreeSchemaIdentifier for node keys.
+ * @alpha
+ * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for types defined by the system.
+ * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
+ */
+export const nodeKeyTreeIdentifier: TreeSchemaIdentifier = brand(nodeKeyFieldKey);

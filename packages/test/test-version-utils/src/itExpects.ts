@@ -4,7 +4,7 @@
  */
 
 import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
-import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
@@ -13,7 +13,7 @@ export type ExpectedEvents =
 	| ITelemetryGenericEvent[]
 	| Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
 
-function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
+export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
 	return async function (this: Context) {
 		const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
 		if (provider === undefined) {

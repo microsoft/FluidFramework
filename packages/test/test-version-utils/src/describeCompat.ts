@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList, mochaGlobalSetup } from "./compatConfig.js";
-import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import { baseVersion } from "./baseVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -59,7 +60,10 @@ function createCompatSuite(
 							},
 						});
 					} catch (error) {
-						const logger = ChildLogger.create(getTestLogger?.(), "DescribeCompatSetup");
+						const logger = createChildLogger({
+							logger: getTestLogger?.(),
+							namespace: "DescribeCompatSetup",
+						});
 						logger.sendErrorEvent(
 							{
 								eventName: "TestObjectProviderLoadFailed",

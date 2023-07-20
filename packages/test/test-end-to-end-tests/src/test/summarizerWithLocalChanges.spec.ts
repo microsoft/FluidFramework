@@ -27,10 +27,13 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryLogger,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 
 export const rootDataObjectType = "@fluid-example/rootDataObject";
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
@@ -189,7 +192,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings = [];
-		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
+		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2"] = "restart";
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
 	});
 
@@ -217,7 +220,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			// Summarization should fail because of a data store created during summarization which does not run GC.
 			await assert.rejects(
 				async () => summarizeNow(summarizer),
-				(error) => {
+				(error: any) => {
 					// The summary should have failed because of "NodeDidNotRunGC" error before it was generated,
 					// i.e., "base" stage.
 					return error.message === "NodeDidNotRunGC" && error.data.stage === "base";
@@ -258,7 +261,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 				async () => {
 					await summarizeNow(summarizer);
 				},
-				(error) => {
+				(error: any) => {
 					// The summary should have failed because of "NodeDidNotRunGC" error after it was uploaded,
 					// i.e., "upload" stage.
 					return error.message === "NodeDidNotRunGC" && error.data.stage === "upload";

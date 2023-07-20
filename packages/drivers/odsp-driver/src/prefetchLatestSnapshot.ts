@@ -4,7 +4,7 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
@@ -16,7 +16,7 @@ import {
 	IOdspUrlParts,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
@@ -65,7 +65,9 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
-	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
+	const odspLogger = createOdspLogger(
+		createChildLogger({ logger, namespace: "PrefetchSnapshot" }),
+	);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 	const resolvedUrlData: IOdspUrlParts = {

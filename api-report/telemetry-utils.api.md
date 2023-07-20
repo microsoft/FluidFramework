@@ -7,27 +7,27 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDebugger } from 'debug';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
-import { ILoggingError } from '@fluidframework/common-definitions';
-import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
-import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
-import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
-import { Lazy } from '@fluidframework/common-utils';
-import { TelemetryEventCategory } from '@fluidframework/common-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
+import { ILoggingError } from '@fluidframework/core-interfaces';
+import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { Lazy } from '@fluidframework/core-utils';
+import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
@@ -42,6 +42,29 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 export const connectedEventName = "connected";
 
 // @public
+export function createChildLogger(props?: {
+    logger?: ITelemetryBaseLogger;
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt;
+
+// @public (undocumented)
+export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
+
+// @public
+export function createDebugLogger(props: {
+    namespace: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt;
+
+// @public
+export function createMultiSinkLogger(props: {
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+    loggers?: (ITelemetryBaseLogger | undefined)[];
+}): ITelemetryLoggerExt;
+
+// @public @deprecated
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
@@ -253,9 +276,9 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-// @public
+// @public @deprecated
 export class MultiSinkLogger extends TelemetryLogger {
-    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags);
+    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[]);
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
@@ -330,7 +353,7 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
-// @public
+// @public @deprecated
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
@@ -356,7 +379,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     }, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
@@ -368,7 +391,7 @@ export class TelemetryNullLogger implements ITelemetryLoggerExt {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryUTLogger implements ITelemetryLoggerExt {
     // (undocumented)
     debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;

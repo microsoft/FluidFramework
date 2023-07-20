@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
@@ -13,7 +13,7 @@ import {
 	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
-	ChildLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	GCNodeType,
@@ -155,7 +155,7 @@ describe("GC Telemetry Tracker", () => {
 	beforeEach(() => {
 		mockLogger = new MockLogger();
 		mc = mixinMonitoringContext(
-			ChildLogger.create(mockLogger, "GarbageCollector"),
+			createChildLogger({ logger: mockLogger, namespace: "GarbageCollector" }),
 			configProvider(injectedSettings),
 		);
 		unreferencedNodesState = new Map();

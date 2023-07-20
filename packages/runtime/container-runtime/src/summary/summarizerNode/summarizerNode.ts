@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
@@ -98,11 +98,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
 		// All logs posted by the summarizer node should include the telemetryNodeId.
-		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
-			all: {
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryNodeId,
+		this.logger = createChildLogger({
+			logger: baseLogger,
+			properties: {
+				all: {
+					id: {
+						tag: TelemetryDataTag.CodeArtifact,
+						value: this.telemetryNodeId,
+					},
 				},
 			},
 		});
@@ -243,9 +246,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 	private wasSummarizeMissed(parentSkipRecursion: boolean): boolean {
 		assert(
 			this.wipSummaryLogger !== undefined,
-			"wipSummaryLogger should have been set in startSummary or ctor",
+			0x6fc /* wipSummaryLogger should have been set in startSummary or ctor */,
 		);
-		assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
+		assert(this.wipReferenceSequenceNumber !== undefined, 0x6fd /* Not tracking a summary */);
 
 		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
 		// but was intentionally not called.
@@ -335,7 +338,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		// If localPathsToUse is undefined, it means summarize didn't run for this node and in that case the validate
 		// step should have failed.
-		assert(localPathsToUse !== undefined, "summarize didn't run for node");
+		assert(localPathsToUse !== undefined, 0x6fe /* summarize didn't run for node */);
 		const summary = new SummaryNode({
 			...localPathsToUse,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
