@@ -6,7 +6,6 @@
 import React from "react";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { pkgVersion } from "./packageVersion";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
