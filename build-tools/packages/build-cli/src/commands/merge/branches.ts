@@ -48,7 +48,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			required: true,
 		}),
 		remote: Flags.string({
-			description: "",
+			description:
+				"The name of the upstream remote to use to check for PRs. If not provided, the remote matching the microsoft/FluidFramework repo will be used.",
 			char: "r",
 		}),
 		reviewers: Flags.string({
