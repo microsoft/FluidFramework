@@ -142,6 +142,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	BrandedFieldKind,
+	ChangeAtomId,
 } from "./modular-schema";
 
 export {

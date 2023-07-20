@@ -6,10 +6,9 @@
 import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
 	isFluidError,
-	loggerToMonitoringContext,
 	MonitoringContext,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
@@ -170,11 +169,13 @@ export class RunningSummarizer implements IDisposable {
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
 		};
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(baseLogger, "Running", {
+		this.mc = createChildMonitoringContext({
+			logger: baseLogger,
+			namespace: "Running",
+			properties: {
 				all: telemetryProps,
-			}),
-		);
+			},
+		});
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(

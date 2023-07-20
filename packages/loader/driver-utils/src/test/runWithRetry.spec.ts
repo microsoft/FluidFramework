@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "../runWithRetry";
 
 const _setTimeout = global.setTimeout;
@@ -19,7 +19,7 @@ async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> 
 }
 
 describe("runWithRetry Tests", () => {
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 
 	it("Should succeed at first time", async () => {
 		let retryTimes: number = 1;

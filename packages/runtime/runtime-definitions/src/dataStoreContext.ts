@@ -212,7 +212,7 @@ export interface IContainerRuntimeBase
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Returns the current quorum.
@@ -470,7 +470,7 @@ export interface IFluidDataStoreContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
