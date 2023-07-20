@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { delay } from "@fluidframework/common-utils";
 import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
@@ -65,7 +65,7 @@ describe("Tests for snapshot fetch", () => {
 	}
 	const resolver = new OdspDriverUrlResolver();
 	const nonPersistentCache = new NonPersistentCache();
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const odspSnapshot: IOdspSnapshot = {
@@ -143,7 +143,7 @@ describe("Tests for snapshot fetch", () => {
 					docId: hashedDocumentId,
 					resolvedUrl,
 				},
-				new TelemetryNullLogger(),
+				createChildLogger(),
 			);
 
 			service = new OdspDocumentStorageService(
@@ -219,7 +219,7 @@ describe("Tests for snapshot fetch", () => {
 					docId: hashedDocumentId,
 					resolvedUrl,
 				},
-				new TelemetryNullLogger(),
+				createChildLogger(),
 			);
 
 			const resolved = await resolver.resolve({ url: odspUrl });
@@ -377,7 +377,7 @@ describe("Tests for snapshot fetch", () => {
 					docId: hashedDocumentId,
 					resolvedUrl,
 				},
-				new TelemetryNullLogger(),
+				createChildLogger(),
 			);
 
 			const resolved = await resolver.resolve({ url: odspUrl });

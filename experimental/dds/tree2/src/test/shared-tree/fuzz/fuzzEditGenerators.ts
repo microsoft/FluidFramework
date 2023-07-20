@@ -27,14 +27,18 @@ import {
 	FuzzDelete,
 	FuzzInsert,
 	FuzzTransactionType,
+	FuzzUndoRedoType,
 	Operation,
 	OptionalFieldEdit,
+	RedoOp,
 	SequenceFieldEdit,
 	TransactionAbortOp,
 	TransactionBoundary,
 	TransactionCommitOp,
 	TransactionStartOp,
 	TreeEdit,
+	UndoOp,
+	UndoRedo,
 	ValueFieldEdit,
 } from "./operationTypes";
 
@@ -46,6 +50,8 @@ export interface EditGeneratorOpWeights {
 	start: number;
 	commit: number;
 	abort: number;
+	undo: number;
+	redo: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
@@ -53,6 +59,8 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	start: 0,
 	commit: 0,
 	abort: 0,
+	undo: 0,
+	redo: 0,
 };
 
 export const makeFieldEditGenerator = (
@@ -242,6 +250,33 @@ export const makeTransactionEditGenerator = (
 	};
 };
 
+export const makeUndoRedoEditGenerator = (
+	opWeights: Partial<EditGeneratorOpWeights>,
+): Generator<UndoRedo, FuzzTestState> => {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
+	const undo: UndoOp = { type: "undo" };
+	const redo: RedoOp = { type: "redo" };
+
+	const undoRedoType = createWeightedGenerator<FuzzUndoRedoType, FuzzTestState>([
+		[undo, passedOpWeights.undo],
+		[redo, passedOpWeights.redo],
+	]);
+
+	return (state) => {
+		const contents = undoRedoType(state);
+
+		return contents === done
+			? done
+			: {
+					type: "undoRedo",
+					contents,
+			  };
+	};
+};
+
 export function makeOpGenerator(
 	opWeights: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
@@ -257,6 +292,10 @@ export function makeOpGenerator(
 		[
 			makeTransactionEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
+		],
+		[
+			makeUndoRedoEditGenerator(passedOpWeights),
+			sumWeights([passedOpWeights.undo, passedOpWeights.redo]),
 		],
 	];
 

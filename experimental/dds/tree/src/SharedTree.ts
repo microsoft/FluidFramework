@@ -23,7 +23,7 @@ import {
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
 } from '@fluidframework/telemetry-utils';
@@ -547,12 +547,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 
-		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		this.sequencedEditAppliedLogger = ChildLogger.create(
-			this.logger,
-			'SequencedEditApplied',
-			sharedTreeTelemetryProperties
-		);
+		this.logger = createChildLogger({
+			logger: runtime.logger,
+			namespace: 'SharedTree',
+			properties: sharedTreeTelemetryProperties,
+		});
+		this.sequencedEditAppliedLogger = createChildLogger({
+			logger: this.logger,
+			namespace: 'SequencedEditApplied',
+			properties: sharedTreeTelemetryProperties,
+		});
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
 		this.idCompressor = new IdCompressor(

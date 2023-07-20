@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-kafka-orderer",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid ordering services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

@@ -89,7 +89,11 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	[
 		"Revive",
 		(i, max) =>
-			Change.revive(2, 2, tag1, brand(i), undefined, generateLineage(tag1, brand(i), 2, max)),
+			Change.revive(2, 2, {
+				revision: tag1,
+				localId: brand(i),
+				lineage: generateLineage(tag1, brand(i), 2, max),
+			}),
 	],
 	[
 		"TransientRevive",
@@ -98,22 +102,35 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 			{
 				type: "Revive",
 				count: 1,
-				detachEvent: { revision: tag1, localId: brand(0) },
+				cellId: { revision: tag1, localId: brand(0) },
 				content: [singleTextCursor({ type, value: 1 })],
 				transientDetach: { revision: tag1, localId: brand(0) },
 			},
 		],
 	],
-	["ConflictedRevive", (i) => Change.redundantRevive(2, 2, tag2, brand(i), undefined)],
+	[
+		"ConflictedRevive",
+		(i) => Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
+	],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
 	[
 		"ReturnFrom",
-		(i, max) => Change.return(i, 2, 1, tag4, brand(i), generateLineage(tag4, brand(i), 2, max)),
+		(i, max) =>
+			Change.return(i, 2, 1, {
+				revision: tag4,
+				localId: brand(i),
+				lineage: generateLineage(tag4, brand(i), 2, max),
+			}),
 	],
 	[
 		"ReturnTo",
-		(i, max) => Change.return(1, 2, i, tag4, brand(i), generateLineage(tag4, brand(1), 2, max)),
+		(i, max) =>
+			Change.return(1, 2, i, {
+				revision: tag4,
+				localId: brand(i),
+				lineage: generateLineage(tag4, brand(1), 2, max),
+			}),
 	],
 ];
 deepFreeze(testChanges);
@@ -340,7 +357,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), tag1);
 		const delABC = tagChange(Change.delete(0, 3), tag2);
-		const revABC = tagChange(Change.revive(0, 3, tag2, id0), tag4);
+		const revABC = tagChange(Change.revive(0, 3, { revision: tag2, localId: id0 }), tag4);
 		const delABC2 = rebaseTagged(delABC, delB);
 		const invDelABC = tagRollbackInverse(invert(delABC), tag3, delABC2.revision);
 		const revABC2 = rebaseTagged(revABC, invDelABC);
@@ -355,7 +372,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Move ABC, Return ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), tag1);
 		const movABC = tagChange(Change.move(0, 3, 1), tag2);
-		const retABC = tagChange(Change.return(1, 3, 0, tag2, id0), tag4);
+		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
 		const movABC2 = rebaseTagged(movABC, delB);
 		const invMovABC = invert(movABC);
 		const retABC2 = rebaseTagged(retABC, tagRollbackInverse(invMovABC, tag3, movABC2.revision));
@@ -370,7 +387,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
 		const addB = tagChange(Change.insert(1, 1), tag1);
 		const delAC = tagChange(Change.delete(0, 2), tag2);
-		const revAC = tagChange(Change.revive(0, 2, tag2, id0), tag4);
+		const revAC = tagChange(Change.revive(0, 2, { revision: tag2, localId: id0 }), tag4);
 		const delAC2 = rebaseTagged(delAC, addB);
 		const invDelAC = invert(delAC);
 		const revAC2 = rebaseTagged(revAC, tagRollbackInverse(invDelAC, tag3, delAC2.revision));
