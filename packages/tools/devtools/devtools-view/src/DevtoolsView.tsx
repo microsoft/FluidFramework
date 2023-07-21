@@ -144,7 +144,9 @@ const useDevtoolsStyles = makeStyles({
 });
 
 /**
- * TODO
+ * Telemetry base logger passed from the {@link DevtoolsPanel}. 
+ * Passed in to {@link DevtoolsView} since it receives the {@link DevtoolsFeatures.Message}. 
+ * 
  */
 export interface DevtoolsViewProps {
 	usageTelemetryLogger?: ITelemetryBaseLogger;
