@@ -19,7 +19,7 @@ import {
 } from "./logger";
 /**
  * Implementation of debug logger
- * @deprecated - DebugLogger is internal an will no longer be exported.
+ * @deprecated - DebugLogger is internal and will no longer be exported.
  */
 export class DebugLogger extends TelemetryLogger {
 	/**
