@@ -95,9 +95,9 @@ export interface ISerializedInterval {
 	 */
 	sequenceNumber: number;
 	/** Start position of the interval */
-	start: number | "start";
+	start: number | "start" | "end";
 	/** End position of the interval */
-	end: number | "end";
+	end: number | "start" | "end";
 	/** Interval type to create */
 	intervalType: IntervalType;
 	/**
@@ -131,15 +131,15 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  */
 export type CompressedSerializedInterval =
 	| [
-			number | "start",
-			number | "end",
+			number | "start" | "end",
+			number | "start" | "end",
 			number,
 			IntervalType,
 			PropertySet,
 			IntervalStickiness,
 			boolean,
 	  ]
-	| [number | "start", number | "end", number, IntervalType, PropertySet];
+	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
 
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
@@ -246,8 +246,8 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 */
 	create(
 		label: string,
-		start: number | "start" | undefined,
-		end: number | "end" | undefined,
+		start: number | "start" | "end" | undefined,
+		end: number | "start" | "end" | undefined,
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
@@ -897,8 +897,8 @@ function createPositionReference(
 
 export function createSequenceInterval(
 	label: string,
-	start: number | "start",
-	end: number | "end",
+	start: number | "start" | "end",
+	end: number | "start" | "end",
 	client: Client,
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
@@ -1330,7 +1330,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		]);
 	}
 
-	public createLegacyId(start: number | "start", end: number | "end"): string {
+	public createLegacyId(start: number | "start" | "end", end: number | "start" | "end"): string {
 		// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
 		// without ID's.
 		return `${LocalIntervalCollection.legacyIdPrefix}${start}-${end}`;
@@ -1385,8 +1385,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	public createInterval(
-		start: number | "start",
-		end: number | "end",
+		start: number | "start" | "end",
+		end: number | "start" | "end",
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
@@ -1406,8 +1406,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	public addInterval(
-		start: number | "start",
-		end: number | "end",
+		start: number | "start" | "end",
+		end: number | "start" | "end",
 		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
@@ -1468,8 +1468,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
 	public changeInterval(
 		interval: TInterval,
-		start: number | "start" | undefined,
-		end: number | "end" | undefined,
+		start: number | "start" | "end" | undefined,
+		end: number | "start" | "end" | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
@@ -2508,8 +2508,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		} else {
 			// If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
 			// should be the winning change.
-			let start: number | "start" | undefined;
-			let end: number | "end" | undefined;
+			let start: number | "start" | "end" | undefined;
+			let end: number | "start" | "end" | undefined;
 			// Track pending start/end independently of one another.
 			if (!this.hasPendingChangeStart(id)) {
 				start = serializedInterval.start;

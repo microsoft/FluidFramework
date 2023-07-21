@@ -594,9 +594,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    readonly isEndEndpoint?: boolean;
-    readonly isEndpoint?: boolean;
-    readonly isStartEndpoint?: boolean;
+    readonly endpointType?: "start" | "end";
     localRefs?: LocalReferenceCollection;
     localRemovedSeq?: number;
     localSeq?: number;

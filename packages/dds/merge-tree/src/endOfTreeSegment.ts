@@ -28,8 +28,7 @@ import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
  */
 export class EndOfTreeSegment implements ISegment, IRemovalInfo {
 	type: string = "EndOfTreeSegment";
-	readonly isEndpoint = true;
-	readonly isEndEndpoint = true;
+	readonly endpointType = "end";
 	constructor(private readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but
@@ -123,8 +122,7 @@ const notSupported = () => {
 
 export class StartOfTreeSegment implements ISegment, IRemovalInfo {
 	type: string = "StartOfTreeSegment";
-	readonly isEndpoint = true;
-	readonly isStartEndpoint = true;
+	readonly endpointType = "start";
 	constructor(private readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but

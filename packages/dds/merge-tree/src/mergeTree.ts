@@ -569,7 +569,7 @@ function getSlideToSegment(
 	mergeTree: MergeTree,
 	cache?: Map<ISegment, { seg?: ISegment }>,
 ): [ISegment | undefined, ISegment | undefined] {
-	if (!segment || !isRemovedAndAcked(segment) || segment.isEndpoint) {
+	if (!segment || !isRemovedAndAcked(segment) || segment.endpointType !== undefined) {
 		return [segment, undefined];
 	}
 
@@ -894,7 +894,7 @@ export class MergeTree {
 		clientId: number,
 		localSeq?: number,
 	): number {
-		if (node.isLeaf() && node.isStartEndpoint) {
+		if (node.isLeaf() && node.endpointType === "start") {
 			return 0;
 		}
 
@@ -2363,7 +2363,7 @@ export class MergeTree {
 		if (
 			isRemovedAndAcked(segment) &&
 			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient) &&
-			!segment.isEndpoint
+			segment.endpointType === undefined
 		) {
 			throw new UsageError(
 				"Can only create SlideOnRemove or Transient local reference position on a removed segment",
