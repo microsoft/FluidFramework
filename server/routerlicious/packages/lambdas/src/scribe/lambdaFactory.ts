@@ -125,14 +125,12 @@ export class ScribeLambdaFactory
 				(error) => true /* shouldRetry */,
 			)) as IDocument;
 
-			if (document.scribe) {
-				if (JSON.parse(document.scribe).isCorrupt) {
-					Lumberjack.info(
-						`Received attempt to connect to a corrupted document.`,
-						lumberProperties,
-					);
-					return new NoOpLambda(context);
-				}
+			if (JSON.parse(document.scribe)?.isCorrupt) {
+				Lumberjack.info(
+					`Received attempt to connect to a corrupted document.`,
+					lumberProperties,
+				);
+				return new NoOpLambda(context);
 			}
 
 			if (!isDocumentValid(document)) {

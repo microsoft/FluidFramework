@@ -557,7 +557,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private markDocumentAsCorrupt(message: IQueuedMessage) {
 		this.isDocumentCorrupt = true;
-		this.prepareCheckpoint(message, CheckpointReason.MarkAsCorrupt, true);
+		this.prepareCheckpoint(message, CheckpointReason.MarkAsCorrupt, this.isDocumentCorrupt);
 	}
 
 	private revertProtocolState(
