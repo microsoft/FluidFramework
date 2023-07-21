@@ -6,7 +6,8 @@
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { IBatchMetadata } from "../metadata";
 import { IMessageProcessingResult } from "./definitions";
@@ -32,7 +33,7 @@ export class OpDecompressor {
 	private processedCount = 0;
 	private readonly logger;
 
-	constructor(logger: ITelemetryLoggerExt) {
+	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
 	}
 
