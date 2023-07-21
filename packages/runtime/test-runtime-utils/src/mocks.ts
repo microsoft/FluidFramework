@@ -344,15 +344,18 @@ export class MockContainerRuntimeFactory {
 	protected messages: ISequencedDocumentMessage[] = [];
 	protected readonly runtimes: MockContainerRuntime[] = [];
 
+	/**
+	 * The MockContainerRuntimeOptions which will be provided to the all runtimes created by this factory
+	 * and also drive the way the ops are processed.
+	 * See {@link MockContainerRuntimeOptions}
+	 */
+	protected readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
+
 	constructor(
-		/**
-		 * The MockContainerRuntimeOptions which will be provided to the all runtimes created by this factory
-		 * and also drive the way the ops are processed.
-		 *
-		 * See {@link MockContainerRuntimeOptions}
-		 */
-		protected readonly runtimeOptions: MockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
-	) {}
+		mockContainerRuntimeOptions: MockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
+	) {
+		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+	}
 
 	public get outstandingMessageCount() {
 		return this.messages.length;

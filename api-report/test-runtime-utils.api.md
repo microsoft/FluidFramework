@@ -125,8 +125,7 @@ export class MockContainerRuntime {
 
 // @public
 export class MockContainerRuntimeFactory {
-    constructor(
-    runtimeOptions?: MockContainerRuntimeOptions);
+    constructor(mockContainerRuntimeOptions?: MockContainerRuntimeOptions);
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
@@ -143,7 +142,7 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
-    protected readonly runtimeOptions: MockContainerRuntimeOptions;
+    protected readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
     // (undocumented)
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
