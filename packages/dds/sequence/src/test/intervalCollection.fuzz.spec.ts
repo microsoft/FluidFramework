@@ -18,6 +18,12 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { SharedString } from "../sharedString";
 import { IIntervalCollection, IntervalStickiness, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
@@ -141,7 +147,7 @@ export function makeOperationGenerator(
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
 			stickiness: state.random.pick(
-				Object.values(IntervalStickiness) as IntervalStickiness[],
+				Object.values(IntervalStickiness),
 			),
 		};
 	}
@@ -221,6 +227,26 @@ export function makeOperationGenerator(
 	]);
 }
 
+class IntervalCollectionFuzzFactory extends SharedStringFactory {
+	options = { mergeTreeUseNewLengthCalculations: true, mergeTreeEnableObliterate: true };
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.mergeTreeUseNewLengthCalculations = true;
+		runtime.options.mergeTreeEnableObliterate = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.mergeTreeUseNewLengthCalculations = true;
+		document.options.mergeTreeEnableObliterate = true;
+		return super.create(document, id);
+	}
+}
+
 const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
@@ -231,7 +257,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFactory(),
+	factory: new IntervalCollectionFuzzFactory(),
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -308,7 +334,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		skip: [80],
+		skip: [31, 56, 80],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});

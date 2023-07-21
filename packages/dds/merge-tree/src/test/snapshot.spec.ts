@@ -176,6 +176,7 @@ describe("snapshot", () => {
 				track: true,
 				policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
 			},
+			mergeTreeEnableObliterate: true,
 		});
 	});
 

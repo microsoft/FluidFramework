@@ -806,7 +806,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 69
 		it("partial lengths updated when local insert is acked", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -831,7 +830,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 175
 		it("two local obliterates get different seq numbers after ack", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -855,7 +853,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 264
 		it("acks remote segment obliterated by local op", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -879,7 +876,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 442
 		it("skips segments obliterated before refSeq when traversing for insertion", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -905,7 +901,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 161
 		it("applies correct movedSeq when right segment has multiple movedSeqs", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -932,7 +927,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 100
 		it("takes the correct moved client id when multiple clientIds for right segment", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -958,7 +952,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 586
 		it("selects clientId if 0", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -984,7 +977,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 441
 		it("obliterates unacked segment inside non-leaf-segment", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1017,7 +1009,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 363
 		it("tracks length at seq of lower move/remove seq when overlapping", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1046,7 +1037,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 152
 		it("segment obliterated on insert overlaps with local obliterate", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1066,7 +1056,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 30
 		it("obliterates entire string when concurrent inserts inside range", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1086,7 +1075,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 891
 		it("obliterate ack traverses over non-obliterated remove", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1114,7 +1102,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 372
 		it("overlapping remove and obliterate when remove happens last", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1141,7 +1128,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 355
 		it("overlapping remove and obliterate when remove happens last _and_ partial length already exists", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1164,7 +1150,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 11
 		it("overlapping obliterate and remove when obliterate is larger than remove and happened last", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1187,7 +1172,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 440
 		it("wasMovedOnInsert remains after leaf node is split", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1211,7 +1195,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 357
 		it("overlapping obliterates, segment is obliterated on insert and by local client", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1236,7 +1219,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 107
 		it("overlapping obliterates and remove", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1259,7 +1241,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 639
 		it("does not mark obliterated on insert for non-acked obliterates", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1283,7 +1264,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 17
 		it("partial len isLocal when seq is -1 but moveSeq > -1", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1305,7 +1285,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 17
 		it("obliterated on insert by overlapping obliterates", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1328,7 +1307,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 174
 		it("overlapping obliterates", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1353,7 +1331,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 174
 		it("overlapping obliterates", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1379,7 +1356,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 527
 		it("overlapping remove and obliterate, local obliterate does not have a remote obliterated len", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1401,7 +1377,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 36
 		it("triple overlapping obliterate and overlapping remove", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1432,7 +1407,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 651
 		it("triple overlapping obliterate with one being local", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1460,7 +1434,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 396 at 50 ops
 		it("obliterate ack traversal is not stopped by moved segment", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1484,7 +1457,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 507 at 50 ops
 		it("updates partial lengths for segments when doing obliterate ack traversal", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1517,7 +1489,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// reduced from seed 625 at 50 ops
 		// fails only for incremental
 		it("combines remote obliterated length ", () => {
 			const helper = new ReconnectTestHelper();

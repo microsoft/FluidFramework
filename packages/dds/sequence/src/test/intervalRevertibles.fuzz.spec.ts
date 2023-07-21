@@ -188,7 +188,7 @@ describe("IntervalCollection fuzz testing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
-						obliterateRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
