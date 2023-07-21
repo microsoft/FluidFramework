@@ -53,7 +53,6 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
@@ -113,7 +112,7 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @public
-export class EventAndErrorTrackingLogger extends TelemetryLogger {
+export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;

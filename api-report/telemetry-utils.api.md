@@ -15,25 +15,11 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public @deprecated
-export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
-}
-
-// @public @deprecated
-export class ChildLogger extends TelemetryLogger {
-    // (undocumented)
-    protected readonly baseLogger: ITelemetryBaseLogger;
-    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
-}
 
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -64,6 +50,8 @@ export function createMultiSinkLogger(props: {
     loggers?: (ITelemetryBaseLogger | undefined)[];
 }): ITelemetryLoggerExt;
 
+// Warning: (ae-forgotten-export) The symbol "TelemetryLogger" needs to be exported by the entry point index.d.ts
+//
 // @public @deprecated
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
@@ -279,15 +267,6 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-// @public @deprecated
-export class MultiSinkLogger extends TelemetryLogger {
-    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[]);
-    addLogger(logger?: ITelemetryBaseLogger): void;
-    // (undocumented)
-    protected loggers: ITelemetryBaseLogger[];
-    send(event: ITelemetryBaseEvent): void;
-}
-
 // @public
 export const NORMALIZED_ERROR_TYPE = "genericError";
 
@@ -358,65 +337,6 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
-
-// @public @deprecated
-export abstract class TelemetryLogger implements ITelemetryLoggerExt {
-    constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
-    // (undocumented)
-    static readonly eventNamespaceSeparator = ":";
-    // @deprecated (undocumented)
-    static formatTick(tick: number): number;
-    // (undocumented)
-    protected readonly namespace?: string | undefined;
-    // @deprecated
-    static numberFromString(str: string | null | undefined): string | number | undefined;
-    static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
-    // (undocumented)
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
-    // (undocumented)
-    protected readonly properties?: ITelemetryLoggerPropertyBags | undefined;
-    // (undocumented)
-    static sanitizePkgName(name: string): string;
-    abstract send(event: ITelemetryBaseEvent): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
-    protected sendTelemetryEventCore(event: ITelemetryGenericEventExt & {
-        category: TelemetryEventCategory;
-    }, error?: any): void;
-}
-
-// @public @deprecated
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
-}
-
-// @public @deprecated
-export class TelemetryUTLogger implements ITelemetryLoggerExt {
-    // (undocumented)
-    debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
-    // (undocumented)
-    logException(event: ITelemetryErrorEvent, exception: any): void;
-    // (undocumented)
-    logGenericError(eventName: string, error: any): void;
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
-    // (undocumented)
-    shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
-}
 
 // @public
 export class ThresholdCounter {
