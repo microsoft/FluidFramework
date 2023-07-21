@@ -41,6 +41,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     protected onDisconnect(): void;
     // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected rollback(op: unknown): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     get value(): number;

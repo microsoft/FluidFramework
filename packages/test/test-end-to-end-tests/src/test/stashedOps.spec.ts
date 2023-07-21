@@ -1466,6 +1466,82 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		// remote value is what we expect
 		assert.strictEqual(counter1.value, 5);
 	});
+
+	it("opid", async () => {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		// pause to accumulate pending ops
+		await container.deltaManager.outbound.pause();
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const counter = await dataStore.getSharedObject<SharedCounter>(counterId);
+		for (let i = 5; i--; ) {
+			counter.increment(1);
+		}
+
+		// wait for resubmission on new clientId...
+		assert(container.isDirty);
+		const pendingState = container.getPendingLocalState?.();
+		const savedP = new Promise((resolve) => container.on("saved", resolve));
+		container.disconnect();
+		container.connect();
+		container.deltaManager.outbound.resume();
+		await savedP;
+		container.close();
+
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+		await provider.ensureSynchronized();
+		// local value is what we expect
+		assert.strictEqual(counter2.value, 5);
+		// remote value is what we expect
+		assert.strictEqual(counter1.value, 5);
+	});
+
+	it("opid rebatch", async () => {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		// pause to accumulate pending ops
+		await container.deltaManager.outbound.pause();
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const counter = await dataStore.getSharedObject<SharedCounter>(counterId);
+		for (let i = 5; i--; ) {
+			counter.increment(1);
+			// submit each op in its own JS turn; they will be batched together in resubmit
+			await new Promise<void>((resolve) => resolve());
+		}
+
+		// wait for resubmission on new clientId...
+		assert(container.isDirty);
+		const pendingState = container.getPendingLocalState?.();
+		const savedP = new Promise((resolve) => container.on("saved", resolve));
+		const logOp = (op) => {
+			console.debug(op);
+			assert(pendingState && op.clientId !== JSON.parse(pendingState).clientId);
+		};
+		container1.on("op", logOp);
+		container.disconnect();
+		container.connect();
+		container.deltaManager.outbound.resume();
+		await savedP;
+		container1.off("op", logOp);
+		container.close();
+
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+		await provider.ensureSynchronized();
+		// local value is what we expect
+		assert.strictEqual(counter2.value, 5);
+		// remote value is what we expect
+		assert.strictEqual(counter1.value, 5);
+	});
 });
 
 describeNoCompat("stashed ops", (getTestObjectProvider) => {

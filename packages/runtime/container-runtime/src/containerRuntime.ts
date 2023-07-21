@@ -1413,6 +1413,7 @@ export class ContainerRuntime
 		this.pendingStateManager = new PendingStateManager(
 			{
 				applyStashedOp: this.applyStashedOp.bind(this),
+				rollback: this.rollbackOp.bind(this),
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
@@ -1463,6 +1464,7 @@ export class ContainerRuntime
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
+			currentResubmitId: () => this.pendingStateManager.currentResubmittingId,
 		});
 
 		this._quorum = quorum;
@@ -1981,6 +1983,32 @@ export class ContainerRuntime
 		}
 	}
 
+	private rollbackOp(op: string, localOpMetadata): void {
+		// Need to parse from string for back-compat
+		const { type, contents } = this.parseOpContent(op);
+		switch (type) {
+			case ContainerMessageType.FluidDataStoreOp:
+				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
+				break;
+
+			// TODO: support these ops somehow
+			case ContainerMessageType.Attach:
+			case ContainerMessageType.IdAllocation:
+				throw new Error(`rollback not supported on ${type}`);
+
+			// applyStashedOp() does nothing with these ops, so there is nothing to roll back
+			case ContainerMessageType.Alias:
+			case ContainerMessageType.BlobAttach:
+				return;
+			case ContainerMessageType.ChunkedOp:
+				throw new Error("chunkedOp not expected here");
+			case ContainerMessageType.Rejoin:
+				throw new Error("rejoin not expected here");
+			default:
+				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+		}
+	}
+
 	public setConnectionState(connected: boolean, clientId?: string) {
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
@@ -2089,6 +2117,7 @@ export class ContainerRuntime
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+			this.pendingStateManager.rollbackSuccessfulPendingOps(message, local);
 			this.processCore(message, local, runtimeMessage);
 		}
 	}
@@ -3338,8 +3367,12 @@ export class ContainerRuntime
 	}
 
 	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+		// NOTE: a call to this.flush() here would make batch boundaries stable through resubmit
+
 		this.orderSequentially(() => {
 			for (const message of batch) {
+				// since resubmitted ops may not match 1:1, we need to be able to identify each op in the batch
+				this.pendingStateManager.notifyBatchOpResubmit();
 				this.reSubmit(message);
 			}
 		});

@@ -107,6 +107,9 @@ describe("Pending State Manager", () => {
 					applyStashedOp: () => {
 						throw new Error();
 					},
+					rollback: () => {
+						throw new Error();
+					},
 					clientId: () => "oldClientId",
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
@@ -283,6 +286,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
+					rollback: () => undefined,
 					clientId: () => undefined,
 					close: () => {},
 					connected: () => true,

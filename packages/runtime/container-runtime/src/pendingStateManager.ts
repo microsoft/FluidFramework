@@ -13,7 +13,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
-import { IBatchMetadata } from "./metadata";
+import { IBatchMetadata, IIdMetadata } from "./metadata";
 
 /**
  * ! TODO: Remove this interface in "2.0.0-internal.7.0.0" once we only read IPendingMessageNew
@@ -64,6 +64,7 @@ export interface IRuntimeStateHandler {
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
+	rollback(envelope, localOpMetadata: unknown): void;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
 	isActiveConnection: () => boolean;
@@ -89,6 +90,15 @@ export class PendingStateManager implements IDisposable {
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length;
 	}
+
+	private readonly stashedIds = new Set<string>();
+
+	private _currentResubmittingId: string | undefined;
+	public get currentResubmittingId(): string | undefined {
+		return this._currentResubmittingId;
+	}
+
+	private readonly currentBatchIds = new Deque<string>();
 
 	// Indicates whether we are processing a batch.
 	private isProcessingBatch: boolean = false;
@@ -146,6 +156,12 @@ export class PendingStateManager implements IDisposable {
 		 */
 		if (initialLocalState?.pendingStates) {
 			for (const initialState of initialLocalState.pendingStates) {
+				const id = initialState?.opMetadata?.id;
+				if (id) {
+					assert(typeof id === "string", "id not string");
+					this.stashedIds.add(id);
+				}
+
 				let messageContent = initialState.content;
 				if (
 					(initialState as IPendingMessageOld).messageType !== undefined &&
@@ -225,6 +241,54 @@ export class PendingStateManager implements IDisposable {
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.pendingMessages.push(this.initialMessages.shift()!);
+		}
+	}
+
+	public rollbackSuccessfulPendingOps(message: ISequencedDocumentMessage, local: boolean) {
+		const id = (message.metadata as IIdMetadata | undefined)?.id;
+		if (id && local) {
+			// local will be true for ops successfully submitted on the orignal clientId, in which case we do
+			// not need to rollback. These will match stashed ops 1:1 and can be processed as local ops.
+			this.stashedIds.delete(id);
+		}
+		if (id && this.stashedIds.has(id)) {
+			// TODO: attach and blobAttach ops need special handling here, as they may appear out of order
+			// attach ops can likely be treated as local ACKs
+			// blobAttach ops do nothing in applyStashedOp(), but BlobManager will expect to see them due to stashed data it is loaded with
+
+			// any ops queued before this id were not resubmitted when reSubmit() was called, so we need to roll them back
+			while (this.pendingMessages.peekFront()?.opMetadata?.id !== id) {
+				const next = this.pendingMessages.shift();
+				assert(next !== undefined, "no op");
+				this.stateHandler.rollback(next.content, next?.localOpMetadata);
+			}
+
+			// these ops may have been resubmitted before being stashed, and multiple ops may have the same ID
+			while (this.pendingMessages.peekFront()?.opMetadata?.id === id) {
+				// roll back entire stashed batches only. Batches on the wire may differ due to resubmission,
+				// but any stashed batch will always have been entirely successful or unsuccessful.
+				if (this.pendingMessages.peekFront()?.opMetadata?.batch) {
+					// eslint-disable-next-line no-constant-condition
+					while (true) {
+						const next = this.pendingMessages.shift();
+						assert(next !== undefined, "no batch end op");
+						this.stateHandler.rollback(next.content, next?.localOpMetadata);
+						if (next.opMetadata?.batch === false) {
+							break;
+						}
+					}
+				} else {
+					const next = this.pendingMessages.shift();
+					assert(next !== undefined, "no op");
+					this.stateHandler.rollback(next.content, next?.localOpMetadata);
+				}
+			}
+
+			// should probably keep these around since it's our only way to detect if another client is
+			// trying to submit the same ops as us. We should probably save the clientIds that submitted
+			// these and close if they're still in quorum when we reach connected. This won't however
+			// guarantee that duplicate op submission will not happen.
+			this.stashedIds.delete(id);
 		}
 	}
 
@@ -345,6 +409,12 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	public notifyBatchOpResubmit() {
+		// allow outbox to know which batch op is being resubmitted, in case it has a unique id (because
+		// it was not part of a batch when originally submitted)
+		this._currentResubmittingId = this.currentBatchIds.shift();
+	}
+
 	/**
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
@@ -382,6 +452,11 @@ export class PendingStateManager implements IDisposable {
 				0x41b /* We cannot process batches in chunks */,
 			);
 
+			const id = pendingMessage?.opMetadata?.id;
+			assert(typeof id === "string", "no id");
+			this._currentResubmittingId = id;
+			this.stashedIds.delete(id);
+
 			/**
 			 * We want to ensure grouped messages get processed in a batch.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
@@ -397,6 +472,13 @@ export class PendingStateManager implements IDisposable {
 
 				// check is >= because batch end may be last pending message
 				while (remainingPendingMessagesCount >= 0) {
+					// resubmitting a batch that was not initally batched
+					const idWithinBatch = (pendingMessage?.opMetadata as IIdMetadata)?.id;
+					if (idWithinBatch) {
+						this.currentBatchIds.push(idWithinBatch);
+						this.stashedIds.delete(idWithinBatch);
+					}
+
 					batch.push({
 						content: pendingMessage.content,
 						localOpMetadata: pendingMessage.localOpMetadata,
@@ -418,6 +500,7 @@ export class PendingStateManager implements IDisposable {
 				}
 
 				this.stateHandler.reSubmitBatch(batch);
+				assert(this.currentBatchIds.isEmpty(), "should be empty now");
 			} else {
 				this.stateHandler.reSubmit({
 					content: pendingMessage.content,
@@ -437,5 +520,10 @@ export class PendingStateManager implements IDisposable {
 				clientId: this.stateHandler.clientId(),
 			});
 		}
+
+		this._currentResubmittingId = undefined;
+		assert(this.currentBatchIds.isEmpty(), "should be empty now");
+		// we should have rolled back or resubmitted all stashed ops by this point
+		assert(this.stashedIds.size === 0, "a");
 	}
 }

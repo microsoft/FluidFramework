@@ -221,4 +221,12 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
 		this.incrementCore(counterOp.incrementAmount);
 	}
+
+	protected rollback(op: unknown): void {
+		const counterOp = op as IIncrementOperation;
+
+		assert(counterOp.type === "increment", "Op type is not increment");
+
+		this.incrementCore(counterOp.incrementAmount * -1);
+	}
 }

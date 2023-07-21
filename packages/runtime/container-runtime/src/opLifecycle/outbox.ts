@@ -49,6 +49,7 @@ export interface IOutboxParameters {
 	readonly reSubmit: (message: IPendingBatchMessage) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
+	readonly currentResubmitId: () => string | undefined;
 }
 
 /**
@@ -235,6 +236,7 @@ export class Outbox {
 				message,
 				this.isContextReentrant(),
 				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+				this.params.currentResubmitId(),
 			)
 		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {

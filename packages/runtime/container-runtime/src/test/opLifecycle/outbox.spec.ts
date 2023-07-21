@@ -213,6 +213,7 @@ describe("Outbox", () => {
 			reSubmit: (message: IPendingBatchMessage) => {},
 			opReentrancy: () => false,
 			closeContainer: (error?: ICriticalContainerError) => {},
+			currentResubmitId: () => undefined,
 		});
 	};
 

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
+import { assert } from "@fluidframework/common-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 
@@ -30,6 +32,8 @@ export class BatchManager {
 	private pendingBatch: BatchMessage[] = [];
 	private batchContentSize = 0;
 	private hasReentrantOps = false;
+
+	private pendingIds: string[] = [];
 
 	public get length() {
 		return this.pendingBatch.length;
@@ -59,6 +63,7 @@ export class BatchManager {
 		message: BatchMessage,
 		reentrant: boolean,
 		currentClientSequenceNumber?: number,
+		id?: string,
 	): boolean {
 		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
 		const opCount = this.pendingBatch.length;
@@ -94,6 +99,9 @@ export class BatchManager {
 
 		this.batchContentSize = contentSize;
 		this.pendingBatch.push(message);
+		if (id) {
+			this.pendingIds.push(id);
+		}
 		return true;
 	}
 
@@ -114,7 +122,10 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch);
+		const ids = this.pendingIds;
+		this.pendingIds = [];
+
+		return addBatchMetadata(batch, ids);
 	}
 
 	/**
@@ -137,7 +148,19 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch): IBatch => {
+const addBatchMetadata = (batch: IBatch, batchIds: string[]): IBatch => {
+	assert(batch.content.length > 0, "i dont think there would be empty batches here...");
+
+	// this check will not work because batch boundaries are not actually stable through resubmit, and
+	// will grow to include preceding ops. in this case, we will have one id per added op and one id
+	// for the original batch
+	// assert(batchIds.length === 0 || batchIds.length === 1 || batchIds.length === batch.content.length, " yeah");
+
+	// The following check is not correct for two reasons:
+	// 1. same reason as above
+	// 2. a DDS may submit multiple ops in reSubmit(), which will have the same id (scenario not tested yet)
+	// assert([0, 1, batch.content.length].includes(new Set(batchIds).size), "should have one id or no ids or all unique ids");
+
 	if (batch.content.length > 1) {
 		batch.content[0].metadata = {
 			...batch.content[0].metadata,
@@ -147,6 +170,23 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
 			...batch.content[batch.content.length - 1].metadata,
 			batch: false,
 		};
+	}
+
+	if (batchIds.length <= 1) {
+		// this is a new op or batch of new ops, or a resubmitted batch
+		// set the new or existing id on the first op of the batch
+		batch.content[0].metadata = {
+			...batch.content[0].metadata,
+			id: batchIds[0] ?? uuid(),
+		}
+	} else if (batchIds.length > 1) {
+		// this is a batch of ops that were not batched initially, thusly they each have a unique id!
+		batch.content.forEach((op, i) =>
+			op.metadata = {
+				...op.metadata,
+				id: batchIds[i],
+			}
+		);
 	}
 
 	return batch;

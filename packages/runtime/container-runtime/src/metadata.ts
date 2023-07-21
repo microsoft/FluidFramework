@@ -11,6 +11,13 @@ export interface IBatchMetadata {
 }
 
 /**
+ * ID makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
+ */
+export interface IIdMetadata {
+	id?: string;
+}
+
+/**
  * Blob handling makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
  */
 export interface IBlobMetadata {
