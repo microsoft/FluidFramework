@@ -178,14 +178,15 @@ const addBatchMetadata = (batch: IBatch, batchIds: string[]): IBatch => {
 		batch.content[0].metadata = {
 			...batch.content[0].metadata,
 			id: batchIds[0] ?? uuid(),
-		}
+		};
 	} else if (batchIds.length > 1) {
 		// this is a batch of ops that were not batched initially, thusly they each have a unique id!
-		batch.content.forEach((op, i) =>
-			op.metadata = {
-				...op.metadata,
-				id: batchIds[i],
-			}
+		batch.content.forEach(
+			(op, i) =>
+				(op.metadata = {
+					...op.metadata,
+					id: batchIds[i],
+				}),
 		);
 	}
 
