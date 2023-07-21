@@ -1283,7 +1283,10 @@ export class MergeTree {
 			);
 		}
 
-		if (searchInfo.tile) {
+		if (
+			searchInfo.tile &&
+			!((startPos === this.length && !tilePrecedesPos) || (startPos === 0 && tilePrecedesPos))
+		) {
 			let pos: number;
 			if (searchInfo.tile.isLeaf()) {
 				const marker = <Marker>searchInfo.tile;

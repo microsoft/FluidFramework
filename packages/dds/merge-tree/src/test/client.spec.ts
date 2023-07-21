@@ -31,6 +31,74 @@ describe("TestClient", () => {
 	});
 
 	describe(".findTile", () => {
+		it("Should not return tile when searching past the end of a string length 1", () => {
+			client.insertTextLocal(0, "");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				markerId: "marker",
+				referenceTileLabels: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 1);
+
+			const foundTile = client.findTile(1, "Eop", false);
+
+			assert.equal(
+				foundTile,
+				undefined,
+				`found a tile: ${foundTile?.pos} + ${foundTile?.tile}`,
+			);
+		});
+		it("Should not return tile when searching before the start of a string length 1", () => {
+			client.insertTextLocal(0, "");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				markerId: "marker",
+				referenceTileLabels: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 1);
+
+			const foundTile = client.findTile(0, "Eop", true);
+
+			assert.equal(
+				foundTile,
+				undefined,
+				`found a tile: ${foundTile?.pos} + ${foundTile?.tile}`,
+			);
+		});
+		it("Should not return tile when searching past the end of a string length > 1", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				markerId: "marker",
+				referenceTileLabels: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4);
+
+			const foundTile = client.findTile(4, "Eop", false);
+
+			assert.equal(
+				foundTile,
+				undefined,
+				`found a tile: ${foundTile?.pos} + ${foundTile?.tile}`,
+			);
+		});
+		it("Should not return tile when searching before the start of a string length > 1", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				markerId: "marker",
+				referenceTileLabels: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4);
+
+			const foundTile = client.findTile(0, "Eop", true);
+
+			assert.equal(
+				foundTile,
+				undefined,
+				`found a tile: ${foundTile?.pos} + ${foundTile?.tile}`,
+			);
+		});
 		it("Should be able to find non preceding tile based on label", () => {
 			const tileLabel = "EOP";
 
@@ -142,7 +210,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1, "length not expected");
 
-			const tile = client.findTile(0, tileLabel);
+			const tile = client.findTile(client.getLength(), tileLabel);
 
 			assert(tile, "Returned tile undefined.");
 
