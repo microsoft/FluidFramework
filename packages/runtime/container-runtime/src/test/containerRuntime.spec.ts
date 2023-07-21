@@ -312,17 +312,20 @@ describe("Runtime", () => {
 
 						const expectedBatchMetadata = [
 							{ batch: true },
-							{ },
+							{},
 							{ batch: false },
 							{ batch: true },
-							{ },
+							{},
 							{ batch: false },
 						];
 
 						// check batch metadata only
 						expectedBatchMetadata.forEach((m, i) => {
-							assert(m?.batch === submittedOpsMetdata[i]?.batch, "batch metadata does not match");
-						})
+							assert(
+								m?.batch === submittedOpsMetdata[i]?.batch,
+								"batch metadata does not match",
+							);
+						});
 
 						// assert.deepStrictEqual(
 						// 	submittedOpsMetdata,
@@ -674,7 +677,7 @@ describe("Runtime", () => {
 						_localOpMetadata: unknown,
 						_opMetadata: Record<string, unknown> | undefined,
 					) => pendingMessages++,
-					rollbackSuccessfulPendingOps: () => undefined
+					rollbackSuccessfulPendingOps: () => undefined,
 				} as unknown as PendingStateManager;
 			};
 			const getMockDataStores = (): DataStores => {
