@@ -45,13 +45,11 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
-//* ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY
-
 /**
  * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) => {
+describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	const remainingTimeUntilSweepMs = 100;
 	const sweepTimeoutMs = 200;
 	assert(
@@ -836,8 +834,8 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 			},
 		);
 
-		//* ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY ONLY
-		itExpects.only(
+		//* Add more test cases (for all different states), and test unref timestamp and freshness timestamp as well
+		itExpects(
 			"Load via handle.get()",
 			[
 				{

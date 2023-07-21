@@ -953,7 +953,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 		const freshnessTimestampMs = this.getLastSummaryTimestampMs();
 
-		//* TODO: Include unref time too if available (I think it's not)
 		if (this.tombstones.includes(nodePath)) {
 			return { state: "Tombstoned", freshnessTimestampMs };
 		}
