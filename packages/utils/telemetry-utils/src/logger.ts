@@ -752,7 +752,7 @@ function convertToBasePropertyTypeUntagged(
 
 export const tagData = <
 	T extends TelemetryDataTag,
-	V extends Record<string, TelemetryEventPropertyType>,
+	V extends Record<string, TelemetryEventPropertyTypeExt>,
 >(
 	tag: T,
 	values: V,
@@ -768,5 +768,6 @@ export const tagData = <
 			return pv;
 		}, {} as any);
 
-export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyType>>(values: T) =>
-	tagData(TelemetryDataTag.CodeArtifact, values);
+export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyTypeExt>>(
+	values: T,
+) => tagData(TelemetryDataTag.CodeArtifact, values);

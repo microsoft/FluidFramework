@@ -33,13 +33,39 @@ describe("logIfFalse", () => {
 });
 
 describe("tagData", () => {
-	it("tagData", () => {
+	it("tagData with data", () => {
 		const taggedData = tagData(TelemetryDataTag.CodeArtifact, { foo: "bar" });
-		assert.deepStrictEqual(taggedData, {
+		const expected: typeof taggedData = {
 			foo: {
 				value: "bar",
 				tag: TelemetryDataTag.CodeArtifact,
 			},
+		};
+		assert.deepStrictEqual(taggedData, expected);
+	});
+	it("tagData with undefined", () => {
+		const taggedData = tagData(TelemetryDataTag.CodeArtifact, { none: undefined });
+		const expected: Partial<typeof taggedData> = {};
+		assert.deepStrictEqual(taggedData, expected);
+	});
+
+	it("tagData with complex object", () => {
+		const taggedData = tagData(TelemetryDataTag.CodeArtifact, {
+			foo: "bar",
+			none: undefined,
+			number: 0,
 		});
+		const expected: Partial<typeof taggedData> = {
+			foo: {
+				value: "bar",
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			number: {
+				value: 0,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+		};
+
+		assert.deepEqual(taggedData, expected);
 	});
 });
