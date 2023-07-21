@@ -19,7 +19,7 @@
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf dist *.tsbuildinfo",
+		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run prettier:fix",

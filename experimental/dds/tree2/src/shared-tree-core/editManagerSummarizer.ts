@@ -23,6 +23,7 @@ import {
 	recordDependency,
 	ChangeFamilyEditor,
 } from "../core";
+import { JsonCompatibleReadOnly } from "../util";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
 import { EditManager, SummaryData } from "./editManager";
 import { makeEditManagerCodec } from "./editManagerCodecs";
@@ -49,7 +50,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	// (the one for the current persisted configuration) and resolve codecs for different versions
 	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
 	// and an op needs to be interpreted which isn't written with the current configuration).
-	private readonly codec: IJsonCodec<SummaryData<TChangeset>, string>;
+	private readonly codec: IJsonCodec<SummaryData<TChangeset>>;
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly editManager: EditManager<
@@ -65,6 +66,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			recordDependency(observer, this.editManager);
 			const encodedSummary = this.codec.encode(this.editManager.getSummaryData());
 			// For now we are not chunking the edit data, but still put it in a reusable blob:
+			// TODO:#4632: Using JSON.stringify here doesn't properly handle `IFluidHandle`s, which the encoded summary may contain.
 			return this.runtime.uploadBlob(IsoBuffer.from(JSON.stringify(encodedSummary)));
 		});
 	}
@@ -75,7 +77,8 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const dataString = this.codec.encode(this.editManager.getSummaryData());
+		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData());
+		const dataString = stringify(jsonCompatible);
 		return createSingleBlobSummary(stringKey, dataString);
 	}
 
@@ -126,8 +129,8 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			0x42c /* There should not already be stored EditManager data when loading from summary */,
 		);
 
-		const dataString = bufferToString(schemaBuffer, "utf-8");
-		const data = this.codec.decode(dataString);
+		const summary = parse(bufferToString(schemaBuffer, "utf-8")) as JsonCompatibleReadOnly;
+		const data = this.codec.decode(summary);
 		this.editManager.loadSummaryData(data);
 	}
 }

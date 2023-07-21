@@ -8,9 +8,10 @@ import fs from "fs";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { pkgName, pkgVersion } from "./packageVersion";
 
 export interface LoggerConfig {
@@ -21,16 +22,14 @@ export interface LoggerConfig {
 	region?: string;
 }
 
-class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private targetEvents: string[] = [];
 	private transformedEvents: Map<string, string> = new Map();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	public registerExpectedEvent(expectedEventNames: string[]) {
 		this.targetEvents = expectedEventNames;
@@ -93,7 +92,7 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 		if (typeof event.testCategoryOverride === "string") {
 			event.category = event.testCategoryOverride;
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
@@ -120,7 +119,7 @@ export async function getLogger(
 	config: LoggerConfig,
 	events?: string[],
 	transformEvents?: Map<string, string>,
-): Promise<TelemetryLogger> {
+): Promise<ITelemetryLogger> {
 	const baseLogger = await loggerP;
 	if (events) {
 		baseLogger.registerExpectedEvent(events);
@@ -128,12 +127,16 @@ export async function getLogger(
 	if (transformEvents) {
 		baseLogger.transformEvents(transformEvents);
 	}
-	return ChildLogger.create(baseLogger, config.namespace, {
-		all: {
-			runId: config.runId,
-			scenarioName: config.scenarioName,
-			endpoint: config.endpoint,
-			region: config.region,
+	return createChildLogger({
+		logger: baseLogger,
+		namespace: config.namespace,
+		properties: {
+			all: {
+				runId: config.runId,
+				scenarioName: config.scenarioName,
+				endpoint: config.endpoint,
+				region: config.region,
+			},
 		},
 	});
 }

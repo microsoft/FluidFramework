@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	ChildLogger,
-	loggerToMonitoringContext,
-	MonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { createChildMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
 import {
@@ -43,7 +39,7 @@ export interface IOutboxParameters {
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
-	readonly logger: ITelemetryLoggerExt;
+	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: IPendingBatchMessage) => void;
@@ -103,7 +99,7 @@ export class Outbox {
 	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
-		this.mc = loggerToMonitoringContext(ChildLogger.create(params.logger, "Outbox"));
+		this.mc = createChildMonitoringContext({ logger: params.logger, namespace: "Outbox" });
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;

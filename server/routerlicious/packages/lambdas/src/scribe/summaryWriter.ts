@@ -713,7 +713,14 @@ export class SummaryWriter implements ISummaryWriter {
 		let logTail: ISequencedDocumentMessage[] = [];
 
 		if (this.getDeltasViaAlfred) {
-			logTail = await this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt);
+			logTail = await this.deltaService.getDeltas(
+				"",
+				this.tenantId,
+				this.documentId,
+				gt,
+				lt,
+				"scribe",
+			);
 		} else {
 			const query = {
 				"documentId": this.documentId,
