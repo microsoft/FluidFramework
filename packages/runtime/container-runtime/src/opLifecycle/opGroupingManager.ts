@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+// import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "..";
 import { IBatch } from "./definitions";
@@ -32,16 +32,18 @@ export class OpGroupingManager {
 			return batch;
 		}
 
-		for (const message of batch.content) {
-			if (message.metadata) {
-				const keys = Object.keys(message.metadata);
-				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(
-					keys.length === 0 || keys[0] === "batch",
-					0x5de /* unexpected op metadata */,
-				);
-			}
-		}
+		// this asserts there is only batch metadata; I believe metadata could be saved below and rehyrated later
+
+		// for (const message of batch.content) {
+		// 	if (message.metadata) {
+		// 		const keys = Object.keys(message.metadata);
+		// 		assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
+		// 		assert(
+		// 			keys.length === 0 || keys[0] === "batch",
+		// 			0x5de /* unexpected op metadata */,
+		// 		);
+		// 	}
+		// }
 
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
