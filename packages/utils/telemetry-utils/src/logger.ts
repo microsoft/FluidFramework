@@ -419,6 +419,7 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Create a logger which logs to multiple other loggers based on the provided props object
  * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ * tryInheritProperties will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
  */
 export function createMultiSinkLogger(props: {
 	namespace?: string;
@@ -445,6 +446,8 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
+	 * @param loggers - The list of loggers to use as sinks
+	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
 	constructor(
 		namespace?: string,
@@ -452,7 +455,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		loggers: ITelemetryBaseLogger[] = [],
 		tryInheritProperties?: true,
 	) {
-		let realProperties = properties;
+		let realProperties = properties !== undefined ? { ...properties } : undefined;
 		if (tryInheritProperties === true) {
 			const merge = (realProperties ??= {});
 			loggers
