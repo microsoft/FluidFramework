@@ -11,4 +11,4 @@ For the deprecated implementations the following replacement function should be 
 -   replace ChildLogger.create, new TelemetryNullLogger, and new BaseTelemetryNullLogger with createChildLogger
 -   replace new MultiSinkLogger with createMultiSinkLogger
 -   replace TelemetryUTLogger with MockLogger
--   replace DebugLogger.create will be made internal
+-   DebugLogger.create will be made internal with no intended replacement
