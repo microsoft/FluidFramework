@@ -315,7 +315,7 @@ export abstract class FluidDataStoreContext
 			logger: this.logger,
 			namespace: "FluidDataStoreContext",
 			properties: {
-				error: tagCodeArtifacts({
+				all: tagCodeArtifacts({
 					fluidDataStoreId: this.id,
 					packagePath: this.pkg?.join("/"),
 				}),

@@ -402,7 +402,7 @@ export function sendGCUnexpectedUsageEvent(
 	packagePath: readonly string[] | undefined,
 	error?: unknown,
 ) {
-	event.pkg = packagePathToTelemetryProperty(packagePath);
+	event.pkg = tagCodeArtifacts({ pkg: packagePath?.join("/") })?.pkg;
 	event.tombstoneFlags = JSON.stringify({
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
