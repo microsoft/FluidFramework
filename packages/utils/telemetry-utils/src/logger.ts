@@ -749,3 +749,25 @@ function convertToBasePropertyTypeUntagged(
 			return `INVALID PROPERTY (typed as ${typeof x})`;
 	}
 }
+
+export const tagData = <
+	T extends TelemetryDataTag,
+	V extends Record<string, TelemetryEventPropertyTypeExt>,
+>(
+	tag: T,
+	values: V,
+) =>
+	(Object.entries(values) as [keyof V, V[keyof V]][])
+		.filter((e): e is [keyof V, Exclude<V[keyof V], undefined>] => e[1] !== undefined)
+		.reduce<{
+			[P in keyof V]:
+				| (V[P] extends undefined ? undefined : never)
+				| { value: Exclude<V[P], undefined>; tag: T };
+		}>((pv, cv) => {
+			pv[cv[0]] = { tag, value: cv[1] };
+			return pv;
+		}, {} as any);
+
+export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyTypeExt>>(
+	values: T,
+) => tagData(TelemetryDataTag.CodeArtifact, values);
