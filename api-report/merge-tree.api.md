@@ -145,14 +145,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // @deprecated
-    getSlideToSegment(segoff: {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
