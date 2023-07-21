@@ -805,7 +805,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
-		})
+		});
 		it("does not restore end that would be before start", () => {
 			sharedString.insertText(0, "hello world");
 
@@ -829,7 +829,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			assertIntervals(sharedString, collection, [{ start: 8, end: 9 }]);
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString2, collection2, [{ start: 8, end: 9 }]);
-		})
+		});
 	});
 
 	it("has an interval contained within the deleted range", () => {
