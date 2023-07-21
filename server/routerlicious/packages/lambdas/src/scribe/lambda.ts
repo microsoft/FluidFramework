@@ -448,11 +448,7 @@ export class ScribeLambda implements IPartitionLambda {
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
 				// checkpoint the current up-to-date state
-				if (this.isDocumentCorrupt) {
-					this.prepareCheckpoint(message, checkpointReason, true);
-				} else {
-					this.prepareCheckpoint(message, checkpointReason);
-				}
+				this.prepareCheckpoint(message, checkpointReason);
 			} else {
 				this.updateCheckpointIdleTimer();
 			}
@@ -462,19 +458,15 @@ export class ScribeLambda implements IPartitionLambda {
 	public prepareCheckpoint(
 		message: IQueuedMessage,
 		checkpointReason: CheckpointReason,
-		bypassKafka: boolean = false,
+		skipKafkaCheckpoint?: boolean,
 	) {
 		// Get checkpoint context
 		const checkpoint = this.generateScribeCheckpoint(message.offset);
 		this.updateCheckpointMessages(message);
 
 		// write the checkpoint with the current up-to-date state
-		if (!bypassKafka) {
-			// kafka checkpoint
-			this.checkpoint(checkpointReason);
-		}
-		// database checkpoint
-		this.checkpointCore(checkpoint, message, this.clearCache);
+		this.checkpoint(checkpointReason);
+		this.checkpointCore(checkpoint, message, this.clearCache, skipKafkaCheckpoint);
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
 		const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
@@ -533,9 +525,6 @@ export class ScribeLambda implements IPartitionLambda {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const message = this.pendingMessages.shift()!;
 			try {
-				if (!this.isDocumentCorrupt) {
-					throw new Error(`Test Error`);
-				}
 				if (
 					message.contents &&
 					typeof message.contents === "string" &&
@@ -568,7 +557,6 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private markDocumentAsCorrupt(message: IQueuedMessage) {
 		this.isDocumentCorrupt = true;
-		// updates the checkpoint in the database only to persist the corrupted document flag
 		this.prepareCheckpoint(message, CheckpointReason.MarkAsCorrupt, true);
 	}
 
@@ -599,6 +587,7 @@ export class ScribeLambda implements IPartitionLambda {
 		checkpoint: IScribe,
 		queuedMessage: IQueuedMessage,
 		clearCache: boolean,
+		skipKafkaCheckpoint: boolean = false,
 	) {
 		if (this.closed) {
 			return;
@@ -616,7 +605,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP
 			.then(() => {
 				this.pendingP = undefined;
-				if (!this.isDocumentCorrupt) {
+				if (!skipKafkaCheckpoint) {
 					this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
 				}
 				const pendingScribe = this.pendingCheckpointScribe;
@@ -645,6 +634,7 @@ export class ScribeLambda implements IPartitionLambda {
 			inserts,
 			this.noActiveClients,
 			this.globalCheckpointOnly,
+			this.isDocumentCorrupt,
 		);
 		if (inserts.length > 0) {
 			// Since we are storing logTails with every summary, we need to make sure that messages are either in DB
