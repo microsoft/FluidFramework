@@ -59,6 +59,7 @@ export enum AttachState {
 export interface IRuntime extends IDisposable {
 	/**
 	 * Executes a request against the runtime
+	 * @deprecated - TODO: will be removed from interface in future major release
 	 */
 	request(request: IRequest): Promise<IResponse>;
 

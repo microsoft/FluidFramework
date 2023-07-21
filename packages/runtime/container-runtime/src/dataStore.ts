@@ -161,7 +161,7 @@ class DataStore implements IDataStore {
 		return "Success";
 	}
 
-	async request(request: IRequest): Promise<IResponse> {
+	public async request(request: IRequest): Promise<IResponse> {
 		return this.fluidDataStoreChannel.request(request);
 	}
 

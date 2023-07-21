@@ -126,6 +126,9 @@ export class FluidDataStoreRuntime
 	 */
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
 
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -380,6 +383,9 @@ export class FluidDataStoreRuntime
 		return this.request(request);
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);

@@ -608,6 +608,9 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -1673,6 +1676,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
+	 * @deprecated - TODO: will be removed in future major release
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -2323,17 +2327,6 @@ export class ContainerRuntime
 		return result;
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-		const internalId = uuid();
-		return channelToDataStore(
-			await this._createDataStore(pkg, internalId),
-			internalId,
-			this,
-			this.dataStores,
-			this.mc.logger,
-		);
-	}
-
 	public createDetachedRootDataStore(
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
@@ -2348,25 +2341,24 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, false);
 	}
 
+	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+		return this._createDataStoreWithProps(pkg);
+	}
+
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
 		props?: any,
 		id = uuid(),
 	): Promise<IDataStore> {
-		const fluidDataStore = await this.dataStores
-			._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-			.realize();
-		return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-	}
-
-	private async _createDataStore(
-		pkg: string | string[],
-		id = uuid(),
-		props?: any,
-	): Promise<IFluidDataStoreChannel> {
-		return this.dataStores
-			._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-			.realize();
+		return channelToDataStore(
+			await this.dataStores
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
+				.realize(),
+			id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
 	}
 
 	private canSendOps() {

@@ -128,7 +128,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Fluid router for the data store
  * - Can be assigned an alias
  */
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
 	/**
 	 * Attempt to assign an alias to the datastore.
 	 * If the operation succeeds, the datastore can be referenced
@@ -149,6 +149,16 @@ export interface IDataStore extends IFluidRouter {
 	 * the data store's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
@@ -231,7 +241,7 @@ export interface IContainerRuntimeBase
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
  */
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
 	readonly id: string;
 
 	/**
@@ -331,6 +341,16 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 * the component's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 export type CreateChildSummarizerNodeFn = (
