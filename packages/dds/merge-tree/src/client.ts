@@ -132,24 +132,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * The start of tree segment for this client.
-	 *
-	 * @internal
-	 */
-	public get startOfTreeSegment(): ISegment {
-		return this._mergeTree.startOfTree;
-	}
-
-	/**
-	 * The end of tree segment for this client.
-	 *
-	 * @internal
-	 */
-	public get endOfTreeSegment(): ISegment {
-		return this._mergeTree.endOfTree;
-	}
-
-	/**
 	 * The merge tree maintains a queue of segment groups for each local operation.
 	 * These segment groups track segments modified by an operation.
 	 * This method peeks the tail of that queue, and returns the segments groups there.
@@ -1112,7 +1094,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getContainingSegment<T extends ISegment>(
-		pos: number,
+		pos: number | "start" | "end",
 		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 		localSeq?: number,
 	) {
@@ -1133,7 +1115,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @deprecated Use getSlideToSegoff function instead.
 	 */
 	getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined }) {
-		return getSlideToSegoff(segoff, this);
+		return getSlideToSegoff(segoff);
 	}
 
 	getPropertiesAtPosition(pos: number) {

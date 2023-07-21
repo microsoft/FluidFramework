@@ -861,11 +861,7 @@ function createPositionReference(
 ): LocalReferencePosition {
 	let segoff;
 
-	if (pos === "start") {
-		segoff = { segment: client.startOfTreeSegment, offset: 0 };
-	} else if (pos === "end") {
-		segoff = { segment: client.endOfTreeSegment, offset: 0 };
-	} else if (op) {
+	if (op) {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) !== 0,
 			0x2f5 /* op create references must be SlideOnRemove */,
@@ -874,7 +870,7 @@ function createPositionReference(
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
-		segoff = getSlideToSegoff(segoff, client);
+		segoff = getSlideToSegoff(segoff);
 	} else {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
@@ -2050,32 +2046,19 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("mergeTree client must exist");
 		}
 		const { clientId } = this.client.getCollabWindow();
-		let segment: ISegment | undefined;
-		let offset: number | undefined;
-
-		if (pos === "start") {
-			segment = this.client.startOfTreeSegment;
-			offset = 0;
-		} else if (pos === "end") {
-			segment = this.client.endOfTreeSegment;
-			offset = 0;
-		} else {
-			const containingSegment = this.client.getContainingSegment(
-				pos,
-				{
-					referenceSequenceNumber: seqNumberFrom,
-					clientId: this.client.getLongClientId(clientId),
-				},
-				localSeq,
-			);
-			segment = containingSegment.segment;
-			offset = containingSegment.offset;
-		}
+		const { segment, offset } = this.client.getContainingSegment(
+			pos,
+			{
+				referenceSequenceNumber: seqNumberFrom,
+				clientId: this.client.getLongClientId(clientId),
+			},
+			localSeq,
+		);
 
 		// if segment is undefined, it slid off the string
 		assert(segment !== undefined, 0x54e /* No segment found */);
 
-		const segoff = getSlideToSegoff({ segment, offset }, this.client) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff.segment === undefined || segoff.offset === undefined) {
@@ -2664,7 +2647,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(segoff, this.client);
+		const newSegoff = getSlideToSegoff(segoff);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined

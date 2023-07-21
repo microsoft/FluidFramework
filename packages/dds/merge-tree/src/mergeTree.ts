@@ -566,9 +566,8 @@ export function findRootMergeBlock(
 function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
-	mergeTree: MergeTree,
 	cache?: Map<ISegment, { seg?: ISegment }>,
-): [ISegment | undefined, ISegment | undefined] {
+): [ISegment | undefined, "start" | "end" | undefined] {
 	if (!segment || !isRemovedAndAcked(segment) || segment.endpointType !== undefined) {
 		return [segment, undefined];
 	}
@@ -605,12 +604,12 @@ function getSlideToSegment(
 		backwardExcursion(segment, goFurtherToFindSlideToSegment);
 	}
 
-	let maybeEndpoint: ISegment | undefined;
+	let maybeEndpoint: "start" | "end" | undefined;
 
 	if (slidingPreference === SlidingPreference.BACKWARD) {
-		maybeEndpoint = mergeTree.startOfTree;
+		maybeEndpoint = "start";
 	} else if (slidingPreference === SlidingPreference.FORWARD) {
-		maybeEndpoint = mergeTree.endOfTree;
+		maybeEndpoint = "end";
 	}
 
 	return [result.seg, maybeEndpoint];
@@ -624,14 +623,12 @@ function getSlideToSegment(
  */
 export function getSlideToSegoff(
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
-	client: Client,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 ) {
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference, client["_mergeTree"]);
+	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
@@ -917,7 +914,7 @@ export class MergeTree {
 	}
 
 	public getContainingSegment<T extends ISegment>(
-		pos: number,
+		pos: number | "start" | "end",
 		refSeq: number,
 		clientId: number,
 		localSeq?: number,
@@ -928,6 +925,14 @@ export class MergeTree {
 		);
 		let segment: T | undefined;
 		let offset: number | undefined;
+
+		if (pos === "start") {
+			return { segment: this.startOfTree, offset: 0 };
+		}
+
+		if (pos === "end") {
+			return { segment: this.endOfTree, offset: 0 };
+		}
 
 		const leaf = (
 			leafSeg: ISegment,
@@ -965,13 +970,13 @@ export class MergeTree {
 		let currentForwardSlideGroup: LocalReferenceCollection[] = [];
 		let currentBackwardSlideGroup: LocalReferenceCollection[] = [];
 
-		let currentForwardMaybeEndpoint: ISegment | undefined;
+		let currentForwardMaybeEndpoint: "start" | "end" | undefined;
 		let currentForwardSlideDestination: ISegment | undefined;
 		let currentForwardSlideIsForward: boolean | undefined;
 		const forwardPred = (ref: LocalReferencePosition) =>
 			ref.slidingPreference !== SlidingPreference.BACKWARD;
 
-		let currentBackwardMaybeEndpoint: ISegment | undefined;
+		let currentBackwardMaybeEndpoint: "start" | "end" | undefined;
 		let currentBackwardSlideDestination: ISegment | undefined;
 		let currentBackwardSlideIsForward: boolean | undefined;
 		const backwardPred = (ref: LocalReferencePosition) =>
@@ -982,7 +987,7 @@ export class MergeTree {
 			currentSlideIsForward: boolean | undefined,
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
-			maybeEndpoint: ISegment | undefined,
+			maybeEndpoint: "start" | "end" | undefined,
 		) => {
 			if (currentSlideIsForward === undefined) {
 				return;
@@ -1003,9 +1008,8 @@ export class MergeTree {
 			);
 
 			if (maybeEndpoint) {
-				const localRefs = (maybeEndpoint.localRefs ??= new LocalReferenceCollection(
-					maybeEndpoint,
-				));
+				const endpoint = maybeEndpoint === "start" ? this.startOfTree : this.endOfTree;
+				const localRefs = (endpoint.localRefs ??= new LocalReferenceCollection(endpoint));
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...endpointRefsToAdd);
 				} else {
@@ -1051,12 +1055,12 @@ export class MergeTree {
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			slidingPreference: SlidingPreference,
-			currentMaybeEndpoint: ISegment | undefined,
+			currentMaybeEndpoint: "start" | "end" | undefined,
 			reassign: (
 				localRefs: LocalReferenceCollection,
 				slideToSegment: ISegment | undefined,
 				slideIsForward: boolean,
-				maybeEndpoint: ISegment | undefined,
+				maybeEndpoint: "start" | "end" | undefined,
 			) => void,
 		) => {
 			// avoid sliding logic if this segment doesn't have any references
@@ -1068,7 +1072,6 @@ export class MergeTree {
 			const [slideToSegment, maybeEndpoint] = getSlideToSegment(
 				segment,
 				slidingPreference,
-				this,
 				slidingPreference === SlidingPreference.FORWARD
 					? forwardSegmentCache
 					: backwardSegmentCache,

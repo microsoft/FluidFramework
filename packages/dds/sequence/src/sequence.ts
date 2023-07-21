@@ -245,10 +245,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
 	 * @param pos - Character position (index) into the current local view of the SharedString.
 	 */
-	public getContainingSegment(pos: number): {
-		segment: T | undefined;
-		offset: number | undefined;
-	} {
+	public getContainingSegment(pos: number) {
 		return this.client.getContainingSegment<T>(pos);
 	}
 

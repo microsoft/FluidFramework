@@ -7,8 +7,76 @@ import { assert } from "@fluidframework/common-utils";
 import { LocalClientId } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
 import { ISegmentLeaf, MergeTree } from "./mergeTree";
-import { IRemovalInfo, ISegment } from "./mergeTreeNodes";
+import { IMergeBlock, IRemovalInfo, ISegment } from "./mergeTreeNodes";
 import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
+
+abstract class BaseEndpointSegment {
+	constructor(protected readonly mergeTree: MergeTree) {}
+	/*
+	 * segments must be of at least length one, but
+	 * removed segments will have a calculated length
+	 * of undefined/0. we leverage this to create
+	 * a 0 length segment for the end of the tree
+	 */
+	removedSeq: number = 0;
+	removedClientIds: number[] = [LocalClientId];
+	attribution: undefined;
+	propertyManager: undefined;
+	localSeq: undefined;
+	localRemovedSeq: undefined;
+	properties: undefined;
+	seq = 0;
+	clientId = LocalClientId;
+	cachedLength = 1;
+
+	isLeaf(): this is ISegment {
+		return true;
+	}
+
+	protected abstract endpointSegmentProps(): {
+		parent: IMergeBlock;
+		index: number;
+		depth: number;
+	};
+
+	get parent() {
+		return this.endpointSegmentProps().parent;
+	}
+
+	get index() {
+		return this.endpointSegmentProps().index;
+	}
+
+	abstract get ordinal(): string;
+
+	/**
+	 * the current supported usage uses the local refs to
+	 * store detached references
+	 */
+	localRefs?: LocalReferenceCollection;
+
+	/*
+	 * since this segment isn't real, throw on any segment
+	 * operation that isn't expected
+	 */
+	get segmentGroups() {
+		return notSupported();
+	}
+	get trackingCollection() {
+		return notSupported();
+	}
+	addProperties = notSupported;
+	clone = notSupported;
+	canAppend = notSupported;
+	append = notSupported;
+	splitAt = notSupported;
+	toJSONObject = notSupported;
+	ack = notSupported;
+}
+
+const notSupported = () => {
+	assert(false, 0x3ed /* operation not supported */);
+};
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -26,37 +94,15 @@ import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
  * would not put the back into the EndOfTreeSegment leading to inconsistent results
  * with existing clients.
  */
-export class EndOfTreeSegment implements ISegment, IRemovalInfo {
+export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
 	type: string = "EndOfTreeSegment";
 	readonly endpointType = "end";
-	constructor(private readonly mergeTree: MergeTree) {}
-	/*
-	 * segments must be of at least length one, but
-	 * removed segments will have a calculated length
-	 * of undefined/0. we leverage this to create
-	 * a 0 length segment for the end of the tree
-	 */
-	removedSeq: number = 0;
-	removedClientIds: number[] = [LocalClientId];
-	seq = 0;
-	clientId = LocalClientId;
-	cachedLength = 1;
-
-	isLeaf(): this is ISegment {
-		return true;
-	}
-
-	/**
-	 * the current supported usage uses the local refs to
-	 * store detached references
-	 */
-	localRefs?: LocalReferenceCollection;
 
 	/**
 	 * this segment pretends to be a sibling of the last real segment.
 	 * so compute the necessary properties to pretend to be that segment.
 	 */
-	private getEndSegProps() {
+	protected endpointSegmentProps() {
 		let lastSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
@@ -83,73 +129,24 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
 		};
 	}
 
-	get parent() {
-		return this.getEndSegProps().parent;
-	}
-
-	get index() {
-		return this.getEndSegProps().index;
-	}
 	get ordinal() {
 		// just compute an arbitrarily big ordinal
 		// we base it on the depth of the tree
 		// to ensure it is bigger than all ordinals in
 		// the tree, as each layer appends to the previous
-		return String.fromCharCode(0xffff).repeat(this.getEndSegProps().depth);
+		return String.fromCharCode(0xffff).repeat(this.endpointSegmentProps().depth);
 	}
-
-	/*
-	 * since this segment isn't real, throw on any segment
-	 * operation that isn't expected
-	 */
-	get segmentGroups() {
-		return notSupported();
-	}
-	get trackingCollection() {
-		return notSupported();
-	}
-	addProperties = notSupported;
-	clone = notSupported;
-	canAppend = notSupported;
-	append = notSupported;
-	splitAt = notSupported;
-	toJSONObject = notSupported;
-	ack = notSupported;
 }
-const notSupported = () => {
-	assert(false, 0x3ed /* operation not supported */);
-};
 
-export class StartOfTreeSegment implements ISegment, IRemovalInfo {
+export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment, IRemovalInfo {
 	type: string = "StartOfTreeSegment";
 	readonly endpointType = "start";
-	constructor(private readonly mergeTree: MergeTree) {}
-	/*
-	 * segments must be of at least length one, but
-	 * removed segments will have a calculated length
-	 * of undefined/0. we leverage this to create
-	 * a 0 length segment for the start of the tree
-	 */
-	removedSeq: number = 0;
-	removedClientIds: number[] = [LocalClientId];
-	seq = 0;
-	clientId = LocalClientId;
-	cachedLength = 1;
-	isLeaf(): this is ISegment {
-		return true;
-	}
-
-	/**
-	 * the current supported usage uses the local refs to
-	 * store detached references
-	 */
-	localRefs?: LocalReferenceCollection;
 
 	/**
 	 * this segment pretends to be a sibling of the first real segment.
 	 * so compute the necessary properties to pretend to be that segment.
 	 */
-	private getStartSegProps() {
+	protected endpointSegmentProps() {
 		let firstSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
@@ -176,32 +173,7 @@ export class StartOfTreeSegment implements ISegment, IRemovalInfo {
 		};
 	}
 
-	get parent() {
-		return this.getStartSegProps().parent;
-	}
-
-	get index() {
-		return this.getStartSegProps().index;
-	}
 	get ordinal() {
 		return String.fromCharCode(0x00);
 	}
-
-	/*
-	 * since this segment isn't real, throw on any segment
-	 * operation that isn't expected
-	 */
-	get segmentGroups() {
-		return notSupported();
-	}
-	get trackingCollection() {
-		return notSupported();
-	}
-	addProperties = notSupported;
-	clone = notSupported;
-	canAppend = notSupported;
-	append = notSupported;
-	splitAt = notSupported;
-	toJSONObject = notSupported;
-	ack = notSupported;
 }

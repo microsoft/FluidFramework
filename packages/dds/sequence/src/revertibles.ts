@@ -19,7 +19,6 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
 	getSlideToSegoff,
-	Client,
 } from "@fluidframework/merge-tree";
 import { IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
@@ -384,15 +383,9 @@ export function discardSharedStringRevertibles(
 	});
 }
 
-function getSlidePosition(
-	string: SharedString,
-	lref: LocalReferencePosition,
-	pos: number,
-	client: Client,
-): number {
+function getSlidePosition(string: SharedString, lref: LocalReferencePosition, pos: number): number {
 	const slide = getSlideToSegoff(
 		{ segment: lref.getSegment(), offset: undefined },
-		client,
 		lref.slidingPreference,
 	);
 	return slide?.segment !== undefined &&
@@ -429,11 +422,9 @@ function revertLocalDelete(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const collection = string.getIntervalCollection(label);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const startSlidePos = getSlidePosition(string, revertible.start, start, string["client"]);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const endSlidePos = getSlidePosition(string, revertible.end, end, string["client"]);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
@@ -459,11 +450,9 @@ function revertLocalChange(
 	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const startSlidePos = getSlidePosition(string, revertible.start, start, string["client"]);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const endSlidePos = getSlidePosition(string, revertible.end, end, string["client"]);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
 	collection.change(id, startSlidePos, endSlidePos);
 
