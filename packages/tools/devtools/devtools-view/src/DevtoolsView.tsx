@@ -197,16 +197,22 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
-				setTopLevelLogger(
-					createChildLogger({
-						logger: telemetryOptInLogger,
-						properties: {
-							all: {
-								devtoolsVersion: message.data.devtoolsVersion,
-							},
+
+				const newTopLevelLogger = createChildLogger({
+					logger: telemetryOptInLogger,
+					properties: {
+						all: {
+							devtoolsVersion: message.data.devtoolsVersion,
 						},
-					}),
-				);
+					},
+				});
+
+				newTopLevelLogger.sendTelemetryEvent({
+					eventName: "Devtools Logger connection completed.",
+				});
+
+				setTopLevelLogger(newTopLevelLogger);
+
 				return true;
 			},
 		};
@@ -230,7 +236,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		};
 	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
 
-	topLevelLogger.sendTelemetryEvent({ eventName: "Devtools Logger connection completed." });
+	// topLevelLogger.sendTelemetryEvent({ eventName: "Devtools Logger connection completed." });
 
 	// Manage the query timeout
 	React.useEffect(() => {
