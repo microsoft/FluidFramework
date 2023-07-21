@@ -20,8 +20,13 @@ import {
 } from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import {
+	gcTreeKey,
+	IExperimentalFluidGCInfo,
+	IProvideExperimentalFluidGCInfo,
+} from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -59,12 +64,23 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
+	/** Get the handle's object and compare its GcInfo to the expected info */
+	async function assertGcInfoMatches(
+		handle: IFluidHandle<FluidObject>,
+		expectedInfo: IExperimentalFluidGCInfo,
+		message?: string,
+	): Promise<void> {
+		const object: FluidObject<IProvideExperimentalFluidGCInfo> = await handle.get();
+		//* TODO: Check more than just state
+		assert.equal(object.IExperimentalFluidGCInfo?.state, expectedInfo.state, message);
+	}
+
 	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
 
-		const { summarizer } = await createSummarizer(
+		const { summarizer, container: container2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			undefined /* summaryVersion */,
@@ -78,14 +94,33 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		);
 		const dataStoreHandle = dataStore.entryPoint;
 		assert(dataStoreHandle !== undefined, "Expected a handle when creating a datastore");
+		// NOTE: This state will not change the entire time for this interactive client. We'll just check it once at the end
+		await assertGcInfoMatches(
+			dataStoreHandle,
+			{ state: "Referenced" },
+			"State should effectively initialize to 'Referenced'",
+		);
+
 		const blobContents = "Blob contents";
 		const blobHandle = await mainDataStore._runtime.uploadBlob(
 			stringToBuffer(blobContents, "utf-8"),
 		);
+		//* TODO: Assert whatever happens for blobs now (NYI)
 
 		// store datastore and blob handles
 		mainDataStore._root.set("dataStore", dataStoreHandle);
 		mainDataStore._root.set("blob", blobHandle);
+
+		// Load dataStore in Summarizer client and check GC Info
+		await provider.ensureSynchronized();
+		const mainDataStore2: ITestDataObject = (await container2.request({ url: "/" })).value;
+		const dataStoreHandle2: IFluidHandle<FluidObject> | undefined =
+			mainDataStore2._root.get("dataStore");
+		assert(
+			dataStoreHandle2 !== undefined,
+			"Should be able to retrieve the dataStore from Summarizer container",
+		);
+		await assertGcInfoMatches(dataStoreHandle2, { state: "Referenced" });
 
 		// unreference datastore and blob handles
 		mainDataStore._root.delete("dataStore");
@@ -93,7 +128,15 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 
 		// Summarize and verify datastore and blob are unreferenced and not tombstoned
 		await provider.ensureSynchronized();
+		await assertGcInfoMatches(
+			dataStoreHandle2,
+			{ state: "Referenced" },
+			"State shouldn't change until GC/Summarize runs",
+		);
+
 		let summaryTree = (await summarizeNow(summarizer)).summaryTree;
+		await assertGcInfoMatches(dataStoreHandle2, { state: "Unreferenced" });
+
 		const gcState = getGCStateFromSummary(summaryTree);
 		assert(gcState !== undefined, "Expected GC state to be generated");
 		assert(
@@ -122,26 +165,51 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		mainDataStore._root.set("send", "op");
 		await provider.ensureSynchronized();
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
-		// GC state is a handle meaning it is the same as before, meaning nothing is tombstoned.
+		// GC state is a handle meaning it is the same as before, meaning nothing is tombstoned...
 		assert(
 			summaryTree.tree[gcTreeKey].type === SummaryType.Handle,
 			"GC tree should not have changed",
 		);
+		// ...but the GcInfo returned should update
+		await assertGcInfoMatches(
+			dataStoreHandle2,
+			{ state: "Inactive" },
+			"State should have changed after summary post-timeout", // Also would have changed before summary due to timers, tested below for SweepReady
+		);
 
-		// Wait sweep timeout
-		await delay(sweepTimeoutMs);
+		// Wait sweep timeout and check the state
+		await delay(sweepTimeoutMs - inactiveTimeoutMs);
+		await assertGcInfoMatches(
+			dataStoreHandle2,
+			{ state: "SweepReady" },
+			"State should have changed after waiting SweepReady timeout",
+		);
+
+		// Summarize and check the state, both the GcInfo and what's in the Summary (should be Tombstoned)
 		mainDataStore._root.set("send", "op2");
 		await provider.ensureSynchronized();
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
+		await assertGcInfoMatches(
+			dataStoreHandle2,
+			{ state: "Tombstoned" },
+			"State should be Tombstoned after GC/Summarize runs",
+		);
+
 		const rootGCTree = summaryTree.tree[gcTreeKey];
 		assert(rootGCTree?.type === SummaryType.Tree, `GC data should be a tree`);
 		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
-		// After sweep timeout the datastore and blob should be tombstoned.
 		assert(tombstoneState !== undefined, "Should have tombstone state");
 		assert(
 			tombstoneState.includes(dataStoreHandle.absolutePath),
 			"Datastore should be tombstoned",
 		);
 		assert(tombstoneState.includes(blobHandle.absolutePath), "Blob should be tombstoned");
+
+		// Meanwhile, the interactive client doesn't even know the dataStore was unreferenced, so it still reports "Referenced"
+		await assertGcInfoMatches(
+			dataStoreHandle,
+			{ state: "Referenced" },
+			"Interactive client should still report 'Referenced' state",
+		);
 	});
 });

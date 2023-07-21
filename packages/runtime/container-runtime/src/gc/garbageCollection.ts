@@ -962,6 +962,11 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		const trackedState = this.unreferencedNodesState.get(nodePath);
+
+		// Two cases where it may be undefined:
+		// 1. The node is referenced so it's of course not in unreferencedNodesState
+		// 2. The node didn't exist in the snapshot we loaded from (e.g. this client created it).
+		// 	  In this case it's ok to call it "Referenced", since we also report { confirmed: false }
 		if (trackedState === undefined) {
 			return { state: "Referenced", confirmed, confirmedAtTimestampMs };
 		}
