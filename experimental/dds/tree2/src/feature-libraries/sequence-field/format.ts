@@ -26,7 +26,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export type ProtoNode = JsonableTree;
 export const ProtoNode = Type.Any();
 
-export type NodeCount = number;
+export type CellCount = number;
 export const NodeCount = Type.Number();
 
 /**
@@ -193,7 +193,7 @@ export interface NoopMark extends CellTargetingMark {
 	/**
 	 * The number of nodes being skipped.
 	 */
-	count: NodeCount;
+	count: CellCount;
 }
 export const NoopMark = Type.Composite(
 	[CellTargetingMark, Type.Object({ count: NodeCount })],
@@ -267,7 +267,7 @@ export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
 	/**
 	 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
 	 */
-	count: NodeCount;
+	count: CellCount;
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
 	 * This is independent of whether this mark has a conflict.
@@ -294,7 +294,7 @@ export interface Delete<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange>,
 		CellTargetingMark {
 	type: "Delete";
-	count: NodeCount;
+	count: CellCount;
 	id: ChangesetLocalId;
 }
 
@@ -320,7 +320,7 @@ export interface MoveOut<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange>,
 		CellTargetingMark {
 	type: "MoveOut";
-	count: NodeCount;
+	count: CellCount;
 }
 export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
@@ -344,7 +344,7 @@ export interface Revive<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange> {
 	type: "Revive";
 	content: ITreeCursorSynchronous[];
-	count: NodeCount;
+	count: CellCount;
 }
 export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
@@ -364,7 +364,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 
 export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 	type: "ReturnTo";
-	count: NodeCount;
+	count: CellCount;
 
 	/**
 	 * When true, the corresponding ReturnFrom has a conflict.
@@ -392,7 +392,7 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange>,
 		CellTargetingMark {
 	type: "ReturnFrom";
-	count: NodeCount;
+	count: CellCount;
 
 	/**
 	 * When true, the corresponding ReturnTo has a conflict.
@@ -449,7 +449,7 @@ export interface MovePlaceholder<TNodeChange>
 		HasMoveId,
 		HasChanges<TNodeChange> {
 	type: "Placeholder";
-	count: NodeCount;
+	count: CellCount;
 }
 
 export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
@@ -500,12 +500,17 @@ export const EmptyInputCellMark = <Schema extends TSchema>(tNodeChange: Schema) 
 		Type.Intersect([DetachedCellMark, ExistingCellMark(tNodeChange)]),
 	]);
 
-export type Mark<TNodeChange = NodeChangeType> =
-	| NoopMark
+export type Effect<TNodeChange = NodeChangeType> =
 	| Modify<TNodeChange>
 	| MovePlaceholder<TNodeChange>
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;
+
+export interface Mark<TNodeChange> {
+	count: CellCount;
+	effect?: Effect<TNodeChange>;
+}
+
 export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([NoopMark, Modify(tNodeChange), Attach(tNodeChange), Detach(tNodeChange)]);
 
