@@ -353,19 +353,34 @@ export interface IProvideExperimentalFluidGCInfo {
 /**
  * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
  * objects within this container.
+ *
+ * @experimental - All members are optional to provide flexibility to change its shape or deprecate it entirely
  */
 export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
-	/** Server timestamp in Unix Epoch format (ms) of the point in time (in the op stream) this was detected as unreferenced */
-	unreferencedTimestampMs?: number;
+	/**
+	 * Provides details on whether the object is referenced or not.
+	 * The different states represent the duration and permanency that apply to unreferenced objects.
+	 */
+	state?: "Referenced" | "Unreferenced" | "Inactive" | "SweepReady" | "Tombstoned";
+
+	/**
+	 * If true, the state was confirmed as of the last processed op on this client.
+	 * Otherwise, the state may have changed since it was last confirmed.
+	 * For instance, if an object was referenced when this client loaded, but became unreferenced, the state may not change to reflect that.
+	 */
+	confirmed?: boolean;
 
 	/**
 	 * Server timestamp in Unix Epoch format (ms) of the point in time (in the op stream) this state was last confirmed
 	 * NOTE: There are corner cases (about 1%) in Summarizer clients where this will be incorrect (older than it should be)
 	 */
-	freshnessTimestampMs?: number;
+	confirmedAtTimestampMs?: number;
 
-	/** Describes varying states regarding whether the object is referenced or not, if known */
-	state?: "Referenced" | "Unreferenced" | "Inactive" | "SweepReady" | "Tombstoned";
+	/**
+	 * Server timestamp in Unix Epoch format (ms) of the point in time (in the op stream) this was detected as unreferenced
+	 * Not set for Tombstoned state (and obviously not for Referenced state)
+	 */
+	unreferencedTimestampMs?: number;
 }
 
 /**

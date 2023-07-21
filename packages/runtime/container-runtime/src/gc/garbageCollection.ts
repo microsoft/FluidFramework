@@ -940,8 +940,10 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Get this client's estimation of the reference state of the give node
-	 * It may be inaccurate in some cases, e.g. if an interactive client sees an object as unreferenced on load,
-	 * some time later it will transition to Inactive even if it is revived in the meantime.
+	 * If the "confirmed" property is false, the state may be inaccurate in some cases, e.g. if an interactive client
+	 * sees an object as unreferenced on load, some time later it will transition to Inactive even if it is revived in the meantime.
+	 *
+	 * NOTE - This does not check for the existence of the given nodePath - non-existent ones will report "Referenced" state
 	 * @param nodePath - Container-relative path to the node
 	 */
 	public getGCReferenceInfo(nodePath: string): IExperimentalFluidGCInfo {
@@ -951,20 +953,23 @@ export class GarbageCollector implements IGarbageCollector {
 			"Shouldn't be getting internal reference info for a deleted node",
 		);
 
-		const freshnessTimestampMs = this.getLastSummaryTimestampMs();
+		// None of the states are guaranteed to stay up to date with the current implementation.
+		const confirmed = false;
+		const confirmedAtTimestampMs = this.getLastSummaryTimestampMs();
 
 		if (this.tombstones.includes(nodePath)) {
-			return { state: "Tombstoned", freshnessTimestampMs };
+			return { state: "Tombstoned", confirmed, confirmedAtTimestampMs };
 		}
 
 		const trackedState = this.unreferencedNodesState.get(nodePath);
 		if (trackedState === undefined) {
-			return { state: "Referenced", freshnessTimestampMs };
+			return { state: "Referenced", confirmed, confirmedAtTimestampMs };
 		}
 
 		return {
 			state: trackedState.state === "Active" ? "Unreferenced" : trackedState.state,
-			freshnessTimestampMs,
+			confirmed,
+			confirmedAtTimestampMs,
 			unreferencedTimestampMs: trackedState.unreferencedTimestampMs,
 		};
 	}
