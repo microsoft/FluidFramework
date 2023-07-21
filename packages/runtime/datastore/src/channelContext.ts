@@ -159,7 +159,6 @@ export async function loadChannelFactoryAndAttributes(
 	}
 	const factory = registry.get(channelFactoryType);
 	if (factory === undefined) {
-		// TODO: dataStoreId may require a different tag from PackageData #7488
 		throw new DataCorruptionError(
 			"channelFactoryNotRegisteredForGivenType",
 			tagCodeArtifacts({
