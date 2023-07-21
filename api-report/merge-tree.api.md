@@ -110,8 +110,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
-    // @internal
-    get endOfTreeSegment(): ISegment;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
@@ -123,7 +121,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
+    getContainingSegment<T extends ISegment>(pos: number | "start" | "end", sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
+        segment: ISegment;
+        offset: number;
+    } | {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -182,8 +183,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
-    // @internal
-    get startOfTreeSegment(): ISegment;
     // (undocumented)
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
     // (undocumented)
@@ -294,7 +293,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 export function getSlideToSegoff(segoff: {
     segment: ISegment | undefined;
     offset: number | undefined;
-}, client: Client, slidingPreference?: SlidingPreference): {
+}, slidingPreference?: SlidingPreference): {
     segment: ISegment | undefined;
     offset: number | undefined;
 };

@@ -927,11 +927,11 @@ export class MergeTree {
 		let offset: number | undefined;
 
 		if (pos === "start") {
-			return { segment: this.startOfTree, offset: 0 };
+			return { segment: this.startOfTree as ISegment, offset: 0 };
 		}
 
 		if (pos === "end") {
-			return { segment: this.endOfTree, offset: 0 };
+			return { segment: this.endOfTree as ISegment, offset: 0 };
 		}
 
 		const leaf = (
