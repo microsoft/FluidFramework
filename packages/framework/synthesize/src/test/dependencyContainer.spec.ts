@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
+import { LazyPromise } from "@fluidframework/core-utils";
 import { DependencyContainer } from "..";
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer";
 import { AsyncFluidObjectProvider, FluidObjectProvider, FluidObjectSymbolProvider } from "../types";
@@ -121,6 +122,31 @@ describe("Routerlicious", () => {
 				);
 			});
 
+			it(`One Optional Provider registered via LazyPromise factory`, async () => {
+				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
+				const mock = new MockLoadable();
+				let lazyPromiseFlag = false;
+				const lazyFactory = new LazyPromise(async () => {
+					lazyPromiseFlag = true;
+					return mock;
+				});
+				dc.register(IFluidLoadable, lazyFactory);
+
+				const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, undefined);
+				const loadable_promise = s.IFluidLoadable;
+				// This stacking of promises is done in order to make sure that the loadable_promise would have been executed by the time the assertion is done
+				await Promise.resolve().then(async () => {
+					assert(!lazyPromiseFlag, "Optional IFluidLoadable was correctly lazy loaded");
+					const loadable = await loadable_promise;
+					assert(loadable, "Optional IFluidLoadable was registered");
+					assert(loadable === mock, "IFluidLoadable is expected");
+					assert(
+						loadable?.handle.absolutePath === mock.handle.absolutePath,
+						"IFluidLoadable is valid",
+					);
+				});
+			});
+
 			it(`One Required Provider registered via value`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const mock = new MockLoadable();
@@ -189,6 +215,33 @@ describe("Routerlicious", () => {
 					loadable?.handle.absolutePath === mock.handle.absolutePath,
 					"IFluidLoadable is valid",
 				);
+			});
+
+			it(`One Required Provider registered via LazyPromise factory`, async () => {
+				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
+				const mock = new MockLoadable();
+				let lazyPromiseFlag = false;
+				const lazyFactory = new LazyPromise(async () => {
+					lazyPromiseFlag = true;
+					return mock;
+				});
+				dc.register(IFluidLoadable, lazyFactory);
+
+				const s = dc.synthesize<undefined, IProvideFluidLoadable>(undefined, {
+					IFluidLoadable,
+				});
+				const loadable_promise = s.IFluidLoadable;
+				// This stacking of promises is done in order to make sure that the loadable_promise would have been executed by the time the assertion is done
+				await Promise.resolve().then(async () => {
+					assert(!lazyPromiseFlag, "Required IFluidLoadable was correctly lazy loaded");
+					const loadable = await loadable_promise;
+					assert(loadable, "Required IFluidLoadable was registered");
+					assert(loadable === mock, "IFluidLoadable is expected");
+					assert(
+						loadable?.handle.absolutePath === mock.handle.absolutePath,
+						"IFluidLoadable is valid",
+					);
+				});
 			});
 
 			it(`Two Optional Modules all registered`, async () => {

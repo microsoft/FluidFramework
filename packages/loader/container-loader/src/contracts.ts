@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
@@ -20,7 +20,7 @@ import {
 	IClientDetails,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
+import { IAnyDriverError, IContainerPackageInfo } from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",
@@ -95,7 +95,7 @@ export interface IConnectionManager {
 	/**
 	 * Initiates connection to relay service (noop if already connected).
 	 */
-	connect(connectionMode?: ConnectionMode): void;
+	connect(reason: string, connectionMode?: ConnectionMode): void;
 
 	/**
 	 * Disposed connection manager
@@ -139,7 +139,7 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever connection to relay service is lost.
 	 */
-	readonly disconnectHandler: (reason: string) => void;
+	readonly disconnectHandler: (reason: string, error?: IAnyDriverError) => void;
 
 	/**
 	 * Called whenever new connection to rely service is established
@@ -148,8 +148,6 @@ export interface IConnectionManagerFactoryArgs {
 
 	/**
 	 * Called whenever ping/pong messages are roundtripped on connection.
-	 *
-	 * @deprecated No replacement API intended.
 	 */
 	readonly pongHandler: (latency: number) => void;
 
@@ -167,6 +165,16 @@ export interface IConnectionManagerFactoryArgs {
 	 * `undefined` indicates that user permissions are not yet known.
 	 */
 	readonly readonlyChangeHandler: (readonly?: boolean) => void;
+
+	/**
+	 * Called whenever we try to start establishing a new connection.
+	 */
+	readonly establishConnectionHandler: (reason: string) => void;
+
+	/**
+	 * Called whenever we cancel the connection in progress.
+	 */
+	readonly cancelConnectionHandler: (reason: string) => void;
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, TelemetryLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
 	AuthorizationError,
 	createGenericNetworkError,
@@ -52,8 +52,8 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 		{ headerName: "content-type", logName: "contentType" },
 	];
 	const additionalProps: ITelemetryProperties = {
-		sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
-		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+		sprequestduration: numberFromString(headers.get("sprequestduration")),
+		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
 		const headerValue = headers.get(header.headerName);
@@ -274,7 +274,10 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 423: // File locked
-			if (innerMostErrorCode === "resourceLocked") {
+			if (
+				innerMostErrorCode === "resourceLocked" ||
+				innerMostErrorCode === "resourceCheckedOut"
+			) {
 				error = new NonRetryableError(
 					errorMessage,
 					DriverErrorType.fileIsLocked,

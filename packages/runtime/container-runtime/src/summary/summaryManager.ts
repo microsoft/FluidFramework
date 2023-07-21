@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IEvent,
-	IEventProvider,
-	ITelemetryLogger,
-} from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IThrottler } from "../throttler";
 import { ISummarizerClientElection } from "./summarizerClientElection";
@@ -74,7 +74,7 @@ export interface ISummaryManagerConfig {
  * stopping existing summarizer client.
  */
 export class SummaryManager implements IDisposable {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly opsToBypassInitialDelay: number;
 	private readonly initialDelayMs: number;
 	private latestClientId: string | undefined;
@@ -97,7 +97,7 @@ export class SummaryManager implements IDisposable {
 			SummaryCollection,
 			"opsSinceLastAck" | "addOpListener" | "removeOpListener"
 		>,
-		parentLogger: ITelemetryLogger,
+		parentLogger: ITelemetryBaseLogger,
 		/** Creates summarizer by asking interactive container to spawn summarizing container and
 		 * get back its Summarizer instance. */
 		private readonly requestSummarizerFn: () => Promise<ISummarizer>,
@@ -108,8 +108,12 @@ export class SummaryManager implements IDisposable {
 		}: Readonly<Partial<ISummaryManagerConfig>> = {},
 		private readonly disableHeuristics?: boolean,
 	) {
-		this.logger = ChildLogger.create(parentLogger, "SummaryManager", {
-			all: { clientId: () => this.latestClientId },
+		this.logger = createChildLogger({
+			logger: parentLogger,
+			namespace: "SummaryManager",
+			properties: {
+				all: { clientId: () => this.latestClientId },
+			},
 		});
 
 		this.connectedState.on("connected", this.handleConnected);

@@ -38,8 +38,6 @@ import type { RevisionTag } from "./types";
  * Would this cause decoherence (and thus be absolutely not ok),
  * or just minor semantic precision issues, which could be tolerated.
  * For now assume that such issues are not ok.
- *
- * @alpha
  */
 export interface ChangeRebaser<TChangeset> {
 	_typeCheck?: Invariant<TChangeset>;
@@ -83,7 +81,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * - `rebase(compose([a, b]), c)` is equal to
 	 * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
 	 * - `rebase(a, compose([]))` is equal to `a`.
-	 * - `rebase(compose([]), a)` is equal to `a`.
+	 * - `rebase(compose([]), a)` is equal to `compose([])`.
 	 */
 	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
 

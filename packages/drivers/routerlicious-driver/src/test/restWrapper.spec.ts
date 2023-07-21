@@ -4,11 +4,14 @@
  */
 
 import assert from "assert";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import nock from "nock";
-import { RouterliciousOrdererRestWrapper } from "../restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	toInstrumentedR11sOrdererTokenFetcher,
+} from "../restWrapper";
 import { RouterliciousErrorType } from "../errorUtils";
 import { DefaultTokenProvider } from "../defaultTokenProvider";
 import { ITokenResponse } from "../tokens";
@@ -41,7 +44,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 	}
 
 	let restWrapper: RouterliciousOrdererRestWrapper;
-
+	const logger = new MockLogger();
 	beforeEach(async () => {
 		// reset auth mocking
 		tokenQueue = [token1, token2, token3];
@@ -58,16 +61,22 @@ describe("RouterliciousDriverRestWrapper", () => {
 		};
 
 		restWrapper = await RouterliciousOrdererRestWrapper.load(
-			"dummytenantid",
-			"dummydocumentid",
-			tokenProvider,
-			new TelemetryUTLogger(),
+			toInstrumentedR11sOrdererTokenFetcher(
+				"dummytenantid",
+				"dummydocumentid",
+				tokenProvider,
+				logger,
+			),
+			logger,
 			rateLimiter,
 			false,
 		);
 	});
 	after(() => {
 		nock.restore();
+	});
+	afterEach(() => {
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	describe("get()", () => {

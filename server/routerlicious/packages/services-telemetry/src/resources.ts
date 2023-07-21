@@ -58,6 +58,9 @@ export enum CommonProperties {
 	clientType = "clientType",
 	clientCount = "clientCount",
 	clientDriverVersion = "clientDriverVersion",
+	connectionClients = "connectionClients",
+	roomClients = "roomClients",
+	connectionCount = "connectionCount",
 
 	// Session properties
 	sessionState = "sessionState",
@@ -87,6 +90,7 @@ export enum CommonProperties {
 	serviceName = "serviceName",
 	telemetryGroupName = "telemetryGroupName",
 	totalBatchSize = "totalBatchSize",
+	restartReason = "restartReason",
 }
 
 export enum ThrottlingTelemetryProperties {

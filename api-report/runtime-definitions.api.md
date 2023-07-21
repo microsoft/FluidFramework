@@ -9,7 +9,7 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -25,11 +25,11 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -140,7 +140,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     request(request: IRequest): Promise<IResponse>;
     submitSignal(type: string, content: any): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public (undocumented)
@@ -280,7 +280,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public (undocumented)
@@ -322,37 +322,6 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
-    usedRoutes?: string[];
-}
-
-// @public @deprecated
-export interface IGarbageCollectionNodeData {
-    outboundRoutes: string[];
-    unreferencedTimestampMs?: number;
-}
-
-// @public @deprecated
-export interface IGarbageCollectionSnapshotData {
-    // (undocumented)
-    deletedNodes: string[] | undefined;
-    // (undocumented)
-    gcState: IGarbageCollectionState;
-    // (undocumented)
-    tombstones: string[] | undefined;
-}
-
-// @public @deprecated
-export interface IGarbageCollectionState {
-    // (undocumented)
-    gcNodes: {
-        [id: string]: IGarbageCollectionNodeData;
-    };
-}
-
-// @public @deprecated (undocumented)
-export interface IGarbageCollectionSummaryDetailsLegacy {
-    gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 

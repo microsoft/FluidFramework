@@ -10,6 +10,7 @@ import {
 	ContainerErrorType,
 	IContainerContext,
 	ICriticalContainerError,
+	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -23,9 +24,9 @@ import {
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MockLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
@@ -34,7 +35,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
+import { IPendingMessageOld, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -44,7 +45,7 @@ describe("Runtime", () => {
 
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
-		logger: ITelemetryLogger = new MockLogger(),
+		logger: ITelemetryLoggerExt = new MockLogger(),
 	): Partial<IContainerContext> => ({
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
@@ -56,6 +57,7 @@ describe("Runtime", () => {
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	});
 
 	describe("Container Runtime", () => {
@@ -131,6 +133,8 @@ describe("Runtime", () => {
 								return opFakeSequenceNumber++;
 							},
 							connected: true,
+							clientId: "fakeClientId",
+							getLoadedFromVersion: () => undefined,
 						};
 					};
 
@@ -261,6 +265,66 @@ describe("Runtime", () => {
 							"third message should be the batch end",
 						);
 					});
+
+					it("Resubmitting batch preserves original batches", async () => {
+						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+						(containerRuntime as any).dataStores = {
+							setConnectionState: (_connected: boolean, _clientId?: string) => {},
+							// Pass data store op right back to ContainerRuntime
+							resubmitDataStoreOp: (envelope, localOpMetadata) => {
+								containerRuntime.submitDataStoreOp(
+									envelope.address,
+									envelope.contents,
+									localOpMetadata,
+								);
+							},
+						} as DataStores;
+
+						containerRuntime.setConnectionState(false);
+
+						containerRuntime.orderSequentially(() => {
+							containerRuntime.submitDataStoreOp("1", "test");
+							containerRuntime.submitDataStoreOp("2", "test");
+							containerRuntime.submitDataStoreOp("3", "test");
+						});
+						(containerRuntime as any).flush();
+
+						containerRuntime.orderSequentially(() => {
+							containerRuntime.submitDataStoreOp("4", "test");
+							containerRuntime.submitDataStoreOp("5", "test");
+							containerRuntime.submitDataStoreOp("6", "test");
+						});
+						(containerRuntime as any).flush();
+
+						assert.strictEqual(
+							submittedOpsMetdata.length,
+							0,
+							"no messages should be sent",
+						);
+
+						containerRuntime.setConnectionState(true);
+
+						assert.strictEqual(
+							submittedOpsMetdata.length,
+							6,
+							"6 messages should be sent",
+						);
+
+						const expectedBatchMetadata = [
+							{ batch: true },
+							undefined,
+							{ batch: false },
+							{ batch: true },
+							undefined,
+							{ batch: false },
+						];
+
+						assert.deepStrictEqual(
+							submittedOpsMetdata,
+							expectedBatchMetadata,
+							"batch metadata does not match",
+						);
+					});
 				});
 			}));
 
@@ -370,6 +434,40 @@ describe("Runtime", () => {
 					})),
 				);
 			});
+
+			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{
+						flushMode: FlushMode.Immediate,
+					}, // runtimeOptions
+				);
+
+				assert.throws(() =>
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.orderSequentially(() => {});
+					}),
+				);
+			});
+
+			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
+				containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{}, // runtimeOptions
+				);
+
+				const callback = () => {
+					containerRuntime.ensureNoDataModelChanges(() => {
+						containerRuntime.submitDataStoreOp("id", "test");
+						callback();
+					});
+				};
+				assert.throws(() => callback());
+			});
 		});
 
 		describe("orderSequentially with rollback", () =>
@@ -401,6 +499,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					});
 
 					beforeEach(async () => {
@@ -463,6 +562,7 @@ describe("Runtime", () => {
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -544,6 +644,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (_dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					};
 				};
 			const getMockPendingStateManager = (): PendingStateManager => {
@@ -622,13 +723,7 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onSubmitMessage(
-					ContainerMessageType.FluidDataStoreOp,
-					0,
-					"",
-					"",
-					undefined,
-				);
+				pendingStateManager.onSubmitMessage("", 0, "", undefined);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
@@ -767,7 +862,7 @@ describe("Runtime", () => {
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
-					"processing remote op, should generate telemetry event and throw an error that closes the container",
+					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -785,6 +880,22 @@ describe("Runtime", () => {
 								},
 							} as any as ISequencedDocumentMessage,
 							false /* local */,
+						);
+						containerRuntime.process(
+							{
+								type: "op",
+								clientId: "clientId",
+								sequenceNumber: 0,
+								contents: {
+									address: "address",
+									contents: {
+										chunkId: i + 1,
+										totalChunks: maxReconnects + 1,
+									},
+									type: "chunkedOp",
+								},
+							} as any as ISequencedDocumentMessage,
+							true /* local */,
 						);
 					}
 
@@ -832,7 +943,7 @@ describe("Runtime", () => {
 				};
 				assert.throws(
 					codeBlock,
-					(e) =>
+					(e: IErrorBase) =>
 						e.errorType === ContainerErrorType.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);
@@ -1033,7 +1144,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					(state?.pendingStates[0] as IPendingMessageOld).content.contents,
 					{
 						prop1: 1,
 					},
@@ -1060,6 +1171,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -1077,6 +1189,7 @@ describe("Runtime", () => {
 					gcAllowed: true,
 				},
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+				enableGroupedBatching: true,
 			};
 
 			const defaultRuntimeOptions = {
@@ -1109,7 +1222,9 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({ idCompressorEnabled: false }),
+						featureGates: JSON.stringify({
+							idCompressorEnabled: false,
+						}),
 					},
 				]);
 			});
@@ -1120,6 +1235,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
+					"Fluid.ContainerRuntime.DisableGroupedBatching": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1139,6 +1255,7 @@ describe("Runtime", () => {
 							disableChunking: true,
 							idCompressorEnabled: true,
 						}),
+						groupedBatchingEnabled: false,
 					},
 				]);
 			});
@@ -1163,6 +1280,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 

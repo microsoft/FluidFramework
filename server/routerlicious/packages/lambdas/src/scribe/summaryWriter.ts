@@ -6,11 +6,6 @@
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "@fluidframework/protocol-base";
-import {
 	ISequencedDocumentMessage,
 	ISummaryContent,
 	ITreeEntry,
@@ -26,6 +21,9 @@ import {
 	ISummaryTree,
 	NetworkError,
 	WholeSummaryUploadManager,
+	getQuorumTreeEntries,
+	generateServiceProtocolEntries,
+	mergeAppAndProtocolTree,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -93,7 +91,7 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
 		this.setSummaryProperties(clientSummaryMetric, op);
-		const content = JSON.parse(op.contents) as ISummaryContent;
+		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
 			// two summaries at the same time. In this case the first one wins.
@@ -132,7 +130,7 @@ export class SummaryWriter implements ISummaryWriter {
 									existingRef ? existingRef.object.sha : "n/a"
 								}" nor other valid parent summaries "[${
 									checkpoint.validParentSummaries?.join(",") ?? ""
-								}]".`,
+								}] nor the last known client summary "${lastSummaryHead}".`,
 								summaryProposal: {
 									summarySequenceNumber: op.sequenceNumber,
 								},
@@ -715,7 +713,14 @@ export class SummaryWriter implements ISummaryWriter {
 		let logTail: ISequencedDocumentMessage[] = [];
 
 		if (this.getDeltasViaAlfred) {
-			logTail = await this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt);
+			logTail = await this.deltaService.getDeltas(
+				"",
+				this.tenantId,
+				this.documentId,
+				gt,
+				lt,
+				"scribe",
+			);
 		} else {
 			const query = {
 				"documentId": this.documentId,

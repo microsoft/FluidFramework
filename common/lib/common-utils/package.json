@@ -25,8 +25,6 @@
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:full": "npm run build",
-		"build:full:compile": "npm run build:compile",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
@@ -36,7 +34,7 @@
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"ci:test": "npm run test:report",
 		"ci:test:coverage": "npm run test:coverage",
-		"clean": "rimraf _api-extractor-temp dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob _api-extractor-temp dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -54,7 +52,7 @@
 		"test:report": "nyc npm run test:mocha:report && npm run test:jest:report",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"nyc": {
 		"all": true,
@@ -86,9 +84,9 @@
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.16.1",
-		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -98,12 +96,13 @@
 		"@types/jest": "22.2.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/puppeteer": "1.3.0",
 		"@types/sinon": "^7.0.13",
 		"benchmark": "^2.1.4",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~8.5.0",
 		"jest": "^26.6.3",
@@ -128,6 +127,23 @@
 		"branchReleaseTypes": {
 			"main": "minor",
 			"release/**": "patch"
+		},
+		"tasks": {
+			"eslint": [
+				"tsc",
+				"build:test:mocha",
+				"build:test:jest",
+				"build:test:types"
+			],
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha": [
+				"tsc"
+			],
+			"build:test:types": [
+				"tsc"
+			]
 		}
 	},
 	"jest-junit": {

@@ -125,6 +125,11 @@ export class CheckpointService implements ICheckpointService {
 		let checkpoint;
 		let lastCheckpoint: IDeliState | IScribe;
 		let isLocalCheckpoint = false;
+		let localLogOffset;
+		let globalLogOffset;
+		let localSequenceNumber;
+		let globalSequenceNumber;
+
 		const restoreFromCheckpointMetric = Lumberjack.newLumberMetric(
 			LumberEventName.RestoreFromCheckpoint,
 		);
@@ -134,6 +139,8 @@ export class CheckpointService implements ICheckpointService {
 			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
 				// If we cannot checkpoint locally, use document
 				lastCheckpoint = JSON.parse(document[service]);
+				globalLogOffset = lastCheckpoint.logOffset;
+				globalSequenceNumber = lastCheckpoint.sequenceNumber;
 			} else {
 				// Search checkpoints collection for checkpoint
 				checkpoint = await this.checkpointRepository
@@ -146,14 +153,35 @@ export class CheckpointService implements ICheckpointService {
 						checkpointSource = "notFoundInLocalCollection";
 					});
 
-				if (checkpoint?.deli) {
-					lastCheckpoint = JSON.parse(checkpoint[service]);
-					checkpointSource = "foundInLocalCollection";
-					isLocalCheckpoint = true;
+				if (checkpoint?.[service]) {
+					const localCheckpoint: IDeliState | IScribe = JSON.parse(checkpoint[service]);
+					const globalCheckpoint: IDeliState | IScribe = JSON.parse(document[service]);
+
+					// Compare local and global checkpoints to use latest version
+					if (localCheckpoint.sequenceNumber < globalCheckpoint.sequenceNumber) {
+						// if local checkpoint is behind global, use global
+						lastCheckpoint = globalCheckpoint;
+						checkpointSource = "latestFoundInGlobalCollection";
+						isLocalCheckpoint = false;
+					} else {
+						lastCheckpoint = localCheckpoint;
+						checkpointSource = "latestFoundInLocalCollection";
+						isLocalCheckpoint = true;
+					}
+					localLogOffset = localCheckpoint.logOffset;
+					globalLogOffset = globalCheckpoint.logOffset;
+					localSequenceNumber = localCheckpoint.sequenceNumber;
+					globalSequenceNumber = globalCheckpoint.sequenceNumber;
 				} else {
 					// If checkpoint does not exist, use document
+					Lumberjack.info(
+						`Local checkpoint not found.`,
+						getLumberBaseProperties(documentId, tenantId),
+					);
 					checkpointSource = "notFoundInLocalCollection";
 					lastCheckpoint = JSON.parse(document[service]);
+					globalLogOffset = lastCheckpoint.logOffset;
+					globalSequenceNumber = lastCheckpoint.sequenceNumber;
 				}
 			}
 			restoreFromCheckpointMetric.setProperties({
@@ -162,6 +190,10 @@ export class CheckpointService implements ICheckpointService {
 				service,
 				checkpointSource,
 				retrievedFromLocalDatabase: isLocalCheckpoint,
+				globalLogOffset,
+				localLogOffset,
+				globalSequenceNumber,
+				localSequenceNumber,
 			});
 		} catch (error) {
 			Lumberjack.error(

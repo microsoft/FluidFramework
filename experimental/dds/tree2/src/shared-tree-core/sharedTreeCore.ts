@@ -22,24 +22,24 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { v4 as uuid } from "uuid";
-import { IMultiFormatCodec } from "../codec";
+import { ICodecOptions, IMultiFormatCodec } from "../codec";
 import {
 	ChangeFamily,
 	AnchorSet,
 	Delta,
 	RevisionTag,
-	RepairDataStore,
 	ChangeFamilyEditor,
 	IRepairDataStoreProvider,
-	mintRevisionTag,
 	GraphCommit,
 } from "../core";
-import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { SharedTreeBranch } from "./branch";
+import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
-import { Commit, EditManager, SeqNumber, minimumPossibleSequenceNumber } from "./editManager";
+import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
+// TODO:AB#4500: The commit import here is used to write `parseCommit`, which should probably share
+// similar validation to decoding a commit as part of the summary.
+import { Commit, SeqNumber } from "./editManagerFormat";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -93,6 +93,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
+	/** Iff false, calls to `submitOp` will have no effect */
+	private submitOps = true;
+
 	/**
 	 * The sequence number that this instance is at.
 	 * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -109,7 +112,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
-	public readonly editor: TEditor;
+	public get editor(): TEditor {
+		return this.getLocalBranch().editor;
+	}
 
 	/**
 	 * Used to encode and decode changes.
@@ -136,7 +141,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		anchors: AnchorSet,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+		options: ICodecOptions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -151,7 +157,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		const localSessionId = uuid();
+		const localSessionId = generateStableId();
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
@@ -161,26 +167,36 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});
-		this.editor = changeFamily.buildEditor((change) => {
-			const [branchChange, newCommit] = this.editManager.localBranch.apply(
-				change,
-				mintRevisionTag(),
-			);
-			if (!this.isTransacting()) {
-				this.submitCommit(newCommit);
-			}
-			this.changeEvents.emit("newLocalChange", branchChange);
-		}, new AnchorSet());
 
-		// When the local branch changes, notify our listeners of the new state.
-		this.editManager.localBranch.on("change", ({ change }) => {
+		this.editManager.localBranch.on("change", (args) => {
+			const { type, change } = args;
+			switch (type) {
+				case "append":
+					for (const c of args.newCommits) {
+						if (!this.getLocalBranch().isTransacting()) {
+							this.submitCommit(c);
+						}
+						this.changeEvents.emit("newLocalChange", c.change);
+					}
+					break;
+				case "replace":
+					if (getChangeReplaceType(args) === "transactionCommit") {
+						if (!this.getLocalBranch().isTransacting()) {
+							this.submitCommit(args.newCommits[0]);
+						}
+					}
+					break;
+				default:
+					break;
+			}
+
 			if (change !== undefined) {
 				this.changeEvents.emit("newLocalState", this.changeFamily.intoDelta(change));
 			}
 		});
 
 		this.summarizables = [
-			new EditManagerSummarizer(runtime, this.editManager),
+			new EditManagerSummarizer(runtime, this.editManager, options),
 			...summarizables,
 		];
 		assert(
@@ -225,6 +241,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
+		this.editManager.afterSummaryLoad();
 	}
 
 	/**
@@ -232,8 +249,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param commit - the commit to submit
 	 */
 	private submitCommit(commit: GraphCommit<TChange>): void {
+		if (!this.submitOps) {
+			return;
+		}
+
 		// Edits should not be submitted until all transactions finish
-		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
+		assert(
+			!this.getLocalBranch().isTransacting(),
+			0x68b /* Unexpected edit submitted during transaction */,
+		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
@@ -260,7 +284,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const commit = parseCommit(message.contents, this.changeCodec);
+		const commit = parseCommit(message.contents as JsonCompatibleReadOnly, this.changeCodec);
 
 		this.editManager.addSequencedChange(
 			commit,
@@ -271,41 +295,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	protected startTransaction(repairStore?: RepairDataStore): void {
-		this.editManager.localBranch.startTransaction(repairStore);
-		this.editor.enterTransaction();
-	}
-
-	protected commitTransaction(): TransactionResult.Commit {
-		const [_, newCommit] = this.editManager.localBranch.commitTransaction();
-		this.editor.exitTransaction();
-		if (!this.isTransacting()) {
-			this.submitCommit(newCommit);
-		}
-		return TransactionResult.Commit;
-	}
-
-	protected abortTransaction(): TransactionResult.Abort {
-		this.editManager.localBranch.abortTransaction();
-		this.editor.exitTransaction();
-		return TransactionResult.Abort;
-	}
-
-	protected isTransacting(): boolean {
-		return this.editManager.localBranch.isTransacting();
-	}
-
 	/**
 	 * Undoes the last completed transaction made by the client.
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	public undo(): void {
-		const result = this.editManager.localBranch.undo();
-		if (result !== undefined) {
-			const [change, newCommit] = result;
-			this.submitCommit(newCommit);
-			this.changeEvents.emit("newLocalChange", change);
-		}
+		this.editManager.localBranch.undo();
 	}
 
 	/**
@@ -313,45 +308,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	public redo(): void {
-		const result = this.editManager.localBranch.redo();
-		if (result !== undefined) {
-			const [change, newCommit] = result;
-			this.submitCommit(newCommit);
-			this.changeEvents.emit("newLocalChange", change);
-		}
-	}
-
-	/**
-	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
-	 * This can be used to support asynchronous checkouts of the tree.
-	 * @remarks
-	 * Branches are valid until they are disposed. Branches should be disposed when
-	 * they are no longer needed because it allows `SharedTreeCore` to free memory.
-	 * Branches are no longer guaranteed to be based off of the trunk once disposed.
-	 */
-	protected forkBranch(
-		repairDataStoreProvider: IRepairDataStoreProvider,
-		anchors?: AnchorSet,
-	): SharedTreeBranch<TEditor, TChange> {
-		return this.editManager.localBranch.fork(repairDataStoreProvider, anchors);
-	}
-
-	/**
-	 * Merges the commits of the given branch into the root local branch.
-	 * This behaves as if all divergent commits on the branch were applied to the root local branch one at a time.
-	 * @param branch - the branch to merge
-	 */
-	protected mergeBranch(branch: SharedTreeBranch<TEditor, TChange>): void {
-		const result = this.editManager.localBranch.merge(branch);
-		if (result !== undefined) {
-			const [change, newCommits] = result;
-			if (!this.isTransacting()) {
-				for (const c of newCommits) {
-					this.submitCommit(c);
-				}
-			}
-			this.changeEvents.emit("newLocalChange", change);
-		}
+		this.editManager.localBranch.redo();
 	}
 
 	/**
@@ -377,12 +334,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
 		assert(
-			!this.isTransacting(),
+			!this.getLocalBranch().isTransacting(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		const { revision, change } = parseCommit(content, this.changeCodec);
-		const [branchChange] = this.editManager.localBranch.apply(change, revision);
-		this.changeEvents.emit("newLocalChange", branchChange);
+		this.submitOps = false;
+		this.editManager.localBranch.apply(change, revision);
+		this.submitOps = true;
 		return;
 	}
 

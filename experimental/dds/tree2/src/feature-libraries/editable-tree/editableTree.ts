@@ -18,38 +18,29 @@ import {
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
-	ITreeCursor,
 	anchorSlot,
 	AnchorNode,
 	inCursorField,
 } from "../../core";
 import { brand, fail } from "../../util";
-import { FieldKind, Multiplicity } from "../modular-schema";
-import { singleMapTreeCursor } from "../mapTreeCursor";
-import {
-	getFieldKind,
-	getFieldSchema,
-	ContextuallyTypedNodeData,
-	applyFieldTypesFromContext,
-	typeNameSymbol,
-	valueSymbol,
-	allowsValue,
-} from "../contextuallyTyped";
-import { AdaptingProxyHandler, adaptWithProxy } from "./utilities";
+import { FieldKind } from "../modular-schema";
+import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { LocalNodeKey } from "../node-key";
+import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
 	EditableTreeEvents,
 	UnwrappedEditableField,
-	createField,
 	getField,
 	on,
 	parentField,
 	proxyTargetSymbol,
-	replaceField,
 	typeSymbol,
 	contextSymbol,
+	NewFieldContent,
+	localNodeKeySymbol,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -141,14 +132,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return this.cursor.value;
 	}
 
-	public set value(value: Value) {
-		assert(
-			allowsValue(this.type.value, value),
-			0x5b2 /* Out of schema value can not be set on tree */,
-		);
-		this.context.setNodeValue(this.anchorNode, value);
-	}
-
 	public get currentIndex(): number {
 		return this.cursor.fieldIndex;
 	}
@@ -195,100 +178,8 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		).values();
 	}
 
-	public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
-		assert(!this.has(fieldKey), 0x44f /* The field already exists. */);
-		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = { parent: this.anchorNode, field: fieldKey };
-		switch (fieldKind.multiplicity) {
-			case Multiplicity.Optional: {
-				assert(
-					!Array.isArray(newContent),
-					0x450 /* Use single cursor to create the optional field */,
-				);
-				this.context.setOptionalField(path, newContent, true);
-				break;
-			}
-			case Multiplicity.Sequence: {
-				this.context.insertNodes(path, 0, newContent);
-				break;
-			}
-			case Multiplicity.Value:
-				fail("It is invalid to create fields of kind `value` as they should always exist.");
-			default:
-				fail("`Forbidden` fields may not be created.");
-		}
-	}
-
 	private fieldLength(field: FieldKey): number {
 		return inCursorField(this.cursor, field, (cursor) => cursor.getFieldLength());
-	}
-
-	public deleteField(fieldKey: FieldKey): void {
-		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = { parent: this.anchorNode, field: fieldKey };
-		switch (fieldKind.multiplicity) {
-			case Multiplicity.Optional: {
-				this.context.setOptionalField(path, undefined, false);
-				break;
-			}
-			case Multiplicity.Sequence: {
-				const length = this.fieldLength(fieldKey);
-				this.context.deleteNodes(path, 0, length);
-				break;
-			}
-			case Multiplicity.Value:
-				fail("Fields of kind `value` may not be deleted.");
-			default:
-				fail("`Forbidden` fields may not be deleted.");
-		}
-	}
-
-	public replaceField(
-		fieldKey: FieldKey,
-		newContent: undefined | ITreeCursor | ITreeCursor[],
-	): void {
-		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = { parent: this.anchorNode, field: fieldKey };
-		switch (fieldKind.multiplicity) {
-			case Multiplicity.Optional: {
-				assert(
-					!Array.isArray(newContent),
-					0x4cd /* It is invalid to replace the optional field using the array data. */,
-				);
-				this.context.setOptionalField(path, newContent, !this.has(fieldKey));
-				break;
-			}
-			case Multiplicity.Sequence: {
-				assert(
-					Array.isArray(newContent),
-					0x5cc /* It is invalid to replace the sequence field with a non array value. */,
-				);
-				const length = this.fieldLength(fieldKey);
-				/**
-				 * `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
-				 * `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
-				 * We currently use `replaceNodes` here because the low-level editing API
-				 * for the desired `replaceField` semantics is not yet avaialble.
-				 */
-				// TODO: update implementation once the low-level editing API is available.
-				this.context.replaceNodes(path, 0, length, newContent);
-				break;
-			}
-			case Multiplicity.Value: {
-				assert(
-					!Array.isArray(newContent),
-					0x4ce /* It is invalid to replace the value field using the array data. */,
-				);
-				assert(
-					newContent !== undefined,
-					0x5cd /* It is invalid to replace a value field with undefined */,
-				);
-				this.context.setValueField(path, newContent);
-				break;
-			}
-			default:
-				fail("`Forbidden` fields may not be replaced as they never exist.");
-		}
 	}
 
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
@@ -316,20 +207,16 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
-				return () => {
-					unsubscribeFromValueChange();
-					unsubscribeFromChildrenChange();
-				};
+				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
@@ -363,16 +250,14 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target[Symbol.iterator].bind(target);
 			case getField:
 				return target.getField.bind(target);
-			case createField:
-				return target.createField.bind(target);
-			case replaceField:
-				return target.replaceField.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:
 				return target.context;
 			case on:
 				return target.on.bind(target);
+			case localNodeKeySymbol:
+				return getLocalNodeKey(target);
 			default:
 				return undefined;
 		}
@@ -380,33 +265,16 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	set: (
 		target: NodeProxyTarget,
 		key: string | symbol,
-		value: ContextuallyTypedNodeData,
+		value: NewFieldContent,
 		receiver: NodeProxyTarget,
 	): boolean => {
+		assert(
+			key !== valueSymbol,
+			0x703 /* The value of a node can only be changed by replacing the node */,
+		);
 		if (typeof key === "string" || symbolIsFieldKey(key)) {
 			const fieldKey: FieldKey = brand(key);
-			const fieldSchema = target.getFieldSchema(fieldKey);
-			const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
-			const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
-			const cursors = content.map(singleMapTreeCursor);
-			// This unconditionally uses `replaceField`, which differs from `createField`
-			// only for sequence fields while using `insertNodes` instead of `replaceNodes`
-			// (plus some difference in assertions, which is ignored here for a sake of a better
-			// consistency with the low-level editing API).
-			// Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
-			// being a bit more general purpose function, it's ok to just use that.
-			if (multiplicity !== Multiplicity.Sequence) {
-				assert(
-					cursors.length <= 1,
-					0x5ce /* more than one top level node in non-sequence filed */,
-				);
-				target.replaceField(fieldKey, cursors.length === 0 ? undefined : cursors[0]);
-			} else {
-				target.replaceField(fieldKey, cursors);
-			}
-			return true;
-		} else if (key === valueSymbol) {
-			target.value = value;
+			target.getField(fieldKey).content = value;
 			return true;
 		}
 		return false;
@@ -414,7 +282,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
 		if (typeof key === "string" || symbolIsFieldKey(key)) {
 			const fieldKey: FieldKey = brand(key);
-			target.deleteField(fieldKey);
+			target.getField(fieldKey).delete();
 			return true;
 		}
 		return false;
@@ -431,11 +299,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case typeNameSymbol:
 			case Symbol.iterator:
 			case getField:
-			case createField:
-			case replaceField:
 			case parentField:
 			case on:
 			case contextSymbol:
+			case localNodeKeySymbol:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -505,20 +372,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.getField.bind(target),
 					writable: false,
 				};
-			case createField:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: target.createField.bind(target),
-					writable: false,
-				};
-			case replaceField:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: target.replaceField.bind(target),
-					writable: false,
-				};
 			case parentField:
 				return {
 					configurable: true,
@@ -540,6 +393,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.on.bind(target),
 					writable: false,
 				};
+			case localNodeKeySymbol:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: getLocalNodeKey(target),
+					writable: false,
+				};
 			default:
 				return undefined;
 		}
@@ -550,9 +410,27 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
  * Checks the type of an UnwrappedEditableField.
  * @alpha
  */
-export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
+export function isEditableTree(field: UnwrappedEditableField): field is EditableTree {
 	return (
 		typeof field === "object" &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
+}
+
+/**
+ * Retrieves the {@link LocalNodeKey} for the given node.
+ * @remarks TODO: Optimize this to be a fast path that gets a {@link LocalNodeKey} directly from the
+ * forest rather than getting the {@link StableNodeKey} and the compressing it.
+ */
+function getLocalNodeKey(target: NodeProxyTarget): LocalNodeKey | undefined {
+	if (target.context.nodeKeyFieldKey === undefined) {
+		return undefined;
+	}
+
+	const stableNodeKey = getStableNodeKey(target.context.nodeKeyFieldKey, target.proxy);
+	if (stableNodeKey === undefined) {
+		return undefined;
+	}
+
+	return target.context.nodeKeys.localizeNodeKey(stableNodeKey);
 }

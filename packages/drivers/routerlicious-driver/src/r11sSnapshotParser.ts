@@ -4,19 +4,18 @@
  */
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IWholeFlatSummary, IWholeFlatSummaryTree } from "@fluidframework/server-services-client";
 import { stringToBuffer } from "@fluidframework/common-utils";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot, IWholeFlatSnapshotTree } from "./contracts";
 
 /**
- * Build a tree heirarchy from a flat tree.
+ * Build a tree hierarchy from a flat tree.
  *
  * @param flatTree - a flat tree
  * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
 function buildHierarchy(
-	flatTree: IWholeFlatSummaryTree,
+	flatTree: IWholeFlatSnapshotTree,
 	treePrefixToRemove: string,
 ): ISnapshotTree {
 	const lookup: { [path: string]: ISnapshotTree } = {};
@@ -54,30 +53,30 @@ function buildHierarchy(
 }
 
 /**
- * Converts existing IWholeFlatSummary to snapshot tree, blob array, and sequence number.
+ * Converts existing IWholeFlatSnapshot to snapshot tree, blob array, and sequence number.
  *
- * @param flatSummary - flat summary
+ * @param flatSnapshot - flat snapshot
  * @param treePrefixToRemove - tree prefix to strip. By default we are stripping ".app" prefix
  * @returns snapshot tree, blob array, and sequence number
  */
-export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
-	flatSummary: IWholeFlatSummary,
+export function convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
+	flatSnapshot: IWholeFlatSnapshot,
 	treePrefixToRemove: string = ".app",
-): INormalizedWholeSummary {
+): INormalizedWholeSnapshot {
 	const blobs = new Map<string, ArrayBuffer>();
-	if (flatSummary.blobs) {
-		flatSummary.blobs.forEach((blob) => {
+	if (flatSnapshot.blobs) {
+		flatSnapshot.blobs.forEach((blob) => {
 			blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
 		});
 	}
-	const flatSummaryTree = flatSummary.trees?.[0];
-	const sequenceNumber = flatSummaryTree?.sequenceNumber;
-	const snapshotTree = buildHierarchy(flatSummaryTree, treePrefixToRemove);
+	const flatSnapshotTree = flatSnapshot.trees?.[0];
+	const sequenceNumber = flatSnapshotTree?.sequenceNumber;
+	const snapshotTree = buildHierarchy(flatSnapshotTree, treePrefixToRemove);
 
 	return {
 		blobs,
 		snapshotTree,
 		sequenceNumber,
-		id: flatSummary.id,
+		id: flatSnapshot.id,
 	};
 }

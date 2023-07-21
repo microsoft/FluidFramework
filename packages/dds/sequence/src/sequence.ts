@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -35,6 +35,7 @@ import {
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -51,6 +52,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import {
+	IIntervalCollection,
 	IntervalCollection,
 	SequenceInterval,
 	SequenceIntervalCollectionValueType,
@@ -198,7 +200,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client = new Client(
 			segmentFromSpec,
-			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
+			createChildLogger({
+				logger: this.logger,
+				namespace: "SharedSegmentSequence.MergeTreeClient",
+			}),
 			dataStoreRuntime.options,
 		);
 
@@ -219,6 +224,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
+			dataStoreRuntime.options,
 		);
 	}
 
@@ -307,8 +313,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		return this.client.createLocalReferencePosition(segment, offset, refType, properties);
+		return this.client.createLocalReferencePosition(
+			segment,
+			offset,
+			refType,
+			properties,
+			slidingPreference,
+		);
 	}
 
 	/**
@@ -442,7 +455,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
 	 * creates one.
 	 */
-	public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
 		return this.intervalCollections.get(label);
 	}
 

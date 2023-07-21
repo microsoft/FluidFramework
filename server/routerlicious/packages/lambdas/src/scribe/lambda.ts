@@ -44,6 +44,7 @@ import {
 	logCommonSessionEndMetrics,
 	CheckpointReason,
 	ICheckpoint,
+	IServerMetadata,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
@@ -88,6 +89,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 	// Used to checkpoint if no active clients
 	private noActiveClients: boolean = false;
+	private globalCheckpointOnly: boolean = false;
 
 	constructor(
 		protected readonly context: IContext,
@@ -104,7 +106,9 @@ export class ScribeLambda implements IPartitionLambda {
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
+		private readonly disableTransientTenantFiltering: boolean,
 		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -114,15 +118,37 @@ export class ScribeLambda implements IPartitionLambda {
 	public async handler(message: IQueuedMessage) {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
-		if (message.offset <= this.lastOffset) {
-			Lumberjack.info(
-				`Repeating ops: message.offset: ${message.offset} <= this.lastOffset: ${this.lastOffset}`,
+		if (this.lastOffset !== undefined && message.offset <= this.lastOffset) {
+			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
+			reprocessOpsMetric.setProperties({
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				kafkaMessageOffset: message.offset,
+				databaseLastOffset: this.lastOffset,
+			});
+
+			this.updateCheckpointMessages(message);
+			try {
+				if (this.kafkaCheckpointOnReprocessingOp) {
+					this.context.checkpoint(message, this.restartOnCheckpointFailure);
+				}
+				reprocessOpsMetric.setProperty(
+					"kafkaCheckpointOnReprocessingOp",
+					this.kafkaCheckpointOnReprocessingOp,
+				);
+				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
+			} catch (error) {
+				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
+			}
+			return;
+		} else if (this.lastOffset === undefined) {
+			Lumberjack.error(
+				`No value for lastOffset`,
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
-			this.updateCheckpointMessages(message);
-			this.context.checkpoint(message, this.restartOnCheckpointFailure);
-			return;
 		}
+		// if lastOffset is undefined or we have skipped all the previously processed ops,
+		// we want to set the offset we store in the database equal to the kafka message offset
+		this.lastOffset = message.offset;
 
 		const boxcar = extractBoxcar(message);
 
@@ -189,7 +215,7 @@ export class ScribeLambda implements IPartitionLambda {
 				// skip summarize messages that deli already acked
 				if (
 					value.operation.type === MessageType.Summarize &&
-					!value.operation.serverMetadata?.deliAcked
+					!(value.operation.serverMetadata as IServerMetadata | undefined)?.deliAcked
 				) {
 					// ensure the client is requesting a summary for a state that scribe can achieve
 					// the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)
@@ -304,6 +330,7 @@ export class ScribeLambda implements IPartitionLambda {
 							}
 						}
 					}
+					// eslint-disable-next-line unicorn/prefer-switch
 				} else if (value.operation.type === MessageType.NoClient) {
 					assert(
 						value.operation.referenceSequenceNumber === value.operation.sequenceNumber,
@@ -314,11 +341,14 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
-					const isTransientTenant = this.transientTenants.has(this.tenantId);
+					this.globalCheckpointOnly = true;
+					const enableServiceSummaryForTenant =
+						this.disableTransientTenantFiltering ||
+						!this.transientTenants.has(this.tenantId);
 
 					if (
 						this.serviceConfiguration.scribe.generateServiceSummary &&
-						!isTransientTenant
+						enableServiceSummaryForTenant
 					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
 						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
@@ -397,6 +427,8 @@ export class ScribeLambda implements IPartitionLambda {
 							content.summaryProposal.summarySequenceNumber,
 						);
 					}
+				} else if (value.operation.type === MessageType.ClientJoin) {
+					this.globalCheckpointOnly = false;
 				}
 			}
 		}
@@ -409,6 +441,7 @@ export class ScribeLambda implements IPartitionLambda {
 			this.prepareCheckpoint(message, CheckpointReason.NoClients);
 			this.noActiveClients = false;
 		} else {
+			this.globalCheckpointOnly = false;
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
 				// checkpoint the current up-to-date state
@@ -553,8 +586,8 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP = clearCache
 			? this.checkpointManager.delete(this.protocolHead, true)
 			: this.writeCheckpoint(checkpoint);
-		this.pendingP.then(
-			() => {
+		this.pendingP
+			.then(() => {
 				this.pendingP = undefined;
 				this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
 
@@ -565,16 +598,15 @@ export class ScribeLambda implements IPartitionLambda {
 					this.pendingCheckpointOffset = undefined;
 					this.checkpointCore(pendingScribe, pendingOffset, clearCache);
 				}
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				const message = "Checkpoint error";
 				Lumberjack.error(
 					message,
 					getLumberBaseProperties(this.documentId, this.tenantId),
 					error,
 				);
-			},
-		);
+			});
 	}
 
 	private async writeCheckpoint(checkpoint: IScribe) {
@@ -584,6 +616,7 @@ export class ScribeLambda implements IPartitionLambda {
 			this.protocolHead,
 			inserts,
 			this.noActiveClients,
+			this.globalCheckpointOnly,
 		);
 		if (inserts.length > 0) {
 			// Since we are storing logTails with every summary, we need to make sure that messages are either in DB

@@ -291,6 +291,7 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					checkpointService,
 					true,
+					true,
 				);
 			},
 		);
@@ -373,6 +374,7 @@ export class LocalOrderer implements IOrderer {
 			scribeMessagesCollection,
 			null /* deltaService */,
 			false /* getDeltasViaAlfred */,
+			false /* verifyLastOpPersistence */,
 			checkpointService,
 		);
 
@@ -391,6 +393,8 @@ export class LocalOrderer implements IOrderer {
 			scribeMessages.map((message) => message.operation),
 			undefined,
 			new Set<string>(),
+			true,
+			true,
 			true,
 		);
 	}

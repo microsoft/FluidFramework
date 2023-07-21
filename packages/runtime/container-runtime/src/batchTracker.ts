@@ -4,25 +4,24 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 export class BatchTracker {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private startBatchSequenceNumber: number | undefined;
 	private trackedBatchCount: number = 0;
 	private batchProcessingStartTimeStamp: number | undefined;
 
 	constructor(
 		private readonly batchEventEmitter: EventEmitter,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		batchLengthThreshold: number,
 		batchCountSamplingRate: number,
 		dateTimeProvider: () => number = () => performance.now(),
 	) {
-		this.logger = ChildLogger.create(logger, "Batching");
+		this.logger = createChildLogger({ logger, namespace: "Batching" });
 
 		this.batchEventEmitter.on("batchBegin", (message: ISequencedDocumentMessage) => {
 			this.startBatchSequenceNumber = message.sequenceNumber;
@@ -72,13 +71,13 @@ export class BatchTracker {
  * Track batch sizes in terms of op counts and processing times
  *
  * @param batchEventEmitter - event emitter which tracks the lifecycle of batch operations
- * @param logger - See {@link @fluidframework/common-definitions#ITelemetryLogger}
+ * @param logger - See {@link @fluidframework/common-definitions#ITelemetryLoggerExt}
  * @param batchLengthThreshold - threshold for the length of a batch when to send an error event
  * @param batchCountSamplingRate - rate for batches for which to send an event with its characteristics
  */
 export const BindBatchTracker = (
 	batchEventEmitter: EventEmitter,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	batchLengthThreshold: number = 1000,
 	batchCountSamplingRate: number = 1000,
 ) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { ChangesetLocalId, NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 
-const dummyMark: SF.Detach = { type: "Delete", count: 1 };
+const dummyMark: SF.Detach = { type: "Delete", id: brand(0), count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = mintRevisionTag();
 
@@ -18,7 +18,7 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		factory.pushOffset(42);
 		factory.pushContent(dummyMark);
-		assert.deepStrictEqual(factory.list, [42, dummyMark]);
+		assert.deepStrictEqual(factory.list, [{ count: 42 }, dummyMark]);
 	});
 
 	it("Does not insert 0-length offsets", () => {
@@ -33,7 +33,7 @@ describe("SequenceField - MarkListFactory", () => {
 		factory.pushOffset(42);
 		factory.pushOffset(42);
 		factory.pushContent(dummyMark);
-		assert.deepStrictEqual(factory.list, [84, dummyMark]);
+		assert.deepStrictEqual(factory.list, [{ count: 84 }, dummyMark]);
 	});
 
 	it("Does not insert an offset when there is no content after the offset", () => {
@@ -66,63 +66,51 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge consecutive deletes", () => {
 		const factory = new SF.MarkListFactory();
-		const delete1: SF.Detach = { type: "Delete", count: 1 };
-		const delete2: SF.Detach = { type: "Delete", count: 1 };
+		const delete1: SF.Detach = { type: "Delete", id: brand(0), count: 1 };
+		const delete2: SF.Detach = { type: "Delete", id: brand(1), count: 1 };
 		factory.pushContent(delete1);
 		factory.pushContent(delete2);
-		assert.deepStrictEqual(factory.list, [{ type: "Delete", count: 2 }]);
+		assert.deepStrictEqual(factory.list, [{ type: "Delete", id: 0, count: 2 }]);
 	});
 
 	it("Can merge adjacent moves ", () => {
-		const moveEffects = SF.newMoveEffectTable<NodeChangeset>();
-		const factory1 = new SF.MarkListFactory(undefined, moveEffects);
+		const factory = new SF.MarkListFactory();
 		const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
 		const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
 		const moveIn1: SF.Mark = { type: "MoveIn", id: brand(0), count: 1 };
 		const moveIn2: SF.Mark = { type: "MoveIn", id: brand(1), count: 1 };
-		factory1.pushContent(moveOut1);
-		factory1.pushContent(moveOut2);
-		factory1.pushOffset(3);
-		factory1.pushContent(moveIn1);
-		factory1.pushContent(moveIn2);
+		factory.pushContent(moveOut1);
+		factory.pushContent(moveOut2);
+		factory.pushOffset(3);
+		factory.pushContent(moveIn1);
+		factory.pushContent(moveIn2);
 
-		const factory2 = new SF.MarkListFactory(undefined, moveEffects);
-		for (const mark of factory1.list) {
-			factory2.push(mark);
-		}
-
-		assert.deepStrictEqual(factory2.list, [
+		assert.deepStrictEqual(factory.list, [
 			{ type: "MoveOut", id: 0, count: 2 },
-			3,
+			{ count: 3 },
 			{ type: "MoveIn", id: 0, count: 2 },
 		]);
 	});
 
 	it("Can merge three adjacent moves ", () => {
-		const moveEffects = SF.newMoveEffectTable<NodeChangeset>();
-		const factory1 = new SF.MarkListFactory(undefined, moveEffects);
+		const factory = new SF.MarkListFactory();
 		const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
 		const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
 		const moveOut3: SF.Detach = { type: "MoveOut", id: brand(2), count: 1 };
 		const moveIn1: SF.Mark = { type: "MoveIn", id: brand(0), count: 1 };
 		const moveIn2: SF.Mark = { type: "MoveIn", id: brand(1), count: 1 };
 		const moveIn3: SF.Mark = { type: "MoveIn", id: brand(2), count: 1 };
-		factory1.pushContent(moveOut1);
-		factory1.pushContent(moveOut2);
-		factory1.pushContent(moveOut3);
-		factory1.pushOffset(3);
-		factory1.pushContent(moveIn1);
-		factory1.pushContent(moveIn2);
-		factory1.pushContent(moveIn3);
+		factory.pushContent(moveOut1);
+		factory.pushContent(moveOut2);
+		factory.pushContent(moveOut3);
+		factory.pushOffset(3);
+		factory.pushContent(moveIn1);
+		factory.pushContent(moveIn2);
+		factory.pushContent(moveIn3);
 
-		const factory2 = new SF.MarkListFactory(undefined, moveEffects);
-		for (const mark of factory1.list) {
-			factory2.push(mark);
-		}
-
-		assert.deepStrictEqual(factory2.list, [
+		assert.deepStrictEqual(factory.list, [
 			{ type: "MoveOut", id: 0, count: 3 },
-			3,
+			{ count: 3 },
 			{ type: "MoveIn", id: 0, count: 3 },
 		]);
 	});
@@ -131,13 +119,13 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, index: 0 },
+			cellId: { revision: detachedBy, localId: brand(0) },
 			content: fakeRepair(detachedBy, 0, 1),
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, index: 1 },
+			cellId: { revision: detachedBy, localId: brand(1) },
 			content: fakeRepair(detachedBy, 1, 1),
 			count: 1,
 		};
@@ -145,7 +133,7 @@ describe("SequenceField - MarkListFactory", () => {
 		factory.pushContent(revive2);
 		const expected: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, index: 0 },
+			cellId: { revision: detachedBy, localId: brand(0) },
 			content: fakeRepair(detachedBy, 0, 2),
 			count: 2,
 		};
@@ -156,13 +144,13 @@ describe("SequenceField - MarkListFactory", () => {
 		const factory = new SF.MarkListFactory();
 		const revive1: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, index: 0 },
+			cellId: { revision: detachedBy, localId: brand(0) },
 			content: fakeRepair(detachedBy, 0, 1),
 			count: 1,
 		};
 		const revive2: SF.Reattach = {
 			type: "Revive",
-			detachEvent: { revision: detachedBy, index: 2 },
+			cellId: { revision: detachedBy, localId: brand(2) },
 			content: fakeRepair(detachedBy, 2, 1),
 			count: 1,
 		};

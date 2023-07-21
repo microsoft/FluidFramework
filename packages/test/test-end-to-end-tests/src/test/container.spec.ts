@@ -19,6 +19,7 @@ import {
 	Loader,
 	ILoaderProps,
 	waitContainerToCatchUp,
+	IContainerExperimental,
 } from "@fluidframework/container-loader";
 import {
 	DriverErrorType,
@@ -38,7 +39,6 @@ import {
 	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
@@ -51,6 +51,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { DataCorruptionError } from "@fluidframework/container-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -101,19 +102,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
-				innerRequestHandler,
-			]);
-		const localTestObjectProvider = new TestObjectProvider(
-			Loader,
-			provider.driver,
-			runtimeFactory,
-		);
-
-		const container = await localTestObjectProvider.makeTestContainer();
+		const container = await provider.makeTestContainer();
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",
@@ -134,7 +123,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		"Load container unsuccessfully",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -164,7 +152,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 				error: "expectedFailure",
 			},
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -223,7 +210,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -262,7 +249,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, false, "Container should not be closed");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -345,7 +332,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = await localTestObjectProvider.makeTestContainer(testContainerConfig);
+		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
+			testContainerConfig,
+		);
 
 		const pendingLocalState: IPendingLocalState = JSON.parse(
 			container.closeAndGetPendingLocalState(),
@@ -579,7 +568,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		let run = 0;
 		container.deltaManager.on("readonly", () => run++);
 
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(
 			run,
 			0,
@@ -597,78 +586,89 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
 	});
 
-	it("Disposing container should send dispose events", async () => {
-		const container = await createConnectedContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+	itExpects(
+		"Disposing container should send dispose events",
+		[{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "error" }],
+		async () => {
+			const container = await createConnectedContainer();
+			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
-		let containerDisposed = 0;
-		let containerClosed = 0;
-		let deltaManagerDisposed = 0;
-		let deltaManagerClosed = 0;
-		let runtimeDispose = 0;
-		container.on("disposed", () => containerDisposed++);
-		container.on("closed", () => containerClosed++);
-		(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
-		(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-		(dataObject._context.containerRuntime as ContainerRuntime).on(
-			"dispose",
-			() => runtimeDispose++,
-		);
+			let containerDisposed = 0;
+			let containerClosed = 0;
+			let deltaManagerDisposed = 0;
+			let deltaManagerClosed = 0;
+			let runtimeDispose = 0;
+			container.on("disposed", () => containerDisposed++);
+			container.on("closed", () => containerClosed++);
+			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+			(dataObject._context.containerRuntime as ContainerRuntime).on(
+				"dispose",
+				() => runtimeDispose++,
+			);
 
-		container.dispose?.();
-		assert.strictEqual(
-			containerDisposed,
-			1,
-			"Container should send disposed event on container dispose",
-		);
-		assert.strictEqual(
-			containerClosed,
-			0,
-			"Container should not send closed event on container dispose",
-		);
-		assert.strictEqual(
-			deltaManagerDisposed,
-			1,
-			"DeltaManager should send disposed event on container dispose",
-		);
-		assert.strictEqual(
-			deltaManagerClosed,
-			0,
-			"DeltaManager should not send closed event on container dispose",
-		);
-		assert.strictEqual(
-			runtimeDispose,
-			1,
-			"ContainerRuntime should send dispose event on container dispose",
-		);
-	});
+			container.dispose(new DataCorruptionError("expected", {}));
+			assert.strictEqual(
+				containerDisposed,
+				1,
+				"Container should send disposed event on container dispose",
+			);
+			assert.strictEqual(
+				containerClosed,
+				0,
+				"Container should not send closed event on container dispose",
+			);
+			assert.strictEqual(
+				deltaManagerDisposed,
+				1,
+				"DeltaManager should send disposed event on container dispose",
+			);
+			assert.strictEqual(
+				deltaManagerClosed,
+				0,
+				"DeltaManager should not send closed event on container dispose",
+			);
+			assert.strictEqual(
+				runtimeDispose,
+				1,
+				"ContainerRuntime should send dispose event on container dispose",
+			);
+		},
+	);
 
-	it("Closing then disposing container should send close and dispose events", async () => {
-		const container = await createConnectedContainer();
-		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+	itExpects(
+		"Closing then disposing container should send close and dispose events",
+		[
+			{ eventName: "fluid:telemetry:Container:ContainerClose", category: "error" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", category: "generic" },
+		],
+		async () => {
+			const container = await createConnectedContainer();
+			const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
-		let containerDisposed = 0;
-		let containerClosed = 0;
-		let deltaManagerDisposed = 0;
-		let deltaManagerClosed = 0;
-		let runtimeDispose = 0;
-		container.on("disposed", () => containerDisposed++);
-		container.on("closed", () => containerClosed++);
-		(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
-		(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
-		(dataObject._context.containerRuntime as ContainerRuntime).on(
-			"dispose",
-			() => runtimeDispose++,
-		);
+			let containerDisposed = 0;
+			let containerClosed = 0;
+			let deltaManagerDisposed = 0;
+			let deltaManagerClosed = 0;
+			let runtimeDispose = 0;
+			container.on("disposed", () => containerDisposed++);
+			container.on("closed", () => containerClosed++);
+			(container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+			(container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+			(dataObject._context.containerRuntime as ContainerRuntime).on(
+				"dispose",
+				() => runtimeDispose++,
+			);
 
-		container.close();
-		container.dispose?.();
-		assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
-		assert.strictEqual(containerClosed, 1, "Container should send closed event");
-		assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
-		assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
-		assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
-	});
+			container.close(new DataCorruptionError("expected", {}));
+			container.dispose(new DataCorruptionError("expected", {}));
+			assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
+			assert.strictEqual(containerClosed, 1, "Container should send closed event");
+			assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
+			assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
+			assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+		},
+	);
 
 	// Temporary disable since we reverted the fix that caused an increase in loader bundle size.
 	// Tracking alternative fix in AB#4129.
@@ -777,7 +777,7 @@ describeNoCompat("Driver", (getTestObjectProvider) => {
 		const fiveDaysMs: FiveDaysMs = 432_000_000;
 
 		const { resolvedUrl } = await provider.makeTestContainer();
-		ensureFluidResolvedUrl(resolvedUrl);
+		assert(resolvedUrl !== undefined, "Missing resolved url");
 		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await ds.connectToStorage();
 		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);

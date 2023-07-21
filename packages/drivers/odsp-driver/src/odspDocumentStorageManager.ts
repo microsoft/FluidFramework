@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { assert, delay, performance } from "@fluidframework/common-utils";
-import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
@@ -54,7 +56,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
 	private firstVersionCall = true;
-
+	private _isFirstSnapshotFromNetwork: boolean | undefined;
 	private readonly documentId: string;
 	private readonly snapshotUrl: string | undefined;
 	private readonly attachmentPOSTUrl: string | undefined;
@@ -74,7 +76,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicyInternal,
@@ -89,6 +91,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
 		this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
 		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
+	}
+
+	public get isFirstSnapshotFromNetwork() {
+		return this._isFirstSnapshotFromNetwork;
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
@@ -333,6 +339,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					if (method === "network") {
 						props.cacheEntryAge = undefined;
 					}
+					if (this.firstVersionCall) {
+						this._isFirstSnapshotFromNetwork = method === "cache" ? false : true;
+					}
 					const prefetchStartTime: number | undefined = (
 						retrievedSnapshot as IPrefetchSnapshotContents
 					).prefetchStartTime;
@@ -434,6 +443,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const result = await this.cache.snapshotPrefetchResultCache
 				?.get(prefetchCacheKey)
 				?.then(async (response) => {
+					// Remove it from cache once used.
+					this.cache.snapshotPrefetchResultCache.remove(prefetchCacheKey);
 					// Validate the epoch from the prefetched snapshot result.
 					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;

@@ -24,43 +24,58 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
+	/**
+	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
+	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
+	 * @returns the ungrouped, unchunked, unpacked SequencedContainerRuntimeMessage encapsulated in the remote message
+	 */
 	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
-		// Ungroup before processing chunks
-		for (let ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
-			ungroupedMessage = this.opDecompressor.processMessage(ungroupedMessage).message;
-			unpackRuntimeMessage(ungroupedMessage);
+		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
+		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
+			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
-			const chunkProcessingResult = this.opSplitter.processRemoteMessage(ungroupedMessage);
-			ungroupedMessage = chunkProcessingResult.message;
-			if (chunkProcessingResult.state !== "Processed") {
-				// If the message is not chunked or if the splitter is still rebuilding the original message,
-				// there is no need to continue processing
-				result.push(ungroupedMessage);
-				continue;
-			}
+			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
+				// unpack and unchunk the ungrouped message in place
+				unpackRuntimeMessage(ungroupedMessage2);
+				const chunkProcessingResult =
+					this.opSplitter.processRemoteMessage(ungroupedMessage2);
+				ungroupedMessage2 = chunkProcessingResult.message;
 
-			// Ungroup the chunked message before decompressing
-			for (let ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
-				ungroupedMessage,
-			)) {
-				const decompressionAfterChunking = this.opDecompressor.processMessage(
-					ungroupedMessageAfterChunking,
-				);
-				ungroupedMessageAfterChunking = decompressionAfterChunking.message;
-				if (decompressionAfterChunking.state === "Skipped") {
-					// After chunking, if the original message was not compressed,
+				if (chunkProcessingResult.state !== "Processed") {
+					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
-					result.push(ungroupedMessageAfterChunking);
+					result.push(ungroupedMessage2);
 					continue;
 				}
 
-				// The message needs to be unpacked after chunking + decompression
-				unpack(ungroupedMessageAfterChunking);
-				result.push(ungroupedMessageAfterChunking);
+				// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
+				for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
+					ungroupedMessage2,
+				)) {
+					const decompressionAfterChunking = this.opDecompressor.processMessage(
+						ungroupedMessageAfterChunking,
+					);
+
+					for (const ungroupedMessageAfterChunking2 of this.opGroupingManager.ungroupOp(
+						decompressionAfterChunking.message,
+					)) {
+						if (decompressionAfterChunking.state === "Skipped") {
+							// After chunking, if the original message was not compressed,
+							// there is no need to continue processing
+							result.push(ungroupedMessageAfterChunking2);
+							continue;
+						}
+
+						// The message needs to be unpacked after chunking + decompression
+						unpack(ungroupedMessageAfterChunking2);
+						result.push(ungroupedMessageAfterChunking2);
+					}
+				}
 			}
 		}
+
 		return result;
 	}
 }
@@ -97,7 +112,7 @@ const unpack = (message: ISequencedDocumentMessage) => {
  *
  * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
- * @returns unpacked runtime message
+ * @returns whether the given message was unpacked
  *
  * @internal
  */
@@ -111,7 +126,11 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 	}
 
 	// legacy op format?
-	if (message.contents.address !== undefined && message.contents.type === undefined) {
+	// TODO: Unsure if this is a real format we should be concerned with. There doesn't appear to be anything prepared to handle the address member.
+	if (
+		(message.contents as { address?: unknown }).address !== undefined &&
+		(message.contents as { type?: unknown }).type === undefined
+	) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
 	} else {
 		// new format

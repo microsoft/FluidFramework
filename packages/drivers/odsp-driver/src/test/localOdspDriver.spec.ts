@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { strict as assert } from "assert";
-import { DriverErrorType, IStream } from "@fluidframework/driver-definitions";
+import { DriverError, DriverErrorType, IStream } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import {
 	IClient,
@@ -49,7 +49,7 @@ describe("Local Odsp driver", () => {
 	);
 
 	async function assertThrowsUsageError(fn: () => Promise<any>) {
-		await assert.rejects(fn, (e) => e.errorType === DriverErrorType.usageError);
+		await assert.rejects(fn, (e: DriverError) => e.errorType === DriverErrorType.usageError);
 	}
 
 	describe("Local Odsp document service factory", () => {
@@ -85,9 +85,6 @@ describe("Local Odsp driver", () => {
 				const factory = new LocalOdspDocumentServiceFactory("sample data");
 				await assert.doesNotReject(async () =>
 					factory.createDocumentService(fakeOdspResolvedUrl),
-				);
-				await assert.rejects(async () =>
-					factory.createDocumentService({ type: "web", data: "" }),
 				);
 			});
 		});

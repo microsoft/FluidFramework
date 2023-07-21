@@ -17,6 +17,8 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	getCorrelationId,
+	getBooleanFromConfig,
+	verifyToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Request, Router } from "express";
@@ -40,7 +42,8 @@ export function create(
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
-	tokenManager?: core.ITokenRevocationManager,
+	jwtTokenCache?: core.ICache,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -49,6 +52,12 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
 
 	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
 		const tenantId = getParam(request.params, "tenantId");
@@ -83,7 +92,9 @@ export function create(
 				storage,
 				maxTokenLifetimeSec,
 				isTokenExpiryEnabled,
-				tokenManager,
+				enableJwtTokenCache,
+				jwtTokenCache,
+				revokedTokenChecker,
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -111,14 +122,13 @@ export function create(
 				content: blobData.content,
 				encoding: "base64",
 			};
-			uploadBlob(uri, requestBody).then(
-				(data: git.ICreateBlobResponse) => {
+			uploadBlob(uri, requestBody)
+				.then((data: git.ICreateBlobResponse) => {
 					response.status(200).json(data);
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					response.status(400).end(err.toString());
-				},
-			);
+				});
 		},
 	);
 
@@ -200,42 +210,72 @@ const verifyRequest = async (
 	storage: core.IDocumentStorage,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
-	tokenManager?: core.ITokenRevocationManager,
+	tokenCacheEnabled: boolean,
+	tokenCache?: core.ICache,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ) =>
 	Promise.all([
-		verifyToken(
+		verifyTokenWrapper(
 			request,
 			tenantManager,
 			maxTokenLifetimeSec,
 			isTokenExpiryEnabled,
-			tokenManager,
+			tokenCacheEnabled,
+			tokenCache,
+			revokedTokenChecker,
 		),
 		checkDocumentExistence(request, storage),
 	]);
 
-async function verifyToken(
+async function verifyTokenWrapper(
 	request: Request,
 	tenantManager: core.ITenantManager,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
-	tokenManager?: core.ITokenRevocationManager,
+	tokenCacheEnabled: boolean,
+	tokenCache?: core.ICache,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
-		return Promise.reject(new Error("Missing access token"));
+		throw new Error("Missing access token in request header.");
 	}
 	const tenantId = getParam(request.params, "tenantId");
+	if (!tenantId) {
+		throw new Error("Missing tenantId in request.");
+	}
 	const documentId = getParam(request.params, "id");
+	if (!documentId) {
+		throw new Error("Missing documentId in request.");
+	}
 	const claims = validateTokenClaims(token, documentId, tenantId);
 	if (isTokenExpiryEnabled) {
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
 
-	if (tokenManager && claims.jti) {
-		const tokenRevoked = await tokenManager.isTokenRevoked(tenantId, documentId, claims.jti);
+	if (!tokenCacheEnabled && revokedTokenChecker && claims.jti) {
+		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
+			tenantId,
+			documentId,
+			claims.jti,
+		);
 		if (tokenRevoked) {
-			return Promise.reject(new Error("Permission denied. Token is revoked."));
+			throw new Error("Permission denied. Token is revoked.");
 		}
+	}
+
+	if (tokenCacheEnabled && tokenCache) {
+		const options = {
+			requireDocumentId: true,
+			requireTokenExpiryCheck: isTokenExpiryEnabled,
+			maxTokenLifetimeSec,
+			ensureSingleUseToken: false,
+			singleUseTokenCache: undefined,
+			enableTokenCache: tokenCacheEnabled,
+			tokenCache,
+			revokedTokenChecker,
+		};
+		return verifyToken(tenantId, documentId, token, tenantManager, options);
 	}
 
 	return tenantManager.verifyToken(claims.tenantId, token);
@@ -248,11 +288,11 @@ async function checkDocumentExistence(
 	const tenantId = getParam(request.params, "tenantId");
 	const documentId = getParam(request.params, "id");
 	if (!tenantId || !documentId) {
-		return Promise.reject(new Error("Invalid tenant or document id"));
+		throw new Error("Invalid tenant or document id");
 	}
 	const document = await storage.getDocument(tenantId, documentId);
 	if (!document || document.scheduledDeletionTime) {
-		return Promise.reject(new Error("Cannot access document marked for deletion"));
+		throw new Error("Cannot access document marked for deletion");
 	}
 }
 

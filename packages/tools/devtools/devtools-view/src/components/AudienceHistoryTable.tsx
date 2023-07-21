@@ -12,9 +12,38 @@ import {
 	Table,
 	TableHeader,
 	TableHeaderCell,
+	makeStyles,
 } from "@fluentui/react-components";
-import { Clock12Regular, DoorArrowLeftRegular, Person12Regular } from "@fluentui/react-icons";
+import {
+	DoorArrowLeftRegular,
+	Clock12Regular,
+	Person12Regular,
+	ArrowJoinRegular,
+	ArrowExitRegular,
+} from "@fluentui/react-icons";
+import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption } from "./SettingsView";
+import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
+import { LabelCellLayout } from "./utility-components";
+
+const audienceStyles = makeStyles({
+	joined: {
+		backgroundColor: tokens.colorPaletteRoyalBlueBackground2,
+	},
+	left: {
+		backgroundColor: tokens.colorPaletteRedBackground2,
+	},
+	highContrast: {
+		"color": "#FFF",
+		"&:hover": {
+			"color": "#000",
+			"& *": {
+				color: "#000",
+			},
+		},
+	},
+});
 
 /**
  * Represents audience history data filtered to the attributes that will be displayed in the history table.
@@ -32,6 +61,9 @@ export interface AudienceHistoryTableProps {
  */
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
+
+	const style = audienceStyles();
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
@@ -46,10 +78,25 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "event" && <DoorArrowLeftRegular />}
-							{column.columnKey === "clientId" && <Person12Regular />}
-							{column.columnKey === "time" && <Clock12Regular />}
-							{column.label}
+							{column.columnKey === "event" && (
+								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
+
+							{column.columnKey === "clientId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={clientIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "time" && (
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>
@@ -57,15 +104,30 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			<TableBody>
 				{audienceHistoryItems.map((item, itemIndex) => (
 					<TableRow
+						// The list of items here is never reordered, and is strictly appended to,
+						// so using the index as the key here is safe.
 						key={itemIndex}
-						style={{
-							backgroundColor:
-								item.changeKind === "joined"
-									? tokens.colorPaletteRoyalBlueBackground2
-									: tokens.colorPaletteRedBorder1,
-						}}
+						className={
+							themeInfo.name === ThemeOption.HighContrast
+								? style.highContrast
+								: item.changeKind === "joined"
+								? style.joined
+								: style.left
+						}
 					>
-						<TableCell>{item.changeKind}</TableCell>
+						<TableCell>
+							<LabelCellLayout
+								icon={
+									item.changeKind === "joined" ? (
+										<ArrowJoinRegular />
+									) : (
+										<ArrowExitRegular />
+									)
+								}
+							>
+								{item.changeKind}
+							</LabelCellLayout>
+						</TableCell>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.time}</TableCell>
 					</TableRow>

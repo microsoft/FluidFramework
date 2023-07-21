@@ -20,8 +20,13 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
-import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	ITelemetryLoggerPropertyBags,
+	PerformanceEvent,
+} from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
@@ -303,7 +308,7 @@ export interface SequencedEditAppliedEventArguments {
 	/** The tree the edit was applied to. */
 	readonly tree: SharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryLoggerExt;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
 	readonly reconciliationPath: ReconciliationPath;
 	/** The outcome of the sequenced edit being applied. */
@@ -477,8 +482,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * logger for SharedTree events.
 	 */
-	public readonly logger: ITelemetryLogger;
-	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
+	public readonly logger: ITelemetryLoggerExt;
+	private readonly sequencedEditAppliedLogger: ITelemetryLoggerExt;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
 	private encoder_0_1_1: SharedTreeEncoder_0_1_1;
@@ -542,12 +547,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 
-		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		this.sequencedEditAppliedLogger = ChildLogger.create(
-			this.logger,
-			'SequencedEditApplied',
-			sharedTreeTelemetryProperties
-		);
+		this.logger = createChildLogger({
+			logger: runtime.logger,
+			namespace: 'SharedTree',
+			properties: sharedTreeTelemetryProperties,
+		});
+		this.sequencedEditAppliedLogger = createChildLogger({
+			logger: this.logger,
+			namespace: 'SequencedEditApplied',
+			properties: sharedTreeTelemetryProperties,
+		});
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
 		this.idCompressor = new IdCompressor(

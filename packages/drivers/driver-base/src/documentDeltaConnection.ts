@@ -22,15 +22,15 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
-	ChildLogger,
+	ITelemetryLoggerExt,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	EventEmitterWithErrorHandling,
 	normalizeError,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -72,6 +72,8 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
+	private trackLatencyTimeout: number | undefined;
+
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
 	// Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -82,21 +84,10 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		try {
-			(Error as any).stackTraceLimit = 50;
-			assert(
-				this._disposed || this.socket.connected,
-				0x244 /* "Socket is closed, but connection is not!" */,
-			);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		} finally {
-			(Error as any).stackTraceLimit = originalStackTraceLimit;
-		}
+		assert(
+			this._disposed || this.socket.connected,
+			0x244 /* "Socket is closed, but connection is not!" */,
+		);
 		return this._disposed;
 	}
 
@@ -110,7 +101,7 @@ export class DocumentDeltaConnection
 	/**
 	 * @deprecated Implementors should manage their own logger or monitoring context
 	 */
-	protected get logger(): ITelemetryLogger {
+	protected get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -130,11 +121,12 @@ export class DocumentDeltaConnection
 	protected constructor(
 		protected readonly socket: Socket,
 		public documentId: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly enableLongPollingDowngrades: boolean = false,
 		protected readonly connectionId?: string,
 	) {
 		super((name, error) => {
+			this.addPropsToError(error);
 			logger.sendErrorEvent(
 				{
 					eventName: "DeltaConnection:EventException",
@@ -144,9 +136,9 @@ export class DocumentDeltaConnection
 			);
 		});
 
-		this.mc = loggerToMonitoringContext(ChildLogger.create(logger, "DeltaConnection"));
+		this.mc = createChildMonitoringContext({ logger, namespace: "DeltaConnection" });
 
-		this.on("newListener", (event, listener) => {
+		this.on("newListener", (event, _listener) => {
 			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
 			// Some events are already forwarded - see this.addTrackedListener() calls in initialize().
@@ -169,9 +161,29 @@ export class DocumentDeltaConnection
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
-				this.addTrackedListener(event, (...args: any[]) => {
-					this.emit(event, ...args);
-				});
+				if (event === "pong") {
+					// Empty callback for tracking purposes in this class
+					this.trackedListeners.set("pong", () => {});
+
+					const sendPingLoop = () => {
+						const start = Date.now();
+
+						this.socket.volatile?.emit("ping", () => {
+							this.emit("pong", Date.now() - start);
+
+							// Schedule another ping event in 1 minute
+							this.trackLatencyTimeout = setTimeout(() => {
+								sendPingLoop();
+							}, 1000 * 60);
+						});
+					};
+
+					sendPingLoop();
+				} else {
+					this.addTrackedListener(event, (...args: any[]) => {
+						this.emit(event, ...args);
+					});
+				}
 			}
 		});
 	}
@@ -236,18 +248,7 @@ export class DocumentDeltaConnection
 	}
 
 	private checkNotDisposed() {
-		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		try {
-			(Error as any).stackTraceLimit = 50;
-			assert(!this.disposed, 0x20c /* "connection disposed" */);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		} finally {
-			(Error as any).stackTraceLimit = originalStackTraceLimit;
-		}
+		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 
 	/**
@@ -341,17 +342,6 @@ export class DocumentDeltaConnection
 	private closeSocket(error: IAnyDriverError) {
 		if (this._disposed) {
 			// This would be rare situation due to complexity around socket emitting events.
-			this.logger.sendTelemetryEvent(
-				{
-					eventName: "SocketCloseOnDisposedConnection",
-					driverVersion,
-					details: JSON.stringify({
-						...this.getConnectionDetailsProps(),
-						trackedListenerCount: this.trackedListeners.size,
-					}),
-				},
-				error,
-			);
 			return;
 		}
 		this.closeSocketCore(error);
@@ -392,6 +382,11 @@ export class DocumentDeltaConnection
 			return;
 		}
 
+		if (this.trackLatencyTimeout !== undefined) {
+			clearTimeout(this.trackLatencyTimeout);
+			this.trackLatencyTimeout = undefined;
+		}
+
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
 		// DocumentDeltaConnection to determine if emitting messages (ops) on the socket is allowed, which is
 		// important since OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it. Note that
@@ -409,14 +404,6 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-		this.logger.sendTelemetryEvent({
-			eventName: "AfterDisconnectEvent",
-			driverVersion,
-			details: JSON.stringify({
-				...this.getConnectionDetailsProps(),
-				disconnectListenerCount: this.listenerCount("disconnect"),
-			}),
-		});
 	}
 
 	/**
@@ -591,9 +578,14 @@ export class DocumentDeltaConnection
 			// Socket can be disconnected while waiting for Fluid protocol messages
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
 			// had a chance to register its handlers.
-			this.addTrackedListener("disconnect", (reason) => {
-				const err = this.createErrorObject("disconnect", reason);
-				failAndCloseSocket(err);
+			this.addTrackedListener("disconnect", (reason, details) => {
+				failAndCloseSocket(
+					this.createErrorObjectWithProps("disconnect", reason, {
+						socketErrorType: details?.context?.type,
+						// https://www.rfc-editor.org/rfc/rfc6455#section-7.4
+						socketCode: details?.context?.code,
+					}),
+				);
 			});
 
 			this.addTrackedListener("error", (error) => {
@@ -705,25 +697,44 @@ export class DocumentDeltaConnection
 		this.connectionListeners.clear();
 	}
 
+	private getErrorMessage(error?: any): string {
+		if (error?.type !== "TransportError") {
+			return extractLogSafeErrorProperties(error, true).message;
+		}
+		// JSON.stringify drops Error.message
+		const messagePrefix = error?.message !== undefined ? `${error.message}: ` : "";
+
+		// Websocket errors reported by engine.io-client.
+		// They are Error objects with description containing WS error and description = "TransportError"
+		// Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
+		return `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
+	}
+
+	private createErrorObjectWithProps(
+		handler: string,
+		error?: any,
+		props?: ITelemetryProperties,
+		canRetry = true,
+	): IAnyDriverError {
+		return createGenericNetworkError(
+			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
+			{ canRetry },
+			{
+				...props,
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
+		);
+	}
+
 	/**
 	 * Error raising for socket.io issues
 	 */
 	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
-		let message: string;
-		if (error?.type === "TransportError") {
-			// JSON.stringify drops Error.message
-			const messagePrefix = error?.message !== undefined ? `${error.message}: ` : "";
-
-			// Websocket errors reported by engine.io-client.
-			// They are Error objects with description containing WS error and description = "TransportError"
-			// Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
-			message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
-		} else {
-			message = extractLogSafeErrorProperties(error, true).message;
-		}
-
-		const errorObj = createGenericNetworkError(
-			`socket.io (${handler}): ${message}`,
+		return createGenericNetworkError(
+			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
 			{
 				driverVersion,
@@ -732,7 +743,5 @@ export class DocumentDeltaConnection
 				}),
 			},
 		);
-
-		return errorObj;
 	}
 }

@@ -11,26 +11,29 @@ import {
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
-	ITelemetryGenericEvent,
-	ITelemetryBaseLogger,
-	ITelemetryBaseEvent,
-} from "@fluidframework/common-definitions";
-import {
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryGenericEvent,
+	ITelemetryBaseLogger,
+	ITelemetryBaseEvent,
+	IRequestHeader,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	createMultiSinkLogger,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -146,8 +149,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 				get: () => documentId,
 				update: (resolvedUrl?: IResolvedUrl) => {
 					// Extract the document ID from the resolved container's URL and reset the ID property
-					ensureFluidResolvedUrl(resolvedUrl);
-					documentId = resolvedUrl.id ?? documentId;
+					documentId = resolvedUrl?.id ?? documentId;
 				},
 				reset: () => {
 					documentId = createDocumentId();
@@ -279,12 +281,15 @@ export class TestObjectProvider implements ITestObjectProvider {
 	get logger(): EventAndErrorTrackingLogger {
 		if (this._logger === undefined) {
 			this._logger = new EventAndErrorTrackingLogger(
-				ChildLogger.create(getTestLogger?.(), undefined, {
-					all: {
-						driverType: this.driver.type,
-						driverEndpointName: this.driver.endpointName,
-						driverTenantName: this.driver.tenantName,
-						driverUserIndex: this.driver.userIndex,
+				createChildLogger({
+					logger: getTestLogger?.(),
+					properties: {
+						all: {
+							driverType: this.driver.type,
+							driverEndpointName: this.driver.endpointName,
+							driverTenantName: this.driver.tenantName,
+							driverUserIndex: this.driver.userIndex,
+						},
 					},
 				}),
 			);
@@ -334,15 +339,13 @@ export class TestObjectProvider implements ITestObjectProvider {
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		const multiSinkLogger = new MultiSinkLogger();
-		multiSinkLogger.addLogger(this.logger);
-		if (loaderProps?.logger !== undefined) {
-			multiSinkLogger.addLogger(loaderProps.logger);
-		}
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
 
 		const loader = new this.LoaderConstructor({
 			...loaderProps,
-			logger: multiSinkLogger,
+			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
 			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
 			documentServiceFactory:
@@ -499,7 +502,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
+	public async ensureSynchronized(): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized();
 	}
 

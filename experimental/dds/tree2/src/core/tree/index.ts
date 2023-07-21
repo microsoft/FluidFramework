@@ -7,11 +7,7 @@ export {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	AnchorEvents,
@@ -29,6 +25,8 @@ export {
 	PathRootPrefix,
 	inCursorField,
 	inCursorNode,
+	CursorMarker,
+	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
 export {
@@ -40,6 +38,7 @@ export {
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
+	topDownPath,
 	getDepth,
 	UpPath,
 	FieldUpPath,
@@ -60,13 +59,7 @@ export {
 	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
-export {
-	EncodedFieldMapObject,
-	EncodedGenericFieldsNode,
-	EncodedGenericTreeNode,
-	EncodedJsonableTree,
-	EncodedNodeData,
-} from "./persistedTreeTextFormat";
+export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
 	FieldKey,

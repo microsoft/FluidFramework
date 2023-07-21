@@ -20,12 +20,13 @@ import {
 } from "@fluidframework/server-services-client";
 import type {
 	ICache,
+	IRevokedTokenChecker,
 	ITenantManager,
-	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
 /**
  * Validates a JWT token to authorize routerlicious.
@@ -122,8 +123,13 @@ export function generateUser(): IUser {
 
 interface IVerifyTokenOptions {
 	requireDocumentId: boolean;
+	requireTokenExpiryCheck?: boolean;
+	maxTokenLifetimeSec?: number;
 	ensureSingleUseToken: boolean;
 	singleUseTokenCache: ICache | undefined;
+	enableTokenCache: boolean;
+	tokenCache: ICache | undefined;
+	revokedTokenChecker: IRevokedTokenChecker | undefined;
 }
 
 export function respondWithNetworkError(response: Response, error: NetworkError): Response {
@@ -143,22 +149,118 @@ function getTokenFromRequest(request: Request): string {
 	return tokenMatch[1];
 }
 
+const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
+
+export async function verifyToken(
+	tenantId: string,
+	documentId: string,
+	token: string,
+	tenantManager: ITenantManager,
+	options: IVerifyTokenOptions,
+): Promise<void> {
+	if (options.requireDocumentId && !documentId) {
+		throw new NetworkError(403, "Missing documentId.");
+	}
+
+	let tokenLifetimeMs: number | undefined;
+	const logProperties = getLumberBaseProperties(documentId, tenantId);
+	try {
+		const claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
+		if (options.requireTokenExpiryCheck) {
+			let maxTokenLifetimeSec = options.maxTokenLifetimeSec;
+			if (!maxTokenLifetimeSec) {
+				Lumberjack.error(
+					`Missing/Invalid maxTokenLifetimeSec=${maxTokenLifetimeSec} in options. Set to default=${defaultMaxTokenLifetimeSec}`,
+					logProperties,
+				);
+				maxTokenLifetimeSec = defaultMaxTokenLifetimeSec;
+			}
+			tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+		}
+
+		// Revoked token check
+		if (options.revokedTokenChecker && claims.jti) {
+			const isTokenRevoked = await options.revokedTokenChecker.isTokenRevoked(
+				tenantId,
+				documentId,
+				claims.jti,
+			);
+			if (isTokenRevoked) {
+				throw new NetworkError(403, "Permission denied. Access token has been revoked.");
+			}
+		}
+
+		// Check token cache first
+		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
+			const cachedToken = await options.tokenCache.get(token).catch((error) => {
+				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
+				return false;
+			});
+
+			if (cachedToken) {
+				Lumberjack.info("Token cache hit", logProperties);
+				if (options.ensureSingleUseToken) {
+					throw new NetworkError(403, "Access token has already been used.");
+				}
+				return;
+			}
+		}
+
+		await tenantManager.verifyToken(claims.tenantId, token);
+
+		// Update token cache
+		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
+			Lumberjack.info("Token cache miss", logProperties);
+			const tokenCacheKey = token;
+			options.tokenCache
+				.set(
+					tokenCacheKey,
+					"used",
+					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
+				)
+				.catch((error) => {
+					Lumberjack.error("Unable to cache JWT", logProperties, error);
+				});
+		}
+	} catch (error) {
+		if (isNetworkError(error)) {
+			throw error;
+		}
+		// We don't understand the error, so it is likely an internal service error.
+		Lumberjack.error(
+			"Unrecognized error when validating/verifying request token",
+			logProperties,
+			error,
+		);
+		throw new NetworkError(500, "Internal server error.");
+	}
+}
+
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
  */
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
-	tokenManager: ITokenRevocationManager | undefined,
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
 		singleUseTokenCache: undefined,
+		enableTokenCache: false,
+		tokenCache: undefined,
+		revokedTokenChecker: undefined,
 	},
 ): RequestHandler {
+	const maxTokenLifetimeSec = getNumberFromConfig("auth:maxTokenLifetimeSec", config);
+	const isTokenExpiryEnabled = getBooleanFromConfig("auth:enableTokenExpiration", config);
+	// Prevent service from starting with invalid configs
+	if (isTokenExpiryEnabled && isNaN(maxTokenLifetimeSec)) {
+		throw new Error(
+			"Invalid configuration: no maxTokenLifetimeSec when token expiry is enabled",
+		);
+	}
+
 	return async (request, res, next) => {
-		const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-		const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
 			return respondWithNetworkError(
@@ -173,6 +275,38 @@ export function verifyStorageToken(
 				new NetworkError(403, "Missing documentId in request"),
 			);
 		}
+
+		// TODO: remove this check and code after this block after validation
+		if (options.enableTokenCache) {
+			const moreOptions: IVerifyTokenOptions = options;
+			moreOptions.maxTokenLifetimeSec = maxTokenLifetimeSec;
+			moreOptions.requireTokenExpiryCheck = isTokenExpiryEnabled;
+			try {
+				await verifyToken(
+					tenantId,
+					documentId,
+					getTokenFromRequest(request),
+					tenantManager,
+					moreOptions,
+				);
+				return next();
+			} catch (error) {
+				if (isNetworkError(error)) {
+					return respondWithNetworkError(res, error);
+				}
+				// We don't understand the error, so it is likely an internal service error.
+				Lumberjack.error(
+					"Unrecognized error when validating/verifying request token",
+					getLumberBaseProperties(documentId, tenantId),
+					error,
+				);
+				return respondWithNetworkError(
+					res,
+					new NetworkError(500, "Internal server error."),
+				);
+			}
+		}
+
 		let claims: ITokenClaims | undefined;
 		let tokenLifetimeMs: number | undefined;
 		let token: string = "";
@@ -182,8 +316,8 @@ export function verifyStorageToken(
 			if (isTokenExpiryEnabled) {
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 			}
-			if (tokenManager && claims.jti) {
-				const tokenRevoked = await tokenManager.isTokenRevoked(
+			if (options.revokedTokenChecker && claims.jti) {
+				const tokenRevoked = await options.revokedTokenChecker.isTokenRevoked(
 					tenantId,
 					documentId,
 					claims.jti,

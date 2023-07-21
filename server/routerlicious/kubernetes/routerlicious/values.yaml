@@ -48,6 +48,7 @@ alfred:
   enforceServerGeneratedDocumentId: false
   socketIo:
     perMessageDeflate: true
+  getDeltasRequestMaxOpsRange: 2000
 
 storage:
   enableWholeSummaryUpload: false
@@ -55,6 +56,8 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
+  kafkaCheckpointOnReprocessingOp: false
 
 session:
   enforceDiscoveryFlow: false
@@ -78,6 +81,8 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  verifyLastOpPersistence: false
+  disableTransientTenantFiltering: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000
@@ -115,7 +120,7 @@ mongodb:
   globalDbEnabled: false
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
-  bufferMaxEntries: 50
+  directConnection: true
   softDeletionRetentionPeriodMs: 2592000000
   offlineWindowMs: 86400000
   softDeletionEnabled: false
@@ -151,6 +156,7 @@ kafka:
     deltas: deltas
   url: kafka_url:port
   libname: rdkafka
+  customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
 
 ingress:
   class: nginx-prod

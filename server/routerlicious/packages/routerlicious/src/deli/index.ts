@@ -28,6 +28,7 @@ export async function deliCreate(
 	const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 	const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 	const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+	const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 
 	const kafkaForwardClientId = config.get("deli:kafkaClientId");
 	const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -42,6 +43,9 @@ export async function deliCreate(
 
 	const restartOnCheckpointFailure =
 		(config.get("deli:restartOnCheckpointFailure") as boolean) ?? true;
+
+	const kafkaCheckpointOnReprocessingOp =
+		(config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -92,6 +96,7 @@ export async function deliCreate(
 		kafkaReplicationFactor,
 		kafkaMaxBatchSize,
 		kafkaSslCACertFilePath,
+		eventHubConnString,
 	);
 	const reverseProducer = services.createProducer(
 		kafkaLibrary,
@@ -104,6 +109,7 @@ export async function deliCreate(
 		kafkaReplicationFactor,
 		kafkaMaxBatchSize,
 		kafkaSslCACertFilePath,
+		eventHubConnString,
 	);
 
 	const redisConfig = config.get("redis");
@@ -163,6 +169,7 @@ export async function deliCreate(
 		reverseProducer,
 		serviceConfiguration,
 		restartOnCheckpointFailure,
+		kafkaCheckpointOnReprocessingOp,
 	);
 }
 

@@ -3,25 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	numberFromString,
+} from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
+	CorrelationIdHeaderName,
+	DriverVersionHeaderName,
 	getAuthorizationTokenFromCredentials,
 	RestLessClient,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
-type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
+export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
 const axiosRequestConfigToFetchRequestConfig = (
 	requestConfig: AxiosRequestConfig,
@@ -80,12 +85,12 @@ export function getPropsToLogFromResponse(headers: {
 	// We rename headers so that otel doesn't scrub them away. Otel doesn't allow
 	// certain characters in headers including '-'
 	const headersToLog: LoggingHeader[] = [
-		{ headerName: "x-correlation-id", logName: "requestCorrelationId" },
+		{ headerName: CorrelationIdHeaderName, logName: "requestCorrelationId" },
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
 	const additionalProps: ITelemetryProperties = {
-		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
 		const headerValue = headers.get(header.headerName);
@@ -102,12 +107,13 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	private token: ITokenResponse | undefined;
 
 	constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly rateLimiter: RateLimiter,
 		private readonly fetchRefreshedToken: TokenFetcher,
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
 		private readonly useRestLess: boolean,
 		baseurl?: string,
+		private tokenP?: Promise<ITokenResponse>,
 		defaultQueryString: QueryStringType = {},
 	) {
 		super(baseurl, defaultQueryString);
@@ -204,25 +210,22 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	): Promise<Record<string, string>> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
-
-		return {
+		const headers: Record<string, string> = {
 			...requestHeaders,
-			// TODO: replace header names with CorrelationIdHeaderName and DriverVersionHeaderName from services-client
-			// NOTE: Can correlationId actually be number | true?
-			"x-correlation-id": correlationId as string,
-			"x-driver-version": driverVersion,
+			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
-			"Authorization": this.getAuthorizationHeader(token),
+			Authorization: this.getAuthorizationHeader(token),
 		};
+		return headers;
 	}
 
 	public async getToken(): Promise<ITokenResponse> {
 		if (this.token !== undefined) {
 			return this.token;
 		}
-		const token = await this.fetchRefreshedToken();
+		const token = await (this.tokenP ?? this.fetchRefreshedToken());
 		this.setToken(token);
+		this.tokenP = undefined;
 		return token;
 	}
 
@@ -233,12 +236,13 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
 		useRestLess: boolean,
 		baseurl?: string,
+		initialTokenP?: Promise<ITokenResponse>,
 		defaultQueryString: QueryStringType = {},
 	) {
 		super(
@@ -248,41 +252,22 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 			getAuthorizationHeader,
 			useRestLess,
 			baseurl,
+			initialTokenP,
 			defaultQueryString,
 		);
 	}
 
 	public static async load(
 		tenantId: string,
-		documentId: string,
-		tokenProvider: ITokenProvider,
-		logger: ITelemetryLogger,
+		tokenFetcher: TokenFetcher,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
+		initialTokenP?: Promise<ITokenResponse>,
 	): Promise<RouterliciousStorageRestWrapper> {
 		const defaultQueryString = {
 			token: `${fromUtf8ToBase64(tenantId)}`,
-		};
-
-		const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
-			return PerformanceEvent.timedExecAsync(
-				logger,
-				{
-					eventName: "FetchStorageToken",
-					docId: documentId,
-				},
-				async () => {
-					// Craft credentials using tenant id and token
-					const storageToken = await tokenProvider.fetchStorageToken(
-						tenantId,
-						documentId,
-						refreshToken,
-					);
-
-					return storageToken;
-				},
-			);
 		};
 
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
@@ -298,10 +283,11 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		const restWrapper = new RouterliciousStorageRestWrapper(
 			logger,
 			rateLimiter,
-			fetchStorageToken,
+			tokenFetcher,
 			getAuthorizationHeader,
 			useRestLess,
 			baseurl,
+			initialTokenP,
 			defaultQueryString,
 		);
 
@@ -311,12 +297,13 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
 		useRestLess: boolean,
 		baseurl?: string,
+		initialTokenP?: Promise<ITokenResponse>,
 		defaultQueryString: QueryStringType = {},
 	) {
 		super(
@@ -326,18 +313,18 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 			getAuthorizationHeader,
 			useRestLess,
 			baseurl,
+			initialTokenP,
 			defaultQueryString,
 		);
 	}
 
 	public static async load(
-		tenantId: string,
-		documentId: string | undefined,
-		tokenProvider: ITokenProvider,
-		logger: ITelemetryLogger,
+		tokenFetcher: TokenFetcher,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
+		initialTokenP?: Promise<ITokenResponse>,
 	): Promise<RouterliciousOrdererRestWrapper> {
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,
@@ -345,34 +332,71 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 			return `Basic ${token.jwt}`;
 		};
 
-		const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
-			return PerformanceEvent.timedExecAsync(
-				logger,
-				{
-					eventName: "FetchOrdererToken",
-					docId: documentId,
-				},
-				async () => {
-					const ordererToken = await tokenProvider.fetchOrdererToken(
-						tenantId,
-						documentId,
-						refreshToken,
-					);
-
-					return ordererToken;
-				},
-			);
-		};
-
 		const restWrapper = new RouterliciousOrdererRestWrapper(
 			logger,
 			rateLimiter,
-			fetchOrdererToken,
+			tokenFetcher,
 			getAuthorizationHeader,
 			useRestLess,
 			baseurl,
+			initialTokenP,
 		);
 
 		return restWrapper;
 	}
+}
+
+export function toInstrumentedR11sOrdererTokenFetcher(
+	tenantId: string,
+	documentId: string | undefined,
+	tokenProvider: ITokenProvider,
+	logger: ITelemetryLoggerExt,
+): TokenFetcher {
+	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{
+				eventName: "FetchOrdererToken",
+				docId: documentId,
+			},
+			async () => {
+				const ordererToken = await tokenProvider.fetchOrdererToken(
+					tenantId,
+					documentId,
+					refreshToken,
+				);
+
+				return ordererToken;
+			},
+		);
+	};
+	return fetchOrdererToken;
+}
+
+export function toInstrumentedR11sStorageTokenFetcher(
+	tenantId: string,
+	documentId: string,
+	tokenProvider: ITokenProvider,
+	logger: ITelemetryLoggerExt,
+): TokenFetcher {
+	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{
+				eventName: "FetchStorageToken",
+				docId: documentId,
+			},
+			async () => {
+				// Craft credentials using tenant id and token
+				const storageToken = await tokenProvider.fetchStorageToken(
+					tenantId,
+					documentId,
+					refreshToken,
+				);
+
+				return storageToken;
+			},
+		);
+	};
+	return fetchStorageToken;
 }

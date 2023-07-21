@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/smde",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -15,12 +15,10 @@
 	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:esnext",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"build:full": "concurrently npm:build npm:webpack",
-		"build:full:compile": "concurrently npm:build:compile npm:webpack",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -61,7 +59,8 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
-		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/events": "^3.0.0",
 		"@types/react": "^17.0.44",
@@ -86,15 +85,6 @@
 					"dist/main.bundle.js"
 				],
 				"library": "main"
-			}
-		}
-	},
-	"pnpm": {
-		"packageExtensions": {
-			"simplemde": {
-				"dependencies": {
-					"codemirror": "^5.65.11"
-				}
 			}
 		}
 	},

@@ -8,6 +8,24 @@ import { FieldUpPath, UpPath } from "./pathTree";
 import { FieldKey, TreeType, Value } from "./types";
 
 /**
+ * A symbol for marking an object as an {@link ITreeCursor}.
+ *
+ * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ */
+export const CursorMarker: unique symbol = Symbol("CursorMarker");
+
+/**
+ * Check if something is an {@link ITreeCursor}.
+ *
+ * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ */
+export function isCursor(data: unknown): data is ITreeCursor {
+	// Other than on null and undefined, looking up a missing symbol shouldn't type error.
+	// typeof check deals with undefined while providing an early out for other non-object types.
+	return data !== null && typeof data === "object" && (data as any)[CursorMarker] === true;
+}
+
+/**
  * A stateful low-level interface for reading tree data.
  * @alpha
  *
@@ -15,6 +33,10 @@ import { FieldKey, TreeType, Value } from "./types";
  * This allows performance optimizations to be done based on a data.
  */
 export interface ITreeCursor {
+	/**
+	 * Marks this object as a cursor.
+	 */
+	readonly [CursorMarker]: true;
 	/**
 	 * What kind of place the cursor is at.
 	 * Determines which operations are allowed.

@@ -12,6 +12,8 @@ export {
 	ValuePropertyFromSchema,
 	FlexibleObject,
 	EditableSequenceField,
+	EditableValueField,
+	EditableOptionalField,
 	TypedField,
 	UnbrandedName,
 	TypeArrayToTypedTreeArray,
@@ -19,6 +21,8 @@ export {
 	EmptyObject,
 } from "./schemaAware";
 
-export { ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
+export { ValuesOf, TypedValue } from "./schemaAwareUtil";
 
-export { UntypedSequenceField } from "./partlyTyped";
+export { PrimitiveValueSchema } from "../../core";
+
+export { UntypedSequenceField, UntypedOptionalField, UntypedValueField } from "./partlyTyped";

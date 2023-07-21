@@ -129,6 +129,8 @@ export {
 	ITaskMessageSender,
 } from "./taskMessages";
 export {
+	EncryptionKeyVersion,
+	IEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -153,7 +155,10 @@ export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
 export {
 	IWebSocketTracker,
 	ITokenRevocationManager,
+	IRevokedTokenChecker,
 	ITokenRevocationResponse,
+	IRevokeTokenOptions,
 	TokenRevocationError,
+	TokenRevokedError,
 	createCompositeTokenId,
 } from "./tokenRevocationManager";

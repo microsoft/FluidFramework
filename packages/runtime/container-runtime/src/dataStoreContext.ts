@@ -5,20 +5,22 @@
 
 import {
 	IDisposable,
-	ITelemetryLogger,
+	FluidObject,
+	IRequest,
+	IResponse,
+	IFluidHandle,
 	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { BlobTreeEntry } from "@fluidframework/protocol-base";
+import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -58,9 +60,9 @@ import {
 	packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
+	createChildMonitoringContext,
 	generateStack,
-	loggerToMonitoringContext,
+	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	TelemetryDataTag,
@@ -163,7 +165,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.clientDetails;
 	}
 
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this._containerRuntime.logger;
 	}
 
@@ -313,9 +315,10 @@ export abstract class FluidDataStoreContext
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(this.logger, "FluidDataStoreContext"),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "FluidDataStoreContext",
+		});
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
 			this.mc.logger,
@@ -394,7 +397,7 @@ export abstract class FluidDataStoreContext
 					packageName: packagePathToTelemetryProperty(this.pkg),
 				});
 				this.channelDeferred?.reject(errorWrapped);
-				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
 		}
 		return this.channelDeferred.promise;
@@ -784,7 +787,7 @@ export abstract class FluidDataStoreContext
 			this.channelDeferred.resolve(this.channel);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
-			this.logger.sendErrorEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
 					fluidDataStoreId: {
@@ -940,8 +943,11 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.containerRuntime.uploadBlob(blob);
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.containerRuntime.uploadBlob(blob, signal);
 	}
 }
 

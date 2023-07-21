@@ -23,6 +23,7 @@ import {
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
+import { mockIntoDelta } from "../utils";
 
 const revision1: RevisionTag = mintRevisionTag();
 const revision2: RevisionTag = mintRevisionTag();
@@ -38,12 +39,7 @@ describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema);
-		let revision = revision1;
-		const store = new ForestRepairDataStore((rev) => {
-			assert.equal(rev, revision);
-			revision = revision2;
-			return forest;
-		});
+		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const capture1 = [
 			{ type: jsonNumber.name, value: 1 },
 			{
@@ -116,77 +112,5 @@ describe("ForestRepairDataStore", () => {
 		const nodes2 = store.getNodes(revision2, root, fooKey, 0, 2);
 		const actual2 = nodes2.map(jsonableTreeFromCursor);
 		assert.deepEqual(actual2, capture2);
-	});
-
-	it("Captures overwritten values", () => {
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema);
-		const store = new ForestRepairDataStore((rev) => {
-			assert.equal(rev, revision1);
-			return forest;
-		});
-		const data = {
-			type: jsonObject.name,
-			fields: {
-				foo: [
-					{ type: jsonNumber.name },
-					{ type: jsonNumber.name, value: 1 },
-					{ type: jsonNumber.name, value: 2 },
-					{ type: jsonNumber.name, value: 3 },
-				],
-			},
-		};
-		initializeForest(forest, [singleTextCursor(data)]);
-		store.capture(
-			new Map([
-				[
-					rootFieldKeySymbol,
-					[
-						{
-							type: Delta.MarkType.Modify,
-							fields: new Map([
-								[
-									fooKey,
-									[
-										{
-											type: Delta.MarkType.Modify,
-											setValue: 40,
-										},
-										1,
-										{
-											type: Delta.MarkType.Modify,
-											setValue: 42,
-										},
-										{
-											type: Delta.MarkType.Modify,
-											setValue: undefined,
-										},
-									],
-								],
-							]),
-						},
-					],
-				],
-			]),
-			revision1,
-		);
-		const value0 = store.getValue(revision1, {
-			parent: root,
-			parentField: fooKey,
-			parentIndex: 0,
-		});
-		const value2 = store.getValue(revision1, {
-			parent: root,
-			parentField: fooKey,
-			parentIndex: 2,
-		});
-		const value3 = store.getValue(revision1, {
-			parent: root,
-			parentField: fooKey,
-			parentIndex: 3,
-		});
-		assert.equal(value0, undefined);
-		assert.equal(value2, 2);
-		assert.equal(value3, 3);
 	});
 });

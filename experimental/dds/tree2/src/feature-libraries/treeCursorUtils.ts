@@ -13,6 +13,7 @@ import {
 	Value,
 	FieldUpPath,
 	PathRootPrefix,
+	CursorMarker,
 } from "../core";
 import { fail } from "../util";
 
@@ -81,6 +82,7 @@ type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
  * A class that satisfies part of the ITreeCursorSynchronous implementation.
  */
 export abstract class SynchronousCursor {
+	public readonly [CursorMarker] = true;
 	public get pending(): false {
 		return false;
 	}
@@ -99,6 +101,7 @@ export abstract class SynchronousCursor {
  * so be careful using types like `TNode | undefined` and expressions like `TNode ??`.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
+	public readonly [CursorMarker] = true;
 	/**
 	 * Might start at special root where fields are detached sequences.
 	 *

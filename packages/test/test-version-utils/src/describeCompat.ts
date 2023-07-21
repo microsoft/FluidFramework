@@ -3,21 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { configList } from "./compatConfig";
-import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions";
-import { getVersionedTestObjectProvider } from "./compatUtils";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
+import { configList, mochaGlobalSetup } from "./compatConfig.js";
+import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import { baseVersion } from "./baseVersion.js";
+import {
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getLoaderApi,
+	CompatApis,
+	getDriverApi,
+} from "./testApi.js";
+
+// See doc comment on mochaGlobalSetup.
+await mochaGlobalSetup();
 
 /*
  * Mocha Utils for test to generate the compat variants.
  */
 function createCompatSuite(
-	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
+	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
 	compatFilter?: CompatKind[],
 ) {
 	return function (this: Mocha.Suite) {
@@ -30,24 +41,29 @@ function createCompatSuite(
 			describe(config.name, function () {
 				let provider: TestObjectProvider;
 				let resetAfterEach: boolean;
+				const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.dataRuntime);
+				const apis: CompatApis = {
+					containerRuntime: getContainerRuntimeApi(baseVersion, config.containerRuntime),
+					dataRuntime: dataRuntimeApi,
+					dds: dataRuntimeApi.dds,
+					driver: getDriverApi(baseVersion, config.driver),
+					loader: getLoaderApi(baseVersion, config.loader),
+				};
+
 				before(async function () {
 					try {
-						provider = await getVersionedTestObjectProvider(
-							baseVersion,
-							config.loader,
-							{
-								type: driver,
-								version: config.driver,
-								config: {
-									r11s: { r11sEndpointName },
-									odsp: { tenantIndex },
-								},
+						provider = await getVersionedTestObjectProviderFromApis(apis, {
+							type: driver,
+							config: {
+								r11s: { r11sEndpointName },
+								odsp: { tenantIndex },
 							},
-							config.containerRuntime,
-							config.dataRuntime,
-						);
+						});
 					} catch (error) {
-						const logger = ChildLogger.create(getTestLogger?.(), "DescribeCompatSetup");
+						const logger = createChildLogger({
+							logger: getTestLogger?.(),
+							namespace: "DescribeCompatSetup",
+						});
 						logger.sendErrorEvent(
 							{
 								eventName: "TestObjectProviderLoadFailed",
@@ -60,13 +76,14 @@ function createCompatSuite(
 
 					Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
 				});
+
 				tests.bind(this)((options?: ITestObjectProviderOptions) => {
 					resetAfterEach = options?.resetAfterEach ?? true;
 					if (options?.syncSummarizer === true) {
 						provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 					}
 					return provider;
-				});
+				}, apis);
 
 				afterEach(function (done: Mocha.Done) {
 					const logErrors = getUnexpectedLogErrorException(provider.logger);
@@ -99,6 +116,7 @@ export type DescribeCompatSuite = (
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
+		apis: CompatApis,
 	) => void,
 ) => Mocha.Suite | void;
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-common",
-	"version": "1.2.0",
+	"version": "2.0.0",
 	"description": "Package containing common configs",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -24,5 +24,5 @@
 	"devDependencies": {
 		"prettier": "~2.6.2"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e"
+	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267"
 }

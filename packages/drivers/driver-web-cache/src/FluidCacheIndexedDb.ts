@@ -5,8 +5,8 @@
 
 import { openDB, DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
 
 // The name of the database that we use for caching Fluid info.
@@ -46,7 +46,7 @@ export function getFluidCacheIndexedDbInstance(
 					// Catch any error done when attempting to delete the older version.
 					// If the object does not exist db will throw.
 					// We can now assume that the old version is no longer there regardless.
-					ChildLogger.create(logger).sendErrorEvent(
+					createChildLogger({ logger }).sendErrorEvent(
 						{
 							eventName: FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
 						},

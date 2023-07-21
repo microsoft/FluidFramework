@@ -25,6 +25,7 @@ import {
 	ITenantManager,
 	LambdaName,
 	MongoManager,
+	runWithRetry,
 } from "@fluidframework/server-services-core";
 import {
 	IDocumentSystemMessage,
@@ -76,9 +77,12 @@ export class ScribeLambdaFactory
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly getDeltasViaAlfred: boolean,
+		private readonly verifyLastOpPersistence: boolean,
 		private readonly transientTenants: string[],
+		private readonly disableTransientTenantFiltering: boolean,
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		super();
 	}
@@ -107,10 +111,18 @@ export class ScribeLambdaFactory
 			this.serviceConfiguration,
 		);
 
-		const lumberProperties = getLumberBaseProperties(tenantId, documentId);
+		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 
 		try {
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			document = (await runWithRetry(
+				async () => this.documentRepository.readOne({ documentId, tenantId }),
+				"readIDocumentInScribeLambdaFactory",
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* shouldIgnoreError */,
+				(error) => true /* shouldRetry */,
+			)) as IDocument;
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -241,6 +253,7 @@ export class ScribeLambdaFactory
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,
+			this.verifyLastOpPersistence,
 			this.checkpointService,
 		);
 
@@ -274,7 +287,9 @@ export class ScribeLambdaFactory
 			opsSinceLastSummary,
 			scribeSessionMetric,
 			new Set(this.transientTenants),
+			this.disableTransientTenantFiltering,
 			this.restartOnCheckpointFailure,
+			this.kafkaCheckpointOnReprocessingOp,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {
@@ -303,6 +318,8 @@ export class ScribeLambdaFactory
 				tenantId,
 				documentId,
 				lastCheckpoint.protocolState.sequenceNumber,
+				undefined,
+				"scribe",
 			);
 		}
 		return opMessages;

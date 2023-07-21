@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "QueryService implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"lodash": "^4.17.21",
 		"long": "^4.0.0",
 		"lru-cache": "^6.0.0",
-		"semver": "^7.3.4",
+		"semver": "^7.5.3",
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {

@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	generateStack,
+	LoggingError,
+	MonitoringContext,
+	raiseConnectedEvent,
+	TelemetryDataTag,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -11,6 +19,7 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	IAudience,
 	IDeltaManager,
@@ -18,22 +27,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
-import {
-	assert,
-	Deferred,
-	LazyPromise,
-	TypedEventEmitter,
-	unreachableCase,
-} from "@fluidframework/common-utils";
-import {
-	ChildLogger,
-	generateStack,
-	LoggingError,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	raiseConnectedEvent,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
+import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -206,7 +200,7 @@ export class FluidDataStoreRuntime
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
-	public get logger(): ITelemetryLogger {
+	public get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -256,11 +250,13 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.logger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
 				all: { dataStoreId: uuid() },
-			}),
-		);
+			},
+		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -583,10 +579,13 @@ export class FluidDataStoreRuntime
 		return this.audience;
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		this.verifyNotClosed();
 
-		return this.dataStoreContext.uploadBlob(blob);
+		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {

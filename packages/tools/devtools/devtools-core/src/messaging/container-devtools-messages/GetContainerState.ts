@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -24,7 +24,7 @@ export namespace GetContainerState {
 	 *
 	 * @internal
 	 */
-	export type MessageData = HasContainerId;
+	export type MessageData = HasContainerKey;
 
 	/**
 	 * Inbound message requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
@@ -33,7 +33,7 @@ export namespace GetContainerState {
 	 *
 	 * @internal
 	 */
-	export interface Message extends IDevtoolsMessage<HasContainerId> {
+	export interface Message extends IDevtoolsMessage<HasContainerKey> {
 		/**
 		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */

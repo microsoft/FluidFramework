@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import {
@@ -103,7 +103,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly configuration: ISummaryConfigurationHeuristics,
 		trySummarize: (reason: SummarizeReason) => void,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
 	) {
 		this.idleTimer = new Timer(this.idleTime, () => this.runSummarize("idle"));

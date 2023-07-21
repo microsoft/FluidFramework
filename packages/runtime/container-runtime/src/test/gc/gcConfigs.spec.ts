@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError, IErrorBase } from "@fluidframework/container-definitions";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -44,7 +44,7 @@ import {
 } from "../../gc";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
-import { configProvider } from "./garbageCollection.spec";
+import { configProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -134,7 +134,6 @@ describe("Garbage Collection configurations", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
-			getContainerDiagnosticId: () => "someDocId",
 		});
 	}
 
@@ -342,7 +341,7 @@ describe("Garbage Collection configurations", () => {
 						[gcSweepGenerationOptionName]: 1,
 					});
 				},
-				(e) => e.errorType === "usageError",
+				(e: IErrorBase) => e.errorType === "usageError",
 				"Should be unsupported",
 			);
 		});
@@ -692,6 +691,30 @@ describe("Garbage Collection configurations", () => {
 					);
 				});
 			});
+
+			it("shouldRunGC should be true when gcVersionInEffect is newer than gcVersionInBaseSnapshot", () => {
+				const gcVersionInBaseSnapshot = stableGCVersion - 1;
+				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
+				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.shouldRunGC, true, "shouldRunGC should be true");
+				assert.equal(
+					gc.configs.gcVersionInBaseSnapshot,
+					gcVersionInBaseSnapshot,
+					"gcVersionInBaseSnapshot set incorrectly",
+				);
+			});
+
+			it("shouldRunGC should be false when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
+				const gcVersionInBaseSnapshot = currentGCVersion + 1;
+				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
+				assert.equal(gc.configs.gcEnabled, true, "PRECONDITION: gcEnabled set incorrectly");
+				assert.equal(gc.configs.shouldRunGC, false, "shouldRunGC should be false");
+				assert.equal(
+					gc.configs.gcVersionInBaseSnapshot,
+					gcVersionInBaseSnapshot,
+					"gcVersionInBaseSnapshot set incorrectly",
+				);
+			});
 		});
 		describe("shouldRunSweep", () => {
 			const testCases: {
@@ -799,7 +822,7 @@ describe("Garbage Collection configurations", () => {
 					() => {
 						gc = createGcWithPrivateMembers();
 					},
-					(e) => e.errorType === "usageError",
+					(e: IErrorBase) => e.errorType === "usageError",
 					"inactiveTimeout must not be greater than sweepTimeout",
 				);
 			});

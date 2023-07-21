@@ -5,11 +5,21 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
-import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
-import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
+import {
+	brand,
+	Brand,
+	fail,
+	Opaque,
+	ReferenceCountedBase,
+	BrandedKey,
+	BrandedMapSubset,
+	brandedSlot,
+} from "../../util";
 import { UpPath } from "./pathTree";
-import { Value, detachedFieldAsKey, DetachedField } from "./types";
+import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
+import { visitDelta, DeltaVisitor } from "./visitDelta";
+import * as Delta from "./delta";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -40,47 +50,12 @@ export interface AnchorLocator {
 }
 
 /**
- * @alpha
- */
-export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
-
-/**
- * @alpha
- */
-export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
-
-/**
- * @alpha
- */
-export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
-	unknown,
-	infer TContent
->
-	? TContent
-	: never;
-
-/**
  * Stores arbitrary, user-defined data on an {@link Anchor}.
  * This data is preserved over the course of that anchor's lifetime.
  * @see {@link anchorSlot} for creation and an example use case.
  * @alpha
  */
-export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
-
-/**
- * A Map where the keys carry the types of values which they correspond to.
- *
- * @remarks
- * These APIs are designed so that a Map can be used to implement this type.
- *
- * @alpha
- */
-export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
-	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
-	has(key: K): boolean;
-	set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
-	delete(key: K): boolean;
-}
+export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">>, TContent>;
 
 /**
  * Events for {@link AnchorNode}.
@@ -198,14 +173,8 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
  * @alpha
  */
 export function anchorSlot<TContent>(): AnchorSlot<TContent> {
-	return brand(slotCounter++);
+	return brandedSlot<AnchorSlot<TContent>>();
 }
-
-/**
- * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorSlot}.
- * This allows the keys to be small integers, which are efficient to use as keys in maps.
- */
-let slotCounter = 0;
 
 /**
  * Collection of Anchors at a specific revision.
@@ -614,7 +583,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
 		// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
 		// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
-		const pathVisitors: Map<PathNode, PathVisitor[]> = new Map();
+		const pathVisitors: Map<PathNode, Set<PathVisitor>> = new Map();
 
 		const visitor: DeltaVisitor = {
 			onDelete: (start: number, count: number): void => {
@@ -695,17 +664,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				moveTable.delete(id);
 				this.moveChildren(sourcePath, { parent, parentField, parentIndex: start }, count);
 			},
-			onSetValue: (value: Value): void => {
-				maybeWithNode((p) => {
-					p.events.emit("valueChanging", p, value);
-				});
-				assert(parent !== undefined, 0x5e9 /* Must be in a node to set its value */);
-				for (const visitors of pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.onSetValue(parent, value);
-					}
-				}
-			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 				parent = { parent, parentField, parentIndex: index };
@@ -717,11 +675,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 							"subtreeChanging",
 							p,
 						);
-						if (visitors.length > 0)
+						if (visitors.length > 0) {
 							pathVisitors.set(
 								p,
-								visitors.filter((v): v is PathVisitor => v !== undefined),
+								new Set(visitors.filter((v): v is PathVisitor => v !== undefined)),
 							);
+						}
 					}
 				});
 			},

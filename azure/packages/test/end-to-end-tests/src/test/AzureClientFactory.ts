@@ -9,7 +9,7 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
@@ -33,7 +33,7 @@ export function createAzureClient(
 		name: userName ?? uuid(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
-	if (endPoint === undefined) {
+	if (useAzure && endPoint === undefined) {
 		throw new Error("Azure FRS endpoint is missing");
 	}
 

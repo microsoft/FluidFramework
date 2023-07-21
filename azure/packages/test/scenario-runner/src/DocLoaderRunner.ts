@@ -4,7 +4,7 @@
  */
 import child_process from "child_process";
 
-import { ConnectionState } from "fluid-framework";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidContainer } from "@fluidframework/fluid-static";

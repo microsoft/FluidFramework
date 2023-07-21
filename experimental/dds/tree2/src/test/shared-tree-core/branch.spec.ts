@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
+import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
 import {
 	GraphCommit,
 	RevisionTag,
@@ -18,11 +18,14 @@ import {
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { brand } from "../../util";
+import { brand, fail } from "../../util";
 import { MockRepairDataStoreProvider } from "../utils";
+import { noopValidator } from "../../codec";
+
+const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
@@ -90,6 +93,23 @@ describe("Branches", () => {
 		assertBased(parent, child);
 		// Ensure that the changes are now present on the parent
 		assertHistory(parent, tag1, tag2);
+	});
+
+	it("rebase changes up to a certain commit", () => {
+		// Create a parent branch and a child fork
+		const parent = create();
+		const child = parent.fork();
+		// Apply a couple of changes to the parent
+		const tag1 = change(parent);
+		change(parent);
+		// Rebase the child onto the parent up to the first new commit
+		const parentCommit1 =
+			findAncestor(parent.getHead(), (c) => c.revision === tag1) ??
+			fail("Expected to find commit");
+
+		child.rebaseOnto(parent, parentCommit1);
+		// Ensure that the changes are now present on the child
+		assertHistory(child, tag1);
 	});
 
 	it("merge changes from a child into a parent", () => {
@@ -174,7 +194,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "rebase") {
+			if (type === "replace") {
 				changeEventCount += 1;
 			}
 		});
@@ -192,7 +212,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "rebase") {
+			if (type === "replace") {
 				changeEventCount += 1;
 			}
 		});
@@ -240,12 +260,15 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 1);
 	});
 
-	it("emit change events during but not after committing a transaction", () => {
+	it("emit correct change events during and after committing a transaction", () => {
 		// Create a branch and count the change events emitted
 		let changeEventCount = 0;
+		let replaceEventCount = 0;
 		const branch = create(({ type }) => {
 			if (type === "append") {
 				changeEventCount += 1;
+			} else if (type === "replace") {
+				replaceEventCount += 1;
 			}
 		});
 		// Begin a transaction
@@ -255,16 +278,30 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 1);
 		change(branch);
 		assert.equal(changeEventCount, 2);
+		assert.equal(replaceEventCount, 0);
 		// Commit the transaction. No change event should be emitted since the commits, though squashed, are still equivalent
 		branch.commitTransaction();
 		assert.equal(changeEventCount, 2);
+		assert.equal(replaceEventCount, 1);
+	});
+
+	it("do not emit a change event after committing an empty transaction", () => {
+		// Create a branch and count the change events emitted
+		let changeEventCount = 0;
+		const branch = create(() => {
+			changeEventCount += 1;
+		});
+		// Start and immediately abort a transaction
+		branch.startTransaction();
+		branch.commitTransaction();
+		assert.equal(changeEventCount, 0);
 	});
 
 	it("emit a change event after aborting a transaction", () => {
 		// Create a branch and count the change events emitted
 		let changeEventCount = 0;
 		const branch = create(({ type }) => {
-			if (type === "rollback") {
+			if (type === "remove") {
 				changeEventCount += 1;
 			}
 		});
@@ -284,7 +321,7 @@ describe("Branches", () => {
 		// Create a branch and count the change events emitted
 		let changeEventCount = 0;
 		const branch = create(({ type }) => {
-			if (type === "rollback") {
+			if (type === "remove") {
 				changeEventCount += 1;
 			}
 		});
@@ -321,22 +358,23 @@ describe("Branches", () => {
 
 	it("cannot be mutated after disposal", () => {
 		const branch = create();
+		const fork = branch.fork();
 		branch.dispose();
 
 		function assertDisposed(fn: () => void): void {
-			assert.throws(fn, (e) => validateAssertionError(e, "Branch is disposed"));
+			assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
 		}
 
 		// These methods are not valid to call after disposal
 		assertDisposed(() => branch.fork());
-		assertDisposed(() => branch.rebaseOnto(branch));
+		assertDisposed(() => branch.rebaseOnto(fork));
 		assertDisposed(() => branch.merge(branch.fork()));
 		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
 		assertDisposed(() => branch.commitTransaction());
 		assertDisposed(() => branch.abortTransaction());
 		assertDisposed(() => branch.abortTransaction());
-		assertDisposed(() => branch.dispose());
+		assertDisposed(() => fork.merge(branch));
 	});
 
 	it("correctly report whether they are in the middle of a transaction", () => {
@@ -405,7 +443,7 @@ describe("Branches", () => {
 		const branch = create();
 		assert.throws(
 			() => branch.undo(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Must construct branch with an `UndoRedoManager` in order to undo.",
@@ -417,7 +455,7 @@ describe("Branches", () => {
 		const branch = create();
 		assert.throws(
 			() => branch.redo(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Must construct branch with an `UndoRedoManager` in order to redo.",
@@ -439,7 +477,7 @@ describe("Branches", () => {
 		change(branch);
 		assert.throws(
 			() => revertibleBranch.rebaseOnto(branch),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Cannot rebase a revertible branch onto a non-revertible branch",
@@ -461,12 +499,54 @@ describe("Branches", () => {
 		change(branch);
 		assert.throws(
 			() => revertibleBranch.merge(branch),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Cannot merge a non-revertible branch into a revertible branch",
 				),
 		);
+	});
+
+	describe("transitive fork event", () => {
+		/** Creates forks at various "depths" and returns the number of forks created */
+		function forkTransitive<T extends { fork(): T }>(forkable: T): number {
+			forkable.fork();
+			const fork = forkable.fork();
+			fork.fork();
+			fork.fork().fork();
+			return 5;
+		}
+
+		it("registers listener on transitive forks", () => {
+			const branch = create();
+			const forks = new Set<DefaultBranch>();
+			onForkTransitive(branch, (fork) => forks.add(fork));
+			const expected = forkTransitive(branch);
+			assert.equal(forks.size, expected);
+		});
+
+		it("deregisters all listeners", () => {
+			const branch = create();
+			let forkCount = 0;
+			const deregister = onForkTransitive(branch, () => (forkCount += 1));
+			deregister();
+			forkTransitive(branch);
+			assert.equal(forkCount, 0);
+		});
+
+		it("registers listener on forks created inside of the listener", () => {
+			const branch = create();
+			let forkCount = 0;
+			onForkTransitive(branch, () => {
+				forkCount += 1;
+				assert(branch.hasListeners("fork"));
+				if (forkCount <= 1) {
+					branch.fork();
+				}
+			});
+			branch.fork();
+			assert.equal(forkCount, 2);
+		});
 	});
 
 	/** Creates a new root branch */
@@ -478,7 +558,11 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
+		const branch = new SharedTreeBranch(
+			initCommit,
+			defaultChangeFamily,
+			new MockRepairDataStoreProvider(),
+		);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
@@ -490,7 +574,8 @@ describe("Branches", () => {
 		return new SharedTreeBranch(
 			from.getHead(),
 			defaultChangeFamily,
-			UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
+			new MockRepairDataStoreProvider(),
+			UndoRedoManager.create(defaultChangeFamily),
 		);
 	}
 

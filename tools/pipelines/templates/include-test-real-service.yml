@@ -102,7 +102,7 @@ jobs:
         ${{ if eq(variables.isTestBranch, 'true') }}:
           value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
         ${{ else }}:
-          value: $(ado-feeds-dev) # Comes from the ado-feeds variable group\
+          value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
 
       steps:
       # Setup
@@ -159,11 +159,7 @@ jobs:
               artifactBuildId=${{ parameters.artifactBuildId }}
             "
 
-      # Install
-      - task: UseNode@1
-        displayName: Use Node 16.x
-        inputs:
-          version: 16.x
+      - template: include-use-node-version.yml
 
       # Download artifact
       - task: DownloadPipelineArtifact@2

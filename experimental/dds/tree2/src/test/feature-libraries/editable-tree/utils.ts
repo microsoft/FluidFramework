@@ -27,7 +27,7 @@ import {
 	isEditableField,
 	isPrimitive,
 	getField,
-	isUnwrappedNode,
+	isEditableTree,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
@@ -66,7 +66,7 @@ export function expectTreeEquals(
 		return;
 	}
 	// Confirm we have an EditableTree object.
-	assert(isUnwrappedNode(node));
+	assert(isEditableTree(node));
 	assert.equal(node[valueSymbol], expected.value);
 	const type = node[typeSymbol];
 	assert.deepEqual(type, expectedType);
@@ -127,7 +127,7 @@ export function expectFieldEquals(
 	if (field.length === 0) {
 		assert.throws(
 			() => field.getNode(0),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"A child node must exist at index to get it without unwrapping.",

@@ -4,18 +4,14 @@
  */
 import * as child_process from "child_process";
 import fs from "fs";
-import { pathExistsSync } from "fs-extra";
-import merge from "lodash.merge";
-import { NpmPackageJsonLint } from "npm-package-json-lint";
 import { EOL as newline } from "os";
 import path from "path";
 import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { IFluidBuildConfig } from "../../common/fluidRepo";
+import { updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
-import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -29,18 +25,6 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
-
-/**
- * An array of dependencies that should always use tilde dependency ranges instead of caret.
- */
-let _tildeDependencies: string[] | undefined;
-
-const getTildeDependencies = (manifest: IFluidBuildConfig | undefined) => {
-	if (_tildeDependencies === undefined) {
-		_tildeDependencies = manifest?.policy?.dependencies?.requireTilde ?? [];
-	}
-	return _tildeDependencies;
-};
 
 // Some of our package scopes definitely should publish, and others should never publish.  If they should never
 // publish, we want to add the "private": true flag to their package.json to prevent publishing, and conversely if
@@ -475,66 +459,6 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-		name: "npm-package-json-lint",
-		match,
-		handler: (file, root) => {
-			let jsonStr: string;
-			let json: PackageJson;
-			try {
-				jsonStr = readFile(file);
-				json = JSON.parse(jsonStr);
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
-			}
-
-			const ret: string[] = [];
-
-			const { dependencies, devDependencies } = json;
-			const manifest = getFluidBuildConfig(root);
-			const tildeDependencies = getTildeDependencies(manifest);
-			if (dependencies !== undefined) {
-				for (const [dep, ver] of Object.entries(dependencies)) {
-					if (tildeDependencies.includes(dep) && !ver?.startsWith("~")) {
-						ret.push(`Dependencies on ${dep} must use tilde (~) dependencies.`);
-					}
-				}
-			}
-
-			if (devDependencies !== undefined) {
-				for (const [dep, ver] of Object.entries(devDependencies)) {
-					if (tildeDependencies.includes(dep) && !ver?.startsWith("~")) {
-						ret.push(`devDependencies on ${dep} must use tilde (~) dependencies.`);
-					}
-				}
-			}
-
-			const { valid, validationResults } = runNpmJsonLint(json, file);
-
-			if (!valid) {
-				for (const result of validationResults.results) {
-					for (const issue of result.issues) {
-						switch (issue.lintId) {
-							case "valid-values-name-scope":
-								ret.push(`${json.name} -- ${issue.lintId} -- ${issue.lintMessage}`);
-								break;
-							default:
-								ret.push(`${issue.lintId} -- ${issue.lintMessage}`);
-								break;
-						}
-					}
-				}
-			}
-
-			if (ret.length > 1) {
-				return `${ret.join(newline)}`;
-			} else if (ret.length === 1) {
-				return ret[0];
-			}
-
-			return undefined;
-		},
-	},
-	{
 		name: "npm-package-json-prettier",
 		match,
 		handler: (file) => {
@@ -633,59 +557,77 @@ export const handlers: Handler[] = [
 			return { resolved: true };
 		},
 	},
-];
+	{
+		name: "npm-package-json-script-clean",
+		match,
+		handler: (file) => {
+			let json;
 
-function runNpmJsonLint(json: PackageJson, file: string) {
-	const lintConfig = getLintConfig(file);
-	const options = {
-		packageJsonObject: json,
-		packageJsonFilePath: file,
-		config: lintConfig,
-	};
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
 
-	const linter = new NpmPackageJsonLint(options);
-	const validationResults = linter.lint();
-	const valid = validationResults.errorCount + validationResults.warningCount === 0;
-	return { valid, validationResults };
-}
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const missingScripts: string[] = [];
 
-const defaultNpmPackageJsonLintConfig = {
-	rules: {
-		"no-repeated-dependencies": "error",
-		"require-repository-directory": "error",
-		"valid-values-name-scope": [
-			"error",
-			[
-				"@fluidframework",
-				"@fluid-internal",
-				"@fluid-example",
-				"@fluid-experimental",
-				"@fluid-tools",
-			],
-		],
+			if (hasScriptsField) {
+				const hasBuildScript = Object.prototype.hasOwnProperty.call(json.scripts, "build");
+				const hasCleanScript = Object.prototype.hasOwnProperty.call(json.scripts, "clean");
+
+				if (hasBuildScript && !hasCleanScript) {
+					missingScripts.push(`clean`);
+				}
+			}
+
+			return missingScripts.length > 0
+				? `${file} is missing the following scripts: \n\t${missingScripts.join("\n\t")}`
+				: undefined;
+		},
 	},
-};
+	{
+		name: "npm-package-json-script-dep",
+		match,
+		handler: (file, root) => {
+			const manifest = getFluidBuildConfig(root);
+			const commandPackages = manifest.policy?.dependencies?.commandPackages;
+			if (commandPackages === undefined) {
+				return;
+			}
+			const commandDep = new Map(commandPackages);
+			let json;
 
-/**
- * Checks for an .npmpackagejsonlintrc.json file next to the package.json. If it exists, its contents will be merged
- * into the default config.
- *
- * @param file path to the package.json file.
- * @returns a config for npmPackageJsonLint.
- */
-function getLintConfig(file: string) {
-	const configFilePath = path.join(path.dirname(file), ".npmpackagejsonlintrc.json");
-	const defaultConfig = defaultNpmPackageJsonLintConfig;
-	const finalConfig = {};
-	if (pathExistsSync(configFilePath)) {
-		let configJson;
-		try {
-			configJson = JSON.parse(readFile(configFilePath));
-		} catch (err) {
-			configJson = {};
-		}
-		merge(finalConfig, defaultConfig, configJson);
-		return finalConfig;
-	}
-	return defaultConfig;
-}
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			const missingDeps: string[] = [];
+
+			if (hasScriptsField) {
+				const commands = new Set(
+					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+				);
+				for (const command of commands.values()) {
+					const dep = commandDep.get(command);
+					if (
+						dep &&
+						json.dependencies?.[dep] === undefined &&
+						json.devDependencies?.[dep] === undefined
+					) {
+						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
+					}
+				}
+			}
+
+			return missingDeps.length > 0
+				? `${file} is missing the following dependencies or devDependencies: \n\t${missingDeps.join(
+						"\n\t",
+				  )}`
+				: undefined;
+		},
+	},
+];

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -29,13 +30,19 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer, generateStableId } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
-	defaultChangeFamily,
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	createSharedTreeView,
+} from "../shared-tree";
+import {
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	defaultSchemaPolicy,
 	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
@@ -43,6 +50,9 @@ import {
 	mapTreeFromCursor,
 	namedTreeSchema,
 	NodeReviver,
+	RevisionInfo,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
 	singleTextCursor,
 } from "../feature-libraries";
 import {
@@ -69,9 +79,13 @@ import {
 	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
+	InMemoryStoredSchemaRepository,
+	TaggedChange,
 } from "../core";
-import { brand, makeArray } from "../util";
-import { ICodecFamily } from "../codec";
+import { JsonCompatible, Mutable, brand, makeArray } from "../util";
+import { ICodecFamily, withSchemaValidation } from "../codec";
+import { typeboxValidator } from "../external-utilities";
+import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
 // Testing utilities
 
@@ -188,7 +202,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: SharedTreeFactory = new SharedTreeFactory(),
+		factory: SharedTreeFactory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -209,6 +223,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
+					enableRuntimeIdCompressor: true,
 				},
 			);
 
@@ -331,11 +346,15 @@ export class TestTreeProviderLite {
 	 * provider.processMessages();
 	 * ```
 	 */
-	public constructor(trees = 1, private readonly factory = new SharedTreeFactory()) {
+	public constructor(
+		trees = 1,
+		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
-			const runtime = new MockFluidDataStoreRuntime();
+			const runtime = new MockFluidDataStoreRuntime({ clientId: generateStableId() });
+			(runtime as Mutable<MockFluidDataStoreRuntime>).id = "tree-provider-lite-data-store";
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
@@ -392,6 +411,47 @@ export function spyOnMethod(
 }
 
 /**
+ * @returns `true` iff the given delta has a visible impact on the document tree.
+ */
+export function isDeltaVisible(delta: Delta.MarkList): boolean {
+	for (const mark of delta) {
+		if (typeof mark === "object") {
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.Modify: {
+					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+						return true;
+					}
+					if (mark.fields !== undefined) {
+						for (const field of mark.fields.values()) {
+							if (isDeltaVisible(field)) {
+								return true;
+							}
+						}
+					}
+					break;
+				}
+				case Delta.MarkType.Insert: {
+					if (mark.isTransient !== true) {
+						return true;
+					}
+					break;
+				}
+				case Delta.MarkType.MoveOut:
+				case Delta.MarkType.MoveIn:
+				case Delta.MarkType.Delete:
+					return true;
+					break;
+				default:
+					unreachableCase(type);
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
@@ -421,7 +481,7 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		private readonly onCreate: (tree: ISharedTree) => void,
 		private readonly onLoad?: (tree: ISharedTree) => void,
 	) {
-		super();
+		super({ jsonValidator: typeboxValidator });
 	}
 
 	public override async load(
@@ -496,12 +556,82 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 	assert.deepEqual(actual, expected);
 }
 
+export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
+}
+
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
+	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
+	return makeTreeFromCursor(cursors, jsonSchema);
+}
+
+/**
+ * @remarks Remove this once schematize can do the work.
+ */
+export function makeTreeFromCursor(
+	cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
+	schemaData: SchemaData,
+): ISharedTreeView {
+	const schemaPolicy = defaultSchemaPolicy;
+	const tree: ISharedTreeView = createSharedTreeView();
+	// TODO: use ISharedTreeView.schematize once it supports cursors
+	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
+	const field = tree.editor.sequenceField({
+		parent: undefined,
+		field: rootFieldKeySymbol,
+	});
+	if (!Array.isArray(cursor) || cursor.length > 0) {
+		field.insert(0, cursor);
+	}
+	return tree;
+}
+
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
 	return jsonable;
+}
+
+/**
+ * Assumes `tree` is in the json domain and returns its content as a json compatible object.
+ */
+export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
+	const readCursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, readCursor);
+	const copy = mapCursorField(readCursor, cursorToJsonObject);
+	readCursor.free();
+	return copy;
+}
+
+/**
+ * Helper function to insert node at a given index.
+ *
+ * @param tree - The tree on which to perform the insert.
+ * @param index - The index in the root field at which to insert.
+ * @param value - The value of the inserted node.
+ */
+export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	field.insert(index, nodes);
+}
+
+export function remove(tree: ISharedTreeView, index: number, count: number): void {
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	field.delete(index, count);
+}
+
+export function expectJsonTree(
+	actual: ISharedTreeView | ISharedTreeView[],
+	expected: JsonCompatible[],
+): void {
+	const trees = Array.isArray(actual) ? actual : [actual];
+	for (const tree of trees) {
+		const roots = toJsonTree(tree);
+		assert.deepEqual(roots, expected);
+	}
 }
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -528,14 +658,17 @@ const testSchema: SchemaData = {
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state: JsonableTree,
+	state?: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-	// Apply an edit to the tree which inserts a node with a value
-	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-	field.insert(0, writeCursor);
+
+	if (state) {
+		// Apply an edit to the tree which inserts a node with a value
+		const writeCursor = singleTextCursor(state);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		field.insert(0, writeCursor);
+	}
 }
 
 export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
@@ -547,10 +680,10 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 	}
 }
 
-export class MockRepairDataStore implements RepairDataStore {
+export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
 
-	public capture(change: Delta.Root, revision: RevisionTag): void {
+	public capture(change: TChange, revision: RevisionTag): void {
 		const existing = this.capturedData.get(revision);
 
 		if (existing === undefined) {
@@ -567,66 +700,124 @@ export class MockRepairDataStore implements RepairDataStore {
 		index: number,
 		count: number,
 	): ITreeCursorSynchronous[] {
-		throw new Error("Method not implemented.");
+		return makeArray(count, () => singleTextCursor({ type: brand("MockRevivedNode") }));
 	}
 
 	public getValue(revision: RevisionTag, path: UpPath): Value {
-		throw new Error("Method not implemented.");
+		return brand("MockRevivedValue");
 	}
 }
 
-export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+export const mockIntoDelta = (delta: Delta.Root) => delta;
+
+export class MockRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
 	public freeze(): void {
 		// Noop
 	}
 
-	public applyDelta(change: Delta.Root): void {
+	public applyChange(change: TChange): void {
 		// Noop
 	}
 
-	public createRepairData(): MockRepairDataStore {
+	public createRepairData(): MockRepairDataStore<TChange> {
 		return new MockRepairDataStore();
 	}
 
-	public clone(): IRepairDataStoreProvider {
+	public clone(): IRepairDataStoreProvider<TChange> {
 		return new MockRepairDataStoreProvider();
 	}
 }
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily);
+	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
 }
+
+export interface EncodingTestData<TDecoded, TEncoded> {
+	/**
+	 * Contains test cases which should round-trip successfully through all persisted formats.
+	 */
+	successes: [name: string, data: TDecoded][];
+	/**
+	 * Contains malformed encoded data which a particular version's codec should fail to decode.
+	 */
+	failures?: { [version: string]: [name: string, data: TEncoded][] };
+}
+
+const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
 
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ *
+ * @privateRemarks - It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * but since these round trip tests start with the decoded format (not the encoded format),
+ * they require assert.deepEqual to be a valid comparison.
+ * This can be problematic for some cases (for example edits containing cursors).
+ *
+ * TODO:
+ * - Consider extending this to allow testing in a way where encoded formats (which can safely use deepEqual) are compared.
+ * - Consider adding a custom comparison function for non-encoded data.
+ * - Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
+ * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded>(
+export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	family: ICodecFamily<TDecoded>,
-	encodingTestData: [name: string, data: TDecoded][],
+	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			for (const [name, data] of encodingTestData) {
-				describe(name, () => {
-					it("json roundtrip", () => {
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
-						assert.deepEqual(decoded, data);
-					});
+			// A common pattern to avoid validating the same portion of encoded data multiple times
+			// is for a codec to either validate its data is in schema itself and not return `encodedSchema`,
+			// or for it to not validate its own data but return an `encodedSchema` and let the caller use that.
+			// This block makes sure we still validate the encoded data schema for codecs following the latter
+			// pattern.
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					: codec.json;
+			describe("can json roundtrip", () => {
+				for (const includeStringification of [false, true]) {
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data] of encodingTestData.successes) {
+								it(name, () => {
+									let encoded = jsonCodec.encode(data);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = jsonCodec.decode(encoded);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
+				}
+			});
 
-					it("json roundtrip with stringification", () => {
-						const encoded = JSON.stringify(codec.json.encode(data));
-						const decoded = codec.json.decode(JSON.parse(encoded));
-						assert.deepEqual(decoded, data);
-					});
-
-					it("binary roundtrip", () => {
+			describe("can binary roundtrip", () => {
+				for (const [name, data] of encodingTestData.successes) {
+					it(name, () => {
 						const encoded = codec.binary.encode(data);
 						const decoded = codec.binary.decode(encoded);
-						assert.deepEqual(decoded, data);
+						assertEquivalent(decoded, data);
 					});
+				}
+			});
+
+			const failureCases = encodingTestData.failures?.[version] ?? [];
+			if (failureCases.length > 0) {
+				describe("rejects malformed data", () => {
+					for (const [name, encodedData] of failureCases) {
+						it(name, () => {
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
+						});
+					}
 				});
 			}
 		});
@@ -649,4 +840,19 @@ export function testChangeReceiver<TChange>(
 	const changes: TChange[] = [];
 	const changeReceiver = (change: TChange) => changes.push(change);
 	return [changeReceiver, () => [...changes]];
+}
+
+export function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<unknown>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				revision: change.revision,
+				rollbackOf: change.rollbackOf,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
 }

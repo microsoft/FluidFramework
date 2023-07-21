@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -24,7 +23,6 @@ import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definition
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -65,7 +63,7 @@ async function loadSummarizer(
 	// Fail fast if we receive a nack as something must have gone wrong.
 	const summaryCollection = new SummaryCollection(
 		summarizerContainer.deltaManager,
-		new TelemetryNullLogger(),
+		createChildLogger(),
 	);
 	summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
 		throw new Error(
@@ -115,7 +113,7 @@ class ControlledCancellationToken implements ISummaryCancellationToken {
 async function submitFailingSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
 	fullTree: boolean = false,
 ) {
@@ -147,7 +145,7 @@ async function submitFailingSummary(
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -180,8 +178,13 @@ async function submitAndAckSummary(
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider) => {
+describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvider, apis) => {
+	const {
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+
 	let provider: ITestObjectProvider;
+	// TODO:#4670: Make this compat-version-specific.
 	const dataObjectFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
@@ -196,7 +199,7 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 		[innerRequestHandler],
 		runtimeOptions,
 	);
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.
 	let latestUploadedSummary: ISummaryTree | undefined;

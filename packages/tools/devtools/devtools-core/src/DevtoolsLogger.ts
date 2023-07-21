@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import {
 	GetTelemetryHistory,
@@ -43,7 +42,7 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @sealed
  * @public
  */
-export class DevtoolsLogger extends TelemetryLogger {
+export class DevtoolsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Base telemetry logger provided by the consumer.
 	 * All messages sent to the Devtools logger will be forwarded to this.
@@ -66,7 +65,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 	 * Handlers for inbound messages related to the logger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetTelemetryHistory.MessageType]: (untypedMessage) => {
+		[GetTelemetryHistory.MessageType]: async (untypedMessage) => {
 			this.postLogHistory();
 			return true;
 		},
@@ -97,8 +96,6 @@ export class DevtoolsLogger extends TelemetryLogger {
 	// #endregion
 
 	public constructor(baseLogger?: ITelemetryBaseLogger) {
-		super();
-
 		this.baseLogger = baseLogger;
 
 		this._telemetryLog = [];
@@ -118,7 +115,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 
 		try {
 			const newEvent: ITimestampedTelemetryEvent = {
-				logContent: this.prepareEvent(event),
+				logContent: event,
 				timestamp: Date.now(),
 			};
 

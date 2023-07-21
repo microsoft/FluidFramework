@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, CursorLocationType, FieldUpPath, UpPath, PathRootPrefix } from "../../core";
+import {
+	FieldKey,
+	CursorLocationType,
+	FieldUpPath,
+	UpPath,
+	PathRootPrefix,
+	CursorMarker,
+} from "../../core";
 import { fail } from "../../util";
 import { prefixFieldPath } from "../treeCursorUtils";
 import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
@@ -37,6 +44,7 @@ const emptyPath: FieldUpPath = {
  * Contains no nodes and is stateless.
  */
 export const emptyCursor: ChunkedCursor = {
+	[CursorMarker]: true,
 	pending: false,
 	mode: CursorLocationType.Fields,
 	[cursorChunk]: emptyChunk,

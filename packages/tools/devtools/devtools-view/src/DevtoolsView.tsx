@@ -5,36 +5,44 @@
 import React from "react";
 
 import {
+	Button,
+	FluentProvider,
+	makeStyles,
+	shorthands,
+	tokens,
+	Tooltip,
+} from "@fluentui/react-components";
+import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
+
+import { ArrowSync24Regular } from "@fluentui/react-icons";
+
+import {
+	ContainerKey,
 	ContainerList,
-	ContainerMetadata,
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingMessage,
+	HasContainerKey,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-
-import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { FluentProvider } from "@fluentui/react-components";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
-	MenuItem,
-	MenuSection,
 	LandingView,
+	SettingsView,
 	Waiting,
+	MenuSection,
+	MenuItem,
 } from "./components";
-import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
-import { getFluentUIThemeToUse } from "./ThemeHelper";
+import { useLogger } from "./TelemetryUtils";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
-
-// Ensure FluentUI icons are initialized.
-initializeFluentUiIcons();
 
 /**
  * Message sent to the webpage to query for the supported set of Devtools features.
@@ -50,16 +58,11 @@ const getContainerListMessage = GetContainerList.createMessage();
  * Indicates that the currently selected menu option is a particular Container.
  * @see {@link MenuSection} for other possible options.
  */
-interface ContainerMenuSelection {
+interface ContainerMenuSelection extends HasContainerKey {
 	/**
 	 * String to differentiate between different types of options in menu.
 	 */
 	type: "containerMenuSelection";
-
-	/**
-	 * The containerId for the selected menu option that this object represents.
-	 */
-	containerId: string;
 }
 
 /**
@@ -74,89 +77,94 @@ interface TelemetryMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Settings view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface SettingsMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "settingsMenuSelection";
+}
+
+/**
+ * Indicates that the currently selected menu option is the Home view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface HomeMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "homeMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
- * is selected, and has a 'containerId' property to indicate which Container.
+ * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+type MenuSelection =
+	| TelemetryMenuSelection
+	| ContainerMenuSelection
+	| SettingsMenuSelection
+	| HomeMenuSelection;
 
-// #region Styles definitions
-
-const stackStyles: IStackStyles = {
+const useDevtoolsStyles = makeStyles({
 	root: {
 		"display": "flex",
 		"flexDirection": "row",
-		"flexWrap": "nowrap",
-		"width": "auto",
-		"height": "auto",
-		"boxSizing": "border-box",
+		"width": "100%",
+		"height": "100%",
+		"overflowY": "auto",
 		"> *": {
 			textOverflow: "ellipsis",
 		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
+	},
+	icon: {
+		"& .ms-MessageBar-icon": {
+			marginTop: "10px",
 		},
 	},
-};
-
-const contentViewStyles: IStackItemStyles = {
-	root: {
-		"alignItems": "center",
-		"display": "flex",
-		"justifyContent": "center",
-		"flexDirection": "column",
-		"flexWrap": "nowrap",
-		"width": "auto",
-		"height": "auto",
-		"boxSizing": "border-box",
-		"> *": {
-			textOverflow: "ellipsis",
-		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
+	retryButton: {
+		marginLeft: "5px",
 	},
-};
-
-const menuStyles: IStackItemStyles = {
-	root: {
-		...contentViewStyles,
-		display: "flex",
-		flexDirection: "column",
-		borderRight: `2px solid`,
-		minWidth: 150,
+	debugNote: {
+		fontWeight: "normal",
+		marginTop: "0px",
+		marginBottom: "0px",
 	},
-};
-
-// #endregion
+});
 
 /**
- * Primary Devtools view.
+ * Primary Fluid Framework Devtools view.
+ *
+ * @remarks
+ *
  * Communicates with {@link @fluid-experimental/devtools-core#FluidDevtools} via {@link MessageRelayContext} to get
  * runtime-level stats to display, as well as the list of Container-level Devtools instances to display as menu options
  * and sub-views.
+ *
+ * Requires {@link MessageRelayContext} to have been set.
  */
 export function DevtoolsView(): React.ReactElement {
 	// Set of features supported by the Devtools.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
-
+	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
+	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
+	const styles = useDevtoolsStyles();
 
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
 				return true;
@@ -182,14 +190,71 @@ export function DevtoolsView(): React.ReactElement {
 		};
 	}, [messageRelay, setSupportedFeatures]);
 
+	// Manage the query timeout
+	React.useEffect(() => {
+		if (supportedFeatures === undefined) {
+			// If we have queried for the supported feature list but have not received
+			// a response yet, queue a timer.
+			const queryTimer = setTimeout(() => {
+				setQueryTimedOut(true);
+			}, queryTimeoutInMilliseconds);
+			return (): void => {
+				clearTimeout(queryTimer);
+			};
+		}
+	}, [supportedFeatures, setQueryTimedOut]);
+
+	function retryQuery(): void {
+		setQueryTimedOut(false);
+		messageRelay.postMessage(getSupportedFeaturesMessage);
+	}
+	initializeIcons();
+
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
-			{supportedFeatures === undefined ? (
-				<Waiting />
-			) : (
-				<_DevtoolsView supportedFeatures={supportedFeatures} />
-			)}
-		</FluentProvider>
+		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+				{supportedFeatures === undefined ? (
+					<>
+						{!queryTimedOut && <Waiting />}
+						{queryTimedOut && !isMessageDismissed && (
+							<MessageBar
+								messageBarType={MessageBarType.error}
+								isMultiline={true}
+								onDismiss={(): void => setIsMessageDismissed(true)}
+								dismissButtonAriaLabel="Close"
+								className={styles.icon}
+							>
+								It seems that Fluid Devtools has not been initialized in the current
+								tab, or it did not respond in a timely manner.
+								<Tooltip
+									content="Retry communicating with Fluid Devtools in the current tab."
+									relationship="description"
+								>
+									<Button
+										className={styles.retryButton}
+										size="small"
+										onClick={retryQuery}
+									>
+										Try again
+									</Button>
+								</Tooltip>
+								<br />
+								<h4 className={styles.debugNote}>
+									Need help? Please refer to our
+									<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
+										documentation page
+									</Link>{" "}
+									for guidance on getting the extension working.{" "}
+								</h4>
+							</MessageBar>
+						)}
+						<_DevtoolsView supportedFeatures={{}} />
+					</>
+				) : (
+					<_DevtoolsView supportedFeatures={supportedFeatures} />
+				)}
+			</FluentProvider>
+		</ThemeContext.Provider>
 	);
 }
 
@@ -206,9 +271,8 @@ interface _DevtoolsViewProps {
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	const { supportedFeatures } = props;
 
-	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
-
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -216,7 +280,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerList.MessageType]: (untypedMessage) => {
+			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
 				return true;
@@ -242,18 +306,35 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		};
 	}, [messageRelay, setContainers]);
 
+	const styles = useDevtoolsStyles();
+
 	return (
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+		<div className={styles.root}>
 			<Menu
 				currentSelection={menuSelection}
 				setSelection={setMenuSelection}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
+			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />
-		</Stack>
+		</div>
 	);
 }
+
+const useViewStyles = makeStyles({
+	root: {
+		...shorthands.padding("10px"),
+		alignItems: "center",
+		display: "flex",
+		flexDirection: "column",
+		height: "100%",
+		width: "100%",
+		minWidth: "200px",
+		overflowY: "auto",
+		boxSizing: "border-box",
+	},
+});
 
 /**
  * {@link View} input props.
@@ -269,7 +350,7 @@ interface ViewProps {
 	/**
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerKey[];
 }
 
 /**
@@ -278,6 +359,8 @@ interface ViewProps {
 function View(props: ViewProps): React.ReactElement {
 	const { menuSelection, containers } = props;
 
+	const styles = useViewStyles();
+
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection":
@@ -285,30 +368,60 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
-			const container = containers?.find((x) => x.id === menuSelection.containerId);
+			const container: ContainerKey | undefined = containers?.find(
+				(containerKey) => containerKey === menuSelection.containerKey,
+			);
 			view =
 				container === undefined ? (
 					<div>Could not find a Devtools instance for that container.</div>
 				) : (
-					<ContainerDevtoolsView containerId={menuSelection.containerId} />
+					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
+			break;
+		case "settingsMenuSelection":
+			view = <SettingsView />;
+			break;
+		case "homeMenuSelection":
+			view = <LandingView />;
 			break;
 		default:
 			view = <LandingView />;
 			break;
 	}
 
-	return (
-		<Stack.Item grow={5} styles={contentViewStyles}>
-			<div
-				id="devtools-view-content"
-				style={{ width: "100%", height: "100%", overflowY: "auto" }}
-			>
-				{view}
-			</div>
-		</Stack.Item>
-	);
+	return <div className={styles.root}>{view}</div>;
 }
+
+const useMenuStyles = makeStyles({
+	root: {
+		...shorthands.gap("0px", "10px"),
+		...shorthands.padding("10px"),
+		"boxSizing": "border-box",
+		"display": "flex",
+		"flexDirection": "column",
+		"height": "100%",
+		"overflowY": "auto",
+		"minWidth": "150px",
+		// Ensures the last div/component is anchored to the bottom.
+		"> :last-child": {
+			marginTop: "auto",
+			marginBottom: "15px",
+		},
+	},
+
+	// TODO: dedupe with MenuItem
+	button: {
+		"alignItems": "center",
+		"cursor": "pointer",
+		"display": "flex",
+		"flexDirection": "row",
+		"paddingLeft": "5px",
+		"&:hover": {
+			color: tokens.colorNeutralForeground1Hover,
+			backgroundColor: tokens.colorNeutralBackground1Hover,
+		},
+	},
+});
 
 /**
  * {@link Menu} input props.
@@ -335,7 +448,7 @@ interface MenuProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerKey[];
 }
 
 /**
@@ -343,24 +456,52 @@ interface MenuProps {
  */
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+	const usageLogger = useLogger();
 
-	function onContainerClicked(id: string): void {
-		setSelection({ type: "containerMenuSelection", containerId: id });
+	const styles = useMenuStyles();
+
+	function onContainerClicked(containerKey: ContainerKey): void {
+		setSelection({ type: "containerMenuSelection", containerKey });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Container" },
+		});
 	}
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Telemetry" },
+		});
+	}
+
+	function onSettingsClicked(): void {
+		setSelection({ type: "settingsMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Settings" },
+		});
+	}
+
+	function onHomeClicked(): void {
+		setSelection({ type: "homeMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Home" },
+		});
 	}
 
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
+		<MenuSection header="Home" key="home-menu-section" onHeaderClick={onHomeClicked} />,
 		<ContainersMenuSection
 			key="containers-menu-section"
 			containers={containers}
 			currentContainerSelection={
 				currentSelection?.type === "containerMenuSelection"
-					? currentSelection.containerId
+					? currentSelection.containerKey
 					: undefined
 			}
 			selectContainer={onContainerClicked}
@@ -380,10 +521,16 @@ function Menu(props: MenuProps): React.ReactElement {
 		);
 	}
 
+	menuSections.push(
+		<MenuSection
+			header="Settings"
+			key="settings-menu-section"
+			onHeaderClick={onSettingsClicked}
+		/>,
+	);
+
 	return (
-		<Stack.Item styles={menuStyles}>
-			{menuSections.length === 0 ? <Waiting /> : menuSections}
-		</Stack.Item>
+		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
 	);
 }
 
@@ -394,19 +541,19 @@ interface ContainersMenuSectionProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerKey[];
 
 	/**
-	 * The currently selected Container ID, if one is currently selected.
+	 * The currently selected Container key, if one is currently selected.
 	 */
-	currentContainerSelection: string | undefined;
+	currentContainerSelection: ContainerKey | undefined;
 
 	/**
-	 * Updates the Container selection to the specified ID.
+	 * Updates the Container selection to the specified key.
 	 *
 	 * @remarks Passing `undefined` clears the selection.
 	 */
-	selectContainer(containerId: string | undefined): void;
+	selectContainer(containerKey: ContainerKey | undefined): void;
 }
 
 /**
@@ -417,22 +564,22 @@ interface ContainersMenuSectionProps {
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
 	const { containers, selectContainer, currentContainerSelection } = props;
-
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label="Fetching Container list" />;
 	} else if (containers.length === 0) {
 		containerSectionInnerView = <div>No Containers found.</div>;
 	} else {
+		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((container) => (
+				{containers.map((containerKey: string) => (
 					<MenuItem
-						key={container.id}
-						isActive={currentContainerSelection === container.id}
-						text={container.nickname ?? container.id}
+						key={containerKey}
+						isActive={currentContainerSelection === containerKey}
+						text={containerKey}
 						onClick={(event): void => {
-							selectContainer(`${container.id}`);
+							selectContainer(`${containerKey}`);
 						}}
 					/>
 				))}
@@ -440,10 +587,44 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		);
 	}
 
-	// TODO: add button to refresh list of containers
 	return (
-		<MenuSection header="Containers" key="container-selection-menu-section">
+		<MenuSection
+			header="Containers"
+			key="container-selection-menu-section"
+			icon={<RefreshButton />}
+		>
 			{containerSectionInnerView}
 		</MenuSection>
+	);
+}
+
+/**
+ * A refresh button to retrieve the latest list of containers.
+ */
+function RefreshButton(): React.ReactElement {
+	const messageRelay = useMessageRelay();
+	const usageLogger = useLogger();
+
+	const transparentButtonStyle = {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+	};
+
+	function handleRefreshClick(): void {
+		// Query for list of Containers
+		messageRelay.postMessage(getContainerListMessage);
+		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+	}
+
+	return (
+		<Tooltip content="Refresh Containers list" relationship="label">
+			<Button
+				icon={<ArrowSync24Regular />}
+				style={transparentButtonStyle}
+				onClick={handleRefreshClick}
+				aria-label="Refresh Containers list"
+			></Button>
+		</Tooltip>
 	);
 }

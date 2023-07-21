@@ -8,7 +8,7 @@ import { DeleteDBCallbacks } from 'idb';
 import { ICacheEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCallbacks): Promise<void>;
@@ -26,6 +26,7 @@ export class FluidCache implements IPersistedCache {
 
 // @public (undocumented)
 export interface FluidCacheConfig {
+    closeDbAfterMs?: number;
     logger?: ITelemetryBaseLogger;
     maxCacheItemAge: number;
     partitionKey: string | null;

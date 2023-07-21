@@ -6,11 +6,11 @@
 import React from "react";
 
 /**
- * Landing page for the debugger
+ * Landing page for the devtools.
  */
 export function LandingView(): React.ReactElement {
 	return (
-		<div style={{ marginLeft: "5px" }}>
+		<div>
 			<h3>Welcome to the Fluid Framework Developer Tools!</h3>
 			<p>To start, select an option from the menu on the left.</p>
 			<p>

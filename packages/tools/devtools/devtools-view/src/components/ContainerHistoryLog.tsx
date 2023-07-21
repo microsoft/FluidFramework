@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import React from "react";
 import {
 	tokens,
@@ -23,8 +22,34 @@ import {
 	Attach20Regular,
 	LockClosed20Filled,
 } from "@fluentui/react-icons";
-import { Stack, StackItem, IStackItemStyles } from "@fluentui/react";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
+import { ThemeContext } from "../ThemeHelper";
+import { ThemeOption } from "./SettingsView";
+import { LabelCellLayout } from "./utility-components";
+
+/**
+ * Returns the text color based on the current color theme of the devtools.
+ */
+function setThemeStyle(themeName: string, state: string): string {
+	if (themeName === ThemeOption.HighContrast) {
+		switch (state) {
+			case "attached":
+				return "#FFF";
+			case "closed":
+				return "#000";
+			case "connected":
+				return "#FFF";
+			case "disconnected":
+				return "#000";
+			case "disposed":
+				return "#000";
+			default:
+				console.log("Unknown state type for container!");
+				return "";
+		}
+	}
+	return "";
+}
 
 /**
  * Represents container state history data which is rendered in {@link ContainerHistoryLog}.
@@ -41,6 +66,7 @@ export interface ContainerHistoryLogProps {
  */
 export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.ReactElement {
 	const { containerHistory } = props;
+	const { themeInfo } = React.useContext(ThemeContext);
 
 	// Columns for rendering container state history.
 	const containerHistoryColumns = [
@@ -66,30 +92,22 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 		}
 	};
 
-	const itemStyles: IStackItemStyles = {
-		root: {
-			paddingTop: "6px",
-			paddingBottom: "6px",
-		},
-	};
-
-	const itemStateStyle: IStackItemStyles = {
-		root: {
-			marginTop: "8px",
-			marginBottom: "8px",
-			marginLeft: "5px",
-		},
-	};
-
 	return (
 		<Table size="extra-small" aria-label="Audience history table">
 			<TableHeader>
 				<TableRow>
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "state" && <AlertBadgeRegular />}
-							{column.columnKey === "time" && <Clock12Regular />}
-							{column.label}
+							{column.columnKey === "state" && (
+								<LabelCellLayout icon={<AlertBadgeRegular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "time" && (
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>
@@ -129,15 +147,24 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableCell>
-								<Stack horizontal>
-									<StackItem styles={itemStyles}>
-										{getStateIcon(item.newState)}
-									</StackItem>
-									<StackItem styles={itemStateStyle}>{item.newState}</StackItem>
-								</Stack>
+							<TableCell
+								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
+							>
+								<LabelCellLayout icon={getStateIcon(item.newState)}>
+									<span
+										style={{
+											color: setThemeStyle(themeInfo.name, item.newState),
+										}}
+									>
+										{item.newState}
+									</span>
+								</LabelCellLayout>
 							</TableCell>
-							<TableCell>{timestampDisplay}</TableCell>
+							<TableCell
+								style={{ color: setThemeStyle(themeInfo.name, item.newState) }}
+							>
+								{timestampDisplay}
+							</TableCell>
 						</TableRow>
 					);
 				})}

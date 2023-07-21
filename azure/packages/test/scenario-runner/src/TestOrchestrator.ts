@@ -8,8 +8,9 @@ import path from "node:path";
 import * as yaml from "js-yaml";
 import { v4 as uuid } from "uuid";
 
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
 import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
 import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
@@ -121,7 +122,7 @@ export class TestOrchestrator {
 		return success;
 	}
 
-	private async execRun(logger: TelemetryLogger): Promise<boolean> {
+	private async execRun(logger: ITelemetryLogger): Promise<boolean> {
 		if (!this.doc) {
 			throw new Error("Invalid config.");
 		}

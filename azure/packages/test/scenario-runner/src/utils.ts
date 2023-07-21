@@ -11,9 +11,11 @@ import {
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
+import { v4 as uuid } from "uuid";
+
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
@@ -21,7 +23,7 @@ export interface AzureClientConfig {
 	connEndpoint?: string;
 	userId?: string;
 	userName?: string;
-	logger?: TelemetryLogger;
+	logger?: ITelemetryLogger;
 	tenantId?: string;
 	tenantKey?: string;
 	functionUrl?: string;
@@ -119,7 +121,10 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 		}
 	} else {
 		connectionProps = {
-			tokenProvider: new InsecureTokenProvider("fooBar", generateTestUser()),
+			tokenProvider: new InsecureTokenProvider("fooBar", {
+				id: uuid(),
+				name: uuid(),
+			}),
 			endpoint: config.connEndpoint,
 			type: "local",
 		};

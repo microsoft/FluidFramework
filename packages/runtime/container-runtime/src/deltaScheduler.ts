@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there
  * is more than one op a particular run of the queue. It does not schedule if there is just one
@@ -52,7 +51,7 @@ export class DeltaScheduler {
 
 	constructor(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.deltaManager = deltaManager;
 		this.deltaManager.inbound.on("idle", () => {
@@ -112,20 +111,16 @@ export class DeltaScheduler {
 					if (this.schedulingLog) {
 						this.logger.sendTelemetryEvent({
 							eventName: "InboundOpsPartialProcessingTime",
-							duration: TelemetryLogger.formatTick(elapsedTime),
+							duration: formatTick(elapsedTime),
 							opsProcessed:
 								this.schedulingLog.lastSequenceNumber -
 								this.schedulingLog.firstSequenceNumber +
 								1,
 							opsRemainingToProcess: this.deltaManager.inbound.length,
-							processingTime: TelemetryLogger.formatTick(
-								this.schedulingLog.totalProcessingTime,
-							),
+							processingTime: formatTick(this.schedulingLog.totalProcessingTime),
 							numberOfTurns: this.schedulingLog.numberOfTurns,
 							batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
-							timeToResume: TelemetryLogger.formatTick(
-								performance.now() - currentTime,
-							),
+							timeToResume: formatTick(performance.now() - currentTime),
 						});
 					}
 					this.deltaManager.inbound.resume();
@@ -148,13 +143,13 @@ export class DeltaScheduler {
 				eventName: "InboundOpsProcessingTime",
 				opsRemainingToProcess: this.schedulingLog.opsRemainingToProcess,
 				numberOfTurns: this.schedulingLog.numberOfTurns,
-				processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
+				processingTime: formatTick(this.schedulingLog.totalProcessingTime),
 				opsProcessed:
 					this.schedulingLog.lastSequenceNumber -
 					this.schedulingLog.firstSequenceNumber +
 					1,
 				batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
-				duration: TelemetryLogger.formatTick(currentTime - this.schedulingLog.startTime),
+				duration: formatTick(currentTime - this.schedulingLog.startTime),
 				schedulingCount: this.schedulingCount,
 			});
 

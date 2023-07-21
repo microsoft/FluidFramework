@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	IBatchMessage,
 	IContainerContext,
+	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
 import {
@@ -15,7 +16,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { PendingStateManager } from "../../pendingStateManager";
+import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager";
 import {
 	BatchMessage,
 	IBatch,
@@ -28,8 +29,8 @@ import {
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	ICompressionRuntimeOptions,
+	makeLegacySendBatchFn,
 } from "../../containerRuntime";
 
 describe("Outbox", () => {
@@ -116,26 +117,22 @@ describe("Outbox", () => {
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		onSubmitMessage: (
-			type: ContainerMessageType,
+			content: string,
 			referenceSequenceNumber: number,
-			content: any,
 			_localOpMetadata: unknown,
 			opMetadata: Record<string, unknown> | undefined,
 		): void => {
-			state.pendingOpContents.push({ type, content, referenceSequenceNumber, opMetadata });
+			state.pendingOpContents.push({ content, referenceSequenceNumber, opMetadata });
 		},
 	});
 
-	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => {
-		const deserializedContent: ContainerRuntimeMessage = { type, contents };
-		return {
-			contents: JSON.stringify(deserializedContent),
-			deserializedContent,
-			metadata: { test: true },
-			localOpMetadata: {},
-			referenceSequenceNumber: Number.POSITIVE_INFINITY,
-		};
-	};
+	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => ({
+		contents: JSON.stringify({ type, contents }),
+		type,
+		metadata: { test: true },
+		localOpMetadata: {},
+		referenceSequenceNumber: Number.POSITIVE_INFINITY,
+	});
 
 	const batchedMessage = (
 		message: BatchMessage,
@@ -171,6 +168,7 @@ describe("Outbox", () => {
 			.reduce((a, b) => a + b, 0),
 		referenceSequenceNumber:
 			messages.length === 0 ? undefined : messages[0].referenceSequenceNumber,
+		hasReentrantOps: false,
 	});
 
 	const DefaultCompressionOptions = {
@@ -178,7 +176,7 @@ describe("Outbox", () => {
 		compressionAlgorithm: CompressionAlgorithms.lz4,
 	};
 
-	const currentSeqNumbers: BatchSequenceNumbers = {};
+	let currentSeqNumbers: BatchSequenceNumbers = {};
 
 	const getOutbox = (params: {
 		context: IContainerContext;
@@ -187,11 +185,17 @@ describe("Outbox", () => {
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
-	}) =>
-		new Outbox({
+		enableGroupedBatching?: boolean;
+	}) => {
+		const { submitFn, submitBatchFn, deltaManager } = params.context;
+
+		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, deltaManager);
+
+		return new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			containerContext: params.context,
+			submitBatchFn,
+			legacySendBatchFn,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,
@@ -201,11 +205,16 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
+				enableGroupedBatching: params.enableGroupedBatching ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
+			reSubmit: (message: IPendingBatchMessage) => {},
+			opReentrancy: () => false,
+			closeContainer: (error?: ICriticalContainerError) => {},
 		});
+	};
 
 	beforeEach(() => {
 		state.deltaManagerFlushCalls = 0;
@@ -216,6 +225,7 @@ describe("Outbox", () => {
 		state.individualOpsSubmitted.splice(0);
 		state.pendingOpContents.splice(0);
 		state.opsSubmitted = 0;
+		currentSeqNumbers = {};
 		mockLogger.clear();
 	});
 
@@ -263,8 +273,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -292,8 +301,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			messages.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -324,8 +332,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -379,8 +386,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -432,8 +438,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -456,9 +461,7 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.Attach, "7"),
 		];
 
-		const attachMessages = messages.filter(
-			(x) => x.deserializedContent.type === ContainerMessageType.Attach,
-		);
+		const attachMessages = messages.filter((x) => x.type === ContainerMessageType.Attach);
 		assert.ok(attachMessages.length > 0 && attachMessages[0].contents !== undefined);
 		const outbox = getOutbox({
 			context: getMockContext() as IContainerContext,
@@ -469,7 +472,7 @@ describe("Outbox", () => {
 		});
 
 		for (const message of messages) {
-			if (message.deserializedContent.type === ContainerMessageType.Attach) {
+			if (message.type === ContainerMessageType.Attach) {
 				outbox.submitAttach(message);
 			} else {
 				outbox.submit(message);
@@ -497,8 +500,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			attachMessages.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -581,8 +583,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -686,8 +687,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -734,7 +734,7 @@ describe("Outbox", () => {
 			const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
-				if (op.deserializedContent.type === ContainerMessageType.Attach) {
+				if (op.type === ContainerMessageType.Attach) {
 					outbox.submitAttach(op);
 				} else {
 					outbox.submit(op);
@@ -786,7 +786,8 @@ describe("Outbox", () => {
 		];
 
 		for (const message of messages) {
-			if (message.deserializedContent.type === ContainerMessageType.Attach) {
+			currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
+			if (message.type === ContainerMessageType.Attach) {
 				outbox.submitAttach(message);
 			} else {
 				outbox.submit(message);
@@ -808,10 +809,12 @@ describe("Outbox", () => {
 		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 
 		for (let i = 0; i < 10; i++) {
+			currentSeqNumbers.referenceSequenceNumber = 0;
 			outbox.submit({
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 				referenceSequenceNumber: 0,
 			});
+			currentSeqNumbers.referenceSequenceNumber = 1;
 			outbox.submit({
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 				referenceSequenceNumber: 1,
@@ -822,6 +825,53 @@ describe("Outbox", () => {
 			new Array(3).fill({
 				eventName: "Outbox:ReferenceSequenceNumberMismatch",
 			}),
+		);
+	});
+
+	it("blobAttach ops always flush before regular ops", () => {
+		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+
+		const messages = [
+			createMessage(ContainerMessageType.BlobAttach, "0"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			createMessage(ContainerMessageType.BlobAttach, "2"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+			createMessage(ContainerMessageType.BlobAttach, "4"),
+		];
+
+		outbox.submitBlobAttach(messages[0]);
+		outbox.submit(messages[1]);
+		outbox.submitBlobAttach(messages[2]);
+		outbox.submit(messages[3]);
+		outbox.submitBlobAttach(messages[4]);
+
+		outbox.flush();
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages),
+			[
+				[
+					batchedMessage(messages[0], true),
+					batchedMessage(messages[2]),
+					batchedMessage(messages[4], false),
+				],
+				[batchedMessage(messages[1], true), batchedMessage(messages[3], false)],
+			],
+		);
+
+		const rawMessagesInFlushOrder = [
+			messages[0],
+			messages[2],
+			messages[4],
+			messages[1],
+			messages[3],
+		];
+		assert.deepEqual(
+			state.pendingOpContents,
+			rawMessagesInFlushOrder.map((message) => ({
+				content: message.contents,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+				opMetadata: message.metadata,
+			})),
 		);
 	});
 });

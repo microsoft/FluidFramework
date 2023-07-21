@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { delay, performance } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
@@ -45,7 +45,7 @@ export interface IProgress {
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
 	fetchCallName: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	progress: IProgress,
 ): Promise<T> {
 	let result: T | undefined;
@@ -80,13 +80,20 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
+						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
 					},
 					err,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
 					DriverErrorType.genericError,
-					{ driverVersion: pkgVersion, fetchCallName },
+					{
+						driverVersion: pkgVersion,
+						fetchCallName,
+						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
+					},
 				);
 			}
 

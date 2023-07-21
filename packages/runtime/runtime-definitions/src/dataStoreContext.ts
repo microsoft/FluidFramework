@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
 	ITelemetryBaseLogger,
 	IDisposable,
-	IEvent,
-	IEventProvider,
-} from "@fluidframework/common-definitions";
-import {
 	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,
@@ -138,6 +135,7 @@ export interface IDataStore extends IFluidRouter {
 	 * by the supplied alias and will not be garbage collected.
 	 *
 	 * @param alias - Given alias for this datastore.
+	 * @returns A promise with the {@link AliasResult}
 	 */
 	trySetAlias(alias: string): Promise<AliasResult>;
 
@@ -214,7 +212,7 @@ export interface IContainerRuntimeBase
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Returns the current quorum.
@@ -472,7 +470,7 @@ export interface IFluidDataStoreContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.

@@ -18,8 +18,9 @@ import {
 	wrapErrorAndLog,
 	isExternalError,
 	NORMALIZED_ERROR_TYPE,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
@@ -61,7 +62,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 	static wrap(
 		error: unknown,
 		retryAfterSeconds: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): IThrottlingWarning {
 		const newErrorFn = (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
 		return wrapErrorAndLog(error, newErrorFn, logger);
@@ -139,20 +140,30 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 	 * But an unrecognized error needs to be classified as DataProcessingError.
 	 * @param originalError - error to be converted
 	 * @param dataProcessingCodepath - which codepath failed while processing data
-	 * @param sequencedMessage - Sequenced message to include info about via telemetry props
+	 * @param messageLike - Sequenced message to include info about via telemetry props
 	 * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
 	 */
 	static wrapIfUnrecognized(
 		originalError: any,
 		dataProcessingCodepath: string,
-		sequencedMessage?: ISequencedDocumentMessage,
+		messageLike?: Partial<
+			Pick<
+				ISequencedDocumentMessage,
+				| "clientId"
+				| "sequenceNumber"
+				| "clientSequenceNumber"
+				| "referenceSequenceNumber"
+				| "minimumSequenceNumber"
+				| "timestamp"
+			>
+		>,
 	): IFluidErrorBase {
 		const props = {
 			dataProcessingError: 1,
 			dataProcessingCodepath,
-			...(sequencedMessage === undefined
+			...(messageLike === undefined
 				? undefined
-				: extractSafePropertiesFromMessage(sequencedMessage)),
+				: extractSafePropertiesFromMessage(messageLike)),
 		};
 
 		const normalizedError = normalizeError(originalError, { props });
@@ -177,11 +188,23 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 	}
 }
 
-export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMessage) => ({
-	messageClientId: message.clientId,
-	messageSequenceNumber: message.sequenceNumber,
-	messageClientSequenceNumber: message.clientSequenceNumber,
-	messageReferenceSequenceNumber: message.referenceSequenceNumber,
-	messageMinimumSequenceNumber: message.minimumSequenceNumber,
-	messageTimestamp: message.timestamp,
+export const extractSafePropertiesFromMessage = (
+	messageLike: Partial<
+		Pick<
+			ISequencedDocumentMessage,
+			| "clientId"
+			| "sequenceNumber"
+			| "clientSequenceNumber"
+			| "referenceSequenceNumber"
+			| "minimumSequenceNumber"
+			| "timestamp"
+		>
+	>,
+) => ({
+	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
+	messageSequenceNumber: messageLike.sequenceNumber,
+	messageClientSequenceNumber: messageLike.clientSequenceNumber,
+	messageReferenceSequenceNumber: messageLike.referenceSequenceNumber,
+	messageMinimumSequenceNumber: messageLike.minimumSequenceNumber,
+	messageTimestamp: messageLike.timestamp,
 });

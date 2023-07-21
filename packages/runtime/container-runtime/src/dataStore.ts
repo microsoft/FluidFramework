@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
@@ -13,7 +13,6 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
 
@@ -48,7 +47,7 @@ export const channelToDataStore = (
 	internalId: string,
 	runtime: ContainerRuntime,
 	datastores: DataStores,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
 
 enum AliasState {
@@ -63,6 +62,9 @@ class DataStore implements IDataStore {
 	private readonly pendingAliases: Map<string, Promise<AliasResult>>;
 	private aliasResult: Promise<AliasResult> | undefined;
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.trySetAlias}
+	 */
 	async trySetAlias(alias: string): Promise<AliasResult> {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
@@ -175,7 +177,7 @@ class DataStore implements IDataStore {
 		private readonly internalId: string,
 		private readonly runtime: ContainerRuntime,
 		private readonly datastores: DataStores,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.pendingAliases = datastores.pendingAliases;
 	}

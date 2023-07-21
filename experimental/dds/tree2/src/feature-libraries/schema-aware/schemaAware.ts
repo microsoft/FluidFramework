@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { TreeSchemaIdentifier, ValueSchema } from "../../core";
+import { PrimitiveValueSchema, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -12,18 +12,13 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 } from "../contextuallyTyped";
-import {
-	Multiplicity,
-	InternalTypedSchemaTypes,
-	FieldSchema,
-	TreeSchema,
-	AllowedTypes,
-} from "../modular-schema";
+import { Multiplicity } from "../modular-schema";
+import { InternalTypedSchemaTypes, FieldSchema, TreeSchema, AllowedTypes } from "../typed-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { contextSymbol, typeSymbol } from "../editable-tree";
-import { Assume } from "../../util";
-import { UntypedSequenceField } from "./partlyTyped";
-import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
+import { AllowOptional, Assume, FlattenKeys, _InlineTrick } from "../../util";
+import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
+import { TypedValue } from "./schemaAwareUtil";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
@@ -129,12 +124,12 @@ export type CollectOptions<
  * @alpha
  */
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
-	InternalTypedSchemaTypes.FlattenKeys<
-		{ [typeNameSymbol]?: UnbrandedName<TName> } & InternalTypedSchemaTypes.AllowOptional<
+	FlattenKeys<
+		{ [typeNameSymbol]?: UnbrandedName<TName> } & AllowOptional<
 			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
-][InternalTypedSchemaTypes._dummy];
+][_InlineTrick];
 
 /**
  * Remove type brand from name.
@@ -142,10 +137,12 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
  */
 export type UnbrandedName<TName> = [
 	TName extends infer S & TreeSchemaIdentifier ? S : string,
-][InternalTypedSchemaTypes._dummy];
+][_InlineTrick];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
+ *
+ * In Editable mode, unwraps the fields.
  *
  * TODO:
  * Extend this to support global fields.
@@ -157,22 +154,25 @@ export type TypedFields<
 > = [
 	TFields extends { [key: string]: FieldSchema }
 		? {
-				[key in keyof TFields]: TypedField<Mode, TFields[key]>;
+				[key in keyof TFields]: TypedField<
+					TFields[key],
+					Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
+				>;
 		  }
 		: EmptyObject,
-][InternalTypedSchemaTypes._dummy];
+][_InlineTrick];
 
 /**
- * `FieldSchemaTypeInfo` to `TypedTree`
+ * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
  * @alpha
  */
-export type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
+export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
-		Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
+		Mode
 	>,
-][InternalTypedSchemaTypes._dummy];
+][_InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -184,11 +184,15 @@ export type ApplyMultiplicity<
 	Mode extends ApiMode,
 > = {
 	[Multiplicity.Forbidden]: undefined;
-	[Multiplicity.Optional]: undefined | TypedChild;
+	[Multiplicity.Optional]: Mode extends ApiMode.Editable
+		? EditableOptionalField<TypedChild>
+		: undefined | TypedChild;
 	[Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped
 		? EditableSequenceField<TypedChild>
 		: TypedChild[];
-	[Multiplicity.Value]: TypedChild;
+	[Multiplicity.Value]: Mode extends ApiMode.Editable
+		? EditableValueField<TypedChild>
+		: TypedChild;
 }[TMultiplicity];
 
 // TODO: add strong typed `getNode`.
@@ -198,7 +202,23 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
 /**
  * @alpha
  */
-export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
+export type EditableSequenceField<TypedChild> = [
+	UntypedSequenceField & MarkedArrayLike<TypedChild>,
+][_InlineTrick];
+
+/**
+ * @alpha
+ */
+export type EditableValueField<TypedChild> = [
+	UntypedValueField & MarkedArrayLike<TypedChild>,
+][_InlineTrick];
+
+/**
+ * @alpha
+ */
+export type EditableOptionalField<TypedChild> = [
+	UntypedOptionalField & MarkedArrayLike<TypedChild>,
+][_InlineTrick];
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
@@ -216,7 +236,7 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 				>
 		  >
 		: UntypedApi<Mode>,
-][InternalTypedSchemaTypes._dummy];
+][_InlineTrick];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -229,7 +249,7 @@ export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly T
 				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
-][InternalTypedSchemaTypes._dummy];
+][_InlineTrick];
 
 // TODO: make these more accurate
 /**
@@ -251,7 +271,7 @@ export type UntypedApi<Mode extends ApiMode> = {
 export type TypedNode<
 	TSchema extends TreeSchema,
 	Mode extends ApiMode = ApiMode.Editable,
-> = InternalTypedSchemaTypes.FlattenKeys<
+> = FlattenKeys<
 	CollectOptions<
 		Mode,
 		TypedFields<
@@ -278,6 +298,7 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
  * Provided schema must be included in the schema for the tree being viewed (getting this wrong will error).
  * @alpha
  */
+// TODO: tests
 export function downCast<TSchema extends TreeSchema>(
 	schema: TSchema,
 	tree: UntypedTreeCore,
@@ -288,13 +309,13 @@ export function downCast<TSchema extends TreeSchema>(
 	const contextSchema = tree[contextSymbol].schema;
 	const lookedUp = contextSchema.treeSchema.get(schema.name);
 	// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
-	assert(lookedUp === schema, "cannot downcast to a schema the tree is not using");
+	assert(lookedUp === schema, 0x68c /* cannot downcast to a schema the tree is not using */);
 
 	// TODO: make this actually work
 	const matches = tree[typeSymbol] === schema;
 	assert(
 		matches === (tree[typeSymbol].name === schema.name),
-		"schema object identity comparison should match identifier comparison",
+		0x68d /* schema object identity comparison should match identifier comparison */,
 	);
 	return matches;
 }

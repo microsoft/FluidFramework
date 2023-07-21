@@ -17,6 +17,7 @@ export {
 	validateTokenClaims,
 	verifyStorageToken,
 	validateTokenScopeClaims,
+	verifyToken,
 } from "./auth";
 export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";
@@ -39,4 +40,10 @@ export {
 export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./throttlerConfigs";
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
-export { WebSocketTracker, DummyTokenRevocationManager } from "./tokenRevocationManager";
+export {
+	WebSocketTracker,
+	DummyTokenRevocationManager,
+	DummyRevokedTokenChecker,
+} from "./tokenRevocationManager";
+export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
+export { IApiCounters, InMemoryApiCounters } from "./apiCounters";

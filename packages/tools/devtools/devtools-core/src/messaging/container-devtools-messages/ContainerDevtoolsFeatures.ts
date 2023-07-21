@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { ContainerDevtoolsFeatureFlags } from "../../Features";
 import { IDevtoolsMessage } from "../Messages";
 
@@ -25,7 +25,7 @@ export namespace ContainerDevtoolsFeatures {
 	 *
 	 * @internal
 	 */
-	export interface MessageData extends HasContainerId {
+	export interface MessageData extends HasContainerKey {
 		/**
 		 * {@inheritDoc ContainerDevtoolsFeatureFlags}
 		 */
@@ -34,7 +34,7 @@ export namespace ContainerDevtoolsFeatures {
 
 	/**
 	 * Outbound message containing the set of features supported by the Container-level Devtools instance associated
-	 * with the specified {@link HasContainerId.containerId}.
+	 * with the specified {@link HasContainerKey.containerKey}.
 	 *
 	 * @internal
 	 */

@@ -1,4 +1,4 @@
 {
 	"tags": ["popup"],
-	"imports": ["utilities"]
+	"imports": ["globals"]
 }

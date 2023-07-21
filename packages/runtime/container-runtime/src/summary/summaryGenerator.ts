@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	LoggingError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+
 import {
 	assert,
 	Deferred,
@@ -12,7 +19,6 @@ import {
 	Timer,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -28,6 +34,8 @@ import {
 	ISummaryCancellationToken,
 	ISummarizeTelemetryProperties,
 	SummaryGeneratorTelemetry,
+	SummaryStage,
+	SubmitSummaryFailureData,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -125,7 +133,9 @@ export const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
-	public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
+	public readonly summarySubmitted = new Deferred<
+		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
+	>();
 	public readonly summaryOpBroadcasted = new Deferred<
 		SummarizeResultPart<IBroadcastSummaryResult>
 	>();
@@ -136,6 +146,7 @@ export class SummarizeResultBuilder {
 	public fail(
 		message: string,
 		error: any,
+		stage: SummaryStage = "unknown",
 		nackSummaryResult?: INackSummaryResult,
 		retryAfterSeconds?: number,
 	) {
@@ -151,7 +162,7 @@ export class SummarizeResultBuilder {
 			error,
 			retryAfterSeconds,
 		} as const;
-		this.summarySubmitted.resolve(result);
+		this.summarySubmitted.resolve({ ...result, data: { stage } });
 		this.summaryOpBroadcasted.resolve(result);
 		this.receivedSummaryAckOrNack.resolve({ ...result, data: nackSummaryResult });
 	}
@@ -161,6 +172,20 @@ export class SummarizeResultBuilder {
 			summaryOpBroadcasted: this.summaryOpBroadcasted.promise,
 			receivedSummaryAckOrNack: this.receivedSummaryAckOrNack.promise,
 		} as const;
+	}
+}
+
+/**
+ * Errors type for errors hit during summary that may be retriable.
+ */
+export class RetriableSummaryError extends LoggingError {
+	public readonly canRetry = this.retryAfterSeconds !== undefined;
+	constructor(
+		message: string,
+		public readonly retryAfterSeconds?: number,
+		props?: ITelemetryProperties,
+	) {
+		super(message, props);
 	}
 }
 
@@ -177,7 +202,7 @@ export class SummaryGenerator {
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>
 			this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
@@ -215,7 +240,11 @@ export class SummaryGenerator {
 		cancellationToken: ISummaryCancellationToken,
 	): Promise<void> {
 		const { refreshLatestAck, fullTree } = options;
-		const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
+		const logger = createChildLogger({
+			logger: this.logger,
+			namespace: undefined,
+			properties: { all: summarizeProps },
+		});
 
 		// Note: timeSinceLastAttempt and timeSinceLastSummary for the
 		// first summary are basically the time since the summarizer was loaded.
@@ -238,6 +267,7 @@ export class SummaryGenerator {
 			{ start: true, end: true, cancel: "generic" },
 		);
 
+		let summaryData: SubmitSummaryResult | undefined;
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
 			error?: any,
@@ -266,14 +296,15 @@ export class SummaryGenerator {
 				},
 				error ?? reason,
 			); // disconnect & summaryAckTimeout do not have proper error.
-			resultsBuilder.fail(reason, error, nackSummaryResult, retryAfterSeconds);
+
+			// If summarize did not hit an unexpected error, summaryData would be available. Otherwise, the state is
+			// unknown.
+			const stage = summaryData?.stage ?? "unknown";
+			resultsBuilder.fail(reason, error, stage, nackSummaryResult, retryAfterSeconds);
 		};
 
 		// Wait to generate and send summary
 		this.summarizeTimer.start();
-
-		// Use record type to prevent unexpected value types
-		let summaryData: SubmitSummaryResult | undefined;
 		try {
 			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
@@ -355,10 +386,10 @@ export class SummaryGenerator {
 				cancellationToken,
 			);
 			if (waitBroadcastResult.result === "cancelled") {
-				return fail("disconnect");
+				return fail("disconnect", summaryData.stage);
 			}
 			if (waitBroadcastResult.result !== "done") {
-				return fail("summaryOpWaitTimeout");
+				return fail("summaryOpWaitTimeout", summaryData.stage);
 			}
 			const summarizeOp = waitBroadcastResult.value;
 

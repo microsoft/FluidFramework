@@ -8,14 +8,13 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -37,7 +36,7 @@ export namespace AudienceSummary {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export interface MessageData extends HasContainerId {
+    export interface MessageData extends HasContainerKey {
         audienceHistory: readonly AudienceChangeLogEntry[];
         audienceState: AudienceClientMetadata[];
         clientId: string | undefined;
@@ -51,7 +50,7 @@ export namespace CloseContainer {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @internal
@@ -61,7 +60,7 @@ export namespace ConnectContainer {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @internal
@@ -86,19 +85,20 @@ export namespace ContainerDevtoolsFeatures {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export interface MessageData extends HasContainerId {
+    export interface MessageData extends HasContainerKey {
         features: ContainerDevtoolsFeatureFlags;
     }
 }
 
 // @public
-export interface ContainerDevtoolsProps {
+export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
-    containerId: string;
-    containerNickname?: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
+
+// @public
+export type ContainerKey = string;
 
 // @internal
 export namespace ContainerList {
@@ -108,14 +108,8 @@ export namespace ContainerList {
         type: typeof MessageType;
     }
     export interface MessageData {
-        containers: ContainerMetadata[];
+        containers: ContainerKey[];
     }
-}
-
-// @internal
-export interface ContainerMetadata {
-    id: string;
-    nickname?: string;
 }
 
 // @internal
@@ -125,7 +119,7 @@ export namespace ContainerStateChange {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export interface MessageData extends HasContainerId {
+    export interface MessageData extends HasContainerKey {
         containerState: ContainerStateMetadata;
     }
 }
@@ -146,21 +140,21 @@ export namespace ContainerStateHistory {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export interface MessageData extends HasContainerId {
+    export interface MessageData extends HasContainerKey {
         history: ConnectionStateChangeLogEntry[];
     }
 }
 
 // @internal
-export interface ContainerStateMetadata extends ContainerMetadata {
+export interface ContainerStateMetadata extends HasContainerKey {
     // (undocumented)
     attachState: AttachState;
-    audienceId?: string;
     // (undocumented)
     clientId?: string;
     closed: boolean;
     // (undocumented)
     connectionState: ConnectionState;
+    userId?: string;
 }
 
 // @internal
@@ -170,8 +164,17 @@ export namespace DataVisualization {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export interface MessageData extends HasContainerId, HasFluidObjectId {
+    export interface MessageData extends HasContainerKey, HasFluidObjectId {
         visualization: FluidObjectNode | undefined;
+    }
+}
+
+// @internal
+export namespace DevtoolsDisposed {
+    const MessageType = "DEVTOOLS_DISPOSED";
+    export function createMessage(): Message;
+    export interface Message extends IDevtoolsMessage<undefined> {
+        type: typeof MessageType;
     }
 }
 
@@ -198,7 +201,7 @@ export namespace DevtoolsFeatures {
 }
 
 // @public @sealed
-export class DevtoolsLogger extends TelemetryLogger {
+export class DevtoolsLogger implements ITelemetryBaseLogger {
     constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
 }
@@ -213,7 +216,7 @@ export namespace DisconnectContainer {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @public
@@ -262,7 +265,7 @@ export namespace GetAudienceSummary {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @internal
@@ -272,7 +275,7 @@ export namespace GetContainerDevtoolsFeatures {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @internal
@@ -288,10 +291,10 @@ export namespace GetContainerList {
 export namespace GetContainerState {
     const MessageType = "GET_CONTAINER_STATE";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDevtoolsMessage<HasContainerId> {
+    export interface Message extends IDevtoolsMessage<HasContainerKey> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @internal
@@ -301,7 +304,7 @@ export namespace GetDataVisualization {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId & HasFluidObjectId;
+    export type MessageData = HasContainerKey & HasFluidObjectId;
 }
 
 // @internal
@@ -320,7 +323,7 @@ export namespace GetRootDataVisualizations {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerId;
+    export type MessageData = HasContainerKey;
 }
 
 // @internal
@@ -338,9 +341,9 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @internal
-export interface HasContainerId {
-    containerId: string;
+// @public
+export interface HasContainerKey {
+    containerKey: ContainerKey;
 }
 
 // @internal
@@ -356,7 +359,7 @@ export interface IDevtoolsMessage<TData = unknown> {
 
 // @public
 export interface IFluidDevtools extends IDisposable {
-    closeContainerDevtools(containerId: string): void;
+    closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
@@ -372,7 +375,7 @@ export interface IMessageRelayEvents<TMessage extends ISourcedDevtoolsMessage = 
 
 // @internal
 export interface InboundHandlers {
-    [type: string]: (message: ISourcedDevtoolsMessage) => boolean;
+    [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
 // @public
@@ -408,9 +411,6 @@ export interface MessageLoggingOptions {
     context?: string;
 }
 
-// @internal
-export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
-
 // @public
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
@@ -421,7 +421,7 @@ export namespace RootDataVisualizations {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export interface MessageData extends HasContainerId {
+    export interface MessageData extends HasContainerKey {
         visualizations: Record<string, RootHandleNode> | undefined;
     }
 }

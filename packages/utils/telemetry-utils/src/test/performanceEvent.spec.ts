@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
+import { ITelemetryLoggerExt } from "../telemetryTypes";
 
-class MockLogger extends TelemetryLogger implements ITelemetryLogger {
+class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;
 
 	constructor() {
@@ -43,7 +44,13 @@ describe("PerformanceEvent", () => {
 			return outerPromise.catch(() => {});
 		};
 
-		await PerformanceEvent.timedExecAsync(logger, { eventName: "Testing" }, callback);
-		assert(logger.errorsLogged === 0, "Shouldn't have logged any errors");
+		await PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "Testing" },
+			callback,
+			{ start: true, end: true, cancel: "generic" },
+			true,
+		);
+		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 });

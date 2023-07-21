@@ -4,18 +4,20 @@
 
 ```ts
 
+import { ContainerKey } from '@fluid-experimental/devtools-core';
 import { DevtoolsLogger } from '@fluid-experimental/devtools-core';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { HasContainerKey } from '@fluid-experimental/devtools-core';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { VisualizeSharedObject } from '@fluid-experimental/devtools-core';
 
 // @public
-export interface ContainerDevtoolsProps {
+export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
-    containerId: string;
-    containerNickname?: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
+
+export { ContainerKey }
 
 export { DevtoolsLogger }
 
@@ -26,13 +28,17 @@ export interface DevtoolsProps {
     logger?: DevtoolsLogger;
 }
 
+export { HasContainerKey }
+
 // @public
 export interface IDevtools extends IDisposable {
     closeContainerDevtools(id: string): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
-// @public
+// @public (undocumented)
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
+
+export { VisualizeSharedObject }
 
 ```

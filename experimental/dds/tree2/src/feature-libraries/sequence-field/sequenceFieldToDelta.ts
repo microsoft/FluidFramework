@@ -4,17 +4,17 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
+import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList } from "./format";
+import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getMarkLength,
 	getNodeChange,
-	isObjMark,
+	markIsTransient,
 } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
@@ -27,11 +27,15 @@ export function sequenceFieldToDelta<TNodeChange>(
 	for (const mark of marks) {
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
-		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
+		} else if (
+			areInputCellsEmpty(mark) &&
+			areOutputCellsEmpty(mark) &&
+			(!markIsTransient(mark) || mark.changes === undefined)
+		) {
 		} else {
-			assert(isObjMark(mark), "Cell changing mark must be an ObjMark");
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
+			assert(type !== NoopMarkType, 0x6b0 /* Cell changing mark must no be a NoopMark */);
 			switch (type) {
 				case "Insert": {
 					const cursors = mark.content.map(singleTextCursor);
@@ -39,6 +43,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: cursors,
 					};
+					if (mark.transientDetach !== undefined) {
+						insertMark.isTransient = true;
+					}
 					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
@@ -55,10 +62,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "Modify": {
 					const modify = deltaFromChild(mark.changes);
-					if (
-						Object.prototype.hasOwnProperty.call(modify, "setValue") ||
-						modify.fields !== undefined
-					) {
+					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
 						out.pushOffset(1);
@@ -90,10 +94,15 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: mark.content,
 					};
+					if (mark.transientDetach !== undefined) {
+						insertMark.isTransient = true;
+					}
 					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
 				}
+				case "Placeholder":
+					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
 					unreachableCase(type);
 			}
@@ -121,11 +130,11 @@ function deltaFromNodeChange<TNodeChange>(
 	if (change === undefined) {
 		return length;
 	}
-	assert(length === 1, "Modifying mark must be length one");
+	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
 	const modify = deltaFromChild(change);
 	return isEmptyModify(modify) ? 1 : modify;
 }
 
 function isEmptyModify(modify: Delta.Modify): boolean {
-	return modify.fields === undefined && modify.setValue === undefined;
+	return modify.fields === undefined;
 }

@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -19,8 +24,8 @@ import {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	cloneGCData,
 	getGCDataFromSnapshot,
@@ -35,6 +40,7 @@ import {
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
 	SummaryNode,
+	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
 
 export interface IRootSummarizerNodeWithGC
@@ -44,7 +50,7 @@ export interface IRootSummarizerNodeWithGC
 // Extend SummaryNode to add used routes tracking to it.
 class SummaryNodeWithGC extends SummaryNode {
 	constructor(
-		public readonly serializedUsedRoutes: string,
+		public readonly serializedUsedRoutes: string | undefined,
 		summary: {
 			readonly referenceSequenceNumber: number;
 			readonly basePath: EscapedPath | undefined;
@@ -102,7 +108,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryBaseLogger,
 		private readonly summarizeFn: (
 			fullTree: boolean,
 			trackState: boolean,
@@ -114,7 +120,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		/** Undefined means created without summary */
 		latestSummary?: SummaryNode,
 		initialSummary?: IInitialSummary,
-		wipSummaryLogger?: ITelemetryLogger,
+		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		/** A unique id of this node to be logged when sending telemetry. */
@@ -241,7 +247,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Called during the start of a summary. Updates the work-in-progress used routes.
 	 */
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger) {
+	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
 		// If GC is disabled, skip setting wip used routes since we should not track GC state.
 		if (!this.gcDisabled) {
 			assert(
@@ -253,44 +259,85 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	}
 
 	/**
+	 * Validates that the in-progress summary is correct for all nodes, i.e., GC should have run for non-skipped nodes.
+	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when running GC.
+	 * In that case, the children will not have work-in-progress state.
+	 *
+	 * @returns ValidateSummaryResult which contains a boolean success indicating whether the validation was successful.
+	 * In case of failure, additional information is returned indicating type of failure and where it was.
+	 */
+	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
+		if (this.wasGCMissed()) {
+			return {
+				success: false,
+				reason: "NodeDidNotRunGC",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: this.telemetryNodeId,
+				},
+				// These errors are usually transient and should go away when summarize / GC is retried.
+				retryAfterSeconds: 1,
+			};
+		}
+		return super.validateSummaryCore(parentSkipRecursion);
+	}
+
+	private wasGCMissed(): boolean {
+		// If GC is disabled, it should not have run so it was not missed.
+		// Otherwise, GC should have been called on this node and wipSerializedUsedRoutes must be set.
+		if (this.gcDisabled || this.wipSerializedUsedRoutes !== undefined) {
+			return false;
+		}
+		/**
+		 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
+		 * 1. A child node was created after GC was already run on the parent. For example, a data store
+		 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
+		 * case, the parent will pass on used routes to the child nodes and it will have wip used routes.
+		 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
+		 * during summarize is incomplete.
+		 *
+		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
+		 * summarize is attempted again.
+		 */
+		return true;
+	}
+
+	/**
 	 * Called after summary has been uploaded to the server. Add the work-in-progress state to the pending
 	 * summary queue. We track this until we get an ack from the server for this summary.
+	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
+	 * @param parentPath - The path of the parent node which is used to build the path of this node.
+	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
+	 * In that case, the children will not have work-in-progress state.
+	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
+		validate: boolean,
 	) {
+		if (validate && this.wasGCMissed()) {
+			this.throwUnexpectedError({
+				eventName: "NodeDidNotRunGC",
+				proposalHandle,
+			});
+		}
+
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
 			wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
-			/**
-			 * The absence of wip used routes indicates that GC was not run on this node. This can happen if:
-			 * 1. A child node was created after GC was already run on the parent. For example, a data store
-			 * is realized (loaded) after GC was run on it creating summarizer nodes for its DDSes. In this
-			 * case, the used routes of the parent should be passed on the child nodes and it should be fine.
-			 * 2. A new node was created but GC was never run on it. This can mean that the GC data generated
-			 * during summarize is complete . We should not continue, log and throw an error. This will help us
-			 * identify these cases and take appropriate action.
-			 */
-			if (wipSerializedUsedRoutes === undefined) {
-				this.throwUnexpectedError({
-					eventName: "NodeDidNotRunGC",
-					proposalHandle,
-				});
-			}
 		}
 
-		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
+		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion, validate);
 
 		// If GC is disabled, skip setting pending summary with GC state.
 		if (!this.gcDisabled) {
 			const summaryNode = this.pendingSummaries.get(proposalHandle);
 			if (summaryNode !== undefined) {
 				const summaryNodeWithGC = new SummaryNodeWithGC(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					wipSerializedUsedRoutes!,
+					wipSerializedUsedRoutes,
 					summaryNode,
 				);
 				this.pendingSummaries.set(proposalHandle, summaryNodeWithGC);
@@ -352,7 +399,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		snapshotTree: ISnapshotTree,
 		basePath: EscapedPath | undefined,
 		localPath: EscapedPath,
-		correlatedSummaryLogger: ITelemetryLogger,
+		correlatedSummaryLogger: ITelemetryLoggerExt,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void> {
 		await this.refreshGCStateFromSnapshot(
@@ -620,7 +667,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param baseGCDetailsP - Function to get the initial GC details of this node
  */
 export const createRootSummarizerNodeWithGC = (
-	logger: ITelemetryLogger,
+	logger: ITelemetryBaseLogger,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,

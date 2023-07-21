@@ -36,6 +36,11 @@ export {
 	DocDeleteScopeType,
 } from "./scopes";
 export {
+	getQuorumTreeEntries,
+	mergeAppAndProtocolTree,
+	generateServiceProtocolEntries,
+} from "./scribeHelper";
+export {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
 	IGitCache,
@@ -71,6 +76,7 @@ export {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 } from "./storageUtils";
 export { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
 export { getOrCreateRepository, getRandomInt } from "./utils";

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as v8 from "v8";
-import { performance } from "perf_hooks";
+import type * as v8 from "v8";
 import { assert } from "chai";
 import { Test } from "mocha";
 import {
@@ -18,6 +17,22 @@ import {
 	TestType,
 } from "../Configuration";
 import { getArrayStatistics, Stats } from "../ReporterUtilities";
+import { timer } from "../timer";
+
+// TODO:
+// Much of the logic and interfaces here were duplicated from the runtime benchmark code.
+// This code should be either updated and/or deduplicated to reflect the major refactoring and improvements done to the runtime benchmark code.
+// TODO:
+// The majority of this code is not mocha specific and should be factored into a place where it can be used by tests not using mocha.
+// TODO:
+// IMemoryTestObject provides a rather unintuitive way to measure memory used by some destructure.
+// Data data to measure needs to be allocated in either `run` or `afterIteration` (there is no reason to separate those as the tooling does nothing between),
+// then freed in `beforeIteration`.
+// Having methods like "allocate" and "free" would make more sense.
+// TODO:
+// Leaks from one iteration not cleaned up before the next should be an error not silently ignored via subtracting them out
+// since the statistics assume samples are independent and that can't be true if each sample leaks memory.
+// Alternatively a mode to measure tests that work this way could be added via a separate API and characterize the grow of memory over iterations.
 
 /**
  * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
@@ -170,7 +185,6 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
  * Tests created with this function get tagged with '\@MemoryUsage', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by fitering on that value.
  */
-
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 	const options: Required<MemoryTestObjectProps> = {
 		maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
@@ -299,7 +313,10 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			totalRunTimeMs: -1,
 		};
 
-		const startTime = performance.now();
+		// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
+		const v8 = await import("v8");
+
+		const startTime = timer.now();
 		try {
 			let heapUsedStats: Stats = {
 				marginOfError: NaN,
@@ -342,7 +359,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				// Break if max elapsed time passed, only if we've reached the min sample count
 				if (
 					benchmarkStats.runs >= options.minSampleCount &&
-					(performance.now() - startTime) / 1000 > options.maxBenchmarkDurationSeconds
+					timer.toSeconds(startTime, timer.now()) > options.maxBenchmarkDurationSeconds
 				) {
 					break;
 				}
@@ -352,11 +369,12 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			);
 			benchmarkStats.stats = heapUsedStats;
 		} catch (error) {
+			// TODO: This results in the mocha test passing when it should fail. Fix this.
 			benchmarkStats.aborted = true;
 			benchmarkStats.error = error as Error;
 		} finally {
 			// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
-			benchmarkStats.totalRunTimeMs = performance.now() - startTime;
+			benchmarkStats.totalRunTimeMs = timer.toSeconds(startTime, timer.now()) * 1000;
 		}
 
 		test.emit("benchmark end", benchmarkStats);

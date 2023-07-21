@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
@@ -176,10 +177,12 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		return {
 			get() {
 				if (provider) {
-					return Promise.resolve(provider).then((p) => {
-						if (p) {
-							return p[t];
-						}
+					return new LazyPromise(async () => {
+						return Promise.resolve(provider).then((p) => {
+							if (p) {
+								return p[t];
+							}
+						});
 					});
 				}
 			},
