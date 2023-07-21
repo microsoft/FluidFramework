@@ -248,6 +248,11 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
 }
 
 // @public
+export interface ISentSignalMessage extends ISignalMessageBase {
+    targetClientId?: string;
+}
+
+// @public
 export interface ISequencedClient {
     client: IClient;
     sequenceNumber: number;
@@ -304,13 +309,17 @@ export interface ISignalClient {
     referenceSequenceNumber?: number;
 }
 
-// @public (undocumented)
-export interface ISignalMessage {
-    clientConnectionNumber?: number;
+// @public
+export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
-    // (undocumented)
+}
+
+// @public
+export interface ISignalMessageBase {
+    clientConnectionNumber?: number;
     content: unknown;
     referenceSequenceNumber?: number;
+    type?: string;
 }
 
 // @public (undocumented)
