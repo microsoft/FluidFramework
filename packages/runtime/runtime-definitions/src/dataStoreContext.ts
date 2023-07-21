@@ -358,6 +358,12 @@ export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFl
 	/** Server timestamp in Unix Epoch format (ms) of the point in time (in the op stream) this was detected as unreferenced */
 	unreferencedTimestampMs?: number;
 
+	/**
+	 * Server timestamp in Unix Epoch format (ms) of the point in time (in the op stream) this state was last confirmed
+	 * NOTE: There are corner cases (about 1%) in Summarizer clients where this will be incorrect (older than it should be)
+	 */
+	freshnessTimestampMs?: number;
+
 	/** Describes varying states regarding whether the object is referenced or not, if known */
 	state?: "Referenced" | "Unreferenced" | "Inactive" | "SweepReady" | "Tombstoned";
 }

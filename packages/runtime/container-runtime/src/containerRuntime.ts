@@ -1022,7 +1022,10 @@ export class ContainerRuntime
 	private readonly dataStores: DataStores;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
 
-	/** The last message processed at the time of the last summary. */
+	/**
+	 * The last message processed at the time of the last summary.
+	 * NOTE: Does not update when refreshing from a snapshot mid-session.
+	 */
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
 	private get summarizer(): Summarizer {

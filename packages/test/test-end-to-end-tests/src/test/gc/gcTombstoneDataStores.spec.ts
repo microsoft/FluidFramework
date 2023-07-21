@@ -39,6 +39,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	IFluidDataStoreChannel,
 	IExperimentalFluidGCInfo,
+	IProvideExperimentalFluidGCInfo,
 } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
@@ -863,7 +864,7 @@ describeNoCompat.only("GC data store tombstone tests", (getTestObjectProvider) =
 
 				// handle.get for the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
 				// Logs a tombstone and sweep ready error
-				const dataObject: FluidObject<IExperimentalFluidGCInfo> = await handle.get();
+				const dataObject: FluidObject<IProvideExperimentalFluidGCInfo> = await handle.get();
 				assert.equal(
 					dataObject.IExperimentalFluidGCInfo?.state ?? "",
 					"Tombstoned",

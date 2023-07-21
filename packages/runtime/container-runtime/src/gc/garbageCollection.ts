@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Timer, assert, unreachableCase } from "@fluidframework/common-utils";
+import { Timer, assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -948,36 +948,26 @@ export class GarbageCollector implements IGarbageCollector {
 		// Callers should know not to query for internal reference info for deleted nodes
 		assert(
 			!this.deletedNodes.has("nodePath"),
-			"Getting internal reference info for a deleted node is not supported",
+			"Shouldn't be getting internal reference info for a deleted node",
 		);
+
+		const freshnessTimestampMs = this.getLastSummaryTimestampMs();
 
 		//* TODO: Include unref time too if available (I think it's not)
 		if (this.tombstones.includes(nodePath)) {
-			return { state: "Tombstoned" };
+			return { state: "Tombstoned", freshnessTimestampMs };
 		}
 
 		const trackedState = this.unreferencedNodesState.get(nodePath);
 		if (trackedState === undefined) {
-			return { state: "Referenced" };
+			return { state: "Referenced", freshnessTimestampMs };
 		}
 
-		//* Finalize state values and logic here
-		let state: IExperimentalFluidGCInfo["state"];
-		switch (trackedState.state) {
-			case "Active":
-				state = "Unreferenced";
-				break;
-			case "Inactive":
-				state = "Inactive";
-				break;
-			case "SweepReady":
-				state = "SweepReady";
-				break;
-			default:
-				unreachableCase(trackedState.state, "All known states covered above");
-		}
-
-		return { state, unreferencedTimestampMs: trackedState.unreferencedTimestampMs };
+		return {
+			state: trackedState.state === "Active" ? "Unreferenced" : trackedState.state,
+			freshnessTimestampMs,
+			unreferencedTimestampMs: trackedState.unreferencedTimestampMs,
+		};
 	}
 
 	public dispose(): void {

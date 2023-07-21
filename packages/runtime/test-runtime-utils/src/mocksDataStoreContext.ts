@@ -23,6 +23,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	IContainerRuntimeBase,
+	IExperimentalFluidGCInfo,
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
@@ -133,6 +134,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+		throw new Error("Method not implemented.");
+	}
+
+	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo {
 		throw new Error("Method not implemented.");
 	}
 }
