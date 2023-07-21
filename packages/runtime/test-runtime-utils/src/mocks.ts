@@ -149,12 +149,15 @@ export class MockContainerRuntime {
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: InternalRuntimeMessage[] = [];
-	private readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
+	/**
+	 * The MockContainerRuntimeOptions this instance is using. See {@link MockContainerRuntimeOptions}.
+	 */
+	protected runtimeOptions: Required<MockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
-		protected mockContainerRuntimeOptions: MockContainerRuntimeOptions = {},
+		mockContainerRuntimeOptions: MockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
@@ -313,6 +316,9 @@ export class MockContainerRuntime {
 		return [local, localOpMetadata];
 	}
 
+	/**
+	 * The current reference sequence number observed by this runtime instance.
+	 */
 	protected get referenceSequenceNumber() {
 		return this.deltaManager.lastSequenceNumber;
 	}
@@ -337,11 +343,14 @@ export class MockContainerRuntimeFactory {
 	 */
 	protected messages: ISequencedDocumentMessage[] = [];
 	protected readonly runtimes: MockContainerRuntime[] = [];
-	protected readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
 
-	constructor(mockContainerRuntimeOptions: MockContainerRuntimeOptions = {}) {
-		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
-	}
+	constructor(
+		/**
+		 * The MockContainerRuntimeOptions which will be provided to the all runtimes created by this factory.
+		 * See {@link MockContainerRuntimeOptions}
+		 */
+		protected readonly runtimeOptions: MockContainerRuntimeOptions = {},
+	) {}
 
 	public get outstandingMessageCount() {
 		return this.messages.length;

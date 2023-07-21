@@ -109,8 +109,6 @@ export class MockContainerRuntime {
     protected readonly factory: MockContainerRuntimeFactory;
     flush?(): void;
     // (undocumented)
-    protected mockContainerRuntimeOptions: MockContainerRuntimeOptions;
-    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
@@ -119,15 +117,16 @@ export class MockContainerRuntime {
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase?(): void;
-    // (undocumented)
     protected get referenceSequenceNumber(): number;
+    protected runtimeOptions: Required<MockContainerRuntimeOptions>;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
 // @public
 export class MockContainerRuntimeFactory {
-    constructor(mockContainerRuntimeOptions?: MockContainerRuntimeOptions);
+    constructor(
+    runtimeOptions?: MockContainerRuntimeOptions);
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
@@ -144,8 +143,7 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
-    // (undocumented)
-    protected readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
+    protected readonly runtimeOptions: MockContainerRuntimeOptions;
     // (undocumented)
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
