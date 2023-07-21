@@ -102,7 +102,7 @@ export interface IMockContainerRuntimePendingMessage {
 /**
  * Options for the container runtime mock.
  */
-export interface MockContainerRuntimeOptions {
+export interface IMockContainerRuntimeOptions {
 	/**
 	 * Configures the flush mode for the runtime. In Immediate flush mode the runtime will immediately
 	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
@@ -120,19 +120,19 @@ export interface MockContainerRuntimeOptions {
 	readonly enableGroupedBatching?: boolean;
 }
 
-const defaultMockContainerRuntimeOptions: Required<MockContainerRuntimeOptions> = {
+const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
 	flushMode: FlushMode.Immediate,
 	enableGroupedBatching: false,
 };
 
 const makeContainerRuntimeOptions = (
-	mockContainerRuntimeOptions: MockContainerRuntimeOptions,
-): Required<MockContainerRuntimeOptions> => ({
+	mockContainerRuntimeOptions: IMockContainerRuntimeOptions,
+): Required<IMockContainerRuntimeOptions> => ({
 	...defaultMockContainerRuntimeOptions,
 	...mockContainerRuntimeOptions,
 });
 
-interface InternalRuntimeMessage {
+interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata: unknown;
 }
@@ -148,16 +148,16 @@ export class MockContainerRuntime {
 	private readonly deltaManager: MockDeltaManager;
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
-	private readonly outbox: InternalRuntimeMessage[] = [];
+	private readonly outbox: IInternalMockRuntimeMessage[] = [];
 	/**
-	 * The MockContainerRuntimeOptions this instance is using. See {@link MockContainerRuntimeOptions}.
+	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
-	protected runtimeOptions: Required<MockContainerRuntimeOptions>;
+	protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
-		mockContainerRuntimeOptions: MockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
+		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
@@ -258,7 +258,7 @@ export class MockContainerRuntime {
 		);
 	}
 
-	private submitInternal(message: InternalRuntimeMessage) {
+	private submitInternal(message: IInternalMockRuntimeMessage) {
 		this.factory.pushMessage({
 			clientId: this.clientId,
 			clientSequenceNumber: this.clientSequenceNumber,
@@ -340,14 +340,15 @@ export class MockContainerRuntimeFactory {
 	protected readonly runtimes: MockContainerRuntime[] = [];
 
 	/**
-	 * The MockContainerRuntimeOptions which will be provided to the all runtimes created by this factory
-	 * and also drive the way the ops are processed.
-	 * See {@link MockContainerRuntimeOptions}
+	 * The container runtime options which will be provided to the all runtimes
+	 * created by this factory and also drive the way the ops are processed.
+	 *
+	 * See {@link IMockContainerRuntimeOptions}
 	 */
-	protected readonly runtimeOptions: Required<MockContainerRuntimeOptions>;
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
-		mockContainerRuntimeOptions: MockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
+		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 	) {
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
 	}

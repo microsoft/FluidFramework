@@ -10,7 +10,7 @@ import {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
-	MockContainerRuntimeOptions,
+	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
 } from "./mocks";
 
@@ -65,7 +65,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForReconnection,
-		runtimeOptions: MockContainerRuntimeOptions = {},
+		runtimeOptions: IMockContainerRuntimeOptions = {},
 		overrides?: { minimumSequenceNumber?: number },
 	) {
 		super(dataStoreRuntime, factory, runtimeOptions, overrides);
