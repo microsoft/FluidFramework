@@ -346,20 +346,16 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
-//* TODO: Find final home for these
-
 export interface IProvideExperimentalFluidGCInfo {
-	//* Make required here?
-	IExperimentalFluidGCInfo?: IExperimentalFluidGCInfo;
+	IExperimentalFluidGCInfo: IExperimentalFluidGCInfo;
 }
 
-//* TODO: Consider converging this type with UnreferencedStateTracker (e.g. have UnreferencedStateTracker implement this interface)
 /**
  * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
  * objects within this container.
  */
 export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
-	/** Server timestamp in Unix Epoch format of the point in time (in the op stream) this was detected as unreferenced */
+	/** Server timestamp in Unix Epoch format (ms) of the point in time (in the op stream) this was detected as unreferenced */
 	unreferencedTimestampMs?: number;
 
 	/** Describes varying states regarding whether the object is referenced or not, if known */

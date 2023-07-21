@@ -935,7 +935,6 @@ export class GarbageCollector implements IGarbageCollector {
 	 * cases where objects are used after they are deleted and throw / log errors accordingly.
 	 */
 	public isNodeDeleted(nodePath: string): boolean {
-		//* TODO: Replace usages with getGCReferenceInfo?
 		return this.deletedNodes.has(nodePath);
 	}
 
