@@ -73,6 +73,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"abort-controller": "^3.0.0",
+		"debug": "^4.1.1",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",

@@ -77,6 +77,8 @@ export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
+export const eventNamespaceSeparator = ":" as const;
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -85,7 +87,7 @@ export function formatTick(tick: number): number {
  * @deprecated - In a subsequent release this type will no longer be exported, use ITelemetryLogger instead
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
-	public static readonly eventNamespaceSeparator = ":";
+	public static readonly eventNamespaceSeparator = eventNamespaceSeparator;
 
 	/**
 	 * @deprecated - use formatTick
@@ -422,11 +424,13 @@ export function createMultiSinkLogger(props: {
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 	loggers?: (ITelemetryBaseLogger | undefined)[];
+	tryInheritProperties?: true;
 }): ITelemetryLoggerExt {
 	return new MultiSinkLogger(
 		props.namespace,
 		props.properties,
 		props.loggers?.filter((l): l is ITelemetryBaseLogger => l !== undefined),
+		props.tryInheritProperties,
 	);
 }
 
@@ -436,6 +440,7 @@ export function createMultiSinkLogger(props: {
  * @deprecated - use createMultiSinkLogger instead
  */
 export class MultiSinkLogger extends TelemetryLogger {
+	protected loggers: ITelemetryBaseLogger[];
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
@@ -444,9 +449,24 @@ export class MultiSinkLogger extends TelemetryLogger {
 	constructor(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
-		protected loggers: ITelemetryBaseLogger[] = [],
+		loggers: ITelemetryBaseLogger[] = [],
+		tryInheritProperties?: true,
 	) {
-		super(namespace, properties);
+		let realProperties = properties;
+		if (tryInheritProperties === true) {
+			const merge = (realProperties ??= {});
+			loggers
+				.filter((l): l is this => l instanceof TelemetryLogger)
+				.map((l) => l.properties ?? {})
+				.forEach((cv) => {
+					Object.keys(cv).forEach((k) => {
+						merge[k] = { ...cv[k], ...merge?.[k] };
+					});
+				});
+		}
+
+		super(namespace, realProperties);
+		this.loggers = loggers;
 	}
 
 	/**

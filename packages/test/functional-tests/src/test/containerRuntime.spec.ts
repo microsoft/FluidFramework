@@ -9,7 +9,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { createDebugLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	ISequencedDocumentMessage,
@@ -101,7 +101,7 @@ describe("Container Runtime", () => {
 
 			deltaManager = new DeltaManager<ConnectionManager>(
 				() => service,
-				createDebugLogger({ namespace: "fluid:testDeltaManager" }),
+				createChildLogger({ namespace: "fluid:testDeltaManager" }),
 				() => false,
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
@@ -109,7 +109,7 @@ describe("Container Runtime", () => {
 						() => false,
 						client as IClient,
 						false,
-						createDebugLogger({ namespace: "fluid:testConnectionManager" }),
+						createChildLogger({ namespace: "fluid:testConnectionManager" }),
 						props,
 					),
 			);
@@ -119,7 +119,7 @@ describe("Container Runtime", () => {
 				deltaManager,
 				emitter,
 				() => "test-client", // clientId,
-				createDebugLogger({ namespace: "fluid:testScheduleManager" }),
+				createChildLogger({ namespace: "fluid:testScheduleManager" }),
 			);
 
 			emitter.on("batchBegin", () => {
@@ -304,7 +304,7 @@ describe("Container Runtime", () => {
 
 			const deltaManager2 = new DeltaManager<ConnectionManager>(
 				() => service2,
-				createDebugLogger({ namespace: "fluid:testDeltaManager" }),
+				createChildLogger({ namespace: "fluid:testDeltaManager" }),
 				() => true,
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
@@ -312,7 +312,7 @@ describe("Container Runtime", () => {
 						() => false,
 						client as IClient,
 						true,
-						createDebugLogger({ namespace: "fluid:testConnectionManager" }),
+						createChildLogger({ namespace: "fluid:testConnectionManager" }),
 						props,
 					),
 			);
