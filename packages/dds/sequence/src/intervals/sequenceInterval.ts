@@ -66,7 +66,7 @@ export class SequenceInterval implements ISerializableInterval {
 	public properties: PropertySet;
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @internal
+	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
 	 */
 	public propertyManager: PropertiesManager;
 
@@ -227,7 +227,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @internal
+	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
 	 */
 	public union(b: SequenceInterval) {
 		return new SequenceInterval(
@@ -240,7 +240,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @internal
+	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
 	 */
 	public addProperties(
 		newProps: PropertySet,
@@ -263,7 +263,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @internal
+	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
 	 */
 	public modify(
 		label: string,
