@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {

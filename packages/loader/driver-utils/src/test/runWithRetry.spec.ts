@@ -183,4 +183,26 @@ describe("runWithRetry Tests", () => {
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as retrying was disabled");
 	});
+
+	it("Abort reason is included in thrown exception", async () => {
+		const abortController = new AbortController();
+
+		const api = () => {
+			abortController.abort("Sample abort reason");
+			const error = new Error("aborted");
+			(error as any).canRetry = true;
+			throw error;
+		};
+		try {
+			await runWithFastSetTimeout(async () =>
+				runWithRetry(api, "test", logger, {
+					cancel: abortController.signal,
+				}),
+			);
+			assert.fail("Should not succeed");
+		} catch (error) {
+			assert.strictEqual((error as any).message, "runWithRetry was Aborted");
+			assert.strictEqual((error as any).reason, "Sample abort reason");
+		}
+	});
 });
