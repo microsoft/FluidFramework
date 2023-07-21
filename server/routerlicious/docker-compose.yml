@@ -6,6 +6,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "3003:3003"
+      - "3002:3002"
       - "3001:3001"
   alfred:
     platform: linux/amd64
