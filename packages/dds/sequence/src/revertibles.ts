@@ -428,15 +428,16 @@ function revertLocalDelete(
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
-	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
-	const int = collection.add(startSlidePos, endSlidePos, type, props);
+	if (isValidRange(startSlidePos, endSlidePos, string)) {
+		const int = collection.add(startSlidePos, endSlidePos, type, props);
 
-	idMap.forEach((newId, oldId) => {
-		if (intervalId === newId) {
-			idMap.set(oldId, getUpdatedIdFromInterval(int));
-		}
-	});
-	idMap.set(intervalId, int.getIntervalId());
+		idMap.forEach((newId, oldId) => {
+			if (intervalId === newId) {
+				idMap.set(oldId, getUpdatedIdFromInterval(int));
+			}
+		});
+		idMap.set(intervalId, int.getIntervalId());
+	}
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
