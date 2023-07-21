@@ -58,6 +58,7 @@ export class SummaryWriter implements ISummaryWriter {
 		private readonly lastSummaryMessages: ISequencedDocumentMessage[],
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly maxRetriesOnError: number = 6,
+		private readonly maxLogtailLength: number = 2000,
 	) {
 		this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 	}
@@ -580,11 +581,19 @@ export class SummaryWriter implements ISummaryWriter {
 	}
 
 	private async generateLogtailEntries(
-		from: number,
-		to: number,
+		gt: number,
+		lt: number,
 		pending: ISequencedOperationMessage[],
 		lastSummaryMessages: ISequencedDocumentMessage[] | undefined,
 	): Promise<ITreeEntry[]> {
+		let to = lt;
+		const from = gt;
+		const LogtailRequestedLength = to - from;
+
+		if (LogtailRequestedLength > this.maxLogtailLength) {
+			Lumberjack.info(`Limiting logtail length`, this.lumberProperties);
+			to = from + this.maxLogtailLength;
+		}
 		const logTail = await this.getLogTail(from, to, pending);
 
 		// Some ops would be missing if we switch cluster during routing.
