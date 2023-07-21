@@ -57,18 +57,6 @@ export type NodeChangeType = NodeChangeset;
 // Boolean encodings can use this alternative to save space for frequently false values.
 const OptionalTrue = Type.Optional(Type.Literal(true));
 
-export enum Tiebreak {
-	Left,
-	Right,
-}
-
-export enum Effects {
-	All = "All",
-	Move = "Move",
-	Delete = "Delete",
-	None = "None",
-}
-
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
@@ -118,39 +106,6 @@ export interface HasChanges<TNodeChange = NodeChangeType> {
 }
 export const HasChanges = <TNodeChange extends TSchema>(tNodeChange: TNodeChange) =>
 	Type.Object({ changes: Type.Optional(tNodeChange) });
-
-export interface HasPlaceFields extends HasLineage {
-	/**
-	 * Describes which kinds of concurrent slice operations should affect the target place.
-	 *
-	 * The tuple allows this choice to be different for concurrent slices that are sequenced
-	 * either before (`heed[0]`) or after (`heed[1]`). For example, multiple concurrent updates
-	 * of a sequence with last-write-wins semantics would use a slice-delete over the whole
-	 * sequence, and an insert with the `heed` value `[Effects.None, Effects.All]`.
-	 *
-	 * When the value for prior and ulterior concurrent slices is the same, that value can be
-	 * used directly instead of the corresponding tuple.
-	 *
-	 * Omit if `Effects.All` for terseness.
-	 */
-	heed?: Effects | [Effects, Effects];
-
-	/**
-	 * Omit if `Tiebreak.Right` for terseness.
-	 */
-	tiebreak?: Tiebreak;
-}
-
-const EffectsSchema = Type.Enum(Effects);
-export const HasPlaceFields = Type.Composite([
-	Type.Object({
-		heed: Type.Optional(
-			Type.Union([EffectsSchema, Type.Tuple([EffectsSchema, EffectsSchema])]),
-		),
-		tiebreak: Type.Optional(Type.Enum(Tiebreak)),
-	}),
-	HasLineage,
-]);
 
 /**
  * Mark which targets a range of existing cells instead of creating new cells.
@@ -234,7 +189,7 @@ export type CanBeTransient = Partial<Transient>;
 export const CanBeTransient = Type.Partial(Transient);
 
 export interface Insert<TNodeChange = NodeChangeType>
-	extends HasPlaceFields,
+	extends HasLineage,
 		HasRevisionTag,
 		CanBeTransient,
 		HasChanges<TNodeChange> {
@@ -250,7 +205,7 @@ export interface Insert<TNodeChange = NodeChangeType>
 export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
-			HasPlaceFields,
+			HasLineage,
 			HasRevisionTag,
 			HasChanges(tNodeChange),
 			Type.Object({
@@ -262,7 +217,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
+export interface MoveIn extends HasMoveId, HasLineage, HasRevisionTag {
 	type: "MoveIn";
 	/**
 	 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -278,7 +233,7 @@ export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
 export const MoveIn = Type.Composite(
 	[
 		HasMoveId,
-		HasPlaceFields,
+		HasLineage,
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
