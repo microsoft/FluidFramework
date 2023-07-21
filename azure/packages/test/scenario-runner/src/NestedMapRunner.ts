@@ -4,11 +4,13 @@
  */
 import child_process from "child_process";
 
-import { ConnectionState, SharedMap } from "fluid-framework";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { SharedMap } from "@fluidframework/map";
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
@@ -313,7 +315,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 	private static async loadContainer(
 		runConfig: NestedMapRunnerRunConfig,
-		logger: TelemetryLogger,
+		logger: ITelemetryLogger,
 		client: AzureClient,
 	): Promise<IFluidContainer> {
 		if (runConfig.container !== undefined) {

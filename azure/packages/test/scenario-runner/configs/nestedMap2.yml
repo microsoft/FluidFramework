@@ -1,45 +1,45 @@
 title: 1 doc, 10,000 nested maps
 description: In this scenario, we create 1 document with 10,000 nested SharedMap objects before attaching
 env:
-    parallelProcesses: false
-    schema:
-        initialObjects:
-            key1: SharedMap
-            key2: SharedMap
-    connectionConfig:
-        type: remote
-        useSecureTokenProvider: false
+  parallelProcesses: false
+  schema:
+    initialObjects:
+      key1: SharedMap
+      key2: SharedMap
+  connectionConfig:
+    type: remote
+    useSecureTokenProvider: false
 stages:
-    - stage-1:
-      id: 1
-      name: Create single azure client
-      package: azure-client
-      params:
-          connectionConfig: ${connectionConfig}
-          userId: SomeUserId;
-          userName: SomeName;
-      out: ${client}
-    - stage-2:
-      id: 2
-      name: Nest Maps
-      package: nested-maps
-      params:
-          connectionConfig: ${connectionConfig}
-          schema: ${schema}
-          client: ${client}
-          initialMapKey: key1
-          numMaps: 10000
-          dataType: number
-      out: ${docIds}
-    - stage-3:
-      id: 3
-      name: Load documents
-      package: doc-loader
-      params:
-          connectionConfig: ${connectionConfig}
-          numOfLoads: 1
-          schema: ${schema}
-          docIds: ${docIds}
-          client: ${client}
-          clientStartDelayMs: 500
-      out: ${containers}
+  - stage-1:
+    id: 1
+    name: Create single azure client
+    package: azure-client
+    params:
+      connectionConfig: ${connectionConfig}
+      userId: SomeUserId;
+      userName: SomeName;
+    out: ${client}
+  - stage-2:
+    id: 2
+    name: Nest Maps
+    package: nested-maps
+    params:
+      connectionConfig: ${connectionConfig}
+      schema: ${schema}
+      client: ${client}
+      initialMapKey: key1
+      numMaps: 10000
+      dataType: number
+    out: ${docIds}
+  - stage-3:
+    id: 3
+    name: Load documents
+    package: doc-loader
+    params:
+      connectionConfig: ${connectionConfig}
+      numOfLoads: 1
+      schema: ${schema}
+      docIds: ${docIds}
+      client: ${client}
+      clientStartDelayMs: 500
+    out: ${containers}

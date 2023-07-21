@@ -227,7 +227,7 @@ export class TestOrchestrator {
 	private async runStage(
 		runner: IRunner,
 		stage: IStage,
-		logger: TelemetryLogger,
+		logger: ITelemetryLogger,
 	): Promise<unknown> {
 		// Initial status
 		const initStatus = runner.getStatus();
