@@ -212,7 +212,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 				});
 
 				newTopLevelLogger.sendTelemetryEvent({
-					eventName: "Devtools Logger connection completed.",
+					eventName: "Connection established with Devtools in the application.",
 				});
 
 				setTopLevelLogger(newTopLevelLogger);
