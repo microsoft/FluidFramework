@@ -147,7 +147,7 @@ export interface IDriverErrorBase {
 	online?: string;
 
 	/**
-	 * Whether service or socket was reachable and we got some error from them.
+	 * Whether service was reachable and we got some response from service.
 	 */
 	endpointReachable?: boolean;
 }

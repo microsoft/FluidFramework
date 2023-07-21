@@ -201,7 +201,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			`R11s fetch error: ${responseSummary}`,
 			response.status,
 			responseBody?.retryAfter,
-			true,
+			true /* endpointReachable */,
 		);
 	}
 

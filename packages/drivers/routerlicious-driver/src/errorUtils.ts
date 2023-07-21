@@ -111,7 +111,7 @@ export function createR11sNetworkError(
 			error = createGenericNetworkError(errorMessage, retryInfo, props);
 			break;
 	}
-	error.endpointReachable = endpointReachable;
+	error.addTelemetryProperties({ endpointReachable });
 	return error;
 }
 
@@ -141,5 +141,10 @@ export function errorObjectFromSocketError(
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
 	const message = `R11s socket error (${handler}): ${socketError.message}`;
-	return createR11sNetworkError(message, socketError.code, socketError.retryAfterMs, true);
+	return createR11sNetworkError(
+		message,
+		socketError.code,
+		socketError.retryAfterMs,
+		true /* endpointReachable */,
+	);
 }
