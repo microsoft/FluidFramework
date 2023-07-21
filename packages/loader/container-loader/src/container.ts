@@ -89,13 +89,13 @@ import {
 	EventEmitterWithErrorHandling,
 	PerformanceEvent,
 	raiseConnectedEvent,
-	TelemetryLogger,
 	connectedEventName,
 	normalizeError,
 	MonitoringContext,
 	createChildMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	formatTick,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -111,7 +111,7 @@ import {
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
-import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues } from "./quorum";
+import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
@@ -1702,16 +1702,15 @@ export class Container
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
 		);
-		const codeDetails = getCodeDetailsFromQuorumValues(qValues);
 		this.initializeProtocolState(
 			attributes,
 			{
 				members: [],
 				proposals: [],
-				values:
-					codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+				values: qValues,
 			}, // IQuorumSnapShot
 		);
+		const codeDetails = this.getCodeDetailsFromQuorum();
 
 		await this.instantiateRuntime(codeDetails, snapshotTree);
 
@@ -2003,7 +2002,7 @@ export class Container
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
-				durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+				durationFromDisconnected = formatTick(durationFromDisconnected);
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;

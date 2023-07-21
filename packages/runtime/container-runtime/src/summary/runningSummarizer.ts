@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerExt,
 	isFluidError,
 	MonitoringContext,
 	createChildMonitoringContext,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
@@ -56,7 +56,7 @@ const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
  */
 export class RunningSummarizer implements IDisposable {
 	public static async start(
-		logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
@@ -89,7 +89,10 @@ export class RunningSummarizer implements IDisposable {
 		// Handle summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
 		summarizer.processIncomingSummaryAcks(lastAckRefSeq).catch((error) => {
-			logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+			createChildLogger({ logger }).sendErrorEvent(
+				{ eventName: "HandleSummaryAckFatalError" },
+				error,
+			);
 		});
 
 		// Update heuristic counts
@@ -149,7 +152,7 @@ export class RunningSummarizer implements IDisposable {
 	private readonly runtimeListener;
 
 	private constructor(
-		baseLogger: ITelemetryLoggerExt,
+		baseLogger: ITelemetryBaseLogger,
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
