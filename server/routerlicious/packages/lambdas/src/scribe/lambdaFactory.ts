@@ -213,7 +213,6 @@ export class ScribeLambdaFactory
 				"scribe",
 				document,
 			)) as IScribe;
-			console.log(`****IS_CORRUPT: ${lastCheckpoint.isCorrupt}`);
 			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
 		}
 
