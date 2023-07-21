@@ -346,10 +346,12 @@ export class MockContainerRuntimeFactory {
 
 	constructor(
 		/**
-		 * The MockContainerRuntimeOptions which will be provided to the all runtimes created by this factory.
+		 * The MockContainerRuntimeOptions which will be provided to the all runtimes created by this factory
+		 * and also drive the way the ops are processed.
+		 *
 		 * See {@link MockContainerRuntimeOptions}
 		 */
-		protected readonly runtimeOptions: MockContainerRuntimeOptions = {},
+		protected readonly runtimeOptions: MockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 	) {}
 
 	public get outstandingMessageCount() {
