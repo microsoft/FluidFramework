@@ -19,6 +19,7 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -26,13 +27,12 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IProvideExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
-import { IProvideExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
@@ -140,9 +140,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     get id(): string;
     // (undocumented)
-    get IFluidHandle(): IFluidHandle<this>;
-    // (undocumented)
     get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo | undefined;
+    // (undocumented)
+    get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
     // (undocumented)

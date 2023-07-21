@@ -4,6 +4,7 @@
  */
 
 import { Timer, assert, unreachableCase } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {

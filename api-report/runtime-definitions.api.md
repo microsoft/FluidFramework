@@ -202,6 +202,12 @@ export interface IEnvelope {
 }
 
 // @public
+export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
+    state?: "Referenced" | "Unreferenced" | "Inactive" | "SweepReady" | "Tombstoned";
+    unreferencedTimestampMs?: number;
+}
+
+// @public
 export interface IExperimentalIncrementalSummaryContext {
     latestSummarySequenceNumber: number;
     summaryPath: string;
@@ -313,13 +319,6 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @public
-export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
-    state?: "Referenced" | "Unreferenced" | "Inactive" | "Tombstoned";
-    // (undocumented)
-    unreferencedTime?: number;
-}
-
-// @public
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -379,6 +378,12 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 };
 
 // @public (undocumented)
+export interface IProvideExperimentalFluidGCInfo {
+    // (undocumented)
+    IExperimentalFluidGCInfo?: IExperimentalFluidGCInfo;
+}
+
+// @public (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
     readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
@@ -388,12 +393,6 @@ export interface IProvideFluidDataStoreFactory {
 export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
-}
-
-// @public (undocumented)
-export interface IProvideExperimentalFluidGCInfo {
-    // (undocumented)
-    IExperimentalFluidGCInfo?: IExperimentalFluidGCInfo;
 }
 
 // @public (undocumented)
