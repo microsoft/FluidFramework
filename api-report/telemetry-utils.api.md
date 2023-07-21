@@ -63,7 +63,7 @@ export function createMultiSinkLogger(props: {
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinDebugLogger(namespace: string, logger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 
