@@ -12,6 +12,8 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
 
 import { ArrowSync24Regular } from "@fluentui/react-icons";
@@ -39,7 +41,7 @@ import {
 	MenuItem,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
-import { useLogger } from "./TelemetryUtils";
+import { ConsoleVerboseLogger, LoggerContext, TelemetryOptInLogger, useLogger } from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
@@ -136,6 +138,14 @@ const useDevtoolsStyles = makeStyles({
 	},
 });
 
+
+/**
+ * TODO
+ */
+export interface DevtoolsViewProps {
+	usageTelemetryLogger?: ITelemetryBaseLogger;  
+}
+
 /**
  * Primary Fluid Framework Devtools view.
  *
@@ -147,17 +157,25 @@ const useDevtoolsStyles = makeStyles({
  *
  * Requires {@link MessageRelayContext} to have been set.
  */
-export function DevtoolsView(): React.ReactElement {
+export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
+	const { usageTelemetryLogger } = props
+
 	// Set of features supported by the Devtools.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+	
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 	const styles = useDevtoolsStyles();
+
+	const consoleLogger = React.useMemo(() => new ConsoleVerboseLogger(usageTelemetryLogger), [usageTelemetryLogger]);
+	const telemetryOptInLogger = React.useMemo(() => new TelemetryOptInLogger(consoleLogger), [consoleLogger]);
+		
+	const [topLevelLogger, setTopLevelLogger] = React.useState(createChildLogger({ logger: telemetryOptInLogger })); 
 
 	React.useEffect(() => {
 		/**
@@ -167,6 +185,8 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
+				setTopLevelLogger(createChildLogger({ logger: telemetryOptInLogger, devtoolsVersion: message.data.devtoolsVersion })); 
+				topLevelLogger?.sendTelemetryEvent({ eventName: "Devtools Logger connection completed." });
 				return true;
 			},
 		};
@@ -188,7 +208,7 @@ export function DevtoolsView(): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, setSupportedFeatures]);
+	}, [messageRelay, setSupportedFeatures, topLevelLogger, telemetryOptInLogger]);
 
 	// Manage the query timeout
 	React.useEffect(() => {
@@ -211,50 +231,52 @@ export function DevtoolsView(): React.ReactElement {
 	initializeIcons();
 
 	return (
-		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
-			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
-				{supportedFeatures === undefined ? (
-					<>
-						{!queryTimedOut && <Waiting />}
-						{queryTimedOut && !isMessageDismissed && (
-							<MessageBar
-								messageBarType={MessageBarType.error}
-								isMultiline={true}
-								onDismiss={(): void => setIsMessageDismissed(true)}
-								dismissButtonAriaLabel="Close"
-								className={styles.icon}
-							>
-								It seems that Fluid Devtools has not been initialized in the current
-								tab, or it did not respond in a timely manner.
-								<Tooltip
-									content="Retry communicating with Fluid Devtools in the current tab."
-									relationship="description"
+		<LoggerContext.Provider value={topLevelLogger}>
+			<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+				<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+					{supportedFeatures === undefined ? (
+						<>
+							{!queryTimedOut && <Waiting />}
+							{queryTimedOut && !isMessageDismissed && (
+								<MessageBar
+									messageBarType={MessageBarType.error}
+									isMultiline={true}
+									onDismiss={(): void => setIsMessageDismissed(true)}
+									dismissButtonAriaLabel="Close"
+									className={styles.icon}
 								>
-									<Button
-										className={styles.retryButton}
-										size="small"
-										onClick={retryQuery}
+									It seems that Fluid Devtools has not been initialized in the current
+									tab, or it did not respond in a timely manner.
+									<Tooltip
+										content="Retry communicating with Fluid Devtools in the current tab."
+										relationship="description"
 									>
-										Try again
-									</Button>
-								</Tooltip>
-								<br />
-								<h4 className={styles.debugNote}>
-									Need help? Please refer to our
-									<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
-										documentation page
-									</Link>{" "}
-									for guidance on getting the extension working.{" "}
-								</h4>
-							</MessageBar>
-						)}
-						<_DevtoolsView supportedFeatures={{}} />
-					</>
-				) : (
-					<_DevtoolsView supportedFeatures={supportedFeatures} />
-				)}
-			</FluentProvider>
-		</ThemeContext.Provider>
+										<Button
+											className={styles.retryButton}
+											size="small"
+											onClick={retryQuery}
+										>
+											Try again
+										</Button>
+									</Tooltip>
+									<br />
+									<h4 className={styles.debugNote}>
+										Need help? Please refer to our
+										<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
+											documentation page
+										</Link>{" "}
+										for guidance on getting the extension working.{" "}
+									</h4>
+								</MessageBar>
+							)}
+							<_DevtoolsView supportedFeatures={{}} />
+						</>
+					) : (
+						<_DevtoolsView supportedFeatures={supportedFeatures} />
+					)}
+				</FluentProvider>
+			</ThemeContext.Provider>
+		</LoggerContext.Provider>
 	);
 }
 
