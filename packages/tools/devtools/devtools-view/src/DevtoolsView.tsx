@@ -144,11 +144,13 @@ const useDevtoolsStyles = makeStyles({
 });
 
 /**
- * Telemetry base logger passed from the {@link DevtoolsPanel}.
- * Passed in to {@link DevtoolsView} since it receives the {@link DevtoolsFeatures.Message}.
- *
+ * {@link DevtoolsView} input props.
  */
 export interface DevtoolsViewProps {
+	/**
+	 * Telemetry base logger passed from the {@link DevtoolsPanel}.
+	 * Passed in to {@link DevtoolsView} since it receives the {@link DevtoolsFeatures.Message}.
+	 */
 	usageTelemetryLogger?: ITelemetryBaseLogger;
 }
 
@@ -237,8 +239,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 			messageRelay.off("message", messageHandler);
 		};
 	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
-
-	// topLevelLogger.sendTelemetryEvent({ eventName: "Devtools Logger connection completed." });
 
 	// Manage the query timeout
 	React.useEffect(() => {
