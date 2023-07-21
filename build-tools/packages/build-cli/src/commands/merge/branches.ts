@@ -280,7 +280,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			tempTarget: tempTargetBranch,
 			mergeBranch,
 			prTitle,
-			remote: this.remote,
+			/**
+			 * setting the remote to `upstream` as the remote repository URL may differ depending on individual setups. To accommodate this variation,
+			 * a note is added later in the description, prompting users to check their remote URL and execute the appropriate set of commands accordingly.
+			 */
+			remote: "upstream",
 		});
 
 		// label the conflicting PRs and the merged-OK PRs with different labels
@@ -446,11 +450,12 @@ The aim of this pull request is to sync ${source} and ${target} branch. This bra
 1. Acknowledge the pull request by adding a comment -- "Actively working on it".
 2. Merge ${mergeBranch} into the target branch, ${target}. **The direction of the merge matters!** You need to checkout ${target} and merge ${mergeBranch} into it, then fast-forward ${mergeBranch} to the merge commit. To do that use the following git commands:
   - \`git fetch --all\` -- this ensures your remote refs are updated
+  - \`git remote -v\` -- displays the list of remote repositories associated with your Git repository along with their corresponding URLs. You have to choose the remote associated with the **microsoft/FluidFramework** repository. Change the remote name in these example commands if yours is not ${remote}.
   - \`git checkout -b ${tempTarget} ${remote}/${target}\` -- make a temporary branch at ${target}.
   - \`git merge ${remote}/${mergeBranch}\` -- merge ${target} into ${mergeBranch}
 3. Resolve any merge conflicts between the branches, then commit all the changes using the following commands:
   - \`git add .\` -- stage all the local changes
-  - \`git commit -m ${prTitle}\` -- commit the merge
+  - \`git commit -m "${prTitle}"\` -- commit the merge
 4. Fast-forward the ${mergeBranch} branch to the merge commit and push to the remote.
   - \`git checkout ${mergeBranch}\` -- check out the mergeBranch locally
   - \`git merge ${tempTarget} --ff-only\` -- fast-forward to the merge commit

@@ -770,6 +770,30 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const interval = collection.add(6, 8, IntervalType.SlideOnRemove);
 			containerRuntimeFactory.processAllMessages();
 
+			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 9);
+			sharedString.removeRange(5, 7);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 6, end: 9 }]);
+			containerRuntimeFactory.processAllMessages();
+			assertIntervals(sharedString2, collection2, [{ start: 6, end: 9 }]);
+		});
+		it("does not restore start that would be after end", () => {
+			sharedString.insertText(0, "hello world");
+
+			sharedString.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+				}
+			});
+
+			const interval = collection.add(6, 8, IntervalType.SlideOnRemove);
+			containerRuntimeFactory.processAllMessages();
+
 			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 3);
 			sharedString.removeRange(5, 7);
 			containerRuntimeFactory.processAllMessages();
@@ -778,11 +802,33 @@ describe("Undo/redo for string remove containing intervals", () => {
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 			assert.equal(sharedString.getText(), "hello world");
-			// Intervals don't currently enforce that start >= end,
-			// so this happens since only start was within the restored range
-			assertIntervals(sharedString, collection, [{ start: 6, end: 3 }]);
+			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [{ start: 6, end: 3 }]);
+			assertIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
+		});
+		it("does not restore end that would be before start", () => {
+			sharedString.insertText(0, "hello world");
+
+			sharedString.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+				}
+			});
+
+			const interval = collection.add(4, 6, IntervalType.SlideOnRemove);
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 8, 9);
+			sharedString.removeRange(5, 7);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 8, end: 9 }]);
+			containerRuntimeFactory.processAllMessages();
+			assertIntervals(sharedString2, collection2, [{ start: 8, end: 9 }]);
 		});
 	});
 
