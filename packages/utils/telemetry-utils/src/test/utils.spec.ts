@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { logIfFalse } from "../utils";
+import { TelemetryDataTag, tagData } from "../logger";
 
 class TestLogger implements ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent): void {
@@ -28,5 +29,17 @@ describe("logIfFalse", () => {
 		const val = logIfFalse(somthing !== undefined, logger, "it's undefined");
 		assert.strictEqual(val, true);
 		assert.strictEqual(logger.events.length, 0);
+	});
+});
+
+describe("tagData", () => {
+	it("tagData", () => {
+		const taggedData = tagData(TelemetryDataTag.CodeArtifact, { foo: "bar" });
+		assert.deepStrictEqual(taggedData, {
+			foo: {
+				value: "bar",
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+		});
 	});
 });

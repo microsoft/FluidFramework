@@ -764,7 +764,7 @@ export const tagData = <
 				| (V[P] extends undefined ? undefined : never)
 				| { value: Exclude<V[P], undefined>; tag: T };
 		}>((pv, cv) => {
-			pv[cv[0]] = { value: cv[1], tag };
+			pv[cv[0]] = { tag, value: cv[1] };
 			return pv;
 		}, {} as any);
 

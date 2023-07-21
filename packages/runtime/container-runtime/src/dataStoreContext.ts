@@ -317,7 +317,7 @@ export abstract class FluidDataStoreContext
 			properties: {
 				all: tagCodeArtifacts({
 					fluidDataStoreId: this.id,
-					packagePath: this.pkg?.join("/"),
+					fullPackageName: this.pkg?.join("/"),
 				}),
 			},
 		});
@@ -396,7 +396,7 @@ export abstract class FluidDataStoreContext
 				);
 				errorWrapped.addTelemetryProperties(
 					tagCodeArtifacts({
-						packagePath: this.pkg?.join("/"),
+						fullPackageName: this.pkg?.join("/"),
 						fluidDataStoreId: this.id,
 					}),
 				);
