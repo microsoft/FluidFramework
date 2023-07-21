@@ -182,12 +182,12 @@ describe("Rebasing", () => {
 				dir2.on("subDirectoryCreated", () => {
 					dir2.set("subDirectoryCreated1", "subDirectoryCreated");
 					dir2.set("subDirectoryCreated2", "subDirectoryCreated");
-					containerRuntime2.rebase?.();
 				});
 				const root1SubDir = dir1.createSubDirectory("testSubDir");
 				dir2.createSubDirectory("testSubDir");
 
 				containerRuntime1.flush();
+				containerRuntime2.rebase();
 				containerRuntime2.flush();
 
 				root1SubDir.set("key1", "testValue1");

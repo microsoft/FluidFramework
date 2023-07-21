@@ -104,20 +104,20 @@ export interface IMockContainerRuntimePendingMessage {
  */
 export interface MockContainerRuntimeOptions {
 	/**
-	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+	 * Configures the flush mode for the runtime. In Immediate flush mode the runtime will immediately
 	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
 	 * and then sent them as a single batch when `flush()` is called on the runtime.
 	 *
 	 * By default, flush mode is Immediate.
 	 */
-	flushMode?: FlushMode;
+	readonly flushMode?: FlushMode;
 	/**
-	 * If set to true, it will simulate group batching by forcing all ops within a batch to have
+	 * If configured, it will simulate group batching by forcing all ops within a batch to have
 	 * the same sequence number.
 	 *
 	 * By default, the value is `false`
 	 */
-	enableGroupedBatching?: boolean;
+	readonly enableGroupedBatching?: boolean;
 }
 
 const defaultMockContainerRuntimeOptions: Required<MockContainerRuntimeOptions> = {
@@ -193,25 +193,20 @@ export class MockContainerRuntime {
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
+		const message = {
+			content: messageContent,
+			localOpMetadata,
+		};
+
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				this.factory.pushMessage({
-					clientId: this.clientId,
-					clientSequenceNumber,
-					contents: messageContent,
-					referenceSequenceNumber: this.referenceSequenceNumber,
-					type: MessageType.Operation,
-				});
-				this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
+				this.submitInternal(message);
 				this.clientSequenceNumber++;
 				break;
 			}
 
 			case FlushMode.TurnBased: {
-				this.outbox.push({
-					content: messageContent,
-					localOpMetadata,
-				});
+				this.outbox.push(message);
 				break;
 			}
 

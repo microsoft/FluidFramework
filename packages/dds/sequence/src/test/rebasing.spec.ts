@@ -85,13 +85,13 @@ import { SharedStringFactory } from "../sequenceFactory";
 			sharedString2.on("sequenceDelta", (sequenceDeltaEvent) => {
 				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "b") {
 					sharedString2.insertText(3, "u");
-					containerRuntime2.rebase?.();
 				}
 			});
 
 			sharedString1.insertText(1, "b");
 			sharedString2.insertText(0, "y");
 			sharedString2.insertText(1, "w");
+			containerRuntime1.rebase();
 			containerRuntime1.flush();
 			containerRuntimeFactory.processOneMessage();
 			sharedString2.insertText(2, "v");

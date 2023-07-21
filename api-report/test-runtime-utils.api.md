@@ -175,8 +175,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 // @public
 export interface MockContainerRuntimeOptions {
-    enableGroupedBatching?: boolean;
-    flushMode?: FlushMode;
+    readonly enableGroupedBatching?: boolean;
+    readonly flushMode?: FlushMode;
 }
 
 // @public
