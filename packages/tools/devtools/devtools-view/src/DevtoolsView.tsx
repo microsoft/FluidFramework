@@ -41,7 +41,12 @@ import {
 	MenuItem,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
-import { ConsoleVerboseLogger, LoggerContext, TelemetryOptInLogger, useLogger } from "./TelemetryUtils";
+import {
+	ConsoleVerboseLogger,
+	LoggerContext,
+	TelemetryOptInLogger,
+	useLogger,
+} from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
@@ -138,12 +143,11 @@ const useDevtoolsStyles = makeStyles({
 	},
 });
 
-
 /**
  * TODO
  */
 export interface DevtoolsViewProps {
-	usageTelemetryLogger?: ITelemetryBaseLogger;  
+	usageTelemetryLogger?: ITelemetryBaseLogger;
 }
 
 /**
@@ -158,7 +162,7 @@ export interface DevtoolsViewProps {
  * Requires {@link MessageRelayContext} to have been set.
  */
 export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
-	const { usageTelemetryLogger } = props
+	const { usageTelemetryLogger } = props;
 
 	// Set of features supported by the Devtools.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
@@ -166,16 +170,24 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
-	
+
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 	const styles = useDevtoolsStyles();
 
-	const consoleLogger = React.useMemo(() => new ConsoleVerboseLogger(usageTelemetryLogger), [usageTelemetryLogger]);
-	const telemetryOptInLogger = React.useMemo(() => new TelemetryOptInLogger(consoleLogger), [consoleLogger]);
-		
-	const [topLevelLogger, setTopLevelLogger] = React.useState(createChildLogger({ logger: telemetryOptInLogger })); 
+	const consoleLogger = React.useMemo(
+		() => new ConsoleVerboseLogger(usageTelemetryLogger),
+		[usageTelemetryLogger],
+	);
+	const telemetryOptInLogger = React.useMemo(
+		() => new TelemetryOptInLogger(consoleLogger),
+		[consoleLogger],
+	);
+
+	const [topLevelLogger, setTopLevelLogger] = React.useState(
+		createChildLogger({ logger: telemetryOptInLogger }),
+	);
 
 	React.useEffect(() => {
 		/**
@@ -185,8 +197,16 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
-				setTopLevelLogger(createChildLogger({ logger: telemetryOptInLogger, devtoolsVersion: message.data.devtoolsVersion })); 
-				topLevelLogger?.sendTelemetryEvent({ eventName: "Devtools Logger connection completed." });
+				setTopLevelLogger(
+					createChildLogger({
+						logger: telemetryOptInLogger,
+						properties: {
+							all: {
+								devtoolsVersion: message.data.devtoolsVersion,
+							},
+						},
+					}),
+				);
 				return true;
 			},
 		};
@@ -208,7 +228,9 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, setSupportedFeatures, topLevelLogger, telemetryOptInLogger]);
+	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
+
+	topLevelLogger.sendTelemetryEvent({ eventName: "Devtools Logger connection completed." });
 
 	// Manage the query timeout
 	React.useEffect(() => {
@@ -245,8 +267,8 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 									dismissButtonAriaLabel="Close"
 									className={styles.icon}
 								>
-									It seems that Fluid Devtools has not been initialized in the current
-									tab, or it did not respond in a timely manner.
+									It seems that Fluid Devtools has not been initialized in the
+									current tab, or it did not respond in a timely manner.
 									<Tooltip
 										content="Retry communicating with Fluid Devtools in the current tab."
 										relationship="description"
@@ -262,7 +284,10 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 									<br />
 									<h4 className={styles.debugNote}>
 										Need help? Please refer to our
-										<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
+										<Link
+											href="https://aka.ms/fluid/devtool/docs"
+											target="_blank"
+										>
 											documentation page
 										</Link>{" "}
 										for guidance on getting the extension working.{" "}
