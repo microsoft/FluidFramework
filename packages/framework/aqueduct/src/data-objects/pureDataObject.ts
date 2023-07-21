@@ -81,7 +81,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		return this.handle;
 	}
 
-	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo | undefined {
+	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo {
 		return this.context.IExperimentalFluidGCInfo;
 	}
 
