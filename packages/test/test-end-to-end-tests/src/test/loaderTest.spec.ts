@@ -137,6 +137,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
+			// TODO: adjust to not rely on caching (AB#5046)
 			options: { cache: true },
 		});
 		container = await createAndAttachContainer(
@@ -191,6 +192,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		assert(url, "dataStore2 url is undefined");
 		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, {
 			url,
+			// TODO: adjust this test to not rely on caching (AB#5046)
 			headers: { [LoaderHeader.cache]: true },
 		});
 
@@ -210,6 +212,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	it("loaded container is paused using loader pause flags", async () => {
 		// load the container paused
 		const headers: IRequestHeader = {
+			// TODO: adjust this test to not rely on caching (AB#5046)
 			[LoaderHeader.cache]: false,
 			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
 		};
@@ -247,6 +250,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// TODO: remove this test when caching is removed (AB#5046)
 	it("caches the loaded container across multiple requests as expected", async () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
@@ -350,6 +354,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		const headers = {
 			wait: false,
 			[RuntimeHeaders.viaHandle]: true,
+			// TODO: adjust this test to not rely on caching (AB#5046)
 			[LoaderHeader.cache]: true,
 		};
 		// Request to the newly created data store with headers.

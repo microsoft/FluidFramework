@@ -802,6 +802,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		await defPromise.promise;
 	});
 
+	// TODO: remove this test when caching is removed (AB#5046)
 	it("Load attached container from cache and check if they are same", async () => {
 		loader.services.options.cache = true;
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
