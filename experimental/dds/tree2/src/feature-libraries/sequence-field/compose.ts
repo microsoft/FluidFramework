@@ -14,16 +14,7 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	EmptyInputCellMark,
-	Modify,
-	MoveId,
-	NoopMarkType,
-	CellId,
-} from "./format";
+import { Changeset, Mark, MarkList, Modify, MoveId, NoopMarkType, CellId } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -44,7 +35,6 @@ import {
 	isDeleteMark,
 	areOutputCellsEmpty,
 	areInputCellsEmpty,
-	getCellId,
 	compareLineages,
 	isNewAttach,
 	isExistingCellMark,
@@ -58,10 +48,18 @@ import {
 	markEmptiesCells,
 	splitMark,
 	markIsTransient,
-	GenerativeMark,
-	isGenerativeMark,
+	isGenerate,
 	areOverlappingIdRanges,
+	isModify,
+	isPlaceholder,
+	isReturnTo,
+	getRevision,
+	isMoveIn,
+	isReturnFrom,
+	getCellId,
+	isInsert,
 } from "./utils";
+import { EmptyInputCellMark, GenerateMark, ModifyMark } from "./helperTypes";
 
 /**
  * @alpha
@@ -181,22 +179,19 @@ function composeMarks<TNodeChange>(
 		return withNodeChange(baseMark, nodeChange);
 	}
 	if (markIsTransient(baseMark)) {
-		if (isGenerativeMark(newMark)) {
+		if (isGenerate(newMark)) {
 			// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
-			const nonTransient = withNodeChange(
-				baseMark,
-				nodeChange,
-			) as GenerativeMark<TNodeChange>;
-			delete nonTransient.transientDetach;
+			const nonTransient = withNodeChange(baseMark, nodeChange) as GenerateMark<TNodeChange>;
+			delete nonTransient.effect.transientDetach;
 			return nonTransient;
 		}
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
-		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
+		if (isModify(newMark) || isPlaceholder(newMark) || isDetachMark(newMark)) {
 			assert(newMark.cellId !== undefined, "Invalid node-targeting mark after transient");
 			return baseMark;
 		}
-		if (newMark.type === "ReturnTo") {
+		if (isReturnTo(newMark)) {
 			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
 			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
 			// knew about the node, and tried to move it out and return it.
@@ -204,7 +199,7 @@ function composeMarks<TNodeChange>(
 			// a given cell. The presence of a transient mark tells us that node just got deleted. Return marks that
 			// attempt to move a deleted node end up being muted.
 			assert(
-				newMark.isSrcConflicted ?? false,
+				newMark.effect.isSrcConflicted ?? false,
 				"Invalid active ReturnTo mark after transient",
 			);
 			return baseMark;
@@ -214,8 +209,8 @@ function composeMarks<TNodeChange>(
 		// However, the branch being rebased over can't be targeting the cell that the MoveIn is targeting,
 		// because no concurrent change has the ability to refer to such a cell.
 		// Therefore, a MoveIn mark cannot occur after a transient.
-		assert(newMark.type !== "MoveIn", "Invalid MoveIn after transient");
-		assert(newMark.type === NoopMarkType, "Unexpected mark type after transient");
+		assert(newMark?.effect?.type !== "MoveIn", "Invalid MoveIn after transient");
+		assert(newMark?.effect?.type === NoopMarkType, "Unexpected mark type after transient");
 		return baseMark;
 	}
 
@@ -225,7 +220,7 @@ function composeMarks<TNodeChange>(
 		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
-		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
+		return createModifyMark(getMarkLength(newMark), nodeChange, baseMark.cellId);
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
@@ -310,15 +305,18 @@ function composeMarks<TNodeChange>(
 		}
 
 		assert(isDeleteMark(newMark), "Unexpected mark type");
-		assert(isGenerativeMark(baseMark), "Expected generative mark");
-		const newMarkRevision = newMark.revision ?? newRev;
+		assert(isGenerate(baseMark), "Expected generative mark");
+		const newMarkRevision = getRevision(newMark) ?? newRev;
 		assert(newMarkRevision !== undefined, "Unable to compose anonymous marks");
 		return withNodeChange(
 			{
 				...baseMark,
-				transientDetach: {
-					revision: newMarkRevision,
-					localId: newMark.id,
+				effect: {
+					...baseMark.effect,
+					transientDetach: {
+						revision: newMarkRevision,
+						localId: newMark.effect.id,
+					},
 				},
 			},
 			nodeChange,
@@ -337,11 +335,13 @@ function composeMarks<TNodeChange>(
 			// which need to be included here.
 			// We will remove the placeholder during `amendCompose`.
 			return {
-				type: "Placeholder",
-				count: baseMark.count,
-				revision: baseMark.revision,
-				id: baseMark.id,
-				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
+				...baseMark,
+				effect: {
+					type: "Placeholder",
+					revision: baseMark.revision,
+					id: baseMark.id,
+					changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
+				},
 			};
 		}
 		const length = getMarkLength(baseMark);
@@ -359,7 +359,8 @@ function createModifyMark<TNodeChange>(
 	}
 
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
-	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
+	const effect: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
+	const mark: ModifyMark<TNodeChange> = { count: 1, effect };
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}
@@ -391,16 +392,21 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	}
 
 	const cloned = cloneMark(mark);
-	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
-	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
-		cloned.revision = revision;
-	}
+	const effect = cloned.effect;
+	if (effect !== undefined) {
+		if (revision !== undefined && effect.type !== "Modify" && effect.revision === undefined) {
+			effect.revision = revision;
+		}
 
-	if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
-		cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
-		return cloned;
+		if (
+			effect.type !== "MoveIn" &&
+			effect.type !== "ReturnTo" &&
+			effect.changes !== undefined
+		) {
+			effect.changes = composeChild([tagChange(effect.changes, revision)]);
+			return cloned;
+		}
 	}
-
 	return cloned;
 }
 
@@ -431,14 +437,18 @@ function amendComposeI<TNodeChange>(
 
 	while (!queue.isEmpty()) {
 		let mark = queue.dequeue();
-		switch (mark.type) {
+		const effect = mark.effect;
+		if (effect === undefined) {
+			continue;
+		}
+		switch (effect.type) {
 			case "MoveOut":
 			case "ReturnFrom": {
 				const replacementMark = getReplacementMark(
 					moveEffects,
 					CrossFieldTarget.Source,
-					mark.revision,
-					mark.id,
+					effect.revision,
+					effect.id,
 					mark.count,
 				);
 				mark = replacementMark ?? mark;
@@ -449,25 +459,30 @@ function amendComposeI<TNodeChange>(
 				const replacementMark = getReplacementMark(
 					moveEffects,
 					CrossFieldTarget.Destination,
-					mark.revision,
-					mark.id,
+					effect.revision,
+					effect.id,
 					mark.count,
 				);
 				mark = replacementMark ?? mark;
 				break;
 			}
 			case "Placeholder": {
-				const modifyAfter = getModifyAfter(moveEffects, mark.revision, mark.id, mark.count);
+				const modifyAfter = getModifyAfter(
+					moveEffects,
+					effect.revision,
+					effect.id,
+					mark.count,
+				);
 				if (modifyAfter !== undefined) {
 					const changes = composeChildChanges(
-						mark.changes,
+						effect.changes,
 						modifyAfter,
 						undefined,
 						composeChild,
 					);
 					mark = createModifyMark(mark.count, changes);
 				} else {
-					mark = createModifyMark(mark.count, mark.changes);
+					mark = createModifyMark(mark.count, effect.changes);
 				}
 			}
 			default:
@@ -515,15 +530,15 @@ export class ComposeQueue<T> {
 		const deletes = new Set<RevisionTag>();
 		for (const mark of baseMarks) {
 			if (isDeleteMark(mark)) {
-				const baseIntention = getIntention(mark.revision, revisionMetadata);
+				const baseIntention = getIntention(getRevision(mark), revisionMetadata);
 				if (baseIntention !== undefined) {
 					deletes.add(baseIntention);
 				}
 			}
 		}
 		for (const mark of newMarks) {
-			if (mark.type === "Insert") {
-				const newRev = mark.revision ?? this.newRevision;
+			if (mark?.effect?.type === "Insert") {
+				const newRev = getRevision(mark) ?? this.newRevision;
 				const newIntention = getIntention(newRev, revisionMetadata);
 				if (newIntention !== undefined && deletes.has(newIntention)) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -552,10 +567,10 @@ export class ComposeQueue<T> {
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			let baseCellId: ChangeAtomId;
 			if (markIsTransient(baseMark)) {
-				baseCellId = baseMark.transientDetach;
+				baseCellId = baseMark.effect.transientDetach;
 			} else if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
-				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
+				const baseRevision = getRevision(baseMark) ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				if (baseRevision === undefined || baseIntention === undefined) {
 					// The base revision always be defined except when squashing changes into a transaction.
@@ -571,13 +586,13 @@ export class ComposeQueue<T> {
 				}
 				baseCellId = {
 					revision: baseIntention,
-					localId: baseMark.id,
+					localId: baseMark.effect.id,
 				};
-			} else if (baseMark.type === "MoveIn") {
-				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
+			} else if (isMoveIn(baseMark)) {
+				const baseRevision = getRevision(baseMark) ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				assert(baseIntention !== undefined, 0x706 /* Base mark must have an intention */);
-				baseCellId = { revision: baseIntention, localId: baseMark.id };
+				baseCellId = { revision: baseIntention, localId: baseMark.effect.id };
 			} else {
 				assert(
 					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
@@ -612,25 +627,28 @@ export class ComposeQueue<T> {
 		const baseMark = this.baseMarks.dequeue();
 
 		if (baseMark !== undefined) {
-			switch (baseMark.type) {
-				case "MoveOut":
-				case "ReturnFrom":
-					{
-						const newMark = getReplacementMark(
-							this.moveEffects,
-							CrossFieldTarget.Source,
-							baseMark.revision,
-							baseMark.id,
-							baseMark.count,
-						);
+			const effect = baseMark.effect;
+			if (effect !== undefined) {
+				switch (effect.type) {
+					case "MoveOut":
+					case "ReturnFrom":
+						{
+							const newMark = getReplacementMark(
+								this.moveEffects,
+								CrossFieldTarget.Source,
+								effect.revision,
+								effect.id,
+								baseMark.count,
+							);
 
-						if (newMark !== undefined) {
-							return { newMark };
+							if (newMark !== undefined) {
+								return { newMark };
+							}
 						}
-					}
-					break;
-				default:
-					break;
+						break;
+					default:
+						break;
+				}
 			}
 		}
 
@@ -641,25 +659,28 @@ export class ComposeQueue<T> {
 		const newMark = this.newMarks.dequeue();
 
 		if (newMark !== undefined) {
-			switch (newMark.type) {
-				case "MoveIn":
-				case "ReturnTo":
-					{
-						const baseMark = getReplacementMark(
-							this.moveEffects,
-							CrossFieldTarget.Destination,
-							newMark.revision ?? this.newRevision,
-							newMark.id,
-							newMark.count,
-						);
+			const effect = newMark.effect;
+			if (effect !== undefined) {
+				switch (effect.type) {
+					case "MoveIn":
+					case "ReturnTo":
+						{
+							const baseMark = getReplacementMark(
+								this.moveEffects,
+								CrossFieldTarget.Destination,
+								effect.revision ?? this.newRevision,
+								effect.id,
+								newMark.count,
+							);
 
-						if (baseMark !== undefined) {
-							return { baseMark };
+							if (baseMark !== undefined) {
+								return { baseMark };
+							}
 						}
-					}
-					break;
-				default:
-					break;
+						break;
+					default:
+						break;
+				}
 			}
 		}
 
@@ -803,11 +824,11 @@ function areInverseMovesAtIntermediateLocation(
 		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
 
-	if (baseMark.type === "ReturnTo" && baseMark.cellId?.revision === newIntention) {
+	if (isReturnTo(baseMark) && baseMark.cellId?.revision === newIntention) {
 		return true;
 	}
 
-	if (newMark.type === "ReturnFrom" && newMark.cellId?.revision === baseIntention) {
+	if (isReturnFrom(newMark) && newMark.cellId?.revision === baseIntention) {
 		return true;
 	}
 
@@ -883,11 +904,7 @@ function compareCellPositions(
 		return Math.sign(cmp) * Infinity;
 	}
 
-	if (
-		newIntention !== undefined &&
-		newMark.type === "Insert" &&
-		cancelledInserts.has(newIntention)
-	) {
+	if (newIntention !== undefined && isInsert(newMark) && cancelledInserts.has(newIntention)) {
 		// We know the new insert is getting cancelled out so we need to delay returning it.
 		// The base mark that cancels the insert must appear later in the base marks.
 		return -Infinity;

@@ -34,30 +34,25 @@ import {
 	getMarkMoveId,
 	isNoopMark,
 	areOverlappingIdRanges,
+	isMoveIn,
+	isReturnTo,
+	isGenerate,
+	isMoveMark,
+	isMoveOut,
+	isReturnFrom,
 } from "./utils";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	ExistingCellMark,
-	NoopMark,
-	MoveId,
-	Modify,
-	EmptyInputCellMark,
-	NoopMarkType,
-	HasLineage,
-} from "./format";
+import { Changeset, Mark, MarkList, MoveId, Modify, NoopMarkType, HasLineage } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 import {
 	getMoveEffect,
 	setMoveEffect,
-	isMoveMark,
 	MoveEffect,
 	MoveEffectTable,
 	PairedMarkUpdate,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
+import { EmptyInputCellMark, ExistingCellMark, ModifyMark, NoopMark } from "./helperTypes";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -156,13 +151,13 @@ function rebaseMarkList<TNodeChange>(
 		} else if (currMark === undefined) {
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x708 /* Only detach marks should empty cells */);
-				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
+				lineageEntries.push({ id: baseMark.effect.id, count: baseMark.count });
 			} else if (isAttach(baseMark)) {
-				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
+				if (isMoveIn(baseMark) || isReturnTo(baseMark)) {
 					const movedMark = getMovedMark(
 						moveEffects,
-						baseMark.revision ?? baseRevision,
-						baseMark.id,
+						baseMark.effect.revision ?? baseRevision,
+						baseMark.effect.id,
 						baseMark.count,
 					);
 					if (movedMark !== undefined) {
@@ -170,8 +165,16 @@ function rebaseMarkList<TNodeChange>(
 					} else {
 						factory.pushOffset(getOutputLength(baseMark));
 					}
-				} else if (baseMark.transientDetach === undefined) {
-					factory.pushOffset(getOutputLength(baseMark));
+				} else {
+					// This assert is just here to help the compiler narrow the type of `baseMark`,
+					// which it should be able to do on its own.
+					assert(
+						isGenerate(baseMark),
+						"An attach mark that is neither a move-in nor a return-to should be a generate mark",
+					);
+					if (baseMark.effect.transientDetach === undefined) {
+						factory.pushOffset(getOutputLength(baseMark));
+					}
 				}
 				lineageRecipients.length = 0;
 				lineageEntries.length = 0;
@@ -200,7 +203,7 @@ function rebaseMarkList<TNodeChange>(
 				addLineageToRecipients(
 					lineageRecipients,
 					baseIntention,
-					baseMark.id,
+					baseMark.effect.id,
 					baseMark.count,
 				);
 			}
@@ -212,7 +215,7 @@ function rebaseMarkList<TNodeChange>(
 
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
-				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
+				lineageEntries.push({ id: baseMark.effect.id, count: baseMark.count });
 			} else {
 				lineageRecipients.length = 0;
 				lineageEntries.length = 0;
@@ -341,7 +344,8 @@ function rebaseMark<TNodeChange>(
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
 				const modify: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
-				sendMarkToDest(modify, moveEffects, baseRevision, moveId, baseMark.count);
+				const mark: ModifyMark<TNodeChange> = { count: 1, effect: modify };
+				sendMarkToDest(mark, moveEffects, baseRevision, moveId, baseMark.count);
 			}
 		}
 
@@ -349,30 +353,32 @@ function rebaseMark<TNodeChange>(
 			!isNewAttach(rebasedMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
+		// The above assert should narrow the type, but it doesn't.
+		const rebasedMarkNarrowed = rebasedMark as ExistingCellMark<TNodeChange>;
 
 		if (isMoveMark(rebasedMark)) {
-			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
+			if (isMoveOut(rebasedMark) || isReturnFrom(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
-					rebasedMark.revision,
-					rebasedMark.id,
+					rebasedMark.effect.revision,
+					rebasedMark.effect.id,
 					rebasedMark.count,
 					PairedMarkUpdate.Deactivated,
 				);
-			} else if (rebasedMark.type === "ReturnTo") {
+			} else if (isReturnTo(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
-					rebasedMark.revision,
-					rebasedMark.id,
+					rebasedMark.effect.revision,
+					rebasedMark.effect.id,
 					rebasedMark.count,
 					PairedMarkUpdate.Reactivated,
 				);
 			}
 		}
 		assert(isDetachMark(baseMark), 0x70b /* Only detach marks should empty cells */);
-		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseMark.id);
+		rebasedMark = makeDetachedMark(rebasedMarkNarrowed, baseMarkIntention, baseMark.effect.id);
 	} else if (markFillsCells(baseMark)) {
 		assert(
 			isExistingCellMark(rebasedMark),
@@ -380,23 +386,23 @@ function rebaseMark<TNodeChange>(
 		);
 		if (isMoveMark(rebasedMark)) {
 			if (
-				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
+				(isMoveOut(rebasedMark) || isReturnFrom(rebasedMark)) &&
 				nodeExistenceState === NodeExistenceState.Alive
 			) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Destination,
-					rebasedMark.revision,
-					rebasedMark.id,
+					rebasedMark.effect.revision,
+					rebasedMark.effect.id,
 					rebasedMark.count,
 					PairedMarkUpdate.Reactivated,
 				);
-			} else if (rebasedMark.type === "ReturnTo") {
+			} else if (isReturnTo(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
-					rebasedMark.revision,
-					rebasedMark.id,
+					rebasedMark.effect.revision,
+					rebasedMark.effect.id,
 					rebasedMark.count,
 					PairedMarkUpdate.Deactivated,
 				);
@@ -405,26 +411,26 @@ function rebaseMark<TNodeChange>(
 		rebasedMark = withoutCellId(rebasedMark);
 	} else if (
 		nodeExistenceState === NodeExistenceState.Alive &&
-		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
+		(isMoveOut(rebasedMark) || isReturnFrom(rebasedMark)) &&
 		rebasedMark.cellId === undefined
 	) {
 		setPairedMarkStatus(
 			moveEffects,
 			CrossFieldTarget.Destination,
-			rebasedMark.revision,
-			rebasedMark.id,
+			rebasedMark.effect.revision,
+			rebasedMark.effect.id,
 			rebasedMark.count,
 			PairedMarkUpdate.Reactivated,
 		);
 	} else if (
 		nodeExistenceState === NodeExistenceState.Dead &&
-		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom")
+		(isMoveOut(rebasedMark) || isReturnFrom(rebasedMark))
 	) {
 		setPairedMarkStatus(
 			moveEffects,
 			CrossFieldTarget.Destination,
-			rebasedMark.revision,
-			rebasedMark.id,
+			rebasedMark.effect.revision,
+			rebasedMark.effect.id,
 			rebasedMark.count,
 			PairedMarkUpdate.Deactivated,
 		);
@@ -433,7 +439,7 @@ function rebaseMark<TNodeChange>(
 }
 
 function markFollowsMoves(mark: Mark<unknown>): boolean {
-	const type = mark.type;
+	const type = mark?.effect?.type;
 	switch (type) {
 		case "Delete":
 		case "Modify":
@@ -608,14 +614,11 @@ function amendRebaseI<TNodeChange>(
 			factory.push(withNodeChange(newMark, rebaseChild(getNodeChange(newMark), undefined)));
 		}
 
-		if (
-			baseMark !== undefined &&
-			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
-		) {
+		if (baseMark !== undefined && (isMoveIn(baseMark) || isReturnTo(baseMark))) {
 			const movedMark = getMovedMark(
 				moveEffects,
-				baseMark.revision ?? baseRevision,
-				baseMark.id,
+				baseMark.effect.revision ?? baseRevision,
+				baseMark.effect.id,
 				baseMark.count,
 			);
 			if (movedMark !== undefined) {
@@ -753,10 +756,6 @@ function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: Rev
 }
 
 function getLineageHolder(mark: Mark<unknown>): HasLineage {
-	if (isNewAttach(mark)) {
-		return mark;
-	}
-
 	assert(mark.cellId !== undefined, "Attached cells cannot have lineage");
 	return mark.cellId;
 }

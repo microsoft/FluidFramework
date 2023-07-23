@@ -11,15 +11,15 @@ import { brand } from "../../util";
 import {
 	CellId,
 	Changeset,
+	Effect,
 	Insert,
 	Mark,
 	MoveId,
 	NodeChangeType,
 	Reattach,
-	ReturnFrom,
-	ReturnTo,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
+import { ReturnFromMark, ReturnToMark } from "./helperTypes";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
@@ -57,7 +57,7 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, 1, { type: "Modify", changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],
@@ -68,29 +68,27 @@ export const sequenceFieldEditor = {
 			content: cursors.map(jsonableTreeFromCursor),
 			id,
 		};
-		return markAtIndex(index, mark);
+		return markAtIndex(index, cursors.length, mark);
 	},
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
-		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
+		markAtIndex(index, count, { type: "Delete", id }),
 
 	revive: (
 		index: number,
 		count: number,
-		detachEvent: CellId,
+		cellId: CellId,
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		assert(detachEvent.revision !== undefined, "Detach event must have a revision");
-		const mark: Reattach<never> = {
+		assert(cellId.revision !== undefined, "Detach event must have a revision");
+		const effect: Reattach<never> = {
 			type: "Revive",
-			content: reviver(detachEvent.revision, detachEvent.localId, count),
-			count,
-			cellId: detachEvent,
+			content: reviver(cellId.revision, cellId.localId, count),
 		};
 		if (!isIntention) {
-			mark.inverseOf = detachEvent.revision;
+			effect.inverseOf = cellId.revision;
 		}
-		return count === 0 ? [] : markAtIndex(index, mark);
+		return markAtIndex(index, count, effect, cellId);
 	},
 
 	move(
@@ -99,61 +97,75 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		id: ChangesetLocalId,
 	): [moveOut: Changeset<never>, moveIn: Changeset<never>] {
-		const moveOut: Mark<never> = {
+		const moveOut: Effect<never> = {
 			type: "MoveOut",
 			id,
-			count,
 		};
 
-		const moveIn: Mark<never> = {
+		const moveIn: Effect<never> = {
 			type: "MoveIn",
 			id,
-			count,
 		};
 
-		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];
+		return [markAtIndex(sourceIndex, count, moveOut), markAtIndex(destIndex, count, moveIn)];
 	},
 
 	return(
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachEvent: CellId,
+		cellId: CellId,
 	): Changeset<never> {
 		if (count === 0) {
 			return [];
 		}
 
 		const id = brand<MoveId>(0);
-		const returnFrom: ReturnFrom<never> = {
-			type: "ReturnFrom",
-			id,
+		const returnFrom: ReturnFromMark<never> = {
 			count,
+			effect: {
+				type: "ReturnFrom",
+				id,
+			},
 		};
 
-		const returnTo: ReturnTo = {
-			type: "ReturnTo",
-			id,
+		const returnTo: ReturnToMark = {
 			count,
-			cellId: detachEvent,
+			cellId,
+			effect: {
+				type: "ReturnTo",
+				id,
+			},
 		};
 
 		const factory = new MarkListFactory<never>();
 		if (sourceIndex < destIndex) {
 			factory.pushOffset(sourceIndex);
-			factory.pushContent(returnFrom);
+			factory.pushMark(returnFrom);
 			factory.pushOffset(destIndex - sourceIndex);
-			factory.pushContent(returnTo);
+			factory.pushMark(returnTo);
 		} else {
 			factory.pushOffset(destIndex);
-			factory.pushContent(returnTo);
+			factory.pushMark(returnTo);
 			factory.pushOffset(sourceIndex - destIndex);
-			factory.pushContent(returnFrom);
+			factory.pushMark(returnFrom);
 		}
 		return factory.list;
 	},
 };
 
-function markAtIndex<TNodeChange>(index: number, mark: Mark<TNodeChange>): Changeset<TNodeChange> {
+function markAtIndex<TNodeChange>(
+	index: number,
+	count: number,
+	effect: Effect<TNodeChange>,
+	cellId?: CellId,
+): Changeset<TNodeChange> {
+	if (count === 0) {
+		return [];
+	}
+	const mark: Mark<TNodeChange> = { count, effect };
+	if (cellId !== undefined) {
+		mark.cellId = cellId;
+	}
 	return index === 0 ? [mark] : [{ count: index }, mark];
 }

@@ -7,8 +7,9 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeEntry } from "../../util";
-import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
-import { cloneMark, splitMark } from "./utils";
+import { Mark, MoveId } from "./format";
+import { cloneMark, isMoveMark, splitMark } from "./utils";
+import { MoveInMark, MoveOutMark, ReturnFromMark, ReturnToMark } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -95,59 +96,46 @@ export function getMoveEffect<T>(
 	return moveEffects.get(target, revision, id, count, addDependency);
 }
 
-export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
-
-export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
-	switch (mark.type) {
-		case "MoveIn":
-		case "MoveOut":
-		case "ReturnFrom":
-		case "ReturnTo":
-			return true;
-		default:
-			return false;
-	}
-}
-
 function applyMoveEffectsToDest<T>(
-	mark: MoveIn | ReturnTo,
+	mark: MoveInMark | ReturnToMark,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
 ): Mark<T> {
-	const newMark: MoveIn | ReturnTo = {
+	const newMark: MoveInMark | ReturnToMark = {
 		...mark,
 	};
 
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Destination,
-		mark.revision ?? revision,
-		mark.id,
+		mark.effect.revision ?? revision,
+		mark.effect.id,
 		mark.count,
 		consumeEffect,
 	);
 	if (statusUpdate === PairedMarkUpdate.Deactivated) {
-		newMark.isSrcConflicted = true;
+		newMark.effect.isSrcConflicted = true;
 	} else if (statusUpdate === PairedMarkUpdate.Reactivated) {
-		delete newMark.isSrcConflicted;
+		delete newMark.effect.isSrcConflicted;
 	}
 
 	return newMark;
 }
 
 function applyMoveEffectsToSource<T>(
-	mark: MoveOut<T> | ReturnFrom<T>,
+	mark: MoveOutMark<T> | ReturnFromMark<T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T> {
-	let nodeChange = mark.changes;
+	const markEffect = mark.effect;
+	let nodeChange = markEffect.changes;
 	const modifyAfter = getModifyAfter(
 		effects,
-		mark.revision ?? revision,
-		mark.id,
+		markEffect.revision ?? revision,
+		markEffect.id,
 		mark.count,
 		consumeEffect,
 	);
@@ -156,33 +144,33 @@ function applyMoveEffectsToSource<T>(
 			composeChildren !== undefined,
 			0x569 /* Must provide a change composer if modifying moves */,
 		);
-		nodeChange = composeChildren(mark.changes, modifyAfter);
+		nodeChange = composeChildren(markEffect.changes, modifyAfter);
 	}
 
 	const newMark = cloneMark(mark);
 	if (nodeChange !== undefined) {
-		newMark.changes = nodeChange;
+		newMark.effect.changes = nodeChange;
 	} else {
-		delete newMark.changes;
+		delete newMark.effect.changes;
 	}
 
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Source,
-		mark.revision ?? revision,
-		mark.id,
+		markEffect.revision ?? revision,
+		markEffect.id,
 		mark.count,
 		consumeEffect,
 	);
 	if (statusUpdate !== undefined) {
 		assert(
-			newMark.type === "ReturnFrom",
+			newMark.effect.type === "ReturnFrom",
 			0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
 		);
 		if (statusUpdate === PairedMarkUpdate.Deactivated) {
-			newMark.isDstConflicted = true;
+			newMark.effect.isDstConflicted = true;
 		} else {
-			delete newMark.isDstConflicted;
+			delete newMark.effect.isDstConflicted;
 		}
 	}
 
@@ -197,23 +185,24 @@ export function applyMoveEffectsToMark<T>(
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
 	if (isMoveMark(mark)) {
-		const type = mark.type;
+		const markEffect = mark.effect;
+		const type = markEffect.type;
 		switch (type) {
 			case "MoveOut":
 			case "ReturnFrom": {
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Source,
-					mark.revision ?? revision,
-					mark.id,
+					markEffect.revision ?? revision,
+					markEffect.id,
 					mark.count,
 				);
 				if (effect === undefined) {
 					return [mark];
 				}
 
-				if (effect.start > mark.id) {
-					const [firstMark, secondMark] = splitMark(mark, effect.start - mark.id);
+				if (effect.start > markEffect.id) {
+					const [firstMark, secondMark] = splitMark(mark, effect.start - markEffect.id);
 					return [
 						firstMark,
 						...applyMoveEffectsToMark(
@@ -227,9 +216,12 @@ export function applyMoveEffectsToMark<T>(
 				}
 
 				const lastEffectId = effect.start + effect.length - 1;
-				const lastMarkId = (mark.id as number) + mark.count - 1;
+				const lastMarkId = (markEffect.id as number) + mark.count - 1;
 				if (lastEffectId < lastMarkId) {
-					const [firstMark, secondMark] = splitMark(mark, lastEffectId - mark.id + 1);
+					const [firstMark, secondMark] = splitMark(
+						mark as MoveOutMark<T> | ReturnFromMark<T>,
+						lastEffectId - markEffect.id + 1,
+					);
 					return [
 						applyMoveEffectsToSource(
 							firstMark,
@@ -249,7 +241,7 @@ export function applyMoveEffectsToMark<T>(
 				}
 				return [
 					applyMoveEffectsToSource(
-						mark,
+						mark as MoveOutMark<T> | ReturnFromMark<T>,
 						revision,
 						effects,
 						consumeEffect,
@@ -262,16 +254,16 @@ export function applyMoveEffectsToMark<T>(
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Destination,
-					mark.revision ?? revision,
-					mark.id,
+					markEffect.revision ?? revision,
+					markEffect.id,
 					mark.count,
 				);
 				if (effect === undefined) {
 					return [mark];
 				}
 
-				if (effect.start > mark.id) {
-					const [firstMark, secondMark] = splitMark(mark, effect.start - mark.id);
+				if (effect.start > markEffect.id) {
+					const [firstMark, secondMark] = splitMark(mark, effect.start - markEffect.id);
 					return [
 						firstMark,
 						...applyMoveEffectsToMark(
@@ -285,9 +277,12 @@ export function applyMoveEffectsToMark<T>(
 				}
 
 				const lastEffectId = effect.start + effect.length - 1;
-				const lastMarkId = (mark.id as number) + mark.count - 1;
+				const lastMarkId = (markEffect.id as number) + mark.count - 1;
 				if (lastEffectId < lastMarkId) {
-					const [firstMark, secondMark] = splitMark(mark, lastEffectId - mark.id + 1);
+					const [firstMark, secondMark] = splitMark(
+						mark as MoveInMark | ReturnToMark,
+						lastEffectId - markEffect.id + 1,
+					);
 					return [
 						applyMoveEffectsToDest(firstMark, revision, effects, consumeEffect),
 						...applyMoveEffectsToMark(
@@ -299,7 +294,14 @@ export function applyMoveEffectsToMark<T>(
 						),
 					];
 				}
-				return [applyMoveEffectsToDest(mark, revision, effects, consumeEffect)];
+				return [
+					applyMoveEffectsToDest(
+						mark as MoveInMark | ReturnToMark,
+						revision,
+						effects,
+						consumeEffect,
+					),
+				];
 			}
 			default:
 				unreachableCase(type);
