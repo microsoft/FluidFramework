@@ -4,7 +4,7 @@
  */
 
 import { Mark, MarkList } from "./format";
-import { isNoopMark, tryExtendMark } from "./utils";
+import { isNoop, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -21,7 +21,7 @@ export class MarkListFactory<TNodeChange> {
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
-			if (isNoopMark(item)) {
+			if (isNoop(item)) {
 				this.pushOffset(item.count);
 			} else {
 				this.pushMark(item);

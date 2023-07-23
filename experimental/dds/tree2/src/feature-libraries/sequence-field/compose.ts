@@ -29,7 +29,7 @@ import {
 import {
 	getInputLength,
 	getOutputLength,
-	isNoopMark,
+	isNoop,
 	getOffsetInCellRange,
 	cloneMark,
 	isDeleteMark,
@@ -215,9 +215,9 @@ function composeMarks<TNodeChange>(
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		if (isNoopMark(baseMark)) {
+		if (isNoop(baseMark)) {
 			return withNodeChange(newMark, nodeChange);
-		} else if (isNoopMark(newMark)) {
+		} else if (isNoop(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
 		return createModifyMark(getMarkLength(newMark), nodeChange, baseMark.cellId);
@@ -387,7 +387,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isNoopMark(mark)) {
+	if (isNoop(mark)) {
 		return mark;
 	}
 

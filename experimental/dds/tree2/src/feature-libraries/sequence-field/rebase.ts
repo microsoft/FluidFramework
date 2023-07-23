@@ -32,7 +32,7 @@ import {
 	getNodeChange,
 	withNodeChange,
 	getMarkMoveId,
-	isNoopMark,
+	isNoop,
 	areOverlappingIdRanges,
 	isMoveIn,
 	isReturnTo,
@@ -550,7 +550,7 @@ function makeDetachedMark<T>(
 	detachIntention: RevisionTag,
 	detachId: ChangesetLocalId,
 ): Mark<T> {
-	if (isNoopMark(mark)) {
+	if (isNoop(mark)) {
 		return { count: 0 };
 	}
 

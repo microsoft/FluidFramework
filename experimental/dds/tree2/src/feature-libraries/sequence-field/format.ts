@@ -367,7 +367,7 @@ export interface Mark<TNodeChange> {
 	 * Undefined if the target cells are not empty in this mark's input context.
 	 */
 	cellId?: CellId;
-	effect?: Effect<TNodeChange>;
+	effect?: Effect<TNodeChange>[];
 }
 
 export const Effect = <Schema extends TSchema>(tNodeChange: Schema) =>
