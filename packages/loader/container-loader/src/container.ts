@@ -1470,6 +1470,9 @@ export class Container
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	) {
+		const verboseLoggingEnabled =
+			this.mc.config.getBoolean("Fluid.enableVerboseLogging") ?? false;
+		let startTime = performance.now();
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
 			this.subLogger,
@@ -1507,6 +1510,7 @@ export class Container
 		}
 
 		this._attachState = AttachState.Attached;
+		const loadStage1 = performance.now() - startTime;
 
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
@@ -1514,6 +1518,7 @@ export class Container
 				? await this.fetchSnapshotTree(specifiedVersion)
 				: { snapshot: pendingLocalState.baseSnapshot, versionId: undefined };
 
+		startTime = performance.now();
 		if (pendingLocalState) {
 			this.baseSnapshot = pendingLocalState.baseSnapshot;
 			this.baseSnapshotBlobs = pendingLocalState.snapshotBlobs;
@@ -1566,6 +1571,7 @@ export class Container
 		// ...load in the existing quorum
 		// Initialize the protocol handler
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
+		const loadStage2 = performance.now() - startTime;
 
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
@@ -1592,6 +1598,7 @@ export class Container
 			this._clientId = pendingLocalState?.clientId;
 		}
 
+		let loadStage3: number = 0;
 		// We might have hit some failure that did not manifest itself in exception in this flow,
 		// do not start op processing in such case - static version of Container.load() will handle it correctly.
 		if (!this.closed) {
@@ -1613,6 +1620,7 @@ export class Container
 				this._deltaManager.inbound.pause();
 			}
 
+			startTime = performance.now();
 			switch (loadMode.deltaConnection) {
 				case undefined:
 					if (pendingLocalState) {
@@ -1634,8 +1642,18 @@ export class Container
 				default:
 					unreachableCase(loadMode.deltaConnection);
 			}
+			loadStage3 = performance.now() - startTime;
 		}
 
+		if (verboseLoggingEnabled) {
+			this.subLogger.sendTelemetryEvent({
+				eventName: "UnaccountedLoadTime",
+				loadStage1,
+				loadStage2,
+				loadStage3,
+				duration: loadStage1 + loadStage2 + loadStage3,
+			});
+		}
 		// Safety net: static version of Container.load() should have learned about it through "closed" handler.
 		// But if that did not happen for some reason, fail load for sure.
 		// Otherwise we can get into situations where container is closed and does not try to connect to ordering
