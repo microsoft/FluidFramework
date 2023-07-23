@@ -588,11 +588,11 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ITreeEntry[]> {
 		let to = lt;
 		const from = gt;
-		const LogtailRequestedLength = to - from;
+		const LogtailRequestedLength = to - from - 1;
 
 		if (LogtailRequestedLength > this.maxLogtailLength) {
 			Lumberjack.info(`Limiting logtail length`, this.lumberProperties);
-			to = from + this.maxLogtailLength;
+			to = from + this.maxLogtailLength + 1;
 		}
 		const logTail = await this.getLogTail(from, to, pending);
 
