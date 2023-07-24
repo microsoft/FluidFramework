@@ -1,5 +1,5 @@
 ---
-"@fluidframework/test-utils": major
+"@fluidframework/telemetry-utils": major
 ---
 
 MockLogger is no longer a TelemetryLogger
