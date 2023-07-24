@@ -416,11 +416,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.undoRedoManager?.clone(),
 			anchors,
 		);
-		if (this.isTransacting()) {
-			const forks = this.transactions.peek().forks;
-			forks.add(fork);
-			fork.on("dispose", () => forks.delete(fork));
-		}
 		this.emit("fork", fork);
 		return fork;
 	}
