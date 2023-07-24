@@ -117,7 +117,6 @@ export {
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
-	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	fieldSchema,

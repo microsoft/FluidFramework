@@ -9,17 +9,16 @@ import {
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
-	SchemaDataAndPolicy,
 	ForestEvents,
 	FieldStoredSchema,
 	FieldKey,
 	LocalFieldKey,
+	SchemaData,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultEditBuilder, fieldKinds } from "../default-field-kinds";
+import { DefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
-import { FullSchemaPolicy } from "../modular-schema";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -79,10 +78,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * Schema used within this context.
 	 * All data must conform to these schema.
-	 *
-	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaDataAndPolicy;
+	readonly schema: SchemaData;
 
 	/**
 	 * Call before editing.
@@ -204,8 +201,8 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaDataAndPolicy<FullSchemaPolicy> {
-		return { ...this.forest.schema, policy: { fieldKinds } };
+	public get schema(): SchemaData {
+		return this.forest.schema;
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {

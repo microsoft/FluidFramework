@@ -58,7 +58,6 @@ export {
 	FieldKindIdentifier,
 	TreeTypeSet,
 	SchemaData,
-	SchemaDataAndPolicy,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -80,6 +79,7 @@ export {
 	TreeAdapter,
 	MapTree,
 	LocalCommitSource,
+	forbiddenFieldKindIdentifier,
 } from "./core";
 
 export {

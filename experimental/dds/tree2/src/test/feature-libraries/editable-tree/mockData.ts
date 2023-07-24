@@ -31,9 +31,9 @@ import {
 	EmptyKey,
 	JsonableTree,
 	IEditableForest,
-	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
+	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
@@ -276,7 +276,7 @@ export function buildTestTree(
 	return context;
 }
 
-export function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
+export function buildTestPerson(): readonly [SchemaData, Person] {
 	const context = buildTestTree(personData);
 	return [context.schema, context.unwrappedRoot as Person];
 }

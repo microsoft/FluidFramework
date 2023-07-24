@@ -14,17 +14,6 @@ import {
 } from "./schema";
 
 /**
- * A {@link SchemaData} with a {@link SchemaPolicy}.
- * @alpha
- */
-export interface SchemaDataAndPolicy<TPolicy = unknown> extends SchemaData {
-	/**
-	 * Configuration information, including the defaults for schema which have no been added yet.
-	 */
-	readonly policy: TPolicy;
-}
-
-/**
  * Events for {@link StoredSchemaRepository}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).

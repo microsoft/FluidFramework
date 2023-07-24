@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, requireAssignableTo } from "../../util";
+import { fail } from "../../util";
 import {
 	FieldStoredSchema,
 	LocalFieldKey,
@@ -14,7 +14,6 @@ import {
 	ViewSchemaData,
 	AdaptedViewSchema,
 	Compatibility,
-	SchemaDataAndPolicy,
 	Named,
 	NamedTreeSchema,
 	TreeTypeSet,
@@ -192,19 +191,11 @@ export interface IFieldSchema {
  * Schema data that can be be used to view a document.
  * @alpha
  */
-export interface SchemaCollection {
+export interface SchemaCollection extends SchemaData {
 	readonly rootFieldSchema: IFieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
 	readonly policy: FullSchemaPolicy;
 	readonly adapters: Adapters;
-}
-
-{
-	// SchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
-	// but want to be compatible with it, so check that here:
-	type _test0 = requireAssignableTo<IFieldSchema, FieldStoredSchema>;
-	type _test1 = requireAssignableTo<SchemaCollection, SchemaData>;
-	type _test2 = requireAssignableTo<SchemaCollection, SchemaDataAndPolicy<FullSchemaPolicy>>;
 }
 
 /**

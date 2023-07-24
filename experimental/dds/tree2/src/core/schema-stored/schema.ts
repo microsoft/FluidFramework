@@ -147,6 +147,16 @@ export interface FieldStoredSchema {
 	readonly types?: TreeTypeSet;
 }
 
+/**
+ * Identifier used for the FieldKind for fields which must be empty.
+ *
+ * @remarks
+ * This mainly show up in:
+ * 1. The root default field for documents.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ *
+ * @alpha
+ */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
 export const storedEmptyFieldSchema: FieldStoredSchema = {

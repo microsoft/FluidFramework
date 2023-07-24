@@ -503,7 +503,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     prepareForEdit(): void;
     get root(): EditableField;
     set root(data: NewFieldContent);
-    readonly schema: SchemaDataAndPolicy;
+    readonly schema: SchemaData;
     get unwrappedRoot(): UnwrappedEditableField;
     set unwrappedRoot(data: NewFieldContent);
 }
@@ -755,6 +755,9 @@ export interface FlushableDataBinder<B extends OperationBinderEvents | Invalidat
 // @alpha (undocumented)
 export interface Forbidden extends BrandedFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden, FieldEditor<any>> {
 }
+
+// @alpha
+export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @alpha
 export interface ForestEvents {
@@ -1675,7 +1678,7 @@ export class SchemaBuilder {
 }
 
 // @alpha
-export interface SchemaCollection {
+export interface SchemaCollection extends SchemaData {
     // (undocumented)
     readonly adapters: Adapters;
     // (undocumented)
@@ -1692,11 +1695,6 @@ export interface SchemaData {
     readonly rootFieldSchema: FieldStoredSchema;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
-}
-
-// @alpha
-export interface SchemaDataAndPolicy<TPolicy = unknown> extends SchemaData {
-    readonly policy: TPolicy;
 }
 
 // @alpha
@@ -2071,7 +2069,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
     free(): void;
     prepareForEdit(): void;
     readonly root: UntypedField;
-    readonly schema: SchemaDataAndPolicy;
+    readonly schema: SchemaData;
     readonly unwrappedRoot: UnwrappedUntypedField;
 }
 

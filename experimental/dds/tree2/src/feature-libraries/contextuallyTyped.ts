@@ -13,7 +13,6 @@ import {
 	ValueSchema,
 	FieldStoredSchema,
 	LocalFieldKey,
-	SchemaDataAndPolicy,
 	TreeSchemaIdentifier,
 	TreeTypeSet,
 	MapTree,
@@ -419,7 +418,7 @@ export function cursorsFromContextualData(
  * @alpha
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	schema: T,
 	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {

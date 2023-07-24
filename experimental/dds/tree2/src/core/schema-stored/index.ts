@@ -26,7 +26,6 @@ export {
 	StoredSchemaRepository,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
-	SchemaDataAndPolicy,
 	SchemaEvents,
 } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";
