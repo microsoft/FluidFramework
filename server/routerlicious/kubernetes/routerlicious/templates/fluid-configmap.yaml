@@ -153,7 +153,7 @@ data:
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
             "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
             "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }},
-            "maxLogtailLength: {{ .Values.scribe.maxLogtailLength }}
+            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }}
         },
         "system": {
             "httpServer": {
