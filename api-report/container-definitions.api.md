@@ -216,7 +216,8 @@ export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
     // (undocumented)
-    opsBeforeReturn?: undefined | "cached" | "all";
+    opsBeforeReturn?: undefined | "sequenceNumber" | "cached" | "all";
+    pauseAfterLoad?: boolean;
 }
 
 // @public
@@ -391,7 +392,6 @@ export interface ILoaderHeader {
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
-    // (undocumented)
     [LoaderHeader.sequenceNumber]: number;
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
@@ -507,7 +507,6 @@ export enum LoaderHeader {
     loadMode = "loadMode",
     // (undocumented)
     reconnect = "fluid-reconnect",
-    // (undocumented)
     sequenceNumber = "fluid-sequence-number",
     version = "version"
 }

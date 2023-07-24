@@ -512,7 +512,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		minSequenceNumber: number,
 		sequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "cached" | "all" | "none" = "none",
+		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
 	) {
 		this.initSequenceNumber = sequenceNumber;
 		this.lastProcessedSequenceNumber = sequenceNumber;

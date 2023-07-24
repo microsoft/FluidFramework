@@ -73,6 +73,12 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_ILoaderHeader": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerLoadMode": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IContainer": {
 				"backCompat": false
 			},
