@@ -6,14 +6,12 @@
 
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
-import { IDebugger } from 'debug';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
@@ -44,16 +42,6 @@ export function createMultiSinkLogger(props: {
     loggers?: (ITelemetryBaseLogger | undefined)[];
     tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
-
-// Warning: (ae-forgotten-export) The symbol "TelemetryLogger" needs to be exported by the entry point index.d.ts
-//
-// @public @deprecated
-export class DebugLogger extends TelemetryLogger {
-    constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
-    static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinDebugLogger(namespace: string, logger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
-}
 
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
@@ -240,8 +228,7 @@ export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: 
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
 // @public
-export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
-    constructor();
+export class MockLogger implements ITelemetryBaseLogger {
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -255,6 +242,8 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+    // (undocumented)
+    toTelemetryLogger(): ITelemetryLoggerExt;
 }
 
 // @public

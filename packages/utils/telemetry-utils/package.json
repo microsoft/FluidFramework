@@ -130,6 +130,10 @@
 			"RemovedClassDeclaration_TelemetryUTLogger": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_MockLogger": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

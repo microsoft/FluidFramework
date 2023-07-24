@@ -144,7 +144,10 @@ describe("Garbage Collection configurations", () => {
 	beforeEach(() => {
 		gc = undefined;
 		mockLogger = new MockLogger();
-		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
+		mc = mixinMonitoringContext(
+			mockLogger.toTelemetryLogger(),
+			configProvider(injectedSettings),
+		);
 		// To ensure inactive timeout is less than sweep timeout.
 		injectedSettings[testOverrideInactiveTimeoutKey] = 1;
 	});

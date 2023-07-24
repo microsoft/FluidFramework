@@ -171,7 +171,10 @@ describe("Garbage Collection Tests", () => {
 	beforeEach(() => {
 		gc = undefined;
 		mockLogger = new MockLogger();
-		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
+		mc = mixinMonitoringContext(
+			mockLogger.toTelemetryLogger(),
+			configProvider(injectedSettings),
+		);
 	});
 
 	afterEach(() => {
