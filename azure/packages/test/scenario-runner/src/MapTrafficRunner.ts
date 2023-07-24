@@ -98,6 +98,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 					this.buildScenarioRunConfig(config, { childId: i, isSync: true }),
 				),
 			);
+			await delay(this.c.clientStartDelayMs);
 		}
 		try {
 			await Promise.all(runs);

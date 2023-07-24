@@ -94,6 +94,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 					this.buildScenarioRunConfig(config, { childId: i, isSync: true }),
 				),
 			);
+			await delay(this.c.clientStartDelayMs);
 		}
 		try {
 			const ids = await Promise.all(runs);

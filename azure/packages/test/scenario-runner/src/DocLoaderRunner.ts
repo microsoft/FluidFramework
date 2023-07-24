@@ -99,6 +99,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 						this.buildScenarioRunConfig(config, { childId: i++, docId, isSync: true }),
 					),
 				);
+				await delay(this.c.clientStartDelayMs);
 			}
 		}
 		try {
