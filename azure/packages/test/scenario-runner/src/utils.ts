@@ -141,3 +141,90 @@ export async function createContainer(
 	const r = await ac.createContainer(schema);
 	return r.container;
 }
+
+export type ScenarioRunnerTelemetryEventNames =
+	| RouterliciousDriverTelemetryEventNames
+	| FluidContainerTelemetryEventNames
+	| FluidSummarizerTelemetryEventNames;
+
+export enum FluidSummarizerTelemetryEventNames {
+	Summarize = "fluid:telemetry:Summarizer:Running:Summarize",
+}
+
+export enum FluidContainerTelemetryEventNames {
+	Request = "fluid:telemetry:Container:Request",
+	ConnectionStateChange = "fluid:telemetry:Container:ConnectionStateChange",
+}
+
+export enum RouterliciousDriverTelemetryEventNames {
+	FetchOrdererToken = "fluid:telemetry:RouterliciousDriver:FetchOrdererToken",
+	FetchStorageToken = "fluid:telemetry:RouterliciousDriver:FetchStorageToken",
+	CreateNew = "fluid:telemetry:RouterliciousDriver:CreateNew",
+	DocPostCreateCallback = "fluid:telemetry:RouterliciousDriver:DocPostCreateCallback",
+	DiscoverSession = "fluid:telemetry:RouterliciousDriver:DiscoverSession",
+	uploadSummaryWithContext = "fluid:telemetry:RouterliciousDriver:uploadSummaryWithContext",
+	getWholeFlatSummary = "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
+	GetDeltas = "fluid:telemetry:RouterliciousDriver:GetDeltas",
+	GetDeltaStreamToken = "fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
+	ConnectToDeltaStream = "fluid:telemetry:RouterliciousDriver:ConnectToDeltaStream",
+}
+
+export function getScenarioRunnerTelemetryEventMap(
+	scenario?: string,
+): Map<ScenarioRunnerTelemetryEventNames, string> {
+	const scenarioName = scenario ? `:${scenario}` : "";
+	return new Map<ScenarioRunnerTelemetryEventNames, string>([
+		[
+			RouterliciousDriverTelemetryEventNames.FetchOrdererToken,
+			`scenario:runner${scenarioName}:Attach:FetchOrdererToken`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.CreateNew,
+			`scenario:runner${scenarioName}:Attach:CreateNew`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.DiscoverSession,
+			`scenario:runner${scenarioName}:Load:DiscoverSession`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.FetchStorageToken,
+			`scenario:runner${scenarioName}:Attach:FetchStorageToken`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.getWholeFlatSummary,
+			`scenario:runner${scenarioName}:Load:GetSummary`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltas,
+			`scenario:runner${scenarioName}:Load:GetDeltas`,
+		],
+		[
+			FluidContainerTelemetryEventNames.Request,
+			`scenario:runner${scenarioName}:Load:RequestDataObject`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.DocPostCreateCallback,
+			`scenario:runner${scenarioName}:Attach:DocPostCreateCallback`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltaStreamToken,
+			`scenario:runner${scenarioName}:Connection:GetDeltaStreamToken`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.ConnectToDeltaStream,
+			`scenario:runner${scenarioName}:Connection:ConnectToDeltaStream`,
+		],
+		[
+			FluidContainerTelemetryEventNames.ConnectionStateChange,
+			`scenario:runner${scenarioName}:Connection:ConnectionStateChange`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltas,
+			`scenario:runner${scenarioName}:Summarize:UploadSummary`,
+		],
+		[
+			FluidSummarizerTelemetryEventNames.Summarize,
+			`scenario:runner${scenarioName}:Summarize:Summarized`,
+		],
+	]);
+}

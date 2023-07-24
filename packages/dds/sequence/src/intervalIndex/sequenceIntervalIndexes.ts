@@ -4,7 +4,7 @@
  */
 
 import { ISegment } from "@fluidframework/merge-tree";
-import { SequenceInterval } from "../intervalCollection";
+import { SequenceInterval } from "../intervals";
 import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
 /**
