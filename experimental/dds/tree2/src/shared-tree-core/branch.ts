@@ -235,9 +235,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
 		| undefined {
 		this.assertNotDisposed();
-		if (this.isTransacting()) {
-			this.disposeForksInCurrentTransaction();
-		}
+		this.assertIsTransacting();
+		this.disposeForksInCurrentTransaction();
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
@@ -296,9 +295,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		abortedCommits: GraphCommit<TChange>[],
 	] {
 		this.assertNotDisposed();
-		if (this.isTransacting()) {
-			this.disposeForksInCurrentTransaction();
-		}
+		this.assertIsTransacting();
+		this.disposeForksInCurrentTransaction();
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;

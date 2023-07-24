@@ -438,6 +438,7 @@ describe("Branches", () => {
 	describe("all nested forks and transactions are disposed and aborted when transaction is", () => {
 		const setUpNestedForks = (rootBranch: DefaultBranch) => {
 			change(rootBranch);
+			rootBranch.startTransaction();
 			const fork1 = rootBranch.fork();
 			change(rootBranch);
 			rootBranch.startTransaction();
@@ -445,19 +446,21 @@ describe("Branches", () => {
 			change(rootBranch);
 			const fork3 = rootBranch.fork();
 			change(fork3);
+			const fork4 = fork3.fork();
+			change(fork3);
 			fork3.startTransaction();
 			change(fork3);
-			const fork4 = fork3.fork();
+			const fork5 = fork3.fork();
 
 			return {
-				disposedFroks: [fork2, fork3, fork4],
+				disposedFroks: [fork2, fork3, fork4, fork5],
 				notDisposedForks: [fork1],
 			};
 		};
 
 		const assertNestedForks = (nestedForks: {
-			disposedFroks: DefaultBranch[];
-			notDisposedForks: DefaultBranch[];
+			disposedFroks: readonly DefaultBranch[];
+			notDisposedForks: readonly DefaultBranch[];
 		}) => {
 			nestedForks.disposedFroks.forEach((fork) => {
 				assertDisposed(() => fork.fork());
@@ -471,6 +474,7 @@ describe("Branches", () => {
 			const nestedForks = setUpNestedForks(rootBranch);
 			rootBranch.commitTransaction();
 
+			assert.equal(rootBranch.isTransacting(), true);
 			assertNestedForks(nestedForks);
 		});
 
@@ -479,6 +483,7 @@ describe("Branches", () => {
 			const nestedForks = setUpNestedForks(rootBranch);
 			rootBranch.abortTransaction();
 
+			assert.equal(rootBranch.isTransacting(), true);
 			assertNestedForks(nestedForks);
 		});
 	});
@@ -661,6 +666,6 @@ describe("Branches", () => {
 	}
 
 	function assertNotDisposed(fn: () => void): void {
-		assert.doesNotThrow(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
+		assert.doesNotThrow(fn, (e: Error) => validateAssertionError(e, "Branch is not disposed"));
 	}
 });
