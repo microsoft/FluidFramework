@@ -19,6 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:genver": "gen-version",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"clean": "rimraf --glob \"_api-extractor-temp\" \"nyc\" \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint src",
@@ -121,6 +122,9 @@
 				"backCompat": false
 			},
 			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ContainerDevtoolsProps": {
 				"backCompat": false
 			}
 		}

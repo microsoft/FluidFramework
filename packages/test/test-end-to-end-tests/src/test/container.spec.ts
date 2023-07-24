@@ -335,10 +335,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
 			testContainerConfig,
 		);
-
-		const pendingLocalState: IPendingLocalState = JSON.parse(
-			container.closeAndGetPendingLocalState(),
-		);
+		const pendingString = container.closeAndGetPendingLocalState?.();
+		assert.ok(pendingString);
+		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
 		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
 	});

@@ -74,7 +74,6 @@
 		"@fluidframework/protocol-base": "^1.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"abort-controller": "^3.0.0",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.6.1",
 		"uuid": "^8.3.1"

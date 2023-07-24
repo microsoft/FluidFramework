@@ -110,6 +110,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_Client": {
+				"backCompat": false
+			},
 			"RemovedInterfaceDeclaration_BlockAction": {
 				"forwardCompat": false,
 				"backCompat": false

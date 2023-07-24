@@ -51,6 +51,8 @@ export {
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
+	tagData,
+	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
 } from "./logger";

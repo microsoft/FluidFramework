@@ -158,6 +158,11 @@ export interface IContainerLoadProps {
 	 * The pending state serialized from a pervious container instance
 	 */
 	readonly pendingLocalState?: IPendingContainerState;
+
+	/**
+	 * Load the container to at least this sequence number.
+	 */
+	readonly loadToSequenceNumber?: number;
 }
 
 /**
@@ -376,7 +381,8 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
+		const { version, pendingLocalState, loadMode, resolvedUrl, loadToSequenceNumber } =
+			loadProps;
 
 		const container = new Container(createProps, loadProps);
 
@@ -405,7 +411,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, resolvedUrl, pendingLocalState)
+						.load(version, mode, resolvedUrl, pendingLocalState, loadToSequenceNumber)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -1475,7 +1481,8 @@ export class Container
 		specifiedVersion: string | undefined,
 		loadMode: IContainerLoadMode,
 		resolvedUrl: IResolvedUrl,
-		pendingLocalState?: IPendingContainerState,
+		pendingLocalState: IPendingContainerState | undefined,
+		loadToSequenceNumber: number | undefined,
 	) {
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
@@ -1549,6 +1556,51 @@ export class Container
 
 		let opsBeforeReturnP: Promise<void> | undefined;
 
+		if (loadMode.pauseAfterLoad === true) {
+			// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
+			if (loadMode.opsBeforeReturn === "sequenceNumber") {
+				assert(loadToSequenceNumber !== undefined, "sequenceNumber should be defined");
+				if (this.deltaManager.lastSequenceNumber > loadToSequenceNumber) {
+					throw new Error(
+						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					);
+				}
+			}
+
+			// Force readonly mode - this will ensure we don't receive an error for the lack of join op
+			this.forceReadonly(true);
+
+			// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
+			const opHandler = () => {
+				if (loadToSequenceNumber === undefined) {
+					// If there is no specified sequence number, pause after the inbound queue is empty.
+					if (this.deltaManager.inbound.length !== 0) {
+						return;
+					}
+				} else {
+					// If there is a specified sequence number, keep processing until we reach it.
+					if (this.deltaManager.lastSequenceNumber < loadToSequenceNumber) {
+						return;
+					}
+				}
+
+				// Pause op processing once we have processed the desired number of ops.
+				void this.deltaManager.inbound.pause();
+				void this.deltaManager.outbound.pause();
+				this.off("op", opHandler);
+			};
+			if (
+				(loadToSequenceNumber === undefined && this.deltaManager.inbound.length === 0) ||
+				this.deltaManager.lastSequenceNumber === loadToSequenceNumber
+			) {
+				// If we have already reached the desired sequence number, call opHandler() to pause immediately.
+				opHandler();
+			} else {
+				// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
+				this.on("op", opHandler);
+			}
+		}
+
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
 		switch (loadMode.opsBeforeReturn) {
@@ -1559,6 +1611,9 @@ export class Container
 					dmAttributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
 				);
+				break;
+			case "sequenceNumber":
+				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "sequenceNumber");
 				break;
 			case "cached":
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "cached");
@@ -1641,6 +1696,22 @@ export class Container
 				default:
 					unreachableCase(loadMode.deltaConnection);
 			}
+		}
+
+		// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
+		if (
+			loadToSequenceNumber !== undefined &&
+			this.deltaManager.lastSequenceNumber < loadToSequenceNumber
+		) {
+			await new Promise<void>((resolve, reject) => {
+				const opHandler = (message: ISequencedDocumentMessage) => {
+					if (message.sequenceNumber >= loadToSequenceNumber) {
+						resolve();
+						this.off("op", opHandler);
+					}
+				};
+				this.on("op", opHandler);
+			});
 		}
 
 		// Safety net: static version of Container.load() should have learned about it through "closed" handler.
@@ -1972,7 +2043,7 @@ export class Container
 
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
-		prefetchType?: "cached" | "all" | "none",
+		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
 	) {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
@@ -2397,5 +2468,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState(): string;
+	closeAndGetPendingLocalState?(): string;
 }

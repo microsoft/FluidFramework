@@ -316,6 +316,18 @@ export class SampledTelemetryHelper implements IDisposable {
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
+// @public (undocumented)
+export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {
+        value: Exclude<T[P], undefined>;
+        tag: TelemetryDataTag.CodeArtifact;
+    } | (T[P] extends undefined ? undefined : never); };
+
+// @public (undocumented)
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyTypeExt>>(tag: T, values: V) => { [P in keyof V]: {
+        value: Exclude<V[P], undefined>;
+        tag: T;
+    } | (V[P] extends undefined ? undefined : never); };
+
 // @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
