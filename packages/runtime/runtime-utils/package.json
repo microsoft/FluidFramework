@@ -96,6 +96,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_packagePathToTelemetryProperty": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
