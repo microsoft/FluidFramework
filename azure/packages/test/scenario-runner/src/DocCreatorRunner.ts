@@ -12,7 +12,6 @@ import { IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
-	AzureClientConnectionConfig,
 	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
@@ -21,7 +20,7 @@ import {
 	RunnnerStatus,
 } from "./interface";
 import {
-	AzureClientConfig,
+	convertConfigToScriptParams,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
@@ -32,27 +31,15 @@ import { getLogger } from "./logger";
 const eventMap = getScenarioRunnerTelemetryEventMap("DocCreator");
 
 export interface DocCreatorRunnerConfig {
-	connectionConfig: AzureClientConnectionConfig;
 	schema: ContainerFactorySchema;
 	numDocs: number;
 	clientStartDelayMs: number;
 	client?: AzureClient;
 }
 
-export interface DocCreatorRunnerRunConfig
-	extends IRunConfig,
-		Pick<
-			AzureClientConfig,
-			| "connType"
-			| "connEndpoint"
-			| "tenantId"
-			| "tenantKey"
-			| "functionUrl"
-			| "secureTokenProvider"
-		> {
+export interface DocCreatorRunnerRunConfig extends IRunConfig {
 	childId: number;
 	schema: ContainerFactorySchema;
-	region?: string;
 	client?: AzureClient;
 }
 
@@ -75,24 +62,16 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 		this.status = "running";
 		const runnerArgs: string[][] = [];
 		for (let i = 0; i < this.c.numDocs; i++) {
-			const connection = this.c.connectionConfig;
 			const childArgs: string[] = [
 				"./dist/docCreatorRunnerClient.js",
-				"--runId",
-				config.runId,
-				"--scenarioName",
-				config.scenarioName,
-				"--childId",
-				i.toString(),
-				"--schema",
-				JSON.stringify(this.c.schema),
-				"--connType",
-				connection.type,
-				...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
-				...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
-				...(connection.region ? ["--region", connection.region] : []),
+				...convertConfigToScriptParams<DocCreatorRunnerRunConfig>({
+					runId: config.runId,
+					scenarioName: config.scenarioName,
+					childId: i,
+					schema: this.c.schema,
+				}),
+				"--verbose",
 			];
-			childArgs.push("--verbose");
 			runnerArgs.push(childArgs);
 		}
 
@@ -117,13 +96,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 
 	public async runSync(config: IRunConfig): Promise<string | string[] | undefined> {
 		this.status = "running";
-		const connection = this.c.connectionConfig;
-		const connType = connection.type;
-		const connEndpoint = connection.endpoint;
-		const tenantId = connection.tenantId;
-		const tenantKey = connection.key;
-		const functionUrl = connection.functionUrl;
-		const secureTokenProvider = connection.useSecureTokenProvider;
 		const schema = this.c.schema;
 		const client = this.c.client;
 		const runs: Promise<string>[] = [];
@@ -132,12 +104,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 				DocCreatorRunner.execRun({
 					...config,
 					childId: i,
-					connType,
-					connEndpoint,
-					tenantId,
-					tenantKey,
-					functionUrl,
-					secureTokenProvider,
 					schema,
 					client,
 				}),
@@ -162,8 +128,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 					runId: runConfig.runId,
 					scenarioName: runConfig.scenarioName,
 					namespace: "scenario:runner:DocCreator",
-					endpoint: runConfig.connEndpoint,
-					region: runConfig.region,
 				},
 				["scenario:runner"],
 				eventMap,
@@ -174,12 +138,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 			(await createAzureClient({
 				userId: `testUserId_${runConfig.childId}`,
 				userName: `testUserName_${runConfig.childId}`,
-				connType: runConfig.connType,
-				connEndpoint: runConfig.connEndpoint,
-				tenantId: runConfig.tenantId,
-				tenantKey: runConfig.tenantKey,
-				functionUrl: runConfig.functionUrl,
-				secureTokenProvider: runConfig.secureTokenProvider,
 				logger,
 			}));
 

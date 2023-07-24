@@ -12,7 +12,6 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
-	AzureClientConnectionConfig,
 	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
@@ -21,7 +20,7 @@ import {
 	RunnnerStatus,
 } from "./interface";
 import {
-	AzureClientConfig,
+	convertConfigToScriptParams,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
@@ -33,7 +32,6 @@ import { getLogger } from "./logger";
 const eventMap = getScenarioRunnerTelemetryEventMap("MapTraffic");
 
 export interface MapTrafficRunnerConfig {
-	connectionConfig: AzureClientConnectionConfig;
 	docId: string;
 	schema: ContainerFactorySchema;
 	numClients: number;
@@ -44,24 +42,13 @@ export interface MapTrafficRunnerConfig {
 	client?: AzureClient;
 }
 
-export interface MapTrafficRunnerRunConfig
-	extends IRunConfig,
-		Pick<
-			AzureClientConfig,
-			| "connType"
-			| "connEndpoint"
-			| "tenantId"
-			| "tenantKey"
-			| "functionUrl"
-			| "secureTokenProvider"
-		> {
+export interface MapTrafficRunnerRunConfig extends IRunConfig {
 	childId: number;
 	docId: string;
 	writeRatePerMin: number;
 	totalWriteCount: number;
 	sharedMapKey: string;
 	schema: ContainerFactorySchema;
-	region?: string;
 	client?: AzureClient;
 }
 
@@ -82,32 +69,20 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 		this.status = "running";
 		const runnerArgs: string[][] = [];
 		for (let i = 0; i < this.c.numClients; i++) {
-			const connection = this.c.connectionConfig;
 			const childArgs: string[] = [
 				"./dist/mapTrafficRunnerClient.js",
-				"--runId",
-				config.runId,
-				"--scenarioName",
-				config.scenarioName,
-				"--childId",
-				i.toString(),
-				"--docId",
-				this.c.docId,
-				"--schema",
-				JSON.stringify(this.c.schema),
-				"--writeRatePerMin",
-				this.c.writeRatePerMin.toString(),
-				"--totalWriteCount",
-				this.c.totalWriteCount.toString(),
-				"--sharedMapKey",
-				this.c.sharedMapKey,
-				"--connType",
-				connection.type,
-				...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
-				...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
-				...(connection.region ? ["--region", connection.region] : []),
+				...convertConfigToScriptParams<MapTrafficRunnerRunConfig>({
+					runId: config.runId,
+					scenarioName: config.scenarioName,
+					childId: i,
+					docId: this.c.docId,
+					schema: this.c.schema,
+					writeRatePerMin: this.c.writeRatePerMin,
+					totalWriteCount: this.c.totalWriteCount,
+					sharedMapKey: this.c.sharedMapKey,
+				}),
+				"--verbose",
 			];
-			childArgs.push("--verbose");
 			runnerArgs.push(childArgs);
 		}
 
@@ -130,14 +105,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 
 	public async runSync(config: IRunConfig): Promise<void> {
 		this.status = "running";
-		const connection = this.c.connectionConfig;
 		const docId = this.c.docId;
-		const connType = connection.type;
-		const connEndpoint = connection.endpoint;
-		const tenantId = connection.tenantId;
-		const tenantKey = connection.key;
-		const functionUrl = connection.functionUrl;
-		const secureTokenProvider = connection.useSecureTokenProvider;
 		const totalWriteCount = this.c.totalWriteCount;
 		const writeRatePerMin = this.c.writeRatePerMin;
 		const sharedMapKey = this.c.sharedMapKey;
@@ -150,12 +118,6 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 					...config,
 					childId: i,
 					docId,
-					connType,
-					connEndpoint,
-					tenantId,
-					tenantKey,
-					functionUrl,
-					secureTokenProvider,
 					schema,
 					totalWriteCount,
 					writeRatePerMin,
@@ -182,8 +144,6 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 					runId: runConfig.runId,
 					scenarioName: runConfig.scenarioName,
 					namespace: "scenario:runner:MapTraffic",
-					endpoint: runConfig.connEndpoint,
-					region: runConfig.region,
 				},
 				["scenario:runner"],
 				eventMap,
@@ -194,12 +154,6 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 			(await createAzureClient({
 				userId: `testUserId_${runConfig.childId}`,
 				userName: `testUserName_${runConfig.childId}`,
-				connType: runConfig.connType,
-				connEndpoint: runConfig.connEndpoint,
-				tenantId: runConfig.tenantId,
-				tenantKey: runConfig.tenantKey,
-				functionUrl: runConfig.functionUrl,
-				secureTokenProvider: runConfig.secureTokenProvider,
 				logger,
 			}));
 

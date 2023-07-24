@@ -12,7 +12,6 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
-	AzureClientConnectionConfig,
 	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
@@ -21,7 +20,7 @@ import {
 	RunnnerStatus,
 } from "./interface";
 import {
-	AzureClientConfig,
+	convertConfigToScriptParams,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
@@ -32,7 +31,6 @@ import { getLogger } from "./logger";
 const eventMap = getScenarioRunnerTelemetryEventMap("DocLoader");
 
 export interface DocLoaderRunnerConfig {
-	connectionConfig: AzureClientConnectionConfig;
 	schema: ContainerFactorySchema;
 	docIds: string[];
 	clientStartDelayMs: number;
@@ -40,21 +38,10 @@ export interface DocLoaderRunnerConfig {
 	client?: AzureClient;
 }
 
-export interface DocLoaderRunnerRunConfig
-	extends IRunConfig,
-		Pick<
-			AzureClientConfig,
-			| "connType"
-			| "connEndpoint"
-			| "tenantId"
-			| "tenantKey"
-			| "functionUrl"
-			| "secureTokenProvider"
-		> {
+export interface DocLoaderRunnerRunConfig extends IRunConfig {
 	childId: number;
 	schema: ContainerFactorySchema;
 	docId: string;
-	region?: string;
 	client?: AzureClient;
 }
 
@@ -75,26 +62,17 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const runnerArgs: string[][] = [];
 		let i = 0;
 		for (const docId of this.c.docIds) {
-			const connection = this.c.connectionConfig;
 			const childArgs: string[] = [
 				"./dist/docLoaderRunnerClient.js",
-				"--runId",
-				config.runId,
-				"--scenarioName",
-				config.scenarioName,
-				"--childId",
-				(i++).toString(),
-				"--docId",
-				docId,
-				"--schema",
-				JSON.stringify(this.c.schema),
-				"--connType",
-				connection.type,
-				...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
-				...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
-				...(connection.region ? ["--region", connection.region] : []),
+				...convertConfigToScriptParams<DocLoaderRunnerRunConfig>({
+					runId: config.runId,
+					scenarioName: config.scenarioName,
+					childId: i++,
+					docId,
+					schema: this.c.schema,
+				}),
+				"--verbose",
 			];
-			childArgs.push("--verbose");
 			runnerArgs.push(childArgs);
 		}
 
@@ -120,13 +98,6 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 	public async runSync(config: IRunConfig): Promise<IFluidContainer[]> {
 		this.status = "running";
-		const connection = this.c.connectionConfig;
-		const connType = connection.type;
-		const connEndpoint = connection.endpoint;
-		const tenantId = connection.tenantId;
-		const tenantKey = connection.key;
-		const functionUrl = connection.functionUrl;
-		const secureTokenProvider = connection.useSecureTokenProvider;
 		const schema = this.c.schema;
 		const client = this.c.client;
 		let i = 0;
@@ -139,12 +110,6 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 						...config,
 						childId: i++,
 						docId,
-						connType,
-						connEndpoint,
-						tenantId,
-						tenantKey,
-						functionUrl,
-						secureTokenProvider,
 						schema,
 						client,
 					}),
@@ -170,8 +135,6 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 					runId: runConfig.runId,
 					scenarioName: runConfig.scenarioName,
 					namespace: "scenario:runner:DocLoader",
-					endpoint: runConfig.connEndpoint,
-					region: runConfig.region,
 				},
 				["scenario:runner"],
 				eventMap,
@@ -182,12 +145,6 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 			(await createAzureClient({
 				userId: `testUserId_${runConfig.childId}`,
 				userName: `testUserName_${runConfig.childId}`,
-				connType: runConfig.connType,
-				connEndpoint: runConfig.connEndpoint,
-				tenantId: runConfig.tenantId,
-				tenantKey: runConfig.tenantKey,
-				functionUrl: runConfig.functionUrl,
-				secureTokenProvider: runConfig.secureTokenProvider,
 				logger,
 			}));
 

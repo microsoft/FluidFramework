@@ -21,13 +21,6 @@ async function main() {
 		.requiredOption("-r, --runId <runId>", "orchestrator run id.")
 		.requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
 		.requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
-		.requiredOption("-ct, --connType <connType>", "Connection type")
-		.option("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
-		.option("-ti, --tenantId <tenantId>", "Tenant ID")
-		.option("-tk, --tenantKey <tenantKey>", "Tenant Key")
-		.option("-furl, --functionUrl <functionUrl>", "Azure Function URL")
-		.option("-st, --secureTokenProvider", "Enable use of secure token provider")
-		.option("-rg, --region <region>", "Alias of Azure region where the tenant is running from")
 		.option(
 			"-l, --log <filter>",
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -39,14 +32,6 @@ async function main() {
 		runId: commander.runId,
 		scenarioName: commander.scenarioName,
 		childId: commander.childId,
-		connType: commander.connType,
-		connEndpoint: commander.connEndpoint ?? process.env.azure__fluid__relay__service__endpoint,
-		tenantId: commander.tenantId ?? process.env.azure__fluid__relay__service__tenantId,
-		tenantKey: commander.tenantKey ?? process.env.azure__fluid__relay__service__tenantKey,
-		functionUrl:
-			commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
-		secureTokenProvider: commander.secureTokenProvider,
-		region: commander.region ?? process.env.azure__fluid__relay__service__region,
 		schema: JSON.parse(commander.schema) as ContainerFactorySchema,
 	};
 

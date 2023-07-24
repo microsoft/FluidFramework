@@ -15,7 +15,6 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
 import {
-	AzureClientConnectionConfig,
 	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
@@ -24,8 +23,8 @@ import {
 	RunnnerStatus,
 } from "./interface";
 import {
-	AzureClientConfig,
 	FluidSummarizerTelemetryEventNames,
+	convertConfigToScriptParams,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
@@ -36,7 +35,6 @@ import { getLogger, loggerP } from "./logger";
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
 export interface NestedMapRunnerConfig {
-	connectionConfig: AzureClientConnectionConfig;
 	schema: ContainerFactorySchema;
 	clientStartDelayMs: number;
 	numMaps: number;
@@ -48,17 +46,7 @@ export interface NestedMapRunnerConfig {
 	containers?: IFluidContainer[];
 }
 
-export interface NestedMapRunnerRunConfig
-	extends IRunConfig,
-		Pick<
-			AzureClientConfig,
-			| "connType"
-			| "connEndpoint"
-			| "tenantId"
-			| "tenantKey"
-			| "functionUrl"
-			| "secureTokenProvider"
-		> {
+export interface NestedMapRunnerRunConfig extends IRunConfig {
 	childId: number;
 	schema: ContainerFactorySchema;
 	numMaps: number;
@@ -67,7 +55,6 @@ export interface NestedMapRunnerRunConfig
 	writeRatePerMin?: number;
 	docId?: string;
 	container?: IFluidContainer;
-	region?: string;
 	client?: AzureClient;
 }
 
@@ -87,35 +74,23 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		this.status = "running";
 		const runnerArgs: string[][] = [];
 		const createRunnerArg = (childId: number, docId?: string): string[] => {
-			const connection = this.c.connectionConfig;
 			const childArgs: string[] = [
-				"./dist/docLoaderRunnerClient.js",
-				"--runId",
-				config.runId,
-				"--scenarioName",
-				config.scenarioName,
-				"--childId",
-				childId.toString(),
-				"--numMaps",
-				this.c.numMaps.toString(),
-				"--writeRatePerMin",
-				(this.c.writeRatePerMin ?? -1).toString(),
-				"--dataType",
-				this.c.dataType ?? "number",
-				"--initialMapKey",
-				this.c.initialMapKey,
-				"--schema",
-				JSON.stringify(this.c.schema),
-				"--connType",
-				connection.type,
-				...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
-				...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
-				...(connection.region ? ["--region", connection.region] : []),
+				"./dist/nestedMapRunnerClient.js",
+				...convertConfigToScriptParams<NestedMapRunnerRunConfig>(
+					{
+						runId: config.runId,
+						scenarioName: config.scenarioName,
+						childId,
+						numMaps: this.c.numMaps,
+						writeRatePerMin: this.c.writeRatePerMin,
+						dataType: this.c.dataType,
+						initialMapKey: this.c.initialMapKey,
+						schema: this.c.schema,
+						docId,
+					},
+					{ writeRatePerMin: -1, dataType: "number" },
+				),
 			];
-			if (docId) {
-				childArgs.push("--docId", docId);
-			}
-			childArgs.push("--verbose");
 			return childArgs;
 		};
 		if (this.c.docIds) {
@@ -146,16 +121,9 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 	public async runSync(config: IRunConfig): Promise<string[]> {
 		this.status = "running";
-		const connection = this.c.connectionConfig;
-		const connType = connection.type;
-		const connEndpoint = connection.endpoint;
-		const tenantId = connection.tenantId;
-		const tenantKey = connection.key;
-		const functionUrl = connection.functionUrl;
-		const secureTokenProvider = connection.useSecureTokenProvider;
 		const numMaps = this.c.numMaps;
 		const dataType = this.c.dataType ?? "number";
-		const writeRatePerMin = this.c.writeRatePerMin;
+		const writeRatePerMin = this.c.writeRatePerMin ?? -1;
 		const schema = this.c.schema;
 		const client = this.c.client;
 		const containers = this.c.containers;
@@ -178,12 +146,6 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 				dataType,
 				writeRatePerMin,
 				initialMapKey,
-				connType,
-				connEndpoint,
-				tenantId,
-				tenantKey,
-				functionUrl,
-				secureTokenProvider,
 				schema,
 				client,
 				container,
@@ -217,8 +179,6 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 					runId: runConfig.runId,
 					scenarioName: runConfig.scenarioName,
 					namespace: "scenario:runner:NestedMap",
-					endpoint: runConfig.connEndpoint,
-					region: runConfig.region,
 				},
 				["scenario:runner"],
 				eventMap,
@@ -229,12 +189,6 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			(await createAzureClient({
 				userId: `testUserId_${runConfig.childId}`,
 				userName: `testUserName_${runConfig.childId}`,
-				connType: runConfig.connType,
-				connEndpoint: runConfig.connEndpoint,
-				tenantId: runConfig.tenantId,
-				tenantKey: runConfig.tenantKey,
-				functionUrl: runConfig.functionUrl,
-				secureTokenProvider: runConfig.secureTokenProvider,
 				logger,
 			}));
 
