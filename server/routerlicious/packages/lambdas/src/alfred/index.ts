@@ -232,7 +232,6 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	httpServer?: core.IHttpServer,
 	eventEmitter?: EventEmitter,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -623,7 +622,7 @@ export function configureWebSocketServices(
 			}
 
 			// Send signal to room from broadcast-signal endpoint
-			if (httpServer !== undefined && eventEmitter !== undefined) {
+			if (eventEmitter !== undefined) {
 				eventEmitter.on("broadcast-signal", (_, containerUrl) => {
 					const documentId = containerUrl.split("/")[containerUrl.split("/").length - 1];
 					const tenantId = containerUrl.split("/")[containerUrl.split("/").length - 2];
