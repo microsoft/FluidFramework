@@ -14,7 +14,8 @@ jobs:
     #
     # This is implemented by comparing the PR title because at creation time, the PR has no labels (and the GItHub API
     # does not have a way to set labels at creation either), so skipping based on labels does not work.
-    if: "github.event.pull_request.title != 'Automation: main-next integrate'"
+    if: |
+      ${{ github.event.pull_request.title != 'Automation: main-next integrate' }}
     steps:
       - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
         with:
