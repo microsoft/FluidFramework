@@ -117,7 +117,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack<TEditor, TChange>();
+	private readonly transactions = new TransactionStack<TChange>();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -238,12 +238,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
 		| undefined {
 		this.assertNotDisposed();
-		const [startCommit, commits, _, forks] = this.popTransaction();
+		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
-
-		for (const fork of forks) {
-			fork.dispose();
-		}
 
 		if (commits.length === 0) {
 			return undefined;
@@ -300,13 +296,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		abortedCommits: GraphCommit<TChange>[],
 	] {
 		this.assertNotDisposed();
-		const [startCommit, commits, repairStore, forks] = this.popTransaction();
+		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
-
-		for (const fork of forks) {
-			fork.dispose();
-		}
 
 		if (commits.length === 0) {
 			return [undefined, []];
@@ -339,16 +331,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],
 		RepairDataStore<TChange> | undefined,
-		Set<SharedTreeBranch<TEditor, TChange>>,
 	] {
-		const { startRevision, repairStore, forks } = this.transactions.pop();
+		const { startRevision, repairStore } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
-		return [startCommit, commits, repairStore, forks];
+		return [startCommit, commits, repairStore];
 	}
 
 	/**
@@ -403,6 +394,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
 	 * provided, then it will be cloned from this branch.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
+	 *
+	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
 	 */
 	public fork(
 		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
