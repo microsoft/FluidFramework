@@ -95,27 +95,11 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeNoCompat.only("LoadModes", (getTestObjectProvider) => {
+describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
 	});
-
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					...DefaultSummaryConfiguration,
-					...{
-						maxOps: 10,
-						initialSummarizerDelayMs: 0,
-						minIdleTime: 10,
-						maxIdleTime: 10,
-					},
-				},
-			},
-		},
-	};
 
 	const loaderContainerTracker = new LoaderContainerTracker();
 
