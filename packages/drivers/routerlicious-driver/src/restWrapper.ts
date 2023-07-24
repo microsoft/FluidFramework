@@ -7,7 +7,7 @@ import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
-	TelemetryLogger,
+	numberFromString,
 } from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
@@ -90,7 +90,7 @@ export function getPropsToLogFromResponse(headers: {
 		{ headerName: "content-type", logName: "contentType" },
 	];
 	const additionalProps: ITelemetryProperties = {
-		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
 		const headerValue = headers.get(header.headerName);

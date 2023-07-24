@@ -16,7 +16,7 @@
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
-		"clean": "rimraf \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
+		"clean": "rimraf --glob \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",

@@ -119,7 +119,7 @@ export class ObjectStoragePartition implements IChannelStorageService {
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @public
+// @public @deprecated
 export function packagePathToTelemetryProperty(packagePath: readonly string[] | undefined): ITaggedTelemetryPropertyType | undefined;
 
 // @public

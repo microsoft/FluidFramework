@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { createDebugLogger } from "@fluidframework/telemetry-utils";
 import { SummaryType, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
 import { IR11sResponse } from "../restWrapper";
@@ -147,7 +147,7 @@ describe("WholeSummaryDocumentStorageService", () => {
 		const service = new WholeSummaryDocumentStorageService(
 			"id",
 			new MockGitManager() as any,
-			DebugLogger.create("fluid:testSummaries"),
+			createDebugLogger({ namespace: "fluid:testSummaries" }),
 			{},
 		);
 
