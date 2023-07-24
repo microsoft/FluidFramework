@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { AzureClient } from "@fluidframework/azure-client";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 
@@ -16,10 +17,19 @@ export interface IRunnerEvents extends IEvent {
 	(event: "status", listener: (s: IRunnerStatus) => void): void;
 }
 
+export interface IScenarioConfig {
+	schema: ContainerFactorySchema;
+	client?: AzureClient;
+}
+
 export interface IRunConfig {
 	runId: string;
 	scenarioName: string;
 	logger?: ITelemetryLogger;
+}
+
+export interface IScenarioRunConfig extends IRunConfig, IScenarioConfig {
+	childId: number;
 }
 
 export interface IRunner extends IEventProvider<IRunnerEvents> {

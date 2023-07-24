@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import commander from "commander";
 import {
 	AzureClient,
 	AzureFunctionTokenProvider,
@@ -259,4 +260,23 @@ export function getScenarioRunnerTelemetryEventMap(
 			`scenario:runner${scenarioName}:Summarize:Summarized`,
 		],
 	]);
+}
+
+export function commanderParseIntArg(value: any): number {
+	if (isNaN(parseInt(value, 10))) {
+		throw new commander.InvalidArgumentError("Not a number.");
+	}
+	return parseInt(value, 10);
+}
+export function getCommander(): commander.CommanderStatic {
+	return commander
+		.version("0.0.1")
+		.requiredOption("-r, --runId <runId>", "orchestrator run id.")
+		.requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
+		.requiredOption("-c, --childId <childId>", "id of this node client.", commanderParseIntArg)
+		.option(
+			"-l, --log <filter>",
+			"Filter debug logging. If not provided, uses DEBUG env variable.",
+		)
+		.requiredOption("-v, --verbose", "Enables verbose logging");
 }

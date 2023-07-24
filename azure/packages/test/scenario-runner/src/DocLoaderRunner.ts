@@ -5,18 +5,18 @@
 import child_process from "child_process";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
-	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
 	IRunnerEvents,
 	IRunnerStatus,
+	IScenarioConfig,
+	IScenarioRunConfig,
 	RunnnerStatus,
 } from "./interface";
 import {
@@ -30,19 +30,14 @@ import { getLogger } from "./logger";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("DocLoader");
 
-export interface DocLoaderRunnerConfig {
-	schema: ContainerFactorySchema;
+export interface DocLoaderRunnerConfig extends IScenarioConfig {
 	docIds: string[];
 	clientStartDelayMs: number;
 	numOfLoads?: number;
-	client?: AzureClient;
 }
 
-export interface DocLoaderRunnerRunConfig extends IRunConfig {
-	childId: number;
-	schema: ContainerFactorySchema;
+export interface DocLoaderRunConfig extends IScenarioRunConfig {
 	docId: string;
-	client?: AzureClient;
 }
 
 export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
@@ -64,7 +59,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		for (const docId of this.c.docIds) {
 			const childArgs: string[] = [
 				"./dist/docLoaderRunnerClient.js",
-				...convertConfigToScriptParams<DocLoaderRunnerRunConfig>({
+				...convertConfigToScriptParams<DocLoaderRunConfig>({
 					runId: config.runId,
 					scenarioName: config.scenarioName,
 					childId: i++,
@@ -126,7 +121,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 	}
 
-	public static async execRun(runConfig: DocLoaderRunnerRunConfig): Promise<IFluidContainer> {
+	public static async execRun(runConfig: DocLoaderRunConfig): Promise<IFluidContainer> {
 		let schema;
 		const logger =
 			runConfig.logger ??

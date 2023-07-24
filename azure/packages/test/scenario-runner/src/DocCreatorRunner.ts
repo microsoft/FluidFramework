@@ -5,18 +5,18 @@
 import child_process from "child_process";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
-	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
 	IRunnerEvents,
 	IRunnerStatus,
+	IScenarioConfig,
+	IScenarioRunConfig,
 	RunnnerStatus,
 } from "./interface";
 import {
@@ -30,18 +30,12 @@ import { getLogger } from "./logger";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("DocCreator");
 
-export interface DocCreatorRunnerConfig {
-	schema: ContainerFactorySchema;
+export interface DocCreatorRunnerConfig extends IScenarioConfig {
 	numDocs: number;
 	clientStartDelayMs: number;
-	client?: AzureClient;
 }
 
-export interface DocCreatorRunnerRunConfig extends IRunConfig {
-	childId: number;
-	schema: ContainerFactorySchema;
-	client?: AzureClient;
-}
+export type DocCreatorRunConfig = IScenarioRunConfig;
 
 export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
 	private status: RunnnerStatus = "notStarted";
@@ -64,7 +58,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 		for (let i = 0; i < this.c.numDocs; i++) {
 			const childArgs: string[] = [
 				"./dist/docCreatorRunnerClient.js",
-				...convertConfigToScriptParams<DocCreatorRunnerRunConfig>({
+				...convertConfigToScriptParams<DocCreatorRunConfig>({
 					runId: config.runId,
 					scenarioName: config.scenarioName,
 					childId: i,
@@ -119,7 +113,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 		}
 	}
 
-	public static async execRun(runConfig: DocCreatorRunnerRunConfig): Promise<string> {
+	public static async execRun(runConfig: DocCreatorRunConfig): Promise<string> {
 		let schema;
 		const logger =
 			runConfig.logger ??

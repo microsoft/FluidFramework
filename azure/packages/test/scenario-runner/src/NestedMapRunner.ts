@@ -15,11 +15,12 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
 import {
-	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
 	IRunnerEvents,
 	IRunnerStatus,
+	IScenarioConfig,
+	IScenarioRunConfig,
 	RunnnerStatus,
 } from "./interface";
 import {
@@ -34,28 +35,22 @@ import { getLogger, loggerP } from "./logger";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
-export interface NestedMapRunnerConfig {
-	schema: ContainerFactorySchema;
-	clientStartDelayMs: number;
+interface INestedMapConfig {
 	numMaps: number;
 	initialMapKey: string;
 	dataType?: "uuid" | "number";
 	writeRatePerMin?: number;
+}
+
+export interface NestedMapRunnerConfig extends IScenarioConfig, INestedMapConfig {
+	clientStartDelayMs: number;
 	docIds?: string[];
-	client?: AzureClient;
 	containers?: IFluidContainer[];
 }
 
-export interface NestedMapRunnerRunConfig extends IRunConfig {
-	childId: number;
-	schema: ContainerFactorySchema;
-	numMaps: number;
-	initialMapKey: string;
-	dataType?: "uuid" | "number";
-	writeRatePerMin?: number;
+export interface NestedMapRunConfig extends IScenarioRunConfig, INestedMapConfig {
 	docId?: string;
 	container?: IFluidContainer;
-	client?: AzureClient;
 }
 
 export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
@@ -76,7 +71,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const createRunnerArg = (childId: number, docId?: string): string[] => {
 			const childArgs: string[] = [
 				"./dist/nestedMapRunnerClient.js",
-				...convertConfigToScriptParams<NestedMapRunnerRunConfig>(
+				...convertConfigToScriptParams<NestedMapRunConfig>(
 					{
 						runId: config.runId,
 						scenarioName: config.scenarioName,
@@ -171,7 +166,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 	}
 
-	public static async execRun(runConfig: NestedMapRunnerRunConfig): Promise<string> {
+	public static async execRun(runConfig: NestedMapRunConfig): Promise<string> {
 		const logger =
 			runConfig.logger ??
 			(await getLogger(
@@ -268,7 +263,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 	}
 
 	private static async loadContainer(
-		runConfig: NestedMapRunnerRunConfig,
+		runConfig: NestedMapRunConfig,
 		logger: ITelemetryLogger,
 		client: AzureClient,
 	): Promise<IFluidContainer> {

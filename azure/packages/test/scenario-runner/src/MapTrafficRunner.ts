@@ -6,17 +6,17 @@ import child_process from "child_process";
 import { v4 as uuid } from "uuid";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { AzureClient } from "@fluidframework/azure-client";
 import { SharedMap } from "@fluidframework/map";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
-	ContainerFactorySchema,
 	IRunConfig,
 	IRunner,
 	IRunnerEvents,
 	IRunnerStatus,
+	IScenarioConfig,
+	IScenarioRunConfig,
 	RunnnerStatus,
 } from "./interface";
 import {
@@ -31,26 +31,19 @@ import { getLogger } from "./logger";
 // This was originally namespaced as "DocLoader"
 const eventMap = getScenarioRunnerTelemetryEventMap("MapTraffic");
 
-export interface MapTrafficRunnerConfig {
+interface IMapTrafficConfig {
 	docId: string;
-	schema: ContainerFactorySchema;
-	numClients: number;
-	clientStartDelayMs: number;
 	writeRatePerMin: number;
-	sharedMapKey: string;
 	totalWriteCount: number;
-	client?: AzureClient;
+	sharedMapKey: string;
 }
 
-export interface MapTrafficRunnerRunConfig extends IRunConfig {
-	childId: number;
-	docId: string;
-	writeRatePerMin: number;
-	totalWriteCount: number;
-	sharedMapKey: string;
-	schema: ContainerFactorySchema;
-	client?: AzureClient;
+export interface MapTrafficRunnerConfig extends IScenarioConfig, IMapTrafficConfig {
+	numClients: number;
+	clientStartDelayMs: number;
 }
+
+export type MapTrafficRunConfig = IScenarioRunConfig & IMapTrafficConfig;
 
 export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
 	private status: RunnnerStatus = "notStarted";
@@ -71,7 +64,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 		for (let i = 0; i < this.c.numClients; i++) {
 			const childArgs: string[] = [
 				"./dist/mapTrafficRunnerClient.js",
-				...convertConfigToScriptParams<MapTrafficRunnerRunConfig>({
+				...convertConfigToScriptParams<MapTrafficRunConfig>({
 					runId: config.runId,
 					scenarioName: config.scenarioName,
 					childId: i,
@@ -135,7 +128,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 		}
 	}
 
-	public static async execRun(runConfig: MapTrafficRunnerRunConfig): Promise<void> {
+	public static async execRun(runConfig: MapTrafficRunConfig): Promise<void> {
 		let schema;
 		const logger =
 			runConfig.logger ??
