@@ -83,6 +83,7 @@ export class ScribeLambdaFactory
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly maxLogtailLength: number,
 	) {
 		super();
 	}
@@ -244,6 +245,7 @@ export class ScribeLambdaFactory
 			this.enableWholeSummaryUpload,
 			lastSummaryMessages,
 			this.getDeltasViaAlfred,
+			this.maxLogtailLength,
 		);
 		const checkpointManager = new CheckpointManager(
 			context,
@@ -318,7 +320,7 @@ export class ScribeLambdaFactory
 				tenantId,
 				documentId,
 				lastCheckpoint.protocolState.sequenceNumber,
-				undefined,
+				lastCheckpoint.protocolState.sequenceNumber + this.maxLogtailLength + 1,
 				"scribe",
 			);
 		}
