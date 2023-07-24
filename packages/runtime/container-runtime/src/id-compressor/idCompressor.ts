@@ -1612,14 +1612,23 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 	public static deserialize(
 		serialized: SerializedIdCompressorWithNoSession,
 		newSessionId: SessionId,
+		logger?: ITelemetryBaseLogger,
 	): IdCompressor;
 
 	public static deserialize(
 		...args:
-			| [serialized: SerializedIdCompressorWithNoSession, newSessionIdMaybe: SessionId]
-			| [serialized: SerializedIdCompressorWithOngoingSession, newSessionIdMaybe?: undefined]
+			| [
+					serialized: SerializedIdCompressorWithNoSession,
+					newSessionIdMaybe: SessionId,
+					logger?: ITelemetryBaseLogger,
+			  ]
+			| [
+					serialized: SerializedIdCompressorWithOngoingSession,
+					newSessionIdMaybe?: undefined,
+					logger?: ITelemetryBaseLogger,
+			  ]
 	): IdCompressor {
-		const [serialized, newSessionIdMaybe] = args;
+		const [serialized, newSessionIdMaybe, logger] = args;
 
 		const {
 			clusterCapacity,
@@ -1640,7 +1649,7 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 			localSessionId = newSessionIdMaybe;
 		}
 
-		const compressor = new IdCompressor(localSessionId);
+		const compressor = new IdCompressor(localSessionId, logger);
 		compressor.clusterCapacity = clusterCapacity;
 
 		const localOverridesInverse = new Map<string, LocalCompressedId>();

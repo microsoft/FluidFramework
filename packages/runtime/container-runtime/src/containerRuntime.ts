@@ -791,10 +791,25 @@ export class ContainerRuntime
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
 			const { IdCompressor, createSessionId } = await import("./id-compressor");
+			// Only generate compressor telemetry for 1/1000 clients
+			const shouldLogSession = Math.random() < 0.001;
+			const compressorLogger = shouldLogSession
+				? createChildLogger({
+						logger,
+						namespace: "RuntimeIdCompressor",
+				  })
+				: createChildLogger();
 			idCompressor =
 				serializedIdCompressor !== undefined
-					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), logger);
+					? IdCompressor.deserialize(
+							serializedIdCompressor,
+							createSessionId(),
+							compressorLogger,
+					  )
+					: new IdCompressor(
+							createSessionId(),
+							shouldLogSession ? logger : createChildLogger(),
+					  );
 		}
 
 		const runtime = new containerRuntimeCtor(
