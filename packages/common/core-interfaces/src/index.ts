@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+export type {
+	ExtendEventProvider,
+	IErrorEvent,
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+	IEventTransformer,
+	ReplaceIEventThisPlaceHolder,
+	TransformedEvent,
+} from "./events";
+
 export {
 	IFluidLoadable,
 	IProvideFluidLoadable,

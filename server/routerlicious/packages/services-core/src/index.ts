@@ -45,6 +45,16 @@ export {
 } from "./document";
 export { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
+export type {
+	ExtendEventProvider,
+	IErrorEvent,
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+	IEventTransformer,
+	ReplaceIEventThisPlaceHolder,
+	TransformedEvent,
+} from "./events";
 export {
 	IHttpServer,
 	IWebServer,
