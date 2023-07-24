@@ -6,10 +6,9 @@
 import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	ICriticalContainerError,
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetailsInternal,
-	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -43,7 +42,12 @@ import {
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, formatTick, normalizeError } from "@fluidframework/telemetry-utils";
-import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
+import {
+	ReconnectMode,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+	IConnectionDetailsInternal,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";

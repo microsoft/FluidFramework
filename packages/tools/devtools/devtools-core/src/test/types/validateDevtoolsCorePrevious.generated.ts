@@ -539,6 +539,7 @@ declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
     use: TypeOnly<old.ContainerDevtoolsProps>);
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*

@@ -446,14 +446,6 @@ export interface IContainerRuntimeOptions {
 }
 
 /**
- * The summary tree returned by the root node. It adds state relevant to the root of the tree.
- */
-export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
-	/** The garbage collection stats if GC ran, undefined otherwise. */
-	gcStats?: IGCStats;
-}
-
-/**
  * Accepted header keys for requests coming to the runtime.
  */
 export enum RuntimeHeaders {
@@ -743,8 +735,6 @@ export class ContainerRuntime
 				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 			]);
 
-		const loadExisting = existing === true || context.existing === true;
-
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
 			context.baseSnapshot?.trees[blobsTreeName],
@@ -779,9 +769,7 @@ export class ContainerRuntime
 				if (loadSequenceNumberVerification === "log") {
 					logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
 				} else {
-					// Call both close and dispose as closeFn implementation will no longer dispose runtime in future
 					context.closeFn(error);
-					context.disposeFn?.(error);
 				}
 			}
 		}
@@ -818,7 +806,7 @@ export class ContainerRuntime
 			},
 			containerScope,
 			logger,
-			loadExisting,
+			existing,
 			blobManagerSnapshot,
 			context.storage,
 			idCompressor,
@@ -1178,13 +1166,7 @@ export class ContainerRuntime
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = this.isSummarizerClient
-			? this.disposeFn
-			: (error?: ICriticalContainerError) => {
-					closeFn(error);
-					// Also call disposeFn to retain functionality of runtime being disposed on close
-					disposeFn?.(error);
-			  };
+		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,
@@ -2565,7 +2547,7 @@ export class ContainerRuntime
 		fullGC?: boolean;
 		/** True to run GC sweep phase after the mark phase */
 		runSweep?: boolean;
-	}): Promise<IRootSummaryTreeWithStats> {
+	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
 
 		const {
@@ -2588,9 +2570,8 @@ export class ContainerRuntime
 		});
 
 		try {
-			let gcStats: IGCStats | undefined;
 			if (runGC) {
-				gcStats = await this.collectGarbage(
+				await this.collectGarbage(
 					{ logger: summaryLogger, runSweep, fullGC },
 					telemetryContext,
 				);
@@ -2607,7 +2588,7 @@ export class ContainerRuntime
 				0x12f /* "Container Runtime's summarize should always return a tree" */,
 			);
 
-			return { stats, summary, gcStats };
+			return { stats, summary };
 		} finally {
 			this.logger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
@@ -2907,7 +2888,7 @@ export class ContainerRuntime
 			}
 
 			const trace = Trace.start();
-			let summarizeResult: IRootSummaryTreeWithStats;
+			let summarizeResult: ISummaryTreeWithStats;
 			// If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
 			// state of all the nodes.
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
@@ -3508,7 +3489,7 @@ export class ContainerRuntime
 						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
 					},
 				);
-				this.closeFn(error);
+				this.disposeFn(error);
 				throw error;
 			}
 
@@ -3657,7 +3638,7 @@ export class ContainerRuntime
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
+			this.disposeFn();
 		}
 
 		return snapshotResults;

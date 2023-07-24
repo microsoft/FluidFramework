@@ -424,50 +424,26 @@ use_old_TypeAliasDeclaration_Myself(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RootDataObject": {"forwardCompat": false}
+* "RemovedClassDeclaration_RootDataObject": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_RootDataObject():
-    TypeOnly<old.RootDataObject>;
-declare function use_current_ClassDeclaration_RootDataObject(
-    use: TypeOnly<current.RootDataObject>);
-use_current_ClassDeclaration_RootDataObject(
-    get_old_ClassDeclaration_RootDataObject());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RootDataObject": {"backCompat": false}
+* "RemovedClassDeclaration_RootDataObject": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_RootDataObject():
-    TypeOnly<current.RootDataObject>;
-declare function use_old_ClassDeclaration_RootDataObject(
-    use: TypeOnly<old.RootDataObject>);
-use_old_ClassDeclaration_RootDataObject(
-    get_current_ClassDeclaration_RootDataObject());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_RootDataObjectProps": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_RootDataObjectProps": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_RootDataObjectProps():
-    TypeOnly<old.RootDataObjectProps>;
-declare function use_current_InterfaceDeclaration_RootDataObjectProps(
-    use: TypeOnly<current.RootDataObjectProps>);
-use_current_InterfaceDeclaration_RootDataObjectProps(
-    get_old_InterfaceDeclaration_RootDataObjectProps());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_RootDataObjectProps": {"backCompat": false}
+* "RemovedInterfaceDeclaration_RootDataObjectProps": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_RootDataObjectProps():
-    TypeOnly<current.RootDataObjectProps>;
-declare function use_old_InterfaceDeclaration_RootDataObjectProps(
-    use: TypeOnly<old.RootDataObjectProps>);
-use_old_InterfaceDeclaration_RootDataObjectProps(
-    get_current_InterfaceDeclaration_RootDataObjectProps());
 
 /*
 * Validate forward compat by using old type in place of current type
