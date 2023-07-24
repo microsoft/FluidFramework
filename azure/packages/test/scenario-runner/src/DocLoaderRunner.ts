@@ -59,13 +59,9 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		for (const docId of this.c.docIds) {
 			const childArgs: string[] = [
 				"./dist/docLoaderRunnerClient.js",
-				...convertConfigToScriptParams<DocLoaderRunConfig>({
-					runId: config.runId,
-					scenarioName: config.scenarioName,
-					childId: i++,
-					docId,
-					schema: this.c.schema,
-				}),
+				...convertConfigToScriptParams<DocLoaderRunConfig>(
+					this.buildScenarioRunConfig(config, { childId: i++, docId }),
+				),
 				"--verbose",
 			];
 			runnerArgs.push(childArgs);
@@ -93,21 +89,15 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 	public async runSync(config: IRunConfig): Promise<IFluidContainer[]> {
 		this.status = "running";
-		const schema = this.c.schema;
-		const client = this.c.client;
 		let i = 0;
 		const runs: Promise<IFluidContainer>[] = [];
 		const numOfLoads = this.c.numOfLoads ?? 1;
 		for (let j = 0; j < numOfLoads; j++) {
 			for (const docId of this.c.docIds) {
 				runs.push(
-					DocLoaderRunner.execRun({
-						...config,
-						childId: i++,
-						docId,
-						schema,
-						client,
-					}),
+					DocLoaderRunner.execRun(
+						this.buildScenarioRunConfig(config, { childId: i++, docId, isSync: true }),
+					),
 				);
 			}
 		}
@@ -119,6 +109,24 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 			this.status = "error";
 			throw new Error("Not all clients closed succesfully.");
 		}
+	}
+
+	private buildScenarioRunConfig(
+		runConfig: IRunConfig,
+		options: { childId: number; docId: string; isSync?: boolean },
+	): DocLoaderRunConfig {
+		const scenarioRunConfig: DocLoaderRunConfig = {
+			...runConfig,
+			childId: options.childId,
+			docId: options.docId,
+			schema: this.c.schema,
+			client: this.c.client,
+		};
+		if (!options.isSync) {
+			delete scenarioRunConfig.logger;
+			delete scenarioRunConfig.client;
+		}
+		return scenarioRunConfig;
 	}
 
 	public static async execRun(runConfig: DocLoaderRunConfig): Promise<IFluidContainer> {

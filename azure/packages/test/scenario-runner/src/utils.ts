@@ -54,21 +54,17 @@ export function createAzureTokenProvider(
 	});
 }
 
-export function convertConfigToScriptParams<T extends IRunConfig>(
-	config: T,
-	defaults: Partial<T> = {},
-): string[] {
+export function convertConfigToScriptParams<T extends IRunConfig>(config: T): string[] {
 	const params: string[] = [];
 	Object.entries(config).forEach(([key, value]) => {
 		const paramName = `--${key}`;
-		const paramValue = value ?? defaults[key];
-		if (paramValue === undefined) {
+		if (value === undefined) {
 			return;
 		}
-		if (typeof paramValue === "string") {
-			params.push(paramName, paramValue);
+		if (typeof value === "string") {
+			params.push(paramName, value);
 		}
-		params.push(paramName, JSON.stringify(paramValue));
+		params.push(paramName, JSON.stringify(value));
 	});
 	return params;
 }

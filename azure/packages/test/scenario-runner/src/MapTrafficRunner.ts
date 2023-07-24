@@ -64,16 +64,9 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 		for (let i = 0; i < this.c.numClients; i++) {
 			const childArgs: string[] = [
 				"./dist/mapTrafficRunnerClient.js",
-				...convertConfigToScriptParams<MapTrafficRunConfig>({
-					runId: config.runId,
-					scenarioName: config.scenarioName,
-					childId: i,
-					docId: this.c.docId,
-					schema: this.c.schema,
-					writeRatePerMin: this.c.writeRatePerMin,
-					totalWriteCount: this.c.totalWriteCount,
-					sharedMapKey: this.c.sharedMapKey,
-				}),
+				...convertConfigToScriptParams<MapTrafficRunConfig>(
+					this.buildScenarioRunConfig(config, { childId: i }),
+				),
 				"--verbose",
 			];
 			runnerArgs.push(childArgs);
@@ -98,25 +91,12 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 
 	public async runSync(config: IRunConfig): Promise<void> {
 		this.status = "running";
-		const docId = this.c.docId;
-		const totalWriteCount = this.c.totalWriteCount;
-		const writeRatePerMin = this.c.writeRatePerMin;
-		const sharedMapKey = this.c.sharedMapKey;
-		const schema = this.c.schema;
-		const client = this.c.client;
 		const runs: Promise<void>[] = [];
 		for (let i = 0; i < this.c.numClients; i++) {
 			runs.push(
-				MapTrafficRunner.execRun({
-					...config,
-					childId: i,
-					docId,
-					schema,
-					totalWriteCount,
-					writeRatePerMin,
-					sharedMapKey,
-					client,
-				}),
+				MapTrafficRunner.execRun(
+					this.buildScenarioRunConfig(config, { childId: i, isSync: true }),
+				),
 			);
 		}
 		try {
@@ -126,6 +106,27 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 			this.status = "error";
 			throw new Error("Not all clients closed succesfully.");
 		}
+	}
+
+	private buildScenarioRunConfig(
+		runConfig: IRunConfig,
+		options: { childId: number; isSync?: boolean },
+	): MapTrafficRunConfig {
+		const scenarioRunConfig: MapTrafficRunConfig = {
+			...runConfig,
+			childId: options.childId,
+			docId: this.c.docId,
+			schema: this.c.schema,
+			totalWriteCount: this.c.totalWriteCount,
+			writeRatePerMin: this.c.writeRatePerMin,
+			sharedMapKey: this.c.sharedMapKey,
+			client: this.c.client,
+		};
+		if (!options.isSync) {
+			delete scenarioRunConfig.logger;
+			delete scenarioRunConfig.client;
+		}
+		return scenarioRunConfig;
 	}
 
 	public static async execRun(runConfig: MapTrafficRunConfig): Promise<void> {

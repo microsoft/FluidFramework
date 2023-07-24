@@ -72,18 +72,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			const childArgs: string[] = [
 				"./dist/nestedMapRunnerClient.js",
 				...convertConfigToScriptParams<NestedMapRunConfig>(
-					{
-						runId: config.runId,
-						scenarioName: config.scenarioName,
-						childId,
-						numMaps: this.c.numMaps,
-						writeRatePerMin: this.c.writeRatePerMin,
-						dataType: this.c.dataType,
-						initialMapKey: this.c.initialMapKey,
-						schema: this.c.schema,
-						docId,
-					},
-					{ writeRatePerMin: -1, dataType: "number" },
+					this.buildScenarioRunConfig(config, { childId, docId }),
 				),
 			];
 			return childArgs;
@@ -116,14 +105,8 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 	public async runSync(config: IRunConfig): Promise<string[]> {
 		this.status = "running";
-		const numMaps = this.c.numMaps;
-		const dataType = this.c.dataType ?? "number";
-		const writeRatePerMin = this.c.writeRatePerMin ?? -1;
-		const schema = this.c.schema;
-		const client = this.c.client;
 		const containers = this.c.containers;
 		const docIds = this.c.docIds;
-		const initialMapKey = this.c.initialMapKey;
 		if (containers !== undefined && containers.length !== docIds?.length) {
 			throw new Error("Number of containers not equal to number of docIds");
 		}
@@ -133,18 +116,14 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			docId?: string,
 			container?: IFluidContainer,
 		): Promise<string> => {
-			return NestedMapRunner.execRun({
-				...config,
-				childId,
-				docId,
-				numMaps,
-				dataType,
-				writeRatePerMin,
-				initialMapKey,
-				schema,
-				client,
-				container,
-			});
+			return NestedMapRunner.execRun(
+				this.buildScenarioRunConfig(config, {
+					childId,
+					docId,
+					container,
+					isSync: true,
+				}),
+			);
 		};
 		if (docIds) {
 			for (let i = 0; i < docIds.length; i++) {
@@ -164,6 +143,35 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			this.status = "error";
 			throw new Error(`Not all clients closed succesfully.\n${error}`);
 		}
+	}
+
+	private buildScenarioRunConfig(
+		runConfig: IRunConfig,
+		options: {
+			childId: number;
+			docId?: string;
+			container?: IFluidContainer;
+			isSync?: boolean;
+		},
+	): NestedMapRunConfig {
+		const scenarioRunConfig: NestedMapRunConfig = {
+			...runConfig,
+			childId: options.childId,
+			docId: options.docId,
+			numMaps: this.c.numMaps,
+			dataType: this.c.dataType ?? "number",
+			writeRatePerMin: this.c.writeRatePerMin ?? -1,
+			initialMapKey: this.c.initialMapKey,
+			schema: this.c.schema,
+			client: this.c.client,
+			container: options.container,
+		};
+		if (!options.isSync) {
+			delete scenarioRunConfig.logger;
+			delete scenarioRunConfig.client;
+			delete scenarioRunConfig.container;
+		}
+		return scenarioRunConfig;
 	}
 
 	public static async execRun(runConfig: NestedMapRunConfig): Promise<string> {

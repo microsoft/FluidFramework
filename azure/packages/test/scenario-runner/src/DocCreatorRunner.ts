@@ -58,12 +58,9 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 		for (let i = 0; i < this.c.numDocs; i++) {
 			const childArgs: string[] = [
 				"./dist/docCreatorRunnerClient.js",
-				...convertConfigToScriptParams<DocCreatorRunConfig>({
-					runId: config.runId,
-					scenarioName: config.scenarioName,
-					childId: i,
-					schema: this.c.schema,
-				}),
+				...convertConfigToScriptParams<DocCreatorRunConfig>(
+					this.buildScenarioRunConfig(config, { childId: i }),
+				),
 				"--verbose",
 			];
 			runnerArgs.push(childArgs);
@@ -90,17 +87,12 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 
 	public async runSync(config: IRunConfig): Promise<string | string[] | undefined> {
 		this.status = "running";
-		const schema = this.c.schema;
-		const client = this.c.client;
 		const runs: Promise<string>[] = [];
 		for (let i = 0; i < this.c.numDocs; i++) {
 			runs.push(
-				DocCreatorRunner.execRun({
-					...config,
-					childId: i,
-					schema,
-					client,
-				}),
+				DocCreatorRunner.execRun(
+					this.buildScenarioRunConfig(config, { childId: i, isSync: true }),
+				),
 			);
 		}
 		try {
@@ -111,6 +103,23 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 			this.status = "error";
 			throw new Error(`Not all clients closed successfully.\n${error}`);
 		}
+	}
+
+	private buildScenarioRunConfig(
+		runConfig: IRunConfig,
+		options: { childId: number; isSync?: boolean },
+	): DocCreatorRunConfig {
+		const scenarioRunConfig: DocCreatorRunConfig = {
+			...runConfig,
+			childId: options.childId,
+			schema: this.c.schema,
+			client: this.c.client,
+		};
+		if (!options.isSync) {
+			delete scenarioRunConfig.logger;
+			delete scenarioRunConfig.client;
+		}
+		return scenarioRunConfig;
 	}
 
 	public static async execRun(runConfig: DocCreatorRunConfig): Promise<string> {
