@@ -38,16 +38,11 @@ export function createChildLogger(props?: {
 export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
 
 // @public
-export function createDebugLogger(props: {
-    namespace: string;
-    properties?: ITelemetryLoggerPropertyBags;
-}): ITelemetryLoggerExt;
-
-// @public
 export function createMultiSinkLogger(props: {
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
     loggers?: (ITelemetryBaseLogger | undefined)[];
+    tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
 
 // Warning: (ae-forgotten-export) The symbol "TelemetryLogger" needs to be exported by the entry point index.d.ts
@@ -56,7 +51,7 @@ export function createMultiSinkLogger(props: {
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinDebugLogger(namespace: string, logger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -69,6 +64,9 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
 }
+
+// @public (undocumented)
+export const eventNamespaceSeparator: ":";
 
 // @public
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {

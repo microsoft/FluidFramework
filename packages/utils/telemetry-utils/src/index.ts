@@ -12,7 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
-export { DebugLogger, createDebugLogger } from "./debugLogger";
+export { DebugLogger } from "./debugLogger";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
@@ -42,6 +42,8 @@ export {
 	isValidLegacyError,
 } from "./fluidErrorBase";
 export {
+	eventNamespaceSeparator,
+	ChildLogger,
 	createChildLogger,
 	createMultiSinkLogger,
 	formatTick,

@@ -11,81 +11,56 @@ import {
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 import {
-	TelemetryLogger,
-	MultiSinkLogger,
+	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
+	createMultiSinkLogger,
+	eventNamespaceSeparator,
 	formatTick,
-	createChildLogger,
-} from "./logger";
+} from "@fluidframework/telemetry-utils";
+
 /**
  * Implementation of debug logger
- * @deprecated - DebugLogger is internal and will no longer be exported.
  */
-export class DebugLogger extends TelemetryLogger {
-	/**
-	 * Create debug logger - all events are output to debug npm library
-	 * @param namespace - Telemetry event name prefix to add to all events
-	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
-	 */
-	public static create(
-		namespace: string,
-		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLogger {
-		// Setup base logger upfront, such that host can disable it (if needed)
-		const debug = registerDebug(namespace);
-
-		// Create one for errors that is always enabled
-		// It can be silenced by replacing console.error if the debug namespace is not enabled.
-		const debugErr = registerDebug(namespace);
-		debugErr.log = function () {
-			if (debug.enabled) {
-				// if the namespace is enabled, just use the default logger
-				registerDebug.log(...arguments);
-			} else {
-				// other wise, use the console logger (which could be replaced and silenced)
-				console.error(...arguments);
-			}
-		};
-		debugErr.enabled = true;
-
-		return new DebugLogger(debug, debugErr, properties);
-	}
-
+export class DebugLogger implements ITelemetryBaseLogger {
 	/**
 	 * Mix in debug logger with another logger.
 	 * Returned logger will output events to both newly created debug logger, as well as base logger
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
 	 * @param propertyGetters - Getters to add additional properties to all events
-	 * @param logger - Base logger to output events (in addition to debug logger being created). Can be undefined.
+	 * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
 	 */
 	public static mixinDebugLogger(
 		namespace: string,
-		logger?: ITelemetryBaseLogger,
+		baseLogger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLogger {
-		if (!logger) {
-			return DebugLogger.create(namespace, properties);
-		}
+	): ITelemetryLoggerExt {
+		// Setup base logger upfront, such that host can disable it (if needed)
+		const debug = registerDebug(namespace);
 
-		const multiSinkLogger = new MultiSinkLogger(
-			undefined,
+		// Create one for errors that is always enabled
+		// It can be silenced by replacing console.error if the debug namespace is not enabled.
+		const debugErr = registerDebug(namespace);
+		debugErr.log = function (...args) {
+			if (debug.enabled === true) {
+				// if the namespace is enabled, just use the default logger
+				registerDebug.log(...args);
+			} else {
+				// other wise, use the console logger (which could be replaced and silenced)
+				console.error(...args);
+			}
+		};
+		debugErr.enabled = true;
+
+		return createMultiSinkLogger({
+			namespace,
+			loggers: [baseLogger, new DebugLogger(debug, debugErr)],
 			properties,
-			[createChildLogger({ logger, namespace }), DebugLogger.create(namespace)],
-			true,
-		);
-
-		return multiSinkLogger;
+			tryInheritProperties: true,
+		});
 	}
 
-	constructor(
-		private readonly debug: IDebugger,
-		private readonly debugErr: IDebugger,
-		properties?: ITelemetryLoggerPropertyBags,
-	) {
-		super(undefined, properties);
-	}
+	private constructor(private readonly debug: IDebugger, private readonly debugErr: IDebugger) {}
 
 	/**
 	 * Send an event to debug loggers
@@ -93,12 +68,12 @@ export class DebugLogger extends TelemetryLogger {
 	 * @param event - the event to send
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		const newEvent: ITelemetryProperties = this.prepareEvent(event);
+		const newEvent: ITelemetryProperties = { ...event };
 		const isError = newEvent.category === "error";
 		let logger = isError ? this.debugErr : this.debug;
 
 		// Use debug's coloring schema for base of the event
-		const index = event.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
+		const index = event.eventName.lastIndexOf(eventNamespaceSeparator);
 		const name = event.eventName.substring(index + 1);
 		if (index > 0) {
 			logger = logger.extend(event.eventName.substring(0, index));
@@ -109,7 +84,7 @@ export class DebugLogger extends TelemetryLogger {
 		tick = `tick=${formatTick(performance.now())}`;
 
 		// Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
-		const stack = newEvent.stack ? newEvent.stack : "";
+		const stack = newEvent.stack ?? "";
 		newEvent.stack = undefined;
 
 		// Watch out for circular references - they can come from two sources

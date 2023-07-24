@@ -77,6 +77,8 @@ export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
+export const eventNamespaceSeparator = ":" as const;
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -84,7 +86,7 @@ export function formatTick(tick: number): number {
  *
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
-	public static readonly eventNamespaceSeparator = ":";
+	public static readonly eventNamespaceSeparator = eventNamespaceSeparator;
 
 	public static sanitizePkgName(name: string) {
 		return name.replace("@", "").replace("/", "-");
@@ -390,16 +392,19 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Create a logger which logs to multiple other loggers based on the provided props object
  * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ * tryInheritProperties will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
  */
 export function createMultiSinkLogger(props: {
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 	loggers?: (ITelemetryBaseLogger | undefined)[];
+	tryInheritProperties?: true;
 }): ITelemetryLoggerExt {
 	return new MultiSinkLogger(
 		props.namespace,
 		props.properties,
 		props.loggers?.filter((l): l is ITelemetryBaseLogger => l !== undefined),
+		props.tryInheritProperties,
 	);
 }
 
@@ -408,17 +413,35 @@ export function createMultiSinkLogger(props: {
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
  */
 export class MultiSinkLogger extends TelemetryLogger {
+	protected loggers: ITelemetryBaseLogger[];
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
+	 * @param loggers - The list of loggers to use as sinks
+	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
 	constructor(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
-		protected loggers: ITelemetryBaseLogger[] = [],
+		loggers: ITelemetryBaseLogger[] = [],
+		tryInheritProperties?: true,
 	) {
-		super(namespace, properties);
+		let realProperties = properties !== undefined ? { ...properties } : undefined;
+		if (tryInheritProperties === true) {
+			const merge = (realProperties ??= {});
+			loggers
+				.filter((l): l is this => l instanceof TelemetryLogger)
+				.map((l) => l.properties ?? {})
+				.forEach((cv) => {
+					Object.keys(cv).forEach((k) => {
+						merge[k] = { ...cv[k], ...merge?.[k] };
+					});
+				});
+		}
+
+		super(namespace, realProperties);
+		this.loggers = loggers;
 	}
 
 	/**
