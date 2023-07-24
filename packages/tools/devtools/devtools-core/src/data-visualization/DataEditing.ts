@@ -14,13 +14,13 @@ import { EditType } from "../CommonInterfaces";
  * @param sharedObject - The {@link @fluidframework/shared-object-base#ISharedObject} whose data will be edited.
  * @param edit - Describes what changes will be made using {@link Edit}.
  *
- * @internal
+ * @public
  */
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 /**
  * Interface to contain information necesary for an edit
- * @internal
+ * @public
  */
 export interface Edit {
 	/**
@@ -31,7 +31,7 @@ export interface Edit {
 	/**
 	 * Type contains the {@link EditType} of the edit being preformed
 	 */
-	type: EditType;
+	type?: EditType;
 
 	/**
 	 * Data contains the new data that will be edited into the DDS

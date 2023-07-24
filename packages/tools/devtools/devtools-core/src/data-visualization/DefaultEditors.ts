@@ -12,7 +12,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { EditType } from "../CommonInterfaces";
 import { Edit, EditSharedObject } from "./DataEditing";
 
 /**
@@ -22,7 +21,10 @@ export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	if (typeof edit.data !== "number" || edit.type !== EditType.number) return;
+	if (typeof edit.data !== "number") return;
+	console.log("edit.data");
+
+	console.log(edit.data);
 	const sharedCounter = sharedObject as SharedCounter;
 	sharedCounter.increment(Math.floor(edit.data) - sharedCounter.value);
 	console.log(sharedCounter);

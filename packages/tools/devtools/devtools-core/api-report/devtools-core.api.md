@@ -228,7 +228,7 @@ export namespace DisconnectContainer {
 export interface Edit {
     data: Serializable<unknown>;
     fluidObjectId: string;
-    type: EditType;
+    type?: EditType;
 }
 
 // @public
@@ -371,7 +371,7 @@ export interface HasContainerKey {
     containerKey: ContainerKey;
 }
 
-// @internal
+// @public
 export interface HasEdit {
     // (undocumented)
     edit: Edit;

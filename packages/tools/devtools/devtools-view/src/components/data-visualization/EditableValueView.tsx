@@ -5,8 +5,9 @@
 
 import React from "react";
 
-import { Input, InputOnChangeData } from "@fluentui/react-components";
-import { EditType, FluidObjectValueNode, SendEditData } from "@fluid-experimental/devtools-core";
+import { Button, Input, InputOnChangeData } from "@fluentui/react-components";
+import { FluidObjectValueNode, SendEditData } from "@fluid-experimental/devtools-core";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { TreeHeader } from "./TreeHeader";
 
@@ -39,12 +40,9 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	/**
 	 * isTextBox is whether or not the area should allow text or numbers only.
 	 */
-	const [isType, setIsType] = React.useState<EditType>(
-		node.typeMetadata === "number" || node.typeMetadata === "SharedCounter"
-			? EditType.number
-			: EditType.string,
-	);
+	const [isType, setIsType] = React.useState<string>(typeof node.value);
 	console.log(setIsType);
+
 	const textAreaRef = React.useRef<HTMLInputElement>(null);
 
 	const backgroundUpdate = (): void => {
@@ -75,10 +73,25 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	}, [node.value]);
 
 	const commitChanges = React.useCallback(() => {
+		let data: Serializable<unknown>;
+		switch (isType) {
+			case "string":
+				data = value;
+				break;
+			case "number":
+				data = Number(value);
+				break;
+			case "boolean":
+				data = value === "True" ? true : false;
+				break;
+			default:
+				data = value;
+				break;
+		}
+
 		const edit = {
 			fluidObjectId: node.fluidObjectId,
-			data: value,
-			type: EditType.string,
+			data,
 		};
 		messageRelay.postMessage(
 			SendEditData.createMessage({
@@ -86,7 +99,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 				edit,
 			}),
 		);
-	}, [containerKey, messageRelay, node.fluidObjectId, value]);
+	}, [containerKey, isType, messageRelay, node.fluidObjectId, value]);
 
 	const onKeyDown = React.useCallback(
 		(event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -104,23 +117,48 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 		[commitChanges],
 	);
 
+	const onButtonClick = React.useCallback(
+		(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+			setValue(String(event.currentTarget.value));
+			commitChanges();
+		},
+		[commitChanges],
+	);
+
+	function boolButton(name: string): React.ReactElement {
+		return (
+			<Button
+				value={name}
+				disabled={value.toLowerCase() === name.toLowerCase() ? true : false}
+				onClick={onButtonClick}
+			></Button>
+		);
+	}
+
 	return (
 		<>
 			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
 
-			<Input
-				size="small"
-				appearance="underline"
-				contentEditable
-				ref={textAreaRef}
-				onClick={(event): void => event.preventDefault()}
-				value={value}
-				onChange={onChange}
-				onFocus={onFocus}
-				onBlur={onBlur}
-				onKeyDown={onKeyDown}
-				type={isType === EditType.string ? "text" : "number"}
-			/>
+			{isType === "boolean" ? (
+				<>
+					{boolButton("True")}
+					{boolButton("False")}
+				</>
+			) : (
+				<Input
+					size="small"
+					appearance="underline"
+					contentEditable
+					ref={textAreaRef}
+					onClick={(event): void => event.preventDefault()}
+					value={value}
+					onChange={onChange}
+					onFocus={onFocus}
+					onBlur={onBlur}
+					onKeyDown={onKeyDown}
+					type={isType === "string" ? "text" : "number"}
+				/>
+			)}
 		</>
 	);
 }

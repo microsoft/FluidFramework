@@ -72,7 +72,7 @@ export interface HasEditType {
 
 /**
  * Base interface used in message data for communicating edits
- * @internal
+ * @public
  */
 export interface HasEdit {
 	edit: Edit;
