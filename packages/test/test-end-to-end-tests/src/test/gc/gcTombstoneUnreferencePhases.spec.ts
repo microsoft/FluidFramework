@@ -64,13 +64,10 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
 
-		const { summarizer } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			gcOptions,
-			mockConfigProvider(settings),
-		);
+		const { summarizer } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions },
+			loaderProps: { configProvider: mockConfigProvider(settings) },
+		});
 
 		// create datastore and blob
 		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(
