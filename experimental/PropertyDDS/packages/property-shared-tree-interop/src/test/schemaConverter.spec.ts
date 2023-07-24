@@ -14,7 +14,6 @@ import {
 	TreeSchemaIdentifier,
 	FieldSchema,
 	getPrimaryField,
-	lookupTreeSchema,
 	isPrimitive,
 	LocalFieldKey,
 } from "@fluid-experimental/tree2";
@@ -109,7 +108,6 @@ describe("schema converter", () => {
 							}
 						}
 					}
-					assert.deepEqual([...propertySchema.globalFields], []);
 					assert.equal(propertySchema.value, ValueSchema.Nothing);
 					assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
 					assert(
@@ -122,15 +120,15 @@ describe("schema converter", () => {
 		it("can use any type as root", () => {
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, Any);
-				assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
+				assert.deepEqual([...fullSchemaData.rootFieldSchema.allowedTypes], [Any]);
 			}
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, new Set([Any]));
-				assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
+				assert.deepEqual([...fullSchemaData.rootFieldSchema.allowedTypes], [Any]);
 			}
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["String", Any]));
-				assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
+				assert.deepEqual([...fullSchemaData.rootFieldSchema.allowedTypes], [Any]);
 			}
 		});
 
@@ -214,7 +212,6 @@ describe("schema converter", () => {
 				[...(neverTreeSchema.extraLocalFields.types ?? fail("expected empty set"))],
 				[],
 			);
-			assert.deepEqual([...(neverTreeSchema.globalFields ?? fail("expected empty set"))], []);
 		});
 
 		it(`does not support types with nested properties`, () => {
@@ -234,8 +231,8 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
-			const nodeProperty = lookupTreeSchema(fullSchemaData, brand("NodeProperty"));
-			const testOptional = lookupTreeSchema(fullSchemaData, brand("Test:Optional-1.0.0"));
+			const nodeProperty = fullSchemaData.treeSchema.get(brand("NodeProperty"));
+			const testOptional = fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0"));
 
 			assert.equal(nodeProperty, nodePropertySchema);
 			assert.equal(testOptional?.extraLocalFields.kind, FieldKinds.forbidden);
@@ -261,9 +258,9 @@ describe("schema converter", () => {
 		it(`can use "NodeProperty" as root`, () => {
 			const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["NodeProperty"]));
 
-			assert.deepEqual(fullSchemaData.root.kind, FieldKinds.optional);
+			assert.deepEqual(fullSchemaData.rootFieldSchema.kind, FieldKinds.optional);
 			assert.deepEqual(
-				[...(fullSchemaData.root.types ?? fail("expected root types"))],
+				[...(fullSchemaData.rootFieldSchema.types ?? fail("expected root types"))],
 				[
 					"NodeProperty",
 					"NamedNodeProperty",
@@ -275,10 +272,7 @@ describe("schema converter", () => {
 
 			// 60 types (all types, their arrays and maps)
 			assert.equal(fullSchemaData.treeSchema.size, 60);
-			const nodePropertySchemaLookedUp = lookupTreeSchema(
-				fullSchemaData,
-				brand("NodeProperty"),
-			);
+			const nodePropertySchemaLookedUp = fullSchemaData.treeSchema.get(brand("NodeProperty"));
 			assert.equal(nodePropertySchemaLookedUp, nodePropertySchema);
 		});
 
@@ -287,7 +281,9 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
-			const nodeSchema = lookupTreeSchema(fullSchemaData, brand("Test:Optional-1.0.0"));
+			const nodeSchema =
+				fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0")) ??
+				fail("missing schema");
 			const arrayField =
 				(nodeSchema.localFields.get(brand("childArray")) as FieldSchema) ??
 				fail("expected field schema");
@@ -296,7 +292,6 @@ describe("schema converter", () => {
 			assert.deepEqual([...(arrayField.types ?? fail("expected types"))], [arrayTypeName]);
 			const arraySchema = fullSchemaData.treeSchema.get(arrayTypeName);
 			assert(arraySchema !== undefined);
-			assert.deepEqual([...arraySchema.globalFields], []);
 			assert.equal(arraySchema.value, ValueSchema.Nothing);
 			assert.equal(arraySchema.localFields.size, 1);
 			const primary = getPrimaryField(arraySchema);
@@ -313,7 +308,9 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
-			const nodeSchema = lookupTreeSchema(fullSchemaData, brand("Test:Optional-1.0.0"));
+			const nodeSchema =
+				fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0")) ??
+				fail("missing schema");
 			const mapField =
 				(nodeSchema.localFields.get(brand("childMap")) as FieldSchema) ??
 				fail("expected field schema");
@@ -328,7 +325,6 @@ describe("schema converter", () => {
 				["Test:Child-1.0.0"],
 			);
 			assert.deepEqual([...mapSchema.localFields], []);
-			assert.deepEqual([...mapSchema.globalFields], []);
 			assert.equal(mapSchema.value, ValueSchema.Nothing);
 		});
 
@@ -379,7 +375,7 @@ describe("schema converter", () => {
 				new Set([extraTypeName, Any]),
 			);
 			assert(fullSchemaData.treeSchema.get(extraTypeName) !== undefined);
-			assert(fullSchemaData.root.types === undefined);
+			assert(fullSchemaData.rootFieldSchema.types === undefined);
 		});
 
 		it(`can use extra schemas`, () => {
@@ -438,7 +434,7 @@ describe("schema converter", () => {
 			const fullSchemaData = convertSchema(FieldKinds.optional, new Set([parentTypeName]));
 
 			assert.deepEqual(
-				[...(fullSchemaData.root.types ?? fail("expected types"))],
+				[...(fullSchemaData.rootFieldSchema.types ?? fail("expected types"))],
 				[parentTypeName, childTypeName],
 			);
 			const parentSchema =
