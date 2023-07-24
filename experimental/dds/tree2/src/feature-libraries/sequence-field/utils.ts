@@ -42,7 +42,6 @@ import {
 	DetachedCellMark,
 	CellTargetingMark,
 	CellId,
-	HasPlaceFields,
 	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -139,20 +138,6 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 		}
 	}
 	return clone;
-}
-
-/**
- * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
- */
-export function isEqualPlace(
-	lhs: Readonly<HasPlaceFields>,
-	rhs: Readonly<HasPlaceFields>,
-): boolean {
-	return (
-		lhs.heed === rhs.heed &&
-		lhs.tiebreak === rhs.tiebreak &&
-		areSameLineage(lhs.lineage, rhs.lineage)
-	);
 }
 
 function haveEqualReattachFields(
@@ -414,7 +399,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if (
-				isEqualPlace(lhsInsert, rhs) &&
+				areSameLineage(lhsInsert.lineage, rhs.lineage) &&
 				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id &&
 				areMergeableChangeAtoms(
 					lhsInsert.transientDetach,
@@ -430,7 +415,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				isEqualPlace(lhsMoveIn, rhs) &&
+				areSameLineage(lhsMoveIn.lineage, rhs.lineage) &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsMoveIn.count === rhs.id
 			) {

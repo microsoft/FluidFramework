@@ -28,7 +28,6 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -61,6 +60,24 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 /**
+ * Attempts to parse number from string.
+ * If fails,returns original string.
+ * Used to make telemetry data typed (and support math operations, like comparison),
+ * in places where we do expect numbers (like contentsize/duration property in http header)
+ */
+export function numberFromString(str: string | null | undefined): string | number | undefined {
+	if (str === undefined || str === null) {
+		return undefined;
+	}
+	const num = Number(str);
+	return Number.isNaN(num) ? str : num;
+}
+
+export function formatTick(tick: number): number {
+	return Math.floor(tick);
+}
+
+/**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
@@ -70,6 +87,9 @@ export interface ITelemetryLoggerPropertyBags {
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public static readonly eventNamespaceSeparator = ":";
 
+	/**
+	 * @deprecated - use formatTick
+	 */
 	public static formatTick(tick: number): number {
 		return Math.floor(tick);
 	}
@@ -79,6 +99,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * If fails,returns original string.
 	 * Used to make telemetry data typed (and support math operations, like comparison),
 	 * in places where we do expect numbers (like contentsize/duration property in http header)
+	 * @deprecated - use numberFromString
 	 */
 	public static numberFromString(str: string | null | undefined): string | number | undefined {
 		if (str === undefined || str === null) {
@@ -166,7 +187,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 
 		// Will include Nan & Infinity, but probably we do not care
 		if (typeof newEvent.duration === "number") {
-			newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
+			newEvent.duration = formatTick(newEvent.duration);
 		}
 
 		this.send(newEvent);
@@ -217,10 +238,11 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		return this.extendProperties(newEvent, includeErrorProps);
 	}
 
-	private extendProperties<T extends ITelemetryPropertiesExt>(
-		eventLike: T,
+	private extendProperties<T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag>(
+		toExtend: T,
 		includeErrorProps: boolean,
 	) {
+		const eventLike: ITelemetryLoggerPropertyBag = toExtend;
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
 			properties.push(this.properties.all);
@@ -238,14 +260,13 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 						const value =
 							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
 						if (value !== undefined) {
-							// @ts-expect-error what
 							eventLike[key] = value;
 						}
 					}
 				}
 			}
 		}
-		return eventLike;
+		return toExtend;
 	}
 }
 
@@ -728,3 +749,25 @@ function convertToBasePropertyTypeUntagged(
 			return `INVALID PROPERTY (typed as ${typeof x})`;
 	}
 }
+
+export const tagData = <
+	T extends TelemetryDataTag,
+	V extends Record<string, TelemetryEventPropertyTypeExt>,
+>(
+	tag: T,
+	values: V,
+) =>
+	(Object.entries(values) as [keyof V, V[keyof V]][])
+		.filter((e): e is [keyof V, Exclude<V[keyof V], undefined>] => e[1] !== undefined)
+		.reduce<{
+			[P in keyof V]:
+				| (V[P] extends undefined ? undefined : never)
+				| { value: Exclude<V[P], undefined>; tag: T };
+		}>((pv, cv) => {
+			pv[cv[0]] = { tag, value: cv[1] };
+			return pv;
+		}, {} as any);
+
+export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyTypeExt>>(
+	values: T,
+) => tagData(TelemetryDataTag.CodeArtifact, values);

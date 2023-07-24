@@ -428,15 +428,16 @@ function revertLocalDelete(
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
-	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
-	const int = collection.add(startSlidePos, endSlidePos, type, props);
+	if (isValidRange(startSlidePos, endSlidePos, string)) {
+		const int = collection.add(startSlidePos, endSlidePos, type, props);
 
-	idMap.forEach((newId, oldId) => {
-		if (intervalId === newId) {
-			idMap.set(oldId, getUpdatedIdFromInterval(int));
-		}
-	});
-	idMap.set(intervalId, int.getIntervalId());
+		idMap.forEach((newId, oldId) => {
+			if (intervalId === newId) {
+				idMap.set(oldId, getUpdatedIdFromInterval(int));
+			}
+		});
+		idMap.set(intervalId, int.getIntervalId());
+	}
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
@@ -453,8 +454,9 @@ function revertLocalChange(
 	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
-	if (!isValidRange(startSlidePos, endSlidePos, string)) return;
-	collection.change(id, startSlidePos, endSlidePos);
+	if (isValidRange(startSlidePos, endSlidePos, string)) {
+		collection.change(id, startSlidePos, endSlidePos);
+	}
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
@@ -545,7 +547,16 @@ function revertLocalSequenceRemove(
 				restoredRanges,
 				sharedString,
 			);
-			if (newStart !== undefined || newEnd !== undefined) {
+			// only move interval if start <= end
+			if (
+				(newStart === undefined &&
+					newEnd !== undefined &&
+					sharedString.localReferencePositionToPosition(interval.start) <= newEnd) ||
+				(newEnd === undefined &&
+					newStart !== undefined &&
+					sharedString.localReferencePositionToPosition(interval.end) >= newStart) ||
+				(newStart !== undefined && newEnd !== undefined && newStart <= newEnd)
+			) {
 				intervalCollection.change(intervalId, newStart, newEnd);
 			}
 		}

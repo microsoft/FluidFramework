@@ -38,7 +38,7 @@ import { NackErrorType } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
 
 // @public
-export function createLocalDocumentService(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService): IDocumentService;
+export function createLocalDocumentService(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService, logger?: ITelemetryBaseLogger): IDocumentService;
 
 // @public (undocumented)
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
@@ -62,7 +62,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 
 // @public
 export class LocalDocumentService implements IDocumentService {
-    constructor(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService | undefined);
+    constructor(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService | undefined, logger?: ITelemetryBaseLogger | undefined);
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
