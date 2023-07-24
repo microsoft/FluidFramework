@@ -45,10 +45,10 @@ type MapCallback = (
 	map: SharedMap,
 ) => void | Promise<void>;
 
-const getPendingStateWithoutClose = (container: IContainerExperimental): string => {
+const getPendingStateWithoutClose = async (container: IContainerExperimental): Promise<string> => {
 	const containerClose = container.close;
 	container.close = (message) => assert(message === undefined);
-	const pendingState = container.closeAndGetPendingLocalState?.();
+	const pendingState = await container.closeAndGetPendingLocalState?.();
 	assert(typeof pendingState === "string");
 	container.close = containerClose;
 	return pendingState;
@@ -73,11 +73,11 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
 	let pendingState: string | undefined;
 	if (send) {
-		pendingState = getPendingStateWithoutClose(container);
+		pendingState = await getPendingStateWithoutClose(container);
 		await args.ensureSynchronized();
 		container.close();
 	} else {
-		pendingState = container.closeAndGetPendingLocalState?.();
+		pendingState = await container.closeAndGetPendingLocalState?.();
 	}
 
 	args.opProcessingController.resumeProcessing();

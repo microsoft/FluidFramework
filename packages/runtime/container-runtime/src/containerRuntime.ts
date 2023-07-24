@@ -3646,6 +3646,11 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
+	public async shutdownPendingBlobs(): Promise<void> {
+		this.verifyNotClosed();
+		await this.blobManager.shutdownPendingBlobs();
+	}
+
 	public getPendingLocalState(): unknown {
 		if (this._orderSequentiallyCalls !== 0) {
 			throw new UsageError("can't get state during orderSequentially");

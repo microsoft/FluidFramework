@@ -1334,7 +1334,7 @@ describe("SharedTree", () => {
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			insert(pausedTree, 1, "b");
 			insert(pausedTree, 2, "c");
-			const pendingOps = pausedContainer.closeAndGetPendingLocalState?.();
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedTree = provider.trees[1];
