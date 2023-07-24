@@ -6,7 +6,6 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	DebugLogger,
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
@@ -43,6 +42,7 @@ import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
+import { DebugLogger } from "./debugLogger";
 
 function canUseCache(request: IRequest): boolean {
 	if (request.headers === undefined) {
