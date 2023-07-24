@@ -23,11 +23,9 @@ import {
 	createDocumentId,
 	LoaderContainerTracker,
 	ITestObjectProvider,
-	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 const counterKey = "count";
 
