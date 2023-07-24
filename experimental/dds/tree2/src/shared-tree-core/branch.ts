@@ -117,8 +117,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack<TChange>();
-	private readonly forksInTransactions: Set<SharedTreeBranch<TEditor, TChange>>[] = [];
+	private readonly transactions = new TransactionStack<TEditor, TChange>();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -219,9 +218,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// state of the branch at the start of the transaction.
 			this.repairDataStoreProvider.freeze();
 		}
-		this.transactions.push(this.head.revision, repairStore);
+		const forks = new Set<SharedTreeBranch<TEditor, TChange>>();
+		onForkTransitive(this, (fork) => {
+			forks.add(fork);
+			fork.on("dispose", () => forks.delete(fork));
+		});
+		this.transactions.push(this.head.revision, repairStore, forks);
 		this.editor.enterTransaction();
-		this.forksInTransactions.push(new Set());
 	}
 
 	/**
@@ -235,10 +238,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
 		| undefined {
 		this.assertNotDisposed();
-		this.assertIsTransacting();
-		this.disposeForksInCurrentTransaction();
-		const [startCommit, commits] = this.popTransaction();
+		const [startCommit, commits, _, forks] = this.popTransaction();
 		this.editor.exitTransaction();
+
+		for (const fork of forks) {
+			fork.dispose();
+		}
 
 		if (commits.length === 0) {
 			return undefined;
@@ -295,11 +300,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		abortedCommits: GraphCommit<TChange>[],
 	] {
 		this.assertNotDisposed();
-		this.assertIsTransacting();
-		this.disposeForksInCurrentTransaction();
-		const [startCommit, commits, repairStore] = this.popTransaction();
+		const [startCommit, commits, repairStore, forks] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
+
+		for (const fork of forks) {
+			fork.dispose();
+		}
+
 		if (commits.length === 0) {
 			return [undefined, []];
 		}
@@ -331,27 +339,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],
 		RepairDataStore<TChange> | undefined,
+		Set<SharedTreeBranch<TEditor, TChange>>,
 	] {
-		const { startRevision, repairStore } = this.transactions.pop();
+		const { startRevision, repairStore, forks } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
-		return [startCommit, commits, repairStore];
-	}
-
-	private getForksInCurrentTransaction(): Set<SharedTreeBranch<TEditor, TChange>> {
-		this.assertIsTransacting();
-		return this.forksInTransactions[this.forksInTransactions.length - 1];
-	}
-
-	private disposeForksInCurrentTransaction(): void {
-		for (const fork of this.getForksInCurrentTransaction()) {
-			fork.dispose();
-		}
-		this.forksInTransactions.pop();
+		return [startCommit, commits, repairStore, forks];
 	}
 
 	/**
@@ -420,8 +417,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			anchors,
 		);
 		if (this.isTransacting()) {
-			this.getForksInCurrentTransaction().add(fork);
-			fork.on("dispose", () => this.getForksInCurrentTransaction().delete(fork));
+			const forks = this.transactions.peek().forks;
+			forks.add(fork);
+			fork.on("dispose", () => forks.delete(fork));
 		}
 		this.emit("fork", fork);
 		return fork;
@@ -590,10 +588,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	private assertNotDisposed(): void {
 		assert(!this.disposed, 0x66e /* Branch is disposed */);
-	}
-
-	private assertIsTransacting(): void {
-		assert(this.isTransacting(), "Branch must have a transaction");
 	}
 }
 

@@ -453,16 +453,16 @@ describe("Branches", () => {
 			const fork5 = fork3.fork();
 
 			return {
-				disposedFroks: [fork2, fork3, fork4, fork5],
+				disposedForks: [fork2, fork3, fork4, fork5],
 				notDisposedForks: [fork1],
 			};
 		};
 
 		const assertNestedForks = (nestedForks: {
-			disposedFroks: readonly DefaultBranch[];
+			disposedForks: readonly DefaultBranch[];
 			notDisposedForks: readonly DefaultBranch[];
 		}) => {
-			nestedForks.disposedFroks.forEach((fork) => {
+			nestedForks.disposedForks.forEach((fork) => {
 				assertDisposed(() => fork.fork());
 				assert.equal(fork.isTransacting(), false);
 			});
