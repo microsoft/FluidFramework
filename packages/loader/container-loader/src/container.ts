@@ -1061,10 +1061,14 @@ export class Container
 		}
 	}
 
-	public closeAndGetPendingLocalState(): string {
+	public async closeAndGetPendingLocalState(): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
+		if (this.runtime.shutdownPendingBlobs) {
+			await this.runtime.shutdownPendingBlobs();
+		}
+
 		const pendingState = this.getPendingLocalState();
 		this.close();
 		return pendingState;
@@ -2397,5 +2401,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(): string;
+	closeAndGetPendingLocalState?(): Promise<string>;
 }

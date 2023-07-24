@@ -82,10 +82,10 @@ const testKey2 = "another test key";
 const testValue = "test value";
 const testIncrementValue = 5;
 
-const getPendingStateWithoutClose = (container: IContainerExperimental): string => {
+const getPendingStateWithoutClose = async (container: IContainerExperimental): Promise<string> => {
 	const containerClose = container.close;
 	container.close = (message) => assert(message === undefined);
-	const pendingState = container.closeAndGetPendingLocalState?.();
+	const pendingState = await container.closeAndGetPendingLocalState?.();
 	assert(typeof pendingState === "string");
 	container.close = containerClose;
 	return pendingState;
@@ -118,11 +118,11 @@ const getPendingOps = async (
 
 	let pendingState: string | undefined;
 	if (send) {
-		pendingState = getPendingStateWithoutClose(container);
+		pendingState = await getPendingStateWithoutClose(container);
 		await args.ensureSynchronized();
 		container.close();
 	} else {
-		pendingState = container.closeAndGetPendingLocalState?.();
+		pendingState = await container.closeAndGetPendingLocalState?.();
 	}
 
 	args.opProcessingController.resumeProcessing();
@@ -874,8 +874,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		dataStore1.context.containerRuntime.orderSequentially(() => {
 			map.set("key1", "value1");
 			map.set("key2", "value2");
-			assert.throws(() => {
-				container1.closeAndGetPendingLocalState?.();
+			assert.throws(async () => {
+				await container1.closeAndGetPendingLocalState?.();
 			}, "Should throw for incomplete batch");
 			map.set("key3", "value3");
 			map.set("key4", "value4");
@@ -903,7 +903,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-			const pendingState = getPendingStateWithoutClose(container);
+			const pendingState = await getPendingStateWithoutClose(container);
 
 			const container2 = await loader.resolve({ url }, pendingState);
 
@@ -995,7 +995,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 		// get stashed ops from this container without connecting
-		const morePendingOps = container2.container.closeAndGetPendingLocalState?.();
+		const morePendingOps = await container2.container.closeAndGetPendingLocalState?.();
 
 		const container3 = await loadOffline(provider, { url }, morePendingOps);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
@@ -1072,7 +1072,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			assert(dataStore2.runtime.deltaManager.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-			const morePendingOps = getPendingStateWithoutClose(container2);
+			const morePendingOps = await getPendingStateWithoutClose(container2);
 			assert.ok(morePendingOps);
 
 			const container3 = await loader.resolve({ url }, morePendingOps);
@@ -1112,6 +1112,27 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		container.connect();
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+		await provider.ensureSynchronized();
+		assert.strictEqual(
+			bufferToString(await map2.get("blob handle").get(), "utf8"),
+			"blob contents",
+		);
+	});
+
+	it.only("close while uploading blob", async function () {
+		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+		const handle = await blobP;
+		map.set("blob handle", handle);
+		const pendingOps = await pendingOpsP;
+
+		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
@@ -1165,7 +1186,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 		map.set("blob handle 1", handle);
 
-		const stashedChanges = container.container.closeAndGetPendingLocalState?.();
+		const stashedChanges = await container.container.closeAndGetPendingLocalState?.();
 
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
@@ -1215,7 +1236,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		container.connect();
 		await waitForDataStoreRuntimeConnection(dataStore.runtime);
 
-		const stashedChanges = container.container.closeAndGetPendingLocalState?.();
+		const stashedChanges = await container.container.closeAndGetPendingLocalState?.();
 		assert.ok(stashedChanges);
 		const parsedChanges = JSON.parse(stashedChanges);
 		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
@@ -1300,7 +1321,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		map.set(testKey, testValue);
 
 		await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
-		const pendingOps = detachedContainer.closeAndGetPendingLocalState?.();
+		const pendingOps = await detachedContainer.closeAndGetPendingLocalState?.();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
@@ -1333,7 +1354,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = rehydratedContainer.closeAndGetPendingLocalState?.();
+		const pendingOps = await rehydratedContainer.closeAndGetPendingLocalState?.();
 
 		const url2 = await rehydratedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
@@ -1488,7 +1509,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 		map.set(testKey, testValue);
-		const pendingOps = container.closeAndGetPendingLocalState?.();
+		const pendingOps = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to
 		assert(/referenceSequenceNumber[^\w,}]*0/.test(pendingOps));

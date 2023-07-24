@@ -100,6 +100,12 @@ export interface IRuntime extends IDisposable {
 	getPendingLocalState(): unknown;
 
 	/**
+	 * Force pending blobs to resolve and wait until they are attached to a DDS
+	 * @experimental
+	 */
+	shutdownPendingBlobs?(): unknown;
+
+	/**
 	 * Notify runtime that container is moving to "Attaching" state
 	 * @param snapshot - snapshot created at attach time
 	 * @deprecated - not necessary after op replay moved to Container

@@ -324,6 +324,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return this.pendingOfflineUploads.length > 0;
 	}
 
+	public get allBlobsAttached(): boolean {
+		for (const [, entry] of this.pendingBlobs) {
+			if (entry.attached === false) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public get hasPendingBlobs(): boolean {
 		return (
 			(this.runtime.attachState !== AttachState.Attached && this.redirectTable.size > 0) ||
@@ -366,6 +375,26 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				// already didn't have the local ID.
 				this.transitionToOffline(localId);
 			}
+		}
+	}
+
+	public async shutdownPendingBlobs(): Promise<void> {
+		for (const [localId, entry] of this.pendingBlobs) {
+			if (
+				entry.status === PendingBlobStatus.OnlinePendingOp ||
+				entry.status === PendingBlobStatus.OnlinePendingUpload
+			) {
+				// This will submit another BlobAttach op for this blob. This is necessary because the one we sent
+				// already didn't have the local ID.
+				this.transitionToOffline(localId);
+			}
+			return new Promise<void>((resolve) => {
+				if (this.allBlobsAttached) {
+					resolve();
+				} else {
+					this.on("allBlobsAttached", () => resolve());
+				}
+			});
 		}
 	}
 
@@ -435,6 +464,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			? () => {
 					pending.attached = true;
 					this.deletePendingBlobMaybe(id);
+					if (this.allBlobsAttached) {
+						this.emit("allBlobsAttached");
+					}
 			  }
 			: undefined;
 		return new BlobHandle(
