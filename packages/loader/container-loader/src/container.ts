@@ -1560,7 +1560,7 @@ export class Container
 			// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
 			if (loadMode.opsBeforeReturn === "sequenceNumber") {
 				assert(loadToSequenceNumber !== undefined, "sequenceNumber should be defined");
-				if (this.deltaManager.lastSequenceNumber > loadToSequenceNumber) {
+				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 					);

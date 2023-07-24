@@ -26,6 +26,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ContainerRuntime, ISummarizer, Summarizer } from "@fluidframework/container-runtime";
 
 const counterKey = "count";
 
@@ -166,6 +167,39 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		});
 	}
 
+	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
+		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+			runtime.IFluidHandleContext.resolveHandle(request);
+
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+			testDataObjectFactory,
+			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+			undefined,
+			[innerRequestHandler],
+		);
+		const loader = createLoader(
+			[[provider.defaultCodeDetails, runtimeFactory]],
+			provider.documentServiceFactory,
+			provider.urlResolver,
+			provider.logger,
+		);
+		loaderContainerTracker.add(loader);
+		const absoluteUrl = await container.getAbsoluteUrl("");
+		if (absoluteUrl === undefined) {
+			throw new Error("URL could not be resolved");
+		}
+		const summarizer = await Summarizer.create(loader, absoluteUrl);
+		await waitForSummarizerConnection(summarizer);
+		return summarizer;
+	}
+
+	async function waitForSummarizerConnection(summarizer: ISummarizer): Promise<void> {
+		const runtime = (summarizer as any).runtime as ContainerRuntime;
+		if (!runtime.connected) {
+			return new Promise((resolve) => runtime.once("connected", () => resolve()));
+		}
+	}
+
 	it("Can load a paused container", async () => {
 		const headers: IRequestHeader = {
 			[LoaderHeader.loadMode]: {
@@ -298,6 +332,41 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 				assert.fail("Did not throw expected error");
 			} catch (e: any) {
 				const expectedError = 'opsBeforeReturn must be set to "sequenceNumber"';
+				assert.ok(e.message);
+				assert.strictEqual(e.message, expectedError, "Did not get expected error message");
+			}
+		});
+
+		it("Throw if attempting to pause at a sequence number before the latest summary", async () => {
+			const summarizer = await createSummarizerFromContainer(container1);
+			// Send 5 ops
+			const numIncrement = 5;
+			for (let i = 0; i < numIncrement; i++) {
+				dataObject1.increment();
+			}
+			await loaderContainerTracker.ensureSynchronized(container1);
+			const result = summarizer.summarizeOnDemand({ reason: "test" });
+			const submitResult = await result.summarySubmitted;
+			assert.ok(submitResult);
+
+			// 1s buffer to ensure we try to load from the summary
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Try to pause at sequence number 1 (before snapshot)
+			const sequenceNumber = 1;
+			const headers: IRequestHeader = {
+				[LoaderHeader.loadMode]: {
+					pauseAfterLoad: true,
+					opsBeforeReturn: "sequenceNumber",
+				},
+				[LoaderHeader.sequenceNumber]: sequenceNumber,
+			};
+			try {
+				await loadContainer(container1.resolvedUrl, testDataObjectFactory, headers);
+				assert.fail("Did not throw expected error");
+			} catch (e: any) {
+				const expectedError =
+					"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.";
 				assert.ok(e.message);
 				assert.strictEqual(e.message, expectedError, "Did not get expected error message");
 			}
