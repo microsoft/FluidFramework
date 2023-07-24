@@ -68,7 +68,7 @@ export const sequenceFieldEditor = {
 			content: cursors.map(jsonableTreeFromCursor),
 			id,
 		};
-		return markAtIndex(index, cursors.length, mark);
+		return markAtIndex(index, cursors.length, mark, { localId: id, revision: undefined });
 	},
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		markAtIndex(index, count, { type: "Delete", id }),
@@ -107,7 +107,10 @@ export const sequenceFieldEditor = {
 			id,
 		};
 
-		return [markAtIndex(sourceIndex, count, moveOut), markAtIndex(destIndex, count, moveIn)];
+		return [
+			markAtIndex(sourceIndex, count, moveOut),
+			markAtIndex(destIndex, count, moveIn, { localId: id, revision: undefined }),
+		];
 	},
 
 	return(
@@ -123,19 +126,23 @@ export const sequenceFieldEditor = {
 		const id = brand<MoveId>(0);
 		const returnFrom: ReturnFromMark<never> = {
 			count,
-			effect: {
-				type: "ReturnFrom",
-				id,
-			},
+			effect: [
+				{
+					type: "ReturnFrom",
+					id,
+				},
+			],
 		};
 
 		const returnTo: ReturnToMark = {
 			count,
 			cellId,
-			effect: {
-				type: "ReturnTo",
-				id,
-			},
+			effect: [
+				{
+					type: "ReturnTo",
+					id,
+				},
+			],
 		};
 
 		const factory = new MarkListFactory<never>();
@@ -163,7 +170,7 @@ function markAtIndex<TNodeChange>(
 	if (count === 0) {
 		return [];
 	}
-	const mark: Mark<TNodeChange> = { count, effect };
+	const mark: Mark<TNodeChange> = { count, effect: [effect] };
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}

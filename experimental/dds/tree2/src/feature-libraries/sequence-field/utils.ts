@@ -183,11 +183,9 @@ export function getCellId(
 	mark: Mark<unknown>,
 	revision: RevisionTag | undefined,
 ): CellId | undefined {
-	// if (isNewAttach(mark)) {
-	// 	const rev = mark.effect.revision ?? revision;
-	// 	return { revision: rev, localId: mark.effect.id, lineage: mark.effect.lineage };
-	// }
-
+	if (mark.cellId !== undefined && mark.cellId.revision === undefined) {
+		return { ...mark.cellId, revision };
+	}
 	return mark.cellId;
 }
 

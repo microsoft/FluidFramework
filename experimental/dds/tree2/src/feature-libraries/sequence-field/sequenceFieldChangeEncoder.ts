@@ -113,7 +113,7 @@ function makeV0Codec<TNodeChange>(
 					jsonMarks.push({
 						count: mark.count,
 						cellId: mark.cellId,
-						effect: encodeEffect(effect),
+						effect: effect.map((e) => encodeEffect(e)),
 					} as unknown as JsonCompatible);
 				}
 			}
@@ -129,7 +129,7 @@ function makeV0Codec<TNodeChange>(
 					marks.push({
 						count: mark.count,
 						cellId: mark.cellId,
-						effect: decodeEffect(mark.effect),
+						effect: mark.effect.map((e) => decodeEffect(e)),
 					});
 				}
 			}

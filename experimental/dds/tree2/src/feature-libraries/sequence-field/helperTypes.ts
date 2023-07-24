@@ -36,9 +36,7 @@ export type ExistingCellMark<TNodeChange> =
 	| ReviveMark<TNodeChange>
 	| ReturnToMark;
 
-export type EmptyInputCellMark<TNodeChange> =
-	| NewAttachMark<TNodeChange>
-	| (DetachedCellMark & ExistingCellMark<TNodeChange>);
+export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
 
 /**
  * A mark that spans one or more cells.
@@ -74,9 +72,8 @@ export type NewAttachMark<TNodeChange> = EffectMark<NewAttach<TNodeChange>>;
 export type InsertMark<TNodeChange> = EffectMark<Insert<TNodeChange>>;
 export type AttachMark<TNodeChange> = EffectMark<Attach<TNodeChange>>;
 export type MoveInMark = EffectMark<MoveIn>;
-export type MoveMark<TNodeChange> = EffectMark<
-	MoveOut<TNodeChange> | MoveIn | ReturnFrom<TNodeChange> | ReturnTo
->;
+export type Move<TNodeChange> = MoveOut<TNodeChange> | MoveIn | ReturnFrom<TNodeChange> | ReturnTo;
+export type MoveMark<TNodeChange> = EffectMark<Move<TNodeChange>>;
 export type DetachMark<TNodeChange> = EffectMark<Detach<TNodeChange>>;
 export type ReattachMark<TNodeChange> = EffectMark<Reattach<TNodeChange>>;
 export type ReturnToMark = EffectMark<ReturnTo>;

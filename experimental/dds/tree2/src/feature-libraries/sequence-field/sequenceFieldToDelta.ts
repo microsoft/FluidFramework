@@ -15,6 +15,7 @@ import {
 	getMarkLength,
 	getNodeChange,
 	markIsTransient,
+	tryGetEffect,
 } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
@@ -30,23 +31,25 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else if (
 			areInputCellsEmpty(mark) &&
 			areOutputCellsEmpty(mark) &&
-			(!markIsTransient(mark) || mark.changes === undefined)
+			(!markIsTransient(mark) || mark.effect[0].changes === undefined)
 		) {
 		} else {
-			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
-			const type = mark.type;
+			const effect = tryGetEffect(mark);
+			assert(effect !== undefined, "Mark must have an effect");
+			// Inline into `switch(effect.type)` once we upgrade to TS 4.7
+			const type = effect.type;
 			assert(type !== NoopMarkType, 0x6b0 /* Cell changing mark must no be a NoopMark */);
 			switch (type) {
 				case "Insert": {
-					const cursors = mark.content.map(singleTextCursor);
+					const cursors = effect.content.map(singleTextCursor);
 					const insertMark: Mutable<Delta.Insert> = {
 						type: Delta.MarkType.Insert,
 						content: cursors,
 					};
-					if (mark.transientDetach !== undefined) {
+					if (effect.transientDetach !== undefined) {
 						insertMark.isTransient = true;
 					}
-					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
+					populateChildModificationsIfAny(effect.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
 				}
@@ -55,13 +58,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 					const moveMark: Delta.MoveIn = {
 						type: Delta.MarkType.MoveIn,
 						count: mark.count,
-						moveId: brandOpaque<Delta.MoveId>(mark.id),
+						moveId: brandOpaque<Delta.MoveId>(effect.id),
 					};
 					out.pushContent(moveMark);
 					break;
 				}
 				case "Modify": {
-					const modify = deltaFromChild(mark.changes);
+					const modify = deltaFromChild(effect.changes);
 					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
@@ -74,7 +77,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Delete,
 						count: mark.count,
 					};
-					populateChildModificationsIfAny(mark.changes, deleteMark, deltaFromChild);
+					populateChildModificationsIfAny(effect.changes, deleteMark, deltaFromChild);
 					out.pushContent(deleteMark);
 					break;
 				}
@@ -82,22 +85,22 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "ReturnFrom": {
 					const moveMark: Mutable<Delta.MoveOut> = {
 						type: Delta.MarkType.MoveOut,
-						moveId: brandOpaque<Delta.MoveId>(mark.id),
+						moveId: brandOpaque<Delta.MoveId>(effect.id),
 						count: mark.count,
 					};
-					populateChildModificationsIfAny(mark.changes, moveMark, deltaFromChild);
+					populateChildModificationsIfAny(effect.changes, moveMark, deltaFromChild);
 					out.pushContent(moveMark);
 					break;
 				}
 				case "Revive": {
 					const insertMark: Mutable<Delta.Insert> = {
 						type: Delta.MarkType.Insert,
-						content: mark.content,
+						content: effect.content,
 					};
-					if (mark.transientDetach !== undefined) {
+					if (effect.transientDetach !== undefined) {
 						insertMark.isTransient = true;
 					}
-					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
+					populateChildModificationsIfAny(effect.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
 				}

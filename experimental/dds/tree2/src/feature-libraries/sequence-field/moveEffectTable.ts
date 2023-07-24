@@ -7,8 +7,8 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeEntry } from "../../util";
-import { Mark, MoveId } from "./format";
-import { cloneMark, isMoveMark, splitMark } from "./utils";
+import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
+import { cloneMark, getEffect, isMoveMark, splitMark } from "./utils";
 import { MoveInMark, MoveOutMark, ReturnFromMark, ReturnToMark } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
@@ -102,22 +102,21 @@ function applyMoveEffectsToDest<T>(
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
 ): Mark<T> {
-	const newMark: MoveInMark | ReturnToMark = {
-		...mark,
-	};
+	const newMark: MoveInMark | ReturnToMark = cloneMark(mark);
 
+	const markEffect = getEffect<MoveIn | ReturnTo>(newMark);
 	const statusUpdate = getPairedMarkStatus(
 		effects,
 		CrossFieldTarget.Destination,
-		mark.effect.revision ?? revision,
-		mark.effect.id,
+		markEffect.revision ?? revision,
+		markEffect.id,
 		mark.count,
 		consumeEffect,
 	);
 	if (statusUpdate === PairedMarkUpdate.Deactivated) {
-		newMark.effect.isSrcConflicted = true;
+		markEffect.isSrcConflicted = true;
 	} else if (statusUpdate === PairedMarkUpdate.Reactivated) {
-		delete newMark.effect.isSrcConflicted;
+		delete markEffect.isSrcConflicted;
 	}
 
 	return newMark;
@@ -130,7 +129,7 @@ function applyMoveEffectsToSource<T>(
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T> {
-	const markEffect = mark.effect;
+	const markEffect = getEffect<MoveOut<T> | ReturnFrom<T>>(mark);
 	let nodeChange = markEffect.changes;
 	const modifyAfter = getModifyAfter(
 		effects,
@@ -148,10 +147,11 @@ function applyMoveEffectsToSource<T>(
 	}
 
 	const newMark = cloneMark(mark);
+	const newMarkEffect = getEffect<MoveOut<T> | ReturnFrom<T>>(newMark);
 	if (nodeChange !== undefined) {
-		newMark.effect.changes = nodeChange;
+		newMarkEffect.changes = nodeChange;
 	} else {
-		delete newMark.effect.changes;
+		delete newMarkEffect.changes;
 	}
 
 	const statusUpdate = getPairedMarkStatus(
@@ -164,13 +164,13 @@ function applyMoveEffectsToSource<T>(
 	);
 	if (statusUpdate !== undefined) {
 		assert(
-			newMark.effect.type === "ReturnFrom",
+			newMarkEffect.type === "ReturnFrom",
 			0x56a /* TODO: support updating MoveOut.isSrcConflicted */,
 		);
 		if (statusUpdate === PairedMarkUpdate.Deactivated) {
-			newMark.effect.isDstConflicted = true;
+			newMarkEffect.isDstConflicted = true;
 		} else {
-			delete newMark.effect.isDstConflicted;
+			delete newMarkEffect.isDstConflicted;
 		}
 	}
 
@@ -185,7 +185,7 @@ export function applyMoveEffectsToMark<T>(
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
 	if (isMoveMark(mark)) {
-		const markEffect = mark.effect;
+		const markEffect = getEffect(mark);
 		const type = markEffect.type;
 		switch (type) {
 			case "MoveOut":

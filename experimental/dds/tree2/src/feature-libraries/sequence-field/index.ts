@@ -48,16 +48,11 @@ export {
 	areRebasable,
 	getInputLength,
 	isDetachMark,
+	isMoveMark,
 	isReattach,
 	DetachedNodeTracker,
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
 } from "./utils";
-export {
-	isMoveMark,
-	MoveMark,
-	MoveEffectTable,
-	MoveEffect,
-	PairedMarkUpdate,
-} from "./moveEffectTable";
+export { MoveEffectTable, MoveEffect, PairedMarkUpdate } from "./moveEffectTable";
