@@ -54,6 +54,8 @@ export {
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
+	tagData,
+	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
 	TelemetryLogger,
