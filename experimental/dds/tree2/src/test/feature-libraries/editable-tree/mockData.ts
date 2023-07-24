@@ -22,7 +22,6 @@ import {
 	FieldSchema,
 	SchemaBuilder,
 	Any,
-	GlobalFieldSchema,
 	TypedSchemaCollection,
 	createMockNodeKeyManager,
 } from "../../../feature-libraries";
@@ -250,7 +249,7 @@ export function getReadonlyEditableTreeContext(forest: IEditableForest): Editabl
 	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
 }
 
-export function setupForest<T extends GlobalFieldSchema>(
+export function setupForest<T extends FieldSchema>(
 	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
@@ -260,7 +259,7 @@ export function setupForest<T extends GlobalFieldSchema>(
 		{
 			schema: schemaRepo,
 		},
-		schema.root.schema,
+		schema.rootFieldSchema,
 		data,
 	);
 	initializeForest(forest, root);

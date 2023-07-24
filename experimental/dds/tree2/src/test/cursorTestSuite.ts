@@ -11,15 +11,13 @@ import {
 	prefixFieldPath,
 } from "../feature-libraries";
 import {
-	GlobalFieldKey,
 	LocalFieldKey,
 	EmptyKey,
 	FieldKey,
 	JsonableTree,
 	ITreeCursor,
 	CursorLocationType,
-	rootFieldKeySymbol,
-	symbolFromKey,
+	rootFieldKey,
 	setGenericTreeField,
 	isLocalKey,
 	UpPath,
@@ -46,13 +44,6 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 		},
 	],
 	[
-		"global field",
-		{
-			type: brand("Foo"),
-			globalFields: { x: [{ type: brand("Bar") }] },
-		},
-	],
-	[
 		"multiple local fields",
 		{
 			type: brand("Foo"),
@@ -60,16 +51,6 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 				a: [{ type: brand("Bar") }],
 				b: [{ type: brand("Baz") }],
 			},
-		},
-	],
-	[
-		"global and local fields",
-		{
-			type: brand("Foo"),
-			fields: {
-				a: [{ type: brand("Bar") }],
-			},
-			globalFields: { a: [{ type: brand("Baz") }] },
 		},
 	],
 	[
@@ -132,7 +113,7 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
  * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
  * @param dataFromCursor - Constructs a `TData` from the provided cursor (which might not be a `TCursor`).
  * @param extraRoot - setting this to `true` makes the tests expect that `cursorFactory` includes a dummy node above the root,
- * with the data under {@link rootFieldKeySymbol}.
+ * with the data under {@link rootFieldKey}.
  *
  * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
  * @typeParam TCursor - Type of the cursor being tested.
@@ -297,8 +278,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 	});
 }
 
-const unusedKey: FieldKey = symbolFromKey(brand("unusedKey"));
-const testGlobalKey = symbolFromKey(brand("testGlobalKey"));
+const unusedKey: LocalFieldKey = brand("unusedKey");
 const testKeys: readonly FieldKey[] = [
 	// keys likely to cause issues due to JS object non-own keys
 	brand("__proto__"),
@@ -311,8 +291,7 @@ const testKeys: readonly FieldKey[] = [
 	brand("0.0"),
 	// Misc test keys
 	EmptyKey,
-	testGlobalKey,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	unusedKey,
 ];
 
@@ -330,7 +309,7 @@ const testKeys: readonly FieldKey[] = [
  * @param testData - A collection of test cases to evaluate the cursor with. Actual content of the tree is only validated if a `reference` is provided:
  * otherwise only basic traversal and API consistency will be checked.
  * @param extraRoot - setting this to `true` makes the tests expect that `cursorFactory` includes a dummy node above the root,
- * with the data under {@link rootFieldKeySymbol}.
+ * with the data under {@link rootFieldKey}.
  *
  * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
  * @typeParam TCursor - Type of the cursor being tested.
@@ -377,7 +356,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 		? undefined
 		: {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 		  };
 
@@ -543,14 +522,13 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 		if (withLocalKeys !== undefined) {
 			describe("key tests", () => {
 				const unrelatedKey: LocalFieldKey = brand("unrelated");
-				const unrelatedGlobalKey: GlobalFieldKey = brand("unrelatedGlobal");
 				for (const key of testKeys) {
 					it(`returns no values for key: ${key.toString()}`, () => {
 						// Test an empty tree, and one with unrelated fields
 						const trees: TData[] = [withLocalKeys([]), withLocalKeys([unrelatedKey])];
-						// If we have a builder for global keys, use to make a tree with unrelatedGlobalKey.
+						// If we have a builder, use to make a tree with unrelatedKey.
 						if (withKeys !== undefined) {
-							trees.push(withKeys([unrelatedKey, symbolFromKey(unrelatedGlobalKey)]));
+							trees.push(withKeys([unrelatedKey]));
 						}
 
 						for (const data of trees) {

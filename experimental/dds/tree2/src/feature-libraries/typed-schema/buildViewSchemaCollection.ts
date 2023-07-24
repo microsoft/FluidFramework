@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { GlobalFieldKey, TreeSchemaIdentifier } from "../../core";
-import { SchemaCollection } from "../modular-schema";
+import { Adapters, TreeSchemaIdentifier } from "../../core";
+import { FullSchemaPolicy, SchemaCollection } from "../modular-schema";
 import { fail } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
 import { SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
-import { FieldSchema, GlobalFieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
+import { FieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 
 // TODO: tests for this file
@@ -24,9 +24,9 @@ import { normalizeFlexListEager } from "./flexList";
 export function buildViewSchemaCollection(
 	libraries: readonly SchemaLibraryData[],
 ): SchemaCollection {
-	const globalFieldSchema: Map<GlobalFieldKey, GlobalFieldSchema> = new Map();
+	let rootFieldSchema: FieldSchema | undefined;
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
-	const adapters: SourcedAdapters = { tree: [], fieldAdapters: new Map() };
+	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];
 	const librarySet: Set<SchemaLibraryData> = new Set();
@@ -44,19 +44,11 @@ export function buildViewSchemaCollection(
 			errors.push(`Found another library with name "${library.name}"`);
 		}
 
-		for (const [key, field] of library.globalFieldSchema) {
-			// This check is an assert since if it fails, the other error messages would be incorrect.
-			assert(
-				field.builder.name === library.name,
-				0x6a8 /* field must be part by the library its in */,
-			);
-			const existing = globalFieldSchema.get(key);
-			if (existing !== undefined) {
-				errors.push(
-					`Multiple global field schema for key "${key}". One from library "${existing.builder.name}" and one from "${field.builder.name}"`,
-				);
+		if (library.rootFieldSchema !== undefined) {
+			if (rootFieldSchema !== undefined) {
+				errors.push(`Multiple root field schema`);
 			} else {
-				globalFieldSchema.set(key, field);
+				rootFieldSchema = library.rootFieldSchema;
 			}
 		}
 		for (const [key, tree] of library.treeSchema) {
@@ -74,9 +66,6 @@ export function buildViewSchemaCollection(
 				treeSchema.set(key, tree);
 			}
 		}
-		for (const [_key, _adapter] of library.adapters.fieldAdapters ?? []) {
-			fail("Adapters not yet supported");
-		}
 		for (const _adapter of library.adapters.tree ?? []) {
 			fail("Adapters not yet supported");
 		}
@@ -86,7 +75,8 @@ export function buildViewSchemaCollection(
 		fail(errors.join("\n"));
 	}
 
-	const result = { globalFieldSchema, treeSchema, adapters, policy: defaultSchemaPolicy };
+	assert(rootFieldSchema !== undefined, "missing root field schema");
+	const result = { rootFieldSchema, treeSchema, adapters, policy: defaultSchemaPolicy };
 	const errors2 = validateViewSchemaCollection(result);
 	if (errors2.length !== 0) {
 		fail(errors2.join("\n"));
@@ -94,9 +84,11 @@ export function buildViewSchemaCollection(
 	return result;
 }
 
-export interface ViewSchemaCollection2 extends SchemaCollection {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
+export interface ViewSchemaCollection2 {
+	readonly rootFieldSchema?: FieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly policy: FullSchemaPolicy;
+	readonly adapters: Adapters;
 }
 
 /**
@@ -118,9 +110,8 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 	}
 
 	// Validate that all schema referenced are included, and none are "never".
-	for (const [key, field] of collection.globalFieldSchema) {
-		assert(key === field.key, 0x6aa /* field key should match map key */);
-		validateGlobalField(collection, field, errors);
+	if (collection.rootFieldSchema !== undefined) {
+		validateRootField(collection, collection.rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
 		for (const [key, field] of tree.localFields) {
@@ -146,27 +137,19 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 				);
 			}
 		}
-		for (const key of tree.globalFields) {
-			if (!collection.globalFieldSchema.has(key)) {
-				errors.push(
-					`Tree schema "${identifier}" from library "${tree.builder.name}" references undefined global field "${key}".`,
-				);
-			}
-		}
 	}
 
 	// TODO: validate adapters
 	return errors;
 }
 
-export function validateGlobalField(
+export function validateRootField(
 	collection: ViewSchemaCollection2,
-	field: GlobalFieldSchema,
+	field: FieldSchema,
 	errors: string[],
 ): void {
-	const describeField = () =>
-		`Global field schema "${field.key}" from library "${field.builder.name}"`;
-	validateField(collection, field.schema, describeField, errors);
+	const describeField = () => `Root field schema`;
+	validateField(collection, field, describeField, errors);
 }
 
 export function validateField(

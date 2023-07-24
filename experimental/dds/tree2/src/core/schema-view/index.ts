@@ -6,7 +6,6 @@
 export {
 	Adapters,
 	Compatibility,
-	FieldAdapter,
 	TreeAdapter,
 	ViewSchemaData,
 	AdaptedViewSchema,

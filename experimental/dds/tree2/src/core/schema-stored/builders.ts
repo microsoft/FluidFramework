@@ -7,7 +7,6 @@ import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
 	FieldStoredSchema,
-	GlobalFieldKey,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	ValueSchema,
@@ -50,7 +49,6 @@ export function fieldSchema(
  */
 export interface TreeSchemaBuilder {
 	readonly localFields?: { [key: string]: FieldStoredSchema };
-	readonly globalFields?: Iterable<GlobalFieldKey>;
 	readonly extraLocalFields: FieldStoredSchema;
 	readonly value?: ValueSchema;
 }
@@ -70,7 +68,6 @@ export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
 
 	return {
 		localFields,
-		globalFields: new Set(data.globalFields ?? []),
 		extraLocalFields: data.extraLocalFields,
 		value: data.value ?? ValueSchema.Nothing,
 	};

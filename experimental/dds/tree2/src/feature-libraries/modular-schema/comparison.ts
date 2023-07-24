@@ -11,6 +11,7 @@ import {
 	TreeTypeSet,
 	SchemaData,
 } from "../../core";
+import { neverTree } from "../default-field-kinds";
 import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 
 /**
@@ -21,10 +22,10 @@ import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	original: TreeStoredSchema,
+	original: TreeStoredSchema | undefined,
 	superset: TreeStoredSchema,
 ): boolean {
-	if (isNeverTree(policy, originalData, original)) {
+	if (original === undefined || isNeverTree(policy, originalData, original)) {
 		return true;
 	}
 	if (!allowsValueSuperset(original.value, superset.value)) {
@@ -37,32 +38,6 @@ export function allowsTreeSuperset(
 			original.extraLocalFields,
 			superset.extraLocalFields,
 		)
-	) {
-		return false;
-	}
-	if (
-		!compareSets({
-			a: original.globalFields,
-			b: superset.globalFields,
-			// true iff the original field must always be empty, or superset supports extra global fields.
-			aExtra: (originalField) =>
-				allowsFieldSuperset(
-					policy,
-					originalData,
-					originalData.globalFieldSchema.get(originalField) ??
-						policy.defaultGlobalFieldSchema,
-					policy.defaultGlobalFieldSchema,
-				),
-			// true iff the new field can be empty, since it may be empty in original
-			bExtra: (supersetField) =>
-				allowsFieldSuperset(
-					policy,
-					originalData,
-					policy.defaultGlobalFieldSchema,
-					originalData.globalFieldSchema.get(supersetField) ??
-						policy.defaultGlobalFieldSchema,
-				),
-		})
 	) {
 		return false;
 	}
@@ -162,18 +137,14 @@ export function allowsRepoSuperset(
 	original: SchemaData,
 	superset: SchemaData,
 ): boolean {
-	const fields = new Set([
-		...original.globalFieldSchema.keys(),
-		...superset.globalFieldSchema.keys(),
-	]);
-	for (const key of fields) {
+	{
 		// TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
 		if (
 			!allowsFieldSuperset(
 				policy,
 				original,
-				original.globalFieldSchema.get(key) ?? policy.defaultGlobalFieldSchema,
-				superset.globalFieldSchema.get(key) ?? policy.defaultGlobalFieldSchema,
+				original.rootFieldSchema,
+				superset.rootFieldSchema,
 			)
 		) {
 			return false;
@@ -182,12 +153,7 @@ export function allowsRepoSuperset(
 	for (const [key, schema] of original.treeSchema) {
 		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
 		if (
-			!allowsTreeSuperset(
-				policy,
-				original,
-				schema,
-				superset.treeSchema.get(key) ?? policy.defaultTreeSchema,
-			)
+			!allowsTreeSuperset(policy, original, schema, superset.treeSchema.get(key) ?? neverTree)
 		) {
 			return false;
 		}
@@ -222,7 +188,7 @@ export function isNeverFieldRecursive(
 				!isNeverTreeRecursive(
 					policy,
 					originalData,
-					originalData.treeSchema.get(type) ?? policy.defaultTreeSchema,
+					originalData.treeSchema.get(type) ?? neverTree,
 					parentTypeStack,
 				)
 			) {
@@ -277,13 +243,6 @@ export function isNeverTreeRecursive(
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
 			// This can be done by passing a set/stack of current types recursively here.
 			if (isNeverFieldRecursive(policy, originalData, field, parentTypeStack)) {
-				return true;
-			}
-		}
-		for (const field of tree.globalFields) {
-			const schema =
-				originalData.globalFieldSchema.get(field) ?? policy.defaultGlobalFieldSchema;
-			if (isNeverField(policy, originalData, schema)) {
 				return true;
 			}
 		}

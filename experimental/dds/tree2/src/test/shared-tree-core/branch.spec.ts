@@ -13,7 +13,7 @@ import {
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
-	rootFieldKeySymbol,
+	rootFieldKey,
 } from "../../core";
 import {
 	DefaultChangeset,
@@ -587,7 +587,7 @@ describe("Branches", () => {
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
 		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
-		branch.editor.valueField({ parent: undefined, field: rootFieldKeySymbol }).set(cursor);
+		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
 		return branch.getHead().revision;
 	}
 

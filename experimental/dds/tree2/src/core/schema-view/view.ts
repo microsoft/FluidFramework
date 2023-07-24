@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	GlobalFieldKey,
-	TreeSchemaIdentifier,
-	SchemaPolicy,
-	SchemaData,
-	FieldStoredSchema,
-} from "../schema-stored";
+import { FullSchemaPolicy } from "../../feature-libraries";
+import { TreeSchemaIdentifier, SchemaData } from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -60,16 +55,6 @@ export interface TreeAdapter {
 }
 
 /**
- * @alpha
- */
-export interface FieldAdapter {
-	readonly field: GlobalFieldKey;
-
-	convert(stored: FieldStoredSchema): FieldStoredSchema;
-	// TODO: include actual adapter functionality (to provide the missing values), not just what types it converts
-}
-
-/**
  * Minimal selection of adapters (nothing for general out of schema, field level adjustments etc.).
  * Would be used with schematize and have actual conversion/update functionality.
  *
@@ -79,17 +64,16 @@ export interface FieldAdapter {
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];
-	/**
-	 * Handlers for when a fields is missing.
-	 */
-	readonly fieldAdapters?: ReadonlyMap<GlobalFieldKey, FieldAdapter>;
 }
 
 /**
  * A collection of View information for schema, including policy.
  */
-export abstract class ViewSchemaData<TPolicy extends SchemaPolicy = SchemaPolicy> {
-	public constructor(public readonly policy: TPolicy, public readonly adapters: Adapters) {}
+export abstract class ViewSchemaData {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		public readonly adapters: Adapters,
+	) {}
 
 	/**
 	 * Determines the compatibility of a stored document

@@ -18,7 +18,6 @@ import {
 	JsonableTree,
 	mapCursorField,
 	rootFieldKey,
-	rootFieldKeySymbol,
 	UpPath,
 	clonePath,
 	ITreeCursor,
@@ -113,7 +112,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const rootFieldSchema = SchemaBuilder.field(FieldKinds.optional, ...jsonRoot);
 					schema.update({
 						...jsonSchema,
-						globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+						rootFieldSchema,
 					});
 
 					// Check schema is actually valid. If we forgot to add some required types this would fail.
@@ -220,7 +219,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 			const expectedParent: UpPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -285,7 +284,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			cursor.clear();
 
 			const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-			const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			forest.applyDelta(delta);
 			forest.anchors.applyDelta(delta);
 
@@ -374,7 +373,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 			const clone = forest.clone(forest.schema, forest.anchors);
 			const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-			const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			clone.applyDelta(delta);
 
 			// Check the clone has the new value
@@ -400,7 +399,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					moveToDetachedField(forest, cursor);
 
 					const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-					const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+					const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 					assert.throws(() => forest.applyDelta(delta));
 				});
 			}
@@ -429,7 +428,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						],
 					]),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setField]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [setField]]]);
 				forest.applyDelta(delta);
 
 				const reader = forest.allocateCursor();
@@ -449,7 +448,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(forest, content.map(singleTextCursor));
 
 				const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [0, mark]]]);
 				forest.applyDelta(delta);
 
 				// Inspect resulting tree: should just have `2`.
@@ -475,7 +474,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 				const skip: Delta.Skip = 1;
 				const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [skip, mark]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [skip, mark]]]);
 				forest.applyDelta(delta);
 
 				// Inspect resulting tree: should just have `1`.
@@ -497,7 +496,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					type: Delta.MarkType.Insert,
 					content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 				forest.applyDelta(delta);
 
 				const reader = forest.allocateCursor();
@@ -544,7 +543,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					isTransient: true,
 					fields: new Map([[xField, [moveOut]]]),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark, moveIn]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [mark, moveIn]]]);
 				forest.applyDelta(delta);
 
 				const reader = forest.allocateCursor();
@@ -576,7 +575,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[yField, [1, moveIn]],
 					]),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [modify]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [modify]]]);
 				forest.applyDelta(delta);
 				const reader = forest.allocateCursor();
 				moveToDetachedField(forest, reader);
@@ -613,7 +612,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						],
 					]),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 				forest.applyDelta(delta);
 
 				const reader = forest.allocateCursor();
@@ -645,7 +644,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					]),
 				};
 				const delta: Delta.Root = new Map([
-					[rootFieldKeySymbol, [mark, { type: Delta.MarkType.MoveIn, count: 1, moveId }]],
+					[rootFieldKey, [mark, { type: Delta.MarkType.MoveIn, count: 1, moveId }]],
 				]);
 				forest.applyDelta(delta);
 
@@ -695,7 +694,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[yField, [{ type: Delta.MarkType.MoveIn, count: 1, moveId }]],
 					]),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 				forest.applyDelta(delta);
 
 				const reader = forest.allocateCursor();
@@ -726,7 +725,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					type: Delta.MarkType.Insert,
 					content: content.map(singleTextCursor),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [insert]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [insert]]]);
 
 				assert.deepEqual(dependent.tokens, []);
 				forest.applyDelta(delta);
@@ -756,7 +755,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 				const delta: Delta.Root = new Map([
 					[
-						rootFieldKeySymbol,
+						rootFieldKey,
 						[
 							{
 								type: Delta.MarkType.Modify,
@@ -817,7 +816,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[yField, [1, moveIn]],
 					]),
 				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [modify]]]);
+				const delta: Delta.Root = new Map([[rootFieldKey, [modify]]]);
 				forest.applyDelta(delta);
 				const expected: JsonableTree[] = [
 					{

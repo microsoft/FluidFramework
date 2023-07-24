@@ -8,13 +8,11 @@ import {
 	Value,
 	Anchor,
 	FieldKey,
-	symbolIsFieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	TreeStoredSchema,
-	lookupTreeSchema,
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
@@ -125,7 +123,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	}
 
 	public get type(): TreeStoredSchema {
-		return lookupTreeSchema(this.context.schema, this.typeName);
+		return (
+			this.context.schema.treeSchema.get(this.typeName) ??
+			fail("requested type does not exist in schema")
+		);
 	}
 
 	public get value(): Value {
@@ -141,7 +142,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	}
 
 	public getFieldSchema(field: FieldKey): FieldStoredSchema {
-		return getFieldSchema(field, this.context.schema, this.type);
+		return getFieldSchema(field, this.type);
 	}
 
 	public getFieldKeys(): FieldKey[] {
@@ -170,11 +171,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
-			makeField(
-				this.context,
-				getFieldSchema(cursor.getFieldKey(), this.context.schema, type),
-				cursor,
-			),
+			makeField(this.context, getFieldSchema(cursor.getFieldKey(), type), cursor),
 		).values();
 	}
 
@@ -187,13 +184,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		const index = cursor.fieldIndex;
 		cursor.exitNode();
 		const key = cursor.getFieldKey();
+		// TODO: make this work for root
 		cursor.exitField();
 		const parentType = cursor.type;
 		cursor.enterField(key);
 		const fieldSchema = getFieldSchema(
 			key,
-			this.context.schema,
-			lookupTreeSchema(this.context.schema, parentType),
+			this.context.schema.treeSchema.get(parentType) ??
+				fail("requested schema that does not exist"),
 		);
 		const proxifiedField = makeField(this.context, fieldSchema, this.cursor);
 		this.cursor.enterNode(index);
@@ -232,7 +230,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
  */
 const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	get: (target: NodeProxyTarget, key: string | symbol): unknown => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			// All string keys are fields
 			return target.unwrappedField(brand(key));
 		}
@@ -272,7 +270,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			key !== valueSymbol,
 			0x703 /* The value of a node can only be changed by replacing the node */,
 		);
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
 			target.getField(fieldKey).content = value;
 			return true;
@@ -280,7 +278,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		return false;
 	},
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
 			target.getField(fieldKey).delete();
 			return true;
@@ -289,7 +287,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	},
 	// Include documented symbols (except value when value is undefined) and all non-empty fields.
 	has: (target: NodeProxyTarget, key: string | symbol): boolean => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			return target.has(brand(key));
 		}
 		// utility symbols
@@ -324,7 +322,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		// but it is an TypeError to return non-configurable for properties that do not exist on target,
 		// so they must return true.
 
-		if ((typeof key === "string" || symbolIsFieldKey(key)) && target.has(brand(key))) {
+		if (typeof key === "string" && target.has(brand(key))) {
 			const field = target.unwrappedField(brand(key));
 			return {
 				configurable: true,

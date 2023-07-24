@@ -24,9 +24,7 @@ import {
 	ICachedValue,
 	recordDependency,
 	FieldStoredSchema,
-	GlobalFieldKey,
 	SchemaData,
-	SchemaPolicy,
 	StoredSchemaRepository,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
@@ -224,12 +222,8 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.listDependees?.bind(this.inner);
 	}
 
-	public get policy(): SchemaPolicy {
-		return this.inner.policy;
-	}
-
-	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldStoredSchema> {
-		return this.inner.globalFieldSchema;
+	public get rootFieldSchema(): FieldStoredSchema {
+		return this.inner.rootFieldSchema;
 	}
 
 	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {

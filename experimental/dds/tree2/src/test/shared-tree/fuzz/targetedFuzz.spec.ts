@@ -15,13 +15,7 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-	moveToDetachedField,
-	compareUpPaths,
-	rootFieldKeySymbol,
-	UpPath,
-	Anchor,
-} from "../../../core";
+import { moveToDetachedField, compareUpPaths, rootFieldKey, UpPath, Anchor } from "../../../core";
 import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { SharedTreeView } from "../../../shared-tree";
@@ -126,7 +120,7 @@ describe("Fuzz - Targeted", () => {
 				parent: {
 					parent: undefined,
 					parentIndex: 0,
-					parentField: rootFieldKeySymbol,
+					parentField: rootFieldKey,
 				},
 				parentField: brand("foo"),
 				parentIndex: 1,

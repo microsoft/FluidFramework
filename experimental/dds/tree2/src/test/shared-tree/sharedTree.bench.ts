@@ -25,7 +25,7 @@ import {
 	AllowedUpdateType,
 	LocalFieldKey,
 	moveToDetachedField,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
 } from "../../core";
 
@@ -322,7 +322,7 @@ describe("SharedTree benchmarks", () => {
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedData(
 								tree.storedSchema,
-								deepSchema.root.schema.allowedTypes,
+								deepSchema.rootFieldSchema.allowedTypes,
 								makeJsDeepTree(numberOfNodes, setCount),
 							),
 						);
@@ -360,7 +360,7 @@ describe("SharedTree benchmarks", () => {
 
 						const rootPath = {
 							parent: undefined,
-							parentField: rootFieldKeySymbol,
+							parentField: rootFieldKey,
 							parentIndex: 0,
 						};
 						const nodeIndex = numberOfNodes - 1;
@@ -538,7 +538,7 @@ function deepPath(depth: number): UpPath {
 	assert(depth > 0);
 	let path: UpPath = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	for (let i = 0; i < depth - 1; i++) {
@@ -559,7 +559,7 @@ function wideLeafPath(index: number): UpPath {
 	const path = {
 		parent: {
 			parent: undefined,
-			parentField: rootFieldKeySymbol,
+			parentField: rootFieldKey,
 			parentIndex: 0,
 		},
 		parentField: localFieldKey,

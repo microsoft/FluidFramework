@@ -65,9 +65,7 @@ import {
 	JsonableTree,
 	SchemaData,
 	fieldSchema,
-	GlobalFieldKey,
 	rootFieldKey,
-	rootFieldKeySymbol,
 	Value,
 	compareUpPaths,
 	UpPath,
@@ -578,7 +576,7 @@ export function makeTreeFromCursor(
 	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
 	const field = tree.editor.sequenceField({
 		parent: undefined,
-		field: rootFieldKeySymbol,
+		field: rootFieldKey,
 	});
 	if (!Array.isArray(cursor) || cursor.length > 0) {
 		field.insert(0, cursor);
@@ -613,13 +611,13 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  * @param value - The value of the inserted node.
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
 }
 
@@ -634,23 +632,17 @@ export function expectJsonTree(
 	}
 }
 
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
 	localFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
 	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
+	rootFieldSchema,
 };
 
 /**
@@ -666,7 +658,7 @@ export function initializeTestTree(
 	if (state) {
 		// Apply an edit to the tree which inserts a node with a value
 		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 		field.insert(0, writeCursor);
 	}
 }

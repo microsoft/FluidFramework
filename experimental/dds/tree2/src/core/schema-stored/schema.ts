@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, brandedStringType } from "../../util";
+import { Brand, brand, brandedStringType } from "../../util";
 
 /**
  * Example internal schema representation types.
@@ -23,7 +23,7 @@ import { Brand, brandedStringType } from "../../util";
  * Use the identifier to associate it with schema when loading to check that the schema match.
  * @alpha
  */
-export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
+export type SchemaIdentifier = TreeSchemaIdentifier;
 
 /**
  * SchemaIdentifier for a Tree.
@@ -49,15 +49,6 @@ export const LocalFieldKeySchema = brandedStringType<LocalFieldKey>();
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
-
-/**
- * SchemaIdentifier for a "global field",
- * meaning a field which has the same meaning for all usages within the document
- * (not scoped to a specific TreeStoredSchema like LocalFieldKey).
- * @alpha
- */
-export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
-export const GlobalFieldKeySchema = brandedStringType<GlobalFieldKey>();
 
 /**
  * Example for how we might want to handle values.
@@ -156,6 +147,13 @@ export interface FieldStoredSchema {
 	readonly types?: TreeTypeSet;
 }
 
+export const forbiddenFieldKindIdentifier = "Forbidden";
+
+export const storedEmptyFieldSchema: FieldStoredSchema = {
+	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
+	types: undefined,
+};
+
 /**
  * @alpha
  */
@@ -169,15 +167,6 @@ export interface TreeStoredSchema {
 	 * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
 	 */
 	readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
-
-	/**
-	 * Schema for fields with keys scoped to the whole document.
-	 *
-	 * Having a centralized map indexed by FieldSchemaIdentifier
-	 * can be used for fields which have the same meaning in multiple places,
-	 * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
-	 */
-	readonly globalFields: ReadonlySet<GlobalFieldKey>;
 
 	/**
 	 * Constraint for local fields not mentioned in `localFields`.
@@ -221,7 +210,6 @@ export interface Named<TName> {
  * @alpha
  */
 export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
-export type NamedFieldSchema = Named<GlobalFieldKey> & FieldStoredSchema;
 
 /**
  * View of schema data that can be stored in a document.
@@ -231,26 +219,6 @@ export type NamedFieldSchema = Named<GlobalFieldKey> & FieldStoredSchema;
  * @alpha
  */
 export interface SchemaData {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldStoredSchema>;
+	readonly rootFieldSchema: FieldStoredSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
-}
-
-/**
- * Policy from the app for interpreting the stored schema.
- * The app must ensure consistency for all users of the document.
- * @alpha
- */
-export interface SchemaPolicy {
-	/**
-	 * Schema used when there is no schema explicitly specified for an identifier.
-	 * Typically a "never" schema which forbids any nodes with that type.
-	 */
-	readonly defaultTreeSchema: TreeStoredSchema;
-
-	/**
-	 * Schema used when there is no schema explicitly specified for an identifier.
-	 * Typically an "empty" schema which forbids any field with that type from having children.
-	 * TODO: maybe this must be an empty field? Anything else might break things.
-	 */
-	readonly defaultGlobalFieldSchema: FieldStoredSchema;
 }

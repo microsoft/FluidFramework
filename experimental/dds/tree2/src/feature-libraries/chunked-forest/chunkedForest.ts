@@ -23,7 +23,7 @@ import {
 	FieldAnchor,
 	ForestEvents,
 	ITreeSubscriptionCursorState,
-	rootFieldKeySymbol,
+	rootFieldKey,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -55,25 +55,23 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 
 	public constructor(
 		public roots: BasicChunk,
-		public readonly schema: StoredSchemaRepository<FullSchemaPolicy>,
+		public readonly schema: StoredSchemaRepository,
+		public readonly policy: FullSchemaPolicy,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {
 		super("object-forest.ChunkedForest");
 		// Invalidate forest if schema change.
 		recordDependency(this.dependent, this.schema);
-		this.chunker = makeTreeChunker(schema);
+		this.chunker = makeTreeChunker(schema, policy);
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public clone(
-		schema: StoredSchemaRepository<FullSchemaPolicy>,
-		anchors: AnchorSet,
-	): ChunkedForest {
+	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, anchors);
+		return new ChunkedForest(this.roots, schema, this.policy, anchors);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -389,7 +387,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 
 	public clear(): void {
 		this.state = ITreeSubscriptionCursorState.Cleared;
-		this.setToDetachedSequence(rootFieldKeySymbol);
+		this.setToDetachedSequence(rootFieldKey);
 	}
 }
 
@@ -397,8 +395,9 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildChunkedForest(
-	schema: StoredSchemaRepository<FullSchemaPolicy>,
+	schema: StoredSchemaRepository,
+	policy: FullSchemaPolicy,
 	anchors?: AnchorSet,
 ): IEditableForest {
-	return new ChunkedForest(makeRoot(), schema, anchors);
+	return new ChunkedForest(makeRoot(), schema, policy, anchors);
 }

@@ -6,8 +6,6 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	IEditableForest,
-	lookupGlobalFieldSchema,
-	rootFieldKey,
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
@@ -18,9 +16,10 @@ import {
 	LocalFieldKey,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultEditBuilder } from "../default-field-kinds";
+import { DefaultEditBuilder, fieldKinds } from "../default-field-kinds";
 import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
+import { FullSchemaPolicy } from "../modular-schema";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -195,7 +194,7 @@ export class ProxyContext implements EditableTreeContext {
 	private getRoot(unwrap: false): EditableField;
 	private getRoot(unwrap: true): UnwrappedEditableField;
 	private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
-		const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
+		const rootSchema = this.schema.rootFieldSchema;
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const proxifiedField = unwrap
@@ -205,8 +204,8 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaDataAndPolicy {
-		return this.forest.schema;
+	public get schema(): SchemaDataAndPolicy<FullSchemaPolicy> {
+		return { ...this.forest.schema, policy: { fieldKinds } };
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
