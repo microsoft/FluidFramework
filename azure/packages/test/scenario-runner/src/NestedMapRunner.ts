@@ -2,36 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import child_process from "child_process";
-
 import { ConnectionState } from "@fluidframework/container-loader";
 import { SharedMap } from "@fluidframework/map";
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { AzureClient } from "@fluidframework/azure-client";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
-import {
-	IRunConfig,
-	IRunner,
-	IRunnerEvents,
-	IRunnerStatus,
-	IScenarioConfig,
-	IScenarioRunConfig,
-	RunnnerStatus,
-} from "./interface";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
 import {
 	FluidSummarizerTelemetryEventNames,
-	convertConfigToScriptParams,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils";
 import { getLogger, loggerP } from "./logger";
+import { ScenarioRunner } from "./ScenarioRunner";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
@@ -53,125 +42,18 @@ export interface NestedMapRunConfig extends IScenarioRunConfig, INestedMapConfig
 	container?: IFluidContainer;
 }
 
-export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-	private status: RunnnerStatus = "notStarted";
-	constructor(public readonly c: NestedMapRunnerConfig) {
-		super();
-	}
+export class NestedMapRunner extends ScenarioRunner<
+	NestedMapRunnerConfig,
+	NestedMapRunConfig,
+	string
+> {
+	protected runnerClientFilePath: string = "./dist/nestedMapRunnerClient.js";
 
-	public async run(config: IRunConfig): Promise<void> {
-		this.status = "running";
-		await this.spawnChildRunners(config);
-		this.status = "success";
-	}
-
-	private async spawnChildRunners(config: IRunConfig): Promise<void> {
-		this.status = "running";
-		const runnerArgs: string[][] = [];
-		const createRunnerArg = (childId: number, docId?: string): string[] => {
-			const childArgs: string[] = [
-				"./dist/nestedMapRunnerClient.js",
-				...convertConfigToScriptParams<NestedMapRunConfig>(
-					this.buildScenarioRunConfig(config, { childId, docId }),
-				),
-			];
-			return childArgs;
-		};
-		if (this.c.docIds) {
-			let i = 0;
-			for (const docId of this.c.docIds) {
-				runnerArgs.push(createRunnerArg(i++, docId));
-			}
-		} else {
-			runnerArgs.push(createRunnerArg(0));
-		}
-
-		const children: Promise<boolean>[] = [];
-		for (const runnerArg of runnerArgs) {
-			try {
-				children.push(this.createChild(runnerArg));
-			} catch {
-				throw new Error("Failed to spawn child");
-			}
-			await delay(this.c.clientStartDelayMs);
-		}
-
-		try {
-			await Promise.all(children);
-		} catch {
-			throw new Error("Not all clients closed successfully");
-		}
-	}
-
-	public async runSync(config: IRunConfig): Promise<string[]> {
-		this.status = "running";
-		const containers = this.c.containers;
-		const docIds = this.c.docIds;
-		if (containers !== undefined && containers.length !== docIds?.length) {
-			throw new Error("Number of containers not equal to number of docIds");
-		}
-		const runs: Promise<string>[] = [];
-		const createRun = async (
-			childId: number,
-			docId?: string,
-			container?: IFluidContainer,
-		): Promise<string> => {
-			return NestedMapRunner.execRun(
-				this.buildScenarioRunConfig(config, {
-					childId,
-					docId,
-					container,
-					isSync: true,
-				}),
-			);
-		};
-		if (docIds) {
-			for (let i = 0; i < docIds.length; i++) {
-				const docId = docIds[i];
-				const container = containers ? containers[i] : undefined;
-				runs.push(createRun(i, docId, container));
-				await delay(this.c.clientStartDelayMs);
-			}
-		} else {
-			runs.push(createRun(0));
-		}
-		try {
-			const resultDocIds = await Promise.all(runs);
-			this.status = "success";
-			return resultDocIds;
-		} catch (error) {
-			this.status = "error";
-			throw new Error(`Not all clients closed succesfully.\n${error}`);
-		}
-	}
-
-	private buildScenarioRunConfig(
-		runConfig: IRunConfig,
-		options: {
-			childId: number;
-			docId?: string;
-			container?: IFluidContainer;
-			isSync?: boolean;
-		},
-	): NestedMapRunConfig {
-		const scenarioRunConfig: NestedMapRunConfig = {
-			...runConfig,
-			childId: options.childId,
-			docId: options.docId,
-			numMaps: this.c.numMaps,
-			dataType: this.c.dataType ?? "number",
-			writeRatePerMin: this.c.writeRatePerMin ?? -1,
-			initialMapKey: this.c.initialMapKey,
-			schema: this.c.schema,
-			client: this.c.client,
-			container: options.container,
-		};
-		if (!options.isSync) {
-			delete scenarioRunConfig.logger;
-			delete scenarioRunConfig.client;
-			delete scenarioRunConfig.container;
-		}
-		return scenarioRunConfig;
+	constructor(scenarioConfig: NestedMapRunnerConfig) {
+		super({
+			...scenarioConfig,
+			numClients: scenarioConfig.docIds?.length,
+		});
 	}
 
 	public static async execRun(runConfig: NestedMapRunConfig): Promise<string> {
@@ -336,35 +218,58 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		return container;
 	}
 
-	public stop(): void {}
-
-	public getStatus(): IRunnerStatus {
-		return {
-			status: this.status,
-			description: this.description(),
-			details: {},
-		};
-	}
-
-	private description(): string {
-		return `This stage loads a list of documents, given their IDs`;
-	}
-
-	private async createChild(childArgs: string[]): Promise<boolean> {
-		const envVar = { ...process.env };
-		const runnerProcess = child_process.spawn("node", childArgs, {
-			stdio: ["inherit", "inherit", "inherit", "ipc"],
-			env: envVar,
+	protected runCore(config: IRunConfig, info: { clientIndex: number }): NestedMapRunConfig {
+		return this.buildScenarioRunConfig(config, {
+			childId: info.clientIndex,
+			docId: (this.scenarioConfig.docIds ?? [])[info.clientIndex],
+			container: (this.scenarioConfig.containers ?? [])[info.clientIndex],
+			isSync: false,
 		});
-
-		return new Promise((resolve, reject) =>
-			runnerProcess.once("close", (status) => {
-				if (status === 0) {
-					resolve(true);
-				} else {
-					reject(new Error("Client failed to complete the tests sucesfully."));
-				}
+	}
+	protected async runSyncCore(
+		config: IRunConfig,
+		info: { clientIndex: number },
+	): Promise<string> {
+		return NestedMapRunner.execRun(
+			this.buildScenarioRunConfig(config, {
+				childId: info.clientIndex,
+				docId: (this.scenarioConfig.docIds ?? [])[info.clientIndex],
+				container: (this.scenarioConfig.containers ?? [])[info.clientIndex],
+				isSync: false,
 			}),
 		);
+	}
+
+	protected buildScenarioRunConfig(
+		runConfig: IRunConfig,
+		options: {
+			childId: number;
+			docId?: string;
+			container?: IFluidContainer;
+			isSync?: boolean;
+		},
+	): NestedMapRunConfig {
+		const scenarioRunConfig: NestedMapRunConfig = {
+			...runConfig,
+			childId: options.childId,
+			docId: options.docId,
+			numMaps: this.scenarioConfig.numMaps,
+			dataType: this.scenarioConfig.dataType ?? "number",
+			writeRatePerMin: this.scenarioConfig.writeRatePerMin ?? -1,
+			initialMapKey: this.scenarioConfig.initialMapKey,
+			schema: this.scenarioConfig.schema,
+			client: this.scenarioConfig.client,
+			container: options.container,
+		};
+		if (!options.isSync) {
+			delete scenarioRunConfig.logger;
+			delete scenarioRunConfig.client;
+			delete scenarioRunConfig.container;
+		}
+		return scenarioRunConfig;
+	}
+
+	protected description(): string {
+		return `This generates nested SharedMaps.`;
 	}
 }

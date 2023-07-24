@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import child_process from "child_process";
 import commander from "commander";
 import {
 	AzureClient,
@@ -160,6 +161,31 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 	}
 
 	return new AzureClient({ connection: connectionProps, logger: config.logger });
+}
+
+export async function createChildProcess(
+	childArgs: string[],
+	additionalSetup?: (runnerProcess: child_process.ChildProcess) => void,
+): Promise<boolean> {
+	const envVar = { ...process.env };
+	const runnerProcess = child_process.spawn("node", childArgs, {
+		stdio: "inherit",
+		env: envVar,
+	});
+
+	if (additionalSetup !== undefined) {
+		additionalSetup(runnerProcess);
+	}
+
+	return new Promise((resolve, reject) =>
+		runnerProcess.once("close", (status) => {
+			if (status === 0) {
+				resolve(true);
+			} else {
+				reject(new Error("Client failed to complet the tests sucesfully."));
+			}
+		}),
+	);
 }
 
 export async function createContainer(

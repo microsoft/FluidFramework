@@ -5,7 +5,7 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
+import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnerStatus } from "./interface";
 import {
 	createAzureClient,
 	getAzureClientConnectionConfigFromEnv,
@@ -27,13 +27,13 @@ export interface AzureClientRunnerConfig {
 export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
 export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-	private status: RunnnerStatus = "notStarted";
+	private status: RunnerStatus = RunnerStatus.NotStarted;
 	constructor(private readonly c: AzureClientRunnerConfig) {
 		super();
 	}
 
 	public async run(config: IRunConfig): Promise<AzureClient> {
-		this.status = "running";
+		this.status = RunnerStatus.Running;
 
 		try {
 			const ac = await AzureClientRunner.execRun({
@@ -41,10 +41,10 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 				...this.c,
 			});
 
-			this.status = "success";
+			this.status = RunnerStatus.Success;
 			return ac;
 		} catch {
-			this.status = "error";
+			this.status = RunnerStatus.Error;
 			throw new Error("Failed to create client");
 		}
 	}

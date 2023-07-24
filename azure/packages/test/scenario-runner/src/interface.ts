@@ -6,9 +6,14 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 
-export type RunnnerStatus = "notStarted" | "running" | "success" | "error";
+export enum RunnerStatus {
+	NotStarted = "notStarted",
+	Running = "running",
+	Success = "success",
+	Error = "error",
+}
 export interface IRunnerStatus {
-	status: RunnnerStatus;
+	status: RunnerStatus;
 	description?: string;
 	details: unknown;
 }
@@ -19,6 +24,9 @@ export interface IRunnerEvents extends IEvent {
 
 export interface IScenarioConfig {
 	schema: ContainerFactorySchema;
+	clientStartDelayMs?: number;
+	numClients?: number;
+	numRunsPerClient?: number;
 	client?: AzureClient;
 }
 
