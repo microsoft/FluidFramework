@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISession } from "@fluidframework/server-services-client";
 import { getDiscoveredFluidResolvedUrl, parseFluidUrl, replaceDocumentIdInPath } from "../urlUtils";
 
@@ -63,7 +63,7 @@ describe("UrlUtils", () => {
 	});
 
 	describe("getDiscoveredFluidResolvedUrl()", () => {
-		let testResolvedURL: IFluidResolvedUrl;
+		let testResolvedURL: IResolvedUrl;
 		let testSession: ISession;
 
 		before(() => {
