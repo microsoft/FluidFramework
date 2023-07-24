@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
         if: |
-          ${{ github.event.pull_request.title != 'Automation: main-next integrate' }}
+          github.event.pull_request.title != "Automation: main-next integrate"
         with:
           configuration-path: ".github/actions-labeler.yml"
           repo-token: "${{ github.token }}"
