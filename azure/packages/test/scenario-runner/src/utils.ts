@@ -12,7 +12,7 @@ import {
 	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
@@ -44,17 +44,6 @@ export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerS
 	return schema;
 }
 
-export function createAzureTokenProvider(
-	fnUrl: string,
-	userID?: string,
-	userName?: string,
-): AzureFunctionTokenProvider {
-	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-		userId: userID ?? "foo",
-		userName: userName ?? "bar",
-	});
-}
-
 export function convertConfigToScriptParams<T extends IRunConfig>(config: T): string[] {
 	const params: string[] = [];
 	Object.entries(config).forEach(([key, value]) => {
@@ -68,6 +57,17 @@ export function convertConfigToScriptParams<T extends IRunConfig>(config: T): st
 		params.push(paramName, JSON.stringify(value));
 	});
 	return params;
+}
+
+export function createAzureTokenProvider(
+	fnUrl: string,
+	userID?: string,
+	userName?: string,
+): AzureFunctionTokenProvider {
+	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
+		userId: userID ?? "foo",
+		userName: userName ?? "bar",
+	});
 }
 
 export function createInsecureTokenProvider(
@@ -186,15 +186,6 @@ export async function createChildProcess(
 			}
 		}),
 	);
-}
-
-export async function createContainer(
-	ac: AzureClient,
-	s: ContainerFactorySchema,
-): Promise<IFluidContainer> {
-	const schema = loadInitialObjSchema(s);
-	const r = await ac.createContainer(schema);
-	return r.container;
 }
 
 export type ScenarioRunnerTelemetryEventNames =
