@@ -41,13 +41,13 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	 * isTextBox is whether or not the area should allow text or numbers only.
 	 */
 	const [isType, setIsType] = React.useState<string>(typeof node.value);
-	console.log(setIsType);
 
 	const textAreaRef = React.useRef<HTMLInputElement>(null);
 
 	const backgroundUpdate = (): void => {
 		if (isEditing === false) {
 			setValue(String(node.value));
+			setIsType(typeof node.value);
 		}
 	};
 	React.useEffect(backgroundUpdate, [node.value, isEditing]);
@@ -73,22 +73,18 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	}, [node.value]);
 
 	const commitChanges = React.useCallback(() => {
-		let data: Serializable<unknown>;
+		let data: Serializable<unknown> = value;
 		switch (isType) {
-			case "string":
-				data = value;
-				break;
 			case "number":
 				data = Number(value);
 				break;
 			case "boolean":
-				data = value === "True" ? true : false;
+				data = value === "true" ? true : false;
 				break;
 			default:
-				data = value;
+				data = String(value);
 				break;
 		}
-
 		const edit = {
 			fluidObjectId: node.fluidObjectId,
 			data,
@@ -125,13 +121,14 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 		[commitChanges],
 	);
 
-	function boolButton(name: string): React.ReactElement {
+	function boolButton(name: boolean): React.ReactElement {
 		return (
 			<Button
-				value={name}
-				disabled={value.toLowerCase() === name.toLowerCase() ? true : false}
+				disabled={String(value) === "true" && isType === "boolean" ? true : false}
 				onClick={onButtonClick}
-			></Button>
+			>
+				{name.toString().charAt(0).toUpperCase()}
+			</Button>
 		);
 	}
 
@@ -141,8 +138,8 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 
 			{isType === "boolean" ? (
 				<>
-					{boolButton("True")}
-					{boolButton("False")}
+					{boolButton(true)}
+					{boolButton(false)}
 				</>
 			) : (
 				<Input
@@ -151,7 +148,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 					contentEditable
 					ref={textAreaRef}
 					onClick={(event): void => event.preventDefault()}
-					value={value}
+					value={String(value)}
 					onChange={onChange}
 					onFocus={onFocus}
 					onBlur={onBlur}

@@ -227,7 +227,6 @@ export namespace DisconnectContainer {
 // @public
 export interface Edit {
     data: Serializable<unknown>;
-    fluidObjectId: string;
     type?: EditType;
 }
 
@@ -371,12 +370,6 @@ export interface HasContainerKey {
     containerKey: ContainerKey;
 }
 
-// @public
-export interface HasEdit {
-    // (undocumented)
-    edit: Edit;
-}
-
 // @internal
 export interface HasEditType {
     // (undocumented)
@@ -392,6 +385,12 @@ export interface HasFluidObjectId {
 export interface HasNewData {
     // (undocumented)
     newData: Serializable<unknown>;
+}
+
+// @public
+export interface HasSharedObjectEdit {
+    // (undocumented)
+    edit: SharedObjectEdit;
 }
 
 // @internal
@@ -479,7 +478,11 @@ export namespace SendEditData {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerKey & HasEdit;
+    export type MessageData = HasContainerKey & HasSharedObjectEdit;
+}
+
+// @internal
+export interface SharedObjectEdit extends Edit, HasFluidObjectId {
 }
 
 // @internal

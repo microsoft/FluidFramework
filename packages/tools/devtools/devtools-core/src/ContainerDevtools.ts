@@ -14,11 +14,11 @@ import {
 	DataVisualizerGraph,
 	defaultVisualizers,
 	defaultEditors,
-	Edit,
 	EditSharedObject,
 	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,
+	SharedObjectEdit,
 } from "./data-visualization";
 import { IContainerDevtools } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -595,7 +595,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	/**
 	 * Begins the process of changing data inside a DDS by using {@link Edit}
 	 */
-	private async editData(edit: Edit): Promise<void> {
+	private async editData(edit: SharedObjectEdit): Promise<void> {
 		return this.dataVisualizer?.applyEdit(edit);
 	}
 }

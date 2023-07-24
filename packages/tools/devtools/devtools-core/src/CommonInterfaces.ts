@@ -4,7 +4,7 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { Edit } from "./data-visualization";
+import { SharedObjectEdit } from "./data-visualization";
 
 /**
  * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
@@ -74,8 +74,8 @@ export interface HasEditType {
  * Base interface used in message data for communicating edits
  * @public
  */
-export interface HasEdit {
-	edit: Edit;
+export interface HasSharedObjectEdit {
+	edit: SharedObjectEdit;
 }
 
 /**

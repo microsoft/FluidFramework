@@ -21,6 +21,7 @@ export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
+	console.log("testing editSharedCounter");
 	if (typeof edit.data !== "number") return;
 	const sharedCounter = sharedObject as SharedCounter;
 	sharedCounter.increment(Math.floor(edit.data) - sharedCounter.value);
