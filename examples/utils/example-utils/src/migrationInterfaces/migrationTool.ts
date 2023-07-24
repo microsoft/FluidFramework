@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
 /**
  * The collaboration session may be in one of four states:

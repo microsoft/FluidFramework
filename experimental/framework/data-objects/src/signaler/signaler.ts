@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IErrorEvent } from "@fluidframework/common-definitions";
+import { IErrorEvent } from "@fluidframework/core-interfaces";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";

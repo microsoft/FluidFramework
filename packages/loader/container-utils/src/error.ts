@@ -20,7 +20,7 @@ import {
 	NORMALIZED_ERROR_TYPE,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 

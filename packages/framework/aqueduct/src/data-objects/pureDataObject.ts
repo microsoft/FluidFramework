@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
 	IFluidRouter,

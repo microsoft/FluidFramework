@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
 	IContainer,

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IRequest,
+	IResponse,
+	IFluidRouter,
+	FluidObject,
+	IEvent,
+	IEventProvider,
+} from "@fluidframework/core-interfaces";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -13,7 +20,6 @@ import {
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";

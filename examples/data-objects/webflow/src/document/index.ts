@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	LazyLoadedDataObject,
 	LazyLoadedDataObjectFactory,
 } from "@fluidframework/data-object-base";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	createDetachedLocalReferencePosition,
 	createInsertSegmentOp,
@@ -40,7 +40,6 @@ import {
 	SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray, randomId, TagName, TokenList } from "../util/index.js";
 import { IHTMLAttributes } from "../util/attr.js";
 import { documentType } from "../package.js";

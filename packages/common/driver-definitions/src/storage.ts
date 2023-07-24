@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent } from "@fluidframework/common-definitions";
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEventProvider,
+	IErrorEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,

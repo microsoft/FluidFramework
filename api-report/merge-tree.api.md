@@ -6,7 +6,7 @@
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/common-definitions";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import { fail, getOrCreate } from "../util";
 

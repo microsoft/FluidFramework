@@ -34,6 +34,7 @@
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
+    "@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"react": "^17.0.1"

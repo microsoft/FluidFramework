@@ -46,7 +46,7 @@ import {
 	ISharedObjectEvents,
 	SummarySerializer,
 } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
 import { DefaultMap, IMapOperation } from "./defaultMap";
