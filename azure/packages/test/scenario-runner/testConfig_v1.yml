@@ -5,16 +5,12 @@ env:
     initialObjects:
       key1: SharedMap
       key2: SharedMap
-  connectionConfig:
-    type: remote
-    useSecureTokenProvider: false
 stages:
   - stage-1:
     id: 1
     name: Create single azure client
     package: azure-client
     params:
-      connectionConfig: ${connectionConfig}
       userId: SomeUserId;
       userName: SomeName;
     out: ${client}
@@ -23,7 +19,6 @@ stages:
     name: Create empty documents
     package: doc-creator
     params:
-      connectionConfig: ${connectionConfig}
       schema: ${schema}
       numDocs: 1
       clientStartDelayMs: 500
@@ -33,7 +28,6 @@ stages:
     name: Load documents
     package: doc-loader
     params:
-      connectionConfig: ${connectionConfig}
       numOfLoads: 5
       schema: ${schema}
       docIds: ${docIds}
