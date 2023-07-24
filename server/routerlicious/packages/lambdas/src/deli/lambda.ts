@@ -33,6 +33,7 @@ import {
 	IControlMessage,
 	IDeliState,
 	IDisableNackMessagesControlMessageContents,
+	IEvent,
 	IMessage,
 	INackMessage,
 	ITicketedSignalMessage,
@@ -68,7 +69,6 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
 	logCommonSessionEndMetrics,
 	createSessionMetric,
