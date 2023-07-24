@@ -278,12 +278,6 @@ export class SnapshotV1 {
 					);
 					raw.removedSeq = segment.removedSeq;
 
-					// back compat for when we split overlap and removed client
-					raw.removedClient =
-						segment.removedClientIds !== undefined
-							? this.getLongClientId(segment.removedClientIds[0])
-							: undefined;
-
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
 						this.getLongClientId(id),
 					);
@@ -292,7 +286,7 @@ export class SnapshotV1 {
 				// Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
-						(raw.removedSeq !== undefined && raw.removedClient !== undefined),
+						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 

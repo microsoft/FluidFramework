@@ -412,7 +412,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 }
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export interface ClientSeq {
@@ -515,7 +514,6 @@ export interface AttributionPolicy {
 }
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export const clientSeqComparer: Comparer<ClientSeq> = {
