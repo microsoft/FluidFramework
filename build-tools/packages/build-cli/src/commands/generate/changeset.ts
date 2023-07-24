@@ -14,12 +14,18 @@ import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
+import GenerateUpcomingCommand from "./upcoming";
+import { ReleaseGroup } from "../../releaseGroups";
 
+/**
+ * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
+ * the target branch.
+ */
+const BRANCH_PROMPT_LIMIT = 10;
 const DEFAULT_BRANCH = "main";
 const INSTRUCTIONS = `
 ↑/↓: Change selection
 Space: Toggle selection
-a: Toggle all
 Enter: Done`;
 
 /**
@@ -42,7 +48,7 @@ interface Choice {
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
 	static summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
 	static aliases: string[] = [
-		// 'cangesets add' is the changesets cli command.
+		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",
 	];
 
@@ -98,7 +104,8 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		changesetPath?: string;
 	}> {
 		const context = await this.getContext();
-		const { all, branch, empty, uiMode } = this.flags;
+		const { all, empty, uiMode } = this.flags;
+		let { branch } = this.flags;
 
 		if (empty) {
 			const emptyFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
@@ -118,10 +125,31 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		const remote = await repo.getRemote(context.originRemotePartialUrl);
 
 		if (remote === undefined) {
-			// Logs and exits
 			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`, { exit: 1 });
 		}
 		this.log(`Remote for ${context.originRemotePartialUrl} is: ${chalk.bold(remote)}`);
+
+		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
+		// undefined because there's a default value for the flag.
+		const usedBranchFlag = this.argv.includes("--branch") || this.argv.includes("-b");
+		if (!usedBranchFlag) {
+			const { packages } = await repo.getChangedSinceRef(branch, remote, context);
+
+			if (packages.length > BRANCH_PROMPT_LIMIT) {
+				const answer = await prompts({
+					type: "select",
+					name: "selectedBranch",
+					message: `More than ${BRANCH_PROMPT_LIMIT} packages were edited compared to the ${branch} branch. Maybe you meant to select a different target branch?`,
+					choices: [
+						{ title: "next", value: "next" },
+						{ title: "main", value: "main" },
+						{ title: "lts", value: "lts" },
+					],
+					initial: branch === "next" ? 0 : branch === "main" ? 1 : 2,
+				});
+				branch = answer.selectedBranch;
+			}
+		}
 
 		const {
 			packages: changedPackages,
@@ -160,9 +188,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 				...rg.packages
 					.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-					.sort((a, b) =>
-						a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
-					)
+					.sort((a, b) => packageComparer(a, b, changedPackages))
 					.map((pkg) => {
 						const changed = changedPackages.some((cp) => cp.name === pkg.name);
 						return {
@@ -197,9 +223,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 					...rg.packages
 						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
-						.sort((a, b) =>
-							a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
-						)
+						.sort((a, b) => packageComparer(a, b, changedPackages))
 						.map((pkg) => {
 							return {
 								title: pkg.name,
@@ -261,6 +285,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			`${response.summary.trim()}\n\n${response.description}`,
 		);
 		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
+
 		this.logHr();
 		this.log(`Created new changeset: ${chalk.green(changesetPath)}`);
 		return {
@@ -306,4 +331,29 @@ function isIncludedByDefault(pkg: Package): boolean {
 	}
 
 	return true;
+}
+
+/**
+ * Compares two packages for sorting purposes. Packages that have changed are sorted first.
+ *
+ * @param a - The first package to compare.
+ * @param b - The second package to compare.
+ * @param changedPackages - An array of changed packages.
+ */
+function packageComparer(a: Package, b: Package, changedPackages: Package[]): number {
+	const aChanged = changedPackages.some((cp) => cp.name === a.name);
+	const bChanged = changedPackages.some((cp) => cp.name === b.name);
+
+	// If a has changed but b hasn't, then a should be sorted earlier.
+	if (aChanged && !bChanged) {
+		return -1;
+	}
+
+	// If a hasn't changed but b has, then b should be sorted earlier.
+	if (!aChanged && bChanged) {
+		return 1;
+	}
+
+	// Otherwise, compare by name.
+	return a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1;
 }

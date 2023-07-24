@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -24,6 +24,7 @@ describe("Hardware Stats", () => {
 		taggedLogger: mockLogger,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	};
 
 	const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
@@ -49,6 +50,7 @@ describe("Hardware Stats", () => {
 			taggedLogger: mockLogger,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (dirty: boolean) => {},
+			getLoadedFromVersion: () => undefined,
 		};
 	});
 

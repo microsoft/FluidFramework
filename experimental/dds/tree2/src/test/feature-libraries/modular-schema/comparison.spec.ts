@@ -54,7 +54,6 @@ describe("Schema Comparison", () => {
 		localFields: emptyMap,
 		globalFields: emptySet,
 		extraLocalFields: anyField,
-		extraGlobalFields: true,
 		value: ValueSchema.Serializable,
 	};
 
@@ -62,7 +61,6 @@ describe("Schema Comparison", () => {
 		localFields: new Map([[brand("x"), neverField]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
-		extraGlobalFields: true,
 		value: ValueSchema.Serializable,
 	};
 
@@ -71,7 +69,6 @@ describe("Schema Comparison", () => {
 		localFields: emptyMap,
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
-		extraGlobalFields: false,
 		value: ValueSchema.Nothing,
 	};
 
@@ -80,7 +77,6 @@ describe("Schema Comparison", () => {
 		localFields: new Map([[brand("x"), emptyField]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
-		extraGlobalFields: false,
 		value: ValueSchema.Nothing,
 	};
 
@@ -89,7 +85,6 @@ describe("Schema Comparison", () => {
 		localFields: new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
-		extraGlobalFields: false,
 		value: ValueSchema.Nothing,
 	};
 
@@ -98,7 +93,6 @@ describe("Schema Comparison", () => {
 		localFields: new Map([[brand("x"), fieldSchema(FieldKinds.value, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
-		extraGlobalFields: false,
 		value: ValueSchema.Nothing,
 	};
 
@@ -161,7 +155,6 @@ describe("Schema Comparison", () => {
 				localFields: emptyMap,
 				globalFields: emptySet,
 				extraLocalFields: neverField,
-				extraGlobalFields: false,
 				value: ValueSchema.Nothing,
 			}),
 		);
@@ -172,7 +165,6 @@ describe("Schema Comparison", () => {
 				localFields: emptyMap,
 				globalFields: new Set([brand("never")]),
 				extraLocalFields: emptyField,
-				extraGlobalFields: true,
 				value: ValueSchema.Serializable,
 			}),
 		);
@@ -181,7 +173,6 @@ describe("Schema Comparison", () => {
 				localFields: emptyMap,
 				globalFields: emptySet,
 				extraLocalFields: emptyField,
-				extraGlobalFields: false,
 				value: ValueSchema.Nothing,
 			}),
 			false,

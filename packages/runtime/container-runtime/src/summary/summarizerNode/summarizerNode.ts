@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
@@ -20,13 +21,13 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -45,6 +46,7 @@ import {
 	parseSummaryTreeForSubtrees,
 	RefreshSummaryResult,
 	SummaryNode,
+	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
@@ -84,30 +86,28 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
-		baseLogger: ITelemetryLoggerExt,
+		baseLogger: ITelemetryBaseLogger,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
 		private _changeSequenceNumber: number,
 		/** Undefined means created without summary */
 		private _latestSummary?: SummaryNode,
 		private readonly initialSummary?: IInitialSummary,
-		protected wipSummaryLogger?: ITelemetryLoggerExt,
+		protected wipSummaryLogger?: ITelemetryBaseLogger,
 		/** A unique id of this node to be logged when sending telemetry. */
 		protected telemetryNodeId?: string,
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
 		// All logs posted by the summarizer node should include the telemetryNodeId.
-		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
-			all: {
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryNodeId,
-				},
+		this.logger = createChildLogger({
+			logger: baseLogger,
+			properties: {
+				all: tagCodeArtifacts({ id: this.telemetryNodeId }),
 			},
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
+	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryBaseLogger) {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -193,24 +193,117 @@ export class SummarizerNode implements IRootSummarizerNode {
 	}
 
 	/**
-	 * Complete the WIP summary for the given proposalHandle
+	 * Validates that the in-progress summary is correct, i.e., summarize should have run for all non-skipped
+	 * nodes. This will only be called for the root summarizer node and is called by it recursively on all child nodes.
+	 *
+	 * @returns ValidateSummaryResult which contains a boolean success indicating whether the validation was successful.
+	 * In case of failure, additional information is returned indicating type of failure and where it was.
 	 */
-	public completeSummary(proposalHandle: string) {
-		this.completeSummaryCore(proposalHandle, undefined, false);
+	public validateSummary(): ValidateSummaryResult {
+		return this.validateSummaryCore(false /* parentSkipRecursion */);
 	}
 
 	/**
-	 * Recursive implementation for completeSummary, with additional internal-only parameters
+	 * Validates that the in-progress summary is correct for all nodes, i.e., summarize should have run for all
+	 * non-skipped nodes.
+	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
+	 * In that case, the children will not have work-in-progress state.
+	 *
+	 * @returns ValidateSummaryResult which contains a boolean success indicating whether the validation was successful.
+	 * In case of failure, additional information is returned indicating type of failure and where it was.
+	 */
+	protected validateSummaryCore(parentSkipRecursion: boolean): ValidateSummaryResult {
+		if (this.wasSummarizeMissed(parentSkipRecursion)) {
+			return {
+				success: false,
+				reason: "NodeDidNotSummarize",
+				id: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: this.telemetryNodeId,
+				},
+				// These errors are usually transient and should go away when summarize is retried.
+				retryAfterSeconds: 1,
+			};
+		}
+		if (parentSkipRecursion) {
+			return { success: true };
+		}
+
+		for (const child of this.children.values()) {
+			const result = child.validateSummaryCore(this.wipSkipRecursion || parentSkipRecursion);
+			// If any child fails, return the failure.
+			if (!result.success) {
+				return result;
+			}
+		}
+		return { success: true };
+	}
+
+	private wasSummarizeMissed(parentSkipRecursion: boolean): boolean {
+		assert(
+			this.wipSummaryLogger !== undefined,
+			0x6fc /* wipSummaryLogger should have been set in startSummary or ctor */,
+		);
+		assert(this.wipReferenceSequenceNumber !== undefined, 0x6fd /* Not tracking a summary */);
+
+		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
+		// but was intentionally not called.
+		// Otherwise, summarize should have been called on this node and wipLocalPaths must be set.
+		if (parentSkipRecursion || this.wipLocalPaths !== undefined) {
+			return false;
+		}
+
+		/**
+		 * The absence of wip local path indicates that summarize was not called for this node. Return failure.
+		 * This can happen if:
+		 * 1. A child node was created after summarize was already called on the parent. For example, a data store
+		 * is realized (loaded) after summarize was called on it creating summarizer nodes for its DDSes. In this case,
+		 * parentSkipRecursion will be true and the if block above would handle it.
+		 * 2. A new node was created but summarize was never called on it. This can mean that the summary that is
+		 * generated may not have the data from this node. We should not continue, log and throw an error. This
+		 * will help us identify these cases and take appropriate action.
+		 *
+		 * This happens due to scenarios such as data store created during summarize. Such errors should go away when
+		 * summarize is attempted again.
+		 */
+		return true;
+	}
+
+	/**
+	 * Called after summary has been uploaded to the server. Add the work-in-progress state to the pending summary
+	 * queue. We track this until we get an ack from the server for this summary.
+	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
+	 */
+	public completeSummary(proposalHandle: string, validate: boolean) {
+		this.completeSummaryCore(
+			proposalHandle,
+			undefined /* parentPath */,
+			false /* parentSkipRecursion */,
+			validate,
+		);
+	}
+
+	/**
+	 * Recursive implementation for completeSummary, with additional internal-only parameters.
+	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
+	 * @param parentPath - The path of the parent node which is used to build the path of this node.
+	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
+	 * In that case, the children will not have work-in-progress state.
+	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
+		validate: boolean,
 	) {
-		assert(
-			this.wipSummaryLogger !== undefined,
-			0x1a3 /* "wipSummaryLogger should have been set in startSummary or ctor" */,
-		);
+		if (validate && this.wasSummarizeMissed(parentSkipRecursion)) {
+			this.throwUnexpectedError({
+				eventName: "NodeDidNotSummarize",
+				proposalHandle,
+			});
+		}
+
 		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
 		let localPathsToUse = this.wipLocalPaths;
 
@@ -239,22 +332,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		/**
-		 * The absence of wip local path indicates that summarize was not called for this node. This can happen if:
-		 * 1. A child node was created after summarize was already called on the parent. For example, a data store
-		 * is realized (loaded) after summarize was called on it creating summarizer nodes for its DDSes. In this case,
-		 * parentSkipRecursion will be true and the if block above would handle it.
-		 * 2. A new node was created but summarize was never called on it. This can mean that the summary that is
-		 * generated may not have the data from this node. We should not continue, log and throw an error. This
-		 * will help us identify these cases and take appropriate action.
-		 */
-		if (localPathsToUse === undefined) {
-			this.throwUnexpectedError({
-				eventName: "NodeNotSummarized",
-				proposalHandle,
-			});
-		}
-
+		// If localPathsToUse is undefined, it means summarize didn't run for this node and in that case the validate
+		// step should have failed.
+		assert(localPathsToUse !== undefined, 0x6fe /* summarize didn't run for node */);
 		const summary = new SummaryNode({
 			...localPathsToUse,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
@@ -266,6 +346,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				proposalHandle,
 				fullPathForChildren,
 				this.wipSkipRecursion || parentSkipRecursion,
+				validate,
 			);
 		}
 		// Note that this overwrites existing pending summary with
@@ -727,10 +808,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const error = new LoggingError(eventProps.eventName, {
 			...eventProps,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
-			id: {
-				tag: TelemetryDataTag.CodeArtifact,
-				value: this.telemetryNodeId,
-			},
+			...tagCodeArtifacts({
+				id: this.telemetryNodeId,
+			}),
 		});
 		this.logger.sendErrorEvent(eventProps, error);
 		throw error;
