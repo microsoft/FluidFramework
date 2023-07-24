@@ -53,6 +53,7 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	client: Client<TChannelFactory>;
 	// dds which was selected to perform an operation on. will be the same as client.channel
 	channel: ReturnType<TChannelFactory["create"]>;
+	isDetached: boolean;
 }
 
 export interface ClientSpec {
@@ -66,6 +67,10 @@ export interface BaseOperation {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+}
+
+export interface Attach {
+	type: "attach";
 }
 
 export interface AddClient {
@@ -210,6 +215,8 @@ export interface DDSFuzzSuiteOptions {
 	 * Number of clients to perform operations on at the start of the test.
 	 * This does not include the read-only client created for consistency validation
 	 * and summarization--see {@link DDSFuzzTestState.summarizerClient}.
+	 *
+	 * If {@link DDSFuzzSuiteOptions.}
 	 */
 	numberOfClients: number;
 
@@ -324,6 +331,15 @@ export interface DDSFuzzSuiteOptions {
 	 * Turning on this feature is encouraged for quick minimization.
 	 */
 	saveFailures: false | { directory: string };
+
+	/**
+	 * Whether the collaboration process should start from a detached state.
+	 *
+	 * When true, coerces {@link DDSFuzzSuiteOptions.numberOfClients} (the number of initialized clients) to 1.
+	 *
+	 * Typically this option should be paired with {@link DDSFuzzSuiteOptions.clientJoinOptions}, as otherwise
+	 */
+	startDetached: boolean;
 }
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
@@ -336,6 +352,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	reconnectProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
+	startDetached: true,
 };
 
 /**
@@ -355,12 +372,13 @@ export function mixinNewClient<
 
 	const generatorFactory: () => Generator<TOperation | AddClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | AddClient | typeof done> => {
+		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
 			const baseOp = baseGenerator(state);
 			const { clients, random } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
 				clients.length < options.clientJoinOptions.maxNumberOfClients &&
+				!state.isDetached &&
 				random.bool(options.clientJoinOptions.clientAddProbability)
 			) {
 				return {
@@ -436,6 +454,71 @@ export function mixinReconnect<
 		} else {
 			return model.reducer(state, operation as TOperation);
 		}
+	};
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
+/**
+ * TODO
+ */
+export function mixinAttach<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
+	const generatorFactory: () => Generator<TOperation | Attach, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | Attach | typeof done> => {
+			if (state.isDetached && state.random.bool(0.1)) {
+				return {
+					type: "attach",
+				};
+			}
+
+			return baseGenerator(state);
+		};
+	};
+
+	const reducer: Reducer<TOperation | Attach, TState> = async (state, operation) => {
+		if (operation.type === "attach") {
+			state.isDetached = false;
+			assert.equal(state.clients.length, 1);
+			const clientA = state.clients[0];
+			const services: IChannelServices = {
+				deltaConnection: clientA.containerRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			clientA.channel.connect(services);
+			const clients = await Promise.all(
+				Array.from({ length: options.numberOfClients }, async (_, index) =>
+					loadClient(
+						state.containerRuntimeFactory,
+						clientA,
+						model.factory,
+						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
+						options,
+					),
+				),
+			);
+			const summarizerClient = clients[0];
+			clients[0] = state.clients[0];
+
+			return {
+				...state,
+				isDetached: false,
+				clients,
+				summarizerClient,
+			};
+		}
+
+		return model.reducer(state, operation as TOperation);
 	};
 	return {
 		...model,
@@ -592,6 +675,7 @@ function createClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
 	clientId: string,
+	options: Pick<DDSFuzzSuiteOptions, "emitter">,
 ): Client<TChannelFactory> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
@@ -601,15 +685,20 @@ function createClient<TChannelFactory extends IChannelFactory>(
 	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, clientId);
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services: IChannelServices = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	};
+	// const services: IChannelServices = {
+	// 	deltaConnection: containerRuntime.createDeltaConnection(),
+	// 	objectStorage: new MockStorage(),
+	// };
 
-	channel.connect(services);
+	// channel.connect(services);
 	// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
 	// than IChannel here.
-	return { containerRuntime, channel: channel as ReturnType<TChannelFactory["create"]> };
+	const newClient: Client<TChannelFactory> = {
+		containerRuntime,
+		channel: channel as ReturnType<TChannelFactory["create"]>,
+	};
+	options.emitter.emit("clientCreate", newClient);
+	return newClient;
 }
 
 async function loadClient<TChannelFactory extends IChannelFactory>(
@@ -669,23 +758,16 @@ export async function runTestForSeed<
 ): Promise<DDSFuzzTestState<TChannelFactory>> {
 	const random = makeRandom(seed);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
 
-	const clients = await Promise.all(
-		Array.from({ length: options.numberOfClients }, async (_, index) =>
-			loadClient(
-				containerRuntimeFactory,
-				summarizerClient,
-				model.factory,
-				makeFriendlyClientId(random, index),
-				options,
-			),
-		),
+	const initialClient = createClient(
+		containerRuntimeFactory,
+		model.factory,
+		makeFriendlyClientId(random, 0),
+		options,
 	);
-
 	const initialState: DDSFuzzTestState<TChannelFactory> = {
-		clients,
-		summarizerClient,
+		clients: [initialClient],
+		summarizerClient: initialClient,
 		containerRuntimeFactory,
 		random,
 		// These properties should always be injected into the state by the mixed in reducer/generator
@@ -693,6 +775,7 @@ export async function runTestForSeed<
 		// to catch bugs in that setup.
 		channel: makeUnreachableCodepathProxy("channel"),
 		client: makeUnreachableCodepathProxy("client"),
+		isDetached: true,
 	};
 
 	options.emitter.emit("testStart", initialState);
@@ -747,8 +830,14 @@ export async function replayTest<
 		skip: new Set(providedOptions?.skip ?? []),
 	};
 
-	const _model = mixinSynchronization(
-		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
+	const _model = mixinAttach(
+		mixinSynchronization(
+			mixinNewClient(
+				mixinClientSelection(mixinReconnect(ddsModel, options), options),
+				options,
+			),
+			options,
+		),
 		options,
 	);
 
@@ -781,8 +870,14 @@ export function createDDSFuzzSuite<
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
-	const model = mixinSynchronization(
-		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
+	const model = mixinAttach(
+		mixinSynchronization(
+			mixinNewClient(
+				mixinClientSelection(mixinReconnect(ddsModel, options), options),
+				options,
+			),
+			options,
+		),
 		options,
 	);
 
