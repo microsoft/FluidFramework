@@ -15,6 +15,7 @@ import {
 	FuzzDelete,
 	FuzzFieldChange,
 	FuzzTransactionType,
+	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
 
@@ -36,6 +37,12 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		const { contents } = operation;
 		const tree = state.channel;
 		applyTransactionEdit(tree, contents);
+		return state;
+	},
+	undoRedo: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyUndoRedoEdit(tree, contents);
 		return state;
 	},
 });
@@ -135,6 +142,21 @@ export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransa
 		}
 		case "transactionAbort": {
 			tree.transaction.abort();
+			break;
+		}
+		default:
+			fail("Invalid edit.");
+	}
+}
+
+export function applyUndoRedoEdit(tree: ISharedTreeView, contents: FuzzUndoRedoType): void {
+	switch (contents.type) {
+		case "undo": {
+			tree.undo();
+			break;
+		}
+		case "redo": {
+			tree.redo();
 			break;
 		}
 		default:

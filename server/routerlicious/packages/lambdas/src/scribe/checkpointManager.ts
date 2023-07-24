@@ -59,6 +59,7 @@ export class CheckpointManager implements ICheckpointManager {
 					this.documentId,
 					expectedSequenceNumber - 1,
 					expectedSequenceNumber + 1,
+					"scribe",
 				);
 
 				// If we don't get the expected delta, retry after a delay
@@ -82,6 +83,7 @@ export class CheckpointManager implements ICheckpointManager {
 						this.documentId,
 						expectedSequenceNumber - 1,
 						expectedSequenceNumber + 1,
+						"scribe",
 					);
 
 					if (

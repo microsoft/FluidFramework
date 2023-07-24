@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
-import { IIntervalCollection, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { SequenceInterval } from "../intervals";
 
 export interface Client {
 	sharedString: SharedString;

@@ -21,7 +21,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
 		"debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
 		"debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",

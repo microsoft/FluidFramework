@@ -42,11 +42,10 @@ import {
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
-	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
-	TelemetryDataTag,
+	createChildMonitoringContext,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
@@ -137,7 +136,7 @@ export class DataStores implements IDisposable {
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
 	) {
-		this.mc = loggerToMonitoringContext(ChildLogger.create(baseLogger));
+		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.containerRuntimeHandle = new FluidObjectHandle(
 			this.runtime,
 			"/",
@@ -243,10 +242,7 @@ export class DataStores implements IDisposable {
 				"Duplicate DataStore created with existing id",
 				{
 					...extractSafePropertiesFromMessage(message),
-					dataStoreId: {
-						value: attachMessage.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
+					...tagCodeArtifacts({ dataStoreId: attachMessage.id }),
 				},
 			);
 			throw error;
@@ -550,19 +546,18 @@ export class DataStores implements IDisposable {
 		}
 	}
 
-	public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
-		const request = { url: address };
-		this.validateNotDeleted(address, request);
-		const context = this.contexts.get(address);
+	public processSignal(fluidDataStoreId: string, message: IInboundSignalMessage, local: boolean) {
+		const request = { url: fluidDataStoreId };
+		this.validateNotDeleted(fluidDataStoreId, request);
+		const context = this.contexts.get(fluidDataStoreId);
 		if (!context) {
 			// Attach message may not have been processed yet
 			assert(!local, 0x163 /* "Missing datastore for local signal" */);
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SignalFluidDataStoreNotFound",
-				fluidDataStoreId: {
-					value: address,
-					tag: TelemetryDataTag.CodeArtifact,
-				},
+				...tagCodeArtifacts({
+					fluidDataStoreId,
+				}),
 			});
 			return;
 		}
@@ -571,7 +566,7 @@ export class DataStores implements IDisposable {
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		for (const [fluidDataStore, context] of this.contexts) {
+		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
 				context.setConnectionState(connected, clientId);
 			} catch (error) {
@@ -579,7 +574,9 @@ export class DataStores implements IDisposable {
 					{
 						eventName: "SetConnectionStateError",
 						clientId,
-						fluidDataStore,
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
 						details: JSON.stringify({
 							runtimeConnected: this.runtime.connected,
 							connected,

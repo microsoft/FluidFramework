@@ -12,13 +12,8 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import {
-	IIntervalCollection,
-	intervalLocatorFromEndpoint,
-	IntervalStickiness,
-	IntervalType,
-	SequenceInterval,
-} from "../intervalCollection";
+import { IIntervalCollection, intervalLocatorFromEndpoint } from "../intervalCollection";
+import { IntervalStickiness, IntervalType, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
 async function loadSharedString(
