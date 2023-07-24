@@ -4,9 +4,17 @@
  */
 
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 import { pkgName } from "./packageVersion";
+
+// this will enabling capturing the full stack for errors
+// since this is test capturing the full stack is worth it
+// in non-test environment we need to be more cautious
+// as this will incur a perf impact when errors are
+// thrown and will take more storage in any logging sink
+// https://v8.dev/docs/stack-trace-api
+Error.stackTraceLimit = Infinity;
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
 const propsDict =

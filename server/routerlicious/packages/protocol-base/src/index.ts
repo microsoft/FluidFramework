@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { buildGitTreeHeirarchy, getGitMode, getGitType } from "./gitHelper";
+export { buildGitTreeHierarchy, getGitMode, getGitType } from "./gitHelper";
 export { IProtocolHandler, IScribeProtocolState, ProtocolOpHandler } from "./protocol";
 export {
 	IQuorumSnapshot,

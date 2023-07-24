@@ -9,17 +9,21 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createDebugLogger,
+	MockLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MessageType2 } from "@fluidframework/driver-utils";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
-import { CollabWindowTracker } from "../collabWindowTracker";
+import { NoopHeuristic } from "../noopHeuristic";
 import { IConnectionManagerFactoryArgs } from "../contracts";
 import { ConnectionManager } from "../connectionManager";
 
@@ -33,7 +37,6 @@ describe("Loader", () => {
 			let clientSeqNumber = 0;
 			let emitter: EventEmitter;
 			let seq: number;
-			let immediateNoOp: boolean;
 			let expectedError: any;
 			const docId = "docId";
 			const submitEvent = "test-submit";
@@ -42,8 +45,12 @@ describe("Loader", () => {
 			// Stash the real setTimeout because sinon fake timers will hijack it.
 			const realSetTimeout = setTimeout;
 
-			async function startDeltaManager(reconnectAllowed = true) {
-				const service = new MockDocumentService(undefined, () => {
+			async function startDeltaManager(
+				reconnectAllowed = true,
+				dmLogger: ITelemetryLoggerExt = logger,
+				deltaStorageFactory?: () => IDocumentDeltaStorageService,
+			) {
+				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
 					// Forces DM into infinite reconnection loop.
 					deltaConnection = new MockDocumentDeltaConnection("test", (messages) =>
@@ -58,7 +65,7 @@ describe("Loader", () => {
 
 				deltaManager = new DeltaManager<ConnectionManager>(
 					() => service,
-					logger,
+					dmLogger,
 					() => false,
 					(props: IConnectionManagerFactoryArgs) =>
 						new ConnectionManager(
@@ -66,24 +73,20 @@ describe("Loader", () => {
 							() => false,
 							client as IClient,
 							reconnectAllowed,
-							logger,
+							dmLogger,
 							props,
 						),
 				);
 
-				const tracker = new CollabWindowTracker(
-					(type: MessageType) => {
-						deltaManager.submit(type);
-						// CollabWindowTracker expects every op submitted (including noops) to result in this call:
-						tracker.stopSequenceNumberUpdate();
-					},
-					expectedTimeout,
-					noopCountFrequency,
-				);
+				const noopHeuristic = new NoopHeuristic(expectedTimeout, noopCountFrequency);
+
+				noopHeuristic.on("wantsNoop", () => {
+					deltaManager.submit(MessageType.NoOp);
+					noopHeuristic.notifyMessageSent();
+				});
 
 				await deltaManager.attachOpHandler(0, 0, {
-					process: (message) =>
-						tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
+					process: (message) => noopHeuristic.notifyMessageProcessed(message),
 					processSignal() {},
 				});
 
@@ -148,15 +151,16 @@ describe("Loader", () => {
 				await yieldEventLoop();
 			}
 
+			const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+
 			before(() => {
 				clock = useFakeTimers();
 			});
 
 			beforeEach(async () => {
 				seq = 1;
-				logger = DebugLogger.create("fluid:testDeltaManager");
+				logger = createDebugLogger({ namespace: "fluid:testDeltaManager" });
 				emitter = new EventEmitter();
-				immediateNoOp = false;
 
 				clientSeqNumber = 0;
 				expectedError = undefined;
@@ -178,21 +182,15 @@ describe("Loader", () => {
 					assert.strictEqual(undefined, messages[0].contents);
 				}
 
-				function assertOneValidAcceptOp(messages: IDocumentMessage[]) {
-					assert.strictEqual(1, messages.length);
-					assert.strictEqual(MessageType2.Accept, messages[0].type);
-					assert.strictEqual(undefined, messages[0].contents);
-				}
-
 				it("Infinite frequency parameters disables periodic noops completely", async () => {
-					const tracker = new CollabWindowTracker(
-						() => assert.fail("No ops should be sent with Infinite thresholds"),
-						Infinity,
-						Infinity,
-					);
+					const noopHeuristic = new NoopHeuristic(Infinity, Infinity);
+
+					noopHeuristic.on("wantsNoop", () => {
+						assert.fail("Heuristic shouldn't request noops with Infinite thresholds");
+					});
 
 					for (let num = 0; num < 1000; ++num) {
-						tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
 
 					await tickClock(1000 * 1000);
@@ -200,58 +198,49 @@ describe("Loader", () => {
 
 				it("Infinite time frequency will not generate noops at time intervals", async () => {
 					let counter = 0;
-					const tracker = new CollabWindowTracker(
-						() => {
-							counter++;
-							tracker.stopSequenceNumberUpdate();
-						},
-						Infinity,
-						100,
-					);
+					const noopHeuristic = new NoopHeuristic(Infinity, 100);
+					noopHeuristic.on("wantsNoop", () => {
+						counter++;
+						noopHeuristic.notifyMessageSent();
+					});
 					for (let num = 0; num < 99; ++num) {
-						tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
 					await tickClock(1000 * 1000);
-					assert.equal(counter, 0, "No messages sent after 99 ops");
-					tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+					assert.equal(counter, 0, "No noops requested after 99 ops");
+					noopHeuristic.notifyMessageProcessed(generateOp());
 					await tickClock(1);
-					assert.equal(counter, 1, "One message should be sent");
+					assert.equal(counter, 1, "One noop should be requested");
 				});
 
 				it("Infinite op frequency will not generate noops at op intervals", async () => {
 					let counter = 0;
-					const tracker = new CollabWindowTracker(
-						() => {
-							counter++;
-							tracker.stopSequenceNumberUpdate();
-						},
-						100,
-						Infinity,
-					);
+					const noopHeuristic = new NoopHeuristic(100, Infinity);
+					noopHeuristic.on("wantsNoop", () => {
+						counter++;
+						noopHeuristic.notifyMessageSent();
+					});
 					for (let num = 0; num < 1000; ++num) {
-						tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
-					assert.equal(counter, 0, "No messages sent after 99 ops");
+					assert.equal(counter, 0, "No noops requested after 99 ops");
 					await tickClock(100);
-					assert.equal(counter, 1, "One message should be sent");
+					assert.equal(counter, 1, "One noop should be requested");
 				});
 
 				it("1k op frequency will generate noop at op intervals", async () => {
 					let counter = 0;
-					const tracker = new CollabWindowTracker(
-						() => {
-							counter++;
-							tracker.stopSequenceNumberUpdate();
-						},
-						Infinity,
-						1000,
-					);
+					const noopHeuristic = new NoopHeuristic(Infinity, 1000);
+					noopHeuristic.on("wantsNoop", () => {
+						counter++;
+						noopHeuristic.notifyMessageSent();
+					});
 					for (let num = 0; num < 1000; ++num) {
-						tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+						noopHeuristic.notifyMessageProcessed(generateOp());
 					}
-					assert.equal(counter, 0, "No messages sent after 999 ops");
+					assert.equal(counter, 0, "No noops requested after 999 ops");
 					await tickClock(1);
-					assert.equal(counter, 1, "One message should be sent");
+					assert.equal(counter, 1, "One noop should be requested");
 				});
 
 				it("Should update after op count threshold", async () => {
@@ -306,20 +295,6 @@ describe("Loader", () => {
 
 					await emitSequentialOps(noopCountFrequency + 1);
 					await tickClock(expectedTimeout);
-				});
-
-				it("Should immediately update with immediate content", async () => {
-					immediateNoOp = true;
-					let runCount = 0;
-					await startDeltaManager();
-
-					emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-						assertOneValidAcceptOp(messages);
-						runCount++;
-					});
-
-					await emitSequentialOps(1);
-					assert.strictEqual(runCount, 1);
 				});
 
 				it("Should not update if op submitted during timeout", async () => {
@@ -514,6 +489,49 @@ describe("Loader", () => {
 
 					deltaManager.connectionManager.forceReadonly(true);
 				});
+			});
+
+			it("Closed abort reason should be passed fetch abort signal", async () => {
+				const mockLogger = new MockLogger();
+				await startDeltaManager(undefined, mockLogger, () => ({
+					fetchMessages: (
+						_from: number,
+						_to: number | undefined,
+						abortSignal?: AbortSignal,
+						_cachedOnly?: boolean,
+					) => {
+						return {
+							read: async () => {
+								await new Promise<void>((resolve) => {
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									abortSignal!.onabort = () => {
+										resolve();
+									};
+								});
+
+								throw new Error(
+									// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+									(abortSignal as AbortSignal & { reason: any }).reason,
+								);
+							},
+						};
+					},
+				}));
+
+				// Dispose will trigger abort
+				deltaManager.dispose();
+				await flushPromises();
+
+				mockLogger.assertMatch([
+					{
+						eventName: "DeltaManager_GetDeltasAborted",
+						reason: "DeltaManager is closed",
+					},
+					{
+						eventName: "GetDeltas_Exception",
+						error: "DeltaManager is closed",
+					},
+				]);
 			});
 		});
 	});

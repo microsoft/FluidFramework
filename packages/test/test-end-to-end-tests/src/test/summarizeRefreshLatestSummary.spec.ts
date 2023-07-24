@@ -17,11 +17,6 @@ import {
 describeNoCompat("Summarizer can refresh a snapshot from the server", (getTestObjectProvider) => {
 	const settings = {};
 	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: { state: "disabled" },
-			},
-		},
 		loaderProps: { configProvider: mockConfigProvider(settings) },
 	};
 

@@ -83,16 +83,13 @@ emitter.on("clientCreate", (client) => {
 				appendAddIntervalToRevertibles(interval, channel.revertibles);
 			}
 		});
-		// Note: delete and change interval edits are disabled for now, and will be reenabled
-		// once bugs AB#4544 and AB#4543 (respectively) are resolved.
-
 		collection.on("deleteInterval", (interval, local, op) => {
 			if (local && !channel.isCurrentRevert) {
 				appendDeleteIntervalToRevertibles(channel, interval, channel.revertibles);
 			}
 		});
-		collection.on("changeInterval", (interval, previousInterval, local, op) => {
-			if (local && !channel.isCurrentRevert) {
+		collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
+			if (local && !channel.isCurrentRevert && !slide) {
 				appendChangeIntervalToRevertibles(
 					channel,
 					interval,
@@ -127,7 +124,7 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0,
 	},
 	// Once the bugs are resolved, the test count will go back to being set at 100.
-	defaultTestCount: 10,
+	defaultTestCount: 100,
 	// Uncomment this line to replay a specific seed from its failure file:
 	// replay: 0,
 	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
@@ -171,7 +168,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam);
+	const baseGenerator = makeOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
@@ -183,17 +180,18 @@ describe("IntervalCollection fuzz testing", () => {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
 			take(
-				// Shortened op stream for now. Will be reset to 100 after bugs are resolved.
-				30,
+				100,
+				// Weights are explicitly defined here while bugs are being resolved. Once resolved,
+				// the weights in the defaultOptions parameter will be used.
 				operationGenerator({
 					weights: {
 						revertWeight: 2,
 						addText: 2,
-						removeRange: 0,
+						removeRange: 1,
 						addInterval: 2,
-						deleteInterval: 0,
-						changeInterval: 0,
-						changeProperties: 0,
+						deleteInterval: 2,
+						changeInterval: 2,
+						changeProperties: 2,
 					},
 				}),
 			),

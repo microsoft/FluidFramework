@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ReadBuffer } from "../ReadBufferUtils";
 import { TreeBuilderSerializer } from "../WriteBufferUtils";
 import {
@@ -59,15 +59,18 @@ function createLongBuffer(length: number) {
 
 describe("Tree Representation tests", () => {
 	let builder: TreeBuilderSerializer;
-
+	const logger = new MockLogger();
 	beforeEach(() => {
 		builder = new TreeBuilderSerializer();
+	});
+	afterEach(() => {
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	function validate(length = -1) {
 		const buffer = builder.serialize();
 		assert.strictEqual(buffer.length, length, "buffer size not equal");
-		const builder2 = TreeBuilder.load(new ReadBuffer(buffer), new TelemetryUTLogger()).builder;
+		const builder2 = TreeBuilder.load(new ReadBuffer(buffer), logger).builder;
 		compareNodes(builder, builder2);
 	}
 

@@ -339,9 +339,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
 	/**
-	 * Returns true if the container has been closed, otherwise false.
+	 * Returns true if the container has been closed and/or disposed, otherwise false.
 	 */
 	readonly closed: boolean;
+
+	/**
+	 * Returns true if the container has been disposed, otherwise false.
+	 */
+	readonly disposed?: boolean;
 
 	/**
 	 * Whether or not there are any local changes that have not been saved.
@@ -366,6 +371,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	close(error?: ICriticalContainerError): void;
 
 	/**
+	 * @deprecated - This is moved to the IContainerExperimental interface. To access you should cast IContainerExperimental before attempting to use
+	 *
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
 	 * @experimental

@@ -53,7 +53,8 @@ export class ForestSummarizer implements Summarizable {
 		this.treeBlob = cachedValue(async (observer) => {
 			// TODO: could optimize to depend on tree only, not also schema.
 			recordDependency(observer, this.forest);
-			const treeText = this.getTreeString();
+			// TODO:#4632: Using JSON.stringify here doesn't properly handle `IFluidHandle`s, which the encoded summary may contain.
+			const treeText = this.getTreeString((c) => JSON.stringify(c));
 
 			// For now we are not chunking the data, and instead put it in a single blob:
 			// TODO: use lower level API to avoid blob manager?
@@ -68,13 +69,13 @@ export class ForestSummarizer implements Summarizable {
 	 *
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
-	private getTreeString(): string {
+	private getTreeString(stringify: SummaryElementStringifier): string {
 		// TODO: maybe assert there are no other roots
 		// (since we don't save them, and they should not exist outside transactions).
 		moveToDetachedField(this.forest, this.cursor);
 		const roots = mapCursorField(this.cursor, jsonableTreeFromCursor);
 		this.cursor.clear();
-		return JSON.stringify(roots);
+		return stringify(roots);
 	}
 
 	public getAttachSummary(
@@ -83,7 +84,7 @@ export class ForestSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		return this.summarizeCore(stringify, this.getTreeString());
+		return this.summarizeCore(stringify, this.getTreeString(stringify));
 	}
 
 	public async summarize(

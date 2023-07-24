@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Package } from "@fluidframework/build-tools";
+import { Context, Package, supportedMonoRepoValues } from "@fluidframework/build-tools";
 import path from "node:path";
-import { ReleaseGroup } from "./releaseGroups";
+import { filterFlags, selectionFlags } from "./flags";
+import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
 
+/**
+ * The criteria that should be used for selecting package-like objects from a collection.
+ */
 export interface PackageSelectionCriteria {
 	/**
 	 * True if independent packages are selected; false otherwise.
@@ -29,6 +33,19 @@ export interface PackageSelectionCriteria {
 	directory?: string;
 }
 
+/**
+ * A pre-defined PackageSelectionCriteria that selects all packages.
+ */
+export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
+	independentPackages: true,
+	releaseGroups: [...knownReleaseGroups],
+	releaseGroupRoots: [...knownReleaseGroups],
+	directory: undefined,
+};
+
+/**
+ * The criteria that should be used for filtering package-like objects from a collection.
+ */
 export interface PackageFilterOptions {
 	/**
 	 * If set, filters IN packages whose scope matches the strings provided.
@@ -50,20 +67,15 @@ export interface PackageFilterOptions {
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageSelectionFlags = (flags: any): PackageSelectionCriteria => {
+export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelectionCriteria => {
 	const options: PackageSelectionCriteria =
 		flags.all === true
-			? {
-					independentPackages: true,
-					releaseGroups: ["all"],
-					releaseGroupRoots: ["all"],
-					directory: undefined,
-			  }
+			? AllPackagesSelectionCriteria
 			: {
 					independentPackages: flags.packages ?? false,
 					releaseGroups: flags.releaseGroup ?? [],
 					releaseGroupRoots: flags.releaseGroupRoot ?? [],
-					directory: flags.directory,
+					directory: flags.dir,
 			  };
 
 	return options;
@@ -74,7 +86,7 @@ export const parsePackageSelectionFlags = (flags: any): PackageSelectionCriteria
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageFilterFlags = (flags: any): PackageFilterOptions => {
+export const parsePackageFilterFlags = (flags: filterFlags): PackageFilterOptions => {
 	const options: PackageFilterOptions = {
 		private: flags.private,
 		scope: flags.scope,
@@ -82,6 +94,98 @@ export const parsePackageFilterFlags = (flags: any): PackageFilterOptions => {
 	};
 
 	return options;
+};
+
+/**
+ * A type indicating the kind of package that is being processed. This enables subcommands to vary behavior based on the
+ * type of package.
+ */
+export type PackageKind =
+	/**
+	 * Package is an independent package.
+	 */
+	| "independentPackage"
+
+	/**
+	 * Package is part of a release group, but is _not_ the root.
+	 */
+	| "releaseGroupChildPackage"
+
+	/**
+	 * Package is the root package of a release group.
+	 */
+	| "releaseGroupRootPackage"
+
+	/**
+	 * Package is being loaded from a directory. The package may be one of the other three kinds. This kind is only used
+	 * when running on a package directly using its directory.
+	 */
+	| "packageFromDirectory";
+
+/**
+ * A convenience type mapping a package to its PackageKind.
+ */
+export type PackageWithKind = Package & { kind: PackageKind };
+
+/**
+ * Selects packages from the context based on the selection.
+ *
+ * @param context - The context.
+ * @param selection - The selection criteria to use to select packages.
+ * @returns An array containing the selected packages.
+ */
+const selectPackagesFromContext = (
+	context: Context,
+	selection: PackageSelectionCriteria,
+): PackageWithKind[] => {
+	const selected: PackageWithKind[] = [];
+
+	if (selection.directory !== undefined) {
+		const pkg = Package.load(
+			path.join(selection.directory, "package.json"),
+			"none",
+			undefined,
+			{
+				kind: "packageFromDirectory" as PackageKind,
+			},
+		);
+		selected.push(pkg);
+	}
+
+	// Select independent packages
+	if (selection.independentPackages === true) {
+		for (const pkg of context.independentPackages) {
+			selected.push(
+				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+					kind: "independentPackage",
+				}),
+			);
+		}
+	}
+
+	// Select release group packages
+	for (const rg of selection.releaseGroups) {
+		for (const pkg of context.packagesInReleaseGroup(rg)) {
+			selected.push(
+				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+					kind: "releaseGroupChildPackage",
+				}),
+			);
+		}
+	}
+
+	// Select release group root packages
+	for (const rg of selection.releaseGroupRoots ?? []) {
+		const packages = context.packagesInReleaseGroup(rg);
+		if (packages.length === 0) {
+			continue;
+		}
+		const dir = packages[0].directory;
+		const pkg = Package.loadDir(dir, rg);
+		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
+	}
+
+	return selected;
 };
 
 /**
@@ -97,59 +201,38 @@ export const selectAndFilterPackages = (
 	context: Context,
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
-): { selected: PackageDetails[]; filtered: PackageDetails[] } => {
-	const selected: PackageDetails[] = [];
+): { selected: PackageWithKind[]; filtered: PackageWithKind[] } => {
+	const selected = selectPackagesFromContext(context, selection);
 
-	if (selection.directory !== undefined) {
-		selected.push({
-			package: new Package(path.join(selection.directory, "package.json"), "none", undefined),
-			kind: "packageFromDirectory",
-		});
-	}
-
-	// Select packages
-	if (selection.independentPackages === true) {
-		for (const pkg of context.independentPackages) {
-			selected.push({ package: pkg, kind: "independentPackage" });
-		}
-	}
-
-	for (const rg of selection.releaseGroups) {
-		for (const pkg of context.packagesInReleaseGroup(rg)) {
-			selected.push({ package: pkg, kind: "releaseGroupChildPackage" });
-		}
-	}
-
-	for (const rg of selection.releaseGroupRoots ?? []) {
-		const dir = context.packagesInReleaseGroup(rg)[0].directory;
-		const pkg = new Package(path.join(dir, "package.json"), rg);
-		selected.push({ package: pkg, kind: "releaseGroupRootPackage" });
-	}
-
+	// Filter packages if needed
 	const filtered = filter === undefined ? selected : filterPackages(selected, filter);
 
 	return { selected, filtered };
 };
 
 /**
+ * Convenience type that extracts only the properties of a package that are needed for filtering.
+ */
+type FilterablePackage = Pick<Package, "name" | "private">;
+
+/**
  * Filters a list of packages by the filter criteria.
  *
  * @param packages - An array of packages to be filtered.
  * @param filters - The filter criteria to filter the packages by.
+ * @typeParam T - The type of the package-like objects being filtered.
  * @returns An array containing only the filtered items.
  */
-export function filterPackages(
-	packages: PackageDetails[],
+export function filterPackages<T extends FilterablePackage>(
+	packages: T[],
 	filters: PackageFilterOptions,
-): PackageDetails[] {
-	const filtered = packages.filter((details) => {
+): T[] {
+	const filtered = packages.filter((pkg) => {
 		if (filters === undefined) {
 			return true;
 		}
 
-		const { package: pkg } = details;
-
-		const isPrivate: boolean = pkg.packageJson.private ?? false;
+		const isPrivate: boolean = pkg.private ?? false;
 		if (filters.private !== undefined && filters.private !== isPrivate) {
 			return false;
 		}
@@ -181,38 +264,4 @@ export function filterPackages(
 
 function scopesToPrefix(scopes: string[] | undefined): string[] | undefined {
 	return scopes === undefined ? undefined : scopes.map((s) => `${s}/`);
-}
-
-/**
- * A type indicating the kind of package that is being processed. This enables subcommands to vary behavior based on the
- * type of package.
- */
-export type PackageKind =
-	/**
-	 * Package is an independent package.
-	 */
-	| "independentPackage"
-
-	/**
-	 * Package is part of a release group, but is _not_ the root.
-	 */
-	| "releaseGroupChildPackage"
-
-	/**
-	 * Package is the root package of a release group.
-	 */
-	| "releaseGroupRootPackage"
-
-	/**
-	 * Package is being loaded from a directory. The package may be one of the other three kinds. This kind is only used
-	 * when running on a package directly using its directory.
-	 */
-	| "packageFromDirectory";
-
-/**
- * A convenience type mapping a directory containing a package to its PackageKind.
- */
-export interface PackageDetails {
-	package: Package;
-	kind: PackageKind;
 }

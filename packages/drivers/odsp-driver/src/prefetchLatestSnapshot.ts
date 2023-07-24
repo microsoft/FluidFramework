@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
@@ -16,7 +15,7 @@ import {
 	IOdspUrlParts,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
@@ -65,7 +64,9 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
-	const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
+	const odspLogger = createOdspLogger(
+		createChildLogger({ logger, namespace: "PrefetchSnapshot" }),
+	);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 	const resolvedUrlData: IOdspUrlParts = {
@@ -141,15 +142,24 @@ export async function prefetchLatestSnapshot(
 					});
 					assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
 					await cacheP;
+					// Schedule it to remove from cache after 5s.
+					// 1. While it's in snapshotNonPersistentCache: Load flow will use this value and will not attempt
+					// to fetch snapshot from network again. That's the best from perf POV, but cache will not be
+					// updated if we keep it in this cache, thus we want to eventually remove snapshot from this cache.
+					// 2. After it's removed from snapshotNonPersistentCache: snapshot is present in persistent cache,
+					// so we sill still use it (in accordance with cache policy controlled by host). But load flow will
+					// also fetch snapshot (in parallel) from storage and update cache. This is fine long term,
+					// but is an extra cost (unneeded network call). However since it is 5s older, new network call
+					// will update the snapshot in cache.
+					setTimeout(() => {
+						snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
+					}, 5000);
 				})
 				.catch((err) => {
+					// Remove it from the non persistent cache if an error occured.
+					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					snapshotContentsWithEpochP.reject(err);
 					throw err;
-				})
-				.finally(() => {
-					// Remove it from the non persistent cache once it is cached in the persistent cache or an error
-					// occured.
-					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 				});
 			return true;
 		},

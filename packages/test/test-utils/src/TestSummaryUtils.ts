@@ -7,15 +7,15 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISummarizer, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -85,6 +85,7 @@ export async function createSummarizerFromFactory(
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
+	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
@@ -97,7 +98,7 @@ export async function createSummarizerFromFactory(
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
-		configProvider: mockConfigProvider(),
+		configProvider,
 		logger,
 	});
 	return createSummarizerCore(container, loader, summaryVersion);
@@ -120,7 +121,7 @@ export async function createSummarizer(
 		...config,
 		runtimeOptions: {
 			...config?.runtimeOptions,
-			summaryOptions: defaultSummaryOptions,
+			summaryOptions: config?.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
 		loaderProps: {
 			...config?.loaderProps,
@@ -141,6 +142,7 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
+		submitResult.error.data = submitResult.data;
 		throw submitResult.error;
 	}
 	assert(

@@ -154,28 +154,29 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		assertMapValues(remoteMap, messageCount, largeString);
 	});
 
-	itExpects(
-		"Small batches pass while disconnected, fail when the container connects and compression is disabled",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
-		async () => {
-			const maxMessageSizeInBytes = 600 * 1024;
-			await setupContainers(disableCompressionConfig);
-			const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
-			const messageCount = 10;
-			localContainer.disconnect();
-			for (let i = 0; i < 3; i++) {
-				setMapKeys(localMap, messageCount, largeString);
-				await new Promise<void>((resolve) => setTimeout(resolve));
-				// Individual small batches will pass, as the container is disconnected and
-				// batches will be stored as pending
-				assert.equal(localContainer.closed, false);
-			}
+	it("Small batches pass while disconnected, succeed when the container connects and compression is disabled", async function () {
+		// Blocked waiting on AB#2690
+		if (provider.driver.type === "local") {
+			this.skip();
+		}
 
-			// On reconnect, all small batches will be sent at once
-			localContainer.connect();
-			await provider.ensureSynchronized();
-		},
-	);
+		const maxMessageSizeInBytes = 600 * 1024;
+		await setupContainers(disableCompressionConfig);
+		const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
+		const messageCount = 10;
+		localContainer.disconnect();
+		for (let i = 0; i < 3; i++) {
+			setMapKeys(localMap, messageCount, largeString);
+			await new Promise<void>((resolve) => setTimeout(resolve));
+			// Individual small batches will pass, as the container is disconnected and
+			// batches will be stored as pending
+			assert.equal(localContainer.closed, false);
+		}
+
+		// On reconnect, all small batches will be sent at once
+		localContainer.connect();
+		await provider.ensureSynchronized();
+	});
 
 	it("Batched small ops pass when batch is larger than max op size", async function () {
 		// flush mode is not applicable for the local driver
@@ -579,7 +580,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
-					(op) => op.contents?.type === ContainerMessageType.ChunkedOp,
+					(op) =>
+						(op.contents as { type?: unknown } | undefined)?.type ===
+						ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -642,7 +645,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents)?.type === ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 

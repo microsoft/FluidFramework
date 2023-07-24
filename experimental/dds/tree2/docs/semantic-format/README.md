@@ -103,12 +103,12 @@ during a rebase).
 Here’s an example of what a command definition may look like:
 
 ```TypeScript
-const incrementDotColorCommand = {
+const deleteFirstDotCommand = {
     id: 'ada59364-b55c-4f35-95cf-867e93a141f5' as CommandId,
-    run: (context: CommandContext, { dot }: { dot: Dot }) => {
-        const color: NumberNode = dot.color;
-        const newColor = (color[value] + 1) % dotColors.length;
-        return color.setValue(newColor, context);
+    run: (context: CommandContext, { dotList }: { dotList: DotList }) => {
+        const index = 0;
+        const count = 1;
+        return dotList.delete(index, count);
     }
 }
 ```
@@ -116,7 +116,7 @@ const incrementDotColorCommand = {
 And a possible pattern for registering commands:
 
 ```TypeScript
-const canvasCommands: CommandRegistry = [ addDotCommand, incrementDotColorCommand ];
+const canvasCommands: CommandRegistry = [ addDotCommand, deleteFirstDotCommand ];
 ...
 const checkout = await sharedTree.checkOut(canvasCommands);
 ```
@@ -125,15 +125,15 @@ The Checkout interface has a runCommand method:
 
 ```TypeScript
 checkout.runCommand({
-   command: incrementDotColorCommand,
-   anchors: { dot }
+   command: deleteFirstDotCommand,
+   anchors: { dotList }
 });
 ```
 
 The CommandContext method has the same method, allowing commands to call other commands. Helper functions can be used to simplify the syntax:
 
 ```TypeScript
-checkout.runCommand(incrementDotColor(dot));
+checkout.runCommand(deleteFirstDotCommand(dotList));
 ```
 
 ## Edits

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldKindIdentifier, RevisionTag, Value } from "../../core";
+import { FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
 import { Brand } from "../../util";
 
 /**
@@ -73,33 +73,7 @@ export interface NodeExistsConstraint {
  * @alpha
  */
 export interface NodeChangeset extends HasFieldChanges {
-	valueChange?: ValueChange;
-	valueConstraint?: ValueConstraint;
 	nodeExistsConstraint?: NodeExistsConstraint;
-}
-
-/**
- * @alpha
- */
-export interface ValueConstraint {
-	value: Value;
-	violated: boolean;
-}
-
-/**
- * @alpha
- */
-export interface ValueChange {
-	/**
-	 * The revision in which this change occurred.
-	 * Undefined when it can be inferred from context.
-	 */
-	revision?: RevisionTag;
-
-	/**
-	 * Can be left unset to represent the value being cleared.
-	 */
-	value?: Value;
 }
 
 /**

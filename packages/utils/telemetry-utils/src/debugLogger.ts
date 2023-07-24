@@ -7,18 +7,31 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 import {
 	TelemetryLogger,
 	MultiSinkLogger,
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerPropertyBags,
+	formatTick,
 } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
+ * Create a logger which uses the debug library for logging
+ * @param props - namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ */
+export function createDebugLogger(props: {
+	namespace: string;
+	properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt {
+	return DebugLogger.create(props.namespace, props.properties);
+}
+/**
  * Implementation of debug logger
+ * @deprecated - use createDebugLogger instead.
  */
 export class DebugLogger extends TelemetryLogger {
 	/**
@@ -72,7 +85,7 @@ export class DebugLogger extends TelemetryLogger {
 		multiSinkLogger.addLogger(
 			DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
-		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
+		multiSinkLogger.addLogger(createChildLogger({ logger: baseLogger, namespace }));
 
 		return multiSinkLogger;
 	}
@@ -111,7 +124,7 @@ export class DebugLogger extends TelemetryLogger {
 		newEvent.eventName = undefined;
 
 		let tick = "";
-		tick = `tick=${TelemetryLogger.formatTick(performance.now())}`;
+		tick = `tick=${formatTick(performance.now())}`;
 
 		// Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
 		const stack = newEvent.stack ? newEvent.stack : "";
