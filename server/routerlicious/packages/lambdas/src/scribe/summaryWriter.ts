@@ -591,7 +591,7 @@ export class SummaryWriter implements ISummaryWriter {
 		const LogtailRequestedLength = to - from - 1;
 
 		if (LogtailRequestedLength > this.maxLogtailLength) {
-			Lumberjack.info(`Limiting logtail length`, this.lumberProperties);
+			Lumberjack.warning(`Limiting logtail length`, this.lumberProperties);
 			to = from + this.maxLogtailLength + 1;
 		}
 		const logTail = await this.getLogTail(from, to, pending);

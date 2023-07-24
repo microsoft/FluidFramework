@@ -320,7 +320,7 @@ export class ScribeLambdaFactory
 				tenantId,
 				documentId,
 				lastCheckpoint.protocolState.sequenceNumber,
-				lastCheckpoint.protocolState.sequenceNumber + this.maxLogtailLength,
+				lastCheckpoint.protocolState.sequenceNumber + this.maxLogtailLength + 1,
 				"scribe",
 			);
 		}
