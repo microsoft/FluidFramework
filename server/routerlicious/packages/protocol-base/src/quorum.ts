@@ -345,9 +345,12 @@ export class QuorumProposals
 		// Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
 		// TODO this can be optimized if necessary to avoid the linear search+sort
 		const completed: PendingProposal[] = [];
+		const pending: PendingProposal[] = [];
 		for (const [sequenceNumber, proposal] of this.proposals) {
 			if (sequenceNumber <= msn) {
 				completed.push(proposal);
+			} else {
+				pending.push(proposal);
 			}
 		}
 		completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
@@ -367,6 +370,25 @@ export class QuorumProposals
 
 			// clear the values cache
 			this.valuesSnapshotCache = undefined;
+
+			// check for pending proposals with sequence number greater than msn
+			let proposalPending = false;
+			for (const proposal of pending) {
+				if (proposal.key == committedProposal.key) {
+					proposalPending = true; 
+				}
+			}
+
+			// emit approveProposalComplete when all pending proposals are processed
+			if (!proposalPending) {
+				this.emit(
+					"approveProposalComplete",
+					committedProposal.sequenceNumber,
+					committedProposal.key,
+					committedProposal.value,
+					committedProposal.approvalSequenceNumber,
+				);
+			}
 
 			this.emit(
 				"approveProposal",
