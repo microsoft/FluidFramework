@@ -110,6 +110,7 @@ async function generateScreenshots() {
 function colorSchemeFromTheme(theme) {
 	switch (theme) {
 		case "dark":
+		case "high-contrast": // Ensure we run high-contrast in dark mode
 			return "dark";
 		case "light":
 			return "light";
