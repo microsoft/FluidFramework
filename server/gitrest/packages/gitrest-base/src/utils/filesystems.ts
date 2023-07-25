@@ -7,13 +7,13 @@ import fs from "node:fs";
 import * as Redis from "ioredis";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
+import { IRedisParameters } from "@fluidframework/server-services-utils";
 import {
 	IFileSystemManager,
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
 } from "./definitions";
 import { RedisFsManager, RedisFsConfig } from ".";
-import { IRedisParameters } from "@fluidframework/server-services-utils";
 export class NodeFsManagerFactory implements IFileSystemManagerFactory {
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
 		return fs;

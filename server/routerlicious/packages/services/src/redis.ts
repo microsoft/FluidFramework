@@ -81,6 +81,11 @@ export class RedisCache implements ICache {
 		}
 	}
 
+	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
+		const result = await this.client.keys(`${this.getKey(keyPrefix)}*`);
+		return result;
+	}
+
 	/**
 	 * Translates the input key to the one we will actually store in redis
 	 */
