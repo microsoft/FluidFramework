@@ -7,10 +7,7 @@ parameters:
 # The node version required. The version must already be installed in the image. 
 - name: version
   type: string
-
-# The path containing the project(s) to build.
-- name: buildDirectory
-  type: string
+  default: '16.16.0'
 
 steps:
 - task: Bash@3
@@ -18,11 +15,11 @@ steps:
   displayName: Set node version
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: $(Build.SourcesDirectory)
     script: |
       # Output installed node versions
       n ls
       # Use the specified node version
       sudo n ${{ parameters.version }}
       # Output the node version
-      node --version
+      echo "Using node $(node --version)"

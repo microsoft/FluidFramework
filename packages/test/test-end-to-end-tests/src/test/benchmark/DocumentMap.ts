@@ -173,9 +173,8 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		const { container: containerClient, summarizer: summarizerClient } = await createSummarizer(
 			this.props.provider,
 			this._mainContainer,
+			undefined,
 			summaryVersion,
-			undefined,
-			undefined,
 			this.logger,
 		);
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);

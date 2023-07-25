@@ -43,6 +43,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
+import { useLogger } from "../TelemetryUtils";
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -192,6 +193,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	const { containerKey } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
+	const usageLogger = useLogger();
 
 	const styles = useContainerSummaryViewStyles();
 
@@ -260,6 +262,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 				containerKey,
 			}),
 		);
+		usageLogger?.sendTelemetryEvent({ eventName: "ConnectContainerButtonClicked" });
 	}
 
 	function forceDisconnect(): void {
@@ -269,6 +272,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
+		usageLogger?.sendTelemetryEvent({ eventName: "DisconnectContainerButtonClicked" });
 	}
 
 	function closeContainer(): void {
@@ -278,6 +282,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
+		usageLogger?.sendTelemetryEvent({ eventName: "CloseContainerButtonClicked" });
 	}
 
 	// Build up status string
@@ -384,7 +389,6 @@ interface ActionsBarProps extends IContainerActions {
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, containerState, tryConnect, forceDisconnect, closeContainer } =
 		props;
-
 	const styles = useActionBarStyles();
 
 	const changeConnectionStateButton = isContainerConnected ? (

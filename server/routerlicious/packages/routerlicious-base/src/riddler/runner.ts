@@ -30,6 +30,7 @@ export class RiddlerRunner implements IRunner {
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
 		private readonly secretManager: ISecretManager,
+		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly cache?: ICache,
 	) {}
 
@@ -46,6 +47,7 @@ export class RiddlerRunner implements IRunner {
 			this.defaultHistorianUrl,
 			this.defaultInternalHistorianUrl,
 			this.secretManager,
+			this.fetchTenantKeyMetricInterval,
 			this.cache,
 		);
 		riddler.set("port", this.port);

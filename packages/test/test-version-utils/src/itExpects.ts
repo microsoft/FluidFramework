@@ -13,7 +13,7 @@ export type ExpectedEvents =
 	| ITelemetryGenericEvent[]
 	| Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
 
-function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
+export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
 	return async function (this: Context) {
 		const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
 		if (provider === undefined) {

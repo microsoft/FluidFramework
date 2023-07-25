@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { validateMessages } from "@fluidframework/driver-base";
@@ -19,6 +18,7 @@ import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
+import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -128,7 +128,7 @@ export class OdspDeltaStorageService {
 }
 
 export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
-	private firstCacheMiss = false;
+	private useCacheForOps = true;
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
@@ -147,6 +147,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		) => Promise<ISequencedDocumentMessage[]>,
 		private readonly requestFromSocket: (from: number, to: number) => void,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
+		private readonly storageManagerGetter: () => OdspDocumentStorageService | undefined,
 	) {}
 
 	public fetchMessages(
@@ -162,6 +163,10 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		// Better implementation would be to return only what we have in cache, but that also breaks API
 		assert(!cachedOnly || toTotal === undefined, 0x1e3);
 
+		// Don't use cache for ops is snapshot is fetched from network or if it was not fetched at all.
+		this.useCacheForOps =
+			this.useCacheForOps &&
+			this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;
@@ -188,13 +193,13 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			this.requestFromSocket(from, to);
 
 			// Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
-			// This saves a bit of processing time
-			if (!this.firstCacheMiss) {
+			// This saves a bit of processing time.
+			if (this.useCacheForOps) {
 				const messagesFromCache = await this.getCached(from, to);
 				validateMessages("cached", messagesFromCache, from, this.logger);
 				// Set the firstCacheMiss as true in case we didn't get all the ops.
 				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
-				this.firstCacheMiss = from + messagesFromCache.length < to;
+				this.useCacheForOps = from + messagesFromCache.length >= to;
 				if (messagesFromCache.length !== 0) {
 					opsFromCache += messagesFromCache.length;
 					return {

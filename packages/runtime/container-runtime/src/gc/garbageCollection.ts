@@ -16,9 +16,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
+	createChildLogger,
+	createChildMonitoringContext,
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -137,11 +137,13 @@ export class GarbageCollector implements IGarbageCollector {
 		const baseSnapshot = createParams.baseSnapshot;
 		const readAndParseBlob = createParams.readAndParseBlob;
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(createParams.baseLogger, "GarbageCollector", {
+		this.mc = createChildMonitoringContext({
+			logger: createParams.baseLogger,
+			namespace: "GarbageCollector",
+			properties: {
 				all: { completedGCRuns: () => this.completedRuns },
-			}),
-		);
+			},
+		});
 
 		this.configs = generateGCConfigs(this.mc, createParams);
 
@@ -466,8 +468,11 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 
 		const logger = options.logger
-			? ChildLogger.create(options.logger, undefined, {
-					all: { completedGCRuns: () => this.completedRuns },
+			? createChildLogger({
+					logger: options.logger,
+					properties: {
+						all: { completedGCRuns: () => this.completedRuns },
+					},
 			  })
 			: this.mc.logger;
 

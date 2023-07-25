@@ -242,9 +242,6 @@ stages:
               fi
 
         - template: include-use-node-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            version: '16.16.0'
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml
