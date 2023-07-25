@@ -28,7 +28,7 @@ export const enum ThemeOption {
 /**
  * Light theme used by the devtools UI.
  */
-const lightTheme: ThemeInfo = {
+export const lightTheme: ThemeInfo = {
 	name: ThemeOption.Light,
 	theme: webLightTheme,
 };
@@ -36,7 +36,7 @@ const lightTheme: ThemeInfo = {
 /**
  * Dark theme used by the devtools UI.
  */
-const darkTheme: ThemeInfo = {
+export const darkTheme: ThemeInfo = {
 	name: ThemeOption.Dark,
 	theme: webDarkTheme,
 };
@@ -44,7 +44,7 @@ const darkTheme: ThemeInfo = {
 /**
  * High-contrast theme used by the devtools UI.
  */
-const highContrastTheme: ThemeInfo = {
+export const highContrastTheme: ThemeInfo = {
 	name: ThemeOption.HighContrast,
 	theme: teamsHighContrastTheme,
 };
