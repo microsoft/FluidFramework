@@ -261,7 +261,9 @@ export class SnapshotV1 {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
-				const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
+				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
+					json: segment.toJSONObject(),
+				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				if (segment.seq! > minSeq) {
@@ -277,6 +279,12 @@ export class SnapshotV1 {
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
 					raw.removedSeq = segment.removedSeq;
+
+					// back compat for when we split overlap and removed client
+					raw.removedClient =
+						segment.removedClientIds !== undefined
+							? this.getLongClientId(segment.removedClientIds[0])
+							: undefined;
 
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
 						this.getLongClientId(id),
