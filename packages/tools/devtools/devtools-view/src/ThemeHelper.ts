@@ -110,3 +110,15 @@ export const ThemeContext = React.createContext<ThemeContextValue>({
 		console.warn("Attempting to set context theme before context has been initialized.");
 	},
 });
+
+/**
+ * Gets the currently set {@link ThemeContext} and returns its value.
+ * @throws If the context is not set.
+ */
+export function useThemeContext(): ThemeContextValue {
+	const context = React.useContext(ThemeContext);
+	if (context === undefined) {
+		throw new Error("ThemeContext was not set.");
+	}
+	return context;
+}
