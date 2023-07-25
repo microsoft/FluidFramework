@@ -1560,6 +1560,9 @@ export class Container
 			// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
 			if (loadMode.opsBeforeReturn === "sequenceNumber") {
 				assert(loadToSequenceNumber !== undefined, "sequenceNumber should be defined");
+				// Note: It is possible that we think the latest snapshot is newer than the specified sequence number
+				// due to saved ops that may be replayed after the snapshot.
+				// https://dev.azure.com/fluidframework/internal/_workitems/edit/5055
 				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
