@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt, createDebugLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -428,7 +428,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt = createDebugLogger({
+	public readonly logger: ITelemetryLoggerExt = createChildLogger({
 		namespace: "fluid:MockFluidDataStoreRuntime",
 	});
 	public quorum = new MockQuorumClients();
