@@ -7,12 +7,12 @@ import fs from "node:fs";
 import * as Redis from "ioredis";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
-import { IRedisParameters } from "@fluidframework/server-services-utils";
 import {
 	IFileSystemManager,
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
 } from "./definitions";
+import { RedisParams } from "./redisFs";
 import { RedisFsManager, RedisFsConfig } from ".";
 export class NodeFsManagerFactory implements IFileSystemManagerFactory {
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
@@ -28,7 +28,7 @@ export class MemFsManagerFactory implements IFileSystemManagerFactory {
 }
 
 export class RedisFsManagerFactory implements IFileSystemManagerFactory {
-	private readonly redisParams: IRedisParameters;
+	private readonly redisParams: RedisParams;
 	private readonly redisOptions: Redis.RedisOptions;
 	private readonly redisFsConfig: RedisFsConfig;
 	constructor(config: Provider) {
@@ -63,7 +63,6 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 		}
 
 		this.redisParams = {
-			prefix: "git",
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 	}
