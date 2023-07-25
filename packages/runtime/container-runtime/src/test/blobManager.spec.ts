@@ -625,7 +625,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData?.redirectTable.size, 3);
 	});
 
-	it.only("all blobs attached", async () => {
+	it("all blobs attached", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
