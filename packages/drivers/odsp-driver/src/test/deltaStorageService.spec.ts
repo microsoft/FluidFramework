@@ -6,11 +6,12 @@
 import { strict as assert } from "assert";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { LocalPersistentCache } from "../odspCache";
 import { EpochTracker } from "../epochTracker";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchOk } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
@@ -37,7 +38,7 @@ describe("DeltaStorageService", () => {
 	const fileEntry = { docId: "docId", resolvedUrl };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
-		const logger = new TelemetryUTLogger();
+		const logger = new MockLogger();
 		const deltaStorageService = new OdspDeltaStorageService(
 			testDeltaStorageUrl,
 			async (_refresh) => "?access_token=123",
@@ -47,6 +48,7 @@ describe("DeltaStorageService", () => {
 		const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
 		const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
 		assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	describe("Get Returns Response With Op Envelope", () => {
@@ -86,14 +88,17 @@ describe("DeltaStorageService", () => {
 		};
 
 		let deltaStorageService: OdspDeltaStorageService;
+		const logger = new MockLogger();
 		before(() => {
-			const logger = new TelemetryUTLogger();
 			deltaStorageService = new OdspDeltaStorageService(
 				testDeltaStorageUrl,
 				async (_refresh) => "",
 				createUtEpochTracker(fileEntry, logger),
 				logger,
 			);
+		});
+		afterEach(() => {
+			logger.assertMatchNone([{ category: "error" }]);
 		});
 
 		it("Should deserialize the delta feed response correctly", async () => {
@@ -156,14 +161,17 @@ describe("DeltaStorageService", () => {
 		};
 
 		let deltaStorageService: OdspDeltaStorageService;
+		const logger = new MockLogger();
 		before(() => {
-			const logger = new TelemetryUTLogger();
 			deltaStorageService = new OdspDeltaStorageService(
 				testDeltaStorageUrl,
 				async (_refresh) => "",
 				createUtEpochTracker(fileEntry, logger),
 				logger,
 			);
+		});
+		afterEach(() => {
+			logger.assertMatchNone([{ category: "error" }]);
 		});
 
 		it("Should deserialize the delta feed response correctly", async () => {
@@ -196,7 +204,10 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("DeltaStorageServiceWith Cache Tests", () => {
-		const logger = new TelemetryUTLogger();
+		const logger = new MockLogger();
+		afterEach(() => {
+			logger.assertMatchNone([{ category: "error" }]);
+		});
 
 		it("FirstCacheMiss should update to first miss op seq number correctly", async () => {
 			const deltasFetchResult: IDeltasFetchResult = { messages: [], partialResult: false };
@@ -233,6 +244,7 @@ describe("DeltaStorageService", () => {
 				async (from, to) => getCached(from, to),
 				(from, to) => [],
 				(ops) => {},
+				() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
 			);
 
 			const messages = odspDeltaStorageServiceWithCache.fetchMessages(1, undefined);

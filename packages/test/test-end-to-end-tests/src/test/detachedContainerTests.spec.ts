@@ -24,7 +24,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -999,7 +999,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 			urlResolver: provider.urlResolver,
 			documentServiceFactory,
 			codeLoader,
-			logger: new TelemetryNullLogger(),
+			logger: createChildLogger(),
 		});
 
 		const container = await mockLoader.createDetachedContainer(provider.defaultCodeDetails);

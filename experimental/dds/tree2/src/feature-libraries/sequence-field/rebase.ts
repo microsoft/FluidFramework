@@ -45,6 +45,7 @@ import {
 	Modify,
 	EmptyInputCellMark,
 	NoopMarkType,
+	HasLineage,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -401,11 +402,11 @@ function rebaseMark<TNodeChange>(
 				);
 			}
 		}
-		rebasedMark = withoutDetachEvent(rebasedMark);
+		rebasedMark = withoutCellId(rebasedMark);
 	} else if (
 		nodeExistenceState === NodeExistenceState.Alive &&
 		(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
-		rebasedMark.detachEvent === undefined
+		rebasedMark.cellId === undefined
 	) {
 		setPairedMarkStatus(
 			moveEffects,
@@ -547,14 +548,13 @@ function makeDetachedMark<T>(
 		return { count: 0 };
 	}
 
-	assert(mark.detachEvent === undefined, 0x69f /* Expected mark to be attached */);
-	return { ...mark, detachEvent: { revision: detachIntention, localId: detachId } };
+	assert(mark.cellId === undefined, 0x69f /* Expected mark to be attached */);
+	return { ...mark, cellId: { revision: detachIntention, localId: detachId } };
 }
 
-function withoutDetachEvent<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
+function withoutCellId<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
 	const newMark = { ...mark };
-	delete newMark.detachEvent;
-	delete newMark.lineage;
+	delete newMark.cellId;
 	return newMark;
 }
 
@@ -684,10 +684,11 @@ function handleLineage<T>(
 	// TODO: Handle cases where the base changeset is a composition of multiple revisions.
 	// TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
 	// e.g., if the inverse of the lineage event is muted after rebasing.
-	tryRemoveLineageEvents(rebasedMark, baseIntention);
+	const lineageHolder = getLineageHolder(rebasedMark);
+	tryRemoveLineageEvents(lineageHolder, baseIntention);
 
 	for (const entry of lineageEntries) {
-		addLineageEntry(rebasedMark, baseIntention, entry.id, entry.count, entry.count);
+		addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
 	}
 
 	lineageRecipients.push(rebasedMark);
@@ -700,33 +701,33 @@ function addLineageToRecipients(
 	count: number,
 ) {
 	for (const mark of recipients) {
-		addLineageEntry(mark, revision, id, count, 0);
+		addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
 	}
 }
 
 function addLineageEntry(
-	mark: Mark<unknown>,
+	lineageHolder: HasLineage,
 	revision: RevisionTag,
 	id: ChangesetLocalId,
 	count: number,
 	offset: number,
 ) {
-	if (mark.lineage === undefined) {
-		mark.lineage = [];
+	if (lineageHolder.lineage === undefined) {
+		lineageHolder.lineage = [];
 	}
 
-	if (mark.lineage.length > 0) {
-		const lastEntry = mark.lineage[mark.lineage.length - 1];
+	if (lineageHolder.lineage.length > 0) {
+		const lastEntry = lineageHolder.lineage[lineageHolder.lineage.length - 1];
 		if (lastEntry.revision === revision && (lastEntry.id as number) + lastEntry.count === id) {
 			if (lastEntry.offset === lastEntry.count) {
-				mark.lineage[mark.lineage.length - 1] = {
+				lineageHolder.lineage[lineageHolder.lineage.length - 1] = {
 					...lastEntry,
 					count: lastEntry.count + count,
 					offset: lastEntry.offset + offset,
 				};
 				return;
 			} else if (offset === 0) {
-				mark.lineage[mark.lineage.length - 1] = {
+				lineageHolder.lineage[lineageHolder.lineage.length - 1] = {
 					...lastEntry,
 					count: lastEntry.count + count,
 				};
@@ -735,18 +736,29 @@ function addLineageEntry(
 		}
 	}
 
-	mark.lineage.push({ revision, id, count, offset });
+	lineageHolder.lineage.push({ revision, id, count, offset });
 }
 
-function tryRemoveLineageEvents<T>(mark: Mark<T>, revisionToRemove: RevisionTag) {
-	if (mark.lineage === undefined) {
+function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: RevisionTag) {
+	if (lineageHolder.lineage === undefined) {
 		return;
 	}
 
-	mark.lineage = mark.lineage.filter((event) => event.revision !== revisionToRemove);
-	if (mark.lineage.length === 0) {
-		delete mark.lineage;
+	lineageHolder.lineage = lineageHolder.lineage.filter(
+		(event) => event.revision !== revisionToRemove,
+	);
+	if (lineageHolder.lineage.length === 0) {
+		delete lineageHolder.lineage;
 	}
+}
+
+function getLineageHolder(mark: Mark<unknown>): HasLineage {
+	if (isNewAttach(mark)) {
+		return mark;
+	}
+
+	assert(mark.cellId !== undefined, "Attached cells cannot have lineage");
+	return mark.cellId;
 }
 
 /**
@@ -775,7 +787,7 @@ function compareCellPositions(
 
 	if (newId !== undefined) {
 		const offset = getOffsetInCellRange(
-			baseMark.lineage,
+			baseId.lineage,
 			newId.revision,
 			newId.localId,
 			newLength,
@@ -783,21 +795,23 @@ function compareCellPositions(
 		if (offset !== undefined) {
 			return offset > 0 ? offset : -Infinity;
 		}
+
+		const newOffset = getOffsetInCellRange(
+			newId.lineage,
+			baseId.revision,
+			baseId.localId,
+			baseLength,
+		);
+		if (newOffset !== undefined) {
+			return newOffset > 0 ? -newOffset : Infinity;
+		}
 	}
 
-	const newOffset = getOffsetInCellRange(
-		newMark.lineage,
-		baseId.revision,
-		baseId.localId,
-		baseLength,
-	);
-	if (newOffset !== undefined) {
-		return newOffset > 0 ? -newOffset : Infinity;
-	}
-
-	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
-	if (cmp !== 0) {
-		return Math.sign(cmp) * Infinity;
+	if (newId !== undefined) {
+		const cmp = compareLineages(baseId.lineage, newId.lineage);
+		if (cmp !== 0) {
+			return Math.sign(cmp) * Infinity;
+		}
 	}
 
 	if (isNewAttach(newMark)) {

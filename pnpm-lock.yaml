@@ -7621,7 +7621,6 @@ importers:
       '@types/node-fetch': ^2.5.10
       '@types/sha.js': ^2.4.0
       '@types/sinon': ^7.0.13
-      abort-controller: ^3.0.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7652,7 +7651,6 @@ importers:
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      abort-controller: 3.0.0
       node-fetch: 2.6.11
       socket.io-client: 4.6.1
       uuid: 8.3.2
@@ -9001,10 +8999,10 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
-      abort-controller: ^3.0.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
+      debug: ^4.1.1
       double-ended-queue: ^2.1.0-0
       eslint: ~8.6.0
       events: ^3.1.0
@@ -9031,7 +9029,7 @@ importers:
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      abort-controller: 3.0.0
+      debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
@@ -9042,7 +9040,7 @@ importers:
       '@fluid-tools/build-cli': 0.21.0_@types+node@16.18.38
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0_@types+node@16.18.38
-      '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.5.2.0
+      '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.5.2.0_debug@4.3.4
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38

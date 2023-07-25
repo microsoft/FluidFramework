@@ -13,7 +13,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
 
 // @public
-export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, baseLogger?: ITelemetryBaseLogger): Promise<T>;
+export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // (No @packageDocumentation comment for this package)
 
