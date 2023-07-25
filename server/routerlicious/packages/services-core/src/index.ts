@@ -129,6 +129,8 @@ export {
 	ITaskMessageSender,
 } from "./taskMessages";
 export {
+	EncryptionKeyVersion,
+	IEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,

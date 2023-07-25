@@ -3,19 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISignalMessage } from "@fluidframework/protocol-definitions";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 export class LeaderElection {
 	private readonly beatInEveryNSecs: number = 1000; // 1 secs
 	private readonly leaderWait: number = 30000; // 30 secs
 	private lastPinged: number | undefined;
-	private readonly logger: TelemetryLogger;
+	private readonly logger: ITelemetryLogger;
 	private prevPing: number | undefined;
 
 	constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
-		this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
+		this.logger = createChildLogger({
+			logger: this.dataStoreRuntime.logger,
+			namespace: "SignalLeaderElection",
+		});
 	}
 
 	public setupLeaderElection() {

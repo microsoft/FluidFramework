@@ -57,7 +57,7 @@ logger.send({ category: "mockEvent", eventName: "mockEventName" });
 
 // More commonly, we would provide the logger to the instance of the Fluid Loader used by your application. This enables Fluid telemetry to be automatically sent to App Insights as your Fluid App is running.
 const tinyliciousClient = new TinyliciousClient({
-	logger: logger,
+	logger,
 });
 
 const createContainerResult = await tinyliciousClient.createContainer(containerSchema);

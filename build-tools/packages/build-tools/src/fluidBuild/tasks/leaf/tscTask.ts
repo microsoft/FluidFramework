@@ -9,6 +9,7 @@ import * as ts from "typescript";
 
 import { defaultLogger } from "../../../common/logging";
 import { existsSync, readFileAsync } from "../../../common/utils";
+import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import * as TscUtils from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -23,6 +24,7 @@ interface ITsBuildInfo {
 		semanticDiagnosticsPerFile?: any[];
 		options: any;
 	};
+	version: string;
 }
 
 export class TscTask extends LeafTask {
@@ -63,7 +65,9 @@ export class TscTask extends LeafTask {
 		// Keep a list of files that need to be compiled based on the command line flags and config, and
 		// remove the files that we sees from the tsBuildInfo.  The remaining files are
 		// new files that need to be rebuilt.
-		const configFileNames = new Set(config.fileNames);
+		const configFileNames = new Set(
+			config.fileNames.map((p) => TscUtils.getCanonicalFileName(path.normalize(p))),
+		);
 
 		// Check dependencies file hashes
 		const fileNames = tsBuildInfo.program.fileNames;
@@ -91,7 +95,7 @@ export class TscTask extends LeafTask {
 				}
 
 				// Remove files that we have built before
-				configFileNames.delete(fullPath);
+				configFileNames.delete(TscUtils.getCanonicalFileName(path.normalize(fullPath)));
 			} catch (e: any) {
 				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
 				return false;
@@ -101,6 +105,22 @@ export class TscTask extends LeafTask {
 		if (configFileNames.size !== 0) {
 			// New files that are not in the previous build, we are not up to date.
 			this.traceTrigger(`new file detected ${[...configFileNames.values()].join(",")}`);
+			return false;
+		}
+		try {
+			const tsVersion = await getInstalledPackageVersion(
+				"typescript",
+				this.node.pkg.directory,
+			);
+
+			if (tsVersion !== tsBuildInfo.version) {
+				this.traceTrigger("previous build error");
+				return false;
+			}
+		} catch (e) {
+			this.traceTrigger(
+				`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
+			);
 			return false;
 		}
 
@@ -384,11 +404,16 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				config = await readFileAsync(this.configFileFullPath, "utf8");
 			}
 
-			return JSON.stringify({ tsBuildInfoFiles, config });
+			return JSON.stringify({
+				version: await this.getToolVersion(),
+				config,
+				tsBuildInfoFiles,
+			});
 		} catch (e) {
 			this.traceExec(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}
 	protected abstract get configFileFullPath(): string;
+	protected abstract getToolVersion(): Promise<string>;
 }

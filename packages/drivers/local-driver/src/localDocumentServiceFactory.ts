@@ -10,7 +10,7 @@ import {
 	IDocumentServicePolicies,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
@@ -85,6 +85,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 			this.documentDeltaConnectionsMap,
 			this.policies,
 			this.innerDocumentService,
+			logger,
 		);
 	}
 

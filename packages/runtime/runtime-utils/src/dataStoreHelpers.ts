@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ITaggedTelemetryPropertyType,
+	FluidObject,
+	IFluidRouter,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -68,6 +73,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
 
 /**
  * Takes a set of packages and joins them pkg1/pkg2... etc. Tags the field as a code artifact
+ * @deprecated - use tagCodeArtifacts instead
  */
 export function packagePathToTelemetryProperty(
 	packagePath: readonly string[] | undefined,

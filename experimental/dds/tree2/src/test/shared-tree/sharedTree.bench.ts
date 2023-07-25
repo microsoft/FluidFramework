@@ -16,7 +16,7 @@ import {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 } from "../../feature-libraries";
-import { jsonNumber, jsonSchema } from "../../domains";
+import { jsonNumber, jsonSchema, singleJsonCursor } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { typeboxValidator } from "../../external-utilities";
@@ -47,18 +47,14 @@ const nodesCountDeep = [
 const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", jsonSchema);
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	local: {
-		foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
-	},
+const linkedListSchema = deepBuilder.structRecursive("linkedList", {
+	foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
 });
 
 const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", jsonSchema);
 
-const wideRootSchema = wideBuilder.object("WideRoot", {
-	local: {
-		foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
-	},
+const wideRootSchema = wideBuilder.struct("WideRoot", {
+	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 });
 
 const wideSchema = wideBuilder.intoDocumentSchema(
@@ -310,12 +306,14 @@ describe("SharedTree benchmarks", () => {
 							initialTree: makeJsDeepTree(numberOfNodes, 1),
 							schema: deepSchema,
 						});
-						const path = deepPath(numberOfNodes + 1);
+						const path = deepPath(numberOfNodes);
 
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							tree.editor.setValue(path, value);
+							tree.editor
+								.valueField({ parent: path, field: localFieldKey })
+								.set(singleJsonCursor(value));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -360,12 +358,22 @@ describe("SharedTree benchmarks", () => {
 							schema: wideSchema,
 						});
 
-						const path = wideLeafPath(numberOfNodes - 1);
+						const rootPath = {
+							parent: undefined,
+							parentField: rootFieldKeySymbol,
+							parentIndex: 0,
+						};
+						const nodeIndex = numberOfNodes - 1;
+						const editor = tree.editor.sequenceField({
+							parent: rootPath,
+							field: localFieldKey,
+						});
 
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							tree.editor.setValue(path, setCount);
+							editor.delete(nodeIndex, 1);
+							editor.insert(nodeIndex, [singleJsonCursor(value)]);
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);

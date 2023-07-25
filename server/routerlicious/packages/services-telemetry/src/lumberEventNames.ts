@@ -17,6 +17,7 @@ export enum LumberEventName {
 	UnitTestEvent = "UnitTestEvent",
 
 	// Lambdas
+	AlfredRunner = "AlfredRunner",
 	ClientSummary = "ClientSummary",
 	DeliHandler = "DeliHandler",
 	KafkaRunner = "KafkaRunner",
@@ -42,10 +43,12 @@ export enum LumberEventName {
 	CreateDocumentUpdateDocumentCollection = "CreateDocumentUpdateDocumentCollection",
 	CreateDocInitialSummaryWrite = "CreateDocInitialSummaryWrite",
 	DisconnectDocument = "DisconnectDocument",
+	DisconnectDocumentRetry = "DisconnectDocumentRetry",
 	RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
 	HttpRequest = "HttpRequest",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
 	ReprocessOps = "ReprocessOps",
+	MongoMonitoring = "MongoMonitoring",
 }

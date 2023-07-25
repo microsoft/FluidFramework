@@ -1,6 +1,14 @@
 # @fluidframework/protocol-definitions Changelog
 
-## [2.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v2.0.0) (2023-05-09)
+## [2.1.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v2.1.0)
+
+### Updated signal interfaces
+
+Updating signal interfaces for some planned improvements. The intention is split the interface between signals submitted by clients to the server and the resulting signals sent from the server to clients.
+
+A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has been added, which will be the typing for signals sent from the client to the server. Both extend a new ISignalMessageBase interface that contains common members.
+
+## [2.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v2.0.0)
 
 ### Remove RemoteHelp from MessageType
 
@@ -9,6 +17,10 @@ This was deprecated in 1.2.0 and is now removed.
 ### Remove IHelpMessage and IQueueMessage
 
 These are unused and have been removed.
+
+### IQuorumClients and IQuorumProposals members disposed and dispose() removed
+
+Directly calling dispose() on the IQuorumClients and IQuorumProposals puts the system in an inconsistent state, and inspecting the disposed state of the IQuorumClients and IQuorumProposals is not recommended (instead, prefer to inspect either the IContainer.disposed, IContainerRuntime.disposed, or IFluidDataStoreRuntime.disposed depending on your scenario). These members have been removed.
 
 ## [1.2.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v1.2.0) (2023-04-05)
 

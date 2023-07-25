@@ -139,6 +139,7 @@ module.exports = {
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
+				["fluid-build", "@fluidframework/build-tools"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
