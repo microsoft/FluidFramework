@@ -380,7 +380,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * before the start of or after the end of the tree
 	 */
 	public createLocalReferencePosition(
-		segment: ISegment,
+		segment: ISegment | "start" | "end",
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
@@ -1094,7 +1094,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getContainingSegment<T extends ISegment>(
-		pos: number | "start" | "end",
+		pos: number,
 		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 		localSeq?: number,
 	) {

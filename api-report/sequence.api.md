@@ -512,9 +512,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected didAttach(): void;
     getContainingSegment(pos: number): {
-        segment: ISegment;
-        offset: number;
-    } | {
         segment: T | undefined;
         offset: number | undefined;
     };

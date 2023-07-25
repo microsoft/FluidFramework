@@ -812,7 +812,7 @@ export class SequenceInterval implements ISerializableInterval {
 
 export function createPositionReferenceFromSegoff(
 	client: Client,
-	segoff: { segment: ISegment | undefined; offset: number | undefined },
+	segoff: { segment: ISegment | undefined; offset: number | undefined } | "start" | "end",
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
 	localSeq?: number,
@@ -820,6 +820,17 @@ export function createPositionReferenceFromSegoff(
 	slidingPreference?: SlidingPreference,
 	canSlideToEndpoint?: boolean,
 ): LocalReferencePosition {
+	if (segoff === "start" || segoff === "end") {
+		return client.createLocalReferencePosition(
+			segoff,
+			undefined,
+			refType,
+			undefined,
+			slidingPreference,
+			canSlideToEndpoint,
+		);
+	}
+
 	if (segoff.segment) {
 		const ref = client.createLocalReferencePosition(
 			segoff.segment,
@@ -866,17 +877,24 @@ function createPositionReference(
 			(refType & ReferenceType.SlideOnRemove) !== 0,
 			0x2f5 /* op create references must be SlideOnRemove */,
 		);
-		segoff = client.getContainingSegment(pos, {
-			referenceSequenceNumber: op.referenceSequenceNumber,
-			clientId: op.clientId,
-		});
-		segoff = getSlideToSegoff(segoff);
+		if (pos === "start" || pos === "end") {
+			segoff = pos;
+		} else {
+			segoff = client.getContainingSegment(pos, {
+				referenceSequenceNumber: op.referenceSequenceNumber,
+				clientId: op.clientId,
+			});
+			segoff = getSlideToSegoff(segoff);
+		}
 	} else {
 		assert(
 			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
 			0x2f6 /* SlideOnRemove references must be op created */,
 		);
-		segoff = client.getContainingSegment(pos, undefined, localSeq);
+		segoff =
+			pos === "start" || pos === "end"
+				? pos
+				: client.getContainingSegment(pos, undefined, localSeq);
 	}
 
 	return createPositionReferenceFromSegoff(
@@ -2041,10 +2059,15 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		pos: number | "start" | "end",
 		seqNumberFrom: number,
 		localSeq: number,
-	): number | undefined {
+	): number | "start" | "end" | undefined {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
 		}
+
+		if (pos === "start" || pos === "end") {
+			return pos;
+		}
+
 		const { clientId } = this.client.getCollabWindow();
 		const { segment, offset } = this.client.getContainingSegment(
 			pos,

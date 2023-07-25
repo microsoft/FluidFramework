@@ -107,7 +107,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -121,10 +121,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number | "start" | "end", sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
-        segment: ISegment;
-        offset: number;
-    } | {
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };

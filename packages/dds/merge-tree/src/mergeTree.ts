@@ -914,7 +914,7 @@ export class MergeTree {
 	}
 
 	public getContainingSegment<T extends ISegment>(
-		pos: number | "start" | "end",
+		pos: number,
 		refSeq: number,
 		clientId: number,
 		localSeq?: number,
@@ -925,14 +925,6 @@ export class MergeTree {
 		);
 		let segment: T | undefined;
 		let offset: number | undefined;
-
-		if (pos === "start") {
-			return { segment: this.startOfTree as ISegment, offset: 0 };
-		}
-
-		if (pos === "end") {
-			return { segment: this.endOfTree as ISegment, offset: 0 };
-		}
 
 		const leaf = (
 			leafSeg: ISegment,
@@ -2356,7 +2348,7 @@ export class MergeTree {
 	endOfTree = new EndOfTreeSegment(this);
 
 	public createLocalReferencePosition(
-		segment: ISegmentLeaf,
+		_segment: ISegmentLeaf | "start" | "end",
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
@@ -2364,13 +2356,25 @@ export class MergeTree {
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		if (
-			isRemovedAndAcked(segment) &&
+			_segment !== "start" &&
+			_segment !== "end" &&
+			isRemovedAndAcked(_segment) &&
 			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient) &&
-			segment.endpointType === undefined
+			_segment.endpointType === undefined
 		) {
 			throw new UsageError(
 				"Can only create SlideOnRemove or Transient local reference position on a removed segment",
 			);
+		}
+
+		let segment: ISegmentLeaf;
+
+		if (_segment === "start") {
+			segment = this.startOfTree;
+		} else if (_segment === "end") {
+			segment = this.endOfTree;
+		} else {
+			segment = _segment;
 		}
 
 		const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
