@@ -476,6 +476,12 @@ describe("Branches", () => {
 
 			assert.equal(rootBranch.isTransacting(), true);
 			assertNestedForks(nestedForks);
+
+			rootBranch.commitTransaction();
+			assertNestedForks({
+				disposedForks: nestedForks.notDisposedForks,
+				notDisposedForks: [],
+			});
 		});
 
 		it("aborted", () => {
@@ -485,6 +491,12 @@ describe("Branches", () => {
 
 			assert.equal(rootBranch.isTransacting(), true);
 			assertNestedForks(nestedForks);
+
+			rootBranch.abortTransaction();
+			assertNestedForks({
+				disposedForks: nestedForks.notDisposedForks,
+				notDisposedForks: [],
+			});
 		});
 	});
 
