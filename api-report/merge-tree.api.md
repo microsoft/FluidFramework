@@ -1025,8 +1025,6 @@ export interface SegmentGroup {
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // @deprecated (undocumented)
-    clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
     // (undocumented)
@@ -1177,8 +1175,6 @@ export class TrackingGroup implements ITrackingGroup {
     has(trackable: Trackable): boolean;
     // (undocumented)
     link(trackable: Trackable): void;
-    // @deprecated (undocumented)
-    get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
