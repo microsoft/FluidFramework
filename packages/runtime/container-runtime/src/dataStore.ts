@@ -161,6 +161,9 @@ class DataStore implements IDataStore {
 		return "Success";
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return this.fluidDataStoreChannel.request(request);
 	}
@@ -182,6 +185,9 @@ class DataStore implements IDataStore {
 		this.pendingAliases = datastores.pendingAliases;
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public get IFluidRouter() {
 		return this.fluidDataStoreChannel;
 	}

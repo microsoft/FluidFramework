@@ -27,6 +27,9 @@ import {
  * IFluidHandle can be retrieved by calling `get` on it.
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -83,6 +86,9 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 		handle.attachGraph();
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed in future major release
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const object: FluidObject<IFluidRouter> = await this.get();
