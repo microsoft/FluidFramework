@@ -18,12 +18,11 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
+import { Interval, ISerializableInterval } from "./intervals";
 import {
-	Interval,
 	IntervalCollection,
 	IIntervalCollection,
 	IntervalCollectionValueType,
-	ISerializableInterval,
 } from "./intervalCollection";
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";

@@ -404,6 +404,25 @@ export class EditManager<
 	}
 
 	/**
+	 * @returns The length of the longest branch maintained by this EditManager.
+	 * This may be the length of a peer branch or the local branch.
+	 * The length is counted from the lowest common ancestor with the trunk such that a fully sequenced branch would
+	 * have length zero.
+	 */
+	public getLongestBranchLength(): number {
+		let max = 0;
+		const trunkHead = this.trunk.getHead();
+		for (const branch of this.peerLocalBranches.values()) {
+			const branchPath = getPathFromBase(branch.getHead(), trunkHead);
+			if (branchPath.length > max) {
+				max = branchPath.length;
+			}
+		}
+		const localPath = getPathFromBase(this.localBranch.getHead(), trunkHead);
+		return Math.max(max, localPath.length);
+	}
+
+	/**
 	 * Needs to be called after a summary is loaded.
 	 * @remarks This is necessary to keep the trunk's repairDataStoreProvider up to date with the
 	 * local's after a summary load.

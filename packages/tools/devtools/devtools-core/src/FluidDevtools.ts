@@ -24,6 +24,7 @@ import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { VisualizeSharedObject } from "./data-visualization";
 import { ContainerKey } from "./CommonInterfaces";
+import { pkgVersion as devtoolsVersion } from "./packageVersion";
 
 /**
  * Message logging options used by the root devtools.
@@ -198,6 +199,7 @@ export class FluidDevtools implements IFluidDevtools {
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({
 				features: supportedFeatures,
+				devtoolsVersion,
 			}),
 		);
 	};

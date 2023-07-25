@@ -4,9 +4,13 @@
  */
 
 import { IDocumentStorage } from "@fluidframework/server-services-core";
-import { defaultHash } from "@fluidframework/server-services-client";
+import {
+	defaultHash,
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
+} from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
+import winston from "winston";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage): Router {
@@ -36,8 +40,11 @@ export function create(storage: IDocumentStorage): Router {
 		const id = request.body.id || uuid();
 
 		// Summary information
-		const summary = request.body.summary;
+		const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+			? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+			: request.body.summary;
 
+		winston.info(`SummaryTree converted = ${request.body.enableAnyBinaryBlobOnFirstSummary}.`);
 		// Protocol state
 		const sequenceNumber = request.body.sequenceNumber;
 		const values = request.body.values;

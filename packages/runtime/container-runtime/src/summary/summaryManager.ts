@@ -4,10 +4,10 @@
  */
 
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import {
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -97,7 +97,7 @@ export class SummaryManager implements IDisposable {
 			SummaryCollection,
 			"opsSinceLastAck" | "addOpListener" | "removeOpListener"
 		>,
-		parentLogger: ITelemetryLoggerExt,
+		parentLogger: ITelemetryBaseLogger,
 		/** Creates summarizer by asking interactive container to spawn summarizing container and
 		 * get back its Summarizer instance. */
 		private readonly requestSummarizerFn: () => Promise<ISummarizer>,
@@ -108,8 +108,12 @@ export class SummaryManager implements IDisposable {
 		}: Readonly<Partial<ISummaryManagerConfig>> = {},
 		private readonly disableHeuristics?: boolean,
 	) {
-		this.logger = ChildLogger.create(parentLogger, "SummaryManager", {
-			all: { clientId: () => this.latestClientId },
+		this.logger = createChildLogger({
+			logger: parentLogger,
+			namespace: "SummaryManager",
+			properties: {
+				all: { clientId: () => this.latestClientId },
+			},
 		});
 
 		this.connectedState.on("connected", this.handleConnected);

@@ -5,13 +5,12 @@
 
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
 	generateStack,
 	LoggingError,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	raiseConnectedEvent,
-	TelemetryDataTag,
+	createChildMonitoringContext,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -63,7 +62,6 @@ import {
 	exceptionToResponse,
 	GCDataBuilder,
 	requestFluidObject,
-	packagePathToTelemetryProperty,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
@@ -251,11 +249,13 @@ export class FluidDataStoreRuntime
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(dataStoreContext.logger, "FluidDataStoreRuntime", {
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.logger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
 				all: { dataStoreId: uuid() },
-			}),
-		);
+			},
+		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -578,10 +578,13 @@ export class FluidDataStoreRuntime
 		return this.audience;
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		this.verifyNotClosed();
 
-		return this.dataStoreContext.uploadBlob(blob);
+		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
@@ -1098,18 +1101,12 @@ export class FluidDataStoreRuntime
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
-			channelType,
-			channelId: {
-				value: channelId,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			fluidDataStorePackagePath: packagePathToTelemetryProperty(
-				this.dataStoreContext.packagePath,
-			),
+			...tagCodeArtifacts({
+				channelType,
+				channelId,
+				fluidDataStoreId: this.id,
+				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+			}),
 			stack: generateStack(),
 		});
 		this.localChangesTelemetryCount--;

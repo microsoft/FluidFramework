@@ -1,6 +1,6 @@
 # This file is deprecated; contents has moved
 
-To see upcoming changes in Fluid Framework releases, see [UPCOMING.md](./UPCOMING.md).
+To see upcoming changes in Fluid Framework releases, see [the .changeset folder](./.changeset).
 
 To see the changes in past releases, check the release in the
 [Releases](https://github.com/microsoft/FluidFramework/releases) section of our GitHub repo.

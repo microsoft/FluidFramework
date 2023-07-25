@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-pairwise-generator",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,7 +19,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -63,7 +63,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/random-js": "^1.0.31",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",

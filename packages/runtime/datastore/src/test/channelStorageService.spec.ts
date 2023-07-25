@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ChannelStorageService } from "../channelStorageService";
@@ -21,10 +21,12 @@ describe("ChannelStorageService", () => {
 				throw new Error("not implemented");
 			},
 		};
-		const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
+		const logger = new MockLogger();
+		const ss = new ChannelStorageService(tree, storage, logger);
 
 		assert.strictEqual(await ss.contains("/"), false);
 		assert.deepStrictEqual(await ss.list(""), []);
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	it("Top Level Blob", async () => {
@@ -39,11 +41,13 @@ describe("ChannelStorageService", () => {
 				return stringToBuffer(id, "utf8");
 			},
 		};
-		const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
+		const logger = new MockLogger();
+		const ss = new ChannelStorageService(tree, storage, logger);
 
 		assert.strictEqual(await ss.contains("foo"), true);
 		assert.deepStrictEqual(await ss.list(""), ["foo"]);
 		assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	it("Nested Blob", async () => {
@@ -63,10 +67,12 @@ describe("ChannelStorageService", () => {
 				return stringToBuffer(id, "utf8");
 			},
 		};
-		const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
+		const logger = new MockLogger();
+		const ss = new ChannelStorageService(tree, storage, logger);
 
 		assert.strictEqual(await ss.contains("nested/foo"), true);
 		assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
 		assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 });

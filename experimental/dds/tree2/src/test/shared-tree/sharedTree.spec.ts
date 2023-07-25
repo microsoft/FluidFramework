@@ -1701,7 +1701,7 @@ describe("SharedTree", () => {
 			pushTestValueDirect(fork, 42);
 			assert.throws(
 				() => view.merge(fork, false),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"A view that is merged into an in-progress transaction must be disposed",
@@ -1727,7 +1727,7 @@ describe("SharedTree", () => {
 			const fork = view.fork();
 			assert.throws(
 				() => fork.transaction.commit(),
-				(e) => validateAssertionError(e, "No transaction is currently in progress"),
+				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
 			);
 		});
 
@@ -1740,15 +1740,6 @@ describe("SharedTree", () => {
 			pushTestValueDirect(view, "C");
 			view.merge(fork);
 			assert.deepEqual(getTestValues(view), ["A", "B", "C"]);
-		});
-
-		itView("can commit over a branch that pulls", (view) => {
-			view.transaction.start();
-			pushTestValueDirect(view, 42);
-			const fork = view.fork();
-			view.transaction.commit();
-			fork.rebaseOnto(view);
-			assert.equal(getTestValue(fork), 42);
 		});
 
 		itView("can handle a pull while in progress", (view) => {
