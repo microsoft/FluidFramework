@@ -57,48 +57,50 @@ async function generateScreenshots() {
 
 	console.debug(`Found ${components.length} test stories. Generating screenshots...`);
 
-	// Run screenshot generation on each detected component
-	// TODO: aggregate errors and list at the end.
-	for (const component of components) {
-		const { filePath: storyFilePath, name: storyName } = decodeComponentId(
-			component.componentId,
-		);
+	try {
+		// Run screenshot generation on each detected component
+		// TODO: aggregate errors and list at the end.
+		for (const component of components) {
+			const { filePath: storyFilePath, name: storyName } = decodeComponentId(
+				component.componentId,
+			);
 
-		const storyFileName = path.basename(storyFilePath);
+			const storyFileName = path.basename(storyFilePath);
 
-		const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)[1];
+			const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)[1];
 
-		// Generate a separate screenshot for each of our supported themes
-		for (const theme of themes) {
-			const testName = `${storyModuleName}-${storyName} (${theme})`;
-			const screenshotFilePath = path.join(outputDirectoryPath, `${testName}.png`);
+			// Generate a separate screenshot for each of our supported themes
+			for (const theme of themes) {
+				const testName = `${storyModuleName}-${storyName} (${theme})`;
+				const screenshotFilePath = path.join(outputDirectoryPath, `${testName}.png`);
 
-			const page = await browser.newPage({
-				colorScheme: colorSchemeFromTheme(theme), // Dark mode vs light mode setting
-				forcedColors: forcedColorsFromTheme(theme), // High contrast setting
-			});
-			const preview = await workspace.preview.start(page);
+				const page = await browser.newPage({
+					colorScheme: colorSchemeFromTheme(theme), // Dark mode vs light mode setting
+					forcedColors: forcedColorsFromTheme(theme), // High contrast setting
+				});
+				const preview = await workspace.preview.start(page);
 
-			try {
-				await preview.show(component.componentId);
-				await preview.iframe.takeScreenshot(screenshotFilePath);
-			} catch (error) {
-				console.error(
-					chalk.red(`Failed to generate ${testName} screenshot due to an error:`),
-					error,
-				);
-				throw error;
+				try {
+					await preview.show(component.componentId);
+					await preview.iframe.takeScreenshot(screenshotFilePath);
+				} catch (error) {
+					console.error(
+						chalk.red(`Failed to generate ${testName} screenshot due to an error:`),
+						error,
+					);
+					throw error;
+				}
+
+				console.debug(chalk.green(`${testName} screenshot generated successfully!`));
+				console.group();
+				console.debug(`Saved to "${screenshotFilePath}".`);
+				console.groupEnd();
 			}
-
-			console.debug(chalk.green(`${testName} screenshot generated successfully!`));
-			console.group();
-			console.debug(`Saved to "${screenshotFilePath}".`);
-			console.groupEnd();
 		}
+	} finally {
+		await workspace.dispose();
+		await browser.close();
 	}
-
-	await workspace.dispose();
-	await browser.close();
 }
 
 /**
