@@ -625,6 +625,24 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData?.redirectTable.size, 3);
 	});
 
+	it.only("all blobs attached", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+		await createBlob(IsoBuffer.from("blob1", "utf8"));
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
+		await runtime.processBlobs();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
+		await runtime.processAll();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+		await createBlob(IsoBuffer.from("blob1", "utf8"));
+		await createBlob(IsoBuffer.from("blob2", "utf8"));
+		await createBlob(IsoBuffer.from("blob3", "utf8"));
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
+		await runtime.processAll();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+	});
+
 	describe("Abort Signal", () => {
 		it("abort before upload", async () => {
 			await runtime.attach();

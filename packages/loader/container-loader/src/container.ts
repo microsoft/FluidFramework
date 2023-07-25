@@ -1071,16 +1071,12 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		if (this.runtime.shutdownPendingBlobs) {
-			await this.runtime.shutdownPendingBlobs();
-		}
-
-		const pendingState = this.getPendingLocalState();
+		const pendingState = await this.getPendingLocalState(true);
 		this.close();
 		return pendingState;
 	}
 
-	public getPendingLocalState(): string {
+	public async getPendingLocalState(close?: boolean): Promise<string> {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
@@ -1099,8 +1095,9 @@ export class Container
 		);
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+		const pendingRuntimeState = await this.runtime.getPendingLocalState(close);
 		const pendingState: IPendingContainerState = {
-			pendingRuntimeState: this.runtime.getPendingLocalState(),
+			pendingRuntimeState,
 			baseSnapshot: this.baseSnapshot,
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
@@ -2464,7 +2461,7 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState?(): string;
+	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be

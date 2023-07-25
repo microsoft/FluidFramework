@@ -388,14 +388,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				// already didn't have the local ID.
 				this.transitionToOffline(localId);
 			}
-			return new Promise<void>((resolve) => {
-				if (this.allBlobsAttached) {
-					resolve();
-				} else {
-					this.on("allBlobsAttached", () => resolve());
-				}
-			});
 		}
+		return new Promise<void>((resolve) => {
+			if (this.allBlobsAttached) {
+				resolve();
+			} else {
+				this.on("allBlobsAttached", () => resolve());
+			}
+		});
 	}
 
 	/**

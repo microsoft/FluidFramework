@@ -3646,14 +3646,13 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public async shutdownPendingBlobs(): Promise<void> {
+	public async getPendingLocalState(close?: boolean): Promise<unknown> {
 		this.verifyNotClosed();
-		await this.blobManager.shutdownPendingBlobs();
-	}
-
-	public getPendingLocalState(): unknown {
 		if (this._orderSequentiallyCalls !== 0) {
 			throw new UsageError("can't get state during orderSequentially");
+		}
+		if (close) {
+			await this.blobManager.shutdownPendingBlobs();
 		}
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe

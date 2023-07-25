@@ -97,13 +97,7 @@ export interface IRuntime extends IDisposable {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): unknown;
-
-	/**
-	 * Force pending blobs to resolve and wait until they are attached to a DDS
-	 * @experimental
-	 */
-	shutdownPendingBlobs?(): unknown;
+	getPendingLocalState(close?: boolean): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state

@@ -1122,7 +1122,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
-	it.only("close while uploading blob", async function () {
+	it("close while uploading blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
@@ -1141,6 +1141,31 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
 			"blob contents",
 		);
+	});
+
+	it("close while uploading multiple blob", async function () {
+		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
+		const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
+		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+		map.set("blob handle 1", await blobP1);
+		map.set("blob handle 2", await blobP2);
+		map.set("blob handle 3", await blobP3);
+		const pendingOps = await pendingOpsP;
+
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await provider.ensureSynchronized();
+		for (let i = 1; i <= 3; i++) {
+			assert.strictEqual(
+				bufferToString(await map2.get(`blob handle ${i}`).get(), "utf8"),
+				`blob contents ${i}`,
+			);
+		}
 	});
 
 	it("load offline with blob redirect table", async function () {
@@ -1416,14 +1441,17 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		// pause outgoing ops so we can detect dropped stashed changes
 		await container.deltaManager.outbound.pause();
-
 		let pendingState;
-		// always delete stash blob on "connected" event
-		container.on("connected", (clientId: string) => {
-			pendingState = container.getPendingLocalState?.();
+
+		const connectedEvent = async (clientId: string): Promise<void> => {
+			pendingState = await container.getPendingLocalState?.();
 			// the pending data in the stash blob may not have changed, but the clientId should match our new
 			// clientId, which will now be used to attempt to resubmit pending changes
 			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+		};
+
+		container.on("connected", (clientId: string) => {
+			void connectedEvent(clientId);
 		});
 
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -1442,6 +1470,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
 		// should be safe to use
+		await pendingState;
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
@@ -1461,11 +1490,15 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		let pendingState;
 		// always delete stash blob on "connected" event
-		container.on("connected", (clientId: string) => {
-			pendingState = container.getPendingLocalState?.();
+		const connectedEvent = async (clientId: string): Promise<void> => {
+			pendingState = await container.getPendingLocalState?.();
 			// the pending data in the stash blob may not have changed, but the clientId should match our new
 			// clientId, which will now be used to attempt to resubmit pending changes
 			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+		};
+
+		container.on("connected", (clientId: string) => {
+			void connectedEvent(clientId);
 		});
 
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -1478,6 +1511,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		}
 		container.close();
 
+		await pendingState;
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
 		// should be safe to use
 		const container2 = await loader.resolve({ url }, pendingState);
