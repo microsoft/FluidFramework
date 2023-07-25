@@ -347,7 +347,7 @@ export class SchemaBuilder {
 		this.finalize();
 
 		// Check for errors:
-		const collection = buildViewSchemaCollection([...this.libraries]);
+		const collection = buildViewSchemaCollection(this.libraries);
 
 		return { ...collection, libraries: this.libraries };
 	}

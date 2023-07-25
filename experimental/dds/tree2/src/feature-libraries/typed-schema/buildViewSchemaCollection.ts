@@ -8,7 +8,7 @@ import { Adapters, TreeSchemaIdentifier } from "../../core";
 import { FullSchemaPolicy, SchemaCollection } from "../modular-schema";
 import { fail } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
-import { SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
+import { SchemaBuilder, SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
 import { FieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 
@@ -22,7 +22,7 @@ import { normalizeFlexListEager } from "./flexList";
  * (like libraries with the same name, nodes which are impossible to create etc).
  */
 export function buildViewSchemaCollection(
-	libraries: readonly SchemaLibraryData[],
+	libraries: Iterable<SchemaLibraryData>,
 ): SchemaCollection {
 	let rootFieldSchema: FieldSchema | undefined;
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
@@ -75,13 +75,18 @@ export function buildViewSchemaCollection(
 		fail(errors.join("\n"));
 	}
 
-	assert(rootFieldSchema !== undefined, "missing root field schema");
 	const result = { rootFieldSchema, treeSchema, adapters, policy: defaultSchemaPolicy };
 	const errors2 = validateViewSchemaCollection(result);
 	if (errors2.length !== 0) {
 		fail(errors2.join("\n"));
 	}
-	return result;
+
+	return {
+		rootFieldSchema: rootFieldSchema ?? SchemaBuilder.field(FieldKinds.forbidden),
+		treeSchema,
+		adapters,
+		policy: defaultSchemaPolicy,
+	};
 }
 
 export interface ViewSchemaCollection2 {

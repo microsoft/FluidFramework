@@ -11,7 +11,6 @@ import {
 	TreeSchemaIdentifier,
 	SchemaData,
 	Adapters,
-	ViewSchemaData,
 	AdaptedViewSchema,
 	Compatibility,
 	Named,
@@ -25,14 +24,12 @@ import { allowsRepoSuperset, isNeverTree } from "./comparison";
 /**
  * A collection of View information for schema, including policy.
  */
-export class ViewSchema extends ViewSchemaData {
+export class ViewSchema {
 	public constructor(
-		policy: FullSchemaPolicy,
-		adapters: Adapters,
+		public readonly policy: FullSchemaPolicy,
+		public readonly adapters: Adapters,
 		public readonly schema: SchemaCollection,
-	) {
-		super(policy, adapters);
-	}
+	) {}
 
 	/**
 	 * Determines the compatibility of a stored document

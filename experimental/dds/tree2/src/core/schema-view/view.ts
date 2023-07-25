@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FullSchemaPolicy } from "../../feature-libraries";
 import { TreeSchemaIdentifier, SchemaData } from "../schema-stored";
 
 /**
@@ -64,32 +63,6 @@ export interface TreeAdapter {
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];
-}
-
-/**
- * A collection of View information for schema, including policy.
- */
-export abstract class ViewSchemaData {
-	public constructor(
-		public readonly policy: FullSchemaPolicy,
-		public readonly adapters: Adapters,
-	) {}
-
-	/**
-	 * Determines the compatibility of a stored document
-	 * (based on its stored schema) with a viewer (based on its view schema).
-	 *
-	 * Adapters can be provided to handle differences between the two schema.
-	 * Adapters should only use to types in the `view` SchemaRepository.
-	 *
-	 * TODO: this API violates the parse don't validate design philosophy.
-	 * It should be wrapped with (or replaced by) a parse style API.
-	 */
-	public abstract checkCompatibility(stored: SchemaData): {
-		read: Compatibility;
-		write: Compatibility;
-		writeAllowingStoredSchemaUpdates: Compatibility;
-	};
 }
 
 /**

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { singleJsonCursor, cursorToJsonObject } from "../../..";
+// eslint-disable-next-line import/no-internal-modules
+import { singleJsonCursor, cursorToJsonObject } from "../../../domains/json";
 import { JsonCompatible } from "../../../util";
 import { testSpecializedCursor } from "../../cursorTestSuite";
 

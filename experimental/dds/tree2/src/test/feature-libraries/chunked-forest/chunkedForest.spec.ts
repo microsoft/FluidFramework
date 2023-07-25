@@ -41,11 +41,7 @@ import { mockIntoDelta } from "../../utils";
 describe("ChunkedForest", () => {
 	testForest({
 		suiteName: "ChunkedForest forest suite",
-		factory: () =>
-			buildChunkedForest(
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema),
-				defaultSchemaPolicy,
-			),
+		factory: (schema) => buildChunkedForest(schema, defaultSchemaPolicy),
 		skipCursorErrorCheck: true,
 	});
 

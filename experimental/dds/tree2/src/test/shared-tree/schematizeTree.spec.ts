@@ -4,9 +4,9 @@
  */
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder, Any, emptyField } from "../../feature-libraries";
+import { SchemaBuilder, Any } from "../../feature-libraries";
 import { SharedTreeFactory } from "../../shared-tree";
-import { ValueSchema, AllowedUpdateType } from "../../core";
+import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 
 const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
@@ -23,7 +23,7 @@ describe("schematizeView", () => {
 	it("initialize tree schema", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		assert.equal(tree.storedSchema.rootFieldSchema, emptyField);
+		assert.equal(tree.storedSchema.rootFieldSchema, storedEmptyFieldSchema);
 
 		const schematized = tree.schematize({
 			allowedSchemaModifications: AllowedUpdateType.None,
@@ -31,7 +31,10 @@ describe("schematizeView", () => {
 			schema,
 		});
 
-		assert.equal(schematized.storedSchema.rootFieldSchema, schemaGeneralized.rootFieldSchema);
+		assert.deepEqual(
+			schematized.storedSchema.rootFieldSchema,
+			schemaGeneralized.rootFieldSchema,
+		);
 		assert(schematized.storedSchema.treeSchema.has(root.name));
 		assert.equal(schematized.root, 10);
 	});

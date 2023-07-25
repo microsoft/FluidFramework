@@ -24,6 +24,7 @@ import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
 import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
+import { neverTree } from "../default-field-kinds";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -184,14 +185,16 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		const index = cursor.fieldIndex;
 		cursor.exitNode();
 		const key = cursor.getFieldKey();
-		// TODO: make this work for root
+		// TODO: make this work properly for root
 		cursor.exitField();
 		const parentType = cursor.type;
 		cursor.enterField(key);
+		// TODO: this should error is schema is not found.
+		// For now this suppress the error to work around root handling issues.
 		const fieldSchema = getFieldSchema(
 			key,
-			this.context.schema.treeSchema.get(parentType) ??
-				fail("requested schema that does not exist"),
+			this.context.schema.treeSchema.get(parentType) ?? neverTree,
+			// fail("requested schema that does not exist"),
 		);
 		const proxifiedField = makeField(this.context, fieldSchema, this.cursor);
 		this.cursor.enterNode(index);

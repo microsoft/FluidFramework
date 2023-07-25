@@ -9,6 +9,8 @@ import {
 	singleTextCursor,
 	prefixPath,
 	prefixFieldPath,
+	SchemaBuilder,
+	Any,
 } from "../feature-libraries";
 import {
 	LocalFieldKey,
@@ -24,44 +26,54 @@ import {
 	compareFieldUpPaths,
 	FieldUpPath,
 	PathRootPrefix,
+	ValueSchema,
 } from "../core";
 import { brand } from "../util";
 import { expectEqualPaths } from "./utils";
 
+const schemaBuilder = new SchemaBuilder("Cursor Test Suite");
+const leaf = schemaBuilder.leaf("Leaf", ValueSchema.Serializable);
+export const emptySchema = schemaBuilder.struct("Empty Struct", {});
+const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
+const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
+export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
+
+export const testTreeSchema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
-	["minimal", { type: brand("Foo") }],
-	["true boolean", { type: brand("Foo"), value: true }],
-	["false boolean", { type: brand("Foo"), value: false }],
-	["integer", { type: brand("Foo"), value: Number.MIN_SAFE_INTEGER - 1 }],
-	["string", { type: brand("Foo"), value: "test" }],
-	["string with escaped characters", { type: brand("Foo"), value: '\\"\b\f\n\r\t' }],
-	["string with emoticon", { type: brand("Foo"), value: "😀" }],
+	["minimal", { type: emptySchema.name }],
+	["true boolean", { type: leaf.name, value: true }],
+	["false boolean", { type: leaf.name, value: false }],
+	["integer", { type: leaf.name, value: Number.MIN_SAFE_INTEGER - 1 }],
+	["string", { type: leaf.name, value: "test" }],
+	["string with escaped characters", { type: leaf.name, value: '\\"\b\f\n\r\t' }],
+	["string with emoticon", { type: leaf.name, value: "😀" }],
 	[
 		"local field",
 		{
-			type: brand("Foo"),
-			fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] },
+			type: mapSchema.name,
+			fields: { x: [{ type: emptySchema.name }, { type: leaf.name, value: 6 }] },
 		},
 	],
 	[
 		"multiple local fields",
 		{
-			type: brand("Foo"),
+			type: mapSchema.name,
 			fields: {
-				a: [{ type: brand("Bar") }],
-				b: [{ type: brand("Baz") }],
+				a: [{ type: emptySchema.name }],
+				b: [{ type: emptySchema2.name }],
 			},
 		},
 	],
 	[
 		"double nested",
 		{
-			type: brand("Foo"),
+			type: mapSchema.name,
 			fields: {
 				a: [
 					{
-						type: brand("Bar"),
-						fields: { b: [{ type: brand("Baz") }] },
+						type: mapSchema.name,
+						fields: { b: [{ type: emptySchema.name }] },
 					},
 				],
 			},
@@ -70,14 +82,14 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"complex",
 		{
-			type: brand("Foo"),
+			type: mapSchema.name,
 			fields: {
-				a: [{ type: brand("Bar") }],
+				a: [{ type: mapSchema.name }],
 				b: [
 					{
-						type: brand("Bar"),
+						type: mapSchema.name,
 						fields: {
-							c: [{ type: brand("Bar"), value: 6 }],
+							c: [{ type: leaf.name, value: 6 }],
 						},
 					},
 				],
@@ -87,16 +99,16 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"siblings restored on up",
 		{
-			type: brand("Foo"),
+			type: mapSchema.name,
 			fields: {
 				X: [
 					{
-						type: brand("a"),
+						type: emptySchema.name,
 						// Inner node so that when navigating up from it,
 						// The cursor's siblings value needs to be restored.
-						fields: { q: [{ type: brand("b") }] },
+						fields: { q: [{ type: emptySchema2.name }] },
 					},
-					{ type: brand("c") },
+					{ type: emptySchema3.name },
 				],
 			},
 		},
@@ -181,6 +193,7 @@ export interface TestField<TData> {
  *
  * @param cursorName - The name of the cursor used as part of the test suite name.
  * @param builders - a collection of optional `TData` builders. The more of these are provided, the larger the test suite will be.
+ * If provided with a JsonableTree, it will either be from testData or comply with testTreeSchema.
  * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
  * @param dataFromCursor - Constructs a `TData` from the provided cursor (which might not be a `TCursor`).
  * @param testData - A collection of test cases to evaluate the cursor with. Actual content of the tree is only validated if a `reference` is provided:
@@ -206,6 +219,7 @@ export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config
  *
  * @param cursorName - The name of the cursor used as part of the test suite name.
  * @param builders - a collection of optional `TData` builders. The more of these are provided, the larger the test suite will be.
+ * If provided with a JsonableTree, it will either be from testData or comply with testTreeSchema.
  * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
  * @param dataFromCursor - Constructs a `TData` from the provided cursor (which might not be a `TCursor`).
  * @param testData - A collection of test cases to evaluate the cursor with. Actual content of the tree is only validated if a `reference` is provided:
@@ -304,6 +318,7 @@ const testKeys: readonly FieldKey[] = [
  *
  * @param cursorName - The name of the cursor used as part of the test suite name.
  * @param builders - `TData` builders. `(data: JsonableTree) => TData` is ideal and supports all tests.
+ * If provided with a JsonableTree, it will either be from testData or comply with testTreeSchema.
  * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
  * @param dataFromCursor - Constructs a `TData` from the provided cursor `TCursor`. This is tested by round tripping data.
  * @param testData - A collection of test cases to evaluate the cursor with. Actual content of the tree is only validated if a `reference` is provided:
@@ -339,11 +354,11 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				: builder.withKeys.bind(builder.withKeys)
 			: (keys: FieldKey[]) => {
 					const root: JsonableTree = {
-						type: brand("Foo"),
+						type: mapSchema.name,
 					};
 					for (const key of keys) {
 						const child: JsonableTree = {
-							type: brand("Foo"),
+							type: emptySchema.name,
 						};
 						setGenericTreeField(root, key, [child]);
 					}
@@ -424,7 +439,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			// TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
 			if (!extraRoot) {
 				it("up from root", () => {
-					const cursor = factory({ type: brand("Foo") });
+					const cursor = factory({ type: emptySchema.name });
 					assert.throws(() => {
 						cursor.exitNode();
 					});
@@ -433,14 +448,14 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			describe("getPath() and getFieldPath()", () => {
 				it("at root", () => {
 					const cursor = factory({
-						type: brand("Foo"),
+						type: emptySchema.name,
 					});
 					assert.deepEqual(cursor.getPath(), parent);
 				});
 
 				it("getFieldPath in root field", () => {
 					const cursor = factory({
-						type: brand("Foo"),
+						type: emptySchema.name,
 					});
 					cursor.enterField(brand("key"));
 					assert.deepEqual(cursor.getFieldPath(), {
@@ -451,8 +466,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("first node in a root field", () => {
 					const cursor = factory({
-						type: brand("Foo"),
-						fields: { key: [{ type: brand("Bar"), value: 0 }] },
+						type: mapSchema.name,
+						fields: { key: [{ type: leaf.name, value: 0 }] },
 					});
 					cursor.enterField(brand("key"));
 					cursor.firstNode();
@@ -465,11 +480,11 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("node in a root field", () => {
 					const cursor = factory({
-						type: brand("Foo"),
+						type: mapSchema.name,
 						fields: {
 							key: [
-								{ type: brand("Bar"), value: 0 },
-								{ type: brand("Bar"), value: 1 },
+								{ type: leaf.name, value: 0 },
+								{ type: leaf.name, value: 1 },
 							],
 						},
 					});
@@ -484,16 +499,16 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("in a nested field", () => {
 					const cursor = factory({
-						type: brand("Foo"),
+						type: mapSchema.name,
 						fields: {
 							a: [
 								{
-									type: brand("Bar"),
-									fields: { [EmptyKey]: [{ type: brand("Baz") }] },
+									type: mapSchema.name,
+									fields: { [EmptyKey]: [{ type: emptySchema.name }] },
 								},
 								{
-									type: brand("Bar"),
-									fields: { [EmptyKey]: [{ type: brand("Baz") }] },
+									type: mapSchema.name,
+									fields: { [EmptyKey]: [{ type: emptySchema.name }] },
 								},
 							],
 						},

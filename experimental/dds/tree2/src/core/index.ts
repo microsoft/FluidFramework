@@ -157,7 +157,6 @@ export {
 
 export {
 	Adapters,
-	ViewSchemaData,
 	AdaptedViewSchema,
 	Compatibility,
 	TreeAdapter,
