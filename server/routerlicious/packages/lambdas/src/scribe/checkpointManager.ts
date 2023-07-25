@@ -46,6 +46,7 @@ export class CheckpointManager implements ICheckpointManager {
 		pending: ISequencedOperationMessage[],
 		noActiveClients: boolean,
 		globalCheckpointOnly: boolean,
+		markAsCorrupt: boolean = false,
 	) {
 		const isLocalCheckpoint = !noActiveClients && !globalCheckpointOnly;
 		if (this.getDeltasViaAlfred) {
@@ -108,6 +109,7 @@ export class CheckpointManager implements ICheckpointManager {
 				"scribe",
 				checkpoint,
 				isLocalCheckpoint,
+				markAsCorrupt,
 			);
 		} else {
 			// The order of the three operations below is important.
@@ -144,6 +146,7 @@ export class CheckpointManager implements ICheckpointManager {
 				"scribe",
 				checkpoint,
 				isLocalCheckpoint,
+				markAsCorrupt,
 			);
 
 			// And then delete messagses that were already summarized.
