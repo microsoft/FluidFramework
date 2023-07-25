@@ -68,6 +68,10 @@ export interface ChangeConnectionState {
 	connected: boolean;
 }
 
+export interface TriggerRebase {
+	type: "rebase";
+}
+
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
@@ -283,6 +287,11 @@ export interface DDSFuzzSuiteOptions {
 	reconnectProbability: number;
 
 	/**
+	 * Each non-synchronization option has this probability of rebasing the current batch before sending it.
+	 */
+	rebaseProbability: number;
+
+	/**
 	 * Seed which should be replayed from disk.
 	 *
 	 * This option is intended for quick, by-hand minimization of failure JSON. As such, it adds a `.only`
@@ -334,6 +343,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	skip: [],
 	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
 	reconnectProbability: 0,
+	rebaseProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
 };
@@ -445,6 +455,56 @@ export function mixinReconnect<
 }
 
 /**
+ * Mixes in functionality to rebase in-flight batches in a DDS fuzz model. A batch is rebased by
+ * resending it to the datastores before being sent over the wire.
+ *
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinRebase<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | TriggerRebase, TState> {
+	const generatorFactory: () => Generator<TOperation | TriggerRebase, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | TriggerRebase | typeof done> => {
+			const baseOp = baseGenerator(state);
+			if (state.random.bool(options.rebaseProbability)) {
+				const client = state.clients.find((c) => c.channel.id === state.channel.id);
+				assert(client !== undefined);
+				return {
+					type: "rebase",
+				};
+			}
+
+			return baseOp;
+		};
+	};
+
+	const reducer: Reducer<TOperation | TriggerRebase, TState> = async (state, operation) => {
+		if (operation.type === "rebase") {
+			assert(
+				state.client.containerRuntime.rebase !== undefined,
+				"Unsupported mock runtime version",
+			);
+			state.client.containerRuntime.rebase();
+			return state;
+		} else {
+			return model.reducer(state, operation as TOperation);
+		}
+	};
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
+/**
  * Mixes in functionality to generate ops which synchronize all clients and assert the resulting state is consistent.
  * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
@@ -496,16 +556,26 @@ export function mixinSynchronization<
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		if (isSynchronizeOp(operation)) {
-			state.containerRuntimeFactory.processAllMessages();
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,
 			);
+
+			for (const client of connectedClients) {
+				assert(
+					client.containerRuntime.flush !== undefined,
+					"Unsupported mock runtime version",
+				);
+				client.containerRuntime.flush();
+			}
+
+			state.containerRuntimeFactory.processAllMessages();
 			if (connectedClients.length > 0) {
 				const readonlyChannel = state.summarizerClient.channel;
 				for (const { channel } of connectedClients) {
 					model.validateConsistency(readonlyChannel, channel);
 				}
 			}
+
 			return state;
 		}
 		return model.reducer(state, operation);
