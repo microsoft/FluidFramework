@@ -37,7 +37,7 @@ import {
 } from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
 import { useLogger } from "../TelemetryUtils";
-import { ThemeContext } from "../ThemeHelper";
+import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { Waiting } from "./Waiting";
 
 /**
@@ -415,7 +415,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	 * @returns string representing the appropriate color
 	 */
 	const mapEventCategoryToBackgroundColor = (eventCategory: string): string | undefined => {
-		if (themeInfo?.name !== "highContrast") {
+		if (themeInfo?.name !== ThemeOption.HighContrast) {
 			switch (eventCategory) {
 				case "generic":
 					return tokens.colorPaletteGreenForeground1;

@@ -15,17 +15,8 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 
-import { ThemeContext } from "../ThemeHelper";
+import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { useTelemetryOptIn } from "../TelemetryUtils";
-
-/**
- * An enum with options for the DevTools themes.
- */
-export const enum ThemeOption {
-	Light = "Light",
-	Dark = "Dark",
-	HighContrast = "High Contrast",
-}
 
 const useStyles = makeStyles({
 	root: {

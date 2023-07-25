@@ -21,8 +21,8 @@ import {
 	ArrowJoinRegular,
 	ArrowExitRegular,
 } from "@fluentui/react-icons";
-import { ThemeContext } from "../ThemeHelper";
-import { ThemeOption } from "./SettingsView";
+
+import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
