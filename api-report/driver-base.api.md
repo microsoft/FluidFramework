@@ -17,7 +17,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
@@ -106,7 +105,7 @@ export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
 }>;
 
 // @public (undocumented)
-export function validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number, logger: ITelemetryBaseLogger, strict?: boolean): void;
+export function validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number, logger: ITelemetryLoggerExt, strict?: boolean): void;
 
 // (No @packageDocumentation comment for this package)
 
