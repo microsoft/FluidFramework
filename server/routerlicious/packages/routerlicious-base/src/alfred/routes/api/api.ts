@@ -75,7 +75,12 @@ export function create(
 			throttleIdPrefix: "ping",
 		}),
 		async (request, response) => {
-			response.sendStatus(200);
+			response
+				.json({
+					ordererUrl: config.get("worker:serverUrl") ?? "",
+					historianUrl: config.get("worker:blobStorageUrl") ?? "",
+				})
+				.sendStatus(200);
 		},
 	);
 
