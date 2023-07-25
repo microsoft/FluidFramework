@@ -108,10 +108,7 @@
 	"module:es5": "es5/index.js",
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DataObject": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_PureDataObject": {
+			"InterfaceDeclaration_IDataObjectProps": {
 				"forwardCompat": false
 			}
 		}

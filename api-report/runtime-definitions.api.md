@@ -202,7 +202,9 @@ export interface IEnvelope {
 }
 
 // @public
-export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
+export interface IExperimentalFluidGCInfo {
+    confirmed?: boolean;
+    confirmedAtTimestampMs?: number;
     state?: "Referenced" | "Unreferenced" | "Inactive" | "SweepReady" | "Tombstoned";
     unreferencedTimestampMs?: number;
 }
@@ -239,7 +241,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 }
 
 // @public
-export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext, IProvideExperimentalFluidGCInfo {
+export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     readonly attachState: AttachState;
     // (undocumented)
@@ -259,6 +261,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     ensureNoDataModelChanges<T>(callback: () => T): T;
+    readonly experimentalGCInfo: IExperimentalFluidGCInfo;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     // @deprecated (undocumented)
@@ -376,12 +379,6 @@ export interface IInboundSignalMessage extends ISignalMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
-
-// @public (undocumented)
-export interface IProvideExperimentalFluidGCInfo {
-    // (undocumented)
-    IExperimentalFluidGCInfo?: IExperimentalFluidGCInfo;
-}
 
 // @public (undocumented)
 export interface IProvideFluidDataStoreFactory {

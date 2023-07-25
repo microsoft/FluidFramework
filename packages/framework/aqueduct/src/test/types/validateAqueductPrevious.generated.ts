@@ -71,7 +71,6 @@ declare function get_old_ClassDeclaration_DataObject():
 declare function use_current_ClassDeclaration_DataObject(
     use: TypeOnly<current.DataObject>);
 use_current_ClassDeclaration_DataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataObject());
 
 /*
@@ -144,6 +143,7 @@ declare function get_old_InterfaceDeclaration_IDataObjectProps():
 declare function use_current_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<current.IDataObjectProps>);
 use_current_InterfaceDeclaration_IDataObjectProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataObjectProps());
 
 /*
@@ -192,7 +192,6 @@ declare function get_old_ClassDeclaration_PureDataObject():
 declare function use_current_ClassDeclaration_PureDataObject(
     use: TypeOnly<current.PureDataObject>);
 use_current_ClassDeclaration_PureDataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PureDataObject());
 
 /*

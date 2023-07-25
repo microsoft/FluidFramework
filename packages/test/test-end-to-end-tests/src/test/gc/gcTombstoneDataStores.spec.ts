@@ -28,7 +28,6 @@ import {
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
 import {
-	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
@@ -36,11 +35,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import {
-	IFluidDataStoreChannel,
-	IExperimentalFluidGCInfo,
-	IProvideExperimentalFluidGCInfo,
-} from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -855,16 +850,16 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					unreferencedId,
 				);
 
-				const handle = manufactureHandle<FluidObject<IExperimentalFluidGCInfo>>(
+				const handle = manufactureHandle<ITestDataObject>(
 					dataObject1._context.IFluidHandleContext,
 					unreferencedId,
 				);
 
 				// handle.get for the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
 				// Logs a tombstone and sweep ready error
-				const dataObject: FluidObject<IProvideExperimentalFluidGCInfo> = await handle.get();
+				const dataObject: ITestDataObject = await handle.get();
 				assert.equal(
-					dataObject.IExperimentalFluidGCInfo?.state ?? "",
+					dataObject._context?.experimentalGCInfo?.state ?? "",
 					"Tombstoned",
 					"Expected the reference info to report Tombstoned",
 				);

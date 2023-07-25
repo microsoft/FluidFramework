@@ -346,17 +346,13 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
-export interface IProvideExperimentalFluidGCInfo {
-	IExperimentalFluidGCInfo: IExperimentalFluidGCInfo;
-}
-
 /**
  * Info that may be provided by a Fluid Object regarding whether it's referenced or not by other
  * objects within this container.
  *
  * @experimental - All members are optional to provide flexibility to change its shape or deprecate it entirely
  */
-export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFluidGCInfo> {
+export interface IExperimentalFluidGCInfo {
 	/**
 	 * Provides details on whether the object is referenced or not.
 	 * The different states represent the duration and permanency that apply to unreferenced objects.
@@ -390,8 +386,7 @@ export interface IExperimentalFluidGCInfo extends Partial<IProvideExperimentalFl
 export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,
 		Partial<IProvideFluidDataStoreRegistry>,
-		IProvideFluidHandleContext,
-		IProvideExperimentalFluidGCInfo {
+		IProvideFluidHandleContext {
 	readonly id: string;
 	/**
 	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
@@ -525,6 +520,9 @@ export interface IFluidDataStoreContext
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+
+	/** Indicates whether the last known GC run found this object to be referenced or not, and other related details */
+	readonly experimentalGCInfo: IExperimentalFluidGCInfo;
 }
 
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {

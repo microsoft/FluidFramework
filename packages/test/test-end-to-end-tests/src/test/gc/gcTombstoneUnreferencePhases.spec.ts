@@ -20,11 +20,7 @@ import {
 } from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import {
-	gcTreeKey,
-	IExperimentalFluidGCInfo,
-	IProvideExperimentalFluidGCInfo,
-} from "@fluidframework/runtime-definitions";
+import { gcTreeKey, IExperimentalFluidGCInfo } from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -70,9 +66,9 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		expectedInfo: IExperimentalFluidGCInfo,
 		message?: string,
 	): Promise<void> {
-		const object: FluidObject<IProvideExperimentalFluidGCInfo> = await handle.get();
+		const object: ITestDataObject = await (handle as IFluidHandle<ITestDataObject>).get();
 		//* TODO: Check more than just state
-		assert.equal(object.IExperimentalFluidGCInfo?.state, expectedInfo.state, message);
+		assert.equal(object._context.experimentalGCInfo?.state, expectedInfo.state, message);
 	}
 
 	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {

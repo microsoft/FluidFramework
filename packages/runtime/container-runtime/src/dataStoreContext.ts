@@ -222,7 +222,8 @@ export abstract class FluidDataStoreContext
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	private deleted: boolean = false;
 
-	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo {
+	//* Use callback instead of reaching out to ContainerRuntime
+	public get experimentalGCInfo(): IExperimentalFluidGCInfo {
 		return this._containerRuntime.getExperimentalGCReferenceInfo(`/${this.id}`);
 	}
 

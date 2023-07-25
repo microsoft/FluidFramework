@@ -19,7 +19,6 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -30,7 +29,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IProvideExperimentalFluidGCInfo } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -123,7 +121,7 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle, IProvideExperimentalFluidGCInfo {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends EventForwarder<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     // @deprecated
@@ -139,8 +137,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     get id(): string;
-    // (undocumented)
-    get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo | undefined;
     // (undocumented)
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)

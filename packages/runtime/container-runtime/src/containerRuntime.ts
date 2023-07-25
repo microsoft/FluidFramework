@@ -2620,6 +2620,7 @@ export class ContainerRuntime
 		return this.dataStores.updateStateBeforeGC();
 	}
 
+	//* Move to callback passed to DataStores
 	public getExperimentalGCReferenceInfo(nodePath: string) {
 		return this.garbageCollector.getGCReferenceInfo(nodePath);
 	}

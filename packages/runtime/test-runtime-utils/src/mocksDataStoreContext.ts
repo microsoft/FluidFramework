@@ -137,7 +137,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public get IExperimentalFluidGCInfo(): IExperimentalFluidGCInfo {
+	public get experimentalGCInfo(): IExperimentalFluidGCInfo {
 		throw new Error("Method not implemented.");
 	}
 }
