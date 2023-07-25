@@ -22,11 +22,12 @@ import { Stream } from "stream";
 import { Abortable } from "events";
 import * as IoRedis from "ioredis";
 import sizeof from "object-sizeof";
+import { RedisCache } from "@fluidframework/historian-base";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IFileSystemManager, IFileSystemPromises } from "../definitions";
 import { getStats, ISystemError, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
-import { Redis, RedisParams } from "./redis";
+import { IRedisParameters } from "@fluidframework/server-services-utils";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
@@ -40,7 +41,7 @@ export class RedisFsManager implements IFileSystemManager {
 	// in `RedisFsManager`, with a `promises` property
 	public readonly promises: IFileSystemPromises;
 	constructor(
-		redisParam: RedisParams,
+		redisParam: IRedisParameters,
 		redisOptions: IoRedis.RedisOptions,
 		redisFsConfig: RedisFsConfig,
 	) {
@@ -49,14 +50,14 @@ export class RedisFsManager implements IFileSystemManager {
 }
 
 export class RedisFs implements IFileSystemPromises {
-	public readonly redisFs: Redis;
+	public readonly redisFsClient: RedisCache;
 	constructor(
-		redisParams: RedisParams,
+		redisParams: IRedisParameters,
 		redisOptions: IoRedis.RedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
 	) {
 		const redisClient = new IoRedis.default(redisOptions);
-		this.redisFs = new Redis(redisClient, redisParams);
+		this.redisFsClient = new RedisCache(redisClient, redisParams);
 	}
 
 	/**
@@ -87,7 +88,7 @@ export class RedisFs implements IFileSystemPromises {
 		}
 
 		const data = await executeRedisFsApi(
-			async () => this.redisFs.get<Buffer | string>(filepathString),
+			async () => this.redisFsClient.get<Buffer | string>(filepathString),
 			RedisFsApis.ReadFile,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -97,7 +98,6 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
-		// const data = await this.redisFs.get<Buffer | string>(filepathString);
 		return data;
 	}
 
@@ -129,7 +129,7 @@ export class RedisFs implements IFileSystemPromises {
 		}
 
 		const result = await executeRedisFsApi(
-			async () => this.redisFs.set(filepath.toString(), data),
+			async () => this.redisFsClient.set(filepath.toString(), data),
 			RedisFsApis.WriteFile,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -151,18 +151,20 @@ export class RedisFs implements IFileSystemPromises {
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L143
 	 */
 	public async unlink(filepath: PathLike): Promise<void> {
-		const filepathString = filepath.toString();
+		// const filepathString = filepath.toString();
 
-		await executeRedisFsApi(
-			async () => this.redisFs.delete(filepath.toString()),
-			RedisFsApis.Unlink,
-			RedisFSConstants.RedisFsApi,
-			this.redisFsConfig.enableRedisFsMetrics,
-			this.redisFsConfig.redisApiMetricsSamplingPeriod,
-			{
-				filepathString,
-			},
-		);
+		// await executeRedisFsApi(
+		// 	async () => this.redisFsClient.delete(filepathString),
+		// 	RedisFsApis.Unlink,
+		// 	RedisFSConstants.RedisFsApi,
+		// 	this.redisFsConfig.enableRedisFsMetrics,
+		// 	this.redisFsConfig.redisApiMetricsSamplingPeriod,
+		// 	{
+		// 		filepathString,
+		// 	},
+		// );
+
+		throw Error("Not implemented");
 	}
 
 	/**
@@ -201,7 +203,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		const result = await executeRedisFsApi(
-			async () => this.redisFs.keys_by_prefix(folderpath.toString()),
+			async () => this.redisFsClient.keysByPrefix(folderpath.toString()),
 			RedisFsApis.Readdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -240,7 +242,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		await executeRedisFsApi(
-			async () => this.redisFs.set(folderpath.toString(), ""),
+			async () => this.redisFsClient.set(folderpath.toString(), ""),
 			RedisFsApis.Mkdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -258,11 +260,24 @@ export class RedisFs implements IFileSystemPromises {
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L152
 	 */
 	public async rmdir(folderpath: PathLike, options?: RmDirOptions): Promise<void> {
-		const keys_to_remove = await this.redisFs.keys_by_prefix(folderpath.toString());
+		// const folderpathString = folderpath.toString();
 
-		keys_to_remove.forEach((key) => {
-			void this.redisFs.delete(key);
-		});
+		// const keysToRemove = await executeRedisFsApi(
+		// 	async () => this.redisFsClient.keysByPrefix(folderpath.toString()),
+		// 	RedisFsApis.Rmdir,
+		// 	RedisFSConstants.RedisFsApi,
+		// 	this.redisFsConfig.enableRedisFsMetrics,
+		// 	this.redisFsConfig.redisApiMetricsSamplingPeriod,
+		// 	{
+		// 		folderpathString,
+		// 	},
+		// );
+
+		// keysToRemove.forEach((key) => {
+		// 	void this.redisFsClient.delete(key);
+		// });
+
+		throw Error("Not implemented");
 	}
 
 	/**
@@ -271,7 +286,7 @@ export class RedisFs implements IFileSystemPromises {
 	 * `fs.Stats` would usually include information like file size and modified time. However, it is
 	 * very expensive to fetch that information from redis every time. Because we don't employ
 	 * fields like `stats.size` and `stats.mtime` in our specific use-case scenario of isomorphic-git,
-	 * we can avoid making "get properties" requests to Az storage, as the only other types of information
+	 * we can avoid making "get properties" requests to the filesystem, as the only other types of information
 	 * we need are whether a path exists and whether it refers to a file or directory. We can compute that
 	 * independently. (Please note that we are initially enabling this change for only a subset of tenants)
 	 * For more info on how isomorphic-git uses this, see:
@@ -291,7 +306,7 @@ export class RedisFs implements IFileSystemPromises {
 	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
 		const data = await executeRedisFsApi(
-			async () => this.redisFs.get<Buffer | string>(filepathString),
+			async () => this.redisFsClient.get<Buffer | string>(filepathString),
 			RedisFsApis.Stat,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -319,17 +334,19 @@ export class RedisFs implements IFileSystemPromises {
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L155
 	 */
 	public async rm(filepath: PathLike, options?: RmOptions): Promise<void> {
-		const filepathString = filepath.toString();
-		await executeRedisFsApi(
-			async () => this.redisFs.delete(filepath.toString()),
-			RedisFsApis.Removefile,
-			RedisFSConstants.RedisFsApi,
-			this.redisFsConfig.enableRedisFsMetrics,
-			this.redisFsConfig.redisApiMetricsSamplingPeriod,
-			{
-				filepathString,
-			},
-		);
+		// const filepathString = filepath.toString();
+		// await executeRedisFsApi(
+		// 	async () => this.redisFsClient.delete(filepath.toString()),
+		// 	RedisFsApis.Removefile,
+		// 	RedisFSConstants.RedisFsApi,
+		// 	this.redisFsConfig.enableRedisFsMetrics,
+		// 	this.redisFsConfig.redisApiMetricsSamplingPeriod,
+		// 	{
+		// 		filepathString,
+		// 	},
+		// );
+
+		throw new Error("Not implemented");
 	}
 
 	/**
@@ -421,6 +438,7 @@ enum RedisFsApis {
 	Removefile = "Removefile",
 	Stat = "Stat",
 	Mkdir = "Mkdir",
+	Rmdir = "Rmdir",
 }
 
 enum RedisFSConstants {

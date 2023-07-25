@@ -59,8 +59,8 @@ export class Redis {
 		return result === 1;
 	}
 
-	public async keys_by_prefix(key_prefix: string): Promise<string[]> {
-		const result = await this.client.keys(`${this.getKey(key_prefix)}*`);
+	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
+		const result = await this.client.keys(`${this.getKey(keyPrefix)}*`);
 		return result;
 	}
 
