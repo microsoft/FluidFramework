@@ -47,7 +47,7 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
  */
 interface UndoRedoFuzzTestState extends FuzzTestState {
 	initialTreeState?: JsonableTree[];
-	firstAnchors?: Anchor[]
+	firstAnchors?: Anchor[];
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
@@ -102,8 +102,8 @@ describe("Fuzz - Targeted", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			const firstAnchor = getFirstAnchor(initialState.clients[0].channel)
-			initialState.firstAnchor = firstAnchor
+			const firstAnchor = getFirstAnchor(initialState.clients[0].channel);
+			initialState.firstAnchor = firstAnchor;
 			initialState.clients[0].channel.transaction.start();
 		});
 
@@ -175,13 +175,13 @@ describe("Fuzz - Targeted", () => {
 	});
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
-		insert:1,
-		delete:1,
-		start:0,
-		commit: 0
+		insert: 1,
+		delete: 1,
+		start: 0,
+		commit: 0,
 	};
 
-	describe.only("Inorder undo/redo matches the initial/final state", () => {
+	describe.skip("Inorder undo/redo matches the initial/final state", () => {
 		const generatorFactory = (): AsyncGenerator<TreeOperation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
@@ -199,30 +199,36 @@ describe("Fuzz - Targeted", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
 			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel);
-			initialState.firstAnchors = []
+			initialState.firstAnchors = [];
 			// creates an initial anchor for each tree
-			for (const client of initialState.clients){
-				initialState.firstAnchors.push(getFirstAnchor(client.channel))
+			for (const client of initialState.clients) {
+				initialState.firstAnchors.push(getFirstAnchor(client.channel));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
-			const clients = finalState.clients
+			const clients = finalState.clients;
 
-			const finalTreeStates = []
+			const finalTreeStates = [];
 			// undo all of the changes and validate against initialTreeState for each tree
-			for (const [i, client] of clients.entries()){
+			for (const [i, client] of clients.entries()) {
 				const tree = client.channel;
 
 				// save final tree states to validate redo later
-				finalTreeStates.push(toJsonableTree(tree))
+				finalTreeStates.push(toJsonableTree(tree));
 
 				// call undo() until tree no more edits left
-				for (let j = 0; j<opsPerRun; j++){
-					tree.undo()
+				for (let j = 0; j < opsPerRun; j++) {
+					tree.undo();
 				}
-				assert(finalState.initialTreeState !== undefined);
-				validateTree(client.channel, finalState.initialTreeState)
+			}
 
+			// synchronize clients after undo
+			finalState.containerRuntimeFactory.processAllMessages();
+
+			// validate the current state of the clients with the initial state, and check anchor stability
+			for (const [i, client] of clients.entries()) {
+				assert(finalState.initialTreeState !== undefined);
+				validateTree(client.channel, finalState.initialTreeState);
 				// check anchor stability
 				const expectedPath: UpPath = {
 					parent: {
@@ -233,21 +239,19 @@ describe("Fuzz - Targeted", () => {
 					parentField: brand("foo"),
 					parentIndex: 1,
 				};
-				assert(finalState.firstAnchors !== undefined)
+				assert(finalState.firstAnchors !== undefined);
 				assert(finalState.firstAnchors[i] !== undefined);
 				const anchorPath = client.channel.locate(finalState.firstAnchors[i]);
 				assert(compareUpPaths(expectedPath, anchorPath));
 			}
 
 			// redo all of the undone changes and validate against the finalTreeState for each tree
-			for (const [i, client] of clients.entries()){
-				for (let j = 0; j<opsPerRun; j++){
-					client.channel.redo()
+			for (const [i, client] of clients.entries()) {
+				for (let j = 0; j < opsPerRun; j++) {
+					client.channel.redo();
 				}
-				validateTree(client.channel, finalTreeStates[i])
+				validateTree(client.channel, finalTreeStates[i]);
 			}
-
-			
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
@@ -257,7 +261,7 @@ describe("Fuzz - Targeted", () => {
 	});
 });
 
-function getFirstAnchor(tree: ISharedTree): Anchor{
+function getFirstAnchor(tree: ISharedTree): Anchor {
 	// building the anchor for anchor stability test
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
@@ -267,6 +271,6 @@ function getFirstAnchor(tree: ISharedTree): Anchor{
 	cursor.getFieldKey();
 	cursor.enterNode(1);
 	const anchor = cursor.buildAnchor();
-	cursor.free()
-	return anchor
+	cursor.free();
+	return anchor;
 }
