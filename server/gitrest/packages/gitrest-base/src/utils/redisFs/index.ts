@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { RedisParams } from "./redis";
 export { RedisFsManager, RedisFsConfig } from "./redisFsManager";
