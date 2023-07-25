@@ -295,10 +295,6 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	}
 }
 
-const NullLogger: ITelemetryBaseLogger = {
-	send: () => {},
-};
-
 /**
  * Create a child logger based on the provided props object
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
@@ -360,10 +356,19 @@ export class ChildLogger extends TelemetryLogger {
 					? baseLogger.namespace
 					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
-			return new ChildLogger(baseLogger.baseLogger, combinedNamespace, combinedProperties);
+			const child = new ChildLogger(
+				baseLogger.baseLogger,
+				combinedNamespace,
+				combinedProperties,
+			);
+
+			if (!loggerIsMonitoringContext(child) && loggerIsMonitoringContext(baseLogger)) {
+				mixinMonitoringContext(child, baseLogger.config);
+			}
+			return child;
 		}
 
-		return new ChildLogger(baseLogger ? baseLogger : NullLogger, namespace, properties);
+		return new ChildLogger(baseLogger ? baseLogger : { send() {} }, namespace, properties);
 	}
 
 	private constructor(
