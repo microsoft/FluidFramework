@@ -128,7 +128,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Fluid router for the data store
  * - Can be assigned an alias
  */
-export interface IDataStore {
+export interface IDataStore extends IFluidRouter {
 	/**
 	 * Attempt to assign an alias to the datastore.
 	 * If the operation succeeds, the datastore can be referenced
@@ -149,16 +149,6 @@ export interface IDataStore {
 	 * the data store's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
-	 */
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**

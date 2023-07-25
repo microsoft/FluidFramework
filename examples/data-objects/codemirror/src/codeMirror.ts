@@ -5,13 +5,7 @@
 
 import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-	IFluidLoadable,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IFluidLoadable, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
@@ -29,7 +23,7 @@ import { PresenceManager } from "./presence";
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable, IFluidRouter {
+export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
@@ -44,6 +38,10 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 	public get IFluidLoadable() {
 		return this;
 	}
+
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -73,6 +71,9 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 		this.presenceManager = new PresenceManager(runtime);
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return defaultFluidObjectRequestHandler(this, request);
 	}

@@ -8,7 +8,6 @@ import {
 	IRequest,
 	IResponse,
 	IFluidHandle,
-	IFluidRouter,
 	FluidObject,
 	IProvideFluidRouter,
 } from "@fluidframework/core-interfaces";
@@ -32,7 +31,7 @@ import { ITestFluidObject } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
-export class TestFluidObject implements ITestFluidObject, IFluidRouter {
+export class TestFluidObject implements ITestFluidObject {
 	public get ITestFluidObject() {
 		return this;
 	}
@@ -41,6 +40,9 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
 		return this;
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -88,6 +90,9 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
 		throw new Error(`Shared object with id ${id} not found.`);
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return defaultFluidObjectRequestHandler(this, request);
 	}

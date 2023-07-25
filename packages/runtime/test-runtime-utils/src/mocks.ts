@@ -415,6 +415,9 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -548,6 +551,9 @@ export class MockFluidDataStoreRuntime
 		return this.request(request);
 	}
 
+	/**
+	 * @deprecated - TODO: will be removed from interface in future major release
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}
