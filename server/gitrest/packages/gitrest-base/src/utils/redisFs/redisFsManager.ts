@@ -128,7 +128,7 @@ export class RedisFs implements IFileSystemPromises {
 		}
 
 		const result = await executeRedisFsApi(
-			async () => this.redisFsClient.set(filepath.toString(), data),
+			async () => this.redisFsClient.set(filepathString, data),
 			RedisFsApis.WriteFile,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -200,7 +200,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		const result = await executeRedisFsApi(
-			async () => this.redisFsClient.keysByPrefix(folderpath.toString()),
+			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Readdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -260,7 +260,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		const keysToRemove = await executeRedisFsApi(
-			async () => this.redisFsClient.keysByPrefix(folderpath.toString()),
+			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Rmdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -331,7 +331,7 @@ export class RedisFs implements IFileSystemPromises {
 	public async rm(filepath: PathLike, options?: RmOptions): Promise<void> {
 		const filepathString = filepath.toString();
 		await executeRedisFsApi(
-			async () => this.redisFsClient.delete(filepath.toString()),
+			async () => this.redisFsClient.delete(filepathString),
 			RedisFsApis.Removefile,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
