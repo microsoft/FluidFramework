@@ -75,8 +75,13 @@ async function generateScreenshots() {
 				const screenshotFilePath = path.join(outputDirectoryPath, `${testName}.png`);
 
 				const page = await browser.newPage({
-					colorScheme: colorSchemeFromTheme(theme), // Dark mode vs light mode setting
-					forcedColors: forcedColorsFromTheme(theme), // High contrast setting
+					// Dark mode vs light mode setting
+					// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
+					colorScheme: colorSchemeFromTheme(theme),
+
+					// High contrast setting
+					// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
+					forcedColors: forcedColorsFromTheme(theme),
 				});
 				const preview = await workspace.preview.start(page);
 
