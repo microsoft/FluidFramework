@@ -12,8 +12,8 @@ import { fail } from "../util";
 export class TransactionStack<TChange> {
 	private readonly stack: {
 		startRevision: RevisionTag;
+		dispose: () => void;
 		repairStore?: RepairDataStore<TChange>;
-		disposables?: Iterable<{ dispose: () => void }>;
 	}[] = [];
 
 	/**
@@ -38,10 +38,10 @@ export class TransactionStack<TChange> {
 	 */
 	public push(
 		startRevision: RevisionTag,
+		dispose: () => void,
 		repairStore?: RepairDataStore<TChange>,
-		disposables?: Iterable<{ dispose: () => void }>,
 	): void {
-		this.stack.push({ startRevision, repairStore, disposables });
+		this.stack.push({ startRevision, dispose, repairStore });
 	}
 
 	/**
@@ -53,11 +53,7 @@ export class TransactionStack<TChange> {
 		repairStore?: RepairDataStore<TChange>;
 	} {
 		const transaction = this.stack.pop() ?? fail("No transaction is currently in progress");
-		const disposables = transaction.disposables ?? [];
-		for (const disposable of disposables) {
-			disposable.dispose();
-		}
-
+		transaction.dispose();
 		return transaction;
 	}
 }

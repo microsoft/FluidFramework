@@ -219,11 +219,20 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.repairDataStoreProvider.freeze();
 		}
 		const forks = new Set<SharedTreeBranch<TEditor, TChange>>();
-		onForkTransitive(this, (fork) => {
+		const onDisposeUnSubscribes: (() => void)[] = [];
+		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
 			forks.add(fork);
-			fork.on("dispose", () => forks.delete(fork));
+			onDisposeUnSubscribes.push(fork.on("dispose", () => forks.delete(fork)));
 		});
-		this.transactions.push(this.head.revision, repairStore, forks);
+		this.transactions.push(
+			this.head.revision,
+			() => {
+				forks.forEach((fork) => fork.dispose());
+				onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+				onForkUnSubscribe();
+			},
+			repairStore,
+		);
 		this.editor.enterTransaction();
 	}
 
