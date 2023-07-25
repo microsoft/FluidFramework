@@ -27,7 +27,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
-import { IGCRuntimeOptions } from '@fluidframework/container-runtime';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { ILoaderProps } from '@fluidframework/container-loader';
