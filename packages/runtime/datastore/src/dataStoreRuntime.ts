@@ -127,7 +127,7 @@ export class FluidDataStoreRuntime
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - TODO: will be removed in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -384,7 +384,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - TODO: will be removed in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {

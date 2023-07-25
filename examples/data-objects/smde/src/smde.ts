@@ -44,7 +44,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 	}
 
 	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -64,7 +64,7 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 	}
 
 	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return defaultFluidObjectRequestHandler(this, request);

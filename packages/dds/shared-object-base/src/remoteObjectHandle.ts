@@ -28,7 +28,7 @@ import {
  */
 export class RemoteFluidObjectHandle implements IFluidHandle {
 	/**
-	 * @deprecated - TODO: will be removed in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -87,7 +87,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 	}
 
 	/**
-	 * @deprecated - TODO: will be removed in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {

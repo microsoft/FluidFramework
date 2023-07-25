@@ -11,7 +11,7 @@ export class ClickerAgent implements IFluidRunnable {
 	constructor(private readonly counter: SharedCounter) {}
 
 	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -33,7 +33,7 @@ export class ClickerAgent implements IFluidRunnable {
 	}
 
 	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return {

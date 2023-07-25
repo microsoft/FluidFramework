@@ -140,12 +140,12 @@ export interface IFluidDataStoreRuntime
 	readonly entryPoint?: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - TODO: will be removed from interface in future major release
+	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
 	 */
 	readonly IFluidRouter: IFluidRouter;
 }
