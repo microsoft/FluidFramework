@@ -373,8 +373,8 @@ export class QuorumProposals
 
 			// check for pending proposals with sequence number greater than msn
 			let proposalPending = false;
-			for (const proposal of pending) {
-				if (proposal.key == committedProposal.key) {
+			for (const pendingProposal of pending) {
+				if (pendingProposal.key === committedProposal.key) {
 					proposalPending = true; 
 				}
 			}
