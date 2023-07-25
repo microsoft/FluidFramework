@@ -4,9 +4,8 @@
  */
 
 import { performance } from "@fluidframework/common-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
  * Extract and return the w3c data.
@@ -111,7 +110,7 @@ export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],
 	from: number,
-	logger: ITelemetryBaseLogger,
+	logger: ITelemetryLoggerExt,
 	strict: boolean = true,
 ) {
 	if (messages.length !== 0) {
@@ -134,7 +133,7 @@ export function validateMessages(
 				}
 				messages.length = validOpsCount;
 			}
-			createChildLogger({ logger }).sendErrorEvent({
+			logger.sendErrorEvent({
 				eventName: "OpsFetchViolation",
 				reason,
 				from,
