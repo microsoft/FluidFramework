@@ -12,7 +12,7 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 	/**
 	 * Notifies when a new value goes pending or has been accepted.
 	 */
-	(event: "pending" | "accepted", listener: (key: string) => void);
+	(event: "pending" | "accepted", listener: (key: string, sequenceNumber: number) => void);
 }
 
 /**

@@ -326,7 +326,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 				accepted: { value, sequenceNumber: setSequenceNumber },
 				pending: undefined,
 			});
-			this.emit("accepted", key);
+			this.emit("accepted", key, setSequenceNumber);
 		} else if (
 			this.runtime.clientId !== undefined &&
 			expectedSignoffs.includes(this.runtime.clientId)
@@ -364,7 +364,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 				accepted: { value: pending.value, sequenceNumber },
 				pending: undefined,
 			});
-			this.emit("accepted", key);
+			this.emit("accepted", key, sequenceNumber);
 		}
 	};
 
@@ -377,15 +377,16 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 				if (pending.expectedSignoffs.length === 0) {
 					// The pending value has settled
+					const setSequenceNumber = this.runtime.deltaManager.lastSequenceNumber;
 					this.values.set(key, {
 						accepted: {
 							value: pending.value,
 							// The sequence number of the ClientLeave message.
-							sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
+							sequenceNumber: setSequenceNumber,
 						},
 						pending: undefined,
 					});
-					this.emit("accepted", key);
+					this.emit("accepted", key, setSequenceNumber);
 				}
 			}
 		}

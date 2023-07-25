@@ -26,7 +26,7 @@ export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 
 // @public
 export interface IPactMapEvents extends ISharedObjectEvents {
-    (event: "pending" | "accepted", listener: (key: string) => void): any;
+    (event: "pending" | "accepted", listener: (key: string, sequenceNumber: number) => void): any;
 }
 
 // @public

@@ -47,6 +47,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 */
 	private _acceptedP: Promise<void> | undefined;
 	/**
+	 * The sequence number that the proposal was accepted at, or undefined if it was not yet accepted.
+	 */
+	private _acceptedSeqNum: number | undefined;
+	/**
 	 * A promise that will resolve when we know the final v1 summary was successfully submitted.
 	 * Note that even when loading from that summary, we should expect to see the summaryAck as part of the logTail
 	 */
@@ -322,10 +326,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				return;
 			}
 
-			const watchForAccepted = (key: string) => {
+			const watchForAccepted = (key: string, sequenceNumber: number) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("accepted", watchForAccepted);
-					console.log("Resolving this._acceptedP: Saw acceptance during run time");
+					this._acceptedSeqNum = sequenceNumber;
+					console.log(
+						"Resolving this._acceptedP: Saw acceptance during run time at sequence number:",
+						this._acceptedSeqNum,
+					);
 					resolve();
 				}
 			};
