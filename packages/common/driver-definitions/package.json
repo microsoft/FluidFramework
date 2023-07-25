@@ -64,6 +64,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
