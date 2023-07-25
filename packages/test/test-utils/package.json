@@ -123,6 +123,10 @@
 			},
 			"ClassDeclaration_TestObjectProvider": {
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_createSummarizerWithTestConfig": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
