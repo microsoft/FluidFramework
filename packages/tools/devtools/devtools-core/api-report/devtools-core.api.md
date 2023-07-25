@@ -15,7 +15,6 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -197,12 +196,13 @@ export namespace DevtoolsFeatures {
         type: typeof MessageType;
     }
     export interface MessageData {
+        devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
     }
 }
 
 // @public @sealed
-export class DevtoolsLogger extends TelemetryLogger {
+export class DevtoolsLogger implements ITelemetryBaseLogger {
     constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
 }

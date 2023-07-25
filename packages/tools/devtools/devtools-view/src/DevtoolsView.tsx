@@ -12,6 +12,8 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { Link, MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
 
 import { ArrowSync24Regular } from "@fluentui/react-icons";
@@ -39,6 +41,12 @@ import {
 	MenuItem,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
+import {
+	ConsoleVerboseLogger,
+	LoggerContext,
+	TelemetryOptInLogger,
+	useLogger,
+} from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DevtoolsView)";
@@ -136,6 +144,17 @@ const useDevtoolsStyles = makeStyles({
 });
 
 /**
+ * {@link DevtoolsView} input props.
+ */
+export interface DevtoolsViewProps {
+	/**
+	 * Telemetry base logger passed from the {@link DevtoolsPanel}.
+	 * Passed in to {@link DevtoolsView} since it receives the {@link DevtoolsFeatures.Message}.
+	 */
+	usageTelemetryLogger?: ITelemetryBaseLogger;
+}
+
+/**
  * Primary Fluid Framework Devtools view.
  *
  * @remarks
@@ -146,17 +165,33 @@ const useDevtoolsStyles = makeStyles({
  *
  * Requires {@link MessageRelayContext} to have been set.
  */
-export function DevtoolsView(): React.ReactElement {
+export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
+	const { usageTelemetryLogger } = props;
+
 	// Set of features supported by the Devtools.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 	const styles = useDevtoolsStyles();
+
+	const consoleLogger = React.useMemo(
+		() => new ConsoleVerboseLogger(usageTelemetryLogger),
+		[usageTelemetryLogger],
+	);
+	const telemetryOptInLogger = React.useMemo(
+		() => new TelemetryOptInLogger(consoleLogger),
+		[consoleLogger],
+	);
+
+	const [topLevelLogger, setTopLevelLogger] = React.useState(
+		createChildLogger({ logger: telemetryOptInLogger }),
+	);
 
 	React.useEffect(() => {
 		/**
@@ -166,6 +201,22 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
+
+				const newTopLevelLogger = createChildLogger({
+					logger: telemetryOptInLogger,
+					properties: {
+						all: {
+							devtoolsVersion: message.data.devtoolsVersion,
+						},
+					},
+				});
+
+				newTopLevelLogger.sendTelemetryEvent({
+					eventName: "Connection established with Devtools in the application.",
+				});
+
+				setTopLevelLogger(newTopLevelLogger);
+
 				return true;
 			},
 		};
@@ -187,7 +238,7 @@ export function DevtoolsView(): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, setSupportedFeatures]);
+	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
 
 	// Manage the query timeout
 	React.useEffect(() => {
@@ -210,50 +261,55 @@ export function DevtoolsView(): React.ReactElement {
 	initializeIcons();
 
 	return (
-		<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
-			<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
-				{supportedFeatures === undefined ? (
-					<>
-						{!queryTimedOut && <Waiting />}
-						{queryTimedOut && !isMessageDismissed && (
-							<MessageBar
-								messageBarType={MessageBarType.error}
-								isMultiline={true}
-								onDismiss={(): void => setIsMessageDismissed(true)}
-								dismissButtonAriaLabel="Close"
-								className={styles.icon}
-							>
-								It seems that Fluid Devtools has not been initialized in the current
-								tab, or it did not respond in a timely manner.
-								<Tooltip
-									content="Retry communicating with Fluid Devtools in the current tab."
-									relationship="description"
+		<LoggerContext.Provider value={topLevelLogger}>
+			<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+				<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+					{supportedFeatures === undefined ? (
+						<>
+							{!queryTimedOut && <Waiting />}
+							{queryTimedOut && !isMessageDismissed && (
+								<MessageBar
+									messageBarType={MessageBarType.error}
+									isMultiline={true}
+									onDismiss={(): void => setIsMessageDismissed(true)}
+									dismissButtonAriaLabel="Close"
+									className={styles.icon}
 								>
-									<Button
-										className={styles.retryButton}
-										size="small"
-										onClick={retryQuery}
+									It seems that Fluid Devtools has not been initialized in the
+									current tab, or it did not respond in a timely manner.
+									<Tooltip
+										content="Retry communicating with Fluid Devtools in the current tab."
+										relationship="description"
 									>
-										Try again
-									</Button>
-								</Tooltip>
-								<br />
-								<h4 className={styles.debugNote}>
-									Need help? Please refer to our
-									<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
-										documentation page
-									</Link>{" "}
-									for guidance on getting the extension working.{" "}
-								</h4>
-							</MessageBar>
-						)}
-						<_DevtoolsView supportedFeatures={{}} />
-					</>
-				) : (
-					<_DevtoolsView supportedFeatures={supportedFeatures} />
-				)}
-			</FluentProvider>
-		</ThemeContext.Provider>
+										<Button
+											className={styles.retryButton}
+											size="small"
+											onClick={retryQuery}
+										>
+											Try again
+										</Button>
+									</Tooltip>
+									<br />
+									<h4 className={styles.debugNote}>
+										Need help? Please refer to our
+										<Link
+											href="https://aka.ms/fluid/devtool/docs"
+											target="_blank"
+										>
+											documentation page
+										</Link>{" "}
+										for guidance on getting the extension working.{" "}
+									</h4>
+								</MessageBar>
+							)}
+							<_DevtoolsView supportedFeatures={{}} />
+						</>
+					) : (
+						<_DevtoolsView supportedFeatures={supportedFeatures} />
+					)}
+				</FluentProvider>
+			</ThemeContext.Provider>
+		</LoggerContext.Provider>
 	);
 }
 
@@ -455,23 +511,40 @@ interface MenuProps {
  */
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Container" },
+		});
 	}
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Telemetry" },
+		});
 	}
 
 	function onSettingsClicked(): void {
 		setSelection({ type: "settingsMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Settings" },
+		});
 	}
 
 	function onHomeClicked(): void {
 		setSelection({ type: "homeMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_Home" },
+		});
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -546,7 +619,6 @@ interface ContainersMenuSectionProps {
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
 	const { containers, selectContainer, currentContainerSelection } = props;
-
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label="Fetching Container list" />;
@@ -586,6 +658,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
+	const usageLogger = useLogger();
 
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
@@ -596,6 +669,7 @@ function RefreshButton(): React.ReactElement {
 	function handleRefreshClick(): void {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
+		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
 	}
 
 	return (

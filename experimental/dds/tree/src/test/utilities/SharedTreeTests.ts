@@ -404,7 +404,7 @@ export function runSharedTreeOperationsTests(
 					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
 					containerRuntimeFactory.pushMessage = (msg) => {
 						// Drop the version property to replicate ops created before the version property existed
-						msg.contents.version = undefined;
+						(msg.contents as { version?: unknown }).version = undefined;
 						originalPushMessage(msg);
 					};
 
@@ -925,7 +925,7 @@ export function runSharedTreeOperationsTests(
 				};
 				assert.throws(
 					() => sharedTree2.loadSummary(corruptedSummary),
-					(e) => validateAssertionError(e, /Duplicate/)
+					(e: Error) => validateAssertionError(e, /Duplicate/)
 				);
 			});
 

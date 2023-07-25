@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/readme-command",
-	"version": "0.21.0",
+	"version": "0.22.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
@@ -28,8 +28,8 @@
 		"build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
 		"build:readme": "node \"./bin/dev\" generate readme",
-		"clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
-		"clean:manifest": "rimraf oclif.manifest.json",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"oclif.manifest.json\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean:manifest": "rimraf --glob \"oclif.manifest.json\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

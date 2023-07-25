@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,
@@ -44,11 +42,7 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	ITelemetryLoggerExt,
-	TelemetryLogger,
-	normalizeError,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, formatTick, normalizeError } from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
@@ -554,7 +548,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent({
 					eventName: "ConnectionAttemptCancelled",
 					attempts: connectRepeatCount,
-					duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performance.now() - connectStartTime),
 					connectionEstablished: false,
 				});
 				return;
@@ -594,7 +588,7 @@ export class ConnectionManager implements IConnectionManager {
 						attempts: connectRepeatCount,
 						delay: delayMs, // milliseconds
 						eventName: "DeltaConnectionFailureToConnect",
-						duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+						duration: formatTick(performance.now() - connectStartTime),
 					},
 					origError,
 				);
@@ -640,7 +634,7 @@ export class ConnectionManager implements IConnectionManager {
 				{
 					eventName: "MultipleDeltaConnectionFailures",
 					attempts: connectRepeatCount,
-					duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performance.now() - connectStartTime),
 				},
 				lastError,
 			);
@@ -652,7 +646,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
 				attempts: connectRepeatCount,
-				duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+				duration: formatTick(performance.now() - connectStartTime),
 				connectionEstablished: true,
 			});
 			return;

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
@@ -68,6 +67,13 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 /**
+ * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
+ */
+interface IBatchMetadata {
+	batch?: boolean;
+}
+
+/**
  * Determines if message was sent by client, not service
  */
 function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
@@ -85,6 +91,17 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 			return false;
 	}
 }
+
+/**
+ * Type is used to cast AbortController to represent new version of DOM API and prevent build issues
+ * TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+ */
+type AbortControllerReal = AbortController & { abort(reason?: any): void };
+/**
+ * Type is used to cast AbortSignal to represent new version of DOM API and prevent build issues
+ * TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+ */
+type AbortSignalReal = AbortSignal & { reason: any };
 
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
@@ -290,13 +307,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				batch[0].metadata?.batch === undefined,
+				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
-			assert(batch[0].metadata?.batch === true, 0x3ca /* no start batch markup */);
 			assert(
-				batch[batch.length - 1].metadata?.batch === false,
+				(batch[0].metadata as IBatchMetadata)?.batch === true,
+				0x3ca /* no start batch markup */,
+			);
+			assert(
+				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
@@ -614,7 +634,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
 			if (!opsFromFetch && cancelFetch(op)) {
-				controller.abort();
+				// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+				(controller as AbortControllerReal).abort("DeltaManager getDeltas fetch cancelled");
 				this._inbound.off("push", opListener);
 			}
 		};
@@ -622,7 +643,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		try {
 			this._inbound.on("push", opListener);
 			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
-			this.closeAbortController.signal.onabort = () => controller.abort();
+			this.closeAbortController.signal.onabort = () =>
+				// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+				(controller as AbortControllerReal).abort(
+					(this.closeAbortController.signal as AbortSignalReal).reason,
+				);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -646,6 +671,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				}
 			}
 		} finally {
+			if (controller.signal.aborted) {
+				this.logger.sendTelemetryEvent({
+					eventName: "DeltaManager_GetDeltasAborted",
+					fetchReason,
+					// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+					reason: (controller.signal as AbortSignalReal).reason,
+				});
+			}
 			this.closeAbortController.signal.onabort = null;
 			this._inbound.off("push", opListener);
 			assert(!opsFromFetch, 0x289 /* "logic error" */);
@@ -700,7 +733,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private clearQueues() {
-		this.closeAbortController.abort();
+		// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+		(this.closeAbortController as AbortControllerReal).abort("DeltaManager is closed");
 
 		this._inbound.clear();
 		this._inboundSignal.clear();

@@ -18,8 +18,9 @@ import {
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
 	SortedSet,
+	getSlideToSegoff,
 } from "@fluidframework/merge-tree";
-import { IntervalOpType, SequenceInterval } from "./intervalCollection";
+import { IntervalOpType, SequenceInterval } from "./intervals";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
@@ -121,18 +122,28 @@ export function appendDeleteIntervalToRevertibles(
 	revertibles: SharedStringRevertible[],
 ) {
 	const startSeg = interval.start.getSegment() as SharedStringSegment;
+	const startType =
+		startSeg.removedSeq !== undefined
+			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
+			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
 	const endSeg = interval.end.getSegment() as SharedStringSegment;
+	const endType =
+		endSeg.removedSeq !== undefined
+			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
+			: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
 	const startRef = string.createLocalReferencePosition(
 		startSeg,
 		interval.start.getOffset(),
-		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+		startType,
 		undefined,
+		interval.start.slidingPreference,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
-		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+		endType,
 		undefined,
+		interval.end.slidingPreference,
 	);
 	const revertible = {
 		event: IntervalOpType.DELETE,
@@ -158,18 +169,31 @@ export function appendChangeIntervalToRevertibles(
 	revertibles: SharedStringRevertible[],
 ) {
 	const startSeg = previousInterval.start.getSegment() as SharedStringSegment;
+	// This logic is needed because the ReferenceType StayOnRemove cannot be used
+	// on removed segments. This works for revertibles because the old position of the
+	// interval within the removed segment is handled by the remove range revertible.
+	const startType =
+		startSeg.removedSeq !== undefined
+			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
+			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
 	const endSeg = previousInterval.end.getSegment() as SharedStringSegment;
+	const endType =
+		endSeg.removedSeq !== undefined
+			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
+			: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
 	const prevStartRef = string.createLocalReferencePosition(
 		startSeg,
 		previousInterval.start.getOffset(),
-		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+		startType,
 		undefined,
+		previousInterval.start.slidingPreference,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
-		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+		endType,
 		undefined,
+		previousInterval.end.slidingPreference,
 	);
 	const revertible = {
 		event: IntervalOpType.CHANGE,
@@ -359,6 +383,29 @@ export function discardSharedStringRevertibles(
 	});
 }
 
+function getSlidePosition(string: SharedString, lref: LocalReferencePosition, pos: number): number {
+	const slide = getSlideToSegoff(
+		{ segment: lref.getSegment(), offset: undefined },
+		lref.slidingPreference,
+	);
+	return slide?.segment !== undefined &&
+		slide.offset !== undefined &&
+		string.getPosition(slide.segment) !== -1 &&
+		(pos < 0 || pos >= string.getLength())
+		? string.getPosition(slide.segment) + slide.offset
+		: pos;
+}
+
+function isValidRange(start: number, end: number, string: SharedString) {
+	return (
+		start >= 0 &&
+		start < string.getLength() &&
+		end >= 0 &&
+		end < string.getLength() &&
+		start <= end
+	);
+}
+
 function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
@@ -373,19 +420,24 @@ function revertLocalDelete(
 	revertible: TypedRevertible<typeof IntervalOpType.DELETE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const collection = string.getIntervalCollection(label);
 	const start = string.localReferencePositionToPosition(revertible.start);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
-	const int = string.getIntervalCollection(label).add(start, end, type, props);
+	if (isValidRange(startSlidePos, endSlidePos, string)) {
+		const int = collection.add(startSlidePos, endSlidePos, type, props);
 
-	idMap.forEach((newId, oldId) => {
-		if (intervalId === newId) {
-			idMap.set(oldId, getUpdatedIdFromInterval(int));
-		}
-	});
-	idMap.set(intervalId, int.getIntervalId());
+		idMap.forEach((newId, oldId) => {
+			if (intervalId === newId) {
+				idMap.set(oldId, getUpdatedIdFromInterval(int));
+			}
+		});
+		idMap.set(intervalId, int.getIntervalId());
+	}
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
@@ -396,10 +448,15 @@ function revertLocalChange(
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
+	const collection = string.getIntervalCollection(label);
 	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
+	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	string.getIntervalCollection(label).change(id, start, end);
+	const endSlidePos = getSlidePosition(string, revertible.end, end);
+	if (isValidRange(startSlidePos, endSlidePos, string)) {
+		collection.change(id, startSlidePos, endSlidePos);
+	}
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
@@ -490,7 +547,16 @@ function revertLocalSequenceRemove(
 				restoredRanges,
 				sharedString,
 			);
-			if (newStart !== undefined || newEnd !== undefined) {
+			// only move interval if start <= end
+			if (
+				(newStart === undefined &&
+					newEnd !== undefined &&
+					sharedString.localReferencePositionToPosition(interval.start) <= newEnd) ||
+				(newEnd === undefined &&
+					newStart !== undefined &&
+					sharedString.localReferencePositionToPosition(interval.end) >= newStart) ||
+				(newStart !== undefined && newEnd !== undefined && newStart <= newEnd)
+			) {
 				intervalCollection.change(intervalId, newStart, newEnd);
 			}
 		}

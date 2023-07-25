@@ -11,7 +11,7 @@ import {
 	Named,
 	treeSchema,
 } from "../core";
-import { emptyField } from "./defaultSchema";
+import { emptyField } from "./default-field-kinds";
 
 /**
  * Helper for building {@link NamedTreeSchema}.

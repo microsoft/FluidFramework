@@ -76,6 +76,7 @@
 		"**/_api-extractor-temp": true,
 		"**/dist/*": true,
 		"**/lib/*": true,
+		"**/nyc/*": true,
 		"**/*.log": true,
 		"**/DS_Store": true,
 	},

@@ -82,7 +82,7 @@ export class Lumber<T extends string = LumberEventName> {
 	public setProperties(properties: Map<string, any> | Record<string, any>): this {
 		if (properties instanceof Map) {
 			if (this._properties.size === 0) {
-				this._properties = properties;
+				this._properties = new Map(properties);
 			} else {
 				properties.forEach((value: any, key: string) => {
 					this.setProperty(key, value);

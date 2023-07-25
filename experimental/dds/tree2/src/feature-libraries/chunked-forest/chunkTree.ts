@@ -187,7 +187,7 @@ function tryShapeForSchema(
 		return cached;
 	}
 	const treeSchema = lookupTreeSchema(schema, type);
-	if (treeSchema.extraGlobalFields || treeSchema.extraLocalFields !== undefined) {
+	if (treeSchema.extraLocalFields !== undefined) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];

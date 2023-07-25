@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.21.0",
+	"version": "0.22.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,16 +23,17 @@
 	],
 	"scripts": {
 		"build": "npm run clean:manifest && concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:manifest npm:build:diagrams",
-		"build:compile": "npm run tsc && npm run build:copy && npm run build:readme",
+		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
 		"build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
 		"build:readme": "fluid-readme generate readme --multi",
+		"build:test": "tsc --project ./test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
-		"clean:manifest": "rimraf oclif.manifest.json",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"oclif.manifest.json\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean:manifest": "rimraf --glob \"oclif.manifest.json\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

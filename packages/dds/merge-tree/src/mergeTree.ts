@@ -546,6 +546,86 @@ export function findRootMergeBlock(
 }
 
 /**
+ * @param segment - The segment to slide from.
+ * @param cache - Optional cache mapping segments to their sliding destinations.
+ * Excursions will be avoided for segments in the cache, and the cache will be populated with
+ * entries for all segments visited during excursion.
+ * This can reduce the number of times the tree needs to be scanned if a range containing many
+ * SlideOnRemove references is removed.
+ * @returns The segment a SlideOnRemove reference should slide to, or undefined if there is no
+ * valid segment (i.e. the tree is empty).
+ * @internal
+ */
+function getSlideToSegment(
+	segment: ISegment | undefined,
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+	cache?: Map<ISegment, { seg?: ISegment }>,
+): ISegment | undefined {
+	if (!segment || !isRemovedAndAcked(segment)) {
+		return segment;
+	}
+
+	const cachedSegment = cache?.get(segment);
+	if (cachedSegment !== undefined) {
+		return cachedSegment.seg;
+	}
+	const result: { seg?: ISegment } = {};
+	cache?.set(segment, result);
+	const goFurtherToFindSlideToSegment = (seg) => {
+		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
+			result.seg = seg;
+			return false;
+		}
+		if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
+			cache.set(seg, result);
+		}
+		return true;
+	};
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	} else {
+		forwardExcursion(segment, goFurtherToFindSlideToSegment);
+	}
+	if (result.seg !== undefined) {
+		return result.seg;
+	}
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		forwardExcursion(segment, goFurtherToFindSlideToSegment);
+	} else {
+		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+	}
+
+	return result.seg;
+}
+
+/**
+ * Returns the position to slide a reference to if a slide is required.
+ * @param segoff - The segment and offset to slide from
+ * @returns - segment and offset to slide the reference to
+ * @internal
+ */
+export function getSlideToSegoff(
+	segoff: { segment: ISegment | undefined; offset: number | undefined },
+	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
+) {
+	if (segoff.segment === undefined) {
+		return segoff;
+	}
+	const segment = getSlideToSegment(segoff.segment, slidingPreference);
+	if (segment === segoff.segment) {
+		return segoff;
+	}
+	const offset =
+		segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+	return {
+		segment,
+		offset,
+	};
+}
+
+/**
  * @internal
  */
 export class MergeTree {
@@ -611,11 +691,9 @@ export class MergeTree {
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
 			if (child.isLeaf()) {
-				const segment = this.segmentClone(child);
+				const segment = child.clone();
 				bBlock.assignChild(segment, i);
-				if (segments) {
-					segments.push(segment);
-				}
+				segments?.push(segment);
 			} else {
 				bBlock.assignChild(this.blockClone(child, segments), i);
 			}
@@ -623,11 +701,6 @@ export class MergeTree {
 		this.nodeUpdateLengthNewStructure(bBlock);
 		this.nodeUpdateOrdinals(bBlock);
 		return bBlock;
-	}
-
-	private segmentClone(segment: ISegment) {
-		const b = segment.clone();
-		return b;
 	}
 
 	/**
@@ -834,62 +907,6 @@ export class MergeTree {
 	}
 
 	/**
-	 * @remarks Must only be used by client.
-	 * @param segment - The segment to slide from.
-	 * @param cache - Optional cache mapping segments to their sliding destinations.
-	 * Excursions will be avoided for segments in the cache, and the cache will be populated with
-	 * entries for all segments visited during excursion.
-	 * This can reduce the number of times the tree needs to be scanned if a range containing many
-	 * SlideOnRemove references is removed.
-	 * @returns The segment a SlideOnRemove reference should slide to, or undefined if there is no
-	 * valid segment (i.e. the tree is empty).
-	 * @internal
-	 */
-	public _getSlideToSegment(
-		segment: ISegment | undefined,
-		slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
-		cache?: Map<ISegment, { seg?: ISegment }>,
-	): ISegment | undefined {
-		if (!segment || !isRemovedAndAcked(segment)) {
-			return segment;
-		}
-
-		const cachedSegment = cache?.get(segment);
-		if (cachedSegment !== undefined) {
-			return cachedSegment.seg;
-		}
-		const result: { seg?: ISegment } = {};
-		cache?.set(segment, result);
-		const goFurtherToFindSlideToSegment = (seg) => {
-			if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
-				result.seg = seg;
-				return false;
-			}
-			if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
-				cache.set(seg, result);
-			}
-			return true;
-		};
-
-		if (slidingPreference === SlidingPreference.BACKWARD) {
-			backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		} else {
-			forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		}
-		if (result.seg !== undefined) {
-			return result.seg;
-		}
-
-		if (slidingPreference === SlidingPreference.BACKWARD) {
-			forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		} else {
-			backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		}
-
-		return result.seg;
-	}
-
-	/**
 	 * Slides or removes references from the provided list of segments.
 	 *
 	 * The order of the references is preserved for references of the same sliding
@@ -985,11 +1002,7 @@ export class MergeTree {
 				return;
 			}
 
-			const slideToSegment = this._getSlideToSegment(
-				segment,
-				slidingPreference,
-				segmentCache,
-			);
+			const slideToSegment = getSlideToSegment(segment, slidingPreference, segmentCache);
 			const slideIsForward =
 				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
 
@@ -1055,8 +1068,6 @@ export class MergeTree {
 	 * Compute local partial length information
 	 *
 	 * Public only for use by internal tests
-	 *
-	 * @internal
 	 */
 	public computeLocalPartials(refSeq: number) {
 		if (this.localPartialsComputed) {
@@ -1154,9 +1165,7 @@ export class MergeTree {
 	}
 
 	public addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
-		if (!this.minSeqListeners) {
-			this.minSeqListeners = new Heap<MinListener>([], minListenerComparer);
-		}
+		this.minSeqListeners ??= new Heap<MinListener>([], minListenerComparer);
 		this.minSeqListeners.add({ minRequired, onMinGE });
 	}
 
@@ -1302,20 +1311,17 @@ export class MergeTree {
 		clientData: TClientData,
 		localSeq?: number,
 	): ISegment | undefined {
+		const { pre, post, contains, leaf, shift } = actions ?? {};
 		let _pos = pos;
 		let _segpos = segpos;
 		const children = block.children;
-		if (actions && actions.pre) {
-			actions.pre(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
-		}
-		const contains = actions && actions.contains;
+		pre?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
 		for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
 			const child = children[childIndex];
 			const len = this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
 			if (
 				(!contains && _pos < len) ||
-				(contains &&
-					contains(child, _pos, refSeq, clientId, undefined, undefined, clientData))
+				contains?.(child, _pos, refSeq, clientId, undefined, undefined, clientData)
 			) {
 				// Found entry containing pos
 				if (!child.isLeaf()) {
@@ -1330,22 +1336,16 @@ export class MergeTree {
 						localSeq,
 					);
 				} else {
-					if (actions && actions.leaf) {
-						actions.leaf(child, _segpos, refSeq, clientId, _pos, -1, clientData);
-					}
+					leaf?.(child, _segpos, refSeq, clientId, _pos, -1, clientData);
 					return child;
 				}
 			} else {
-				if (actions && actions.shift) {
-					actions.shift(child, _segpos, refSeq, clientId, _pos, undefined, clientData);
-				}
+				shift?.(child, _segpos, refSeq, clientId, _pos, undefined, clientData);
 				_pos -= len;
 				_segpos += len;
 			}
 		}
-		if (actions && actions.post) {
-			actions.post(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
-		}
+		post?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
 	}
 
 	private backwardSearch<TClientData>(
@@ -1371,20 +1371,17 @@ export class MergeTree {
 		actions: SegmentActions<TClientData> | undefined,
 		clientData: TClientData,
 	): ISegment | undefined {
+		const { pre, post, contains, leaf, shift } = actions ?? {};
 		let _segEnd = segEnd;
 		const children = block.children;
-		if (actions && actions.pre) {
-			actions.pre(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
-		}
-		const contains = actions && actions.contains;
+		pre?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
 		for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
 			const child = children[childIndex];
 			const len = this.nodeLength(child, refSeq, clientId) ?? 0;
 			const segpos = _segEnd - len;
 			if (
 				(!contains && pos >= segpos) ||
-				(contains &&
-					contains(child, pos, refSeq, clientId, undefined, undefined, clientData))
+				contains?.(child, pos, refSeq, clientId, undefined, undefined, clientData)
 			) {
 				// Found entry containing pos
 				if (!child.isLeaf()) {
@@ -1398,21 +1395,15 @@ export class MergeTree {
 						clientData,
 					);
 				} else {
-					if (actions && actions.leaf) {
-						actions.leaf(child, segpos, refSeq, clientId, pos, -1, clientData);
-					}
+					leaf?.(child, segpos, refSeq, clientId, pos, -1, clientData);
 					return child;
 				}
 			} else {
-				if (actions && actions.shift) {
-					actions.shift(child, segpos, refSeq, clientId, pos, undefined, clientData);
-				}
+				shift?.(child, segpos, refSeq, clientId, pos, undefined, clientData);
 				_segEnd = segpos;
 			}
 		}
-		if (actions && actions.post) {
-			actions.post(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
-		}
+		post?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
 	}
 
 	private updateRoot(splitNode: IMergeBlock | undefined) {
@@ -1469,7 +1460,6 @@ export class MergeTree {
 			const clientId = this.collabWindow.clientId;
 			for (const node of nodesToUpdate) {
 				this.blockUpdatePathLengths(node, seq, clientId, overwrite);
-				// NodeUpdatePathLengths(node, seq, clientId, true);
 			}
 		}
 		if (MergeTree.options.zamboniSegments) {
@@ -2289,7 +2279,7 @@ export class MergeTree {
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
 					const rollbackType =
-						op.combiningOp && op.combiningOp.name === "rewrite"
+						op.combiningOp?.name === "rewrite"
 							? PropertiesRollback.Rewrite
 							: PropertiesRollback.Rollback;
 					const annotateOp = createAnnotateRangeOp(
@@ -2641,16 +2631,9 @@ export class MergeTree {
 				return;
 			}
 			if (state.childIndex === 0) {
-				if (state.start === undefined) {
-					state.start = 0;
-				}
-				if (state.end === undefined) {
-					state.end = this.blockLength(state.block, state.refSeq, state.clientId);
-				}
-
-				if (state.actions.pre) {
-					state.actions.pre(state);
-				}
+				state.start ??= 0;
+				state.end ??= this.blockLength(state.block, state.refSeq, state.clientId);
+				state.actions.pre?.(state);
 			}
 			if (state.op === IncrementalExecOp.Go && state.childIndex < state.block.childCount) {
 				const child = state.block.children[state.childIndex];
@@ -2679,8 +2662,8 @@ export class MergeTree {
 				state.childIndex++;
 			} else {
 				if (state.childIndex === state.block.childCount) {
-					if (state.op === IncrementalExecOp.Go && state.actions.post) {
-						state.actions.post(state);
+					if (state.op === IncrementalExecOp.Go) {
+						state.actions.post?.(state);
 					}
 					stateStack.pop();
 				}

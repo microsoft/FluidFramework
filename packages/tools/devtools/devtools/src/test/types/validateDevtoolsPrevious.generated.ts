@@ -83,6 +83,7 @@ declare function get_current_ClassDeclaration_DevtoolsLogger():
 declare function use_old_ClassDeclaration_DevtoolsLogger(
     use: TypeOnly<old.DevtoolsLogger>);
 use_old_ClassDeclaration_DevtoolsLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DevtoolsLogger());
 
 /*
@@ -107,6 +108,7 @@ declare function get_current_InterfaceDeclaration_DevtoolsProps():
 declare function use_old_InterfaceDeclaration_DevtoolsProps(
     use: TypeOnly<old.DevtoolsProps>);
 use_old_InterfaceDeclaration_DevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_DevtoolsProps());
 
 /*
