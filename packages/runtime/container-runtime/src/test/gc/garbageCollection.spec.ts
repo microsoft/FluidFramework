@@ -24,7 +24,7 @@ import {
 	mixinMonitoringContext,
 	MonitoringContext,
 	tagCodeArtifacts,
-	createChildMonitoringContext,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -85,7 +85,7 @@ describe("Garbage Collection Tests", () => {
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
-	let mc: MonitoringContext;
+	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
 
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
@@ -149,7 +149,7 @@ describe("Garbage Collection Tests", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mc.logger,
+			baseLogger: createChildLogger({ logger: mc.logger }),
 			existing,
 			metadata,
 			createContainerMetadata: {
@@ -172,9 +172,7 @@ describe("Garbage Collection Tests", () => {
 	beforeEach(() => {
 		gc = undefined;
 		mockLogger = new MockLogger();
-		mc = createChildMonitoringContext({
-			logger: mixinMonitoringContext(mockLogger, configProvider(injectedSettings)).logger,
-		});
+		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
 	});
 
 	afterEach(() => {

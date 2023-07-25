@@ -15,7 +15,7 @@ import {
 	ConfigTypes,
 	MonitoringContext,
 	mixinMonitoringContext,
-	createChildMonitoringContext,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -60,7 +60,7 @@ describe("Garbage Collection configurations", () => {
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
-	let mc: MonitoringContext;
+	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -123,7 +123,7 @@ describe("Garbage Collection configurations", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mc.logger,
+			baseLogger: createChildLogger({ logger: mc.logger }),
 			existing: createParams.metadata !== undefined /* existing */,
 			metadata: createParams.metadata,
 			createContainerMetadata: {
@@ -145,9 +145,7 @@ describe("Garbage Collection configurations", () => {
 	beforeEach(() => {
 		gc = undefined;
 		mockLogger = new MockLogger();
-		mc = createChildMonitoringContext({
-			logger: mixinMonitoringContext(mockLogger, configProvider(injectedSettings)).logger,
-		});
+		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
 		// To ensure inactive timeout is less than sweep timeout.
 		injectedSettings[testOverrideInactiveTimeoutKey] = 1;
 	});
