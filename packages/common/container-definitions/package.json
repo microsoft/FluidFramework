@@ -84,6 +84,10 @@
 			},
 			"InterfaceDeclaration_IDeltaManager": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICodeAllowList": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
