@@ -35,7 +35,6 @@ export {
 } from "./error";
 export {
 	ConnectionState,
-	ICodeAllowList,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,

@@ -86,18 +86,6 @@ export interface IFluidCodeResolver {
 }
 
 /**
- * Code AllowListing Interface
- *
- * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
- */
-export interface ICodeAllowList {
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
-	 */
-	testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
-}
-
-/**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
  */
 export interface IContainerEvents extends IEvent {
@@ -140,11 +128,6 @@ export interface IContainerEvents extends IEvent {
 		event: "codeDetailsProposed",
 		listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void,
 	);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	(event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
 
 	/**
 	 * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
