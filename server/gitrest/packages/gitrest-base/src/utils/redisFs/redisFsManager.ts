@@ -241,7 +241,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		await executeRedisFsApi(
-			async () => this.redisFsClient.set(folderpath.toString(), ""),
+			async () => this.redisFsClient.set(folderpathString, RedisFSConstants.Folder),
 			RedisFsApis.Mkdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -439,6 +439,7 @@ enum RedisFsApis {
 }
 
 enum RedisFSConstants {
+	Folder = "Folder",
 	RedisFsApi = "RedisFsApi",
 }
 
