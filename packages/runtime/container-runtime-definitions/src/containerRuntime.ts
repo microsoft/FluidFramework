@@ -63,6 +63,14 @@ export interface IContainerRuntime
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
 	/**
+	 * Returns an aliased data store with the given alias.
+	 * @param alias - The alias for the data store.
+	 * @returns - The aliased data store as a FluidObject. Throws usage error if the data store
+	 * is not aliased or if it doesn't exist.
+	 */
+	getAliasDataStore?(alias: string): Promise<FluidObject>;
+
+	/**
 	 * Creates detached data store context. Data store initialization is considered complete
 	 * only after context.attachRuntime() is called.
 	 * @param pkg - package path
