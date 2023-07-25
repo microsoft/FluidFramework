@@ -5,6 +5,7 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { CommanderStatic } from "commander";
 
 export enum RunnerStatus {
 	NotStarted = "notStarted",
@@ -73,3 +74,7 @@ export interface AzureClientConnectionConfig {
 	useSecureTokenProvider?: boolean;
 	region?: string;
 }
+
+export type ChildRunner = (
+	program: CommanderStatic,
+) => (opts: { [key: string]: any }) => Promise<void>;

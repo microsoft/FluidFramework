@@ -31,10 +31,6 @@ export abstract class ScenarioRunner<
 	 */
 	protected childResults: A[] = [];
 	protected status: RunnerStatus = RunnerStatus.NotStarted;
-	/**
-	 * The filepath to execute when spawning a child process run.
-	 */
-	protected abstract runnerClientFilePath: string;
 
 	constructor(protected readonly scenarioConfig: ScenarioConfig) {
 		super();
@@ -63,7 +59,8 @@ export abstract class ScenarioRunner<
 		const numClients = this.scenarioConfig.numClients ?? 1;
 		for (let i = 0; i < numClients; i++) {
 			const childArgs: string[] = [
-				this.runnerClientFilePath,
+				`./dist/scenarioRunnerClient`,
+				`${this.constructor.name}`,
 				...convertConfigToScriptParams<ScenarioRunConfig>(
 					this.runCore(config, { clientIndex: i }),
 				),
