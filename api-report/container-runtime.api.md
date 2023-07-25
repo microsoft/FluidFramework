@@ -141,7 +141,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;
     // (undocumented)
-    getEntryPoint?(): Promise<FluidObject | undefined>;
+    getEntryPoint(): Promise<FluidObject | undefined>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
@@ -167,12 +167,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
         existing: boolean;
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
         runtimeOptions?: IContainerRuntimeOptions;
         containerScope?: FluidObject;
         containerRuntimeCtor?: typeof ContainerRuntime;
-        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-    }): Promise<ContainerRuntime>;
+    } & ({
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+        initializeEntryPoint?: undefined;
+    } | {
+        requestHandler?: undefined;
+        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    })): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
