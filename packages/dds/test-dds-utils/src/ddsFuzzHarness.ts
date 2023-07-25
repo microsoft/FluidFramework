@@ -160,11 +160,6 @@ export interface DDSFuzzModel<
 	factory: TChannelFactory;
 
 	/**
-	 * Options object to be passed to the data store runtime
-	 */
-	dataStoreRuntimeOptions?: { [key: string]: unknown };
-
-	/**
 	 * Factory which creates a generator for this model.
 	 * @remarks DDS model generators can decide to use the "channel" or "client" field to decide which
 	 * client to perform the operation on.
@@ -385,7 +380,6 @@ export function mixinNewClient<
 				model.factory,
 				op.addedClientId,
 				options,
-				model.dataStoreRuntimeOptions,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -598,10 +592,8 @@ function createClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
 	clientId: string,
-	dataStoreRuntimeOptions: { [key: string]: unknown } = {},
 ): Client<TChannelFactory> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-	dataStoreRuntime.options = dataStoreRuntimeOptions;
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
 	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
 	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
@@ -626,11 +618,9 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	factory: TChannelFactory,
 	clientId: string,
 	options: Pick<DDSFuzzSuiteOptions, "emitter">,
-	dataStoreRuntimeOptions: { [key: string]: unknown } = {},
 ): Promise<Client<TChannelFactory>> {
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-	dataStoreRuntime.options = dataStoreRuntimeOptions;
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
 	});
@@ -679,12 +669,7 @@ export async function runTestForSeed<
 ): Promise<DDSFuzzTestState<TChannelFactory>> {
 	const random = makeRandom(seed);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-	const summarizerClient = createClient(
-		containerRuntimeFactory,
-		model.factory,
-		"summarizer",
-		model.dataStoreRuntimeOptions,
-	);
+	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
 
 	const clients = await Promise.all(
 		Array.from({ length: options.numberOfClients }, async (_, index) =>
@@ -694,7 +679,6 @@ export async function runTestForSeed<
 				model.factory,
 				makeFriendlyClientId(random, index),
 				options,
-				model.dataStoreRuntimeOptions,
 			),
 		),
 	);

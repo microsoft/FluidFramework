@@ -219,7 +219,6 @@ export function makeOperationGenerator(
 }
 
 class IntervalCollectionFuzzFactory extends SharedStringFactory {
-	options = { intervalStickinessEnabled: true };
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -247,7 +246,6 @@ const baseModel: Omit<
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
 	factory: new IntervalCollectionFuzzFactory(),
-	dataStoreRuntimeOptions: { intervalStickinessEnabled: true },
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
