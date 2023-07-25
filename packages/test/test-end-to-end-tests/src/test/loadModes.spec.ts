@@ -9,14 +9,13 @@ import {
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
+	getDefaultObjectFromContainer,
 } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	createAndAttachContainer,
 	createLoader,
@@ -33,7 +32,7 @@ const counterKey = "count";
 /**
  * Implementation of counter dataObject for testing.
  */
-export class TestDataObject extends DataObject {
+class TestDataObject extends DataObject {
 	public static readonly type = "@fluid-example/test-dataObject";
 
 	public static getFactory() {
@@ -89,7 +88,7 @@ export class TestDataObject extends DataObject {
 const testDataObjectFactory = new DataObjectFactory(
 	TestDataObject.type,
 	TestDataObject,
-	[SharedCounter.getFactory(), SharedString.getFactory()],
+	[SharedCounter.getFactory()],
 	{},
 );
 
@@ -109,7 +108,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
-		dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+		dataObject1 = await getDefaultObjectFromContainer<TestDataObject>(container1);
 	});
 
 	afterEach(() => {
@@ -117,14 +116,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	async function createContainer(): Promise<IContainer> {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 			testDataObjectFactory,
 			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
 			undefined,
-			[innerRequestHandler],
 		);
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
@@ -146,13 +141,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		factory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 			factory,
 			[[factory.type, Promise.resolve(factory)]],
 			undefined,
-			[inner],
 		);
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
@@ -168,14 +160,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	}
 
 	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 			testDataObjectFactory,
 			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
 			undefined,
-			[innerRequestHandler],
 		);
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
@@ -211,7 +199,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
 		const initialValue = dataObject2.value;
 
 		assert.strictEqual(dataObject1.value, dataObject2.value, "counter values should be equal");
@@ -219,8 +207,12 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		dataObject1.increment();
 		await loaderContainerTracker.ensureSynchronized(container1);
 
-		assert.notEqual(dataObject1.value, dataObject2.value, "counter values should not be equal");
-		assert.notEqual(
+		assert.notStrictEqual(
+			dataObject1.value,
+			dataObject2.value,
+			"counter values should not be equal",
+		);
+		assert.notStrictEqual(
 			container1.deltaManager.lastSequenceNumber,
 			container2.deltaManager.lastSequenceNumber,
 			"container sequence numbers should not be equal",
@@ -233,8 +225,8 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	it("Can load a paused container at a specific sequence number", async () => {
-		// Min 5 ops, max 15 ops
-		const numIncrement = Math.round(Math.random() * 10) + 5;
+		// Min 5 ops
+		const numIncrement = 5;
 		for (let i = 0; i < numIncrement; i++) {
 			dataObject1.increment();
 		}
@@ -256,7 +248,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -275,8 +267,76 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		}
 		await loaderContainerTracker.ensureSynchronized(container1);
 
-		assert.notEqual(dataObject1.value, dataObject2.value, "counter values should not be equal");
-		assert.notEqual(
+		assert.notStrictEqual(
+			dataObject1.value,
+			dataObject2.value,
+			"counter values should not be equal",
+		);
+		assert.notStrictEqual(
+			container1.deltaManager.lastSequenceNumber,
+			container2.deltaManager.lastSequenceNumber,
+			"container sequence numbers should not be equal",
+		);
+
+		assert.strictEqual(
+			sequenceNumber,
+			container2.deltaManager.lastSequenceNumber,
+			"container2 should still be at the specified sequence number",
+		);
+	});
+
+	it("Can load a paused container after a summary", async () => {
+		const summarizer = await createSummarizerFromContainer(container1);
+		// Send 5 ops
+		const numIncrement = 5;
+		for (let i = 0; i < numIncrement; i++) {
+			dataObject1.increment();
+		}
+		await loaderContainerTracker.ensureSynchronized(container1);
+		const result = summarizer.summarizeOnDemand({ reason: "test" });
+		const submitResult = await result.receivedSummaryAckOrNack;
+		assert.ok(submitResult);
+
+		// Record sequence number we want to pause at, and the expected value at that sequence number
+		const sequenceNumber = container1.deltaManager.lastSequenceNumber;
+		const expectedValue = dataObject1.value;
+
+		const headers: IRequestHeader = {
+			[LoaderHeader.loadMode]: {
+				pauseAfterLoad: true,
+				opsBeforeReturn: "sequenceNumber",
+			},
+			[LoaderHeader.sequenceNumber]: sequenceNumber,
+		};
+		const container2 = await loadContainer(
+			container1.resolvedUrl,
+			testDataObjectFactory,
+			headers,
+		);
+		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+
+		assert.strictEqual(
+			sequenceNumber,
+			container2.deltaManager.lastSequenceNumber,
+			"container2 should be at the specified sequence number",
+		);
+		assert.strictEqual(
+			expectedValue,
+			dataObject2.value,
+			"sharedCounter2 should still be the expected value",
+		);
+
+		for (let i = 0; i < numIncrement; i++) {
+			dataObject1.increment();
+		}
+		await loaderContainerTracker.ensureSynchronized(container1);
+
+		assert.notStrictEqual(
+			dataObject1.value,
+			dataObject2.value,
+			"counter values should not be equal",
+		);
+		assert.notStrictEqual(
 			container1.deltaManager.lastSequenceNumber,
 			container2.deltaManager.lastSequenceNumber,
 			"container sequence numbers should not be equal",
@@ -296,14 +356,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 					opsBeforeReturn: "sequenceNumber",
 				},
 			};
-			try {
-				await loadContainer(container1.resolvedUrl, testDataObjectFactory, headers);
-				assert.fail("Did not throw expected error");
-			} catch (e: any) {
-				const expectedError = "sequenceNumber must be set to a non-negative integer";
-				assert.ok(e.message);
-				assert.strictEqual(e.message, expectedError, "Did not get expected error message");
-			}
+			await assert.rejects(
+				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
+				{ message: "sequenceNumber must be set to a non-negative integer" },
+			);
 		});
 
 		it('Throw if sequence number is a negative integer"', async () => {
@@ -313,28 +369,20 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 				},
 				[LoaderHeader.sequenceNumber]: -1,
 			};
-			try {
-				await loadContainer(container1.resolvedUrl, testDataObjectFactory, headers);
-				assert.fail("Did not throw expected error");
-			} catch (e: any) {
-				const expectedError = "sequenceNumber must be set to a non-negative integer";
-				assert.ok(e.message);
-				assert.strictEqual(e.message, expectedError, "Did not get expected error message");
-			}
+			await assert.rejects(
+				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
+				{ message: "sequenceNumber must be set to a non-negative integer" },
+			);
 		});
 
 		it('Throw if opsBeforeReturn is not set to "sequenceNumber"', async () => {
 			const headers: IRequestHeader = {
 				[LoaderHeader.sequenceNumber]: 0, // Actual value doesn't matter
 			};
-			try {
-				await loadContainer(container1.resolvedUrl, testDataObjectFactory, headers);
-				assert.fail("Did not throw expected error");
-			} catch (e: any) {
-				const expectedError = 'opsBeforeReturn must be set to "sequenceNumber"';
-				assert.ok(e.message);
-				assert.strictEqual(e.message, expectedError, "Did not get expected error message");
-			}
+			await assert.rejects(
+				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
+				{ message: 'opsBeforeReturn must be set to "sequenceNumber"' },
+			);
 		});
 
 		it("Throw if attempting to pause at a sequence number before the latest summary", async () => {
@@ -346,14 +394,11 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			}
 			await loaderContainerTracker.ensureSynchronized(container1);
 			const result = summarizer.summarizeOnDemand({ reason: "test" });
-			const submitResult = await result.summarySubmitted;
+			const submitResult = await result.receivedSummaryAckOrNack;
 			assert.ok(submitResult);
 
-			// 1s buffer to ensure we try to load from the summary
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-
 			// Try to pause at sequence number 1 (before snapshot)
-			const sequenceNumber = 1;
+			const sequenceNumber = 3;
 			const headers: IRequestHeader = {
 				[LoaderHeader.loadMode]: {
 					pauseAfterLoad: true,
@@ -361,15 +406,13 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 				},
 				[LoaderHeader.sequenceNumber]: sequenceNumber,
 			};
-			try {
-				await loadContainer(container1.resolvedUrl, testDataObjectFactory, headers);
-				assert.fail("Did not throw expected error");
-			} catch (e: any) {
-				const expectedError =
-					"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.";
-				assert.ok(e.message);
-				assert.strictEqual(e.message, expectedError, "Did not get expected error message");
-			}
+			await assert.rejects(
+				loadContainer(container1.resolvedUrl, testDataObjectFactory, headers),
+				{
+					message:
+						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+				},
+			);
 		});
 	});
 });
