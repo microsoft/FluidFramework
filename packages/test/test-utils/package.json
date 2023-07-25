@@ -117,6 +117,12 @@
 		"broken": {
 			"ClassDeclaration_TestFluidObject": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_EventAndErrorTrackingLogger": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TestObjectProvider": {
+				"backCompat": false
 			}
 		}
 	}
