@@ -15,6 +15,7 @@ import {
 	ConfigTypes,
 	MonitoringContext,
 	mixinMonitoringContext,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -144,10 +145,9 @@ describe("Garbage Collection configurations", () => {
 	beforeEach(() => {
 		gc = undefined;
 		mockLogger = new MockLogger();
-		mc = mixinMonitoringContext(
-			mockLogger.toTelemetryLogger(),
-			configProvider(injectedSettings),
-		);
+		mc = createChildMonitoringContext({
+			logger: mixinMonitoringContext(mockLogger, configProvider(injectedSettings)).logger,
+		});
 		// To ensure inactive timeout is less than sweep timeout.
 		injectedSettings[testOverrideInactiveTimeoutKey] = 1;
 	});
