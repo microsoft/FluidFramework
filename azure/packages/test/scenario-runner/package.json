@@ -1,6 +1,6 @@
 {
-	"name": "@fluidframework/azure-scenario-runner",
-	"version": "2.0.0-internal.5.4.0",
+	"name": "@fluid-experimental/azure-scenario-runner",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -27,6 +27,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"start": "node ./dist/orchestratorRunner.js --config v1",
+		"start:scenario": "node ./dist/orchestratorRunner.js --config",
 		"start:server": "node ./dist/server.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"test:realsvc": "npm run test:realsvc:tinylicious",

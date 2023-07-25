@@ -280,26 +280,14 @@ use_old_InterfaceDeclaration_IBatchMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICodeAllowList():
-    TypeOnly<old.ICodeAllowList>;
-declare function use_current_InterfaceDeclaration_ICodeAllowList(
-    use: TypeOnly<current.ICodeAllowList>);
-use_current_InterfaceDeclaration_ICodeAllowList(
-    get_old_InterfaceDeclaration_ICodeAllowList());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeAllowList": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICodeAllowList": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICodeAllowList():
-    TypeOnly<current.ICodeAllowList>;
-declare function use_old_InterfaceDeclaration_ICodeAllowList(
-    use: TypeOnly<old.ICodeAllowList>);
-use_old_InterfaceDeclaration_ICodeAllowList(
-    get_current_InterfaceDeclaration_ICodeAllowList());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -457,6 +445,7 @@ declare function get_current_InterfaceDeclaration_IContainerLoadMode():
 declare function use_old_InterfaceDeclaration_IContainerLoadMode(
     use: TypeOnly<old.IContainerLoadMode>);
 use_old_InterfaceDeclaration_IContainerLoadMode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerLoadMode());
 
 /*
@@ -998,6 +987,7 @@ declare function get_current_InterfaceDeclaration_ILoaderHeader():
 declare function use_old_InterfaceDeclaration_ILoaderHeader(
     use: TypeOnly<old.ILoaderHeader>);
 use_old_InterfaceDeclaration_ILoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderHeader());
 
 /*

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -74,7 +74,6 @@
 		"@fluidframework/protocol-base": "^1.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"abort-controller": "^3.0.0",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.6.1",
 		"uuid": "^8.3.1"

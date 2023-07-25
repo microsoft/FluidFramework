@@ -196,6 +196,7 @@ export namespace DevtoolsFeatures {
         type: typeof MessageType;
     }
     export interface MessageData {
+        devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
     }
 }

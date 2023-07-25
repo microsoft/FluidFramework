@@ -145,14 +145,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // @deprecated
-    getSlideToSegment(segoff: {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
@@ -1033,8 +1025,6 @@ export interface SegmentGroup {
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // @deprecated (undocumented)
-    clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
     // (undocumented)
@@ -1185,8 +1175,6 @@ export class TrackingGroup implements ITrackingGroup {
     has(trackable: Trackable): boolean;
     // (undocumented)
     link(trackable: Trackable): void;
-    // @deprecated (undocumented)
-    get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)

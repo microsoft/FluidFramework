@@ -9,6 +9,7 @@ import { IStream } from "@fluidframework/driver-definitions";
 import { delay } from "@fluidframework/common-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 
 export type MyDataInput = IMessage & { data: string };
 
@@ -107,7 +108,7 @@ async function runTestNoTimer(
 	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		logger,
+		logger.toTelemetryLogger(),
 		mockCache,
 		batchSize,
 		-1, // timerGranularity
@@ -148,7 +149,7 @@ export async function runTestWithTimer(
 	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		logger,
+		logger.toTelemetryLogger(),
 		mockCache,
 		batchSize,
 		1, // timerGranularity
@@ -312,7 +313,7 @@ describe("OpsCache", () => {
 		const logger = new MockLogger();
 		const cache = new OpsCache(
 			initialSeq,
-			logger,
+			logger.toTelemetryLogger(),
 			mockCache,
 			5 /* batchSize */,
 			-1, // timerGranularity
@@ -399,7 +400,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		const logger = new MockLogger();
 		const storage = new OdspDeltaStorageWithCache(
 			snapshotOps,
-			logger,
+			logger.toTelemetryLogger(),
 			batchSize,
 			concurrency,
 			// getFromStorage
@@ -412,6 +413,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
+			() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
 		);
 
 		const stream = storage.fetchMessages(

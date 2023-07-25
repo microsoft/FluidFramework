@@ -12,7 +12,7 @@ import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -146,7 +146,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 			0,
 			"Inbound queue should be empty",
 		);
-		const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+		const containerId = (container.resolvedUrl as IResolvedUrl).id;
 		assert.ok(container, "No container ID");
 		if (provider.driver.type === "local") {
 			assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
@@ -1015,7 +1015,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 			0,
 			"Inbound queue should be empty",
 		);
-		const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+		const containerId = (container.resolvedUrl as IResolvedUrl).id;
 		assert.ok(containerId, "No container ID");
 		if (provider.driver.type === "local") {
 			assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");

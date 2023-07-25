@@ -6,7 +6,6 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	DebugLogger,
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
@@ -38,11 +37,12 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
+import { DebugLogger } from "./debugLogger";
 
 function canUseCache(request: IRequest): boolean {
 	if (request.headers === undefined) {
@@ -453,7 +453,24 @@ export class Loader implements IHostLoader {
 			this.cachingEnabled &&
 			request.headers[LoaderHeader.cache] !== false &&
 			pendingLocalState === undefined;
-		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
+		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as
+			| number
+			| undefined;
+		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
+			| string
+			| undefined;
+
+		if (
+			opsBeforeReturn === "sequenceNumber" &&
+			(fromSequenceNumber === undefined || fromSequenceNumber < 0)
+		) {
+			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
+			throw new UsageError("sequenceNumber must be set to a non-negative integer");
+		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== undefined) {
+			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be undefined (default value).
+			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
+			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
+		}
 
 		let container: Container;
 		if (canCache) {
@@ -468,19 +485,6 @@ export class Loader implements IHostLoader {
 			}
 		} else {
 			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
-		}
-
-		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
-			await new Promise<void>((resolve, reject) => {
-				function opHandler(message: ISequencedDocumentMessage) {
-					if (message.sequenceNumber > fromSequenceNumber) {
-						resolve();
-						container.removeListener("op", opHandler);
-					}
-				}
-
-				container.on("op", opHandler);
-			});
 		}
 
 		return { container, parsed };
@@ -501,6 +505,7 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,
+				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
 			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],

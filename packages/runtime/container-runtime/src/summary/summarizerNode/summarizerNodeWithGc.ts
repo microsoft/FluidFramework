@@ -7,6 +7,7 @@ import {
 	ITelemetryLoggerExt,
 	LoggingError,
 	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
@@ -25,6 +26,7 @@ import {
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	cloneGCData,
 	getGCDataFromSnapshot,
@@ -107,7 +109,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
-		logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		private readonly summarizeFn: (
 			fullTree: boolean,
 			trackState: boolean,
@@ -119,7 +121,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		/** Undefined means created without summary */
 		latestSummary?: SummaryNode,
 		initialSummary?: IInitialSummary,
-		wipSummaryLogger?: ITelemetryLoggerExt,
+		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		/** A unique id of this node to be logged when sending telemetry. */
@@ -370,10 +372,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 					const error = new LoggingError("MissingGCStateInPendingSummary", {
 						proposalHandle,
 						referenceSequenceNumber,
-						id: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: this.telemetryNodeId,
-						},
+						...tagCodeArtifacts({
+							id: this.telemetryNodeId,
+						}),
 					});
 					this.logger.sendErrorEvent(
 						{
@@ -666,7 +667,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param baseGCDetailsP - Function to get the initial GC details of this node
  */
 export const createRootSummarizerNodeWithGC = (
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,

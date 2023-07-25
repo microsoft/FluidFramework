@@ -31,8 +31,8 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryBaseEvent,
-	ITelemetryLogger,
 	IFluidHandle,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
 export const rootDataObjectType = "@fluid-example/rootDataObject";
@@ -125,7 +125,7 @@ let settings = {};
 const createContainer = async (
 	provider: ITestObjectProvider,
 	disableSummary: boolean = true,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryBaseLogger,
 ): Promise<IContainer> => {
 	let summaryConfigOverrides: ISummaryConfiguration;
 	if (disableSummary) {

@@ -52,7 +52,6 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
@@ -67,19 +66,13 @@ export const createDocumentId: () => string;
 export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, documentServiceFactory: IDocumentServiceFactory, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger, options?: ILoaderOptions): IHostLoader;
 
 // @public
-export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase, logger?: ITelemetryBaseLogger): Promise<{
+export function createSummarizer(provider: ITestObjectProvider, container: IContainer, config?: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
 
 // @public
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger, configProvider?: IConfigProviderBase): Promise<{
-    container: IContainer;
-    summarizer: ISummarizer;
-}>;
-
-// @public
-export function createSummarizerWithTestConfig(provider: ITestObjectProvider, container: IContainer, config: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -112,7 +105,7 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @public
-export class EventAndErrorTrackingLogger extends TelemetryLogger {
+export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
