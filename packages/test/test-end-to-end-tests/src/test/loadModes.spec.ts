@@ -199,6 +199,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
+		const initialSequenceNumber = container2.deltaManager.lastSequenceNumber;
 		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
 		const initialValue = dataObject2.value;
 
@@ -221,6 +222,11 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			initialValue,
 			dataObject2.value,
 			"sharedCounter2 should still be the initial value",
+		);
+		assert.strictEqual(
+			initialSequenceNumber,
+			container2.deltaManager.lastSequenceNumber,
+			"container2 should still be at the initial sequence number",
 		);
 	});
 
