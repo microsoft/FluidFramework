@@ -55,9 +55,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 
 	/**
 	 * @param roots - dummy node above the root under which detached fields are stored. All content of the forest is reachable from this.
-	 * @param schema - schema which all content is this forest is assumed to comply with.
-	 * @param policy - provides information needed to interpret the schema, mainly multiplicities for each field kind whish are used for chunking policy.
-	 * @param anchors - anchorSet use to track location in this forest across changes. Callers of applyDelta must ensure this is updated this accordingly.
+	 * @param schema - schema which all content in this forest is assumed to comply with.
+	 * @param policy - provides information needed to interpret the schema, mainly multiplicities for each field kind which are used for chunking policy.
+	 * @param anchors - anchorSet used to track location in this forest across changes. Callers of applyDelta must ensure this is updated accordingly.
 	 */
 	public constructor(
 		public roots: BasicChunk,
