@@ -189,8 +189,8 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		cursor.exitField();
 		const parentType = cursor.type;
 		cursor.enterField(key);
-		// TODO: this should error is schema is not found.
-		// For now this suppress the error to work around root handling issues.
+		// TODO: this should error if schema is not found.
+		// For now this suppresses the error to work around root handling issues.
 		const fieldSchema = getFieldSchema(
 			key,
 			this.context.schema.treeSchema.get(parentType) ?? neverTree,
