@@ -122,6 +122,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
+import { cloneDeep } from "lodash";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -744,7 +745,7 @@ export class Container
 		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
 		// all clients that were loaded from the same loader (including summarizer clients).
 		// Tracking alternative ways to handle this in AB#4129.
-		this.options = { ...options };
+		this.options = cloneDeep(options);
 		this.scope = scope;
 		this.detachedBlobStorage = detachedBlobStorage;
 		this.protocolHandlerBuilder =
