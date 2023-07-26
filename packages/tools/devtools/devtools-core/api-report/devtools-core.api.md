@@ -230,7 +230,7 @@ export interface FluidHandleNode extends VisualNodeBase {
     nodeKind: VisualNodeKind.FluidHandleNode;
 }
 
-// @public
+// @internal
 export type FluidObjectId = string;
 
 // @internal
