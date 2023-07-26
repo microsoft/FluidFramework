@@ -218,7 +218,7 @@ export function createInsertMark<TChange = never>(
 
 export function createReviveMark<TChange = never>(
 	countOrContent: number | ITreeCursorSynchronous[],
-	cellId: SF.CellId,
+	cellId?: SF.CellId,
 	overrides?: Partial<SF.Revive<TChange>>,
 ): SF.Revive<TChange> {
 	const content = Array.isArray(countOrContent)
@@ -228,10 +228,15 @@ export function createReviveMark<TChange = never>(
 		type: "Revive",
 		count: content.length,
 		content,
-		cellId,
+	};
+	if (cellId !== undefined) {
+		mark.cellId = cellId;
+	}
+	const withOverrides: SF.Revive<TChange> = {
+		...mark,
 		...overrides,
 	};
-	return mark;
+	return withOverrides;
 }
 
 export function createDeleteMark<TChange = never>(
