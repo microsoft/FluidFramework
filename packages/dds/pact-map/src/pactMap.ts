@@ -377,16 +377,16 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 				if (pending.expectedSignoffs.length === 0) {
 					// The pending value has settled
-					const setSequenceNumber = this.runtime.deltaManager.lastSequenceNumber;
+					const clientLeaveSequenceNumber = this.runtime.deltaManager.lastSequenceNumber;
 					this.values.set(key, {
 						accepted: {
 							value: pending.value,
 							// The sequence number of the ClientLeave message.
-							sequenceNumber: setSequenceNumber,
+							sequenceNumber: clientLeaveSequenceNumber,
 						},
 						pending: undefined,
 					});
-					this.emit("accepted", key, setSequenceNumber);
+					this.emit("accepted", key, clientLeaveSequenceNumber);
 				}
 			}
 		}
