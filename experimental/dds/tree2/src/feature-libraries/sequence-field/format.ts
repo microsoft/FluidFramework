@@ -98,14 +98,6 @@ export const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(Lineag
  * @alpha
  */
 export interface CellId extends ChangeAtomId, HasLineage {}
-
-// /**
-//  * @alpha
-//  */
-// export interface ContextualCellId extends CellId {
-// 	readonly revision?: RevisionTag | undefined;
-// }
-
 export const CellId = Type.Composite([EncodedChangeAtomId, HasLineage]);
 
 export interface HasChanges<TNodeChange = NodeChangeType> {
@@ -153,17 +145,10 @@ export interface Insert<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
-
-	/**
-	 * The first ID in a block associated with the nodes being inserted.
-	 * The node `content[i]` is associated with `id + i`.
-	 */
-	id: ChangesetLocalId;
 }
 export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
-			HasRevisionTag,
 			HasChanges(tNodeChange),
 			Type.Object({
 				type: Type.Literal("Insert"),

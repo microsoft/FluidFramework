@@ -13,7 +13,7 @@ import {
 	IdAllocator,
 	NodeReviver,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, Modify, ReturnFrom, MoveOut } from "./format";
+import { Changeset, Mark, MarkList, Modify, ReturnFrom, MoveOut, Effect } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -114,6 +114,17 @@ function invertMark<TNodeChange>(
 		case "Insert": {
 			if (effect.transientDetach !== undefined) {
 				assert(revision !== undefined, "Unable to revert to undefined revision");
+				const inverseEffect: Effect<never> = {
+					type: "Revive",
+					content: reviver(revision, inputIndex, effect.content.length),
+					inverseOf: effect.revision ?? revision,
+				};
+				if (mark.cellId !== undefined) {
+					inverseEffect.transientDetach = {
+						revision: mark.cellId.revision ?? revision,
+						localId: mark.cellId.localId,
+					};
+				}
 				return [
 					withNodeChange(
 						{
@@ -122,31 +133,22 @@ function invertMark<TNodeChange>(
 								localId: effect.transientDetach.localId,
 							},
 							count: mark.count,
-							effect: [
-								{
-									type: "Revive",
-									content: reviver(revision, inputIndex, effect.content.length),
-									inverseOf: effect.revision ?? revision,
-									transientDetach: {
-										revision: effect.revision ?? revision,
-										localId: effect.id,
-									},
-								},
-							],
+							effect: [inverseEffect],
 						},
 						invertNodeChange(effect.changes, inputIndex, invertChild),
 					),
 				];
-			} else {
+			} else if (mark.cellId !== undefined) {
 				const inverse = withNodeChange(
 					{
 						count: mark.count,
-						effect: [{ type: "Delete", id: effect.id }],
+						effect: [{ type: "Delete", id: mark.cellId.localId }],
 					},
 					invertNodeChange(effect.changes, inputIndex, invertChild),
 				);
 				return [inverse];
 			}
+			return [];
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);

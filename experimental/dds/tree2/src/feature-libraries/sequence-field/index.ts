@@ -9,6 +9,7 @@ export {
 	Changeset,
 	Delete,
 	Detach,
+	Effect,
 	HasChanges,
 	HasMoveId,
 	HasRevisionTag,
@@ -31,6 +32,17 @@ export {
 	CellId,
 	HasLineage,
 } from "./format";
+export {
+	InsertMark,
+	ReviveMark,
+	DeleteMark,
+	MoveOutMark,
+	MoveInMark,
+	ReturnFromMark,
+	ReturnToMark,
+	ModifyMark,
+	ReattachMark,
+} from "./helperTypes";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,

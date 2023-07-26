@@ -66,7 +66,6 @@ export const sequenceFieldEditor = {
 		const mark: Insert<never> = {
 			type: "Insert",
 			content: cursors.map(jsonableTreeFromCursor),
-			id,
 		};
 		return markAtIndex(index, cursors.length, mark, { localId: id, revision: undefined });
 	},

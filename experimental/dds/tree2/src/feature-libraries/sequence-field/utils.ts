@@ -488,7 +488,6 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Insert": {
 			const lhsInsert = lhsEffect as Insert;
 			if (
-				(lhsInsert.id as number) + lhsInsert.content.length === rhsEffect.id &&
 				areMergeableChangeAtoms(
 					lhsInsert.transientDetach,
 					lhs.count,
@@ -938,7 +937,6 @@ export function splitEffect<T, TEffect extends Effect<T>>(
 			const effect2: TEffect = {
 				...effect,
 				content: effect.content.slice(length),
-				id: brand((effect.id as number) + length),
 			};
 			if (effect.transientDetach !== undefined) {
 				(effect2 as Transient).transientDetach = higherCellId(
