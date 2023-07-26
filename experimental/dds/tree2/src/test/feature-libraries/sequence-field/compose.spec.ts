@@ -18,7 +18,7 @@ import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 import { compose, composeNoVerify, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -451,30 +451,18 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive and modify ○ delete", () => {
-		const childChange = TestChange.mint([0, 1], 2);
+		const changes = TestChange.mint([0, 1], 2);
 		const detachEvent: ChangeAtomId = { revision: tag1, localId: brand(0) };
-		const revive: TestChangeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				cellId: detachEvent,
-				changes: childChange,
-			},
-		];
-		const deletion: TestChangeset = [{ type: "Delete", id: brand(0), count: 2 }];
+		const revive = [Mark.revive(fakeRepair(tag1, 0, 1), detachEvent, { changes })];
+		const deletion = [Mark.delete(2, brand(0))];
 		const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
-		const expected: TestChangeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				cellId: detachEvent,
-				changes: childChange,
+		const expected = [
+			Mark.revive(fakeRepair(tag1, 0, 1), detachEvent, {
+				changes,
 				revision: tag2,
 				transientDetach: { revision: tag3, localId: brand(0) },
-			},
-			{ type: "Delete", revision: tag3, id: brand(1), count: 1 },
+			}),
+			Mark.delete(1, brand(1), { revision: tag3 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -483,13 +471,7 @@ describe("SequenceField - Compose", () => {
 		const childChange = TestChange.mint([0, 1], 2);
 		const modify = Change.modify(0, childChange);
 		const insert = Change.insert(0, 1, 2);
-		const expected: TestChangeset = [
-			{ type: "Insert", content: [{ type, value: 2 }], id: brand(2) },
-			{
-				type: "Modify",
-				changes: childChange,
-			},
-		];
+		const expected = [Mark.insert([{ type, value: 2 }], brand(2)), Mark.modify(childChange)];
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(insert)]);
 		assert.deepEqual(actual, expected);
 	});
@@ -498,9 +480,9 @@ describe("SequenceField - Compose", () => {
 		const deletion = Change.delete(0, 3);
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
-		const expected: SF.Changeset = [
-			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
-			{ type: "Delete", id: brand(0), revision: tag1, count: 3 },
+		const expected = [
+			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
+			Mark.delete(3, brand(0), { revision: tag1 }),
 		];
 		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
 		assert.deepEqual(actual, expected);
@@ -510,48 +492,45 @@ describe("SequenceField - Compose", () => {
 		const revive = Change.revive(0, 5, { revision: tag1, localId: brand(0) });
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
-		const expected: SF.Changeset = [
-			{ type: "Insert", content: [{ type, value: 2 }], id: brand(2) },
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 5),
-				count: 5,
-				cellId: { revision: tag1, localId: brand(0) },
-				inverseOf: tag1,
-			},
+		const expected = [
+			Mark.insert([{ type, value: 2 }], brand(2)),
+			Mark.revive(
+				fakeRepair(tag1, 0, 5),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1 },
+			),
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(insert)]);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert ○ insert", () => {
-		const insertA: SF.Changeset = [
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
+		const insertA = [
+			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
 			{ count: 2 },
-			{
-				type: "Insert",
-				revision: tag2,
-				content: [
+			Mark.insert(
+				[
 					{ type, value: 2 },
 					{ type, value: 3 },
 				],
-				id: brand(2),
-			},
+				brand(2),
+				{ revision: tag2 },
+			),
 		];
 
-		const insertB: SF.Changeset = [
-			{ type: "Insert", revision: tag3, content: [{ type, value: 4 }], id: brand(4) },
+		const insertB = [
+			Mark.insert([{ type, value: 4 }], brand(4), { revision: tag3 }),
 			{ count: 4 },
-			{ type: "Insert", revision: tag4, content: [{ type, value: 5 }], id: brand(5) },
+			Mark.insert([{ type, value: 5 }], brand(5), { revision: tag4 }),
 		];
 		const actual = shallowCompose([makeAnonChange(insertA), makeAnonChange(insertB)], revInfos);
-		const expected: SF.Changeset = [
-			{ type: "Insert", revision: tag3, content: [{ type, value: 4 }], id: brand(4) },
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
+		const expected = [
+			Mark.insert([{ type, value: 4 }], brand(4), { revision: tag3 }),
+			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
 			{ count: 2 },
-			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
-			{ type: "Insert", revision: tag4, content: [{ type, value: 5 }], id: brand(5) },
-			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
+			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
+			Mark.insert([{ type, value: 5 }], brand(5), { revision: tag4 }),
+			Mark.insert([{ type, value: 3 }], brand(3), { revision: tag2 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -560,18 +539,13 @@ describe("SequenceField - Compose", () => {
 		const childChange = TestChange.mint([0, 1], 2);
 		const modify = Change.modify(0, childChange);
 		const revive = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
-		const expected: TestChangeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 2),
-				count: 2,
-				cellId: { revision: tag1, localId: brand(0) },
-				inverseOf: tag1,
-			},
-			{
-				type: "Modify",
-				changes: childChange,
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 2),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1 },
+			),
+			Mark.modify(childChange),
 		];
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(revive)]);
 		assert.deepEqual(actual, expected);
@@ -583,15 +557,13 @@ describe("SequenceField - Compose", () => {
 		const revive = makeAnonChange(
 			Change.revive(0, 2, { revision: tag2, localId: brand(0), lineage }),
 		);
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 0, 2),
-				count: 2,
-				cellId: { revision: tag2, localId: brand(0), lineage },
-				inverseOf: tag2,
-			},
-			{ type: "Delete", id: brand(0), count: 2, revision: tag1 },
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag2, 0, 2),
+				{ revision: tag2, localId: brand(0), lineage },
+				{ inverseOf: tag2 },
+			),
+			Mark.delete(2, brand(0), { revision: tag1 }),
 		];
 		const actual = shallowCompose([deletion, revive]);
 		assert.deepEqual(actual, expected);
@@ -603,16 +575,14 @@ describe("SequenceField - Compose", () => {
 		const revive = makeAnonChange(
 			Change.revive(0, 2, { revision: tag2, localId: brand(0), lineage }),
 		);
-		const expected: SF.Changeset = [
-			{ type: "Delete", id: brand(0), count: 1, revision: tag1 },
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 0, 2),
-				count: 2,
-				cellId: { revision: tag2, localId: brand(0), lineage },
-				inverseOf: tag2,
-			},
-			{ type: "Delete", id: brand(1), count: 1, revision: tag1 },
+		const expected = [
+			Mark.delete(1, brand(0), { revision: tag1 }),
+			Mark.revive(
+				fakeRepair(tag2, 0, 2),
+				{ revision: tag2, localId: brand(0), lineage },
+				{ inverseOf: tag2 },
+			),
+			Mark.delete(1, brand(1), { revision: tag1 }),
 		];
 		const actual = shallowCompose([deletion, revive]);
 		assert.deepEqual(actual, expected);
@@ -624,15 +594,13 @@ describe("SequenceField - Compose", () => {
 		const revive = makeAnonChange(
 			Change.revive(0, 2, { revision: tag2, localId: brand(0), lineage }),
 		);
-		const expected: SF.Changeset = [
-			{ type: "Delete", id: brand(0), count: 2, revision: tag1 },
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 0, 2),
-				count: 2,
-				cellId: { revision: tag2, localId: brand(0), lineage },
-				inverseOf: tag2,
-			},
+		const expected = [
+			Mark.delete(2, brand(0), { revision: tag1 }),
+			Mark.revive(
+				fakeRepair(tag2, 0, 2),
+				{ revision: tag2, localId: brand(0), lineage },
+				{ inverseOf: tag2 },
+			),
 		];
 		const actual = shallowCompose([deletion, revive]);
 		assert.deepEqual(actual, expected);
@@ -648,12 +616,12 @@ describe("SequenceField - Compose", () => {
 			localId: brand(1),
 			lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 1 }],
 		});
-		const expected: SF.Changeset = [
-			{ type: "Delete", id: brand(0), count: 1, revision: tag2 },
-			{ type: "Delete", id: brand(0), count: 1, revision: tag1 },
+		const expected = [
+			Mark.delete(1, brand(0), { revision: tag2 }),
+			Mark.delete(1, brand(0), { revision: tag1 }),
 			{ count: 1 },
-			{ type: "Delete", id: brand(2), count: 1, revision: tag1 },
-			{ type: "Delete", id: brand(1), count: 1, revision: tag2 },
+			Mark.delete(1, brand(2), { revision: tag1 }),
+			Mark.delete(1, brand(1), { revision: tag2 }),
 		];
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
@@ -667,10 +635,7 @@ describe("SequenceField - Compose", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
 		const revive = Change.revive(0, 2, { revision: tag2, localId: brand(0) });
-		const expected: SF.Changeset = [
-			{ count: 1 },
-			{ type: "Delete", id: brand(0), count: 3, revision: tag1 },
-		];
+		const expected = [{ count: 1 }, Mark.delete(3, brand(0), { revision: tag1 })];
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
 			tagChange(delete2, tag2),
@@ -683,21 +648,17 @@ describe("SequenceField - Compose", () => {
 		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 1 }];
 		const reviveAA = Change.revive(0, 2, { revision: tag1, localId: brand(1), lineage });
 		const reviveB = Change.revive(0, 1, { revision: tag2, localId: brand(0) });
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 0, 1),
-				count: 1,
-				cellId: { revision: tag2, localId: brand(0) },
-				inverseOf: tag2,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 1, 2),
-				count: 2,
-				cellId: { revision: tag1, localId: brand(1), lineage },
-				inverseOf: tag1,
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag2, 0, 1),
+				{ revision: tag2, localId: brand(0) },
+				{ inverseOf: tag2 },
+			),
+			Mark.revive(
+				fakeRepair(tag1, 1, 2),
+				{ revision: tag1, localId: brand(1), lineage },
+				{ inverseOf: tag1 },
+			),
 		];
 		const actual = shallowCompose([makeAnonChange(reviveAA), makeAnonChange(reviveB)]);
 		assert.deepEqual(actual, expected);
@@ -708,28 +669,22 @@ describe("SequenceField - Compose", () => {
 		const reviveA = Change.revive(0, 1, { revision: tag1, localId: brand(1), lineage });
 		const reviveB1 = Change.revive(0, 1, { revision: tag2, localId: brand(0) });
 		const reviveB2 = Change.revive(2, 1, { revision: tag2, localId: brand(1) });
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 0, 1),
-				count: 1,
-				cellId: { revision: tag2, localId: brand(0) },
-				inverseOf: tag2,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 1, 1),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(1), lineage },
-				inverseOf: tag1,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 1, 1),
-				count: 1,
-				cellId: { revision: tag2, localId: brand(1) },
-				inverseOf: tag2,
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag2, 0, 1),
+				{ revision: tag2, localId: brand(0) },
+				{ inverseOf: tag2 },
+			),
+			Mark.revive(
+				fakeRepair(tag1, 1, 1),
+				{ revision: tag1, localId: brand(1), lineage },
+				{ inverseOf: tag1 },
+			),
+			Mark.revive(
+				fakeRepair(tag2, 1, 1),
+				{ revision: tag2, localId: brand(1) },
+				{ inverseOf: tag2 },
+			),
 		];
 		const actual = shallowCompose([
 			makeAnonChange(reviveA),
@@ -743,21 +698,17 @@ describe("SequenceField - Compose", () => {
 		const lineage: SF.LineageEvent[] = [{ revision: tag2, id: brand(0), count: 1, offset: 0 }];
 		const reviveA = Change.revive(0, 2, { revision: tag1, localId: brand(0), lineage });
 		const reviveB = Change.revive(2, 1, { revision: tag2, localId: brand(0) });
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 2),
-				count: 2,
-				cellId: { revision: tag1, localId: brand(0), lineage },
-				inverseOf: tag1,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag2, 0, 1),
-				count: 1,
-				cellId: { revision: tag2, localId: brand(0) },
-				inverseOf: tag2,
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 2),
+				{ revision: tag1, localId: brand(0), lineage },
+				{ inverseOf: tag1 },
+			),
+			Mark.revive(
+				fakeRepair(tag2, 0, 1),
+				{ revision: tag2, localId: brand(0) },
+				{ inverseOf: tag2 },
+			),
 		];
 		const actual = shallowCompose([makeAnonChange(reviveA), makeAnonChange(reviveB)]);
 		assert.deepEqual(actual, expected);
@@ -766,71 +717,59 @@ describe("SequenceField - Compose", () => {
 	it("revive ○ redundant revive", () => {
 		const reviveA = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
 		const reviveB = Change.redundantRevive(0, 2, { revision: tag1, localId: brand(0) });
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 2),
-				count: 2,
-				cellId: { revision: tag1, localId: brand(0) },
-				inverseOf: tag1,
-				revision: tag2,
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 2),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1, revision: tag2 },
+			),
 		];
 		const actual = shallowCompose([tagChange(reviveA, tag2), makeAnonChange(reviveB)]);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert ○ revive", () => {
-		const insert: SF.Changeset = [
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
+		const insert = [
+			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
 			{ count: 2 },
-			{
-				type: "Insert",
-				revision: tag2,
-				content: [
+			Mark.insert(
+				[
 					{ type, value: 2 },
 					{ type, value: 3 },
 				],
-				id: brand(2),
-			},
+				brand(2),
+				{ revision: tag2 },
+			),
 		];
-		const revive: SF.Changeset = [
-			{
-				type: "Revive",
-				revision: tag3,
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(0) },
-			},
+		const revive = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 1),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1, revision: tag3 },
+			),
 			{ count: 4 },
-			{
-				type: "Revive",
-				revision: tag4,
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(0) },
-			},
+			Mark.revive(
+				fakeRepair(tag1, 0, 1),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1, revision: tag4 },
+			),
 		];
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				revision: tag3,
-				count: 1,
-				content: fakeRepair(tag1, 0, 1),
-				cellId: { revision: tag1, localId: brand(0) },
-			},
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 1),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1, revision: tag3 },
+			),
+			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
 			{ count: 2 },
-			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
-			{
-				type: "Revive",
-				revision: tag4,
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(0) },
-			},
-			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
+			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
+			Mark.revive(
+				fakeRepair(tag1, 0, 1),
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1, revision: tag4 },
+			),
+			Mark.insert([{ type, value: 3 }], brand(3), { revision: tag2 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -924,10 +863,7 @@ describe("SequenceField - Compose", () => {
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
-		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange1, cellId: detach1 },
-			{ type: "Modify", changes: nodeChange2, cellId: detach2 },
-		];
+		const expected = [Mark.modify(nodeChange1, detach1), Mark.modify(nodeChange2, detach2)];
 
 		assert.deepEqual(actual, expected);
 	});
@@ -948,10 +884,7 @@ describe("SequenceField - Compose", () => {
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
-		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange2, cellId: detach2 },
-			{ type: "Modify", changes: nodeChange1, cellId: detach1 },
-		];
+		const expected = [Mark.modify(nodeChange2, detach2), Mark.modify(nodeChange1, detach1)];
 
 		assert.deepEqual(actual, expected);
 	});
@@ -972,10 +905,7 @@ describe("SequenceField - Compose", () => {
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach1);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
-		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange2, cellId: detach1 },
-			{ type: "Modify", changes: nodeChange1, cellId: detach2 },
-		];
+		const expected = [Mark.modify(nodeChange2, detach1), Mark.modify(nodeChange1, detach2)];
 
 		assert.deepEqual(actual, expected);
 	});
@@ -997,10 +927,7 @@ describe("SequenceField - Compose", () => {
 		const modify2 = Change.modifyDetached(0, nodeChange2, detach1);
 		const actual = shallowCompose([tagChange(modify1, tag3), tagChange(modify2, tag4)]);
 
-		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange1, cellId: detach2 },
-			{ type: "Modify", changes: nodeChange2, cellId: detach1 },
-		];
+		const expected = [Mark.modify(nodeChange1, detach2), Mark.modify(nodeChange2, detach1)];
 
 		assert.deepEqual(actual, expected);
 	});
@@ -1025,28 +952,19 @@ describe("SequenceField - Compose", () => {
 		);
 		const actual = shallowCompose([tagChange(revive1, tag5), tagChange(revive2, tag6)]);
 
-		const expected: SF.Changeset<never> = [
-			{
-				type: "Revive",
-				revision: tag5,
-				count: 5,
-				content: fakeRepair(tag1, 0, 5),
-				cellId: { revision: tag2, localId: brand(0) },
-				inverseOf: tag1,
-			},
-			{
-				type: "Revive",
-				revision: tag6,
-				count: 4,
-				content: fakeRepair(tag3, 0, 4),
-				cellId: { revision: tag4, localId: brand(0), lineage },
-				inverseOf: tag3,
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 5),
+				{ revision: tag2, localId: brand(0) },
+				{ revision: tag5, inverseOf: tag1 },
+			),
+			Mark.revive(
+				fakeRepair(tag3, 0, 4),
+				{ revision: tag4, localId: brand(0), lineage },
+				{ revision: tag6, inverseOf: tag3 },
+			),
 		];
 
 		assert.deepEqual(actual, expected);
 	});
 });
-function effectMark(): SF.Mark<TestChange> {
-	throw new Error("Function not implemented.");
-}
