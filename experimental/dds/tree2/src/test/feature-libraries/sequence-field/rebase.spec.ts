@@ -175,7 +175,7 @@ describe("SequenceField - Rebase", () => {
 		);
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(revive, deletion, tag3);
-		const expected: SF.Changeset = [
+		const expected = [
 			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
 			Mark.revive(
 				fakeRepair(tag1, 2, 1),
@@ -197,7 +197,7 @@ describe("SequenceField - Rebase", () => {
 		);
 		const revive2 = Change.revive(0, 1, { revision: tag2, localId: brand(2) }, fakeRepair);
 		const actual = rebase(revive1, revive2, tag2);
-		const expected: SF.Changeset = [
+		const expected = [
 			Mark.revive(
 				fakeRepair(tag1, 0, 1),
 				{ revision: tag2, localId: brand(1) },
@@ -268,7 +268,7 @@ describe("SequenceField - Rebase", () => {
 		]);
 		const actual = rebase(deleteA, deleteB, tag1);
 		// Deletes --E-G
-		const expected: SF.Changeset<never> = [
+		const expected = [
 			{ count: 2 },
 			Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(1) } }),
 			Mark.delete(1, brand(1)),
