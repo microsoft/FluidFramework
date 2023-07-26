@@ -1983,7 +1983,7 @@ TFields extends {
 // @alpha
 type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
 
-// @alpha (undocumented)
+// @alpha
 export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
     // (undocumented)
     readonly rootFieldSchema: T;

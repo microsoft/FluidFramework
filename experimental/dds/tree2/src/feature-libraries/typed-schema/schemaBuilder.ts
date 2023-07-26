@@ -389,6 +389,13 @@ export interface SchemaLibraryData {
 }
 
 /**
+ * {@link SchemaCollection} strongly typed over its rootFieldSchema.
+ *
+ * @remarks
+ * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
+ * The actual type used will include detailed schema information for all the types in the collection.
+ * This pattern is used to implement SchemaAware APIs.
+ *
  * @alpha
  */
 export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
