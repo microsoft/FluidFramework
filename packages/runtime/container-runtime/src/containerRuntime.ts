@@ -841,6 +841,19 @@ export class ContainerRuntime
 					: IdCompressor.create(logger);
 		}
 
+		const initializeEntryPointFn =
+			initializeEntryPoint ??
+			(async (containerRuntime: IContainerRuntime) => {
+				return (await containerRuntime.request({ url: "/" })).value as FluidObject;
+			});
+
+		// let initializeEntryPointFn = initializeEntryPoint;
+		// if (requestHandler !== undefined) {
+		// 	initializeEntryPointFn = async (containerRuntime: IContainerRuntime) => {
+		// 		return (await requestHandler({ url: "/" }, containerRuntime)).value as FluidObject;
+		// 	};
+		// }
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -868,7 +881,7 @@ export class ContainerRuntime
 			idCompressor,
 			requestHandler,
 			undefined, // summaryConfiguration
-			initializeEntryPoint,
+			initializeEntryPointFn,
 		);
 
 		await runtime.blobManager.processStashedChanges();
