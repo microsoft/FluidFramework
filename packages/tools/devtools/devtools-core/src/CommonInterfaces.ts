@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { Edit } from "./data-visualization";
-
 /**
  * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
  *
@@ -56,33 +53,7 @@ export interface HasFluidObjectId {
  * @public
  */
 export enum EditType {
-	number = "number",
-	string = "string",
-	boolean = "boolean",
-}
-
-/**
- * Base interface used in message data for edit events containing the allowed edits as an array of EditType.
- *
- * @internal
- */
-export interface HasEditType {
-	editType: EditType;
-}
-
-/**
- * Base interface used in message data for communicating edits
- * @public
- */
-export interface HasEdit {
-	edit: Edit;
-}
-
-/**
- * Base interface used in message data for edit events containing the new data.
- *
- * @internal
- */
-export interface HasNewData {
-	newData: Serializable<unknown>;
+	Number = "number",
+	String = "string",
+	Boolean = "boolean",
 }

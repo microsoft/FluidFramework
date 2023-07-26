@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { Button, Input, InputOnChangeData } from "@fluentui/react-components";
+import { Input, InputOnChangeData } from "@fluentui/react-components";
 import { FluidObjectValueNode, SendEditData } from "@fluid-experimental/devtools-core";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
@@ -38,16 +38,16 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	const [isEditing, setIsEditing] = React.useState<boolean>(false);
 
 	/**
-	 * isTextBox is whether or not the area should allow text or numbers only.
+	 * isType declares what type the edit will be
 	 */
 	const [isType, setIsType] = React.useState<string>(typeof node.value);
-	console.log(setIsType);
 
 	const textAreaRef = React.useRef<HTMLInputElement>(null);
 
 	const backgroundUpdate = (): void => {
 		if (isEditing === false) {
 			setValue(String(node.value));
+			setIsType(typeof node.value);
 		}
 	};
 	React.useEffect(backgroundUpdate, [node.value, isEditing]);
@@ -73,22 +73,18 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	}, [node.value]);
 
 	const commitChanges = React.useCallback(() => {
-		let data: Serializable<unknown>;
+		let data: Serializable<unknown> = value;
 		switch (isType) {
-			case "string":
-				data = value;
-				break;
 			case "number":
 				data = Number(value);
 				break;
 			case "boolean":
-				data = value === "True" ? true : false;
+				data = value === "true" ? true : false;
 				break;
 			default:
-				data = value;
+				data = String(value);
 				break;
 		}
-
 		const edit = {
 			fluidObjectId: node.fluidObjectId,
 			data,

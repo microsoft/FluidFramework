@@ -51,7 +51,7 @@ export enum ContainerDevtoolsFeature {
 	ContainerData = "container-data",
 
 	/**
-	 * thing
+	 * Indicates that editing of values is available in the Devtools View.
 	 */
 	ContainerDataEditing = "container-data-editing",
 }

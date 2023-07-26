@@ -97,8 +97,6 @@ export namespace ContainerDevtoolsFeatures {
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
-    // (undocumented)
-    dataEditors?: Record<string, EditSharedObject>;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
@@ -224,24 +222,23 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerKey;
 }
 
-// @public
+// @internal
 export interface Edit {
     data: Serializable<unknown>;
-    fluidObjectId: string;
     type?: EditType;
 }
 
-// @public
+// @internal
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 // @public
 export enum EditType {
     // (undocumented)
-    boolean = "boolean",
+    Boolean = "boolean",
     // (undocumented)
-    number = "number",
+    Number = "number",
     // (undocumented)
-    string = "string"
+    String = "string"
 }
 
 // @public
@@ -371,27 +368,9 @@ export interface HasContainerKey {
     containerKey: ContainerKey;
 }
 
-// @public
-export interface HasEdit {
-    // (undocumented)
-    edit: Edit;
-}
-
-// @internal
-export interface HasEditType {
-    // (undocumented)
-    editType: EditType;
-}
-
 // @internal
 export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
-}
-
-// @internal
-export interface HasNewData {
-    // (undocumented)
-    newData: Serializable<unknown>;
 }
 
 // @internal
@@ -479,7 +458,13 @@ export namespace SendEditData {
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
-    export type MessageData = HasContainerKey & HasEdit;
+    export interface MessageData extends HasContainerKey {
+        edit: SharedObjectEdit;
+    }
+}
+
+// @internal
+export interface SharedObjectEdit extends Edit, HasFluidObjectId {
 }
 
 // @internal

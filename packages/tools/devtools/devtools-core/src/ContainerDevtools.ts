@@ -14,11 +14,10 @@ import {
 	DataVisualizerGraph,
 	defaultVisualizers,
 	defaultEditors,
-	Edit,
-	EditSharedObject,
 	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,
+	SharedObjectEdit,
 } from "./data-visualization";
 import { IContainerDevtools } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -87,8 +86,6 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 * provided when initializing the Devtools.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
-
-	dataEditors?: Record<string, EditSharedObject>;
 }
 
 /**
@@ -483,7 +480,6 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 						},
 						{
 							...defaultEditors,
-							...props.dataEditors,
 						},
 				  );
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
@@ -563,7 +559,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			/**
 			 * Todo: When ready to enable feature set it to this.containerData !== undefined
 			 */
-			[ContainerDevtoolsFeature.ContainerDataEditing]: true,
+			[ContainerDevtoolsFeature.ContainerDataEditing]: false,
 		};
 	}
 
@@ -595,7 +591,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	/**
 	 * Begins the process of changing data inside a DDS by using {@link Edit}
 	 */
-	private async editData(edit: Edit): Promise<void> {
+	private async editData(edit: SharedObjectEdit): Promise<void> {
 		return this.dataVisualizer?.applyEdit(edit);
 	}
 }

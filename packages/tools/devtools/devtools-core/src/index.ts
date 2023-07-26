@@ -27,10 +27,7 @@ export {
 	EditType,
 	FluidObjectId,
 	HasContainerKey,
-	HasEdit,
-	HasEditType,
 	HasFluidObjectId,
-	HasNewData,
 } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";
@@ -46,6 +43,7 @@ export {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
+	SharedObjectEdit,
 	TreeNodeBase,
 	ValueNodeBase,
 	VisualChildNode,
