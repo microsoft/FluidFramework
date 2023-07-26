@@ -30,7 +30,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	/**
 	 * value is the current value of the text field.
 	 */
-	const [value, setValue] = React.useState<string>(String(node.value));
+	const [value, setValue] = React.useState<Serializable<unknown>>(String(node.value));
 
 	/**
 	 * isEditing is whether or not the user is currently attempting to edit a value. If they are it will not update so their changes are not overwritten
@@ -127,11 +127,9 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 
 	function boolButton(name: string): React.ReactElement {
 		return (
-			<Button
-				value={name}
-				disabled={value.toLowerCase() === name.toLowerCase() ? true : false}
-				onClick={onButtonClick}
-			></Button>
+			<Button disabled={value === true ? true : false} onClick={onButtonClick} size="small">
+				{name}
+			</Button>
 		);
 	}
 
@@ -151,7 +149,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 					contentEditable
 					ref={textAreaRef}
 					onClick={(event): void => event.preventDefault()}
-					value={value}
+					value={String(value)}
 					onChange={onChange}
 					onFocus={onFocus}
 					onBlur={onBlur}
@@ -159,6 +157,8 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 					type={isType === "string" ? "text" : "number"}
 				/>
 			)}
+			{boolButton("True")}
+			{boolButton("False")}
 		</>
 	);
 }
