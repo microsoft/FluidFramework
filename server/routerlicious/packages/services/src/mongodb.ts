@@ -67,6 +67,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		private readonly collectionName: string,
 		private readonly apiCounterIntervalMS: number,
 		private readonly apiFailureRateTerminationThreshold: number,
+		private readonly apiMinimumCountToEnableTermination: number,
 	) {
 		setInterval(() => {
 			if (!this.apiCounter.countersAreActive) {
@@ -443,7 +444,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
 		if (this.apiFailureRateTerminationThreshold > 1) {
-			return; // If threshold set more than 1, meaning we should ever terminate and skip followings.
+			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
 		}
 		let totalCount = 0;
 		let totalFailedCount = 0;
@@ -454,7 +455,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			}
 		}
 
-		if (totalCount < 100) {
+		if (totalCount < this.apiMinimumCountToEnableTermination) {
 			// too little requests to consider
 			return;
 		}
@@ -481,6 +482,7 @@ export class MongoDb implements core.IDb {
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
 		private readonly apiCounterIntervalMS: number,
 		private readonly apiFailureRateTerminationThreshold: number,
+		private readonly apiMinimumCountToEnableTermination: number,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -502,6 +504,7 @@ export class MongoDb implements core.IDb {
 			name,
 			this.apiCounterIntervalMS,
 			this.apiFailureRateTerminationThreshold,
+			this.apiMinimumCountToEnableTermination,
 		);
 	}
 
@@ -544,6 +547,7 @@ const DefaultMinHeartbeatFrequencyMS = 10000;
 const DefaultApiCounterIntervalMS = 60000;
 // 1 means 100%, using 2 just for safety for incorrect calculations and meaning this feature disabled
 const DefaultApiFailureRateTerminationThreshold = 2;
+const DefaultApiMinimumCountToEnableTermination = 100;
 
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
@@ -564,6 +568,7 @@ interface IMongoDBConfig {
 	minHeartbeatFrequencyMS?: number;
 	apiCounterIntervalMS?: number;
 	apiFailureRateTerminationThreshold?: number;
+	apiMinimumCountToEnableTermination?: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -584,6 +589,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly minHeartbeatFrequencyMS: number;
 	private readonly apiCounterIntervalMS: number;
 	private readonly apiFailureRateTerminationThreshold: number;
+	private readonly apiMinimumCountToEnableTermination: number;
 
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -602,6 +608,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			minHeartbeatFrequencyMS,
 			apiCounterIntervalMS,
 			apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -626,6 +633,8 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.apiCounterIntervalMS = apiCounterIntervalMS ?? DefaultApiCounterIntervalMS;
 		this.apiFailureRateTerminationThreshold =
 			apiFailureRateTerminationThreshold ?? DefaultApiFailureRateTerminationThreshold;
+		this.apiMinimumCountToEnableTermination =
+			apiMinimumCountToEnableTermination ?? DefaultApiMinimumCountToEnableTermination;
 	}
 
 	public async connect(global = false): Promise<core.IDb> {
@@ -681,6 +690,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			retryAnalyzer,
 			this.apiCounterIntervalMS,
 			this.apiFailureRateTerminationThreshold,
+			this.apiMinimumCountToEnableTermination,
 		);
 	}
 }
