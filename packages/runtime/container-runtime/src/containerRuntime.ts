@@ -609,7 +609,7 @@ export class ContainerRuntime
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
-	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -1676,7 +1676,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {

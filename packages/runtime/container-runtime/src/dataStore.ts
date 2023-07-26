@@ -162,7 +162,7 @@ class DataStore implements IDataStore {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return this.fluidDataStoreChannel.request(request);
@@ -186,7 +186,7 @@ class DataStore implements IDataStore {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Please migrate all usage to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
 	 */
 	public get IFluidRouter() {
 		return this.fluidDataStoreChannel;
