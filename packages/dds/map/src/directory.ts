@@ -1250,7 +1250,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const isNew = this.createSubDirectoryCore(
 			subdirName,
 			true,
-			-1,
+			this.getLocalSeq(),
 			this.runtime.clientId ?? "detached",
 		);
 		const subDir = this._subdirectories.get(subdirName);
@@ -1272,6 +1272,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		return subDir;
+	}
+
+	/**
+	 * @returns A sequenceNumber which should be used for local changes.
+	 * @remarks - While detached, 0 is used rather than -1 to represent a change which should be universally known (as opposed to known
+	 * only by the local client). This ensures that if the directory is later attached, none of its data needs to be updated (the values
+	 * last set while detached will now be known to any new client, until they are changed).
+	 * TODO: Convert these conventions to named constants. The semantics used here match those for merge-tree.
+	 */
+	private getLocalSeq(): number {
+		return this.directory.isAttached() ? -1 : 0;
 	}
 
 	/**

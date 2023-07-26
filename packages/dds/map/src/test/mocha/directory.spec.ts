@@ -18,6 +18,7 @@ import {
 import { MapFactory } from "../../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
 import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
@@ -859,7 +860,7 @@ describe("Directory", () => {
 				);
 			});
 
-			it("should correctly process a sub directory operation sent in local state", async () => {
+			it("should correctly process subdirectory operations sent in local state", async () => {
 				// Set the data store runtime to local.
 				dataStoreRuntime.local = true;
 
@@ -899,10 +900,15 @@ describe("Directory", () => {
 					directory.getSubDirectory(subDirName),
 					"The first directory does not have sub directory",
 				);
-				assert.ok(
-					directory2.getSubDirectory(subDirName),
-					"The second directory does not have sub directory",
-				);
+				const subDir2 = directory2.getSubDirectory(subDirName);
+
+				assert.ok(subDir2, "The second directory does not have sub directory");
+
+				subDir2.set("foo", "bar");
+
+				containerRuntimeFactory.processAllMessages();
+
+				assertEquivalentDirectories(directory, directory2);
 
 				// Delete the subdirectory in the second SharedDirectory.
 				directory2.deleteSubDirectory(subDirName);
