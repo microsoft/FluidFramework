@@ -120,7 +120,15 @@ export interface IMockContainerRuntimeOptions {
 	readonly enableGroupedBatching?: boolean;
 }
 
-const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
+/**
+ * The default options for the mock container runtime.
+ *
+ * By default, runtimes will:
+ * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
+ * so all batches have a single op.
+ * - not use grouped batching.
+ */
+export const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
 	flushMode: FlushMode.Immediate,
 	enableGroupedBatching: false,
 };

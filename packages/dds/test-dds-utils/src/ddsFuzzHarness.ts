@@ -27,6 +27,8 @@ import {
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	IMockContainerRuntimeOptions,
+	defaultMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
@@ -333,6 +335,11 @@ export interface DDSFuzzSuiteOptions {
 	 * Turning on this feature is encouraged for quick minimization.
 	 */
 	saveFailures: false | { directory: string };
+
+	/**
+	 * Options to be provided to the underlying container runtimes {@link IMockContainerRuntimeOptions}.
+	 */
+	containerRuntimeOptions?: IMockContainerRuntimeOptions;
 }
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
@@ -346,6 +353,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	rebaseProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
+	containerRuntimeOptions: defaultMockContainerRuntimeOptions,
 };
 
 /**

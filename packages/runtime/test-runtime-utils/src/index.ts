@@ -9,6 +9,7 @@ export { MockFluidDataStoreContext } from "./mocksDataStoreContext";
 export { MockDeltaManager, MockDeltaQueue } from "./mockDeltas";
 export { MockHandle } from "./mockHandle";
 export {
+	defaultMockContainerRuntimeOptions,
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
 	IMockContainerRuntimeOptions,

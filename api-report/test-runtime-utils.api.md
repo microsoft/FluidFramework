@@ -60,6 +60,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
 // @public
+export const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions>;
+
+// @public
 export interface IInsecureUser extends IUser {
     name: string;
 }
