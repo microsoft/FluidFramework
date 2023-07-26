@@ -37,6 +37,7 @@ import {
 	defaultOperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
@@ -259,6 +260,23 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
 		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+	});
+});
+
+describe("IntervalCollection fuzz testing with batches and rebasing", () => {
+	const model = {
+		...baseModel,
+		workloadName: "default interval collection",
+	};
+
+	createDDSFuzzSuite(model, {
+		...defaultFuzzOptions,
+		rebaseProbability: 0.1,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.Immediate,
+			enableGroupedBatching: true,
+		},
 		// replay: 0,
 	});
 });
