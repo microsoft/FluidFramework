@@ -88,14 +88,26 @@ use_old_TypeAliasDeclaration_ConfigTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DebugLogger": {"forwardCompat": false}
+* "ClassDeclaration_DebugLogger": {"forwardCompat": false}
 */
+declare function get_old_ClassDeclaration_DebugLogger():
+    TypeOnly<old.DebugLogger>;
+declare function use_current_ClassDeclaration_DebugLogger(
+    use: TypeOnly<current.DebugLogger>);
+use_current_ClassDeclaration_DebugLogger(
+    get_old_ClassDeclaration_DebugLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DebugLogger": {"backCompat": false}
+* "ClassDeclaration_DebugLogger": {"backCompat": false}
 */
+declare function get_current_ClassDeclaration_DebugLogger():
+    TypeOnly<current.DebugLogger>;
+declare function use_old_ClassDeclaration_DebugLogger(
+    use: TypeOnly<old.DebugLogger>);
+use_old_ClassDeclaration_DebugLogger(
+    get_current_ClassDeclaration_DebugLogger());
 
 /*
 * Validate forward compat by using old type in place of current type

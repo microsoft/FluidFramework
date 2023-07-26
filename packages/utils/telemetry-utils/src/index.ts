@@ -12,6 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
+export { DebugLogger } from "./debugLogger";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,

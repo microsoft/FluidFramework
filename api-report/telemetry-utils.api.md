@@ -6,6 +6,7 @@
 
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
+import { IDebugger } from 'debug';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { ILoggingError } from '@fluidframework/core-interfaces';
@@ -57,6 +58,14 @@ export function createMultiSinkLogger(props: {
     loggers?: (ITelemetryBaseLogger | undefined)[];
     tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
+
+// @public @deprecated
+export class DebugLogger extends TelemetryLogger {
+    constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
+    static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinDebugLogger(namespace: string, logger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
+}
 
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
