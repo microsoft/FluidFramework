@@ -10,7 +10,7 @@ import { deepFreeze, fakeRepair } from "../../utils";
 import { brand } from "../../../util";
 import { ChangesetLocalId } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
-import { ChangeMaker as Change, TestChangeset } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset): TestChangeset {
 	deepFreeze(change);
@@ -243,24 +243,12 @@ describe("SequenceField - Invert", () => {
 
 		it("return-from + redundant return-to => skip + skip", () => {
 			const input: TestChangeset = [
-				{
-					type: "ReturnFrom",
-					count: 1,
-					id: brand(0),
-					isDstConflicted: true,
-					changes: childChange1,
-				},
-				{
-					type: "ReturnTo",
-					count: 1,
-					id: brand(0),
-					cellId: { revision: tag2, localId: brand(0) },
+				Mark.returnFrom(1, brand(0), { isDstConflicted: true, changes: childChange1 }),
+				Mark.returnTo(1, brand(0), {
 					inverseOf: tag1,
-				},
-				{
-					type: "Modify",
-					changes: childChange2,
-				},
+					cellId: { revision: tag2, localId: brand(0) },
+				}),
+				Mark.modify(childChange2),
 			];
 			const actual = invert(input);
 			const expected = composeAnonChanges([
@@ -303,27 +291,13 @@ describe("SequenceField - Invert", () => {
 
 		it("redundant return-from + return to => nil + nil", () => {
 			const input: TestChangeset = [
-				{
-					type: "ReturnFrom",
-					count: 1,
-					id: brand(0),
-					cellId: { revision: tag2, localId: brand(0) },
-				},
-				{
-					type: "Modify",
-					changes: childChange1,
-				},
-				{
-					type: "ReturnTo",
-					count: 1,
-					id: brand(0),
-					cellId: { revision: tag1, localId: brand(0) },
+				Mark.returnFrom(1, brand(0), { cellId: { revision: tag2, localId: brand(0) } }),
+				Mark.modify(childChange1),
+				Mark.returnTo(1, brand(0), {
 					isSrcConflicted: true,
-				},
-				{
-					type: "Modify",
-					changes: childChange2,
-				},
+					cellId: { revision: tag2, localId: brand(0) },
+				}),
+				Mark.modify(childChange2),
 			];
 			const actual = invert(input);
 			const expected = composeAnonChanges([
@@ -335,27 +309,15 @@ describe("SequenceField - Invert", () => {
 
 		it("redundant return-from + redundant return-to => nil + skip", () => {
 			const input: TestChangeset = [
-				{
-					type: "ReturnFrom",
-					count: 1,
-					id: brand(0),
-					cellId: { revision: tag2, localId: brand(0) },
+				Mark.returnFrom(1, brand(0), {
 					isDstConflicted: true,
-				},
-				{
-					type: "Modify",
-					changes: childChange1,
-				},
-				{
-					type: "ReturnTo",
-					count: 1,
-					id: brand(0),
+					cellId: { revision: tag2, localId: brand(0) },
+				}),
+				Mark.modify(childChange1),
+				Mark.returnTo(1, brand(0), {
 					isSrcConflicted: true,
-				},
-				{
-					type: "Modify",
-					changes: childChange2,
-				},
+				}),
+				Mark.modify(childChange2),
 			];
 			const actual = invert(input);
 			const expected = composeAnonChanges([
