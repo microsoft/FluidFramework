@@ -11,6 +11,7 @@ import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -63,6 +64,12 @@ export interface IInsecureUser extends IUser {
     name: string;
 }
 
+// @public
+export interface IMockContainerRuntimeOptions {
+    readonly enableGroupedBatching?: boolean;
+    readonly flushMode?: FlushMode;
+}
+
 // @public (undocumented)
 export interface IMockContainerRuntimePendingMessage {
     // (undocumented)
@@ -87,7 +94,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 
 // @public
 export class MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, overrides?: {
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined);
     // (undocumented)
@@ -106,6 +113,7 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
+    flush?(): void;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -114,12 +122,16 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
+    rebase?(): void;
+    protected get referenceSequenceNumber(): number;
+    protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
 // @public
 export class MockContainerRuntimeFactory {
+    constructor(mockContainerRuntimeOptions?: IMockContainerRuntimeOptions);
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
@@ -136,6 +148,7 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
+    protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
@@ -154,7 +167,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 
 // @public
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, overrides?: {
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
     });
     // (undocumented)
@@ -391,7 +404,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly connected = true;
     // (undocumented)
+    containerRuntime?: MockContainerRuntime;
+    // (undocumented)
     createChannel(id: string, type: string): IChannel;
+    // (undocumented)
+    createDeltaConnection?(): MockDeltaConnection;
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
@@ -444,7 +461,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly path = "";
     // (undocumented)
-    process(message: ISequencedDocumentMessage, local: boolean): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: any, local: boolean): void;
     // (undocumented)

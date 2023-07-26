@@ -32,7 +32,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty, GCDataBuilder } from "@fluidframework/runtime-utils";
+import { GCDataBuilder } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -175,7 +175,7 @@ describe("Data Store Context Tests", () => {
 					const props = e.getTelemetryProperties();
 					assert.strictEqual(
 						(props.fullPackageName as ITaggedTelemetryPropertyType)?.value,
-						packagePathToTelemetryProperty(fullPackageName)?.value,
+						fullPackageName.join("/"),
 						"The error should have the full package name in its telemetry properties",
 					);
 					assert.equal(
@@ -401,10 +401,14 @@ describe("Data Store Context Tests", () => {
 				const expectedEvents = [
 					{
 						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
-						packageName: packagePathToTelemetryProperty(packageName),
-						fluidDataStoreId: {
-							value: dataStoreId,
+						fullPackageName: {
 							tag: TelemetryDataTag.CodeArtifact,
+							value: packageName.join("/"),
+						},
+						fluidDataStoreId: {
+							tag: TelemetryDataTag.CodeArtifact,
+
+							value: dataStoreId,
 						},
 					},
 				];
@@ -437,12 +441,15 @@ describe("Data Store Context Tests", () => {
 				const expectedEvents = [
 					{
 						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
-						packageName: packagePathToTelemetryProperty(packageName),
-						fluidDataStoreId: {
-							value: dataStoreId,
-							tag: TelemetryDataTag.CodeArtifact,
-						},
 						type: DataStoreMessageType.ChannelOp,
+						fluidDataStoreId: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: dataStoreId,
+						},
+						fullPackageName: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: packageName.join("/"),
+						},
 					},
 				];
 				mockLogger.assertMatch(

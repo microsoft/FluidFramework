@@ -1742,15 +1742,6 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(view), ["A", "B", "C"]);
 		});
 
-		itView("can commit over a branch that pulls", (view) => {
-			view.transaction.start();
-			pushTestValueDirect(view, 42);
-			const fork = view.fork();
-			view.transaction.commit();
-			fork.rebaseOnto(view);
-			assert.equal(getTestValue(fork), 42);
-		});
-
 		itView("can handle a pull while in progress", (view) => {
 			const fork = view.fork();
 			fork.transaction.start();

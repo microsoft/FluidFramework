@@ -192,7 +192,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 	return changeset;
 }
 
-export function createInsertMark<TChange>(
+export function createInsertMark<TChange = never>(
 	countOrContent: number | JsonableTree[],
 	id: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.Insert<TChange>>,
@@ -216,7 +216,7 @@ export function createInsertMark<TChange>(
 	return mark;
 }
 
-export function createReviveMark<TChange>(
+export function createReviveMark<TChange = never>(
 	countOrContent: number | ITreeCursorSynchronous[],
 	cellId?: SF.CellId,
 	overrides?: Partial<SF.Revive<TChange>>,
@@ -240,7 +240,7 @@ export function createReviveMark<TChange>(
 	return mark;
 }
 
-export function createDeleteMark<TChange>(
+export function createDeleteMark<TChange = never>(
 	count: number,
 	id: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.Delete<TChange>>,
@@ -260,7 +260,7 @@ export function createDeleteMark<TChange>(
 	return mark;
 }
 
-export function createMoveOutMark<TChange>(
+export function createMoveOutMark<TChange = never>(
 	count: number,
 	id: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.MoveOut<TChange>>,
@@ -369,6 +369,8 @@ export const MarkMaker = {
 	modify: createModifyMark,
 	moveOut: createMoveOutMark,
 	moveIn: createMoveInMark,
+	returnFrom: createReturnFromMark,
+	returnTo: createReturnToMark,
 };
 
 export const ChangeMaker = {

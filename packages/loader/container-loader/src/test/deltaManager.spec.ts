@@ -9,13 +9,18 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { ITelemetryLoggerExt, createDebugLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	MockLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { NoopHeuristic } from "../noopHeuristic";
@@ -40,8 +45,12 @@ describe("Loader", () => {
 			// Stash the real setTimeout because sinon fake timers will hijack it.
 			const realSetTimeout = setTimeout;
 
-			async function startDeltaManager(reconnectAllowed = true) {
-				const service = new MockDocumentService(undefined, () => {
+			async function startDeltaManager(
+				reconnectAllowed = true,
+				dmLogger: ITelemetryLoggerExt = logger,
+				deltaStorageFactory?: () => IDocumentDeltaStorageService,
+			) {
+				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
 					// Forces DM into infinite reconnection loop.
 					deltaConnection = new MockDocumentDeltaConnection("test", (messages) =>
@@ -56,7 +65,7 @@ describe("Loader", () => {
 
 				deltaManager = new DeltaManager<ConnectionManager>(
 					() => service,
-					logger,
+					dmLogger,
 					() => false,
 					(props: IConnectionManagerFactoryArgs) =>
 						new ConnectionManager(
@@ -64,7 +73,7 @@ describe("Loader", () => {
 							() => false,
 							client as IClient,
 							reconnectAllowed,
-							logger,
+							dmLogger,
 							props,
 						),
 				);
@@ -142,13 +151,15 @@ describe("Loader", () => {
 				await yieldEventLoop();
 			}
 
+			const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+
 			before(() => {
 				clock = useFakeTimers();
 			});
 
 			beforeEach(async () => {
 				seq = 1;
-				logger = createDebugLogger({ namespace: "fluid:testDeltaManager" });
+				logger = createChildLogger({ namespace: "fluid:testDeltaManager" });
 				emitter = new EventEmitter();
 
 				clientSeqNumber = 0;
@@ -478,6 +489,49 @@ describe("Loader", () => {
 
 					deltaManager.connectionManager.forceReadonly(true);
 				});
+			});
+
+			it("Closed abort reason should be passed fetch abort signal", async () => {
+				const mockLogger = new MockLogger();
+				await startDeltaManager(undefined, mockLogger, () => ({
+					fetchMessages: (
+						_from: number,
+						_to: number | undefined,
+						abortSignal?: AbortSignal,
+						_cachedOnly?: boolean,
+					) => {
+						return {
+							read: async () => {
+								await new Promise<void>((resolve) => {
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									abortSignal!.onabort = () => {
+										resolve();
+									};
+								});
+
+								throw new Error(
+									// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+									(abortSignal as AbortSignal & { reason: any }).reason,
+								);
+							},
+						};
+					},
+				}));
+
+				// Dispose will trigger abort
+				deltaManager.dispose();
+				await flushPromises();
+
+				mockLogger.assertMatch([
+					{
+						eventName: "DeltaManager_GetDeltasAborted",
+						reason: "DeltaManager is closed",
+					},
+					{
+						eventName: "GetDeltas_Exception",
+						error: "DeltaManager is closed",
+					},
+				]);
 			});
 		});
 	});

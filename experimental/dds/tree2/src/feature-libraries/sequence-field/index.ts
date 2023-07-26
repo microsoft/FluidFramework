@@ -41,6 +41,7 @@ export {
 	ReturnFromMark,
 	ReturnToMark,
 	ModifyMark,
+	DetachMark,
 	ReattachMark,
 } from "./helperTypes";
 export {
@@ -66,5 +67,6 @@ export {
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
+	tryGetEffect,
 } from "./utils";
 export { MoveEffectTable, MoveEffect, PairedMarkUpdate } from "./moveEffectTable";

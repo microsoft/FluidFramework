@@ -4,7 +4,7 @@
  */
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils";
-import { TelemetryDataTag, createChildLogger } from "./logger";
+import { createChildLogger, tagCodeArtifacts } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -222,11 +222,10 @@ export class CachedConfigProvider implements IConfigProvider {
 					this.logger?.send({
 						category: "generic",
 						eventName: "ConfigRead",
-						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
-						configValue: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: JSON.stringify(parsed),
-						},
+						...tagCodeArtifacts({
+							configName: name,
+							configValue: JSON.stringify(parsed),
+						}),
 					});
 					return parsed;
 				}

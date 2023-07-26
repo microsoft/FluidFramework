@@ -58,18 +58,17 @@ describe("Config", () => {
 		const config = new CachedConfigProvider(logger, inMemoryConfigProvider(mockStore));
 
 		assert.equal(config.getNumber("number"), 1);
-		assert(
-			logger.matchEvents([
-				{
-					eventName: "ConfigRead",
-					configName: { tag: TelemetryDataTag.CodeArtifact, value: "number" },
-					configValue: {
-						tag: TelemetryDataTag.CodeArtifact,
-						value: `{"raw":"1","string":"1","number":1}`,
-					},
+		logger.assertMatch([
+			{
+				category: "generic",
+				eventName: "ConfigRead",
+				configName: { tag: TelemetryDataTag.CodeArtifact, value: "number" },
+				configValue: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: `{"raw":"1","string":"1","number":1}`,
 				},
-			]),
-		);
+			},
+		]);
 		assert.equal(config.getNumber("badNumber"), undefined);
 		assert.equal(config.getNumber("stringAndNumber"), 1);
 

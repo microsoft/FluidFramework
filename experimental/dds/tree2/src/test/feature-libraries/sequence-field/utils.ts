@@ -169,10 +169,17 @@ export function toDelta(change: TestChangeset): Delta.MarkList {
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
 	let max: ChangesetLocalId | undefined;
+	const ingest = (id: ChangesetLocalId) => {
+		max = max === undefined ? id : brand(Math.max(max, id));
+	};
 	for (const change of changes) {
 		for (const mark of change) {
-			if (SF.isMoveMark(mark)) {
-				max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
+			if (mark.cellId !== undefined) {
+				// It's possible that the cell local ID is not from this changeset, but taking the max over it is harmless.
+				ingest(mark.cellId.localId);
+			}
+			if (SF.isDetachMark(mark)) {
+				ingest(mark.effect[0].id);
 			}
 		}
 	}

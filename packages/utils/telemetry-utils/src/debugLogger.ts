@@ -13,25 +13,13 @@ import { debug as registerDebug, IDebugger } from "debug";
 import {
 	TelemetryLogger,
 	MultiSinkLogger,
-	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 	formatTick,
+	createChildLogger,
 } from "./logger";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
-
-/**
- * Create a logger which uses the debug library for logging
- * @param props - namespace will be prefixed to all event names, properties are default properties that will be applied events.
- */
-export function createDebugLogger(props: {
-	namespace: string;
-	properties?: ITelemetryLoggerPropertyBags;
-}): ITelemetryLoggerExt {
-	return DebugLogger.create(props.namespace, props.properties);
-}
 /**
  * Implementation of debug logger
- * @deprecated - use createDebugLogger instead.
+ * @deprecated - DebugLogger is internal and will no longer be exported.
  */
 export class DebugLogger extends TelemetryLogger {
 	/**
@@ -70,31 +58,25 @@ export class DebugLogger extends TelemetryLogger {
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
 	 * @param propertyGetters - Getters to add additional properties to all events
-	 * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
+	 * @param logger - Base logger to output events (in addition to debug logger being created). Can be undefined.
 	 */
 	public static mixinDebugLogger(
 		namespace: string,
-		baseLogger?: ITelemetryBaseLogger,
+		logger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
-		if (!baseLogger) {
+		if (!logger) {
 			return DebugLogger.create(namespace, properties);
 		}
 
-		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
-		multiSinkLogger.addLogger(
-			DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+		const multiSinkLogger = new MultiSinkLogger(
+			undefined,
+			properties,
+			[createChildLogger({ logger, namespace }), DebugLogger.create(namespace)],
+			true,
 		);
-		multiSinkLogger.addLogger(createChildLogger({ logger: baseLogger, namespace }));
 
 		return multiSinkLogger;
-	}
-
-	private static tryGetBaseLoggerProps(baseLogger?: ITelemetryBaseLogger) {
-		if (baseLogger instanceof TelemetryLogger) {
-			return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags }).properties;
-		}
-		return undefined;
 	}
 
 	constructor(

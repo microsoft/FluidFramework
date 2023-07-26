@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { IntervalType, SequenceInterval } from "../intervalCollection";
+import { IntervalType, SequenceInterval } from "../intervals";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { createOverlappingSequenceIntervalsIndex } from "../intervalIndex";

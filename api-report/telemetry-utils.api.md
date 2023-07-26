@@ -52,23 +52,18 @@ export function createChildLogger(props?: {
 export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
 
 // @public
-export function createDebugLogger(props: {
-    namespace: string;
-    properties?: ITelemetryLoggerPropertyBags;
-}): ITelemetryLoggerExt;
-
-// @public
 export function createMultiSinkLogger(props: {
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
     loggers?: (ITelemetryBaseLogger | undefined)[];
+    tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
 
 // @public @deprecated
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinDebugLogger(namespace: string, logger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -81,6 +76,9 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
 }
+
+// @public (undocumented)
+export const eventNamespaceSeparator: ":";
 
 // @public
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
@@ -281,7 +279,7 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
 
 // @public @deprecated
 export class MultiSinkLogger extends TelemetryLogger {
-    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[]);
+    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[], tryInheritProperties?: true);
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
@@ -337,6 +335,18 @@ export class SampledTelemetryHelper implements IDisposable {
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
+// @public (undocumented)
+export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {
+        value: Exclude<T[P], undefined>;
+        tag: TelemetryDataTag.CodeArtifact;
+    } | (T[P] extends undefined ? undefined : never); };
+
+// @public (undocumented)
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyTypeExt>>(tag: T, values: V) => { [P in keyof V]: {
+        value: Exclude<V[P], undefined>;
+        tag: T;
+    } | (V[P] extends undefined ? undefined : never); };
+
 // @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
@@ -363,7 +373,7 @@ export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTe
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
-    static readonly eventNamespaceSeparator = ":";
+    static readonly eventNamespaceSeparator: ":";
     // @deprecated (undocumented)
     static formatTick(tick: number): number;
     // (undocumented)
