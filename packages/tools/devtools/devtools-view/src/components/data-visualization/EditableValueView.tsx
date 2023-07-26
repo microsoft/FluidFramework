@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { Button, Input, InputOnChangeData } from "@fluentui/react-components";
+import { Input, InputOnChangeData } from "@fluentui/react-components";
 import { FluidObjectValueNode, SendEditData } from "@fluid-experimental/devtools-core";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
@@ -38,7 +38,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	const [isEditing, setIsEditing] = React.useState<boolean>(false);
 
 	/**
-	 * isTextBox is whether or not the area should allow text or numbers only.
+	 * isType declares what type the edit will be
 	 */
 	const [isType, setIsType] = React.useState<string>(typeof node.value);
 
@@ -113,49 +113,22 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 		[commitChanges],
 	);
 
-	const onButtonClick = React.useCallback(
-		(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-			setValue(String(event.currentTarget.value));
-			commitChanges();
-		},
-		[commitChanges],
-	);
-
-	function boolButton(name: boolean): React.ReactElement {
-		return (
-			<Button
-				disabled={String(value) === "true" && isType === "boolean" ? true : false}
-				onClick={onButtonClick}
-			>
-				{name.toString().charAt(0).toUpperCase()}
-			</Button>
-		);
-	}
-
 	return (
 		<>
 			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
-
-			{isType === "boolean" ? (
-				<>
-					{boolButton(true)}
-					{boolButton(false)}
-				</>
-			) : (
-				<Input
-					size="small"
-					appearance="underline"
-					contentEditable
-					ref={textAreaRef}
-					onClick={(event): void => event.preventDefault()}
-					value={String(value)}
-					onChange={onChange}
-					onFocus={onFocus}
-					onBlur={onBlur}
-					onKeyDown={onKeyDown}
-					type={isType === "string" ? "text" : "number"}
-				/>
-			)}
+			<Input
+				size="small"
+				appearance="underline"
+				contentEditable
+				ref={textAreaRef}
+				onClick={(event): void => event.preventDefault()}
+				value={String(value)}
+				onChange={onChange}
+				onFocus={onFocus}
+				onBlur={onBlur}
+				onKeyDown={onKeyDown}
+				type={isType === "string" ? "text" : "number"}
+			/>
 		</>
 	);
 }

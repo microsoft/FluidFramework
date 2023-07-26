@@ -14,7 +14,6 @@ import {
 	DataVisualizerGraph,
 	defaultVisualizers,
 	defaultEditors,
-	EditSharedObject,
 	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,
@@ -87,8 +86,6 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 * provided when initializing the Devtools.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
-
-	dataEditors?: Record<string, EditSharedObject>;
 }
 
 /**
@@ -483,7 +480,6 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 						},
 						{
 							...defaultEditors,
-							...props.dataEditors,
 						},
 				  );
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);

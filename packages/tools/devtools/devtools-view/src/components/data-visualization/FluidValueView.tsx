@@ -4,8 +4,12 @@
  */
 import React from "react";
 
-import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
-import { EditFlagContext } from "../../EditFlagHelper";
+import {
+	ContainerDevtoolsFeature,
+	FluidObjectValueNode,
+	HasContainerKey,
+} from "@fluid-experimental/devtools-core";
+import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
 import { EditableValueView } from "./EditableValueView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
@@ -20,15 +24,17 @@ export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNod
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
+ *
+ * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;
-	const { editFlagInfo } = React.useContext(EditFlagContext) ?? {};
-	console.log(label);
-	// const metadata = JSON.stringify(node.metadata);
+	const { containerFeatureFlags } = useContainerFeaturesContext();
+	const editingEnabled =
+		containerFeatureFlags[ContainerDevtoolsFeature.ContainerDataEditing] === true;
 	const header = (
 		<>
-			{editFlagInfo.edit === true ? (
+			{editingEnabled === true ? (
 				<EditableValueView
 					label={label}
 					containerKey={containerKey}

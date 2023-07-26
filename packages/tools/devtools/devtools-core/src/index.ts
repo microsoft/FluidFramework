@@ -27,10 +27,7 @@ export {
 	EditType,
 	FluidObjectId,
 	HasContainerKey,
-	HasEditType,
 	HasFluidObjectId,
-	HasNewData,
-	HasSharedObjectEdit,
 } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";

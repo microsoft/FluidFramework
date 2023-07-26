@@ -26,7 +26,7 @@ import {
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext";
-import { EditFlagContext } from "../EditFlagHelper";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -160,19 +160,15 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 			: PanelView.ContainerStateHistory,
 	);
 
-	const [isEditable, setIsEditable] = React.useState({
-		edit: supportedFeatures[ContainerDevtoolsFeature.ContainerDataEditing] ?? false,
-	});
-
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
 			innerView = (
-				<EditFlagContext.Provider
-					value={{ editFlagInfo: isEditable, setEditFlag: setIsEditable }}
+				<ContainerFeatureFlagContext.Provider
+					value={{ containerFeatureFlags: supportedFeatures }}
 				>
 					<DataObjectsView containerKey={containerKey} />
-				</EditFlagContext.Provider>
+				</ContainerFeatureFlagContext.Provider>
 			);
 			break;
 		case PanelView.Audience:

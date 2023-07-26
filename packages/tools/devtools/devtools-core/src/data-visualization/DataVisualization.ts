@@ -168,6 +168,10 @@ export class DataVisualizerGraph
 		 * Policy object for visualizing different kinds of shared objects.
 		 */
 		private readonly visualizers: SharedObjectVisualizers,
+
+		/**
+		 * Policy object for editing different kinds of shared objects.
+		 */
 		private readonly editors: SharedObjectEditors,
 	) {
 		super();
@@ -227,6 +231,7 @@ export class DataVisualizerGraph
 	/**
 	 * Begins the process of applying an edit to a Fluid object.
 	 * @param edit - is a Edit object that describes an edit to a Fluid object.
+	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
 	public async applyEdit(edit: SharedObjectEdit): Promise<void> {
 		return this.visualizerNodes.get(edit.fluidObjectId)?.applyEdit(edit);
@@ -417,8 +422,9 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	}
 
 	/**
-	 * Begins the process of applying an edit to a Fluid object.
+	 * Edits a {@link @fluidframework/shared-object-base#ISharedObject}
 	 * @param edit - is a Edit object that describes an edit to a Fluid object.
+	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
 	public async applyEdit(edit: Edit): Promise<void> {
 		return this.editSharedObject(this.sharedObject, edit);

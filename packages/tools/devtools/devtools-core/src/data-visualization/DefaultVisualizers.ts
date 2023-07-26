@@ -48,7 +48,6 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		children: { data: renderedData },
 		typeMetadata: "SharedCell",
 		nodeKind: VisualNodeKind.FluidTreeNode,
-		editProps: { editTypes: [EditType.string, EditType.number, EditType.number] },
 	};
 };
 
@@ -64,6 +63,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
+		editProps: { editTypes: [EditType.Number] },
 	};
 };
 
@@ -194,7 +194,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 		value: text,
 		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
-		editProps: { editTypes: [EditType.string] },
+		editProps: { editTypes: [EditType.String] },
 	};
 };
 
