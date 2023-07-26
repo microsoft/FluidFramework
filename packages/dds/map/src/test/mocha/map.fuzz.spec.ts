@@ -147,7 +147,7 @@ describe("Map fuzz tests", () => {
 				maxNumberOfClients: 6,
 				clientAddProbability: 0.1,
 			},
-			rebaseProbability: 0.1,
+			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,

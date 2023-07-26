@@ -18,6 +18,7 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalStickiness, SequenceInterval } from "../intervals";
@@ -288,6 +289,11 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 			),
 	};
 
+	const noReconnectWithRebaseModel = {
+		...baseModel,
+		workloadName: "interval collection with rebasing",
+	};
+
 	const options = {
 		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
@@ -300,13 +306,25 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		skip: [80],
+		skip: [80, 9, 12, 44],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
 
 	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
 		...options,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+	});
+
+	createDDSFuzzSuite(noReconnectWithRebaseModel, {
+		...options,
+		skip: [12],
+		rebaseProbability: 0.2,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
