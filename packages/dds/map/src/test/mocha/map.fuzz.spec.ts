@@ -155,7 +155,7 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
 			},
 		},
 	);
