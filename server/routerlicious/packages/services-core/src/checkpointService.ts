@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { ICheckpointRepository, IDocumentRepository } from "./database";
 import { IDeliState, IDocument, IScribe } from "./document";
+import { runWithRetry } from "./runWithRetry";
 
 type DocumentLambda = "deli" | "scribe";
 
@@ -42,7 +43,13 @@ export class CheckpointService implements ICheckpointService {
 				service,
 				checkpoint,
 				this.localCheckpointEnabled,
-			);
+			).catch((error) => {
+				Lumberjack.error(
+					`Error marking document as corrupt in global collection.`,
+					getLumberBaseProperties(documentId, tenantId),
+					error,
+				);
+			});
 			if (this.localCheckpointEnabled && this.checkpointRepository) {
 				await this.writeLocalCheckpoint(documentId, tenantId, checkpoint);
 			}
@@ -77,15 +84,22 @@ export class CheckpointService implements ICheckpointService {
 		tenantId: string,
 		checkpoint: IScribe | IDeliState,
 	) {
-		await this.checkpointRepository
-			.writeCheckpoint(documentId, tenantId, checkpoint)
-			.catch((error) => {
-				Lumberjack.error(
-					`Error writing checkpoint to local database`,
-					getLumberBaseProperties(documentId, tenantId),
-					error,
-				);
-			});
+		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+		try {
+			await runWithRetry(
+				async () =>
+					this.checkpointRepository.writeCheckpoint(documentId, tenantId, checkpoint),
+				"checkpointServiceWriteLocalCheckpoint",
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* shouldIgnoreError */,
+				(error) => true /* shouldRetry */,
+			);
+		} catch (error) {
+			Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
+			throw error;
+		}
 	}
 
 	private async writeGlobalCheckpoint(
@@ -106,26 +120,44 @@ export class CheckpointService implements ICheckpointService {
 			[service]: JSON.stringify(checkpoint),
 		};
 
-		await this.documentRepository
-			.updateOne(checkpointFilter, checkpointData, null)
-			.catch((error) => {
+		try {
+			await runWithRetry(
+				async () =>
+					this.documentRepository.updateOne(checkpointFilter, checkpointData, null),
+				"checkpointServiceUpdateDocumentRepository",
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* shouldIgnoreError */,
+				(error) => true /* shouldRetry */,
+			);
+		} catch (error) {
+			Lumberjack.error(
+				`Error writing checkpoint to the global database.`,
+				lumberProperties,
+				error,
+			);
+			throw error;
+		}
+
+		if (localCheckpointEnabled) {
+			try {
+				await runWithRetry(
+					async () => this.checkpointRepository.deleteCheckpoint(documentId, tenantId),
+					"checkpointServiceDeleteLocalCheckpoint",
+					3,
+					1000,
+					lumberProperties,
+					undefined,
+					(error) => true,
+				);
+			} catch (error) {
 				Lumberjack.error(
-					`Error writing checkpoint to the global database.`,
+					`Error removing checkpoint data from the local database.`,
 					lumberProperties,
 					error,
 				);
-			});
-
-		if (localCheckpointEnabled) {
-			await this.checkpointRepository
-				.deleteCheckpoint(documentId, tenantId)
-				.catch((error) => {
-					Lumberjack.error(
-						`Error removing checkpoint data from the local database.`,
-						lumberProperties,
-						error,
-					);
-				});
+			}
 		}
 	}
 

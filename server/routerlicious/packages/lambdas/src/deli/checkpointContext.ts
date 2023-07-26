@@ -42,6 +42,8 @@ export class CheckpointContext {
 			return;
 		}
 
+		let databaseCheckpointFailed = false;
+
 		// Database checkpoint
 		try {
 			this.pendingUpdateP = this.checkpointCore(checkpoint, globalCheckpointOnly);
@@ -62,37 +64,47 @@ export class CheckpointContext {
 				getLumberBaseProperties(this.id, this.tenantId),
 				ex,
 			);
-			return;
+			databaseCheckpointFailed = true;
 		}
 
-		// Kafka checkpoint
-		try {
-			// depending on the sequence of events, it might try to checkpoint the same offset a second time
-			// detect and prevent that case here
-			const kafkaCheckpointMessage = checkpoint.kafkaCheckpointMessage;
-			if (
-				kafkaCheckpointMessage &&
-				(this.lastKafkaCheckpointOffset === undefined ||
-					kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)
-			) {
-				this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
-				this.context.checkpoint(kafkaCheckpointMessage, restartOnCheckpointFailure);
+		if (!databaseCheckpointFailed) {
+			// Kafka checkpoint
+			try {
+				// depending on the sequence of events, it might try to checkpoint the same offset a second time
+				// detect and prevent that case here
+				const kafkaCheckpointMessage = checkpoint.kafkaCheckpointMessage;
+				if (
+					kafkaCheckpointMessage &&
+					(this.lastKafkaCheckpointOffset === undefined ||
+						kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)
+				) {
+					this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
+					this.context.checkpoint(kafkaCheckpointMessage, restartOnCheckpointFailure);
+				}
+			} catch (ex) {
+				// TODO flag context as error / use this.context.error() instead?
+				this.context.log?.error(
+					`Error writing checkpoint to kafka: ${JSON.stringify(ex)}`,
+					{
+						messageMetaData: {
+							documentId: this.id,
+							tenantId: this.tenantId,
+						},
+					},
+				);
+				Lumberjack.error(
+					`Error writing checkpoint to the kafka`,
+					getLumberBaseProperties(this.id, this.tenantId),
+					ex,
+				);
 			}
-		} catch (ex) {
-			// TODO flag context as error / use this.context.error() instead?
-			this.context.log?.error(`Error writing checkpoint to kafka: ${JSON.stringify(ex)}`, {
-				messageMetaData: {
-					documentId: this.id,
-					tenantId: this.tenantId,
-				},
-			});
-			Lumberjack.error(
-				`Error writing checkpoint to the kafka`,
+		} else {
+			Lumberjack.info(
+				`Skipping kafka checkpoint due to database checkpoint failure.`,
 				getLumberBaseProperties(this.id, this.tenantId),
-				ex,
 			);
+			databaseCheckpointFailed = false;
 		}
-
 		this.pendingUpdateP = undefined;
 
 		// Trigger another round if there is a pending update
@@ -152,9 +164,7 @@ export class CheckpointContext {
 				getLumberBaseProperties(this.id, this.tenantId),
 				error,
 			);
-			return new Promise<void>((resolve, reject) => {
-				resolve(this.checkpointCore(checkpoint));
-			});
+			throw error;
 		});
 	}
 }

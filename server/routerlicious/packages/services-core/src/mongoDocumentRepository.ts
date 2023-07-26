@@ -14,6 +14,10 @@ export class MongoDocumentRepository implements IDocumentRepository {
 	}
 
 	async updateOne(filter: any, update: any, options: any): Promise<void> {
+		const test = true;
+		if (test) {
+			throw new Error("Test Error");
+		}
 		const addToSet = undefined; // AddToSet is not used anywhere. Change the behavior in the future if things changed.
 		await (options?.upsert
 			? this.collection.upsert(filter, update, addToSet, options)
