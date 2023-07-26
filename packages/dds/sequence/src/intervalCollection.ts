@@ -1608,7 +1608,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
-	 * 
+	 *
 	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateForwardIteratorWithStartPosition(
@@ -1620,7 +1620,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithStartPosition}
-	 * 
+	 *
 	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateBackwardIteratorWithStartPosition(
@@ -1632,7 +1632,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithEndPosition}
-	 * 
+	 *
 	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateForwardIteratorWithEndPosition(
@@ -1649,7 +1649,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithEndPosition}
-	 * 
+	 *
 	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateBackwardIteratorWithEndPosition(
