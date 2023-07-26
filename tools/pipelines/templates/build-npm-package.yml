@@ -452,6 +452,7 @@ stages:
                 ne(variables['Build.Reason'], 'PullRequest'),
                 eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
               )
+            continueOnError: true,
             inputs:
               PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               Artifactname: 'bundleAnalysis'
