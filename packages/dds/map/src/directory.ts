@@ -1672,7 +1672,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): ICreateSubDirLocalOpMetadata {
 		this.throwIfDisposed();
 		// Create the sub directory locally first.
-		this.createSubDirectoryCore(op.subdirName, true, -1, this.runtime.clientId ?? "detached");
+		this.createSubDirectoryCore(
+			op.subdirName,
+			true,
+			this.getLocalSeq(),
+			this.runtime.clientId ?? "detached",
+		);
 		this.updatePendingSubDirMessageCount(op);
 
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
