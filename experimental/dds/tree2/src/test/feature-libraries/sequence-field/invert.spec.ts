@@ -19,7 +19,6 @@ function invert(change: TestChangeset): TestChangeset {
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
-const tag3: RevisionTag = mintRevisionTag();
 
 const childChange1 = TestChange.mint([0], 1);
 const childChange2 = TestChange.mint([1], 2);
@@ -134,16 +133,8 @@ describe("SequenceField - Invert", () => {
 
 	describe("Redundant changes", () => {
 		it("delete", () => {
-			const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
-			const input: TestChangeset = [
-				{
-					type: "Delete",
-					id: brand(0),
-					count: 1,
-					changes: childChange1,
-					cellId: detachEvent,
-				},
-			];
+			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+			const input = [Mark.delete(1, brand(0), { cellId, changes: childChange1 })];
 
 			const actual = invert(input);
 			// TODO: use the line below once we apply modifications to removed content
@@ -152,21 +143,10 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("move out", () => {
-			const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
-			const input: TestChangeset = [
-				{
-					type: "MoveOut",
-					count: 1,
-					id: brand(0),
-					changes: childChange1,
-					cellId: detachEvent,
-				},
-				{
-					type: "MoveIn",
-					count: 1,
-					id: brand(0),
-					isSrcConflicted: true,
-				},
+			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+			const input = [
+				Mark.moveOut(1, brand(0), { cellId, changes: childChange1 }),
+				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
 			];
 
 			const actual = invert(input);
@@ -176,22 +156,13 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("revert-only redundant revive => skip", () => {
-			const input: TestChangeset = [
-				{
-					type: "Modify",
-					changes: childChange1,
-				},
-				{
-					type: "Revive",
-					content: fakeRepair(tag1, 0, 1),
-					count: 1,
+			const input = [
+				Mark.modify(childChange1),
+				Mark.revive(fakeRepair(tag1, 0, 1), undefined, {
 					inverseOf: tag1,
 					changes: childChange2,
-				},
-				{
-					type: "Modify",
-					changes: childChange3,
-				},
+				}),
+				Mark.modify(childChange3),
 			];
 			const expected = composeAnonChanges([
 				Change.modify(0, inverseChildChange1),
@@ -242,7 +213,7 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("return-from + redundant return-to => skip + skip", () => {
-			const input: TestChangeset = [
+			const input = [
 				Mark.returnFrom(1, brand(0), { isDstConflicted: true, changes: childChange1 }),
 				Mark.returnTo(1, brand(0), {
 					inverseOf: tag1,
@@ -259,27 +230,11 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("redundant move-out + move-in => nil + nil", () => {
-			const input: TestChangeset = [
-				{
-					type: "MoveOut",
-					count: 1,
-					id: brand(0),
-					cellId: { revision: tag2, localId: brand(0) },
-				},
-				{
-					type: "Modify",
-					changes: childChange1,
-				},
-				{
-					type: "MoveIn",
-					count: 1,
-					id: brand(0),
-					isSrcConflicted: true,
-				},
-				{
-					type: "Modify",
-					changes: childChange2,
-				},
+			const input = [
+				Mark.moveOut(1, brand(0), { cellId: { revision: tag2, localId: brand(0) } }),
+				Mark.modify(childChange1),
+				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
+				Mark.modify(childChange2),
 			];
 			const actual = invert(input);
 			const expected = composeAnonChanges([
@@ -290,7 +245,7 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("redundant return-from + return to => nil + nil", () => {
-			const input: TestChangeset = [
+			const input = [
 				Mark.returnFrom(1, brand(0), { cellId: { revision: tag2, localId: brand(0) } }),
 				Mark.modify(childChange1),
 				Mark.returnTo(1, brand(0), {
@@ -308,7 +263,7 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("redundant return-from + redundant return-to => nil + skip", () => {
-			const input: TestChangeset = [
+			const input = [
 				Mark.returnFrom(1, brand(0), {
 					isDstConflicted: true,
 					cellId: { revision: tag2, localId: brand(0) },
