@@ -836,21 +836,6 @@ export async function replayTest<
 	await runTestForSeed(model, options, seed, saveInfo);
 }
 
-const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<
-	TChannelFactory,
-	TOperation | AddClient | ChangeConnectionState | TriggerRebase | Synchronize
-> =>
-	mixinSynchronization(
-		mixinNewClient(
-			mixinClientSelection(mixinReconnect(mixinRebase(ddsModel, options), options), options),
-			options,
-		),
-		options,
-	);
-
 /**
  * Creates a suite of eventual consistency tests for a particular DDS model.
  */
@@ -910,6 +895,21 @@ export function createDDSFuzzSuite<
 		}
 	});
 }
+
+const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<
+	TChannelFactory,
+	TOperation | AddClient | ChangeConnectionState | TriggerRebase | Synchronize
+> =>
+	mixinSynchronization(
+		mixinNewClient(
+			mixinClientSelection(mixinReconnect(mixinRebase(ddsModel, options), options), options),
+			options,
+		),
+		options,
+	);
 
 /**
  * Runs only the provided seeds.
