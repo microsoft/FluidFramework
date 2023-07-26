@@ -97,7 +97,6 @@ import {
 	ITelemetryLoggerExt,
 	formatTick,
 } from "@fluidframework/telemetry-utils";
-import { cloneDeep } from "lodash";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
@@ -123,6 +122,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
+import { cloneDeep } from "lodash";
 
 const detachedContainerRefSeqNumber = 0;
 
