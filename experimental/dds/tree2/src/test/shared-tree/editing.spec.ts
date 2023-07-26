@@ -811,7 +811,7 @@ describe("Editing", () => {
 		it("can move nodes from field, and back to the source field", () => {
 			const tree = makeTreeFromJson({
 				foo: ["A", "B", "C", "D"],
-				bar: ["D"],
+				bar: ["E"],
 			});
 
 			const rootPath = {
@@ -823,6 +823,7 @@ describe("Editing", () => {
 			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
 			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
 
+			tree.transaction.start();
 			// Move nodes from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -831,7 +832,6 @@ describe("Editing", () => {
 				{ parent: barList, field: brand("") },
 				0,
 			);
-
 			// Move the same nodes from bar back to foo.
 			tree.editor.move(
 				{ parent: barList, field: brand("") },
@@ -840,11 +840,12 @@ describe("Editing", () => {
 				{ parent: fooList, field: brand("") },
 				0,
 			);
+			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [
 				{
 					foo: ["A", "B", "C", "D"],
-					bar: ["D"],
+					bar: ["E"],
 				},
 			];
 
@@ -868,6 +869,7 @@ describe("Editing", () => {
 			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
 			const bazList: UpPath = { parent: rootPath, parentField: brand("baz"), parentIndex: 0 };
 
+			tree.transaction.start();
 			// Move nodes from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -876,7 +878,6 @@ describe("Editing", () => {
 				{ parent: barList, field: brand("") },
 				0,
 			);
-
 			// Move different nodes from bar into baz.
 			tree.editor.move(
 				{ parent: barList, field: brand("") },
@@ -885,7 +886,6 @@ describe("Editing", () => {
 				{ parent: bazList, field: brand("") },
 				0,
 			);
-
 			// Move different nodes from baz into foo.
 			tree.editor.move(
 				{ parent: bazList, field: brand("") },
@@ -894,6 +894,7 @@ describe("Editing", () => {
 				{ parent: fooList, field: brand("") },
 				0,
 			);
+			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [
 				{
@@ -909,84 +910,6 @@ describe("Editing", () => {
 		it("can move inserted nodes to a different field", () => {
 			const tree = makeTreeFromJson({
 				foo: ["D"],
-				bar: ["D"],
-			});
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
-
-			// inserts nodes to move
-			const field = tree.editor.sequenceField({ parent: fooList, field: brand("") });
-			field.insert(0, singleTextCursor({ type: jsonString.name, value: "C" }));
-			field.insert(0, singleTextCursor({ type: jsonString.name, value: "B" }));
-			field.insert(0, singleTextCursor({ type: jsonString.name, value: "A" }));
-
-			// Move nodes from foo into bar.
-			tree.editor.move(
-				{ parent: fooList, field: brand("") },
-				0,
-				3,
-				{ parent: barList, field: brand("") },
-				0,
-			);
-
-			const expectedState: JsonCompatible = [
-				{
-					foo: ["D"],
-					bar: ["A", "B", "C", "D"],
-				},
-			];
-
-			expectJsonTree(tree, expectedState);
-		});
-
-		it("can move nodes to another field and delete them", () => {
-			const tree = makeTreeFromJson({
-				foo: ["A", "B", "C", "D"],
-				bar: ["D"],
-			});
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
-
-			// Move nodes from foo into bar.
-			tree.editor.move(
-				{ parent: fooList, field: brand("") },
-				0,
-				3,
-				{ parent: barList, field: brand("") },
-				0,
-			);
-
-			// Deletes moved nodes
-			const field = tree.editor.sequenceField({ parent: barList, field: brand("") });
-			field.delete(0, 3);
-
-			const expectedState: JsonCompatible = [
-				{
-					foo: ["D"],
-					bar: ["D"],
-				},
-			];
-
-			expectJsonTree(tree, expectedState);
-		});
-
-		it("can move nodes to another field and delete a subset of them", () => {
-			const tree = makeTreeFromJson({
-				foo: ["A", "B", "C", "D", "E"],
 				bar: ["E"],
 			});
 
@@ -999,6 +922,87 @@ describe("Editing", () => {
 			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
 			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
 
+			tree.transaction.start();
+			// inserts nodes to move
+			const field = tree.editor.sequenceField({ parent: fooList, field: brand("") });
+			field.insert(0, singleTextCursor({ type: jsonString.name, value: "C" }));
+			field.insert(0, singleTextCursor({ type: jsonString.name, value: "B" }));
+			field.insert(0, singleTextCursor({ type: jsonString.name, value: "A" }));
+			// Move nodes from foo into bar.
+			tree.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				3,
+				{ parent: barList, field: brand("") },
+				0,
+			);
+			tree.transaction.commit();
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: ["D"],
+					bar: ["A", "B", "C", "E"],
+				},
+			];
+
+			expectJsonTree(tree, expectedState);
+		});
+
+		it("can move nodes to another field and delete them", () => {
+			const tree = makeTreeFromJson({
+				foo: ["A", "B", "C", "D"],
+				bar: ["E"],
+			});
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			tree.transaction.start();
+			// Move nodes from foo into bar.
+			tree.editor.move(
+				{ parent: fooList, field: brand("") },
+				0,
+				3,
+				{ parent: barList, field: brand("") },
+				0,
+			);
+			// Deletes moved nodes
+			const field = tree.editor.sequenceField({ parent: barList, field: brand("") });
+			field.delete(0, 3);
+			tree.transaction.commit();
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: ["D"],
+					bar: ["E"],
+				},
+			];
+
+			expectJsonTree(tree, expectedState);
+		});
+
+		it("can move nodes to another field and delete a subset of them", () => {
+			const tree = makeTreeFromJson({
+				foo: ["A", "B", "C", "D", "E"],
+				bar: ["F"],
+			});
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+
+			tree.transaction.start();
 			// Move nodes from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1007,15 +1011,15 @@ describe("Editing", () => {
 				{ parent: barList, field: brand("") },
 				0,
 			);
-
 			// Deletes subset of moved nodes
 			const field = tree.editor.sequenceField({ parent: barList, field: brand("") });
 			field.delete(1, 2);
+			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [
 				{
 					foo: ["E"],
-					bar: ["A", "D", "E"],
+					bar: ["A", "D", "F"],
 				},
 			];
 
@@ -1039,6 +1043,7 @@ describe("Editing", () => {
 			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
 			const bazList: UpPath = { parent: rootPath, parentField: brand("baz"), parentIndex: 0 };
 
+			tree.transaction.start();
 			// Move nodes from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1056,6 +1061,7 @@ describe("Editing", () => {
 				{ parent: bazList, field: brand("") },
 				0,
 			);
+			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [
 				{
@@ -1071,8 +1077,8 @@ describe("Editing", () => {
 		it("can move nodes to one field, and move its child node to another field", () => {
 			const tree = makeTreeFromJson({
 				foo: ["A", { foo: "B" }],
-				bar: ["E"],
-				baz: ["F"],
+				bar: ["C"],
+				baz: ["D"],
 			});
 
 			const rootPath = {
@@ -1090,6 +1096,7 @@ describe("Editing", () => {
 			};
 			const bazList: UpPath = { parent: rootPath, parentField: brand("baz"), parentIndex: 0 };
 
+			tree.transaction.start();
 			// Move node from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1098,7 +1105,6 @@ describe("Editing", () => {
 				{ parent: barList, field: brand("") },
 				0,
 			);
-
 			// Move child node from bar into baz.
 			tree.editor.move(
 				{ parent: barListChild, field: brand("foo") },
@@ -1107,19 +1113,72 @@ describe("Editing", () => {
 				{ parent: bazList, field: brand("") },
 				0,
 			);
+			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [
 				{
 					foo: ["A"],
-					bar: [{}, "E"],
-					baz: ["B", "F"],
+					bar: [{}, "C"],
+					baz: ["B", "D"],
 				},
 			];
 
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move sequence field to root field, and delete its previous parent node", () => {
+		it("can move child node to one field, and move its parent node to another field", () => {
+			const tree = makeTreeFromJson({
+				foo: ["A", { foo: "B" }],
+				bar: ["C"],
+				baz: ["D"],
+			});
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+			const fooListChild: UpPath = {
+				parent: fooList,
+				parentField: brand(""),
+				parentIndex: 1,
+			};
+			const barList: UpPath = { parent: rootPath, parentField: brand("bar"), parentIndex: 0 };
+			const bazList: UpPath = { parent: rootPath, parentField: brand("baz"), parentIndex: 0 };
+
+			tree.transaction.start();
+			// Move child node from foo into baz.
+			tree.editor.move(
+				{ parent: fooListChild, field: brand("foo") },
+				0,
+				1,
+				{ parent: bazList, field: brand("") },
+				0,
+			);
+			// Move node from foo into bar.
+			tree.editor.move(
+				{ parent: fooList, field: brand("") },
+				1,
+				1,
+				{ parent: barList, field: brand("") },
+				0,
+			);
+			tree.transaction.commit();
+
+			const expectedState: JsonCompatible = [
+				{
+					foo: ["A"],
+					bar: [{}, "C"],
+					baz: ["B", "D"],
+				},
+			];
+
+			expectJsonTree(tree, expectedState);
+		});
+
+		it("can move a node out from under its parent, and delete that parent from its containing sequence field", () => {
 			const tree = makeTreeFromJson({ foo: ["A"] });
 			const rootPath = {
 				parent: undefined,
@@ -1127,13 +1186,14 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+
+			tree.transaction.start();
 			tree.editor
 				.sequenceField({
 					parent: fooList,
 					field: brand(""),
 				})
 				.insert(0, singleJsonCursor({ foo: ["B"] }));
-
 			// Move node from foo into rootField.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1142,18 +1202,19 @@ describe("Editing", () => {
 				{ parent: undefined, field: rootFieldKeySymbol },
 				1,
 			);
-
 			// Deletes parent node
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKeySymbol,
 			});
 			field.delete(0, 1);
+			tree.transaction.commit();
+
 			const expectedState: JsonCompatible = [{ foo: ["B"] }];
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move optional field to root field, and delete its previous parent node", () => {
+		it("can move a node out from under its parent, and delete that parent from its containing optional field", () => {
 			const tree = makeTreeFromJson({ foo: ["A"] });
 			const rootPath = {
 				parent: undefined,
@@ -1161,13 +1222,14 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+
+			tree.transaction.start();
 			tree.editor
 				.optionalField({
 					parent: fooList,
 					field: brand(""),
 				})
 				.set(singleJsonCursor({ foo: ["B"] }), false);
-
 			// Move node from foo into rootField.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1176,18 +1238,19 @@ describe("Editing", () => {
 				{ parent: undefined, field: rootFieldKeySymbol },
 				1,
 			);
-
 			// Deletes parent node
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKeySymbol,
 			});
 			field.delete(0, 1);
+			tree.transaction.commit();
+
 			const expectedState: JsonCompatible = [{ foo: ["B"] }];
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move valueField to root field, and delete its previous parent node", () => {
+		it("can move a node out from under its parent, and delete that parent from its containing value field", () => {
 			const tree = makeTreeFromJson({ foo: ["A"] });
 			const rootPath = {
 				parent: undefined,
@@ -1195,13 +1258,14 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
+
+			tree.transaction.start();
 			tree.editor
 				.valueField({
 					parent: fooList,
 					field: brand(""),
 				})
 				.set(singleJsonCursor({ foo: ["B"] }));
-
 			// Move node from foo into rootField.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1210,13 +1274,14 @@ describe("Editing", () => {
 				{ parent: undefined, field: rootFieldKeySymbol },
 				1,
 			);
-
 			// Deletes parent node
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKeySymbol,
 			});
 			field.delete(0, 1);
+			tree.transaction.commit();
+
 			const expectedState: JsonCompatible = [{ foo: ["B"] }];
 			expectJsonTree(tree, expectedState);
 		});
