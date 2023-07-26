@@ -295,7 +295,7 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * Define a schema for an value field.
+	 * Define a schema for a value field.
 	 * Shorthand or passing `FieldKinds.value` to {@link SchemaBuilder.field}.
 	 *
 	 * Value fields hold a single child.
