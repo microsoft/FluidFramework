@@ -18,6 +18,7 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalStickiness, SequenceInterval } from "../intervals";
@@ -37,7 +38,6 @@ import {
 	defaultOperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
