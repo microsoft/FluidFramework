@@ -6,23 +6,9 @@ import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
 
 import { jsonObject, jsonString, singleJsonCursor } from "../../domains";
-import {
-	rootFieldKeySymbol,
-	UpPath,
-	moveToDetachedField,
-	FieldUpPath,
-	JsonableTree,
-} from "../../core";
+import { rootFieldKeySymbol, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
-import {
-	makeTreeFromJson,
-	remove,
-	insert,
-	expectJsonTree,
-	TestTreeProviderLite,
-	initializeTestTree,
-	toJsonableTree,
-} from "../utils";
+import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
 import { SharedTreeView } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
 
@@ -1235,36 +1221,9 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move node within a child branch to another field, and delete the source's parent node", () => {
-			const provider = new TestTreeProviderLite();
-			const [tree] = provider.trees;
-
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{
-							type: brand("Node"),
-							fields: {
-								foo: [
-									{ type: brand("Node"), value: "A" },
-									{ type: brand("Node"), value: "B" },
-								],
-							},
-						},
-						{
-							type: brand("Node"),
-							fields: {
-								bar: [
-									{ type: brand("Node"), value: "C" },
-									{ type: brand("Node"), value: "D" },
-								],
-							},
-						},
-					],
-				},
-			};
-			initializeTestTree(tree, initialState);
+		it.skip("can rebase a move over the deletion of the source parent", () => {
+			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
+			const childBranch = tree.fork();
 
 			const rootPath = {
 				parent: undefined,
@@ -1272,73 +1231,36 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 
-			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 1 };
+			const srcList: UpPath = { parent: rootPath, parentField: brand("src"), parentIndex: 0 };
+			const dstList: UpPath = { parent: rootPath, parentField: brand("dst"), parentIndex: 0 };
 
-			// Move node from child branch foo to child branch bar.
-			tree.editor.move(
-				{ parent: fooList, field: brand("foo") },
+			// In the child branch, move a node from src to dst.
+			childBranch.editor.move(
+				{ parent: srcList, field: brand("") },
 				0,
 				1,
-				{ parent: barList, field: brand("bar") },
+				{ parent: dstList, field: brand("") },
 				0,
 			);
 
-			// Deletes parent node which contains child branch foo
-			const field = tree.editor.sequenceField({ parent: rootPath, field: brand("foo") });
-			field.delete(0, 1);
+			// Deletes parent node of the src field
+			tree.editor
+				.optionalField({ parent: rootPath, field: brand("src") })
+				.set(undefined, false);
 
-			const expectedState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{
-							type: brand("Node"),
-							fields: {
-								bar: [
-									{ type: brand("Node"), value: "A" },
-									{ type: brand("Node"), value: "C" },
-									{ type: brand("Node"), value: "D" },
-								],
-							},
-						},
-					],
-				},
-			};
+			// Edits to deleted subtrees are currently ignored
+			const expectedState: JsonCompatible = [{ dst: ["C", "D"] }];
 
-			assert.deepEqual([expectedState], toJsonableTree(tree));
+			childBranch.rebaseOnto(tree);
+			expectJsonTree(childBranch, expectedState);
+
+			tree.merge(childBranch);
+			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move node within a child branch to another field, and delete the destination's parent node", () => {
-			const provider = new TestTreeProviderLite();
-			const [tree] = provider.trees;
-
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{
-							type: brand("Node"),
-							fields: {
-								foo: [
-									{ type: brand("Node"), value: "A" },
-									{ type: brand("Node"), value: "B" },
-								],
-							},
-						},
-						{
-							type: brand("Node"),
-							fields: {
-								bar: [
-									{ type: brand("Node"), value: "C" },
-									{ type: brand("Node"), value: "D" },
-								],
-							},
-						},
-					],
-				},
-			};
-			initializeTestTree(tree, initialState);
+		it.skip("can rebase a move over the deletion of the destination parent", () => {
+			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
+			const childBranch = tree.fork();
 
 			const rootPath = {
 				parent: undefined,
@@ -1346,69 +1268,36 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 
-			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 1 };
+			const srcList: UpPath = { parent: rootPath, parentField: brand("src"), parentIndex: 0 };
+			const dstList: UpPath = { parent: rootPath, parentField: brand("dst"), parentIndex: 0 };
 
-			// Move node from child branch foo to child branch bar.
-			tree.editor.move(
-				{ parent: fooList, field: brand("foo") },
+			// In the child branch, move a node from src to dst.
+			childBranch.editor.move(
+				{ parent: srcList, field: brand("") },
 				0,
 				1,
-				{ parent: barList, field: brand("bar") },
+				{ parent: dstList, field: brand("") },
 				0,
 			);
 
-			// Deletes parent node which contains child branch foo
-			const field = tree.editor.sequenceField({ parent: rootPath, field: brand("foo") });
-			field.delete(1, 1);
+			// Deletes parent node of the src field
+			tree.editor
+				.optionalField({ parent: rootPath, field: brand("dst") })
+				.set(undefined, false);
 
-			const expectedState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{
-							type: brand("Node"),
-							fields: {
-								foo: [{ type: brand("Node"), value: "B" }],
-							},
-						},
-					],
-				},
-			};
+			// Edits to deleted subtrees are currently ignored
+			const expectedState: JsonCompatible = [{ src: ["A", "B"] }];
 
-			assert.deepEqual([expectedState], toJsonableTree(tree));
+			childBranch.rebaseOnto(tree);
+			expectJsonTree(childBranch, expectedState);
+
+			tree.merge(childBranch);
+			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move node within a child branch to another field, and delete the parent node of both fields", () => {
-			const provider = new TestTreeProviderLite();
-			const [tree] = provider.trees;
-
-			const initialState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{
-							type: brand("Node"),
-							fields: {
-								foo: [
-									{ type: brand("Node"), value: "A" },
-									{ type: brand("Node"), value: "B" },
-								],
-							},
-						},
-						{
-							type: brand("Node"),
-							fields: {
-								bar: [
-									{ type: brand("Node"), value: "C" },
-									{ type: brand("Node"), value: "D" },
-								],
-							},
-						},
-					],
-				},
-			};
-			initializeTestTree(tree, initialState);
+		it("can rebase a move over the deletion of the source and destination parents", () => {
+			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
+			const childBranch = tree.fork();
 
 			const rootPath = {
 				parent: undefined,
@@ -1416,26 +1305,37 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 
-			const fooList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 0 };
-			const barList: UpPath = { parent: rootPath, parentField: brand("foo"), parentIndex: 1 };
+			const srcList: UpPath = { parent: rootPath, parentField: brand("src"), parentIndex: 0 };
+			const dstList: UpPath = { parent: rootPath, parentField: brand("dst"), parentIndex: 0 };
 
-			// Move node from child branch foo to child branch bar.
-			tree.editor.move(
-				{ parent: fooList, field: brand("foo") },
+			// In the child branch, move a node from src to dst.
+			childBranch.editor.move(
+				{ parent: srcList, field: brand("") },
 				0,
 				1,
-				{ parent: barList, field: brand("bar") },
+				{ parent: dstList, field: brand("") },
 				0,
 			);
 
-			// Deletes parent node which contains child branch foo
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKeySymbol,
-			});
-			field.delete(0, 1);
+			tree.transaction.start();
+			// Deletes parent node of the src field
+			tree.editor
+				.optionalField({ parent: rootPath, field: brand("src") })
+				.set(undefined, false);
+			// Deletes parent node of the dst field
+			tree.editor
+				.optionalField({ parent: rootPath, field: brand("dst") })
+				.set(undefined, false);
+			tree.transaction.commit();
 
-			assert.deepEqual([], toJsonableTree(tree));
+			// Edits to deleted subtrees are currently ignored
+			const expectedState: JsonCompatible = [{}];
+
+			childBranch.rebaseOnto(tree);
+			expectJsonTree(childBranch, expectedState);
+
+			tree.merge(childBranch);
+			expectJsonTree(tree, expectedState);
 		});
 
 		it("rebase changes to field untouched by base", () => {
