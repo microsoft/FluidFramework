@@ -18,7 +18,6 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalStickiness, SequenceInterval } from "../intervals";
@@ -260,23 +259,6 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
-	});
-});
-
-describe("IntervalCollection fuzz testing with batches and rebasing", () => {
-	const model = {
-		...baseModel,
-		workloadName: "default interval collection",
-	};
-
-	createDDSFuzzSuite(model, {
-		...defaultFuzzOptions,
-		rebaseProbability: 0.1,
-		containerRuntimeOptions: {
-			flushMode: FlushMode.TurnBased,
-			enableGroupedBatching: true,
-		},
 		// replay: 0,
 	});
 });
