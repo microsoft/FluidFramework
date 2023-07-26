@@ -80,7 +80,7 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, revive);
 	});
 
-	it.only("modify ↷ delete", () => {
+	it("modify ↷ delete", () => {
 		const mods = composeAnonChanges([
 			Change.modify(0, TestChange.mint([0], 1)),
 			Change.modify(3, TestChange.mint([0], 2)),

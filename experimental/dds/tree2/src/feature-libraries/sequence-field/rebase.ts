@@ -220,19 +220,7 @@ function rebaseMarkList<TNodeChange>(
 		}
 	}
 
-	let found = false;
-	let index = factory.list.length - 1;
-	while (index >= 0 && !found) {
-		if (!isNoopMark(factory.list[index])) {
-			found = true;
-			break;
-		}
-
-		index--;
-	}
-
-	const listWithoutTrailingNoOps = factory.list.slice(0, index + 1);
-	return listWithoutTrailingNoOps;
+	return factory.list;
 }
 
 interface IdRange {

@@ -23,7 +23,7 @@ export class MarkListFactory<TNodeChange> {
 		for (const item of marks) {
 			if (isNoopMark(item) && item.cellId === undefined) {
 				this.pushOffset(item.count);
-			} else {
+			} else if (!isNoopMark(item)) {
 				this.pushContent(item);
 			}
 		}
