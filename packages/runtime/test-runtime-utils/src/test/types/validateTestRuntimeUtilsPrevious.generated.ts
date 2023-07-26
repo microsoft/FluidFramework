@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_MockContainerRuntime():
 declare function use_current_ClassDeclaration_MockContainerRuntime(
     use: TypeOnly<current.MockContainerRuntime>);
 use_current_ClassDeclaration_MockContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntime());
 
 /*
@@ -167,6 +168,7 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeForReconnection():
 declare function use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
     use: TypeOnly<current.MockContainerRuntimeForReconnection>);
 use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeForReconnection());
 
 /*
@@ -312,6 +314,7 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_current_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<current.MockFluidDataStoreRuntime>);
 use_current_ClassDeclaration_MockFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
