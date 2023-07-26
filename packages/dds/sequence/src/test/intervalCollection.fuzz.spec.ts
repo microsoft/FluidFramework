@@ -274,7 +274,7 @@ describe("IntervalCollection fuzz testing with batches and rebasing", () => {
 		...defaultFuzzOptions,
 		rebaseProbability: 0.1,
 		containerRuntimeOptions: {
-			flushMode: FlushMode.Immediate,
+			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
 		// replay: 0,
