@@ -11674,7 +11674,6 @@ importers:
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
       eslint: ~8.6.0
       events: ^3.1.0
       mocha: ^10.2.0
@@ -11692,7 +11691,6 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
-      debug: 4.3.4
       events: 3.3.0
       uuid: 8.3.2
     devDependencies:
