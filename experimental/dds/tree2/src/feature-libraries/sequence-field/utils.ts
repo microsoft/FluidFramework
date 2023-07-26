@@ -367,9 +367,13 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	}
 	const type = rhs.type;
 	if (type === NoopMarkType) {
-		(lhs as NoopMark).count += rhs.count;
-		return true;
+		if (getCellId(lhs, undefined) === getCellId(rhs, undefined)) {
+			(lhs as NoopMark).count += rhs.count;
+		} else {
+			return false;
+		}
 	}
+	assert(type !== undefined, "no noops here");
 	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
 		return false;
 	}

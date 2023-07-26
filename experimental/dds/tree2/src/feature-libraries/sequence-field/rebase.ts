@@ -220,7 +220,19 @@ function rebaseMarkList<TNodeChange>(
 		}
 	}
 
-	return factory.list;
+	let found = false;
+	let index = factory.list.length - 1;
+	while (index >= 0 && !found) {
+		if (!isNoopMark(factory.list[index])) {
+			found = true;
+			break;
+		}
+
+		index--;
+	}
+
+	const listWithoutTrailingNoOps = factory.list.slice(0, index + 1);
+	return listWithoutTrailingNoOps;
 }
 
 interface IdRange {
@@ -286,6 +298,10 @@ class RebaseQueue<T> {
 	}
 
 	private dequeueBase(): RebaseMarks<T> {
+		// const baseMark = this.baseMarks.dequeue();
+		// const cellId = getCellId(baseMark, this.baseIntention);
+		// return { baseMark, newMark: { count: getMarkLength(baseMark), cellId } };
+
 		return { baseMark: this.baseMarks.dequeue() };
 	}
 
@@ -544,9 +560,9 @@ function makeDetachedMark<T>(
 	detachIntention: RevisionTag,
 	detachId: ChangesetLocalId,
 ): Mark<T> {
-	if (isNoopMark(mark)) {
-		return { count: 0 };
-	}
+	// if (isNoopMark(mark)) {
+	// 	return { count: 0 };
+	// }
 
 	assert(mark.cellId === undefined, 0x69f /* Expected mark to be attached */);
 	return { ...mark, cellId: { revision: detachIntention, localId: detachId } };
