@@ -4,15 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-	IFluidLoadable,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
+import { IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
 import {
@@ -29,7 +22,7 @@ import { PresenceManager } from "./presence";
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable, IFluidRouter {
+export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
@@ -42,9 +35,6 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 	}
 
 	public get IFluidLoadable() {
-		return this;
-	}
-	public get IFluidRouter() {
 		return this;
 	}
 
@@ -73,10 +63,6 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 		this.presenceManager = new PresenceManager(runtime);
 	}
 
-	public async request(request: IRequest): Promise<IResponse> {
-		return defaultFluidObjectRequestHandler(this, request);
-	}
-
 	private async initialize(existing: boolean) {
 		if (!existing) {
 			this.root = SharedMap.create(this.runtime, "root");
@@ -103,12 +89,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
-			const router = await routerP;
-			return router.request(request);
-		});
-
-		const runtime = new runtimeClass(
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -117,8 +98,9 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			async (_: IFluidDataStoreRuntime) =>
+				CodeMirrorComponent.load(runtime, context, existing),
 		);
-		const routerP = CodeMirrorComponent.load(runtime, context, existing);
 		return runtime;
 	}
 }

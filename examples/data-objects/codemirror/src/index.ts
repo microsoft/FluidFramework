@@ -6,15 +6,11 @@
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
-import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import {
-	requestFluidObject,
-	RequestParser,
-	RuntimeFactoryHelper,
-} from "@fluidframework/runtime-utils";
-import { MountableView } from "@fluidframework/view-adapters";
+	IFluidDataStoreChannel,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 import React from "react";
 
@@ -27,27 +23,6 @@ export { CodeMirrorReactView } from "./codeMirrorView";
 const defaultComponentId = "default";
 
 const smde = new SmdeFactory();
-
-const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-	if (request.pathParts.length === 0) {
-		const objectRequest = RequestParser.create({
-			url: ``,
-			headers: request.headers,
-		});
-		const codeMirror = await requestFluidObject<CodeMirrorComponent>(
-			await runtime.getRootDataStore(defaultComponentId),
-			objectRequest,
-		);
-		return {
-			status: 200,
-			mimeType: "fluid/view",
-			value: React.createElement(CodeMirrorReactView, {
-				text: codeMirror.text,
-				presenceManager: codeMirror.presenceManager,
-			}),
-		};
-	}
-};
 
 class CodeMirrorFactory extends RuntimeFactoryHelper {
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
@@ -63,16 +38,34 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 			[smde.type, Promise.resolve(smde)],
 		]);
 
-		const runtime: ContainerRuntime = await ContainerRuntime.load(
+		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
-			registry,
-			buildRuntimeRequestHandler(
-				mountableViewRequestHandler(MountableView, [viewRequestHandler]),
-			),
-			undefined, // runtimeOptions
-			undefined, // containerScope
+			registryEntries: registry,
 			existing,
-		);
+			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
+				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
+				const dataStore: IFluidDataStoreChannel = (await containerRuntime.getRootDataStore(
+					defaultComponentId,
+				)) as IFluidDataStoreChannel;
+
+				// TODO: better type discovery
+				const codeMirror: CodeMirrorComponent =
+					(await dataStore.entryPoint?.get()) as CodeMirrorComponent;
+				if (codeMirror === undefined) {
+					throw new Error("DataStore did not set its EntryPoint");
+				}
+
+				return {
+					status: 200,
+					mimeType: "fluid/view",
+					value: React.createElement(CodeMirrorReactView, {
+						text: codeMirror.text,
+						presenceManager: codeMirror.presenceManager,
+					}),
+				};
+			},
+		});
 
 		return runtime;
 	}
