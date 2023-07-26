@@ -82,7 +82,7 @@ export class SchemaBuilder {
 	 * If a single library is added multiple times (even indirectly via libraries it was added into),
 	 * only a single copy will be included, so they will not conflict.
 	 * This allows adding any library this one depends on without risk of conflicts for users of this library.
-	 * Contents withing the added libraries can still conflict however.
+	 * Contents within the added libraries can still conflict however.
 	 * Such errors will be reported when finalizing this builder into a library of document schema.
 	 */
 	public addLibraries(...libraries: SchemaLibrary[]) {
