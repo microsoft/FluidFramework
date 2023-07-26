@@ -40,26 +40,26 @@ use_old_TypeAliasDeclaration_DeserializeCallback(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IEndpointInRangeIndex": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IEndpointInRangeIndex": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IEndpointInRangeIndex():
     TypeOnly<old.IEndpointInRangeIndex<any>>;
-declare function use_current_InterfaceDeclaration_IEndpointInRangeIndex(
+declare function use_current_RemovedInterfaceDeclaration_IEndpointInRangeIndex(
     use: TypeOnly<current.IEndpointInRangeIndex<any>>);
-use_current_InterfaceDeclaration_IEndpointInRangeIndex(
+use_current_RemovedInterfaceDeclaration_IEndpointInRangeIndex(
     get_old_InterfaceDeclaration_IEndpointInRangeIndex());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IEndpointInRangeIndex": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IEndpointInRangeIndex": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IEndpointInRangeIndex():
+declare function get_current_RemovedInterfaceDeclaration_IEndpointInRangeIndex():
     TypeOnly<current.IEndpointInRangeIndex<any>>;
 declare function use_old_InterfaceDeclaration_IEndpointInRangeIndex(
     use: TypeOnly<old.IEndpointInRangeIndex<any>>);
 use_old_InterfaceDeclaration_IEndpointInRangeIndex(
-    get_current_InterfaceDeclaration_IEndpointInRangeIndex());
+    get_current_RemovedInterfaceDeclaration_IEndpointInRangeIndex());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -376,26 +376,26 @@ use_old_InterfaceDeclaration_ISharedString(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IStartpointInRangeIndex": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IStartpointInRangeIndex": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IStartpointInRangeIndex():
     TypeOnly<old.IStartpointInRangeIndex<any>>;
-declare function use_current_InterfaceDeclaration_IStartpointInRangeIndex(
+declare function use_current_RemovedInterfaceDeclaration_IStartpointInRangeIndex(
     use: TypeOnly<current.IStartpointInRangeIndex<any>>);
-use_current_InterfaceDeclaration_IStartpointInRangeIndex(
+use_current_RemovedInterfaceDeclaration_IStartpointInRangeIndex(
     get_old_InterfaceDeclaration_IStartpointInRangeIndex());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IStartpointInRangeIndex": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IStartpointInRangeIndex": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IStartpointInRangeIndex():
+declare function get_current_RemovedInterfaceDeclaration_IStartpointInRangeIndex():
     TypeOnly<current.IStartpointInRangeIndex<any>>;
 declare function use_old_InterfaceDeclaration_IStartpointInRangeIndex(
     use: TypeOnly<old.IStartpointInRangeIndex<any>>);
 use_old_InterfaceDeclaration_IStartpointInRangeIndex(
-    get_current_InterfaceDeclaration_IStartpointInRangeIndex());
+    get_current_RemovedInterfaceDeclaration_IStartpointInRangeIndex());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -472,26 +472,26 @@ use_old_TypeAliasDeclaration_IntervalConflictResolver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IntervalIndex": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IntervalIndex": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IntervalIndex():
     TypeOnly<old.IntervalIndex<any>>;
-declare function use_current_InterfaceDeclaration_IntervalIndex(
+declare function use_current_RemovedInterfaceDeclaration_IntervalIndex(
     use: TypeOnly<current.IntervalIndex<any>>);
-use_current_InterfaceDeclaration_IntervalIndex(
+use_current_RemovedInterfaceDeclaration_IntervalIndex(
     get_old_InterfaceDeclaration_IntervalIndex());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IntervalIndex": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IntervalIndex": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IntervalIndex():
+declare function get_current_RemovedInterfaceDeclaration_IntervalIndex():
     TypeOnly<current.IntervalIndex<any>>;
 declare function use_old_InterfaceDeclaration_IntervalIndex(
     use: TypeOnly<old.IntervalIndex<any>>);
 use_old_InterfaceDeclaration_IntervalIndex(
-    get_current_InterfaceDeclaration_IntervalIndex());
+    get_current_RemovedInterfaceDeclaration_IntervalIndex());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1144,26 +1144,26 @@ use_old_FunctionDeclaration_appendSharedStringDeltaToRevertibles(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createEndpointInRangeIndex": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_createEndpointInRangeIndex": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createEndpointInRangeIndex():
     TypeOnly<typeof old.createEndpointInRangeIndex>;
-declare function use_current_FunctionDeclaration_createEndpointInRangeIndex(
+declare function use_current_RemovedFunctionDeclaration_createEndpointInRangeIndex(
     use: TypeOnly<typeof current.createEndpointInRangeIndex>);
-use_current_FunctionDeclaration_createEndpointInRangeIndex(
+use_current_RemovedFunctionDeclaration_createEndpointInRangeIndex(
     get_old_FunctionDeclaration_createEndpointInRangeIndex());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createEndpointInRangeIndex": {"backCompat": false}
+* "RemovedFunctionDeclaration_createEndpointInRangeIndex": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_createEndpointInRangeIndex():
+declare function get_current_RemovedFunctionDeclaration_createEndpointInRangeIndex():
     TypeOnly<typeof current.createEndpointInRangeIndex>;
 declare function use_old_FunctionDeclaration_createEndpointInRangeIndex(
     use: TypeOnly<typeof old.createEndpointInRangeIndex>);
 use_old_FunctionDeclaration_createEndpointInRangeIndex(
-    get_current_FunctionDeclaration_createEndpointInRangeIndex());
+    get_current_RemovedFunctionDeclaration_createEndpointInRangeIndex());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1216,26 +1216,26 @@ use_old_FunctionDeclaration_createOverlappingSequenceIntervalsIndex(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createStartpointInRangeIndex": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_createStartpointInRangeIndex": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createStartpointInRangeIndex():
     TypeOnly<typeof old.createStartpointInRangeIndex>;
-declare function use_current_FunctionDeclaration_createStartpointInRangeIndex(
+declare function use_current_RemovedFunctionDeclaration_createStartpointInRangeIndex(
     use: TypeOnly<typeof current.createStartpointInRangeIndex>);
-use_current_FunctionDeclaration_createStartpointInRangeIndex(
+use_current_RemovedFunctionDeclaration_createStartpointInRangeIndex(
     get_old_FunctionDeclaration_createStartpointInRangeIndex());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createStartpointInRangeIndex": {"backCompat": false}
+* "RemovedFunctionDeclaration_createStartpointInRangeIndex": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_createStartpointInRangeIndex():
+declare function get_current_RemovedFunctionDeclaration_createStartpointInRangeIndex():
     TypeOnly<typeof current.createStartpointInRangeIndex>;
 declare function use_old_FunctionDeclaration_createStartpointInRangeIndex(
     use: TypeOnly<typeof old.createStartpointInRangeIndex>);
 use_old_FunctionDeclaration_createStartpointInRangeIndex(
-    get_current_FunctionDeclaration_createStartpointInRangeIndex());
+    get_current_RemovedFunctionDeclaration_createStartpointInRangeIndex());
 
 /*
 * Validate forward compat by using old type in place of current type
