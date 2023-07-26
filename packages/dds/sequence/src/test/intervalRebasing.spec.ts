@@ -9,9 +9,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalStickiness, IntervalType } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
+import { IntervalStickiness, IntervalType } from "../intervals";
 import { assertConsistent, Client } from "./intervalUtils";
 
 function constructClients(

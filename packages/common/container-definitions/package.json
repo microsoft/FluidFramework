@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-definitions",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Fluid container definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,7 +25,7 @@
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -73,11 +73,21 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_ILoaderHeader": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerLoadMode": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IContainer": {
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IDeltaManager": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICodeAllowList": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

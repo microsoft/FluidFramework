@@ -45,13 +45,6 @@ export class ComponentView implements NodeView {
 
 	private load(url: string) {
 		this.attach(url);
-		const containerP = this.loader.resolve({ url });
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		containerP.then((container) => {
-			container.on("contextChanged", (value) => {
-				this.attach(url);
-			});
-		});
 	}
 
 	private attach(url: string) {

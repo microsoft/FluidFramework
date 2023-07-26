@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-dds-utils",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,7 +17,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

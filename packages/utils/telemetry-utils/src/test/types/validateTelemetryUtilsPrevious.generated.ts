@@ -16,50 +16,26 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BaseTelemetryNullLogger():
-    TypeOnly<old.BaseTelemetryNullLogger>;
-declare function use_current_ClassDeclaration_BaseTelemetryNullLogger(
-    use: TypeOnly<current.BaseTelemetryNullLogger>);
-use_current_ClassDeclaration_BaseTelemetryNullLogger(
-    get_old_ClassDeclaration_BaseTelemetryNullLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BaseTelemetryNullLogger": {"backCompat": false}
+* "RemovedClassDeclaration_BaseTelemetryNullLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BaseTelemetryNullLogger():
-    TypeOnly<current.BaseTelemetryNullLogger>;
-declare function use_old_ClassDeclaration_BaseTelemetryNullLogger(
-    use: TypeOnly<old.BaseTelemetryNullLogger>);
-use_old_ClassDeclaration_BaseTelemetryNullLogger(
-    get_current_ClassDeclaration_BaseTelemetryNullLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ChildLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_ChildLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_ChildLogger():
-    TypeOnly<old.ChildLogger>;
-declare function use_current_ClassDeclaration_ChildLogger(
-    use: TypeOnly<current.ChildLogger>);
-use_current_ClassDeclaration_ChildLogger(
-    get_old_ClassDeclaration_ChildLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ChildLogger": {"backCompat": false}
+* "RemovedClassDeclaration_ChildLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_ChildLogger():
-    TypeOnly<current.ChildLogger>;
-declare function use_old_ClassDeclaration_ChildLogger(
-    use: TypeOnly<old.ChildLogger>);
-use_old_ClassDeclaration_ChildLogger(
-    get_current_ClassDeclaration_ChildLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -88,26 +64,14 @@ use_old_TypeAliasDeclaration_ConfigTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DebugLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_DebugLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DebugLogger():
-    TypeOnly<old.DebugLogger>;
-declare function use_current_ClassDeclaration_DebugLogger(
-    use: TypeOnly<current.DebugLogger>);
-use_current_ClassDeclaration_DebugLogger(
-    get_old_ClassDeclaration_DebugLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DebugLogger": {"backCompat": false}
+* "RemovedClassDeclaration_DebugLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DebugLogger():
-    TypeOnly<current.DebugLogger>;
-declare function use_old_ClassDeclaration_DebugLogger(
-    use: TypeOnly<old.DebugLogger>);
-use_old_ClassDeclaration_DebugLogger(
-    get_current_ClassDeclaration_DebugLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -503,6 +467,7 @@ declare function get_old_ClassDeclaration_MockLogger():
 declare function use_current_ClassDeclaration_MockLogger(
     use: TypeOnly<current.MockLogger>);
 use_current_ClassDeclaration_MockLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockLogger());
 
 /*
@@ -515,6 +480,7 @@ declare function get_current_ClassDeclaration_MockLogger():
 declare function use_old_ClassDeclaration_MockLogger(
     use: TypeOnly<old.MockLogger>);
 use_old_ClassDeclaration_MockLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockLogger());
 
 /*
@@ -544,26 +510,14 @@ use_old_InterfaceDeclaration_MonitoringContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiSinkLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_MultiSinkLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MultiSinkLogger():
-    TypeOnly<old.MultiSinkLogger>;
-declare function use_current_ClassDeclaration_MultiSinkLogger(
-    use: TypeOnly<current.MultiSinkLogger>);
-use_current_ClassDeclaration_MultiSinkLogger(
-    get_old_ClassDeclaration_MultiSinkLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiSinkLogger": {"backCompat": false}
+* "RemovedClassDeclaration_MultiSinkLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MultiSinkLogger():
-    TypeOnly<current.MultiSinkLogger>;
-declare function use_old_ClassDeclaration_MultiSinkLogger(
-    use: TypeOnly<old.MultiSinkLogger>);
-use_old_ClassDeclaration_MultiSinkLogger(
-    get_current_ClassDeclaration_MultiSinkLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -736,74 +690,38 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_TelemetryLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TelemetryLogger():
-    TypeOnly<old.TelemetryLogger>;
-declare function use_current_ClassDeclaration_TelemetryLogger(
-    use: TypeOnly<current.TelemetryLogger>);
-use_current_ClassDeclaration_TelemetryLogger(
-    get_old_ClassDeclaration_TelemetryLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryLogger": {"backCompat": false}
+* "RemovedClassDeclaration_TelemetryLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TelemetryLogger():
-    TypeOnly<current.TelemetryLogger>;
-declare function use_old_ClassDeclaration_TelemetryLogger(
-    use: TypeOnly<old.TelemetryLogger>);
-use_old_ClassDeclaration_TelemetryLogger(
-    get_current_ClassDeclaration_TelemetryLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TelemetryNullLogger():
-    TypeOnly<old.TelemetryNullLogger>;
-declare function use_current_ClassDeclaration_TelemetryNullLogger(
-    use: TypeOnly<current.TelemetryNullLogger>);
-use_current_ClassDeclaration_TelemetryNullLogger(
-    get_old_ClassDeclaration_TelemetryNullLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryNullLogger": {"backCompat": false}
+* "RemovedClassDeclaration_TelemetryNullLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TelemetryNullLogger():
-    TypeOnly<current.TelemetryNullLogger>;
-declare function use_old_ClassDeclaration_TelemetryNullLogger(
-    use: TypeOnly<old.TelemetryNullLogger>);
-use_old_ClassDeclaration_TelemetryNullLogger(
-    get_current_ClassDeclaration_TelemetryNullLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryUTLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_TelemetryUTLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TelemetryUTLogger():
-    TypeOnly<old.TelemetryUTLogger>;
-declare function use_current_ClassDeclaration_TelemetryUTLogger(
-    use: TypeOnly<current.TelemetryUTLogger>);
-use_current_ClassDeclaration_TelemetryUTLogger(
-    get_old_ClassDeclaration_TelemetryUTLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryUTLogger": {"backCompat": false}
+* "RemovedClassDeclaration_TelemetryUTLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TelemetryUTLogger():
-    TypeOnly<current.TelemetryUTLogger>;
-declare function use_old_ClassDeclaration_TelemetryUTLogger(
-    use: TypeOnly<old.TelemetryUTLogger>);
-use_old_ClassDeclaration_TelemetryUTLogger(
-    get_current_ClassDeclaration_TelemetryUTLogger());
 
 /*
 * Validate forward compat by using old type in place of current type

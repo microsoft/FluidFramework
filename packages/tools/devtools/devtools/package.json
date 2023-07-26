@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,7 +20,7 @@
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"clean": "rimraf _api-extractor-temp nyc dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"_api-extractor-temp\" \"nyc\" \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -100,6 +100,16 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DevtoolsLogger": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_DevtoolsProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidDevtoolsProps": {
+				"backCompat": false
+			}
+		}
 	}
 }

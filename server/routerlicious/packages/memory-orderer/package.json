@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-memory-orderer",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid server in memory orderer",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,7 +20,7 @@
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

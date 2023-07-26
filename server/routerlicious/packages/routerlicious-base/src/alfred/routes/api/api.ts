@@ -122,14 +122,13 @@ export function create(
 				content: blobData.content,
 				encoding: "base64",
 			};
-			uploadBlob(uri, requestBody).then(
-				(data: git.ICreateBlobResponse) => {
+			uploadBlob(uri, requestBody)
+				.then((data: git.ICreateBlobResponse) => {
 					response.status(200).json(data);
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					response.status(400).end(err.toString());
-				},
-			);
+				});
 		},
 	);
 

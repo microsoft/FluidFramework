@@ -433,12 +433,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		collabWindow?: CollaborationWindow,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
+		this.propertyManager ??= new PropertiesManager();
+		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
@@ -657,9 +653,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
 	}
 
 	getId(): string | undefined {
-		if (this.properties && this.properties[reservedMarkerIdKey]) {
-			return this.properties[reservedMarkerIdKey] as string;
-		}
+		return this.properties?.[reservedMarkerIdKey] as string;
 	}
 
 	toString() {

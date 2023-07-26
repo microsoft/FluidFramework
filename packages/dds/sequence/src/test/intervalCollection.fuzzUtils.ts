@@ -10,7 +10,7 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IntervalStickiness, IntervalType } from "../intervalCollection";
+import { IntervalStickiness, IntervalType } from "../intervals";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";

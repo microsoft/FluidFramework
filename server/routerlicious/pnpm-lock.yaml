@@ -937,6 +937,7 @@ importers:
       '@fluidframework/server-services-client': workspace:*
       '@fluidframework/server-services-core': workspace:*
       '@fluidframework/server-services-ordering-rdkafka-previous': npm:@fluidframework/server-services-ordering-rdkafka@0.1040.1000
+      '@fluidframework/server-services-telemetry': workspace:*
       '@fluidframework/server-test-utils': workspace:*
       '@types/amqplib': ^0.5.17
       '@types/debug': ^4.1.5
@@ -960,6 +961,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
+      '@fluidframework/server-services-telemetry': link:../services-telemetry
       events: 3.3.0
       nconf: 0.12.0
       node-rdkafka: 2.16.1

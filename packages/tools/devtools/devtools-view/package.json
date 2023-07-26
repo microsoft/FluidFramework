@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -19,7 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"_api-extractor-temp\" \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",

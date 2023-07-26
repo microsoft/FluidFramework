@@ -12,15 +12,14 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branches -a <value> -p <value> -s <value> -t <value> -b <value> --reviewers <value> [-v | --quiet]
-    [-r <value>]
+  $ flub merge branches -p <value> -s <value> -t <value> -b <value> --reviewers <value> [-v | --quiet] [-r <value>]
 
 FLAGS
-  -a, --auth=<value>       (required) GitHub authentication token. For security reasons, this value should be passed
-                           using the GITHUB_TOKEN environment variable.
   -b, --batchSize=<value>  (required) Maximum number of commits to include in the pull request
-  -p, --pat=<value>        (required) GitHub Personal Access Token
-  -r, --remote=<value>     [default: origin]
+  -p, --pat=<value>        (required) GitHub Personal Access Token. This parameter should be passed using the GITHUB_PAT
+                           environment variable for security purposes.
+  -r, --remote=<value>     The name of the upstream remote to use to check for PRs. If not provided, the remote matching
+                           the microsoft/FluidFramework repo will be used.
   -s, --source=<value>     (required) Source branch name
   -t, --target=<value>     (required) Target branch name
   --reviewers=<value>...   (required) Add reviewers to PR

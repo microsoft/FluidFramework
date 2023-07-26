@@ -59,13 +59,13 @@ export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, Optio
 		new Set([]),
 	);
 
-const valueFieldEditor: ValueFieldEditor = {
+export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
 	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
 		optionalFieldEditor.set(newContent, false, id),
 };
 
-const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
+export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
 	...optional.changeHandler,
 	editor: valueFieldEditor,
 };

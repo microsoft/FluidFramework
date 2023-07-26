@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,15 +39,14 @@
 		"ci:test:stress:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:stress:tinylicious:report ",
 		"ci:test:stress:tinylicious:coverage": "c8 --no-clean pnpm run -r --no-sort --stream --no-bail test:stress:tinylicious:report ",
 		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
-		"clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
-		"clean:nyc": "rimraf nyc/**",
+		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
+		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"clean:r11s": "cd server/routerlicious && npm run clean",
 		"format": "npm run prettier:root:fix && pnpm run -r --no-sort --stream format",
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "pretty-quick --branch main",
 		"format:changed:next": "pretty-quick --branch next",
 		"format:repo": "npm run prettier:repo:fix",
-		"generate:upcoming": "flub generate upcoming --releaseGroup client -t minor",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:eslint",
@@ -158,7 +157,7 @@
 		"syncpack": "^9.8.4",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
 		"node": ">=16.16.0",
 		"pnpm": "7"
@@ -172,7 +171,7 @@
 			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node"
 		],
 		"overrides": {
-			"@types/node": "^14.18.38",
+			"@types/node": "^16.18.38",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",

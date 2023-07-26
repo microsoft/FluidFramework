@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,7 +22,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -92,7 +92,7 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
@@ -110,6 +110,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_Client": {
+				"backCompat": false
+			},
 			"RemovedInterfaceDeclaration_BlockAction": {
 				"forwardCompat": false,
 				"backCompat": false
@@ -187,6 +190,36 @@
 			},
 			"RemovedFunctionDeclaration_ordinalToArray": {
 				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_BaseSegment": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConsensusInfo": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ITrackingGroup": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SegmentGroupCollection": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_Trackable": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
 				"backCompat": false
 			}
 		}

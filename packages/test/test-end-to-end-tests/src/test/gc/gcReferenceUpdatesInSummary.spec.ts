@@ -12,7 +12,7 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import type { SharedString } from "@fluidframework/sequence";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
@@ -113,7 +113,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 			runGC: true,
 			fullTree: true,
 			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
+			summaryLogger: createChildLogger(),
 		});
 
 		let dataStoreTree: ISummaryTree | undefined;

@@ -10,6 +10,7 @@ import {
 	ContainerErrorType,
 	IContainerContext,
 	ICriticalContainerError,
+	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -23,7 +24,6 @@ import {
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MockLogger,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -44,18 +44,16 @@ describe("Runtime", () => {
 
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
-		logger: ITelemetryLoggerExt = new MockLogger(),
+		logger = new MockLogger(),
 	): Partial<IContainerContext> => ({
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
 		quorum: new MockQuorumClients(),
-		taggedLogger: mixinMonitoringContext(
-			logger,
-			configProvider(settings),
-		) as unknown as MockLogger,
+		taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
+		getLoadedFromVersion: () => undefined,
 	});
 
 	describe("Container Runtime", () => {
@@ -132,6 +130,7 @@ describe("Runtime", () => {
 							},
 							connected: true,
 							clientId: "fakeClientId",
+							getLoadedFromVersion: () => undefined,
 						};
 					};
 
@@ -496,6 +495,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					});
 
 					beforeEach(async () => {
@@ -558,6 +558,7 @@ describe("Runtime", () => {
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -639,6 +640,7 @@ describe("Runtime", () => {
 							}
 						},
 						updateDirtyContainerState: (_dirty: boolean) => {},
+						getLoadedFromVersion: () => undefined,
 					};
 				};
 			const getMockPendingStateManager = (): PendingStateManager => {
@@ -937,7 +939,7 @@ describe("Runtime", () => {
 				};
 				assert.throws(
 					codeBlock,
-					(e) =>
+					(e: IErrorBase) =>
 						e.errorType === ContainerErrorType.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);
@@ -1166,6 +1168,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 
@@ -1274,6 +1277,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
 				};
 			};
 

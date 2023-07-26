@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -74,7 +74,6 @@
 		"@fluidframework/protocol-base": "^1.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"abort-controller": "^3.0.0",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.6.1",
 		"uuid": "^8.3.1"
@@ -88,7 +87,7 @@
 		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.0.0-internal.5.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/node-fetch": "^2.5.10",
 		"@types/sha.js": "^2.4.0",
 		"@types/sinon": "^7.0.13",

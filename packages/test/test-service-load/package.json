@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -21,7 +21,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
 		"debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
 		"debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
@@ -111,7 +111,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",

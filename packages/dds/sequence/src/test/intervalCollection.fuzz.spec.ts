@@ -23,9 +23,10 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IIntervalCollection, IntervalStickiness, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
+import { SequenceInterval, IntervalStickiness } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,

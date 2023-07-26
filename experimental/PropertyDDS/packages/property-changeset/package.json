@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -24,7 +24,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -76,7 +76,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"chai": "^4.2.0",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",

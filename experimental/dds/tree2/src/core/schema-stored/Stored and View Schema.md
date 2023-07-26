@@ -173,10 +173,6 @@ Use edit primitives that avoid this?
 
 ex: swap instead of delete and insert. Maybe a version of detach that inserts a placeholder which has to be replaced with valid data before the transaction ends? That seems like it could make the tree reading API for the middle of transactions messy.
 
-### What to do with TreeStoredSchema.extraGlobalFields?
-
-Should TreeStoredSchema.extraGlobalFields exist, and if not, should be be unconditionally on or off? (See its doc comment).
-
 ### Do we need bounded open polymorphism?
 
 Definitions for adjectives used with polymorphism:

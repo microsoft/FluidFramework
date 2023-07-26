@@ -1,6 +1,6 @@
 # This file is deprecated; contents has moved
 
-To see upcoming changes in Fluid Framework releases, see [UPCOMING.md](./UPCOMING.md).
+To see upcoming changes in Fluid Framework releases, see [the .changeset folder](./.changeset).
 
 To see the changes in past releases, check the release in the
 [Releases](https://github.com/microsoft/FluidFramework/releases) section of our GitHub repo.
@@ -31,6 +31,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
 -   [Upgraded Typescript target to ES2020](#Upgraded-Typescript-target-to-ES2020)
 -   [IRootSummaryTreeWithStats removed from container-runtime package](#IRootSummaryTreeWithStats-removed-from-container-runtime-package)
+-   [Loader.resolve() throws if LoaderHeader.sequenceNumber and IContainerLoadMode.opsBeforeReturn do not match](<#Loader.resolve()-throws-if-LoaderHeader.sequenceNumber-and-IContainerLoadMode.opsBeforeReturn-do-not-match>)
 
 ### FluidDataStoreRuntime.getChannel throws for channels that do not exist
 
@@ -44,6 +45,10 @@ If any app wants to target any older versions of browsers with which this target
 ### IRootSummaryTreeWithStats removed from container-runtime package
 
 `IRootSummaryTreeWithStats` was the return type of `summarize` method on `ContainerRuntime`. It was an internal interface used only in `ContainerRuntime` class to to access `gcStats` from a call site. `gcStats` is not needed in the call site anymore and so, it is now removed from the container-runtime package.
+
+### Loader.resolve() throws if LoaderHeader.sequenceNumber and IContainerLoadMode.opsBeforeReturn do not match
+
+Calling `Loader.resolve()` will now throw an error if `LoaderHeader.sequenceNumber` is defined but `IContainerLoadMode.opsBeforeReturn` is not set to "sequenceNumber". Vice versa, `Loader.resolve()` will also throw an error if `IContainerLoadMode.opsBeforeReturn` is set to "sequenceNumber" but `LoaderHeader.sequenceNumber` is not defined.
 
 # 2.0.0-internal.5.0.0
 

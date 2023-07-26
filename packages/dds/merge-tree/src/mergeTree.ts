@@ -413,7 +413,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 }
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export interface ClientSeq {
@@ -516,7 +515,6 @@ export interface AttributionPolicy {
 }
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export const clientSeqComparer: Comparer<ClientSeq> = {
@@ -706,11 +704,9 @@ export class MergeTree {
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
 			if (child.isLeaf()) {
-				const segment = this.segmentClone(child);
+				const segment = child.clone();
 				bBlock.assignChild(segment, i);
-				if (segments) {
-					segments.push(segment);
-				}
+				segments?.push(segment);
 			} else {
 				bBlock.assignChild(this.blockClone(child, segments), i);
 			}
@@ -718,11 +714,6 @@ export class MergeTree {
 		this.nodeUpdateLengthNewStructure(bBlock);
 		this.nodeUpdateOrdinals(bBlock);
 		return bBlock;
-	}
-
-	private segmentClone(segment: ISegment) {
-		const b = segment.clone();
-		return b;
 	}
 
 	/**
@@ -1159,8 +1150,6 @@ export class MergeTree {
 	 * Compute local partial length information
 	 *
 	 * Public only for use by internal tests
-	 *
-	 * @internal
 	 */
 	public computeLocalPartials(refSeq: number) {
 		if (this.localPartialsComputed) {
@@ -1263,9 +1252,7 @@ export class MergeTree {
 	}
 
 	public addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
-		if (!this.minSeqListeners) {
-			this.minSeqListeners = new Heap<MinListener>([], minListenerComparer);
-		}
+		this.minSeqListeners ??= new Heap<MinListener>([], minListenerComparer);
 		this.minSeqListeners.add({ minRequired, onMinGE });
 	}
 
@@ -1411,20 +1398,17 @@ export class MergeTree {
 		clientData: TClientData,
 		localSeq?: number,
 	): ISegment | undefined {
+		const { pre, post, contains, leaf, shift } = actions ?? {};
 		let _pos = pos;
 		let _segpos = segpos;
 		const children = block.children;
-		if (actions && actions.pre) {
-			actions.pre(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
-		}
-		const contains = actions && actions.contains;
+		pre?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
 		for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
 			const child = children[childIndex];
 			const len = this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
 			if (
 				(!contains && _pos < len) ||
-				(contains &&
-					contains(child, _pos, refSeq, clientId, undefined, undefined, clientData))
+				contains?.(child, _pos, refSeq, clientId, undefined, undefined, clientData)
 			) {
 				// Found entry containing pos
 				if (!child.isLeaf()) {
@@ -1439,22 +1423,16 @@ export class MergeTree {
 						localSeq,
 					);
 				} else {
-					if (actions && actions.leaf) {
-						actions.leaf(child, _segpos, refSeq, clientId, _pos, -1, clientData);
-					}
+					leaf?.(child, _segpos, refSeq, clientId, _pos, -1, clientData);
 					return child;
 				}
 			} else {
-				if (actions && actions.shift) {
-					actions.shift(child, _segpos, refSeq, clientId, _pos, undefined, clientData);
-				}
+				shift?.(child, _segpos, refSeq, clientId, _pos, undefined, clientData);
 				_pos -= len;
 				_segpos += len;
 			}
 		}
-		if (actions && actions.post) {
-			actions.post(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
-		}
+		post?.(block, _segpos, refSeq, clientId, undefined, undefined, clientData);
 	}
 
 	private backwardSearch<TClientData>(
@@ -1480,20 +1458,17 @@ export class MergeTree {
 		actions: SegmentActions<TClientData> | undefined,
 		clientData: TClientData,
 	): ISegment | undefined {
+		const { pre, post, contains, leaf, shift } = actions ?? {};
 		let _segEnd = segEnd;
 		const children = block.children;
-		if (actions && actions.pre) {
-			actions.pre(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
-		}
-		const contains = actions && actions.contains;
+		pre?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
 		for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
 			const child = children[childIndex];
 			const len = this.nodeLength(child, refSeq, clientId) ?? 0;
 			const segpos = _segEnd - len;
 			if (
 				(!contains && pos >= segpos) ||
-				(contains &&
-					contains(child, pos, refSeq, clientId, undefined, undefined, clientData))
+				contains?.(child, pos, refSeq, clientId, undefined, undefined, clientData)
 			) {
 				// Found entry containing pos
 				if (!child.isLeaf()) {
@@ -1507,21 +1482,15 @@ export class MergeTree {
 						clientData,
 					);
 				} else {
-					if (actions && actions.leaf) {
-						actions.leaf(child, segpos, refSeq, clientId, pos, -1, clientData);
-					}
+					leaf?.(child, segpos, refSeq, clientId, pos, -1, clientData);
 					return child;
 				}
 			} else {
-				if (actions && actions.shift) {
-					actions.shift(child, segpos, refSeq, clientId, pos, undefined, clientData);
-				}
+				shift?.(child, segpos, refSeq, clientId, pos, undefined, clientData);
 				_segEnd = segpos;
 			}
 		}
-		if (actions && actions.post) {
-			actions.post(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
-		}
+		post?.(block, _segEnd, refSeq, clientId, undefined, undefined, clientData);
 	}
 
 	private updateRoot(splitNode: IMergeBlock | undefined) {
@@ -1578,7 +1547,6 @@ export class MergeTree {
 			const clientId = this.collabWindow.clientId;
 			for (const node of nodesToUpdate) {
 				this.blockUpdatePathLengths(node, seq, clientId, overwrite);
-				// NodeUpdatePathLengths(node, seq, clientId, true);
 			}
 		}
 		if (MergeTree.options.zamboniSegments) {
@@ -2269,7 +2237,7 @@ export class MergeTree {
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
 					const rollbackType =
-						op.combiningOp && op.combiningOp.name === "rewrite"
+						op.combiningOp?.name === "rewrite"
 							? PropertiesRollback.Rewrite
 							: PropertiesRollback.Rollback;
 					const annotateOp = createAnnotateRangeOp(
@@ -2649,16 +2617,9 @@ export class MergeTree {
 				return;
 			}
 			if (state.childIndex === 0) {
-				if (state.start === undefined) {
-					state.start = 0;
-				}
-				if (state.end === undefined) {
-					state.end = this.blockLength(state.block, state.refSeq, state.clientId);
-				}
-
-				if (state.actions.pre) {
-					state.actions.pre(state);
-				}
+				state.start ??= 0;
+				state.end ??= this.blockLength(state.block, state.refSeq, state.clientId);
+				state.actions.pre?.(state);
 			}
 			if (state.op === IncrementalExecOp.Go && state.childIndex < state.block.childCount) {
 				const child = state.block.children[state.childIndex];
@@ -2687,8 +2648,8 @@ export class MergeTree {
 				state.childIndex++;
 			} else {
 				if (state.childIndex === state.block.childCount) {
-					if (state.op === IncrementalExecOp.Go && state.actions.post) {
-						state.actions.post(state);
+					if (state.op === IncrementalExecOp.Go) {
+						state.actions.post?.(state);
 					}
 					stateStack.pop();
 				}
