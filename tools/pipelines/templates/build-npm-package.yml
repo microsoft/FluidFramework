@@ -452,7 +452,6 @@ stages:
                 ne(variables['Build.Reason'], 'PullRequest'),
                 eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
               )
-            continueOnError: true,
             inputs:
               PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
               Artifactname: 'bundleAnalysis'
@@ -461,6 +460,7 @@ stages:
           - task: Npm@1
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            continueOnError: true,
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
