@@ -82,12 +82,13 @@ export function buildViewSchemaCollection(
 	}
 
 	return {
-		// To implement the SchemaData interface (which SchemaCollection extends), a rootFieldSchema.
-		// In the case where this schema collection is a library and not full document schema, no rootFieldSchema:
-		// in this case comparability with SchemaData can be enabled by adding a rootFieldSchema.
-		// For this case, a forbidden field is used,
-		// meaning that if this rootFieldSchema is ever actually used as a full document schema instead of a library,
-		// the document will be forced to be empty.
+		// The returned value here needs to implement the SchemaData interface (which SchemaCollection extends).
+		// This means it must have a rootFieldSchema.
+		// In the case where this SchemaCollection is a library and not a full document schema,
+		// no caller provided rootFieldSchema is available and a "forbidden" field is used instead.
+		// Thus a library can be used as SchemaData, but if used for full document's SchemaData,
+		// the document will be forced to be empty (due to having an empty root field):
+		// this seems unlikely to cause issues in practice, and results in convenient type compatibility.
 		rootFieldSchema: rootFieldSchema ?? SchemaBuilder.field(FieldKinds.forbidden),
 		treeSchema,
 		adapters,
