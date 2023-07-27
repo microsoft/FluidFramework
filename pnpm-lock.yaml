@@ -796,7 +796,7 @@ importers:
       office-ui-fabric-react: 7.199.6
       prettier: ~2.6.2
       process: ^0.11.10
-      prop-types: ^15.7.2
+      prop-types: ^15.8.1
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-collapsible: ^2.7.0
@@ -10845,29 +10845,37 @@ importers:
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@fluentui/react': ^8.109.4
+      '@fluid-example/example-utils': workspace~
       '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
+      '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.21.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/tinylicious-client': workspace:~
+      '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
       '@types/jsdom': ^21.1.1
       '@types/jsdom-global': ^3.0.4
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/proxyquire': ^1.3.28
+      '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/sinon': ^7.0.13
@@ -10882,19 +10890,25 @@ importers:
       eslint-plugin-chai-expect: ~3.0.0
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
+      jest: ^26.6.3
+      jest-dev-server: ^4.3.0
+      jest-environment-puppeteer: ^4.3.0
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
       jsdom: ^16.7.0
       jsdom-global: ^3.0.2
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
       proxyquire: ^2.1.3
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
       sinon: ^7.4.2
       sinon-chrome: ^3.0.1
       start-server-and-test: ^1.11.7
-      tinylicious: 0.7.2
+      ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       webpack: ^5.82.0
@@ -10907,26 +10921,34 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
-      '@fluidframework/map': link:../../../dds/map
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
-      '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
+      '@fluidframework/test-utils': link:../../../test/test-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/chai': 4.3.5
       '@types/chrome': 0.0.232
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
       '@types/jsdom': 21.1.1
       '@types/jsdom-global': 3.0.4
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
       '@types/proxyquire': 1.3.28
+      '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/sinon': 7.5.2
@@ -10941,17 +10963,23 @@ importers:
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       good-fences: 1.2.0
       html-webpack-plugin: 5.5.1_webpack@5.83.0
+      jest: 26.6.3
+      jest-dev-server: 4.4.0
+      jest-environment-puppeteer: 4.4.0
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
       jsdom: 16.7.0
       jsdom-global: 3.0.2_jsdom@16.7.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
       proxyquire: 2.1.3
+      puppeteer: 1.20.0
       rimraf: 4.4.1
       sinon: 7.5.0
       sinon-chrome: 3.0.1
       start-server-and-test: 1.15.5
-      tinylicious: 0.7.2
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -11218,7 +11246,7 @@ importers:
       jest-junit: ^10.0.0
       playwright: ^1.36.0
       prettier: ~2.6.2
-      prop-types: ^15.7.2
+      prop-types: ^15.8.1
       react: ^17.0.1
       react-dom: ^17.0.1
       react-split-pane: ^0.1.92

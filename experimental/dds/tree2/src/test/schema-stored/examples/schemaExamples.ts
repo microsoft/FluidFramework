@@ -17,7 +17,6 @@ import {
 	ValueSchema,
 	NamedTreeSchema,
 	emptyMap,
-	emptySet,
 	fieldSchema,
 } from "../../../core";
 import { brand } from "../../../util";
@@ -25,7 +24,6 @@ import { brand } from "../../../util";
 export const codePoint: NamedTreeSchema = {
 	name: brand("Primitive.CodePoint"),
 	localFields: emptyMap,
-	globalFields: emptySet,
 	extraLocalFields: emptyField,
 	value: ValueSchema.Number,
 };
@@ -34,7 +32,6 @@ export const codePoint: NamedTreeSchema = {
  * String made of unicode code points, allowing for sequence editing of a string.
  */
 export const string: TreeStoredSchema = {
-	globalFields: emptySet,
 	extraLocalFields: emptyField,
 	localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
 	value: ValueSchema.Nothing,

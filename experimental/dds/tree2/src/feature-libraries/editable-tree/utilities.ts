@@ -28,7 +28,6 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 	return (
 		schema.value !== ValueSchema.Nothing &&
 		schema.localFields.size === 0 &&
-		schema.globalFields.size === 0 &&
 		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
 	);
 }

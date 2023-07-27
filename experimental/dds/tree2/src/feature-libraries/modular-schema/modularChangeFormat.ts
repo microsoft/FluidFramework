@@ -4,12 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import {
-	FieldKindIdentifierSchema,
-	GlobalFieldKeySchema,
-	LocalFieldKeySchema,
-	RevisionTagSchema,
-} from "../../core";
+import { FieldKindIdentifierSchema, LocalFieldKeySchema, RevisionTagSchema } from "../../core";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
@@ -26,7 +21,7 @@ export const EncodedChangeAtomId = Type.Object(
 		/**
 		 * Uniquely identifies the changeset within which the change was made.
 		 */
-		revision: Type.Union([RevisionTagSchema, Type.Undefined()]),
+		revision: Type.Optional(RevisionTagSchema),
 		/**
 		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 		 */
@@ -55,8 +50,7 @@ type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
 const EncodedFieldChange = Type.Object(
 	{
-		fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
-		keyIsGlobal: Type.Boolean(),
+		fieldKey: LocalFieldKeySchema,
 		fieldKind: FieldKindIdentifierSchema,
 		// Implementation note: node and field change encoding is mutually recursive.
 		// This field marks a boundary in that recursion to avoid constructing excessively complex

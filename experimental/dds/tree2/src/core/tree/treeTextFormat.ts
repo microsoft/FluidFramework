@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
-import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
+import { LocalFieldKey } from "../schema-stored";
 import { FieldKey, NodeData } from "./types";
 
 /**
@@ -69,7 +68,6 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
  */
 export interface GenericFieldsNode<TChild> {
 	[FieldScope.local]?: FieldMapObject<TChild>;
-	[FieldScope.global]?: FieldMapObject<TChild>;
 }
 
 /**
@@ -84,18 +82,8 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 /**
  * Derives the scope using the type of `key`.
  */
-export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey | GlobalFieldKey] {
-	return isGlobalFieldKey(key)
-		? [FieldScope.global, keyFromSymbol(key)]
-		: [FieldScope.local, key];
-}
-
-/**
- * Derives the scope using the type of `key`.
- * @alpha
- */
-export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol {
-	return typeof key === "symbol";
+export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey] {
+	return [FieldScope.local, key];
 }
 
 /**
@@ -128,7 +116,6 @@ export function getGenericTreeField<T>(
  */
 export const enum FieldScope {
 	local = "fields",
-	global = "globalFields",
 }
 
 /**
@@ -175,24 +162,15 @@ export function setGenericTreeField<T>(
  */
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
 	const local = tree[FieldScope.local];
-	const global = tree[FieldScope.global];
 	// This function is used when iterating through a tree.
 	// This means that this is often called on nodes with no keys
 	// (most trees are a large portion leaf nodes).
 	// Therefore this function special cases empty fields objects as an optimization.
 	if (local === undefined) {
-		if (global === undefined) {
-			return [];
-		}
-		return (Object.keys(global) as GlobalFieldKey[]).map(symbolFromKey);
+		return [];
 	}
-	if (global === undefined) {
-		return Object.keys(local) as LocalFieldKey[];
-	}
-	return [
-		...(Object.keys(local) as LocalFieldKey[]),
-		...(Object.keys(global) as GlobalFieldKey[]).map(symbolFromKey),
-	];
+
+	return Object.keys(local) as LocalFieldKey[];
 }
 
 /**

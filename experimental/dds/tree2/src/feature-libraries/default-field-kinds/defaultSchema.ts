@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeStoredSchema } from "../../core";
+import { fieldSchema, emptyMap, ValueSchema, TreeStoredSchema } from "../../core";
 import { FullSchemaPolicy } from "../modular-schema";
 import { value, forbidden, fieldKinds } from "./defaultFieldKinds";
 
@@ -22,9 +22,9 @@ export const emptyField = fieldSchema(forbidden, []);
  * TreeStoredSchema which is impossible for any data to be in schema with.
  * @alpha
  */
+// TODO: remove need for this.
 export const neverTree: TreeStoredSchema = {
 	localFields: emptyMap,
-	globalFields: emptySet,
 	extraLocalFields: neverField,
 	value: ValueSchema.Nothing,
 };
@@ -38,6 +38,4 @@ export const neverTree: TreeStoredSchema = {
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
 	fieldKinds,
-	defaultTreeSchema: neverTree,
-	defaultGlobalFieldSchema: emptyField,
 };
