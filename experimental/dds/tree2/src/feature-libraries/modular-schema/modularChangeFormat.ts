@@ -21,7 +21,7 @@ export const EncodedChangeAtomId = Type.Object(
 		/**
 		 * Uniquely identifies the changeset within which the change was made.
 		 */
-		revision: Type.Union([RevisionTagSchema, Type.Undefined()]),
+		revision: Type.Optional(RevisionTagSchema),
 		/**
 		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 		 */
