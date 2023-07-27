@@ -261,6 +261,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
+		// ADO:5083, eventual consistency issue was detected
 		skip: [0, 2, 6],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {

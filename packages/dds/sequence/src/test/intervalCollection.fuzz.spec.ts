@@ -301,6 +301,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
+		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
 		skip: [80, 9, 12, 44],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -314,7 +315,8 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 });
 
 /**
- * Disabled. ADO:X to deal with the failures.
+ * Disabled as all tests are failing due to eventual consistency issues.
+ * ADO:5083 to deal with the failures.
  */
 describe.skip("IntervalCollection fuzz testing with rebased batches", () => {
 	const noReconnectWithRebaseModel = {
