@@ -200,7 +200,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 // @public
 export interface IDriverErrorBase {
     canRetry: boolean;
-    endpointReachable?: boolean;
+    endpointReached?: boolean;
     readonly errorType: DriverErrorType;
     readonly message: string;
     online?: string;

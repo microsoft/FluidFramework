@@ -149,7 +149,7 @@ export interface IDriverErrorBase {
 	/**
 	 * Whether service was reachable and we got some response from service.
 	 */
-	endpointReachable?: boolean;
+	endpointReached?: boolean;
 }
 
 export interface IThrottlingWarning extends IDriverErrorBase {

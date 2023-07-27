@@ -107,10 +107,10 @@ export async function runWithRetry<T>(
 			numRetries++;
 			lastError = err;
 			// If the error is throttling error, then wait for the specified time before retrying.
-			// If the waitTime is not specified, then we start with retrying immediately to max of 8s or 30s.
+			// If the waitTime is not specified, then we start with retrying immediately to max of 8s or 120s.
 			retryAfterMs =
 				getRetryDelayFromError(err) ??
-				Math.min(retryAfterMs * 2, calculateMaxWaitTime(lastError));
+				Math.min(retryAfterMs * 2, calculateMaxWaitTime(err));
 			if (progress.onRetry) {
 				progress.onRetry(retryAfterMs, err);
 			}
@@ -132,7 +132,7 @@ export async function runWithRetry<T>(
 	return result!;
 }
 
-const MaxReconnectDelayInMsWhenEndpointIsReachable = 30000;
+const MaxReconnectDelayInMsWhenEndpointIsReachable = 120000;
 const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
 
 /**
@@ -143,7 +143,7 @@ const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
  * @returns - Max wait time.
  */
 export function calculateMaxWaitTime(error: unknown): number {
-	return isFluidError(error) && error.getTelemetryProperties().endpointReachable === true
+	return isFluidError(error) && error.getTelemetryProperties().endpointReached === true
 		? MaxReconnectDelayInMsWhenEndpointIsReachable
 		: MaxReconnectDelayInMsWhenEndpointIsNotReachable;
 }

@@ -64,27 +64,12 @@ export type R11sError = DriverError | IR11sError;
 
 export function createR11sNetworkError(
 	errorMessage: string,
-	statusCode?: number,
+	statusCode: number,
 	retryAfterMs?: number,
-	endpointReachable?: boolean,
 ): IFluidErrorBase & R11sError {
 	let error: IFluidErrorBase & R11sError;
 	const props = { statusCode, driverVersion };
 	switch (statusCode) {
-		case undefined:
-			// If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
-			// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
-			// the error message will start with NetworkError as defined in restWrapper.ts
-			// If there exists a self-signed SSL certificates error, throw a NonRetryableError
-			// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
-			error = errorMessage.includes("failed, reason: self signed certificate")
-				? new NonRetryableError(errorMessage, RouterliciousErrorType.sslCertError, props)
-				: new GenericNetworkError(
-						errorMessage,
-						errorMessage.startsWith("NetworkError"),
-						props,
-				  );
-			break;
 		case 401:
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
 		// so we treat repeat 401s the same as 403.
@@ -111,22 +96,16 @@ export function createR11sNetworkError(
 			error = createGenericNetworkError(errorMessage, retryInfo, props);
 			break;
 	}
-	error.addTelemetryProperties({ endpointReachable });
+	error.addTelemetryProperties({ endpointReached: true });
 	return error;
 }
 
 export function throwR11sNetworkError(
 	errorMessage: string,
-	statusCode?: number,
+	statusCode: number,
 	retryAfterMs?: number,
-	endpointReachable?: boolean,
 ): never {
-	const networkError = createR11sNetworkError(
-		errorMessage,
-		statusCode,
-		retryAfterMs,
-		endpointReachable,
-	);
+	const networkError = createR11sNetworkError(errorMessage, statusCode, retryAfterMs);
 
 	// eslint-disable-next-line @typescript-eslint/no-throw-literal
 	throw networkError;
@@ -141,10 +120,5 @@ export function errorObjectFromSocketError(
 ): R11sError {
 	// pre-0.58 error message prefix: R11sSocketError
 	const message = `R11s socket error (${handler}): ${socketError.message}`;
-	return createR11sNetworkError(
-		message,
-		socketError.code,
-		socketError.retryAfterMs,
-		true /* endpointReachable */,
-	);
+	return createR11sNetworkError(message, socketError.code, socketError.retryAfterMs);
 }
