@@ -249,17 +249,19 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		const quorumProposal = { package: version };
 		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
 		this.emit("proposingV2Code");
-		const container = await this._containerP;
-		// Check again, since we might have seen a proposal while waiting on the container.
 		if (!this._anyQuorumProposalSeen) {
-			// TODO: we should only propose if we are still in this state after fully catching up
-			// TODO: awaiting here may await past an earlier proposal from someone else.  This is probably OK, since we would be waiting for our
-			// own proposal to accept anyway in _quorumApprovalCompleteP but maybe something to think about.
-			await container.proposeCodeDetails(quorumProposal);
+			const container = await this._containerP;
+			// Check again, since we might have seen a proposal while waiting on the container.
+			if (!this._anyQuorumProposalSeen) {
+				// TODO: we should only propose if we are still in this state after fully catching up
+				// TODO: awaiting here may await past an earlier proposal from someone else.  This is probably OK, since we would be waiting for our
+				// own proposal to accept anyway in _quorumApprovalCompleteP but maybe something to think about.
+				await container.proposeCodeDetails(quorumProposal);
+			}
 		}
-		await this.checkQuorumApprovalComplete(container);
+		await this._anyQuorumProposalSeenP;
 		this.emit("waitingForV2ProposalCompletion");
-		await this.checkCodeDetailsProposed(container);
+		await this._quorumApprovalCompleteP;
 		this.emit("readyForMigration");
 	};
 
@@ -274,34 +276,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 		// TODO real error handling
 		this.overseeMigration().catch(console.error);
-	}
-
-	// considering this as an alternative method to pass container reference from ensureQuorumCodeDetails
-	private readonly checkCodeDetailsProposed = async (container) => {
-		return new Promise<void>((resolve) => {
-			const watchForCodeDetailsProposed = (op: ISequencedDocumentMessage) => {
-				// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
-				// Or maybe set that up in ensureQuorumCodeDetails().
-				container.off("codeDetailsProposed", watchForCodeDetailsProposed);
-				this._anyQuorumProposalSeen = true;
-				console.log("Resolving this._anyQuorumProposalSeenP");
-				resolve();
-			};
-			container.on("codeDetailsProposed", watchForCodeDetailsProposed);
-		});
-	}
-
-	// considering this as an alternative method to pass container reference from ensureQuorumCodeDetails
-	private readonly checkQuorumApprovalComplete = async (container) => {
-		return new Promise<void>((resolve) => {
-			const watchForApproveProposalComplete = () => {
-				container.off("approveProposalComplete", watchForApproveProposalComplete);
-				this._quorumApprovalComplete = true;
-				console.log("Resolving this._quorumApprovalCompleteP");
-				resolve();
-			};
-			container.on("approveProposalComplete", watchForApproveProposalComplete);
-		});
 	}
 
 	// TODO: Consider splitting into two parts - a sync setupMigration that sets up the promises, vs. the async overseeMigration.
@@ -389,7 +363,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Here we want to watch the quorum and resolve on the first sequenced proposal.
 			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
-
+			const container = await this._containerP;
 			const watchForCodeDetailsProposed = (op: ISequencedDocumentMessage) => {
 				// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
 				// Or maybe set that up in ensureQuorumCodeDetails().
@@ -398,7 +372,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				console.log("Resolving this._anyQuorumProposalSeenP");
 				resolve();
 			};
-			
 			container.on("codeDetailsProposed", watchForCodeDetailsProposed);
 		});
 
@@ -406,16 +379,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Here we want to watch the quorum and track all proposals, and resolve on the MSN advancing past the last one's sequence number.
 			// This is even more awkward than the proposal tracking, because there is no event for proposal acceptance on the Container, only on the QuorumProposals.
 			// Again for now, spying on the deltaManager and using insider knowledge.
-
+			const container = await this._containerP;
 			const watchForApproveProposalComplete = () => {
 				container.off("approveProposalComplete", watchForApproveProposalComplete);
 				this._quorumApprovalComplete = true;
 				console.log("Resolving this._quorumApprovalCompleteP");
 				resolve();
 			};
-
 			container.on("approveProposalComplete", watchForApproveProposalComplete);
-
 		});
 
 		this._v2SummaryP = new Promise<void>((resolve) => {
