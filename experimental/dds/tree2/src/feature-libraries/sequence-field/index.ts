@@ -32,6 +32,7 @@ export {
 	HasReattachFields,
 	CellSpanningMark,
 	CellId,
+	CellTargetingMark,
 	HasLineage,
 } from "./format";
 export {
