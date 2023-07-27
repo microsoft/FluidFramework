@@ -353,12 +353,18 @@ export class MockContainerRuntimeFactory {
 		return this.messages.length;
 	}
 
+	/**
+	 * @returns a minimum sequence number for all connected clients.
+	 */
 	public getMinSeq(): number {
-		let minSeq: number | undefined;
-		for (const [, clientSeq] of this.minSeq) {
-			minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [, clientSequenceNumber] of this.minSeq) {
+			minimumSequenceNumber =
+				minimumSequenceNumber === undefined
+					? clientSequenceNumber
+					: Math.min(minimumSequenceNumber, clientSequenceNumber);
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public createContainerRuntime(

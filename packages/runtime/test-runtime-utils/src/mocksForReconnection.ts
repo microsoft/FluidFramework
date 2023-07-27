@@ -71,7 +71,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		super(dataStoreRuntime, factory, runtimeOptions, overrides);
 	}
 
-	public process(message: ISequencedDocumentMessage) {
+	override process(message: ISequencedDocumentMessage) {
 		if (this.connected) {
 			super.process(message);
 		} else {
@@ -79,7 +79,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown) {
+	override submit(messageContent: any, localOpMetadata: unknown) {
 		// Submit messages only if we are connection, otherwise, just add it to the pending queue.
 		if (this.connected) {
 			return super.submit(messageContent, localOpMetadata);
@@ -108,7 +108,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
  * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
-	public createContainerRuntime(
+	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		overrides?: { minimumSequenceNumber?: number },
 	): MockContainerRuntimeForReconnection {
@@ -122,19 +122,22 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		return containerRuntime;
 	}
 
-	public getMinSeq(): number {
-		// We overwrite the min sequence number function, to simulate that
-		// the minimum sequence number will be incremented by the server while the
-		// client is not connected. By checking, whether a client is currently
-		// within the quorum we ignore it during the min sequence number computation
-		// it it is currently not connected.
-		let minSeq: number | undefined;
-		for (const [client, clientSeq] of this.minSeq) {
+	/**
+	 * {@inheritdoc MockContainerRuntimeFactory.getMinSeq}
+	 */
+	override getMinSeq(): number {
+		// In a reconnection case the minimum sequence number is not incremented
+		// by the server while the client is not connected.
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
 			if (this.quorum.getMember(client) !== undefined) {
-				minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
 			}
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public clearOutstandingClientMessages(clientId: string) {
