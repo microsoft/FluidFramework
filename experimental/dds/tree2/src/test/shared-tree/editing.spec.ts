@@ -816,7 +816,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -861,7 +861,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -915,7 +915,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -956,7 +956,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -995,7 +995,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -1035,7 +1035,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -1083,7 +1083,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -1135,7 +1135,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -1182,7 +1182,7 @@ describe("Editing", () => {
 			const tree = makeTreeFromJson({ src: ["A"], dst: ["B"] });
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 			const srcList: UpPath = { parent: rootPath, parentField: brand("src"), parentIndex: 0 };
@@ -1213,7 +1213,7 @@ describe("Editing", () => {
 			const tree = makeTreeFromJson({ src: ["A"], dst: ["B"] });
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 			const srcList: UpPath = { parent: rootPath, parentField: brand("src"), parentIndex: 0 };
@@ -1244,7 +1244,7 @@ describe("Editing", () => {
 			const tree = makeTreeFromJson({ src: ["A"], dst: ["B"] });
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 			const srcList: UpPath = { parent: rootPath, parentField: brand("src"), parentIndex: 0 };
@@ -1277,7 +1277,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -1314,7 +1314,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
@@ -1351,7 +1351,7 @@ describe("Editing", () => {
 
 			const rootPath = {
 				parent: undefined,
-				parentField: rootFieldKeySymbol,
+				parentField: rootFieldKey,
 				parentIndex: 0,
 			};
 
