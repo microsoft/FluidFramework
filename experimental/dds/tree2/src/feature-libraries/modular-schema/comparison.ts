@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { compareSets, fail } from "../../util";
 import {
 	TreeStoredSchema,
@@ -11,23 +12,29 @@ import {
 	TreeTypeSet,
 	SchemaData,
 } from "../../core";
-import { neverTree } from "../default-field-kinds";
 import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * `undefined` TreeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
 	original: TreeStoredSchema | undefined,
-	superset: TreeStoredSchema,
+	superset: TreeStoredSchema | undefined,
 ): boolean {
-	if (original === undefined || isNeverTree(policy, originalData, original)) {
+	if (isNeverTree(policy, originalData, original)) {
 		return true;
 	}
+	if (isNeverTree(policy, originalData, superset)) {
+		return false;
+	}
+	assert(original !== undefined, "only never trees have undefined schema");
+	assert(superset !== undefined, "only never trees have undefined schema");
 	if (!allowsValueSuperset(original.value, superset.value)) {
 		return false;
 	}
@@ -152,9 +159,7 @@ export function allowsRepoSuperset(
 	}
 	for (const [key, schema] of original.treeSchema) {
 		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
-		if (
-			!allowsTreeSuperset(policy, original, schema, superset.treeSchema.get(key) ?? neverTree)
-		) {
+		if (!allowsTreeSuperset(policy, original, schema, superset.treeSchema.get(key))) {
 			return false;
 		}
 	}
@@ -188,7 +193,7 @@ export function isNeverFieldRecursive(
 				!isNeverTreeRecursive(
 					policy,
 					originalData,
-					originalData.treeSchema.get(type) ?? neverTree,
+					originalData.treeSchema.get(type),
 					parentTypeStack,
 				)
 			) {
@@ -204,26 +209,33 @@ export function isNeverFieldRecursive(
 
 /**
  * Returns true iff there are no possible trees that could meet this schema.
- * Trees which are infinate (like endless linked lists) are considered impossible.
+ * Trees which are infinite (like endless linked lists) are considered impossible.
+ *
+ * `undefined` means the schema is not present and thus a NeverTree.
  */
 export function isNeverTree(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	tree: TreeStoredSchema,
+	tree: TreeStoredSchema | undefined,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, tree, new Set());
 }
 
 /**
  * Returns true iff there are no possible trees that could meet this schema.
- * Trees which are infinate (like endless linked lists) are considered impossible.
+ * Trees which are infinite (like endless linked lists) are considered impossible.
+ *
+ * `undefined` means the schema is not present and thus a NeverTree.
  */
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	tree: TreeStoredSchema,
+	tree: TreeStoredSchema | undefined,
 	parentTypeStack: Set<TreeStoredSchema>,
 ): boolean {
+	if (tree === undefined) {
+		return true;
+	}
 	if (parentTypeStack.has(tree)) {
 		return true;
 	}

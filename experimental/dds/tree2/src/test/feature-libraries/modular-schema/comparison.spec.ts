@@ -138,6 +138,7 @@ describe("Schema Comparison", () => {
 			}),
 		);
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
+		assert(isNeverTree(defaultSchemaPolicy, repo, undefined));
 		assert.equal(
 			isNeverTree(defaultSchemaPolicy, repo, {
 				localFields: emptyMap,
@@ -256,14 +257,17 @@ describe("Schema Comparison", () => {
 	it("allowsTreeSuperset", () => {
 		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
-		const compare = (a: TreeStoredSchema, b: TreeStoredSchema): boolean =>
-			allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
+		const compare = (
+			a: TreeStoredSchema | undefined,
+			b: TreeStoredSchema | undefined,
+		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);
 		testPartialOrder(
 			compare,
 			[
 				neverTree,
 				neverTree2,
+				undefined,
 				anyTree,
 				emptyTree,
 				emptyLocalFieldTree,
@@ -271,7 +275,7 @@ describe("Schema Comparison", () => {
 				valueLocalFieldTree,
 			],
 			[
-				[neverTree, neverTree2],
+				[neverTree, neverTree2, undefined],
 				[emptyTree, emptyLocalFieldTree],
 			],
 		);
