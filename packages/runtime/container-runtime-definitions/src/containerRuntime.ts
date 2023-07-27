@@ -65,10 +65,10 @@ export interface IContainerRuntime
 	/**
 	 * Returns an aliased data store with the given alias.
 	 * @param alias - The alias for the data store.
-	 * @returns - The aliased data store as a FluidObject. Throws usage error if the data store
-	 * is not aliased or if it doesn't exist.
+	 * @returns - The data store as a FluidObject if it exists and is aliased. Returns undefined if the data
+	 * store doesn't exists or is not aliased.
 	 */
-	getAliasDataStore?(alias: string): Promise<FluidObject>;
+	getAliasedDataStore?(alias: string): Promise<FluidObject | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete

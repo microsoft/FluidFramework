@@ -137,7 +137,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly gcTombstoneEnforcementAllowed: boolean;
     // (undocumented)
     readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
-    getAliasDataStore(alias: string): Promise<FluidObject>;
+    getAliasedDataStore(alias: string): Promise<FluidObject | undefined>;
     // (undocumented)
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;

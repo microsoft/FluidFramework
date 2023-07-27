@@ -90,8 +90,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string) =>
 		runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id);
 
-	const getAliasDataStore = async (dataObject: ITestFluidObject, id: string, wait = false) =>
-		runtimeOf(dataObject).getAliasDataStore?.(id) ??
+	const getAliasedDataStore = async (dataObject: ITestFluidObject, id: string, wait = false) =>
+		runtimeOf(dataObject).getAliasedDataStore?.(id) ??
 		runtimeOf(dataObject).getRootDataStore(id, wait);
 
 	// Used in couple of tests because of the bug fixed by https://github.com/microsoft/FluidFramework/pull/15857
@@ -131,7 +131,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "Conflict");
 
-			assert.ok(await getAliasDataStore(dataObject, alias));
+			assert.ok(await getAliasedDataStore(dataObject, alias));
 
 			await container.attach(request);
 			const ds3 = await runtimeOf(dataObject).createDataStore(packageName);
@@ -149,7 +149,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "Conflict");
 
-			assert.ok(await getAliasDataStore(dataObject1, alias));
+			assert.ok(await getAliasedDataStore(dataObject1, alias));
 		});
 
 		it("Aliases with slashes are not supported", async () => {
@@ -162,7 +162,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				"Slashes should not be supported",
 			);
 			await assert.rejects(
-				getAliasDataStore(dataObject1, wrongAlias, /* wait */ false),
+				getAliasedDataStore(dataObject1, wrongAlias, /* wait */ false),
 				() => true,
 				"The aliasing should not have happened",
 			);
@@ -177,7 +177,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "Success");
 
-			assert.ok(await getAliasDataStore(dataObject1, alias));
+			assert.ok(await getAliasedDataStore(dataObject1, alias));
 		});
 
 		it("Aliasing a datastore while aliasing", async () => {
@@ -193,7 +193,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "Success");
-			assert.ok(await getAliasDataStore(dataObject1, alias1));
+			assert.ok(await getAliasedDataStore(dataObject1, alias1));
 
 			const alias2 = "alias2";
 			const [aliasResult3, aliasResult4] = await Promise.all([
@@ -203,7 +203,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 
 			assert.equal(aliasResult3, "Success");
 			assert.equal(aliasResult4, "AlreadyAliased");
-			assert.ok(await getAliasDataStore(dataObject1, alias2));
+			assert.ok(await getAliasedDataStore(dataObject1, alias2));
 
 			const [aliasResult5, aliasResult6] = await Promise.all([
 				ds3.trySetAlias(alias1),
@@ -221,7 +221,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				const datastores: IFluidRouter[] = [];
 				const createAliasedDataStore = async () => {
 					try {
-						const datastore = await getAliasDataStore(
+						const datastore = await getAliasedDataStore(
 							dataObject1,
 							alias,
 							/* wait */ false,
@@ -233,7 +233,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 						);
 						datastores.push(newDataStore);
 						await newDataStore.trySetAlias(alias);
-						return getAliasDataStore(dataObject1, alias);
+						return getAliasedDataStore(dataObject1, alias);
 					}
 				};
 
@@ -278,7 +278,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult1, "Success");
 			assert.equal(aliasResult2, "AlreadyAliased");
 
-			assert.ok(await getAliasDataStore(dataObject1, alias));
+			assert.ok(await getAliasedDataStore(dataObject1, alias));
 		});
 
 		it("Aliasing a datastore which previously failed to alias will succeed", async () => {
@@ -293,7 +293,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult2, "Conflict");
 			assert.equal(aliasResult3, "Success");
 
-			assert.ok(await getAliasDataStore(dataObject1, alias));
+			assert.ok(await getAliasedDataStore(dataObject1, alias));
 		});
 
 		it("Sending a bad alias message returns error", async () => {
@@ -415,14 +415,14 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			try {
 				// This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
 				// the isRootDataStore property in the dataStoreContext
-				await (containerRuntime2.getAliasDataStore?.(aliasedDataStore1.runtime.id) ??
+				await (containerRuntime2.getAliasedDataStore?.(aliasedDataStore1.runtime.id) ??
 					containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id));
 			} catch (e) {
 				callFailed = true;
 			}
 			assert(
 				callFailed,
-				"Expected getAliasDataStore to fail as the datastore is not yet a root datastore",
+				"Expected getAliasedDataStore to fail as the datastore is not yet a root datastore",
 			);
 
 			// Alias a datastore
@@ -437,7 +437,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			// Should be able to retrieve root datastore from remote
 			assert.doesNotThrow(
 				async () =>
-					containerRuntime2.getAliasDataStore?.(_alias) ??
+					containerRuntime2.getAliasedDataStore?.(_alias) ??
 					containerRuntime2.getRootDataStore(_alias),
 				"A remote aliased datastore should be a root datastore",
 			);
@@ -445,7 +445,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			// Should be able to retrieve local root datastore
 			assert.doesNotThrow(
 				async () =>
-					containerRuntime1.getAliasDataStore?.(_alias) ??
+					containerRuntime1.getAliasedDataStore?.(_alias) ??
 					containerRuntime1.getRootDataStore(_alias),
 				"A local aliased datastore should be a root datastore",
 			);

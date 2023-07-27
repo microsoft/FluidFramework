@@ -110,6 +110,7 @@ import {
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
+	IResponseException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -186,6 +187,7 @@ import {
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 import { IBatchMetadata } from "./metadata";
+import { FluidDataStoreContext } from "./dataStoreContext";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store

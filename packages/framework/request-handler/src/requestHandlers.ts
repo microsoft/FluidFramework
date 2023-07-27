@@ -36,24 +36,9 @@ export type RuntimeRequestHandler = (
 export const rootDataStoreRequestHandler = async (
 	request: IRequest,
 	runtime: IContainerRuntime,
-): Promise<IResponse | undefined> => {
+) => {
 	const requestParser = RequestParser.create(request);
 	const id = requestParser.pathParts[0];
-
-	// back-compat: If getAliasDataStore exits, use it to get the data store. Else, fallback to using getRootDataStore.
-	if (runtime.getAliasDataStore !== undefined) {
-		try {
-			// getAliasDataStore currently throws if the data store is not found
-			return {
-				status: 200,
-				mimeType: "fluid/object",
-				value: await runtime.getAliasDataStore(id),
-			};
-		} catch (error) {
-			return undefined;
-		}
-	}
-
 	const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
 	let rootDataStore: IFluidRouter;
 	try {

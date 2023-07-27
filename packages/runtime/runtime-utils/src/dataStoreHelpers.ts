@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
 
-interface IResponseException extends Error {
+export interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
 	message: string;
 	code: number;
