@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/agent-scheduler",
-	"version": "2.0.0-internal.4.4.3",
+	"version": "2.0.0-internal.4.4.4",
 	"description": "Built in runtime object for distributing agents across instances of a container",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -56,16 +56,16 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-utils": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
-		"@fluidframework/register-collection": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/container-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/container-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/datastore": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/map": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/register-collection": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {

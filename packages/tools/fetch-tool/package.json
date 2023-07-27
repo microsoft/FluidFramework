@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fetch-tool",
-	"version": "2.0.0-internal.4.4.3",
+	"version": "2.0.0-internal.4.4.4",
 	"description": "Console tool to fetch Fluid data from relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -30,22 +30,22 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluid-tools/fluidapp-odsp-urlresolver": "workspace:~",
+		"@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/odsp-urlresolver": "workspace:~",
+		"@fluidframework/container-runtime": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/datastore": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/odsp-driver": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/odsp-urlresolver": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/routerlicious-urlresolver": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/test-client-utils": "workspace:~",
-		"@fluidframework/tool-utils": "workspace:~"
+		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/routerlicious-urlresolver": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/test-client-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/tool-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.18.2",

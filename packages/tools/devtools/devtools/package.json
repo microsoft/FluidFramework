@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools",
-	"version": "2.0.0-internal.4.4.3",
+	"version": "2.0.0-internal.4.4.4",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -55,18 +55,18 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/devtools-core": "workspace:~",
+		"@fluid-experimental/devtools-core": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-utils": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~"
+		"@fluidframework/container-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/fluid-static": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.18.2",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/telemetry-utils",
-	"version": "2.0.0-internal.4.4.3",
+	"version": "2.0.0-internal.4.4.4",
 	"description": "Collection of telemetry relates utilities for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -79,7 +79,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.18.2",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.4.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/debug": "^4.1.5",

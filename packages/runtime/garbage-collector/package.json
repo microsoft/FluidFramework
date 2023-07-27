@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/garbage-collector",
-	"version": "2.0.0-internal.4.4.3",
+	"version": "2.0.0-internal.4.4.4",
 	"description": "Garbage Collector implementation for Fluid, @deprecated - This package is for internal use only and will be deleted in a future release.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -71,7 +71,7 @@
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/runtime-definitions": "workspace:~"
+		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.18.2",
@@ -79,7 +79,7 @@
 		"@fluidframework/build-tools": "^0.18.2",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/garbage-collector-previous": "npm:@fluidframework/garbage-collector@2.0.0-internal.4.1.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",

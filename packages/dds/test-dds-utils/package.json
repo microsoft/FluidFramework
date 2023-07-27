@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-dds-utils",
-	"version": "2.0.0-internal.4.4.3",
+	"version": "2.0.0-internal.4.4.4",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -56,19 +56,19 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/stochastic-test-utils": "workspace:~",
+		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.18.2",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
+		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.4.4 <2.0.0-internal.4.5.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
 		"concurrently": "^7.6.0",
