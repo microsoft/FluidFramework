@@ -85,7 +85,7 @@ export interface RedoOp {
 }
 
 /**
- * This interface was duplicated from the ddsFuzzHarness code for use cases which requires more control over how the synchronize op is generated.
+ * This Synchronize interface was duplicated from the ddsFuzzHarness code for use cases which requires more control over how the synchronize op is generated.
  */
 export interface Synchronize {
 	type: "synchronizeTrees";
