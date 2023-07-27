@@ -11,7 +11,7 @@ import {
 } from "@fluid-internal/test-loader-utils";
 import {
 	ITelemetryLoggerExt,
-	createDebugLogger,
+	createChildLogger,
 	MockLogger,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -159,7 +159,7 @@ describe("Loader", () => {
 
 			beforeEach(async () => {
 				seq = 1;
-				logger = createDebugLogger({ namespace: "fluid:testDeltaManager" });
+				logger = createChildLogger({ namespace: "fluid:testDeltaManager" });
 				emitter = new EventEmitter();
 
 				clientSeqNumber = 0;

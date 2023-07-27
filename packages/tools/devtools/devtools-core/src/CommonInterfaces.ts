@@ -29,7 +29,7 @@ export interface HasContainerKey {
 /**
  * A unique ID for a Fluid object
  *
- * @public
+ * @internal
  */
 export type FluidObjectId = string;
 

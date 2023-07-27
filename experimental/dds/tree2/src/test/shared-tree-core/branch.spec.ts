@@ -361,10 +361,6 @@ describe("Branches", () => {
 		const fork = branch.fork();
 		branch.dispose();
 
-		function assertDisposed(fn: () => void): void {
-			assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
-		}
-
 		// These methods are not valid to call after disposal
 		assertDisposed(() => branch.fork());
 		assertDisposed(() => branch.rebaseOnto(fork));
@@ -437,6 +433,71 @@ describe("Branches", () => {
 		// Abort the last transaction as well, and ensure that the branch has no commits on it
 		branch.abortTransaction();
 		assert.equal(branch.getHead().revision, nullRevisionTag);
+	});
+
+	describe("all nested forks and transactions are disposed and aborted when transaction is", () => {
+		const setUpNestedForks = (rootBranch: DefaultBranch) => {
+			change(rootBranch);
+			rootBranch.startTransaction();
+			const fork1 = rootBranch.fork();
+			change(rootBranch);
+			rootBranch.startTransaction();
+			const fork2 = rootBranch.fork();
+			change(rootBranch);
+			const fork3 = rootBranch.fork();
+			change(fork3);
+			const fork4 = fork3.fork();
+			change(fork3);
+			fork3.startTransaction();
+			change(fork3);
+			const fork5 = fork3.fork();
+
+			return {
+				disposedForks: [fork2, fork3, fork4, fork5],
+				notDisposedForks: [fork1],
+			};
+		};
+
+		const assertNestedForks = (nestedForks: {
+			disposedForks: readonly DefaultBranch[];
+			notDisposedForks: readonly DefaultBranch[];
+		}) => {
+			nestedForks.disposedForks.forEach((fork) => {
+				assertDisposed(() => fork.fork());
+				assert.equal(fork.isTransacting(), false);
+			});
+			nestedForks.notDisposedForks.forEach((fork) => assertNotDisposed(() => fork.fork()));
+		};
+
+		it("commited", () => {
+			const rootBranch = create();
+			const nestedForks = setUpNestedForks(rootBranch);
+			rootBranch.commitTransaction();
+
+			assert.equal(rootBranch.isTransacting(), true);
+			assertNestedForks(nestedForks);
+
+			rootBranch.commitTransaction();
+			assertNestedForks({
+				disposedForks: nestedForks.notDisposedForks,
+				notDisposedForks: [],
+			});
+		});
+
+		it("aborted", () => {
+			const rootBranch = create();
+			const nestedForks = setUpNestedForks(rootBranch);
+			rootBranch.abortTransaction();
+
+			assert.equal(rootBranch.isTransacting(), true);
+			assertNestedForks(nestedForks);
+
+			rootBranch.abortTransaction();
+			assertNestedForks({
+				disposedForks: nestedForks.notDisposedForks,
+				notDisposedForks: [],
+			});
+		});
 	});
 
 	it("error if undo is called with no undo redo manager", () => {
@@ -610,5 +671,13 @@ describe("Branches", () => {
 	function assertBased(branch: DefaultBranch, on: DefaultBranch): void {
 		const ancestor = findCommonAncestor(branch.getHead(), on.getHead());
 		assert.equal(ancestor, on.getHead());
+	}
+
+	function assertDisposed(fn: () => void): void {
+		assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
+	}
+
+	function assertNotDisposed(fn: () => void): void {
+		assert.doesNotThrow(fn, (e: Error) => validateAssertionError(e, /\*/));
 	}
 });
