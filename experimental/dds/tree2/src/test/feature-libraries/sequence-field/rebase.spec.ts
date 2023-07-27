@@ -270,23 +270,11 @@ describe("SequenceField - Rebase", () => {
 		// Deletes --E-G
 		const expected = [
 			{ count: 2 },
-			Mark.delete(
-				1,
-				{ revision: tag1, localId: brand(1) },
-				{ revision: undefined, id: brand(0) },
-			),
+			Mark.onCell({ revision: tag1, localId: brand(1) }, Mark.delete(1, brand(0))),
 			Mark.delete(1, brand(1)),
-			Mark.delete(
-				1,
-				{ revision: tag1, localId: brand(2) },
-				{ revision: undefined, id: brand(2) },
-			),
+			Mark.onCell({ revision: tag1, localId: brand(2) }, Mark.delete(1, brand(2))),
 			Mark.delete(1, brand(3)),
-			Mark.delete(
-				1,
-				{ revision: tag1, localId: brand(3) },
-				{ revision: undefined, id: brand(4) },
-			),
+			Mark.onCell({ revision: tag1, localId: brand(3) }, Mark.delete(1, brand(4))),
 		];
 		checkDeltaEquality(actual, expected);
 	});
@@ -330,36 +318,30 @@ describe("SequenceField - Rebase", () => {
 			Mark.moveIn(1, brand(3)),
 			Mark.moveIn(1, brand(4), { isSrcConflicted: true }),
 			{ count: 2 },
-			Mark.moveOut(
-				1,
+			Mark.onCell(
 				{
 					revision: tag1,
 					localId: brand(1),
 					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
 				},
-				{
-					revision: undefined,
-					id: brand(0),
-				},
+				Mark.moveOut(1, brand(0)),
 			),
 			Mark.moveOut(1, brand(1)),
-			Mark.moveOut(
-				1,
-				{ revision: tag1, localId: brand(2) },
-				{ revision: undefined, id: brand(2) },
+			Mark.onCell(
+				{
+					revision: tag1,
+					localId: brand(2),
+				},
+				Mark.moveOut(1, brand(2)),
 			),
 			Mark.moveOut(1, brand(3)),
-			Mark.moveOut(
-				1,
+			Mark.onCell(
 				{
 					revision: tag1,
 					localId: brand(3),
 					lineage: [{ revision: tag1, id: brand(4), count: 1, offset: 0 }],
 				},
-				{
-					revision: undefined,
-					id: brand(4),
-				},
+				Mark.moveOut(1, brand(4)),
 			),
 		];
 		assert.deepEqual(actual, expected);

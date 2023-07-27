@@ -231,7 +231,6 @@ export function createReviveMark<TChange = never>(
 	};
 	const mark: SF.ReviveMark<TChange> = {
 		count: content.length,
-		cellId,
 		effect: [effect],
 	};
 	if (cellId !== undefined) {
@@ -245,13 +244,13 @@ export function createDeleteMark<TChange = never>(
 	id: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.Delete<TChange>>,
 ): SF.DeleteMark<TChange> {
-	const cellId: SF.CellId = typeof id === "object" ? id : { localId: id };
+	const atomId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
 	const effect: SF.Delete<TChange> = {
 		type: "Delete",
-		id: cellId.localId,
+		id: atomId.localId,
 	};
-	if (cellId.revision !== undefined) {
-		effect.revision = cellId.revision;
+	if (atomId.revision !== undefined) {
+		effect.revision = atomId.revision;
 	}
 	const mark: SF.DeleteMark<TChange> = {
 		count,
@@ -262,16 +261,16 @@ export function createDeleteMark<TChange = never>(
 
 export function createMoveOutMark<TChange = never>(
 	count: number,
-	id: ChangesetLocalId | SF.CellId,
+	id: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.MoveOut<TChange>>,
 ): SF.MoveOutMark<TChange> {
-	const cellId: SF.CellId = typeof id === "object" ? id : { localId: id };
+	const atomId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
 	const effect: SF.MoveOut<TChange> = {
 		type: "MoveOut",
-		id: cellId.localId,
+		id: atomId.localId,
 	};
-	if (cellId.revision !== undefined) {
-		effect.revision = cellId.revision;
+	if (atomId.revision !== undefined) {
+		effect.revision = atomId.revision;
 	}
 	const mark: SF.MoveOutMark<TChange> = {
 		count,
@@ -303,20 +302,19 @@ export function createMoveInMark(
 
 export function createReturnFromMark<TChange = never>(
 	count: number,
-	id: ChangesetLocalId | SF.CellId,
+	id: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.ReturnFrom<TChange>>,
 ): SF.ReturnFromMark<TChange> {
-	const cellId: SF.CellId = typeof id === "object" ? id : { localId: id };
+	const atomId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
 	const effect: SF.ReturnFrom<TChange> = {
 		type: "ReturnFrom",
-		id: cellId.localId,
+		id: atomId.localId,
 	};
-	if (cellId.revision !== undefined) {
-		effect.revision = cellId.revision;
+	if (atomId.revision !== undefined) {
+		effect.revision = atomId.revision;
 	}
 	const mark: SF.ReturnFromMark<TChange> = {
 		count,
-		cellId,
 		effect: [{ ...effect, ...overrides }],
 	};
 	return mark;
@@ -325,27 +323,30 @@ export function createReturnFromMark<TChange = never>(
 export function createReturnToMark(
 	count: number,
 	id: ChangesetLocalId | ChangeAtomId,
+	cellId?: SF.CellId,
 	overrides?: Partial<SF.ReturnTo>,
 ): SF.ReturnToMark {
-	const cellId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
+	const atomId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
 	const effect: SF.ReturnTo = {
 		type: "ReturnTo",
-		id: cellId.localId,
+		id: atomId.localId,
 	};
-	if (cellId.revision !== undefined) {
-		effect.revision = cellId.revision;
+	if (atomId.revision !== undefined) {
+		effect.revision = atomId.revision;
 	}
 	const mark: SF.ReturnToMark = {
 		count,
-		cellId,
 		effect: [{ ...effect, ...overrides }],
 	};
+	if (cellId !== undefined) {
+		mark.cellId = cellId;
+	}
 	return mark;
 }
 
 export function createModifyMark<TChange>(
 	changes: TChange,
-	id?: SF.CellId,
+	cellId?: SF.CellId,
 ): SF.ModifyMark<TChange> {
 	const mark: SF.ModifyMark<TChange> = {
 		count: 1,
@@ -356,13 +357,19 @@ export function createModifyMark<TChange>(
 			},
 		],
 	};
-	if (id !== undefined) {
-		mark.cellId = id;
+	if (cellId !== undefined) {
+		mark.cellId = cellId;
 	}
 	return mark;
 }
 
+function overrideCellId<TMark extends SF.Mark<any>>(id: SF.CellId, mark: TMark): TMark {
+	mark.cellId = id;
+	return mark;
+}
+
 export const MarkMaker = {
+	onCell: overrideCellId,
 	insert: createInsertMark,
 	revive: createReviveMark,
 	delete: createDeleteMark,
