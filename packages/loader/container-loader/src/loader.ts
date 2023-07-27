@@ -418,7 +418,10 @@ export class Loader implements IHostLoader {
 					});
 				}
 			})
-			.catch((error) => {});
+			.catch((error) => {
+				// If an error occured while resolving the container request, then remove it from the cache.
+				this.containers.delete(key);
+			});
 	}
 
 	private async resolveCore(
