@@ -135,7 +135,7 @@ describe("SequenceField - Invert", () => {
 		it("delete", () => {
 			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 			const input = [
-				Mark.onCell(cellId, Mark.delete(1, brand(0), { changes: childChange1 })),
+				Mark.onEmptyCell(cellId, Mark.delete(1, brand(0), { changes: childChange1 })),
 			];
 
 			const actual = invert(input);
@@ -147,7 +147,7 @@ describe("SequenceField - Invert", () => {
 		it("move out", () => {
 			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 			const input = [
-				Mark.onCell(cellId, Mark.moveOut(1, brand(0), { changes: childChange1 })),
+				Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0), { changes: childChange1 })),
 				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
 			];
 
@@ -231,7 +231,7 @@ describe("SequenceField - Invert", () => {
 
 		it("redundant move-out + move-in => nil + nil", () => {
 			const input = [
-				Mark.onCell({ revision: tag2, localId: brand(0) }, Mark.moveOut(1, brand(0))),
+				Mark.onEmptyCell({ revision: tag2, localId: brand(0) }, Mark.moveOut(1, brand(0))),
 				Mark.modify(childChange1),
 				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
 				Mark.modify(childChange2),
@@ -246,7 +246,10 @@ describe("SequenceField - Invert", () => {
 
 		it("redundant return-from + return to => nil + nil", () => {
 			const input = [
-				Mark.onCell({ revision: tag2, localId: brand(0) }, Mark.returnFrom(1, brand(0))),
+				Mark.onEmptyCell(
+					{ revision: tag2, localId: brand(0) },
+					Mark.returnFrom(1, brand(0)),
+				),
 				Mark.modify(childChange1),
 				Mark.returnTo(
 					1,
@@ -266,7 +269,7 @@ describe("SequenceField - Invert", () => {
 
 		it("redundant return-from + redundant return-to => nil + skip", () => {
 			const input = [
-				Mark.onCell(
+				Mark.onEmptyCell(
 					{ revision: tag2, localId: brand(0) },
 					Mark.returnFrom(1, brand(0), { isDstConflicted: true }),
 				),
