@@ -14,7 +14,11 @@ import {
 	MongoClientOptions,
 	OptionalUnlessRequiredId,
 } from "mongodb";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
@@ -445,6 +449,36 @@ export class MongoDb implements core.IDb {
 }
 
 export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
+const DefaultMongoDbMonitoringEvents = [
+	"serverOpening",
+	"serverClosed",
+	"serverDescriptionChanged",
+	"topologyOpening",
+	"topologyClosed",
+	"topologyDescriptionChanged",
+	"serverHeartbeatStarted",
+	"serverHeartbeatSucceeded",
+	"serverHeartbeatFailed",
+	// "commandStarted", Comment out because this will be too often
+	// "commandSucceeded", Comment out because this will be too often
+	// "commandFailed", Comment out because this will be too often
+	"connectionPoolCreated",
+	"connectionPoolReady",
+	"connectionPoolClosed",
+	"connectionCreated",
+	"connectionReady",
+	"connectionClosed",
+	// "connectionCheckOutStarted", Comment out because this will be too often
+	"connectionCheckOutFailed",
+	// "connectionCheckedOut", Comment out because this will be too often
+	// "connectionCheckedIn", Comment out because this will be too often
+	"connectionPoolCleared",
+];
+const DefaultHeartbeatFrequencyMS = 30000;
+const DefaultKeepAliveInitialDelay = 60000;
+const DefaultSocketTimeoutMS = 100000;
+const DefaultConnectionTimeoutMS = 120000;
+const DefaultMinHeartbeatFrequencyMS = 10000;
 
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
@@ -457,6 +491,12 @@ interface IMongoDBConfig {
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
 	connectionNotAvailableMode?: ConnectionNotAvailableMode;
+	dbMonitoringEventsList?: string[];
+	heartbeatFrequencyMS?: number;
+	keepAliveInitialDelay?: number;
+	socketTimeoutMS?: number;
+	connectionTimeoutMS?: number;
+	minHeartbeatFrequencyMS?: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -469,6 +509,12 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly telemetryEnabled: boolean = false;
 	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
 	private readonly retryRuleOverride: Map<string, boolean>;
+	private readonly dbMonitoringEventsList: string[];
+	private readonly heartbeatFrequencyMS: number;
+	private readonly keepAliveInitialDelay: number;
+	private readonly socketTimeoutMS: number;
+	private readonly connectionTimeoutMS: number;
+	private readonly minHeartbeatFrequencyMS: number;
 	constructor(config: IMongoDBConfig) {
 		const {
 			operationsDbEndpoint,
@@ -478,6 +524,12 @@ export class MongoDbFactory implements core.IDbFactory {
 			connectionPoolMaxSize,
 			directConnection,
 			connectionNotAvailableMode,
+			dbMonitoringEventsList,
+			heartbeatFrequencyMS,
+			keepAliveInitialDelay,
+			socketTimeoutMS,
+			connectionTimeoutMS,
+			minHeartbeatFrequencyMS,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -493,6 +545,12 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
 			? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
 			: new Map();
+		this.dbMonitoringEventsList = dbMonitoringEventsList ?? DefaultMongoDbMonitoringEvents;
+		this.heartbeatFrequencyMS = heartbeatFrequencyMS ?? DefaultHeartbeatFrequencyMS;
+		this.keepAliveInitialDelay = keepAliveInitialDelay ?? DefaultKeepAliveInitialDelay;
+		this.socketTimeoutMS = socketTimeoutMS ?? DefaultSocketTimeoutMS;
+		this.connectionTimeoutMS = connectionTimeoutMS ?? DefaultConnectionTimeoutMS;
+		this.minHeartbeatFrequencyMS = minHeartbeatFrequencyMS ?? DefaultMinHeartbeatFrequencyMS;
 	}
 
 	public async connect(global = false): Promise<core.IDb> {
@@ -505,8 +563,11 @@ export class MongoDbFactory implements core.IDbFactory {
 		const options: MongoClientOptions = {
 			directConnection: this.directConnection ?? false,
 			keepAlive: true,
-			keepAliveInitialDelay: 180000,
-			socketTimeoutMS: 120000,
+			keepAliveInitialDelay: this.keepAliveInitialDelay,
+			socketTimeoutMS: this.socketTimeoutMS,
+			connectTimeoutMS: this.connectionTimeoutMS,
+			heartbeatFrequencyMS: this.heartbeatFrequencyMS,
+			minHeartbeatFrequencyMS: this.minHeartbeatFrequencyMS,
 		};
 		if (this.connectionPoolMinSize) {
 			options.minPoolSize = this.connectionPoolMinSize;
@@ -520,6 +581,18 @@ export class MongoDbFactory implements core.IDbFactory {
 			global ? this.globalDbEndpoint : this.operationsDbEndpoint,
 			options,
 		);
+		for (const monitoringEvent of this.dbMonitoringEventsList) {
+			connection.on(monitoringEvent, (event) => {
+				// Using an event here so that we can use geneva monitoring in the future if we want to build alerts.
+				const eventWithName = { ...event, MonitoringEventName: monitoringEvent };
+				const metric = Lumberjack.newLumberMetric(
+					LumberEventName.MongoMonitoring,
+					eventWithName,
+				);
+				metric.success(`Event recorded for ${monitoringEvent}`);
+			});
+		}
+		Lumberjack.info("Added event listeners", this.dbMonitoringEventsList);
 
 		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(
 			this.retryRuleOverride,

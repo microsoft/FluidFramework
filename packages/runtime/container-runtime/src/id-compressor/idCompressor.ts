@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import {
 	IIdCompressor,
@@ -31,6 +30,8 @@ import type {
 	VersionedSerializedIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import BTree from "sorted-btree";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	hasAtLeastLength,
 	compareFiniteNumbers,
@@ -305,15 +306,15 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 	private readonly finalIdToCluster: AppendOnlySortedMap<FinalCompressedId, IdCluster> =
 		new AppendOnlySortedMap(compareFiniteNumbers);
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	/**
 	 * @param localSessionId - the `IdCompressor`'s current local session ID.
 	 * {@link generateStableId}.
 	 */
-	public constructor(
-		public readonly localSessionId: SessionId,
-		private readonly logger?: ITelemetryLoggerExt,
-	) {
+	public constructor(public readonly localSessionId: SessionId, logger?: ITelemetryBaseLogger) {
 		this.localSession = this.createSession(localSessionId);
+		this.logger = createChildLogger({ logger });
 	}
 
 	/**

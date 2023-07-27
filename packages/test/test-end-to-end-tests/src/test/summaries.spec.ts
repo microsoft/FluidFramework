@@ -20,7 +20,7 @@ import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	waitForContainerConnection,
 	ITestContainerConfig,
@@ -253,7 +253,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			runGC: false,
 			fullTree: false,
 			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
+			summaryLogger: createChildLogger(),
 		});
 
 		// Validate stats
@@ -407,7 +407,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		const summaryCollection = new SummaryCollection(
 			container.deltaManager,
-			new TelemetryNullLogger(),
+			createChildLogger(),
 		);
 
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(
@@ -474,7 +474,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 					runGC: false,
 					fullTree: false,
 					trackState: false,
-					summaryLogger: new TelemetryNullLogger(),
+					summaryLogger: createChildLogger(),
 				})
 				.catch(() => {});
 

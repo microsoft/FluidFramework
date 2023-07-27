@@ -9,7 +9,7 @@ import Random from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalType } from "../intervalCollection";
+import { IntervalType } from "../intervals";
 import {
 	SharedStringWithV1IntervalCollection,
 	V1IntervalCollectionSharedStringFactory,

@@ -5798,7 +5798,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@sinclair/typebox': ^0.28.8
+      '@sinclair/typebox': ^0.29.4
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -5836,7 +5836,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
-      '@sinclair/typebox': 0.28.11
+      '@sinclair/typebox': 0.29.4
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -7621,7 +7621,6 @@ importers:
       '@types/node-fetch': ^2.5.10
       '@types/sha.js': ^2.4.0
       '@types/sinon': ^7.0.13
-      abort-controller: ^3.0.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7652,7 +7651,6 @@ importers:
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      abort-controller: 3.0.0
       node-fetch: 2.6.11
       socket.io-client: 4.6.1
       uuid: 8.3.2
@@ -9001,10 +8999,10 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
-      abort-controller: ^3.0.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
+      debug: ^4.1.1
       double-ended-queue: ^2.1.0-0
       eslint: ~8.6.0
       events: ^3.1.0
@@ -9031,7 +9029,7 @@ importers:
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      abort-controller: 3.0.0
+      debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
@@ -9042,7 +9040,7 @@ importers:
       '@fluid-tools/build-cli': 0.21.0_@types+node@16.18.38
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0_@types+node@16.18.38
-      '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.5.2.0
+      '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.5.2.0_debug@4.3.4
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
@@ -10847,29 +10845,37 @@ importers:
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@fluentui/react': ^8.109.4
+      '@fluid-example/example-utils': workspace~
       '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
+      '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^1.2.0
       '@fluidframework/build-tools': ^0.21.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/tinylicious-client': workspace:~
+      '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
       '@types/jsdom': ^21.1.1
       '@types/jsdom-global': ^3.0.4
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/proxyquire': ^1.3.28
+      '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/sinon': ^7.0.13
@@ -10884,19 +10890,25 @@ importers:
       eslint-plugin-chai-expect: ~3.0.0
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
+      jest: ^26.6.3
+      jest-dev-server: ^4.3.0
+      jest-environment-puppeteer: ^4.3.0
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
       jsdom: ^16.7.0
       jsdom-global: ^3.0.2
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
       proxyquire: ^2.1.3
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
       sinon: ^7.4.2
       sinon-chrome: ^3.0.1
       start-server-and-test: ^1.11.7
-      tinylicious: 0.7.2
+      ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       webpack: ^5.82.0
@@ -10909,26 +10921,34 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
-      '@fluidframework/map': link:../../../dds/map
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
-      '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
+      '@fluidframework/test-utils': link:../../../test/test-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/chai': 4.3.5
       '@types/chrome': 0.0.232
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
       '@types/jsdom': 21.1.1
       '@types/jsdom-global': 3.0.4
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
       '@types/proxyquire': 1.3.28
+      '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/sinon': 7.5.2
@@ -10943,17 +10963,23 @@ importers:
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       good-fences: 1.2.0
       html-webpack-plugin: 5.5.1_webpack@5.83.0
+      jest: 26.6.3
+      jest-dev-server: 4.4.0
+      jest-environment-puppeteer: 4.4.0
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
       jsdom: 16.7.0
       jsdom-global: 3.0.2_jsdom@16.7.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
       proxyquire: 2.1.3
+      puppeteer: 1.20.0
       rimraf: 4.4.1
       sinon: 7.5.0
       sinon-chrome: 3.0.1
       start-server-and-test: 1.15.5
-      tinylicious: 0.7.2
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
       webpack: 5.83.0_webpack-cli@4.10.0
@@ -15231,7 +15257,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.5.2.0
       '@fluidframework/runtime-utils': 2.0.0-internal.5.2.0
       '@fluidframework/shared-object-base': 2.0.0-internal.5.2.0
-      '@sinclair/typebox': 0.28.11
+      '@sinclair/typebox': 0.28.20
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -20010,8 +20036,13 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dev: true
 
-  /@sinclair/typebox/0.28.11:
-    resolution: {integrity: sha512-8QPhkOowccAdXa/ra54pq+UVYvzbKjYMuojxCOTFq+yyEfcWZJSdlIVdivTRrIq7Mgjx1n4E37t8Js/RXwyvUg==}
+  /@sinclair/typebox/0.28.20:
+    resolution: {integrity: sha512-QCF3BGfacwD+3CKhGsMeixnwOmX4AWgm61nKkNdRStyLVu0mpVFYlDSY8gVBOOED1oSwzbJauIWl/+REj8K5+w==}
+    dev: true
+
+  /@sinclair/typebox/0.29.4:
+    resolution: {integrity: sha512-XSEM1jjL9CPI4pZ0RZs84Oq+jcONXFHljufxrp70rTYTbslDuYDj1wnDCzDb3XC9Tf5C36sGO1Fu7VFXXDTgFw==}
+    dev: false
 
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}

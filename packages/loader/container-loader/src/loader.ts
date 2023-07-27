@@ -6,14 +6,12 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
-	DebugLogger,
 	IConfigProviderBase,
-	loggerToMonitoringContext,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 	sessionStorageConfigProvider,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBaseLogger,
@@ -44,6 +42,7 @@ import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
+import { DebugLogger } from "./debugLogger";
 
 function canUseCache(request: IRequest): boolean {
 	if (request.headers === undefined) {
@@ -343,7 +342,10 @@ export class Loader implements IHostLoader {
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
+		this.mc = createChildMonitoringContext({
+			logger: this.services.subLogger,
+			namespace: "Loader",
+		});
 	}
 
 	public get IFluidRouter(): IFluidRouter {

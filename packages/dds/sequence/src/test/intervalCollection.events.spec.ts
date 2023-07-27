@@ -13,7 +13,8 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { IntervalType, SequenceInterval } from "../intervals";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
