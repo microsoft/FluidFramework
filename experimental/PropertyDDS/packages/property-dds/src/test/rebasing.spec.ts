@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { strict as assert } from "assert";
 import { expect } from "chai";
+import { v5 as uuidv5 } from "uuid";
 import {
 	IContainer,
 	IHostLoader,
@@ -38,7 +39,9 @@ import {
 	Float64Property,
 } from "@fluid-experimental/property-properties";
 import { SharedPropertyTree } from "../propertyTree";
-import { createDerivedGuid } from "./createDerivedGuid";
+
+// a "namespace" uuid to generate uuidv5 in fuzz tests
+const namespaceGuid: string = "b6abf2df-d86d-413b-8fd1-359d4aa341f2";
 
 function createLocalLoader(
 	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
@@ -124,7 +127,7 @@ describe("PropertyDDS", () => {
 		maxOperations = 30,
 	) {
 		for (let i = startTest; i < count; i++) {
-			const seed = createDerivedGuid("", String(i));
+			const seed = uuidv5(String(i), namespaceGuid);
 			it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
 				let testString = "";
 
@@ -465,7 +468,7 @@ describe("PropertyDDS", () => {
 				const logTest = true;
 
 				for (let i = startTest; i < count; i++) {
-					const seed = createDerivedGuid("", String(i));
+					const seed = uuidv5(String(i), namespaceGuid);
 					it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
 						const random = new DeterministicRandomGenerator(seed);
 						let testString = "";
