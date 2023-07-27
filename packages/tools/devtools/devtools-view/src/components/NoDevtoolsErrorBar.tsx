@@ -33,6 +33,21 @@ const useStyles = makeStyles({
 });
 
 /**
+ * Core message displayed in the error notice bar.
+ *
+ * @remarks Note: this is only exported for testing purposes.
+ */
+export const coreErrorMessage =
+	"It seems that Fluid Devtools has not been initialized in the current tab, or it did not respond in a timely manner.";
+
+/**
+ * URL pointing to help documentation for the Devtools.
+ *
+ * @remarks Note: this is only exported for testing purposes.
+ */
+export const docsLinkUrl = "https://aka.ms/fluid/devtool/docs";
+
+/**
  * {@link NoDevtoolsErrorBar} input props.
  */
 export interface NoDevtoolsErrorBarProps {
@@ -63,20 +78,24 @@ export function NoDevtoolsErrorBar(props: NoDevtoolsErrorBarProps): React.ReactE
 			dismissButtonAriaLabel="Close"
 			className={styles.root}
 		>
-			It seems that Fluid Devtools has not been initialized in the current tab, or it did not
-			respond in a timely manner.
+			{coreErrorMessage}
 			<Tooltip
 				content="Retry communicating with Fluid Devtools in the current tab."
 				relationship="description"
 			>
-				<Button className={styles.retryButton} size="small" onClick={retrySearch}>
+				<Button
+					className={styles.retryButton}
+					size="small"
+					onClick={retrySearch}
+					data-testid="retry-search-button"
+				>
 					Try again
 				</Button>
 			</Tooltip>
 			<br />
 			<h4 className={styles.debugNote}>
 				Need help? Please refer to our
-				<Link href="https://aka.ms/fluid/devtool/docs" target="_blank">
+				<Link href={docsLinkUrl} target="_blank">
 					documentation page
 				</Link>{" "}
 				for guidance on getting the extension working.{" "}
