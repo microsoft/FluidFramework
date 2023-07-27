@@ -337,6 +337,10 @@ export interface DDSFuzzSuiteOptions {
 
 	/**
 	 * Options to be provided to the underlying container runtimes {@link IMockContainerRuntimeOptions}.
+	 * By default nothing will be provided, which means that the runtimes will:
+	 * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
+	 * therefore all batches have a single op.
+	 * - not use grouped batching.
 	 */
 	containerRuntimeOptions?: IMockContainerRuntimeOptions;
 }
