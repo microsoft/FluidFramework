@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { EmptyKey, Value, FieldKey, rootFieldKeySymbol, JsonableTree } from "../../../core";
+import { EmptyKey, Value, FieldKey, rootFieldKey, JsonableTree } from "../../../core";
 import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
 	EditableTree,
@@ -455,7 +455,7 @@ describe("editable-tree: read-only", () => {
 			assert.equal(index, 0);
 			expectFieldEquals(context.schema, rootParent, [personJsonableTree()]);
 			assert.equal(rootParent.parent, undefined);
-			assert.equal(rootParent.fieldKey, rootFieldKeySymbol);
+			assert.equal(rootParent.fieldKey, rootFieldKey);
 		});
 
 		it("child field", () => {
@@ -591,7 +591,6 @@ describe("editable-tree: read-only", () => {
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
 		assert.deepEqual(simplePhonesSchema.extraLocalFields.types, new Set());
-		assert.deepEqual([...simplePhonesSchema.globalFields], []);
 		assert.equal(simplePhonesSchema.localFields.size, 1);
 		const simplePhonesPrimaryKey = [...simplePhonesSchema.localFields.keys()][0];
 		// primary key must be the same across the schema

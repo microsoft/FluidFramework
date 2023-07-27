@@ -11,7 +11,7 @@ import {
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	RevisionTag,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
 } from "../../core";
 import { jsonNumber, jsonObject } from "../../domains";
@@ -31,7 +31,7 @@ const fooKey: FieldKey = brand("foo");
 
 const root: UpPath = {
 	parent: undefined,
-	parentField: rootFieldKeySymbol,
+	parentField: rootFieldKey,
 	parentIndex: 0,
 };
 
@@ -62,7 +62,7 @@ describe("ForestRepairDataStore", () => {
 		initializeForest(forest, [singleTextCursor(data)]);
 		const delta1 = new Map([
 			[
-				rootFieldKeySymbol,
+				rootFieldKey,
 				[
 					{
 						type: Delta.MarkType.Modify,
@@ -86,7 +86,7 @@ describe("ForestRepairDataStore", () => {
 		forest.applyDelta(delta1);
 		const delta2 = new Map([
 			[
-				rootFieldKeySymbol,
+				rootFieldKey,
 				[
 					{
 						type: Delta.MarkType.Modify,

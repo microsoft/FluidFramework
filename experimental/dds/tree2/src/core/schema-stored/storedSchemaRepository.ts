@@ -6,25 +6,12 @@
 import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { createEmitter, ISubscribable } from "../../events";
 import {
-	GlobalFieldKey,
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	TreeStoredSchema,
 	SchemaData,
-	SchemaPolicy,
+	storedEmptyFieldSchema,
 } from "./schema";
-
-/**
- * A {@link SchemaData} with a {@link SchemaPolicy}.
- * @alpha
- */
-export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy>
-	extends SchemaData {
-	/**
-	 * Configuration information, including the defaults for schema which have no been added yet.
-	 */
-	readonly policy: TPolicy;
-}
 
 /**
  * Events for {@link StoredSchemaRepository}.
@@ -50,12 +37,10 @@ export interface SchemaEvents {
  * TODO: could implement more fine grained dependency tracking.
  * @alpha
  */
-export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
-	extends Dependee,
-		ISubscribable<SchemaEvents>,
-		SchemaDataAndPolicy<TPolicy> {
+export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
 	/**
-	 * Add the provided schema, possibly over-writing preexisting schema.
+	 * Replaces all schema with the provided schema.
+	 * Can over-write preexisting schema, and removes unmentioned schema.
 	 */
 	update(newSchema: SchemaData): void;
 }
@@ -64,9 +49,9 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
  * StoredSchemaRepository for in memory use:
  * not hooked up to Fluid (does not create Fluid ops when editing).
  */
-export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
+export class InMemoryStoredSchemaRepository<TPolicy = unknown>
 	extends SimpleDependee
-	implements StoredSchemaRepository<TPolicy>
+	implements StoredSchemaRepository
 {
 	protected readonly data: MutableSchemaData;
 	private readonly events = createEmitter<SchemaEvents>();
@@ -87,7 +72,7 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 		super("StoredSchemaRepository");
 		this.data = {
 			treeSchema: new Map(data?.treeSchema ?? []),
-			globalFieldSchema: new Map(data?.globalFieldSchema ?? []),
+			rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
 		};
 	}
 
@@ -99,8 +84,8 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 		return new InMemoryStoredSchemaRepository(this.policy, this.data);
 	}
 
-	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldStoredSchema> {
-		return this.data.globalFieldSchema;
+	public get rootFieldSchema(): FieldStoredSchema {
+		return this.data.rootFieldSchema;
 	}
 
 	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
@@ -109,9 +94,10 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 
 	public update(newSchema: SchemaData): void {
 		this.events.emit("beforeSchemaChange", newSchema);
-		for (const [name, schema] of newSchema.globalFieldSchema) {
-			this.data.globalFieldSchema.set(name, schema);
-		}
+
+		this.data.rootFieldSchema = newSchema.rootFieldSchema;
+
+		this.data.treeSchema.clear();
 		for (const [name, schema] of newSchema.treeSchema) {
 			this.data.treeSchema.set(name, schema);
 		}
@@ -121,34 +107,10 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 }
 
 interface MutableSchemaData extends SchemaData {
-	globalFieldSchema: Map<GlobalFieldKey, FieldStoredSchema>;
+	rootFieldSchema: FieldStoredSchema;
 	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
-/**
- * Helper for getting a global {@link FieldSchema} from a stored schema.
- * Defaults to the FieldSchema defined with a stored schema policy.
- * @alpha
- */
-export function lookupGlobalFieldSchema(
-	data: SchemaDataAndPolicy,
-	identifier: GlobalFieldKey,
-): FieldStoredSchema {
-	return data.globalFieldSchema.get(identifier) ?? data.policy.defaultGlobalFieldSchema;
-}
-
-/**
- * Helper for getting a {@link TreeSchema} from a stored schema.
- * Defaults to the TreeSchema defined with a stored schema policy.
- * @alpha
- */
-export function lookupTreeSchema(
-	data: SchemaDataAndPolicy,
-	identifier: TreeSchemaIdentifier,
-): TreeStoredSchema {
-	return data.treeSchema.get(identifier) ?? data.policy.defaultTreeSchema;
-}
-
 export function schemaDataIsEmpty(data: SchemaData): boolean {
-	return data.treeSchema.size === 0 && data.globalFieldSchema.size === 0;
+	return data.treeSchema.size === 0;
 }
