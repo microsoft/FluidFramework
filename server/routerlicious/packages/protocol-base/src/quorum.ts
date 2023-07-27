@@ -345,12 +345,9 @@ export class QuorumProposals
 		// Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
 		// TODO this can be optimized if necessary to avoid the linear search+sort
 		const completed: PendingProposal[] = [];
-		const pending: PendingProposal[] = [];
 		for (const [sequenceNumber, proposal] of this.proposals) {
 			if (sequenceNumber <= msn) {
 				completed.push(proposal);
-			} else {
-				pending.push(proposal);
 			}
 		}
 		completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
@@ -371,23 +368,22 @@ export class QuorumProposals
 			// clear the values cache
 			this.valuesSnapshotCache = undefined;
 
-			// check for pending proposals with sequence number greater than msn
-			let proposalPending = false;
-			for (const pendingProposal of pending) {
-				if (pendingProposal.key === committedProposal.key) {
-					proposalPending = true; 
+			// check if there are multiple proposals with matching keys
+			let proposalSettled = false;
+			let proposalKeySeen = false;
+			for (const [, p] of this.proposals) {
+				if (p.key === committedProposal.key) {
+					if(!proposalKeySeen){
+						// set proposalSettled to true if the proposal key match is unique thus far
+						proposalSettled = true;
+					}
+					else {
+						// set proposalSettled to false if matching proposal key is not unique
+						proposalSettled = false;
+						break;
+					}
+					proposalKeySeen = true;
 				}
-			}
-
-			// emit approveProposalComplete when all pending proposals are processed
-			if (!proposalPending) {
-				this.emit(
-					"approveProposalComplete",
-					committedProposal.sequenceNumber,
-					committedProposal.key,
-					committedProposal.value,
-					committedProposal.approvalSequenceNumber,
-				);
 			}
 
 			this.emit(
@@ -397,6 +393,17 @@ export class QuorumProposals
 				committedProposal.value,
 				committedProposal.approvalSequenceNumber,
 			);
+
+			// emit approveProposalComplete when all pending proposals are processed
+			if (!proposalSettled) {
+				this.emit(
+					"approveProposalComplete",
+					committedProposal.sequenceNumber,
+					committedProposal.key,
+					committedProposal.value,
+					committedProposal.approvalSequenceNumber,
+				);
+			}
 
 			this.proposals.delete(proposal.sequenceNumber);
 

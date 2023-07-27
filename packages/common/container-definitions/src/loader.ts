@@ -142,6 +142,24 @@ export interface IContainerEvents extends IEvent {
 	);
 
 	/**
+	 * Fires when all pending proposals for a proposal key have been processed.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `codeDetails`: The code details being proposed.
+	 *
+	 * - `sequenceNumber`: Proposal sequence number.
+	 * 
+	 * - `key`: Proposal key.
+	 *
+	 * @see {@link QuorumProposals.updateMinimumSequenceNumber}
+	 */
+	(
+		event: "approveProposalComplete",
+		listener: (sequenceNumber: number | undefined, key: string, codeDetails: IFluidCodeDetails) => void,
+	);
+
+	/**
 	 * @deprecated No replacement API recommended.
 	 */
 	(event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
