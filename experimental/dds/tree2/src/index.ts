@@ -32,7 +32,6 @@ export {
 	rootFieldKey,
 	rootField,
 	fieldSchema,
-	FieldScope,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,

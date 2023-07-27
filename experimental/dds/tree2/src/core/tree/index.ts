@@ -42,14 +42,12 @@ export {
 } from "./pathTree";
 export {
 	FieldMapObject,
-	FieldScope,
 	GenericFieldsNode,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
 	GenericTreeNode,
 	getGenericTreeField,
 	JsonableTree,
-	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
 export { EncodedJsonableTree } from "./persistedTreeTextFormat";

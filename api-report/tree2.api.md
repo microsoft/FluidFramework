@@ -701,12 +701,6 @@ export function fieldSchema(kind: {
     identifier: FieldKindIdentifier;
 }, types?: Iterable<TreeSchemaIdentifier>): FieldStoredSchema;
 
-// @alpha
-export const enum FieldScope {
-    // (undocumented)
-    local = "fields"
-}
-
 // @alpha (undocumented)
 export interface FieldStoredSchema {
     // (undocumented)
