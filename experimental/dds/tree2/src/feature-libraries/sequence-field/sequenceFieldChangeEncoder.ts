@@ -13,44 +13,52 @@ import { Changeset, Effect, Mark, NoopMarkType } from "./format";
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
 
+type JsonCompatibleEffect = JsonCompatible & Effect<JsonCompatible | JsonCompatibleReadOnly>;
+type JsonCompatibleMark = JsonCompatible & Mark<JsonCompatible | JsonCompatibleReadOnly>;
+
 function makeV0Codec<TNodeChange>(
 	childCodec: IJsonCodec<TNodeChange>,
 ): IJsonCodec<Changeset<TNodeChange>> {
-	function encodeEffect(effect: Effect<TNodeChange>): JsonCompatibleReadOnly {
+	function encodeEffect(effect: Effect<TNodeChange>): JsonCompatibleEffect {
 		const type = effect.type;
 		switch (type) {
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
-				return effect.changes !== undefined
-					? ({
-							...effect,
-							changes: childCodec.encode(effect.changes),
-					  } as unknown as JsonCompatible)
-					: (effect as Effect<JsonCompatibleReadOnly> & JsonCompatibleReadOnly);
+				return (
+					effect.changes !== undefined
+						? {
+								...effect,
+								changes: childCodec.encode(effect.changes),
+						  }
+						: effect
+				) as JsonCompatibleEffect;
 			case "Revive": {
 				const content = effect.content.map(jsonableTreeFromCursor);
-				return effect.changes !== undefined
-					? ({
-							...effect,
-							content,
-							changes: childCodec.encode(effect.changes),
-					  } as unknown as JsonCompatible)
-					: ({
-							...effect,
-							content,
-					  } as unknown as JsonCompatible);
+				return (
+					effect.changes !== undefined
+						? {
+								...effect,
+								content,
+								changes: childCodec.encode(effect.changes),
+						  }
+						: {
+								...effect,
+								content,
+						  }
+				) as JsonCompatibleEffect;
 			}
 			case "Modify":
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
 					...effect,
 					changes: childCodec.encode(effect.changes),
-				} as unknown as JsonCompatible;
+				} as JsonCompatibleEffect;
 			case NoopMarkType:
 			case "MoveIn":
 			case "ReturnTo":
-				return effect as unknown as JsonCompatible;
+				return effect as JsonCompatibleEffect;
 			case "Placeholder":
 				fail("Should not have placeholders in serialized changeset");
 			default:
@@ -108,13 +116,16 @@ function makeV0Codec<TNodeChange>(
 			for (const mark of changeset) {
 				const effect = mark.effect;
 				if (effect === undefined) {
-					jsonMarks.push(mark as unknown as JsonCompatible);
+					jsonMarks.push(mark as JsonCompatibleMark);
 				} else {
-					jsonMarks.push({
+					const encodedMark: JsonCompatibleMark = {
 						count: mark.count,
-						cellId: mark.cellId,
 						effect: effect.map((e) => encodeEffect(e)),
-					} as unknown as JsonCompatible);
+					};
+					if (mark.cellId !== undefined) {
+						encodedMark.cellId = mark.cellId;
+					}
+					jsonMarks.push(encodedMark as JsonCompatibleMark);
 				}
 			}
 			return jsonMarks;
@@ -126,11 +137,14 @@ function makeV0Codec<TNodeChange>(
 				if (mark.effect === undefined) {
 					marks.push(mark as Mark<TNodeChange>);
 				} else {
-					marks.push({
+					const decodedMark: Mark<TNodeChange> = {
 						count: mark.count,
-						cellId: mark.cellId,
 						effect: mark.effect.map((e) => decodeEffect(e)),
-					});
+					};
+					if (mark.cellId !== undefined) {
+						decodedMark.cellId = mark.cellId;
+					}
+					marks.push(decodedMark);
 				}
 			}
 			return marks;

@@ -465,7 +465,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 
 	if (
 		(type !== "MoveIn" && type !== "ReturnTo" && rhsEffect.changes !== undefined) ||
-		(lhs as Modify | HasChanges).changes !== undefined
+		(lhsEffect as Modify | HasChanges).changes !== undefined
 	) {
 		return false;
 	}
@@ -495,6 +495,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				)
 			) {
 				lhsInsert.content.push(...rhsEffect.content);
+				lhs.count += rhs.count;
 				return true;
 			}
 			break;
@@ -505,6 +506,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				lhsMoveIn.isSrcConflicted === rhsEffect.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhs.count === rhsEffect.id
 			) {
+				lhs.count += rhs.count;
 				return true;
 			}
 			break;
@@ -516,6 +518,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				lhsReturnTo.isSrcConflicted === rhsEffect.isSrcConflicted &&
 				(lhsReturnTo.id as number) + lhs.count === rhsEffect.id
 			) {
+				lhs.count += rhs.count;
 				return true;
 			}
 		}
@@ -524,6 +527,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Delete": {
 			const lhsDetach = lhsEffect as Detach;
 			if ((lhsDetach.id as number) + lhs.count === rhsEffect.id) {
+				lhs.count += rhs.count;
 				return true;
 			}
 			break;
@@ -539,6 +543,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				)
 			) {
 				lhsRevive.content.push(...rhsEffect.content);
+				lhs.count += rhs.count;
 				return true;
 			}
 			break;

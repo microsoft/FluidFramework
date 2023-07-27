@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, Mutable } from "../../util";
 import {
 	ChangeAtomId,
 	CrossFieldManager,
@@ -411,6 +411,13 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	}
 
 	const cloned = cloneMark(mark);
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
+		(cloned.cellId as Mutable<CellId>).revision = revision;
+	}
 	const effect = tryGetEffect(cloned);
 	if (effect !== undefined) {
 		if (revision !== undefined && effect.type !== "Modify" && effect.revision === undefined) {
@@ -457,55 +464,54 @@ function amendComposeI<TNodeChange>(
 	while (!queue.isEmpty()) {
 		let mark = queue.dequeue();
 		const effect = tryGetEffect(mark);
-		if (effect === undefined) {
-			continue;
-		}
-		switch (effect.type) {
-			case "MoveOut":
-			case "ReturnFrom": {
-				const replacementMark = getReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Source,
-					effect.revision,
-					effect.id,
-					mark.count,
-				);
-				mark = replacementMark ?? mark;
-				break;
-			}
-			case "MoveIn":
-			case "ReturnTo": {
-				const replacementMark = getReplacementMark(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					effect.revision,
-					effect.id,
-					mark.count,
-				);
-				mark = replacementMark ?? mark;
-				break;
-			}
-			case "Placeholder": {
-				const modifyAfter = getModifyAfter(
-					moveEffects,
-					effect.revision,
-					effect.id,
-					mark.count,
-				);
-				if (modifyAfter !== undefined) {
-					const changes = composeChildChanges(
-						effect.changes,
-						modifyAfter,
-						undefined,
-						composeChild,
+		if (effect !== undefined) {
+			switch (effect.type) {
+				case "MoveOut":
+				case "ReturnFrom": {
+					const replacementMark = getReplacementMark(
+						moveEffects,
+						CrossFieldTarget.Source,
+						effect.revision,
+						effect.id,
+						mark.count,
 					);
-					mark = createModifyMark(mark.count, changes);
-				} else {
-					mark = createModifyMark(mark.count, effect.changes);
+					mark = replacementMark ?? mark;
+					break;
 				}
+				case "MoveIn":
+				case "ReturnTo": {
+					const replacementMark = getReplacementMark(
+						moveEffects,
+						CrossFieldTarget.Destination,
+						effect.revision,
+						effect.id,
+						mark.count,
+					);
+					mark = replacementMark ?? mark;
+					break;
+				}
+				case "Placeholder": {
+					const modifyAfter = getModifyAfter(
+						moveEffects,
+						effect.revision,
+						effect.id,
+						mark.count,
+					);
+					if (modifyAfter !== undefined) {
+						const changes = composeChildChanges(
+							effect.changes,
+							modifyAfter,
+							undefined,
+							composeChild,
+						);
+						mark = createModifyMark(mark.count, changes);
+					} else {
+						mark = createModifyMark(mark.count, effect.changes);
+					}
+				}
+				default:
+					break;
 			}
-			default:
-				break;
 		}
 		factory.push(mark);
 	}

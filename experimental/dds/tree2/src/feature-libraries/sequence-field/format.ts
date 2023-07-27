@@ -27,7 +27,7 @@ export type ProtoNode = JsonableTree;
 export const ProtoNode = Type.Any();
 
 export type CellCount = number;
-export const NodeCount = Type.Number();
+export const CellCount = Type.Number();
 
 /**
  * Left undefined for terseness.
@@ -77,6 +77,8 @@ export interface LineageEvent {
 export const LineageEvent = Type.Object(
 	{
 		revision: Type.Readonly(RevisionTagSchema),
+		id: Type.Readonly(ChangesetLocalIdSchema),
+		count: Type.Readonly(Type.Number()),
 		offset: Type.Readonly(Type.Number()),
 	},
 	noAdditionalProps,
@@ -149,11 +151,12 @@ export interface Insert<TNodeChange = NodeChangeType>
 export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
+			HasRevisionTag,
+			CanBeTransient,
 			HasChanges(tNodeChange),
 			Type.Object({
 				type: Type.Literal("Insert"),
 				content: Type.Array(ProtoNode),
-				id: ChangesetLocalIdSchema,
 			}),
 		],
 		noAdditionalProps,
@@ -187,8 +190,7 @@ export interface Delete<TNodeChange = NodeChangeType>
 	id: ChangesetLocalId;
 }
 
-// Note: inconsistent naming here is to avoid shadowing Effects.Delete
-export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
+export const Delete = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
 			HasRevisionTag,
@@ -311,7 +313,7 @@ export type Detach<TNodeChange = NodeChangeType> =
 	| MoveOut<TNodeChange>
 	| ReturnFrom<TNodeChange>;
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
+	Type.Union([Delete(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
 /**
  * Mark used during compose to temporarily remember the position of nodes which were being moved
@@ -324,6 +326,18 @@ export interface MovePlaceholder<TNodeChange>
 		HasChanges<TNodeChange> {
 	type: "Placeholder";
 }
+export const MovePlaceholder = <Schema extends TSchema>(tNodeChange: Schema) =>
+	Type.Composite(
+		[
+			HasRevisionTag,
+			HasMoveId,
+			HasChanges(tNodeChange),
+			Type.Object({
+				type: Type.Literal("Placeholder"),
+			}),
+		],
+		noAdditionalProps,
+	);
 
 export interface Modify<TNodeChange = NodeChangeType> {
 	type: "Modify";
@@ -343,6 +357,13 @@ export type Effect<TNodeChange = NodeChangeType> =
 	| MovePlaceholder<TNodeChange>
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;
+export const Effect = <Schema extends TSchema>(tNodeChange: Schema) =>
+	Type.Union([
+		Modify(tNodeChange),
+		MovePlaceholder(tNodeChange),
+		Attach(tNodeChange),
+		Detach(tNodeChange),
+	]);
 
 export interface Mark<TNodeChange> {
 	count: CellCount;
@@ -355,15 +376,12 @@ export interface Mark<TNodeChange> {
 	effect?: Effect<TNodeChange>[];
 }
 
-export const Effect = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Modify(tNodeChange), Attach(tNodeChange), Detach(tNodeChange)]);
-
 export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
-			count: NodeCount,
+			count: CellCount,
 			cellId: Type.Optional(CellId),
-			effect: Type.Optional(Effect(tNodeChange)),
+			effect: Type.Optional(Type.Array(Effect(tNodeChange))),
 		},
 		noAdditionalProps,
 	);

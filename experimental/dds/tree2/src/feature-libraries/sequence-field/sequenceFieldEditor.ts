@@ -67,7 +67,7 @@ export const sequenceFieldEditor = {
 			type: "Insert",
 			content: cursors.map(jsonableTreeFromCursor),
 		};
-		return markAtIndex(index, cursors.length, mark, { localId: id, revision: undefined });
+		return markAtIndex(index, cursors.length, mark, { localId: id });
 	},
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		markAtIndex(index, count, { type: "Delete", id }),
@@ -108,7 +108,7 @@ export const sequenceFieldEditor = {
 
 		return [
 			markAtIndex(sourceIndex, count, moveOut),
-			markAtIndex(destIndex, count, moveIn, { localId: id, revision: undefined }),
+			markAtIndex(destIndex, count, moveIn, { localId: id }),
 		];
 	},
 
