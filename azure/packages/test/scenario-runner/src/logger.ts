@@ -5,13 +5,15 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { IEvent, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { pkgName, pkgVersion } from "./packageVersion";
+import { ScenarioRunnerTelemetryEventNames } from "./utils";
 
 export interface LoggerConfig {
 	scenarioName?: string;
@@ -21,22 +23,28 @@ export interface LoggerConfig {
 	region?: string;
 }
 
-class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+export interface IScenarioRunnerTelemetryEvents extends IEvent {
+	(
+		event: ScenarioRunnerTelemetryEventNames,
+		listener: (e: ITelemetryBaseEvent & { originalEventName: string }) => void,
+	): void;
+}
+
+class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private targetEvents: string[] = [];
-	private transformedEvents: Map<string, string> = new Map();
+	private transformedEvents: Map<ScenarioRunnerTelemetryEventNames, string> = new Map();
 	private logs: ITelemetryBaseEvent[] = [];
+	public readonly events = new TypedEventEmitter<IScenarioRunnerTelemetryEvents>();
 
-	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	public registerExpectedEvent(expectedEventNames: string[]) {
 		this.targetEvents = expectedEventNames;
 	}
 
-	public transformEvents(events: Map<string, string>) {
+	public transformEvents(events: Map<ScenarioRunnerTelemetryEventNames, string>) {
 		this.transformedEvents = events;
 		for (const k of events.keys()) {
 			this.targetEvents.push(k);
@@ -71,6 +79,14 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 	}
 
 	send(event: ITelemetryBaseEvent): void {
+		if (process.env.FLUID_TEST_VERBOSE === "1") {
+			if (event.category.toLowerCase() === "error") {
+				console.error(event);
+			} else {
+				console.log(event);
+			}
+		}
+
 		// We want to log only events that are relevant to the test runner.
 		if (this.targetEvents.length > 0) {
 			const found = this.targetEvents.find((a) => event.eventName.startsWith(a));
@@ -81,7 +97,12 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 
 		// Here we are remapping internal FF events to scenario runner events.
 		// TODO: Further cleanup needed.
+		const originalEventName = event.eventName;
+		let telemetryEventName: ScenarioRunnerTelemetryEventNames | undefined;
 		for (const k of this.transformedEvents.keys()) {
+			if (event.eventName.includes(k)) {
+				telemetryEventName = k;
+			}
 			if (event.eventName.startsWith(k)) {
 				event.eventName = `${this.transformedEvents.get(k)}${event.eventName.slice(
 					k.length,
@@ -90,10 +111,15 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 			}
 		}
 
+		// We want to emit any events that match ScenarioRunnerTelemetryEventNames
+		if (telemetryEventName !== undefined) {
+			this.events.emit(telemetryEventName, { ...event, originalEventName });
+		}
+
 		if (typeof event.testCategoryOverride === "string") {
 			event.category = event.testCategoryOverride;
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
@@ -119,8 +145,8 @@ export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
 export async function getLogger(
 	config: LoggerConfig,
 	events?: string[],
-	transformEvents?: Map<string, string>,
-): Promise<TelemetryLogger> {
+	transformEvents?: Map<ScenarioRunnerTelemetryEventNames, string>,
+): Promise<ITelemetryLogger> {
 	const baseLogger = await loggerP;
 	if (events) {
 		baseLogger.registerExpectedEvent(events);
@@ -128,12 +154,16 @@ export async function getLogger(
 	if (transformEvents) {
 		baseLogger.transformEvents(transformEvents);
 	}
-	return ChildLogger.create(baseLogger, config.namespace, {
-		all: {
-			runId: config.runId,
-			scenarioName: config.scenarioName,
-			endpoint: config.endpoint,
-			region: config.region,
+	return createChildLogger({
+		logger: baseLogger,
+		namespace: config.namespace,
+		properties: {
+			all: {
+				runId: config.runId,
+				scenarioName: config.scenarioName,
+				endpoint: config.endpoint,
+				region: config.region,
+			},
 		},
 	});
 }

@@ -164,6 +164,7 @@ export class DocumentPartition {
 	}
 
 	private updateActivityTime() {
-		this.activityTimeoutTime = Date.now() + this.activityTimeout;
+		this.activityTimeoutTime =
+			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 	}
 }

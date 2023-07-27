@@ -26,7 +26,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -39,7 +39,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:jest",
-		"pretest:coverage": "rimraf coverage/",
+		"pretest:coverage": "rimraf --glob \"coverage/\"",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:jest": "jest",
 		"tsc": "tsc"

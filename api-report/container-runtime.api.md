@@ -224,7 +224,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUnusedRoutes(unusedRoutes: string[]): void;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public (undocumented)

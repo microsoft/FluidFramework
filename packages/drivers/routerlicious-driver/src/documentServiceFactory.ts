@@ -21,7 +21,7 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
@@ -29,7 +29,12 @@ import {
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	toInstrumentedR11sOrdererTokenFetcher,
+	toInstrumentedR11sStorageTokenFetcher,
+} from "./restWrapper";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -116,7 +121,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -147,7 +152,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary, "", ""),
+						summary: convertSummaryTreeToWholeSummaryTree(
+							undefined,
+							appSummary,
+							"",
+							"",
+						),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
@@ -244,8 +254,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`,
 			);
 		}
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver", {
-			all: { driverVersion },
+		const logger2 = createChildLogger({
+			logger,
+			namespace: "RouterliciousDriver",
+			properties: {
+				all: { driverVersion },
+			},
 		});
 
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(

@@ -24,10 +24,13 @@ class Wrapper<T extends TSchema> {
 export const EncodedGenericChange = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,
 ) =>
-	Type.Object({
-		index: Type.Number({ minimum: 0 }),
-		nodeChange: tNodeChangeset,
-	});
+	Type.Object(
+		{
+			index: Type.Number({ minimum: 0 }),
+			nodeChange: tNodeChangeset,
+		},
+		{ additionalProperties: false },
+	);
 
 export type EncodedGenericChange<Schema extends TSchema = TAnySchema> = Static<
 	ReturnType<Wrapper<Schema>["encodedGenericChange"]>

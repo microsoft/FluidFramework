@@ -19,7 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"_api-extractor-temp\" \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -82,6 +82,7 @@
 		"jest": "^26.6.3",
 		"jest-junit": "^10.0.0",
 		"prettier": "~2.6.2",
+		"prop-types": "^15.8.1",
 		"rimraf": "^4.4.0",
 		"ts-jest": "^26.4.4",
 		"typescript": "~4.5.5"
