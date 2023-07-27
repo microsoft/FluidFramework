@@ -255,7 +255,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 							{!queryTimedOut && <Waiting />}
 							{queryTimedOut && !isMessageDismissed && (
 								<NoDevtoolsErrorBar
-									onDismiss={(): void => setIsMessageDismissed(true)}
+									dismiss={(): void => setIsMessageDismissed(true)}
 									retrySearch={(): void => retryQuery()}
 								/>
 							)}

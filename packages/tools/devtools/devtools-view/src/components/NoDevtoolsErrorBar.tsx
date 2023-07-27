@@ -39,7 +39,7 @@ export interface NoDevtoolsErrorBarProps {
 	/**
 	 * Call to dismiss error notice bar.
 	 */
-	onDismiss(): void;
+	dismiss(): void;
 
 	/**
 	 * Reattempt to find devtools on the page.
@@ -51,7 +51,7 @@ export interface NoDevtoolsErrorBarProps {
  * TODO
  */
 export function NoDevtoolsErrorBar(props: NoDevtoolsErrorBarProps): React.ReactElement {
-	const { onDismiss, retrySearch } = props;
+	const { dismiss, retrySearch } = props;
 
 	const styles = useStyles();
 
@@ -59,7 +59,7 @@ export function NoDevtoolsErrorBar(props: NoDevtoolsErrorBarProps): React.ReactE
 		<MessageBar
 			messageBarType={MessageBarType.error}
 			isMultiline={true}
-			onDismiss={onDismiss}
+			onDismiss={dismiss}
 			dismissButtonAriaLabel="Close"
 			className={styles.root}
 		>
