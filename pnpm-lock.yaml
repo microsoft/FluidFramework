@@ -3541,7 +3541,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/local-driver': workspace:~
-      '@fluidframework/map': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -3575,7 +3574,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../../packages/common/driver-definitions
       '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
       '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
-      '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/register-collection': link:../../../packages/dds/register-collection
       '@fluidframework/request-handler': link:../../../packages/framework/request-handler

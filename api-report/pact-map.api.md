@@ -16,9 +16,16 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
+export interface IAcceptedPactDetails<T> {
+    sequenceNumber: number;
+    value: T;
+}
+
+// @public
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
     delete(key: string): void;
     get(key: string): T | undefined;
+    getDetails(key: string): IAcceptedPactDetails<T> | undefined;
     getPending(key: string): T | undefined;
     isPending(key: string): boolean;
     set(key: string, value: T | undefined): void;
@@ -37,6 +44,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
     static create(runtime: IFluidDataStoreRuntime, id?: string): PactMap;
     delete(key: string): void;
     get(key: string): T | undefined;
+    getDetails(key: string): IAcceptedPactDetails<T> | undefined;
     static getFactory(): IChannelFactory;
     getPending(key: string): T | undefined;
     // @internal (undocumented)

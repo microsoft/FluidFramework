@@ -23,7 +23,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { PactMapFactory } from "./pactMapFactory";
-import { IPactMap, IPactMapEvents } from "./interfaces";
+import { IAcceptedPactDetails, IPactMap, IPactMapEvents } from "./interfaces";
 
 /**
  * The accepted pact information, if any.
@@ -206,6 +206,22 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 */
 	public get(key: string): T | undefined {
 		return this.values.get(key)?.accepted?.value;
+	}
+
+	/**
+	 * {@inheritDoc IPactMap.getDetails}
+	 */
+	public getDetails(key: string): IAcceptedPactDetails<T> | undefined {
+		// Note: We return type `IAcceptedPactDetails` instead of `IAcceptedPact` since we may want to diverge
+		// the interfaces in the future.
+		const acceptedPact = this.values.get(key)?.accepted;
+		if (acceptedPact?.value === undefined) {
+			return undefined;
+		}
+		return {
+			value: acceptedPact.value,
+			sequenceNumber: acceptedPact.sequenceNumber,
+		};
 	}
 
 	/**
