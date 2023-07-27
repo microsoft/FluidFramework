@@ -409,11 +409,15 @@ export class Loader implements IHostLoader {
 		this.containers.set(key, containerP);
 		containerP
 			.then((container) => {
-				// If the container is closed or becomes closed after we resolve it, remove it from the cache.
-				if (container.closed) {
+				// If the container is closed/disposed or becomes closed/disposed after we resolve it,
+				// remove it from the cache.
+				if (container.closed || container.disposed) {
 					this.containers.delete(key);
 				} else {
 					container.once("closed", () => {
+						this.containers.delete(key);
+					});
+					container.once("disposed", () => {
 						this.containers.delete(key);
 					});
 				}
