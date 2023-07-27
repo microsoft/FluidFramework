@@ -1606,8 +1606,6 @@ export class ContainerRuntime
 				!readonly || !this.connected,
 				0x125 /* "Unsafe to transition to read-only state!" */,
 			);
-
-			this.replayPendingStates();
 		});
 
 		// logging hardware telemetry
@@ -2039,6 +2037,12 @@ export class ContainerRuntime
 		// There might be no change of state due to Container calling this API after loading runtime.
 		const changeOfState = this._connected !== connected;
 		const reconnection = changeOfState && !connected;
+
+		// We need to flush the ops currently collected by Outbox to the PendingStateManager to preserve original order upon calling "replayPendingStates"
+		if (changeOfState && connected) {
+			this.flush();
+		}
+
 		this._connected = connected;
 
 		if (!connected) {

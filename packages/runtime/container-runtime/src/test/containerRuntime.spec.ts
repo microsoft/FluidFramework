@@ -132,8 +132,8 @@ describe("Runtime", () => {
 				(containerRuntime as any).flush();
 
 				assert.strictEqual(submittedOps.length, 2);
-				assert.strictEqual(submittedOps[0].contents.address, "2");
-				assert.strictEqual(submittedOps[1].contents.address, "1");
+				assert.strictEqual(submittedOps[0].contents.address, "1");
+				assert.strictEqual(submittedOps[1].contents.address, "2");
 			});
 		});
 
