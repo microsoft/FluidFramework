@@ -26,12 +26,7 @@ import {
 import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { ISharedTree, SharedTreeView } from "../../../shared-tree";
-import {
-	makeOpGenerator,
-	EditGeneratorOpWeights,
-	FuzzTestState,
-	sumWeights,
-} from "./fuzzEditGenerators";
+import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import {
 	applyFieldEdit,
 	applyTransactionEdit,
@@ -310,16 +305,14 @@ describe("Fuzz - Targeted", () => {
 			 * TODO: Currently this array is used to track that undo() is called "opsPerRun" number of times.
 			 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
 			 */
-			const undoOpsOnClients = new Array(clients.length).fill(0);
-
+			const undoOrderByClientIndex = Array.from(
+				{ length: opsPerRun * clients.length },
+				(_, index) => Math.floor(index / opsPerRun),
+			);
+			finalState.random.shuffle(undoOrderByClientIndex);
 			// call undo() until trees contain no more edits to undo
-			while (sumWeights(undoOpsOnClients) < opsPerRun * clients.length) {
-				const clientIdx = finalState.random.integer(0, clients.length);
-				const client = clients[clientIdx];
-				if (undoOpsOnClients[clientIdx] < opsPerRun) {
-					undoOpsOnClients[clientIdx] += 1;
-					client.channel.undo();
-				}
+			for (const clientIndex of undoOrderByClientIndex) {
+				clients[clientIndex].channel.undo();
 			}
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();

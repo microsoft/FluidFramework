@@ -307,7 +307,7 @@ export function makeOpGenerator(
 	};
 }
 
-export function sumWeights(values: (number | undefined)[]): number {
+function sumWeights(values: (number | undefined)[]): number {
 	let sum = 0;
 	for (const value of values) {
 		if (value !== undefined) {
