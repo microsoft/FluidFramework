@@ -4,26 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-	Adapters,
-	FieldAdapter,
-	GlobalFieldKey,
-	rootFieldKey,
-	TreeAdapter,
-	TreeSchemaIdentifier,
-	ValueSchema,
-} from "../../core";
+import { Adapters, TreeAdapter, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { Sourced, SchemaCollection } from "../modular-schema";
 import { requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
-import {
-	AllowedTypes,
-	TreeSchema,
-	TreeSchemaSpecification,
-	GlobalFieldSchema,
-	FieldSchema,
-} from "./typedTreeSchema";
+import { AllowedTypes, TreeSchema, TreeSchemaSpecification, FieldSchema } from "./typedTreeSchema";
 import { FlexList } from "./flexList";
 
 // TODO: tests and examples for this file
@@ -347,7 +333,7 @@ export class SchemaBuilder {
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			globalFieldSchema: new Map(),
+			rootFieldSchema: undefined,
 			treeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
@@ -361,7 +347,7 @@ export class SchemaBuilder {
 		this.finalize();
 
 		// Check for errors:
-		const collection = buildViewSchemaCollection([...this.libraries]);
+		const collection = buildViewSchemaCollection(this.libraries);
 
 		return { ...collection, libraries: this.libraries };
 	}
@@ -374,21 +360,18 @@ export class SchemaBuilder {
 	 */
 	public intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(
 		root: FieldSchema<Kind, Types>,
-	): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>> {
+	): TypedSchemaCollection<FieldSchema<Kind, Types>> {
 		this.finalize();
-		const rootField = new GlobalFieldSchema(this, rootFieldKey, root);
 		const rootLibrary: SchemaLibraryData = {
 			name: this.name,
-			globalFieldSchema: new Map<GlobalFieldKey, GlobalFieldSchema>([
-				[rootField.key, rootField],
-			]),
+			rootFieldSchema: root,
 			treeSchema: new Map(),
 			adapters: {},
 		};
 		const collection = buildViewSchemaCollection([rootLibrary, ...this.libraries]);
-		const typed: TypedSchemaCollection<GlobalFieldSchema<Kind, Types>> = {
+		const typed: TypedSchemaCollection<FieldSchema<Kind, Types>> = {
 			...collection,
-			root: rootField,
+			rootFieldSchema: root,
 		};
 		return typed;
 	}
@@ -400,20 +383,23 @@ export class SchemaBuilder {
  */
 export interface SchemaLibraryData {
 	readonly name: string;
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
+	readonly rootFieldSchema?: FieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly adapters: Adapters;
 }
 
 /**
+ * {@link SchemaCollection} strongly typed over its rootFieldSchema.
+ *
+ * @remarks
+ * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
+ * The actual type used will include detailed schema information for all the types in the collection.
+ * This pattern is used to implement SchemaAware APIs.
+ *
  * @alpha
  */
-export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {
-	/**
-	 * Root field.
-	 * Also in globalFieldSchema under the key {@link rootFieldKey}.
-	 */
-	readonly root: T;
+export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
+	readonly rootFieldSchema: T;
 }
 
 /**
@@ -434,7 +420,6 @@ export interface SchemaLibrary extends SchemaCollection {
  */
 export interface SourcedAdapters {
 	readonly tree: (Sourced & TreeAdapter)[];
-	readonly fieldAdapters: Map<GlobalFieldKey, Sourced & FieldAdapter>;
 }
 
 {

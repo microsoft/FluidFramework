@@ -19,7 +19,6 @@ import type { TSchema } from '@sinclair/typebox';
 
 // @alpha
 export interface Adapters {
-    readonly fieldAdapters?: ReadonlyMap<GlobalFieldKey, FieldAdapter>;
     // (undocumented)
     readonly tree?: readonly TreeAdapter[];
 }
@@ -504,7 +503,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     prepareForEdit(): void;
     get root(): EditableField;
     set root(data: NewFieldContent);
-    readonly schema: SchemaDataAndPolicy;
+    readonly schema: SchemaData;
     get unwrappedRoot(): UnwrappedEditableField;
     set unwrappedRoot(data: NewFieldContent);
 }
@@ -561,14 +560,6 @@ type ExtractListItemType<List extends FlexList> = List extends FlexList<infer It
 
 // @alpha (undocumented)
 export function fail(message: string): never;
-
-// @alpha (undocumented)
-export interface FieldAdapter {
-    // (undocumented)
-    convert(stored: FieldStoredSchema): FieldStoredSchema;
-    // (undocumented)
-    readonly field: GlobalFieldKey;
-}
 
 // @alpha
 export interface FieldAnchor {
@@ -627,7 +618,7 @@ export interface FieldEditor<TChangeset> {
 export type FieldGenerator = () => MapTree[];
 
 // @alpha
-export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
+export type FieldKey = LocalFieldKey;
 
 // @alpha @sealed
 export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
@@ -707,8 +698,6 @@ export function fieldSchema(kind: {
 // @alpha
 export const enum FieldScope {
     // (undocumented)
-    global = "globalFields",
-    // (undocumented)
     local = "fields"
 }
 
@@ -764,8 +753,11 @@ export interface FlushableDataBinder<B extends OperationBinderEvents | Invalidat
 }
 
 // @alpha (undocumented)
-export interface Forbidden extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {
+export interface Forbidden extends BrandedFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden, FieldEditor<any>> {
 }
+
+// @alpha
+export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @alpha
 export interface ForestEvents {
@@ -777,7 +769,7 @@ export interface ForestEvents {
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @alpha
-export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
 
@@ -785,8 +777,6 @@ export interface FullSchemaPolicy extends SchemaPolicy {
 export interface GenericFieldsNode<TChild> {
     // (undocumented)
     [FieldScope.local]?: FieldMapObject<TChild>;
-    // (undocumented)
-    [FieldScope.global]?: FieldMapObject<TChild>;
 }
 
 // @alpha
@@ -801,31 +791,6 @@ export function getPrimaryField(schema: TreeStoredSchema): {
     key: LocalFieldKey;
     schema: FieldStoredSchema;
 } | undefined;
-
-// @alpha
-export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
-
-// @alpha
-export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
-
-// @alpha @sealed
-export class GlobalFieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types extends AllowedTypes = AllowedTypes> implements IFieldSchema {
-    constructor(builder: Named<string>, key: GlobalFieldKey, schema: FieldSchema<Kind, Types>);
-    // (undocumented)
-    readonly builder: Named<string>;
-    // (undocumented)
-    readonly key: GlobalFieldKey;
-    // (undocumented)
-    get kind(): Kind;
-    // (undocumented)
-    readonly schema: FieldSchema<Kind, Types>;
-    // (undocumented)
-    readonly symbol: GlobalFieldKeySymbol;
-    // (undocumented)
-    protected _typeCheck?: MakeNominal;
-    // (undocumented)
-    get types(): TreeTypeSet;
-}
 
 // @alpha (undocumented)
 export interface HasFieldChanges {
@@ -1073,9 +1038,6 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
-
-// @alpha
 export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
@@ -1099,7 +1061,7 @@ export interface ISharedTreeView extends AnchorLocator {
     get root(): UnwrappedEditableField;
     set root(data: NewFieldContent);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;
@@ -1162,8 +1124,6 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
     // (undocumented)
     readonly extraLocalFields: IFieldSchema;
-    // (undocumented)
-    readonly globalFields: ReadonlySet<GlobalFieldKey>;
     // (undocumented)
     readonly localFields: ReadonlyMap<LocalFieldKey, IFieldSchema>;
 }
@@ -1274,9 +1234,6 @@ export interface JsonValidator {
     compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
 
-// @alpha (undocumented)
-export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
-
 // @alpha
 type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -1304,12 +1261,6 @@ export type LocalNodeKey = Opaque<Brand<SessionSpaceCompressedId, "Local Node Ke
 
 // @alpha
 export const localNodeKeySymbol: unique symbol;
-
-// @alpha
-export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
-
-// @alpha
-export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
 
 // @alpha
 interface MakeNominal {
@@ -1669,10 +1620,7 @@ export interface RootField {
 export const rootField: DetachedField;
 
 // @alpha
-export const rootFieldKey: GlobalFieldKey;
-
-// @alpha (undocumented)
-export const rootFieldKeySymbol: GlobalFieldKeySymbol;
+export const rootFieldKey: LocalFieldKey;
 
 // @alpha
 export function runSynchronous(view: ISharedTreeView, transaction: (view: ISharedTreeView) => TransactionResult | void): TransactionResult;
@@ -1708,7 +1656,7 @@ export class SchemaBuilder {
     static fieldRecursive<Kind extends FieldKindTypes, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
     static fieldValue<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.value, T>;
-    intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
+    intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<FieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
     leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
         value: T;
@@ -1730,13 +1678,13 @@ export class SchemaBuilder {
 }
 
 // @alpha
-export interface SchemaCollection {
+export interface SchemaCollection extends SchemaData {
     // (undocumented)
     readonly adapters: Adapters;
     // (undocumented)
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
-    // (undocumented)
     readonly policy: FullSchemaPolicy;
+    // (undocumented)
+    readonly rootFieldSchema: IFieldSchema;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
 }
@@ -1744,14 +1692,9 @@ export interface SchemaCollection {
 // @alpha
 export interface SchemaData {
     // (undocumented)
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldStoredSchema>;
+    readonly rootFieldSchema: FieldStoredSchema;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
-}
-
-// @alpha
-export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy> extends SchemaData {
-    readonly policy: TPolicy;
 }
 
 // @alpha
@@ -1770,23 +1713,17 @@ export interface SchemaLibraryData {
     // (undocumented)
     readonly adapters: Adapters;
     // (undocumented)
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
-    // (undocumented)
     readonly name: string;
+    // (undocumented)
+    readonly rootFieldSchema?: FieldSchema;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 // @alpha
-export interface SchemaPolicy {
-    readonly defaultGlobalFieldSchema: FieldStoredSchema;
-    readonly defaultTreeSchema: TreeStoredSchema;
-}
-
-// @alpha
-export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
+export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple> | readonly ITreeCursor[];
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursor[];
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
@@ -1856,7 +1793,7 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     get rootEvents(): ISubscribable<AnchorSetRootEvents>;
     // (undocumented)
-    schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
     // (undocumented)
     get storedSchema(): StoredSchemaRepository;
     // (undocumented)
@@ -1901,15 +1838,9 @@ export interface Sourced {
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
-export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
+export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
     update(newSchema: SchemaData): void;
 }
-
-// @alpha (undocumented)
-export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
-
-// @alpha (undocumented)
-export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol;
 
 // @alpha (undocumented)
 export interface TaggedChange<TChangeset> {
@@ -1943,7 +1874,7 @@ export interface TreeAdapter {
 // @alpha
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
-    readonly schema: SchemaDataAndPolicy;
+    readonly schema: SchemaData;
 }
 
 // @alpha (undocumented)
@@ -1969,8 +1900,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly extraLocalFields: FieldSchema;
     // (undocumented)
-    get globalFields(): ReadonlySet<GlobalFieldKey>;
-    // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
     readonly localFields: ObjectToMap<NormalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>, LocalFieldKey, FieldSchema>;
@@ -1987,8 +1916,6 @@ export interface TreeSchemaBuilder {
     // (undocumented)
     readonly extraLocalFields: FieldStoredSchema;
     // (undocumented)
-    readonly globalFields?: Iterable<GlobalFieldKey>;
-    // (undocumented)
     readonly localFields?: {
         [key: string]: FieldStoredSchema;
     };
@@ -2004,8 +1931,6 @@ interface TreeSchemaSpecification {
     // (undocumented)
     readonly extraLocalFields?: FieldSchema;
     // (undocumented)
-    readonly global?: FlexList<GlobalFieldSchema>;
-    // (undocumented)
     readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
     // (undocumented)
     readonly value?: ValueSchema;
@@ -2014,7 +1939,6 @@ interface TreeSchemaSpecification {
 // @alpha (undocumented)
 export interface TreeStoredSchema {
     readonly extraLocalFields: FieldStoredSchema;
-    readonly globalFields: ReadonlySet<GlobalFieldKey>;
     readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
     readonly value: ValueSchema;
 }
@@ -2059,9 +1983,10 @@ TFields extends {
 // @alpha
 type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
 
-// @alpha (undocumented)
-export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {
-    readonly root: T;
+// @alpha
+export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
+    // (undocumented)
+    readonly rootFieldSchema: T;
 }
 
 // @alpha
@@ -2144,7 +2069,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
     free(): void;
     prepareForEdit(): void;
     readonly root: UntypedField;
-    readonly schema: SchemaDataAndPolicy;
+    readonly schema: SchemaData;
     readonly unwrappedRoot: UnwrappedUntypedField;
 }
 

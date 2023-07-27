@@ -13,7 +13,6 @@ import {
 	LocalFieldKey,
 	TreeStoredSchema,
 	ValueSchema,
-	lookupTreeSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -602,7 +601,9 @@ function unwrappedTree(
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableTree {
 	const nodeTypeName = cursor.type;
-	const nodeType = lookupTreeSchema(context.schema, nodeTypeName);
+	const nodeType =
+		context.schema.treeSchema.get(nodeTypeName) ??
+		fail("requested type does not exist in schema");
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
 	if (isPrimitive(nodeType)) {
 		const nodeValue = cursor.value;

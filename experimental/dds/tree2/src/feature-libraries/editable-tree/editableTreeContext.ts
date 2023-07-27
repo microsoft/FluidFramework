@@ -6,16 +6,14 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	IEditableForest,
-	lookupGlobalFieldSchema,
-	rootFieldKey,
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
-	SchemaDataAndPolicy,
 	ForestEvents,
 	FieldStoredSchema,
 	FieldKey,
 	LocalFieldKey,
+	SchemaData,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
@@ -80,10 +78,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * Schema used within this context.
 	 * All data must conform to these schema.
-	 *
-	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaDataAndPolicy;
+	readonly schema: SchemaData;
 
 	/**
 	 * Call before editing.
@@ -195,7 +191,7 @@ export class ProxyContext implements EditableTreeContext {
 	private getRoot(unwrap: false): EditableField;
 	private getRoot(unwrap: true): UnwrappedEditableField;
 	private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
-		const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
+		const rootSchema = this.schema.rootFieldSchema;
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const proxifiedField = unwrap
@@ -205,7 +201,7 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaDataAndPolicy {
+	public get schema(): SchemaData {
 		return this.forest.schema;
 	}
 

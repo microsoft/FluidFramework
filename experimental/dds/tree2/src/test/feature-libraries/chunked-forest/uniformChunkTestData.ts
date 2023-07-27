@@ -8,14 +8,14 @@ import {
 	UniformChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { TestField } from "../../cursorTestSuite";
-import { jsonArray, jsonNull, jsonNumber, jsonObject } from "../../../domains";
+import { TestField, emptySchema } from "../../cursorTestSuite";
+import { jsonArray, jsonNumber, jsonObject } from "../../../domains";
 import { brand, makeArray } from "../../../util";
 import { EmptyKey, FieldKey } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { dummyRoot } from "../../../feature-libraries/chunked-forest";
 
-export const emptyShape = new TreeShape(jsonNull.name, false, []);
+export const emptyShape = new TreeShape(emptySchema.name, false, []);
 
 export const xField: FieldKey = brand("x");
 export const yField: FieldKey = brand("y");

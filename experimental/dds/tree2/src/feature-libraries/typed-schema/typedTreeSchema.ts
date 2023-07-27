@@ -5,19 +5,10 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFieldSchema, ITreeSchema } from "../modular-schema";
-import {
-	GlobalFieldKey,
-	GlobalFieldKeySymbol,
-	LocalFieldKey,
-	Named,
-	TreeSchemaIdentifier,
-	TreeTypeSet,
-	ValueSchema,
-	symbolFromKey,
-} from "../../core";
+import { LocalFieldKey, Named, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
 import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
-import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
+import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 
@@ -88,17 +79,6 @@ export class TreeSchema<
 			Assume<T, TreeSchemaSpecification>["value"],
 			ValueSchema.Nothing
 		>;
-	}
-
-	// TODO: determine if this needs to be lazy. If not, remove flex list and initialize in constructor.
-	// If this does need to be lazy, maybe cache result?
-	public get globalFields(): ReadonlySet<GlobalFieldKey> {
-		if (this.info.global === undefined) {
-			return new Set();
-		}
-		const normalized = normalizeFlexList(this.info.global);
-		const mapped = normalized.map((f) => f().key);
-		return new Set(mapped);
 	}
 }
 
@@ -176,7 +156,6 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
  */
 export interface TreeSchemaSpecification {
 	readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
-	readonly global?: FlexList<GlobalFieldSchema>;
 	readonly extraLocalFields?: FieldSchema;
 	readonly value?: ValueSchema;
 }
@@ -216,35 +195,4 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
 	const names = list.map((f) => f().name);
 	return new Set(names);
-}
-
-/**
- * All policy for a specific field,
- * including functionality that does not have to be kept consistent across versions or deterministic.
- *
- * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @sealed @alpha
- */
-export class GlobalFieldSchema<
-	Kind extends FieldKindTypes = FieldKindTypes,
-	Types extends AllowedTypes = AllowedTypes,
-> implements IFieldSchema
-{
-	public readonly symbol: GlobalFieldKeySymbol;
-	protected _typeCheck?: MakeNominal;
-	public constructor(
-		public readonly builder: Named<string>,
-		public readonly key: GlobalFieldKey,
-		public readonly schema: FieldSchema<Kind, Types>,
-	) {
-		this.symbol = symbolFromKey(key);
-	}
-
-	public get kind(): Kind {
-		return this.schema.kind;
-	}
-
-	public get types(): TreeTypeSet {
-		return this.schema.types;
-	}
 }
