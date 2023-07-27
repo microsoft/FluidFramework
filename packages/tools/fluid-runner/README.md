@@ -27,7 +27,9 @@ and provide a [`IFluidFileConverter`](./src/codeLoaderBundle.ts) implementation 
 ```typescript
 import { fluidRunner } from "@fluidframework/fluid-runner";
 
-fluidRunner({ /* IFluidFileConverter implementation here */ });
+fluidRunner({
+	/* IFluidFileConverter implementation here */
+});
 ```
 
 > **Note**: Only one of `codeLoader` or `fluidRunner(...)` argument is allowed. If both or none are provided, an error will be thrown at the start of execution.
