@@ -477,7 +477,7 @@ describe("Schema Evolution Examples", () => {
 	// 					textIdentifier,
 	// 				]),
 	// 			},
-	// 			extraLocalFields: emptyField,
+	// 			extraFields: emptyField,
 	// 		});
 	// 		assert(
 	// 			stored.tryUpdateTreeSchema(

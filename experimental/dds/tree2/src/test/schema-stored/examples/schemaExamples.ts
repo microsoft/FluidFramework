@@ -23,8 +23,8 @@ import { brand } from "../../../util";
 
 export const codePoint: NamedTreeSchema = {
 	name: brand("Primitive.CodePoint"),
-	localFields: emptyMap,
-	extraLocalFields: emptyField,
+	fields: emptyMap,
+	extraFields: emptyField,
 	value: ValueSchema.Number,
 };
 
@@ -32,7 +32,7 @@ export const codePoint: NamedTreeSchema = {
  * String made of unicode code points, allowing for sequence editing of a string.
  */
 export const string: TreeStoredSchema = {
-	extraLocalFields: emptyField,
-	localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
+	extraFields: emptyField,
+	fields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
 	value: ValueSchema.Nothing,
 };

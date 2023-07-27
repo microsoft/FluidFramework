@@ -638,7 +638,7 @@ const rootNodeSchema = namedTreeSchema({
 	localFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	extraFields: fieldSchema(FieldKinds.sequence),
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),

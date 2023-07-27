@@ -95,7 +95,7 @@ describe("LlsSchemaConverter", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = fullSchemaData.treeSchema.get(tableTypeName);
 		assert(table !== undefined);
-		const encoding = table.localFields.get(brand("encoding"));
+		const encoding = table.fields.get(brand("encoding"));
 		assert(encoding !== undefined);
 		assert(encoding.types !== undefined);
 		assert(encoding.types.has(brand("Enum")));
@@ -107,7 +107,7 @@ describe("LlsSchemaConverter", () => {
 		for (const typeName of typeNames) {
 			const treeSchema = fullSchemaData.treeSchema.get(typeName);
 			assert(treeSchema !== undefined);
-			treeSchema.localFields.forEach((field, fieldKey) => {
+			treeSchema.fields.forEach((field, fieldKey) => {
 				if (field.types) {
 					field.types.forEach((type) => {
 						assert(
@@ -117,8 +117,8 @@ describe("LlsSchemaConverter", () => {
 					});
 				}
 			});
-			if (treeSchema.extraLocalFields.types) {
-				treeSchema.extraLocalFields.types.forEach((type) => {
+			if (treeSchema.extraFields.types) {
+				treeSchema.extraFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
 						`Missing type "${type}" in tree schema "${typeName}" for extra local fields`,
@@ -132,23 +132,23 @@ describe("LlsSchemaConverter", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = fullSchemaData.treeSchema.get(tableTypeName);
 		assert(table !== undefined);
-		assert(table.localFields !== undefined);
+		assert(table.fields !== undefined);
 
-		const extendedRows = table.localFields.get(brand("extendedRows"));
+		const extendedRows = table.fields.get(brand("extendedRows"));
 		assert(extendedRows !== undefined);
 		assert(extendedRows.types !== undefined);
 		assert(extendedRows.types.has(brand("array<Test:ExtendedRow-1.0.0>")));
 
 		const extendedRowsSchema = fullSchemaData.treeSchema.get(brand("Test:ExtendedRow-1.0.0"));
 		assert(extendedRowsSchema !== undefined);
-		const info = extendedRowsSchema.localFields.get(brand("info"));
+		const info = extendedRowsSchema.fields.get(brand("info"));
 		assert(info !== undefined);
 		assert(info.types !== undefined);
 		assert(info.types.has(brand("map<Test:RowInfo-1.0.0>")));
 		const infoType = fullSchemaData.treeSchema.get(brand("Test:RowInfo-1.0.0"));
 		assert(infoType !== undefined);
 
-		const uint64 = infoType.localFields.get(brand("value"));
+		const uint64 = infoType.fields.get(brand("value"));
 		assert(uint64 !== undefined);
 		assert(uint64.types !== undefined);
 		expect(uint64.types.has(brand("Uint64"))).toBeTruthy();
@@ -161,8 +161,8 @@ describe("LlsSchemaConverter", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const row = fullSchemaData.treeSchema.get(brand("array<Test:Row-1.0.0>"));
 		assert(row !== undefined);
-		assert(row.localFields !== undefined);
-		const field = row.localFields.get(EmptyKey);
+		assert(row.fields !== undefined);
+		const field = row.fields.get(EmptyKey);
 		assert(field !== undefined);
 		assert(field.types !== undefined);
 		assert(field.types.has(brand("Test:Row-1.0.0")));

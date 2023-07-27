@@ -37,8 +37,8 @@ export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier
  * Key (aka Name or Label) for a field which is scoped to a specific TreeStoredSchema.
  * @alpha
  */
-export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
-export const LocalFieldKeySchema = brandedStringType<LocalFieldKey>();
+export type FieldKey = Brand<string, "tree.FieldKey">;
+export const FieldKeySchema = brandedStringType<FieldKey>();
 
 /**
  * Identifier for a FieldKind.
@@ -174,15 +174,15 @@ export interface TreeStoredSchema {
 	 * This refers to the FieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
-	 * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
+	 * It also interoperates well with extraFields being used as a map with arbitrary data as keys.
 	 */
-	readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
+	readonly fields: ReadonlyMap<FieldKey, FieldStoredSchema>;
 
 	/**
 	 * Constraint for local fields not mentioned in `localFields`.
 	 *
 	 * Allows using using the local fields as a map, with the keys being
-	 * LocalFieldKeys and the values being constrained by this FieldStoredSchema.
+	 * FieldKeys and the values being constrained by this FieldStoredSchema.
 	 *
 	 * To forbid this map like usage, use {@link emptyField} here.
 	 *
@@ -192,7 +192,7 @@ export interface TreeStoredSchema {
 	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
 	 * and can be useful in special cases (like a default stored schema when none is specified).
 	 */
-	readonly extraLocalFields: FieldStoredSchema;
+	readonly extraFields: FieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree

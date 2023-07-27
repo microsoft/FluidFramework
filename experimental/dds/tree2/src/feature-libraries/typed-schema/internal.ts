@@ -10,9 +10,9 @@ export { ObjectToMap, WithDefault, Unbrand, UnbrandList, ArrayToUnion } from "./
 
 export {
 	TreeSchemaSpecification,
-	NormalizeLocalFieldsInner,
-	NormalizeLocalFields,
-	LocalFields,
+	NormalizeFieldsInner as NormalizeLocalFieldsInner,
+	NormalizeFields as NormalizeLocalFields,
+	Fields as LocalFields,
 	NormalizeField,
 } from "./typedTreeSchema";
 

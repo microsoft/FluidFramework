@@ -46,7 +46,6 @@ export {
 	ForestLocation,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	LocalFieldKey,
 	TreeSchemaIdentifier,
 	TreeSchemaBuilder,
 	NamedTreeSchema,

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalFieldKey } from "../schema-stored";
-import { FieldKey, NodeData } from "./types";
+import { FieldKey } from "../schema-stored";
+import { NodeData } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -67,7 +67,7 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
  * @alpha
  */
 export interface GenericFieldsNode<TChild> {
-	[FieldScope.local]?: FieldMapObject<TChild>;
+	fields?: FieldMapObject<TChild>;
 }
 
 /**
@@ -82,7 +82,7 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 /**
  * Derives the scope using the type of `key`.
  */
-export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey] {
+export function scopeFromKey(key: FieldKey): [FieldScope, FieldKey] {
 	return [FieldScope.local, key];
 }
 
@@ -170,7 +170,7 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
 		return [];
 	}
 
-	return Object.keys(local) as LocalFieldKey[];
+	return Object.keys(local) as FieldKey[];
 }
 
 /**

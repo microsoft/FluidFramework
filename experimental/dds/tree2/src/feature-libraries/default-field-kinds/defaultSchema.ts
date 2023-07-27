@@ -24,8 +24,8 @@ export const emptyField = fieldSchema(forbidden, []);
  */
 // TODO: remove need for this.
 export const neverTree: TreeStoredSchema = {
-	localFields: emptyMap,
-	extraLocalFields: neverField,
+	fields: emptyMap,
+	extraFields: neverField,
 	value: ValueSchema.Nothing,
 };
 

@@ -6,7 +6,7 @@
 import { fail } from "../../util";
 import {
 	FieldStoredSchema,
-	LocalFieldKey,
+	FieldKey,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	SchemaData,
@@ -143,17 +143,17 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
-		const localFields: Map<LocalFieldKey, FieldStoredSchema> = new Map();
-		for (const [key, schema] of original.localFields) {
+		const localFields: Map<FieldKey, FieldStoredSchema> = new Map();
+		for (const [key, schema] of original.fields) {
 			// TODO: support missing field adapters for local fields.
 			localFields.set(key, this.adaptField(schema));
 		}
 		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
 		// so copying the data over manually is better.
 		return {
-			extraLocalFields: original.extraLocalFields,
+			extraFields: original.extraFields,
 			value: original.value,
-			localFields,
+			fields: localFields,
 		};
 	}
 }
@@ -163,8 +163,8 @@ export class ViewSchema {
  * @alpha
  */
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
-	readonly localFields: ReadonlyMap<LocalFieldKey, IFieldSchema>;
-	readonly extraLocalFields: IFieldSchema;
+	readonly fields: ReadonlyMap<FieldKey, IFieldSchema>;
+	readonly extraFields: IFieldSchema;
 }
 
 /**

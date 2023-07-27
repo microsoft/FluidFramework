@@ -23,7 +23,7 @@ import {
 
 const stringSchema = namedTreeSchema({
 	name: brand("String"),
-	extraLocalFields: emptyField,
+	extraFields: emptyField,
 	value: ValueSchema.String,
 });
 
@@ -32,7 +32,7 @@ export const childSchema = namedTreeSchema({
 	localFields: {
 		data: fieldSchema(FieldKinds.value, [stringSchema.name]),
 	},
-	extraLocalFields: emptyField,
+	extraFields: emptyField,
 });
 
 export const parentSchema = namedTreeSchema({
@@ -40,7 +40,7 @@ export const parentSchema = namedTreeSchema({
 	localFields: {
 		children: fieldSchema(FieldKinds.sequence, [childSchema.name]),
 	},
-	extraLocalFields: emptyField,
+	extraFields: emptyField,
 });
 
 export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);

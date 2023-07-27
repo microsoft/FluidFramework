@@ -22,7 +22,7 @@ export function namedTreeSchema(
 ): NamedTreeSchema {
 	return {
 		name: data.name,
-		...treeSchema({ extraLocalFields: emptyField, ...data }),
+		...treeSchema({ extraFields: emptyField, ...data }),
 	};
 }
 

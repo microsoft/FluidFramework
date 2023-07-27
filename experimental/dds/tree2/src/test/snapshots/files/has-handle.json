@@ -18,7 +18,7 @@
                     "tree": {
                         "SchemaString": {
                             "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Handle\",\"extraLocalFields\":{\"kind\":\"Forbidden\",\"types\":[]},\"localFields\":[],\"value\":4}],\"rootFieldSchema\":{\"kind\":\"Optional\",\"types\":[\"Handle\"]}}"
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Handle\",\"extraFields\":{\"kind\":\"Forbidden\",\"types\":[]},\"localFields\":[],\"value\":4}],\"rootFieldSchema\":{\"kind\":\"Optional\",\"types\":[\"Handle\"]}}"
                         }
                     }
                 },

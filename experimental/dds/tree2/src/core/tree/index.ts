@@ -55,7 +55,6 @@ export {
 export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	ChildLocation,
 	DetachedField,
@@ -68,7 +67,6 @@ export {
 	rootFieldKey,
 	NodeData,
 	rootField,
-	isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 export { PathVisitor } from "./visitPath";

@@ -19,7 +19,6 @@ export {
 
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	Value,
 	TreeValue,
@@ -65,7 +64,6 @@ export {
 	compareUpPaths,
 	clonePath,
 	topDownPath,
-	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
 	forEachField,
@@ -101,8 +99,8 @@ export {
 } from "./forest";
 
 export {
-	LocalFieldKey,
-	LocalFieldKeySchema,
+	FieldKey,
+	FieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,

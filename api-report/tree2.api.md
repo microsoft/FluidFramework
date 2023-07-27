@@ -536,7 +536,7 @@ export interface EditDescription {
 export const emptyField: FieldStoredSchema;
 
 // @alpha
-export const EmptyKey: LocalFieldKey;
+export const EmptyKey: FieldKey;
 
 // @alpha
 type EmptyObject = {};
@@ -618,7 +618,7 @@ export interface FieldEditor<TChangeset> {
 export type FieldGenerator = () => MapTree[];
 
 // @alpha
-export type FieldKey = LocalFieldKey;
+export type FieldKey = Brand<string, "tree.FieldKey">;
 
 // @alpha @sealed
 export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
@@ -675,6 +675,12 @@ export interface FieldMapObject<TChild> {
 
 // @alpha (undocumented)
 type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
+
+// @alpha (undocumented)
+interface Fields {
+    // (undocumented)
+    readonly [key: string]: FieldSchema;
+}
 
 // @alpha @sealed
 export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> implements IFieldSchema {
@@ -776,7 +782,7 @@ export interface FullSchemaPolicy {
 // @alpha
 export interface GenericFieldsNode<TChild> {
     // (undocumented)
-    [FieldScope.local]?: FieldMapObject<TChild>;
+    fields?: FieldMapObject<TChild>;
 }
 
 // @alpha
@@ -788,7 +794,7 @@ export const getField: unique symbol;
 
 // @alpha (undocumented)
 export function getPrimaryField(schema: TreeStoredSchema): {
-    key: LocalFieldKey;
+    key: FieldKey;
     schema: FieldStoredSchema;
 } | undefined;
 
@@ -931,9 +937,9 @@ declare namespace InternalTypedSchemaTypes {
         UnbrandList,
         ArrayToUnion,
         TreeSchemaSpecification,
-        NormalizeLocalFieldsInner,
-        NormalizeLocalFields,
-        LocalFields,
+        NormalizeFieldsInner as NormalizeLocalFieldsInner,
+        NormalizeFields as NormalizeLocalFields,
+        Fields as LocalFields,
         NormalizeField,
         FlexList,
         FlexListToNonLazyArray,
@@ -1123,9 +1129,9 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 // @alpha (undocumented)
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
     // (undocumented)
-    readonly extraLocalFields: IFieldSchema;
+    readonly extraFields: IFieldSchema;
     // (undocumented)
-    readonly localFields: ReadonlyMap<LocalFieldKey, IFieldSchema>;
+    readonly fields: ReadonlyMap<FieldKey, IFieldSchema>;
 }
 
 // @alpha
@@ -1155,13 +1161,13 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
-local: {
+fields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
-local: {};
+fields: {};
 }>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
@@ -1188,7 +1194,7 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 
 // @alpha (undocumented)
 export const jsonNull: TreeSchema<"Json.Null", {
-local: {};
+fields: {};
 }>;
 
 // @alpha (undocumented)
@@ -1198,14 +1204,14 @@ value: ValueSchema.Number;
 
 // @alpha (undocumented)
 export const jsonObject: TreeSchema<"Json.Object", {
-extraLocalFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
-local: {
+extraFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
+fields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
-local: {};
+fields: {};
 }>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
@@ -1215,7 +1221,7 @@ value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
-local: {};
+fields: {};
 }>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
@@ -1245,15 +1251,6 @@ export enum LocalCommitSource {
     Default = 0,
     Redo = 2,
     Undo = 1
-}
-
-// @alpha
-export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
-
-// @alpha (undocumented)
-interface LocalFields {
-    // (undocumented)
-    readonly [key: string]: FieldSchema;
 }
 
 // @alpha
@@ -1446,10 +1443,10 @@ type NormalizedFlexList<Item> = readonly Item[];
 type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema ? T : FieldSchema<typeof FieldKinds.forbidden, []>;
 
 // @alpha (undocumented)
-type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFieldsInner<WithDefault<T, Record<string, never>>>;
+type NormalizeFields<T extends Fields | undefined> = NormalizeFieldsInner<WithDefault<T, Record<string, never>>>;
 
 // @alpha (undocumented)
-type NormalizeLocalFieldsInner<T extends LocalFields> = {
+type NormalizeFieldsInner<T extends Fields> = {
     [Property in keyof T]: NormalizeField<T[Property]>;
 };
 
@@ -1620,7 +1617,7 @@ export interface RootField {
 export const rootField: DetachedField;
 
 // @alpha
-export const rootFieldKey: LocalFieldKey;
+export const rootFieldKey: FieldKey;
 
 // @alpha
 export function runSynchronous(view: ISharedTreeView, transaction: (view: ISharedTreeView) => TransactionResult | void): TransactionResult;
@@ -1643,12 +1640,12 @@ export class SchemaBuilder {
     addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
-        local: {
+        fields: {
             [""]: T;
         };
     }>;
     fieldNodeRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
-        local: {
+        fields: {
             [""]: T;
         };
     }>;
@@ -1662,18 +1659,18 @@ export class SchemaBuilder {
         value: T;
     }>;
     map<Name extends string, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<Name, {
-        extraLocalFields: T;
+        extraFields: T;
     }>;
     mapRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
-        extraLocalFields: T;
+        extraFields: T;
     }>;
     // (undocumented)
     readonly name: string;
     struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
-        local: T;
+        fields: T;
     }>;
     structRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
-        local: T;
+        fields: T;
     }>;
 }
 
@@ -1898,13 +1895,13 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly builder: Named<string>;
     // (undocumented)
-    readonly extraLocalFields: FieldSchema;
+    readonly extraFields: FieldSchema;
+    // (undocumented)
+    readonly fields: ObjectToMap<NormalizeFields<Assume<T, TreeSchemaSpecification>["fields"]>, FieldKey, FieldSchema>;
     // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
-    readonly localFields: ObjectToMap<NormalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>, LocalFieldKey, FieldSchema>;
-    // (undocumented)
-    readonly localFieldsObject: NormalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>;
+    readonly localFieldsObject: NormalizeFields<Assume<T, TreeSchemaSpecification>["fields"]>;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)
@@ -1914,7 +1911,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
 // @alpha
 export interface TreeSchemaBuilder {
     // (undocumented)
-    readonly extraLocalFields: FieldStoredSchema;
+    readonly extraFields: FieldStoredSchema;
     // (undocumented)
     readonly localFields?: {
         [key: string]: FieldStoredSchema;
@@ -1929,17 +1926,17 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 // @alpha
 interface TreeSchemaSpecification {
     // (undocumented)
-    readonly extraLocalFields?: FieldSchema;
+    readonly extraFields?: FieldSchema;
     // (undocumented)
-    readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
+    readonly fields?: RestrictiveReadonlyRecord<string, FieldSchema>;
     // (undocumented)
     readonly value?: ValueSchema;
 }
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
-    readonly extraLocalFields: FieldStoredSchema;
-    readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
+    readonly extraFields: FieldStoredSchema;
+    readonly fields: ReadonlyMap<FieldKey, FieldStoredSchema>;
     readonly value: ValueSchema;
 }
 

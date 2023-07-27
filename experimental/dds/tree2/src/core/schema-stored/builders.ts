@@ -49,7 +49,7 @@ export function fieldSchema(
  */
 export interface TreeSchemaBuilder {
 	readonly localFields?: { [key: string]: FieldStoredSchema };
-	readonly extraLocalFields: FieldStoredSchema;
+	readonly extraFields: FieldStoredSchema;
 	readonly value?: ValueSchema;
 }
 
@@ -67,8 +67,8 @@ export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
 	}
 
 	return {
-		localFields,
-		extraLocalFields: data.extraLocalFields,
+		fields: localFields,
+		extraFields: data.extraFields,
 		value: data.value ?? ValueSchema.Nothing,
 	};
 }

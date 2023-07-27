@@ -12,7 +12,6 @@ import {
 	ForestEvents,
 	FieldStoredSchema,
 	FieldKey,
-	LocalFieldKey,
 	SchemaData,
 } from "../../core";
 import { ISubscribable } from "../../events";
@@ -131,7 +130,7 @@ export class ProxyContext implements EditableTreeContext {
 		public readonly forest: IEditableForest,
 		public readonly editor: DefaultEditBuilder,
 		public readonly nodeKeys: NodeKeyManager,
-		public readonly nodeKeyFieldKey?: LocalFieldKey,
+		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -225,7 +224,7 @@ export function getEditableTreeContext(
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey?: LocalFieldKey,
+	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
 	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
 }

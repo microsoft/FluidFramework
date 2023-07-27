@@ -12,7 +12,7 @@ import {
 	getFieldSchema,
 	SchemaBuilder,
 } from "../../../feature-libraries";
-import { LocalFieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
+import { FieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
@@ -37,9 +37,8 @@ describe("editable-tree utilities", () => {
 	});
 
 	it("field utils", () => {
-		const schema =
-			arraySchema.localFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: LocalFieldKey; schema: FieldStoredSchema } = {
+		const schema = arraySchema.fields.get(EmptyKey) ?? fail("Expected primary array field");
+		const expectedPrimary: { key: FieldKey; schema: FieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};

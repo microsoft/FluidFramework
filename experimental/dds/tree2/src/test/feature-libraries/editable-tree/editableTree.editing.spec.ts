@@ -5,12 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import {
-	AllowedUpdateType,
-	JsonableTree,
-	LocalFieldKey,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { AllowedUpdateType, JsonableTree, FieldKey, TreeSchemaIdentifier } from "../../../core";
 import { createSharedTreeView, ISharedTree } from "../../../shared-tree";
 import { brand, clone } from "../../../util";
 import {
@@ -47,8 +42,8 @@ import {
 	personSchemaLibrary,
 } from "./mockData";
 
-const localFieldKey: LocalFieldKey = brand("foo");
-const otherFieldKey: LocalFieldKey = brand("foo2");
+const localFieldKey: FieldKey = brand("foo");
+const otherFieldKey: FieldKey = brand("foo2");
 
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 

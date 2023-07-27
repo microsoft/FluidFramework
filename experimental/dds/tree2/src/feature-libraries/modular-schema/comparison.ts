@@ -38,41 +38,34 @@ export function allowsTreeSuperset(
 	if (!allowsValueSuperset(original.value, superset.value)) {
 		return false;
 	}
-	if (
-		!allowsFieldSuperset(
-			policy,
-			originalData,
-			original.extraLocalFields,
-			superset.extraLocalFields,
-		)
-	) {
+	if (!allowsFieldSuperset(policy, originalData, original.extraFields, superset.extraFields)) {
 		return false;
 	}
 
 	if (
 		!compareSets({
-			a: original.localFields,
-			b: superset.localFields,
+			a: original.fields,
+			b: superset.fields,
 			aExtra: (originalField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.localFields.get(originalField) ?? fail("missing expected field"),
-					superset.extraLocalFields,
+					original.fields.get(originalField) ?? fail("missing expected field"),
+					superset.extraFields,
 				),
 			bExtra: (supersetField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.extraLocalFields,
-					superset.localFields.get(supersetField) ?? fail("missing expected field"),
+					original.extraFields,
+					superset.fields.get(supersetField) ?? fail("missing expected field"),
 				),
 			same: (sameField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.localFields.get(sameField) ?? fail("missing expected field"),
-					superset.localFields.get(sameField) ?? fail("missing expected field"),
+					original.fields.get(sameField) ?? fail("missing expected field"),
+					superset.fields.get(sameField) ?? fail("missing expected field"),
 				),
 		})
 	) {
@@ -242,14 +235,12 @@ export function isNeverTreeRecursive(
 	try {
 		parentTypeStack.add(tree);
 		if (
-			(
-				policy.fieldKinds.get(tree.extraLocalFields.kind.identifier) ??
-				fail("missing field kind")
-			).multiplicity === Multiplicity.Value
+			(policy.fieldKinds.get(tree.extraFields.kind.identifier) ?? fail("missing field kind"))
+				.multiplicity === Multiplicity.Value
 		) {
 			return true;
 		}
-		for (const field of tree.localFields.values()) {
+		for (const field of tree.fields.values()) {
 			// TODO: this can recurse infinitely for schema that include themselves in a value field.
 			// This breaks even if there are other allowed types.
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
