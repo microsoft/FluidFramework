@@ -48,6 +48,7 @@ import {
 	useLogger,
 } from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
+import { DynamicComposedChart } from "./components/graphs";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -106,6 +107,17 @@ interface HomeMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Op Latency view
+ * @see {@link MenuSection} for other possible options.
+ */
+interface OpLatencyMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "opLatencyMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
@@ -115,7 +127,8 @@ type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
-	| HomeMenuSelection;
+	| HomeMenuSelection
+	| OpLatencyMenuSelection;
 
 const useDevtoolsStyles = makeStyles({
 	root: {
@@ -438,6 +451,69 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 		case "homeMenuSelection":
 			view = <LandingView />;
+			break;
+		case "opLatencyMenuSelection":
+			view = (
+				<div style={{ width: "600px", height: "400px" }}>
+					<h3>Op Latency</h3>
+					<DynamicComposedChart
+						stackedGraphType="bar"
+						dataSets={[
+							{
+								graphType: "area",
+								schema: {
+									displayName: "Duration outbound",
+									uuid: "Duration outbound",
+									xAxisDataKey: "y",
+									yAxisDataKey: "x",
+								},
+								data: [
+									{ x: "12:00:00", y: 10 },
+									{ x: "12:00:02", y: 15 },
+									{ x: "12:00:04", y: 12 },
+									{ x: "12:00:05", y: 12 },
+									{ x: "12:00:06", y: 10 },
+									{ x: "12:00:08", y: 11 },
+								],
+							},
+							{
+								graphType: "bar",
+								schema: {
+									displayName: "Duration Inbound",
+									uuid: "Duration Inbound",
+									xAxisDataKey: "x",
+									yAxisDataKey: "y",
+								},
+								data: [
+									{ x: "12:00:00", y: 3 },
+									{ x: "12:00:02", y: 1 },
+									{ x: "12:00:04", y: 0 },
+									{ x: "12:00:05", y: 0 },
+									{ x: "12:00:06", y: 1 },
+									{ x: "12:00:08", y: 1 },
+								],
+							},
+							{
+								graphType: "line",
+								schema: {
+									displayName: "Duration Network",
+									uuid: "Duration Network",
+									xAxisDataKey: "x",
+									yAxisDataKey: "y",
+								},
+								data: [
+									{ x: "12:00:00", y: 1 },
+									{ x: "12:00:02", y: 0 },
+									{ x: "12:00:04", y: 0 },
+									{ x: "12:00:05", y: 1 },
+									{ x: "12:00:06", y: 0 },
+									{ x: "12:00:08", y: 0 },
+								],
+							},
+						]}
+					/>
+				</div>
+			);
 			break;
 		default:
 			view = <LandingView />;
