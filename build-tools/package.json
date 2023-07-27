@@ -89,12 +89,12 @@
 		"syncpack": "^9.8.6",
 		"typescript": "~4.5.5"
 	},
-	"dependenciesComments": {
-		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
-	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
 		"node": ">=14.17.0"
+	},
+	"dependenciesComments": {
+		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
 	},
 	"pnpm": {
 		"peerDependencyRules": {
