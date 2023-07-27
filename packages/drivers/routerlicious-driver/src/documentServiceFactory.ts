@@ -29,7 +29,12 @@ import {
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	toInstrumentedR11sOrdererTokenFetcher,
+	toInstrumentedR11sStorageTokenFetcher,
+} from "./restWrapper";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -147,11 +152,17 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary, "", ""),
+						summary: convertSummaryTreeToWholeSummaryTree(
+							undefined,
+							appSummary,
+							"",
+							"",
+						),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
 
