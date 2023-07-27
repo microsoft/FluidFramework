@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IContainer } from "@fluidframework/container-definitions";
@@ -13,7 +14,9 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
 const pactMapKey = "pact-map";
+const sharedMapKey = "shared-map";
 const newVersionKey = "newVersion";
+const acceptedSeqNumKey = "sequence-number";
 
 // RANDOM NOTES
 // Should the migration tool emit state changes and such REGARDLESS of connection state, etc.?
@@ -23,6 +26,7 @@ const newVersionKey = "newVersion";
 
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
+	private _sharedMap: ISharedMap | undefined;
 	private readonly _containerP: Promise<IContainer>;
 	private _setContainerRef: ((container: IContainer) => void) | undefined;
 	public get setContainerRef(): (container: IContainer) => void {
@@ -90,6 +94,20 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			throw new Error("Couldn't retrieve the PactMap");
 		}
 		return this._pactMap;
+	}
+
+	private get sharedMap() {
+		if (this._sharedMap === undefined) {
+			throw new Error("Couldn't retrieve the SharedMap");
+		}
+		return this._sharedMap;
+	}
+
+	private get acceptedSeqNum() {
+		if (this._acceptedSeqNum === undefined) {
+			this._acceptedSeqNum = this.sharedMap.get(acceptedSeqNumKey);
+		}
+		return this._acceptedSeqNum;
 	}
 
 	public get migrationState() {
@@ -272,11 +290,15 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	protected async initializingFirstTime() {
 		const pactMap = PactMap.create(this.runtime);
 		this.root.set(pactMapKey, pactMap.handle);
+		const sharedMap = SharedMap.create(this.runtime);
+		this.root.set(sharedMapKey, sharedMap.handle);
 	}
 
 	protected async hasInitialized() {
 		const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
 		this._pactMap = await pactMapHandle?.get();
+		const sharedMapHandle = this.root.get<IFluidHandle<ISharedMap>>(sharedMapKey);
+		this._sharedMap = await sharedMapHandle?.get();
 
 		// TODO real error handling
 		this.overseeMigration().catch(console.error);
@@ -321,7 +343,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 		this._acceptedP = new Promise<void>((resolve) => {
 			if (this.pactMap.get(newVersionKey) !== undefined) {
-				console.log("Resolving this._acceptedP: Acceptance already exists at load time");
+				console.log(
+					"Resolving this._acceptedP: Acceptance already exists at load time at sequence number:",
+					this.acceptedSeqNum,
+				);
 				resolve();
 				return;
 			}
@@ -329,10 +354,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			const watchForAccepted = (key: string, sequenceNumber: number) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("accepted", watchForAccepted);
-					this._acceptedSeqNum = sequenceNumber;
+					this.sharedMap.set(acceptedSeqNumKey, sequenceNumber);
 					console.log(
 						"Resolving this._acceptedP: Saw acceptance during run time at sequence number:",
-						this._acceptedSeqNum,
+						this.acceptedSeqNum,
 					);
 					resolve();
 				}
@@ -496,6 +521,6 @@ export const SameContainerMigrationToolInstantiationFactory =
 	new DataObjectFactory<SameContainerMigrationTool>(
 		"migration-tool",
 		SameContainerMigrationTool,
-		[PactMap.getFactory()],
+		[PactMap.getFactory(), SharedMap.getFactory()],
 		{},
 	);

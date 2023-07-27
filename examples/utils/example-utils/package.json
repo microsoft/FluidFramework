@@ -45,6 +45,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/map": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
