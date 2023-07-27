@@ -7830,12 +7830,12 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1039.1000
+      '@fluidframework/gitresources': ^1.0.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^0.1039.1000
+      '@fluidframework/protocol-base': ^1.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver-previous': npm:@fluidframework/routerlicious-driver@2.0.0-internal.5.2.0
-      '@fluidframework/server-services-client': ^0.1039.1000
+      '@fluidframework/server-services-client': ^1.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
@@ -7871,10 +7871,10 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1039.1000
-      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/gitresources': 1.0.0
+      '@fluidframework/protocol-base': 1.0.0
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-client': 1.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.6
       json-stringify-safe: 5.0.1
@@ -16336,6 +16336,10 @@ packages:
   /@fluidframework/gitresources/0.1039.1000:
     resolution: {integrity: sha512-O1LAJQL6/TGXZPKHLE8Z8J8KlQ5wpODP+Pj/Q7KvNYWkIUOWepXyq873MobT2adN4hlUdwia4jqif9jaNcIQBA==}
 
+  /@fluidframework/gitresources/1.0.0:
+    resolution: {integrity: sha512-j4yu9JM5kU3y+5XfPOu19Ak1vJZai+6tiqCAYeJeXaczfGRlWVdqWgl4Cc8LUdJ+JDPEKo9a54FaJG+Gpa/kwQ==}
+    dev: false
+
   /@fluidframework/ink/2.0.0-internal.5.2.0:
     resolution: {integrity: sha512-4FA5G+NTLc35q4ktWc+jTvAYmqvetUqnvyPjjgpNwE3ew1NR5nxq+EX+nKBVj71HxTgTB30SqHCevM1Zo4W/Xw==}
     dependencies:
@@ -16621,6 +16625,15 @@ packages:
       '@fluidframework/protocol-definitions': 1.2.0
       events: 3.3.0
       lodash: 4.17.21
+
+  /@fluidframework/protocol-base/1.0.0:
+    resolution: {integrity: sha512-n/9NVKRDb0FVQtyLx0Z8VlcpdMf54IKXnSnZbHklUMHVC4Jehp9vrjgT0UOlEC032+i/CNteWXSVI4S1tqnMAQ==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 1.0.0
+      '@fluidframework/protocol-definitions': 1.2.0
+      events: 3.3.0
+    dev: false
 
   /@fluidframework/protocol-definitions/1.2.0:
     resolution: {integrity: sha512-2/GoupA8mjHD8gcjyn4SedqJStKlQAZxga5PtDBoh+xHsuugQRhsAHJCX+8tdqbSK4ZOo9z8iq/vWKVLUi5Dzw==}
@@ -17061,6 +17074,26 @@ packages:
       uuid: 8.3.2
     transitivePeerDependencies:
       - supports-color
+
+  /@fluidframework/server-services-client/1.0.0:
+    resolution: {integrity: sha512-130UhP79xYgwi03MRe54WHC+EIHctnGrhZcilYfrQ2zDnu8jtqUrbz88cqqqrREmVbAo9s6NGYFEMn3cK7j3KQ==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 1.0.0
+      '@fluidframework/protocol-base': 1.0.0
+      '@fluidframework/protocol-definitions': 1.2.0
+      axios: 0.26.1_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 10.8.6
+      jwt-decode: 3.1.2
+      querystring: 0.2.1
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@fluidframework/server-services-core/0.1038.4001:
     resolution: {integrity: sha512-nuZ9ebvyeIoRdlpQQpBNGkawKtc2/tHKbc8CHbMZRMh7F7kwYUtoHd/J8powb9eUcg5IHDmXx1l+PQRbQX4vCg==}
