@@ -11239,6 +11239,7 @@ importers:
       jest: ^26.6.3
       jest-junit: ^10.0.0
       prettier: ~2.6.2
+      prop-types: ^15.6.0
       react: ^17.0.1
       react-dom: ^17.0.1
       react-split-pane: ^0.1.92
@@ -11262,7 +11263,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-split-pane: 0.1.92_sfoxds7t5ydpegc3knd667wn6m
-      recharts: 2.7.2_sfoxds7t5ydpegc3knd667wn6m
+      recharts: 2.7.2_oxfzelaz5ynxsop2v2nu2h2m64
       scheduler: 0.20.2
     devDependencies:
       '@fluidframework/build-common': 1.2.0
@@ -11292,6 +11293,7 @@ importers:
       jest: 26.6.3
       jest-junit: 10.0.0
       prettier: 2.6.2
+      prop-types: 15.8.1
       rimraf: 4.4.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       typescript: 4.5.5
@@ -38231,7 +38233,7 @@ packages:
       react-is: 17.0.2
     dev: true
 
-  /react-smooth/2.0.3_sfoxds7t5ydpegc3knd667wn6m:
+  /react-smooth/2.0.3_oxfzelaz5ynxsop2v2nu2h2m64:
     resolution: {integrity: sha512-yl4y3XiMorss7ayF5QnBiSprig0+qFHui8uh7Hgg46QX5O+aRMRKlfGGNGLHno35JkQSvSYY8eCWkBfHfrSHfg==}
     peerDependencies:
       prop-types: ^15.6.0
@@ -38239,6 +38241,7 @@ packages:
       react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       fast-equals: 5.0.1
+      prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-transition-group: 2.9.0_sfoxds7t5ydpegc3knd667wn6m
@@ -38529,7 +38532,7 @@ packages:
       decimal.js-light: 2.5.1
     dev: false
 
-  /recharts/2.7.2_sfoxds7t5ydpegc3knd667wn6m:
+  /recharts/2.7.2_oxfzelaz5ynxsop2v2nu2h2m64:
     resolution: {integrity: sha512-HMKRBkGoOXHW+7JcRa6+MukPSifNtJlqbc+JreGVNA407VLE/vOP+8n3YYjprDVVIF9E2ZgwWnL3D7K/LUFzBg==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -38540,11 +38543,12 @@ packages:
       classnames: 2.3.2
       eventemitter3: 4.0.7
       lodash: 4.17.21
+      prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-is: 16.13.1
       react-resize-detector: 8.1.0_sfoxds7t5ydpegc3knd667wn6m
-      react-smooth: 2.0.3_sfoxds7t5ydpegc3knd667wn6m
+      react-smooth: 2.0.3_oxfzelaz5ynxsop2v2nu2h2m64
       recharts-scale: 0.4.5
       reduce-css-calc: 2.1.8
       victory-vendor: 36.6.11
