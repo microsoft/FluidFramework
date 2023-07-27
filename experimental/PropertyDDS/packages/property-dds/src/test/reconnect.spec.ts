@@ -103,6 +103,7 @@ describe("PropertyDDS", () => {
 
 			// Make sure the rebase happened correctly
 			assert(tree1.root.get<StringProperty>("test")?.getValue() === "test");
+			assert(tree2.root.get<StringProperty>("test")?.getValue() === "test");
 		});
 
 		describe("fuzz test", () => {
