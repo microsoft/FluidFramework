@@ -215,15 +215,23 @@ export class CheckpointService implements ICheckpointService {
 				globalSequenceNumber = lastCheckpoint.sequenceNumber;
 			} else {
 				// Search checkpoints collection for checkpoint
-				checkpoint = await this.checkpointRepository
-					.getCheckpoint(documentId, tenantId)
-					.catch((error) => {
-						Lumberjack.error(
-							`Error retrieving local checkpoint`,
-							getLumberBaseProperties(documentId, tenantId),
-						);
-						checkpointSource = "notFoundInLocalCollection";
-					});
+				try {
+					checkpoint = await runWithRetry(
+						async () => this.checkpointRepository.getCheckpoint(documentId, tenantId),
+						"checkpointServiceRestoreFromCheckpoint",
+						3 /* max retries */,
+						1000 /* retryAfterMs */,
+						getLumberBaseProperties(documentId, tenantId),
+						undefined,
+						(error) => true,
+					);
+				} catch (error) {
+					Lumberjack.error(
+						`Error retrieving local checkpoint`,
+						getLumberBaseProperties(documentId, tenantId),
+					);
+					checkpointSource = "notFoundInLocalCollection";
+				}
 
 				if (checkpoint?.[service]) {
 					const localCheckpoint: IDeliState | IScribe = JSON.parse(checkpoint[service]);
