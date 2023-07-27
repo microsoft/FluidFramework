@@ -28,7 +28,6 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	IMockContainerRuntimeOptions,
-	defaultMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
@@ -353,7 +352,6 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	rebaseProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
-	containerRuntimeOptions: defaultMockContainerRuntimeOptions,
 };
 
 /**
@@ -746,7 +744,9 @@ export async function runTestForSeed<
 	saveInfo?: SaveInfo,
 ): Promise<DDSFuzzTestState<TChannelFactory>> {
 	const random = makeRandom(seed);
-	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
+		options.containerRuntimeOptions,
+	);
 	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
 
 	const clients = await Promise.all(
