@@ -32,7 +32,6 @@ import {
 	IAlfredTenant,
 	ISession,
 	NetworkError,
-	convertWholeSummaryTreeToSummaryTree,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 } from "@fluidframework/server-services-client";
@@ -163,9 +162,6 @@ export function create(
 				? uuid()
 				: (request.body.id as string) || uuid();
 
-			Lumberjack.info(
-				`Whole summary length= ${JSON.stringify(request.body.summary).length}.`,
-			);
 			// Summary information
 			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
 				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
@@ -175,7 +171,6 @@ export function create(
 				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
 			);
 
-			Lumberjack.info(`SummaryTree length = ${JSON.stringify(summary).length}.`);
 			// Protocol state
 			const { sequenceNumber, values, generateToken = false } = request.body;
 
