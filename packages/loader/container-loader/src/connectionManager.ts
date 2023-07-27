@@ -614,8 +614,6 @@ export class ConnectionManager implements IConnectionManager {
 					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
 					await new Promise<void>((resolve) => {
 						setTimeout(resolve, delayMs);
-						// If the endpoint is reachable, then set max limit to 120s as we are not able to get proper response even after
-						// reaching the endpoint, otherwise max wait is 8s.
 						delayMs = Math.min(delayMs * 2, calculateMaxWaitTime(origError));
 					});
 				}
