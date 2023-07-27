@@ -603,6 +603,11 @@ export class ScribeLambda implements IPartitionLambda {
 			? this.checkpointManager.delete(this.protocolHead, true)
 			: this.writeCheckpoint(checkpoint).catch((error) => {
 					databaseCheckpointFailed = true;
+					Lumberjack.error(
+						`Error writing database checkpoint.`,
+						getLumberBaseProperties(this.documentId, this.tenantId),
+						error,
+					);
 			  });
 		this.pendingP
 			.then(() => {

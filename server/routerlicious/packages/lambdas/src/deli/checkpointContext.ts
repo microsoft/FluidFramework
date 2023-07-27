@@ -147,7 +147,6 @@ export class CheckpointContext {
 			);
 		}
 
-		// Retry the checkpoint on error
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		return updateP.catch((error) => {
 			this.context.log?.error(

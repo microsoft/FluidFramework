@@ -226,6 +226,7 @@ export class CheckpointService implements ICheckpointService {
 						(error) => true,
 					);
 				} catch (error) {
+					checkpoint = undefined;
 					Lumberjack.error(
 						`Error retrieving local checkpoint`,
 						getLumberBaseProperties(documentId, tenantId),
