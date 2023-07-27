@@ -894,7 +894,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
-		const container = await provider.loadTestContainer(testContainerConfig) as IContainerExperimental;
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
 		const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
 
 		await provider.opProcessingController.pauseProcessing(container);
@@ -916,7 +918,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				// Stash right after we see the DDS attach op. If we stash the DDS attach op, it will be applied
 				// first and everything will work fine. If ops are arriving on the network, there's no guarantee
 				// of how small this window is.
-				if (JSON.stringify(op).includes('attach')) {
+				if (JSON.stringify(op).includes("attach")) {
 					resolve(container.closeAndGetPendingLocalState());
 				}
 			});
