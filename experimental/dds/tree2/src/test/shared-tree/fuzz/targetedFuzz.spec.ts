@@ -18,7 +18,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	moveToDetachedField,
 	compareUpPaths,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
 	Anchor,
 	JsonableTree,
@@ -127,7 +127,7 @@ describe("Fuzz - Targeted", () => {
 				parent: {
 					parent: undefined,
 					parentIndex: 0,
-					parentField: rootFieldKeySymbol,
+					parentField: rootFieldKey,
 				},
 				parentField: brand("foo"),
 				parentIndex: 1,
@@ -245,7 +245,7 @@ describe("Fuzz - Targeted", () => {
 					parent: {
 						parent: undefined,
 						parentIndex: 0,
-						parentField: rootFieldKeySymbol,
+						parentField: rootFieldKey,
 					},
 					parentField: brand("foo"),
 					parentIndex: 1,

@@ -4,9 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
 	Multiplicity,
 	getPrimaryField,
@@ -14,15 +12,7 @@ import {
 	getFieldSchema,
 	SchemaBuilder,
 } from "../../../feature-libraries";
-import {
-	LocalFieldKey,
-	FieldStoredSchema,
-	InMemoryStoredSchemaRepository,
-	EmptyKey,
-	rootFieldKey,
-	symbolFromKey,
-} from "../../../core";
-import { brand } from "../../../util";
+import { LocalFieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
@@ -56,22 +46,11 @@ describe("editable-tree utilities", () => {
 
 		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
 		const fullSchemaData = buildTestSchema(rootSchema);
-		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
-		assert.equal(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), fullSchemaData.root);
-		assert.throws(
-			() => getFieldSchema(brand(rootFieldKey), fullSchema),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"The field is a local field, a parent schema is required.",
-				),
-			"Expected exception was not thrown",
-		);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);
-		assert.deepEqual(getFieldSchema(primary.key, fullSchema, arraySchema), schema);
+		assert.deepEqual(getFieldSchema(primary.key, arraySchema), schema);
 		assert.equal(
-			getFieldKind(getFieldSchema(primary.key, fullSchema, arraySchema)).multiplicity,
+			getFieldKind(getFieldSchema(primary.key, arraySchema)).multiplicity,
 			Multiplicity.Sequence,
 		);
 		assert.deepEqual(primary, expectedPrimary);

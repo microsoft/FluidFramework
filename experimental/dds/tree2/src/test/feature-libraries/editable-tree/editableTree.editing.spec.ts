@@ -26,8 +26,8 @@ import {
 	SchemaBuilder,
 	FieldKindTypes,
 	TypedSchemaCollection,
-	GlobalFieldSchema,
 	UnwrappedEditableField,
+	FieldSchema,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -62,7 +62,7 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 }
 
 function createSharedTree(
-	schemaData: TypedSchemaCollection<GlobalFieldSchema>,
+	schemaData: TypedSchemaCollection<FieldSchema>,
 	data?: JsonableTree[],
 ): ISharedTree {
 	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests

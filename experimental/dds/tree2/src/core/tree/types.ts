@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
+import { LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
-import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
 
 /**
  * Either LocalFieldKey or GlobalFieldKey.
@@ -17,7 +15,7 @@ import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
  * Thus global field keys are using their symbols instead.
  * @alpha
  */
-export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
+export type FieldKey = LocalFieldKey;
 
 export function isLocalKey(key: FieldKey): key is LocalFieldKey {
 	return typeof key === "string";
@@ -44,20 +42,17 @@ export type TreeType = TreeSchemaIdentifier;
 export const EmptyKey: LocalFieldKey = brand("");
 
 /**
- * GlobalFieldKey to use for the root of documents.
+ * LocalFieldKey to use for the root of documents in places that need to refer to detached sequences or the root.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
  * @alpha
  */
-export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
+export const rootFieldKey: LocalFieldKey = brand("rootFieldKey");
+
 /**
  * @alpha
  */
-export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
-/**
- * @alpha
- */
-export const rootField = keyAsDetachedField(rootFieldKeySymbol);
+export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
@@ -110,9 +105,6 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * @alpha
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
-	if (field === rootField) {
-		return rootFieldKeySymbol;
-	}
 	return brand(extractFromOpaque(field));
 }
 
@@ -123,18 +115,7 @@ export function detachedFieldAsKey(field: DetachedField): FieldKey {
  * @alpha
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
-	if (isLocalKey(key)) {
-		assert(
-			key !== (rootFieldKey as string),
-			0x3be /* Root is field key must be a global field key */,
-		);
-		return brand(key);
-	}
-	assert(
-		key === rootFieldKeySymbol,
-		0x3bf /* Root is only allowed global field key as detached field */,
-	);
-	return brand(rootFieldKey);
+	return brand(key);
 }
 
 /**
