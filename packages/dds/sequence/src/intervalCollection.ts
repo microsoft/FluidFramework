@@ -966,9 +966,17 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * Creates a new interval and add it to the collection.
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
-	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
+	 * @param intervalType - type of the interval. All intervals are SlideOnRemove.
+	 * Intervals may not be Transient.
 	 * @param props - properties of the interval
 	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
+	 * @param canBeExclusive - Whether the endpoints of the interval can be made
+	 * exclusive (as opposed to inclusive). This is primarily useful in combination
+	 * with stickiness. If this value is set to true, the sticky endpoints of the
+	 * interval will be automatically adjusted to be the exclusive counterpart.
+	 * That is, if an exclusive interval is created with end stickiness, the
+	 * interval [0, 3] would become `[0, 4)` and the endpoint would automatically
+	 * be placed onto the character at position 4, rather than 3.
 	 * @returns - the created interval
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.

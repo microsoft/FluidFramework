@@ -56,8 +56,13 @@ const reservedIntervalIdKey = "intervalId";
  * is undesirable.
  *
  * Since the end of an interval is treated exclusively but cannot be greater than or equal to the
- * length of the associated sequence, application models which leverage interval collections should
- * consider inserting a marker at the end of the sequence to represent the end of the content.
+ * length of the associated sequence, there exist special endpoint segments, "start" and "end",
+ * which represent the position immediately before or immediately after the string respectively.
+ *
+ * If a `SequenceInterval` is created with `canBeExclusive` set to true, the
+ * endpoints of the interval that are sticky will be automatically created as
+ * exclusive and will have the ability to slide to these special endpoint
+ * segments.
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**

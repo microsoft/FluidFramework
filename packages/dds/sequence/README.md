@@ -386,6 +386,57 @@ comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
 comments.removeIntervalById(comment.getIntervalId());
 ```
 
+### Interval stickiness
+
+"Stickiness" refers to the behavior of intervals when text is inserted on either side of the interval. A "sticky" interval is one which expands to include text inserted directly adjacent to it.
+
+A "start sticky" interval is one which expands only to include text inserted to the start of it. An "end sticky" interval is the same, but with regard to text inserted adjacent to the end.
+
+For example, let's look at the string "abc". If we have an interval on the character "b", what happens when we insert text on either side of it? In the below diagrams, we represent an interval by putting a caret directly underneath the characters it contains.
+
+##### Original string:
+
+```
+abc
+ ^
+```
+
+##### No stickiness:
+
+```
+aXbYc
+  ^
+```
+
+The interval does not expand to include the newly inserted characters `X` and `Y`.
+
+##### Start stickiness:
+
+```
+aXbYc
+ ^^
+```
+
+##### End stickiness:
+
+```
+aXbYc
+  ^^
+```
+
+##### Full stickiness:
+
+```
+aXbYc
+ ^^^
+```
+
+Stickiness on either side is implemented by adding exclusivity to an existing interval. That is, if we were to take the interval `[0, 3]` and make it end-sticky, we would make the end endpoint exclusive: `[0, 4)`.
+
+Such exclusivity requires that it be possible to reference positions before and after the start or end of the string respectively. These positions before and after the string are not possible to reference with regular (insertion, deletion, etc.) ops, but _can_ be referenced by intervals using the values "start" and "end", rather than an integer string position.
+
+The "start" and "end" positions act as though they refer to position 0 and string.length - 1 respectively for most operations.
+
 ## SharedString
 
 SharedString is a specialized data structure for handling collaborative text. It is based on a more general
