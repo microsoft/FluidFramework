@@ -5,7 +5,7 @@
 
 import { FieldKey, UpPath } from "../../../core";
 
-export type Operation = TreeOperation;
+export type Operation = TreeOperation | Synchronize;
 
 export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
 
@@ -82,6 +82,10 @@ export interface UndoOp {
 
 export interface RedoOp {
 	type: "redo";
+}
+
+export interface Synchronize {
+	type: "synchronize";
 }
 
 export interface NodeRangePath {
