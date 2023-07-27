@@ -53,7 +53,7 @@
 		"react-base-table": "1.13.2",
 		"react-dom": "^17.0.1",
 		"react-loading-skeleton": "^3.1.0",
-		"react-select": "^2.4.3",
+		"react-select": "^5.7.4",
 		"react-virtualized-auto-sizer": "1.0.7",
 		"require-from-string": "^2.0.2"
 	},

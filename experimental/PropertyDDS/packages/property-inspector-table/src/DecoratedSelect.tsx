@@ -6,13 +6,17 @@
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React, { useState } from "react";
-import Select from "react-select";
-import { IndicatorProps } from "react-select/lib/components/indicators";
-import Option, { OptionProps } from "react-select/lib/components/Option";
-import SingleValue, { SingleValueProps } from "react-select/lib/components/SingleValue";
-import { Props as SelectProps } from "react-select/lib/Select";
-import { StylesConfig } from "react-select/lib/styles";
-import { GroupedOptionsType, OptionsType, ValueType } from "react-select/lib/types";
+import Select, {
+	DropdownIndicatorProps,
+	StylesConfig,
+	GroupBase,
+	Options as OptionsType,
+	OptionProps,
+	SingleValue as ValueType,
+	SingleValueProps,
+	Props as SelectProps,
+	components,
+} from "react-select";
 import { SvgIcon } from "./SVGIcon";
 import {
 	backGroundDarkGrayColor,
@@ -23,6 +27,8 @@ import {
 	textDarkColor,
 	transparentShadowColor,
 } from "./constants";
+
+const { Option, SingleValue } = components;
 
 const useStyles = makeStyles(
 	{
@@ -49,7 +55,7 @@ const useStyles = makeStyles(
 );
 
 // Style api of react-select library
-const reactSelectStyles: StylesConfig = {
+const reactSelectStyles: StylesConfig<IDecoratedSelectOptionType> = {
 	container: (provided) => ({
 		...provided,
 		backgroundColor: "transparent",
@@ -119,6 +125,10 @@ export interface IDecoratedSelectOptionType {
 }
 
 // Those two types are only exported so users can type their options arrays:
+type GroupedOptionsType<
+	Option = unknown,
+	Group extends GroupBase<Option> = GroupBase<Option>,
+> = readonly Group[];
 export type DecoratedSelectGroupedOptionsType = GroupedOptionsType<IDecoratedSelectOptionType>;
 export type DecoratedSelectOptionsType = OptionsType<IDecoratedSelectOptionType>;
 export type DecoratedSelectValueType = ValueType<IDecoratedSelectOptionType>;
@@ -126,7 +136,7 @@ export type DecoratedSelectValueType = ValueType<IDecoratedSelectOptionType>;
 export { OptionsType, GroupedOptionsType };
 
 // This interface is also exported for convenience only:
-export type DecoratedSelectProps = SelectProps<IDecoratedSelectOptionType>;
+export type DecoratedSelectProps = SelectProps<IDecoratedSelectOptionType, false>;
 
 const CustomOption: React.FunctionComponent<OptionProps<IDecoratedSelectOptionType>> = (props) => {
 	const classes = useStyles();
@@ -151,7 +161,7 @@ const CustomSingleValue: React.FunctionComponent<SingleValueProps<IDecoratedSele
 };
 
 const CustomDropdownIndicator: React.FunctionComponent<
-	IndicatorProps<IDecoratedSelectOptionType>
+	DropdownIndicatorProps<IDecoratedSelectOptionType>
 > = (props) => {
 	const classes = useStyles();
 	return (
@@ -175,6 +185,7 @@ export const DecoratedSelect: React.FunctionComponent<DecoratedSelectProps> = (p
 			)}
 		>
 			<Select<IDecoratedSelectOptionType>
+				{...restProps}
 				onMenuOpen={() => setRenderBorder(true)}
 				onMenuClose={() => setRenderBorder(false)}
 				isSearchable={renderBorder}
@@ -186,7 +197,6 @@ export const DecoratedSelect: React.FunctionComponent<DecoratedSelectProps> = (p
 					SingleValue: CustomSingleValue,
 				}}
 				styles={reactSelectStyles}
-				{...restProps}
 			/>
 		</div>
 	);
@@ -196,5 +206,5 @@ DecoratedSelect.defaultProps = {
 	maxMenuHeight: 180,
 	menuPlacement: "bottom",
 	pageSize: 5,
-	searchable: true,
+	isSearchable: true,
 };
