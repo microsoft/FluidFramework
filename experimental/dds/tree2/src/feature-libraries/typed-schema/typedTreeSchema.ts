@@ -24,14 +24,14 @@ export interface Fields {
 /**
  * @alpha
  */
-export type NormalizeFieldsInner<T extends Fields> = {
+export type NormalizeStructFieldsInner<T extends Fields> = {
 	[Property in keyof T]: NormalizeField<T[Property]>;
 };
 
 /**
  * @alpha
  */
-export type NormalizeFields<T extends Fields | undefined> = NormalizeFieldsInner<
+export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<
 	WithDefault<T, Record<string, never>>
 >;
 
@@ -48,12 +48,12 @@ export class TreeSchema<
 {
 	// Allows reading fields through the normal map, but without losing type information.
 	public readonly structFields: ObjectToMap<
-		NormalizeFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
+		NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
 		FieldKey,
 		FieldSchema
 	>;
 
-	public readonly structFieldsObject: NormalizeFields<
+	public readonly structFieldsObject: NormalizeStructFields<
 		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
@@ -70,7 +70,7 @@ export class TreeSchema<
 	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
-		this.structFieldsObject = normalizeLocalFields<
+		this.structFieldsObject = normalizeStructFields<
 			Assume<T, TreeSchemaSpecification>["structFields"]
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
@@ -90,9 +90,9 @@ export type NormalizeField<T extends FieldSchema | undefined> = T extends FieldS
 	? T
 	: FieldSchema<typeof FieldKinds.forbidden, []>;
 
-function normalizeLocalFields<T extends Fields | undefined>(fields: T): NormalizeFields<T> {
+function normalizeStructFields<T extends Fields | undefined>(fields: T): NormalizeStructFields<T> {
 	if (fields === undefined) {
-		return {} as unknown as NormalizeFields<T>;
+		return {} as unknown as NormalizeStructFields<T>;
 	}
 	const out: Record<string, FieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
@@ -102,7 +102,7 @@ function normalizeLocalFields<T extends Fields | undefined>(fields: T): Normaliz
 			out[key] = normalizeField(element);
 		}
 	}
-	return out as NormalizeFields<T>;
+	return out as NormalizeStructFields<T>;
 }
 
 function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField<T> {

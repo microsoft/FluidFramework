@@ -131,7 +131,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 				collection,
 				field,
 				() =>
-					`Local field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`,
+					`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
 		}
@@ -139,13 +139,12 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 			validateField(
 				collection,
 				tree.mapFields,
-				() =>
-					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}"`,
+				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
 			if (tree.mapFields.kind === FieldKinds.value) {
 				errors.push(
-					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible local field keys to have a value under them.`,
+					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
 			}
 		}

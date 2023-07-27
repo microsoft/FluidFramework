@@ -179,9 +179,9 @@ export interface TreeStoredSchema {
 	readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
 
 	/**
-	 * Constraint for local fields not mentioned in `structFields`.
+	 * Constraint for fields not mentioned in `structFields`.
 	 *
-	 * Allows using using the local fields as a map, with the keys being
+	 * Allows using using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this FieldStoredSchema.
 	 *
 	 * To forbid this map like usage, use {@link emptyField} here.

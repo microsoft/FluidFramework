@@ -31,7 +31,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
 
-const NamedLocalFieldSchemaFormat = Type.Composite(
+const NamedFieldSchemaFormat = Type.Composite(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
@@ -44,7 +44,7 @@ const NamedLocalFieldSchemaFormat = Type.Composite(
 const TreeSchemaFormat = Type.Object(
 	{
 		name: TreeSchemaIdentifierSchema,
-		structFields: Type.Array(NamedLocalFieldSchemaFormat),
+		structFields: Type.Array(NamedFieldSchemaFormat),
 		mapFields: FieldSchemaFormat,
 		// TODO: don't use external type here.
 		value: Type.Enum(ValueSchema),
@@ -73,7 +73,7 @@ const Format = Type.Object(
 type Format = Static<typeof Format>;
 type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
 type TreeSchemaFormat = Static<typeof TreeSchemaFormat>;
-type NamedLocalFieldSchemaFormat = Static<typeof NamedLocalFieldSchemaFormat>;
+type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;
 
 const Versioned = Type.Object({
 	version: Type.String(),

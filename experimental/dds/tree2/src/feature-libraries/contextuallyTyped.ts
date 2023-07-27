@@ -300,7 +300,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys as strings.
 	 *
-	 * Allow unbranded local field keys and a convenience for literals.
+	 * Allow unbranded field keys as a convenience for literals.
 	 */
 	[key: string]: ContextuallyTypedFieldData;
 }
@@ -340,7 +340,7 @@ function shallowCompatibilityTest(
 	// For now, consider all not explicitly typed objects shallow compatible.
 	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
 
-	// Special case primitive schema to not be compatible with data with local fields.
+	// Special case primitive schema to not be compatible with data with fields.
 	if (isPrimitive(schema)) {
 		if (fieldKeysFromData(data).length > 0) {
 			return false;

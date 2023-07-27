@@ -47,14 +47,14 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["string with escaped characters", { type: leaf.name, value: '\\"\b\f\n\r\t' }],
 	["string with emoticon", { type: leaf.name, value: "😀" }],
 	[
-		"local field",
+		"field",
 		{
 			type: mapSchema.name,
 			fields: { x: [{ type: emptySchema.name }, { type: leaf.name, value: 6 }] },
 		},
 	],
 	[
-		"multiple local fields",
+		"multiple fields",
 		{
 			type: mapSchema.name,
 			fields: {

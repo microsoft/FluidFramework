@@ -931,10 +931,10 @@ declare namespace InternalTypedSchemaTypes {
         UnbrandList,
         ArrayToUnion,
         TreeSchemaSpecification,
-        NormalizeFieldsInner as NormalizeLocalFieldsInner,
-        NormalizeFields as NormalizeLocalFields,
-        Fields as LocalFields,
+        NormalizeStructFieldsInner,
+        NormalizeStructFields,
         NormalizeField,
+        Fields,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1437,10 +1437,10 @@ type NormalizedFlexList<Item> = readonly Item[];
 type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema ? T : FieldSchema<typeof FieldKinds.forbidden, []>;
 
 // @alpha (undocumented)
-type NormalizeFields<T extends Fields | undefined> = NormalizeFieldsInner<WithDefault<T, Record<string, never>>>;
+type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<WithDefault<T, Record<string, never>>>;
 
 // @alpha (undocumented)
-type NormalizeFieldsInner<T extends Fields> = {
+type NormalizeStructFieldsInner<T extends Fields> = {
     [Property in keyof T]: NormalizeField<T[Property]>;
 };
 
@@ -1895,9 +1895,9 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)
-    readonly structFields: ObjectToMap<NormalizeFields<Assume<T, TreeSchemaSpecification>["structFields"]>, FieldKey, FieldSchema>;
+    readonly structFields: ObjectToMap<NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>, FieldKey, FieldSchema>;
     // (undocumented)
-    readonly structFieldsObject: NormalizeFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
+    readonly structFieldsObject: NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
     // (undocumented)
     readonly value: WithDefault<Assume<T, TreeSchemaSpecification>["value"], ValueSchema.Nothing>;
 }
