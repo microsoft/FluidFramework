@@ -231,7 +231,9 @@ describe("IntervalCollection fuzz testing", () => {
 		// ADO:5083, the seed 12 started failing after rebasing was added,
 		// however there are no rebase ops in this test run.
 		// the other failing seeds were added when updates of the msn on reconnects
-		// were introduced
+		// were introduced to
+		// skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
+		// TODO: remove when the sequence is fixed.
 		skip: [
 			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
 			76, 79, 86, 91, 92, 94,
