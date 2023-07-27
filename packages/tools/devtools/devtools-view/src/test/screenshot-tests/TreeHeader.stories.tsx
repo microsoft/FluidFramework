@@ -20,3 +20,14 @@ export const Simple = {
 		label: "Hello world!",
 	},
 };
+
+/**
+ * {@link TreeHeader} with metadata and inline text.
+ */
+export const Complex = {
+	args: {
+		label: "foo",
+		metadata: "Bar",
+		inlineValue: "BAZ",
+	},
+};
