@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	ChildLogger,
-	loggerToMonitoringContext,
-	MonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { createChildMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
 import {
@@ -37,11 +32,14 @@ export interface IOutboxConfig {
 export interface IOutboxParameters {
 	readonly shouldSend: () => boolean;
 	readonly pendingStateManager: PendingStateManager;
-	readonly containerContext: IContainerContext;
+	readonly submitBatchFn:
+		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
+		| undefined;
+	readonly legacySendBatchFn: (batch: IBatch) => void;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
-	readonly logger: ITelemetryLoggerExt;
+	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: IPendingBatchMessage) => void;
@@ -85,6 +83,7 @@ export class Outbox {
 	private readonly mc: MonitoringContext;
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
+	private readonly blobAttachBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
@@ -99,7 +98,7 @@ export class Outbox {
 	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
-		this.mc = loggerToMonitoringContext(ChildLogger.create(params.logger, "Outbox"));
+		this.mc = createChildMonitoringContext({ logger: params.logger, namespace: "Outbox" });
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
@@ -109,10 +108,15 @@ export class Outbox {
 
 		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
 		this.mainBatch = new BatchManager({ hardLimit });
+		this.blobAttachBatch = new BatchManager({ hardLimit });
 	}
 
 	public get isEmpty(): boolean {
-		return this.attachFlowBatch.length === 0 && this.mainBatch.length === 0;
+		return (
+			this.attachFlowBatch.length === 0 &&
+			this.mainBatch.length === 0 &&
+			this.blobAttachBatch.length === 0
+		);
 	}
 
 	/**
@@ -124,9 +128,11 @@ export class Outbox {
 	private maybeFlushPartialBatch() {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
+		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		assert(
 			this.params.config.disablePartialFlush ||
-				sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums),
+				(sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums) &&
+					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums)),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -134,7 +140,8 @@ export class Outbox {
 
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers) &&
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -149,6 +156,8 @@ export class Outbox {
 					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
 					attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
 					attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
+					blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
+					blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
 					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
 					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
 				},
@@ -164,20 +173,7 @@ export class Outbox {
 	public submit(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		if (
-			!this.mainBatch.push(
-				message,
-				this.isContextReentrant(),
-				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-			)
-		) {
-			throw new GenericError("BatchTooLarge", /* error */ undefined, {
-				opSize: message.contents?.length ?? 0,
-				batchSize: this.mainBatch.contentSizeInBytes,
-				count: this.mainBatch.length,
-				limit: this.mainBatch.options.hardLimit,
-			});
-		}
+		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
@@ -194,20 +190,8 @@ export class Outbox {
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
 			this.flushInternal(this.attachFlowBatch);
-			if (
-				!this.attachFlowBatch.push(
-					message,
-					this.isContextReentrant(),
-					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
-				)
-			) {
-				throw new GenericError("BatchTooLarge", /* error */ undefined, {
-					opSize: message.contents?.length ?? 0,
-					batchSize: this.attachFlowBatch.contentSizeInBytes,
-					count: this.attachFlowBatch.length,
-					limit: this.attachFlowBatch.options.hardLimit,
-				});
-			}
+
+			this.addMessageToBatchManager(this.attachFlowBatch, message);
 		}
 
 		// If compression is enabled, we will always successfully receive
@@ -223,6 +207,41 @@ export class Outbox {
 		}
 	}
 
+	public submitBlobAttach(message: BatchMessage) {
+		this.maybeFlushPartialBatch();
+
+		this.addMessageToBatchManager(this.blobAttachBatch, message);
+
+		// If compression is enabled, we will always successfully receive
+		// blobAttach ops and compress then send them at the next JS turn, regardless
+		// of the overall size of the accumulated ops in the batch.
+		// However, it is more efficient to flush these ops faster, preferably
+		// after they reach a size which would benefit from compression.
+		if (
+			this.blobAttachBatch.contentSizeInBytes >=
+			this.params.config.compressionOptions.minimumBatchSizeInBytes
+		) {
+			this.flushInternal(this.blobAttachBatch);
+		}
+	}
+
+	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
+		if (
+			!batchManager.push(
+				message,
+				this.isContextReentrant(),
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
+			throw new GenericError("BatchTooLarge", /* error */ undefined, {
+				opSize: message.contents?.length ?? 0,
+				batchSize: batchManager.contentSizeInBytes,
+				count: batchManager.length,
+				limit: batchManager.options.hardLimit,
+			});
+		}
+	}
+
 	public flush() {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
@@ -235,10 +254,11 @@ export class Outbox {
 
 	private flushAll() {
 		this.flushInternal(this.attachFlowBatch);
+		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
 		this.flushInternal(this.mainBatch);
 	}
 
-	private flushInternal(batchManager: BatchManager) {
+	private flushInternal(batchManager: BatchManager, disableGroupedBatching: boolean = false) {
 		if (batchManager.empty) {
 			return;
 		}
@@ -253,7 +273,7 @@ export class Outbox {
 			return;
 		}
 
-		const processedBatch = this.compressBatch(rawBatch);
+		const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
 		this.sendBatch(processedBatch);
 
 		this.persistBatch(rawBatch.content);
@@ -298,20 +318,20 @@ export class Outbox {
 		return this.params.opReentrancy() && !this.rebasing;
 	}
 
-	private compressBatch(batch: IBatch): IBatch {
+	private compressBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
-			this.params.containerContext.submitBatchFn === undefined
+			this.params.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return this.params.groupingManager.groupBatch(batch);
+			return disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch);
 		}
 
 		const compressedBatch = this.params.compressor.compressBatch(
-			this.params.groupingManager.groupBatch(batch),
+			disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch),
 		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
@@ -359,7 +379,7 @@ export class Outbox {
 			});
 		}
 
-		if (this.params.containerContext.submitBatchFn === undefined) {
+		if (this.params.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
@@ -367,23 +387,13 @@ export class Outbox {
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
-			for (const message of batch.content) {
-				this.params.containerContext.submitFn(
-					MessageType.Operation,
-					// For back-compat (submitFn only works on deserialized content)
-					message.contents === undefined ? undefined : JSON.parse(message.contents),
-					true, // batch
-					message.metadata,
-				);
-			}
-
-			this.params.containerContext.deltaManager.flush();
+			this.params.legacySendBatchFn(batch);
 		} else {
 			assert(
 				batch.referenceSequenceNumber !== undefined,
 				0x58e /* Batch must not be empty */,
 			);
-			this.params.containerContext.submitBatchFn(
+			this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
@@ -413,6 +423,7 @@ export class Outbox {
 		return {
 			mainBatch: this.mainBatch.checkpoint(),
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
+			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}
 }

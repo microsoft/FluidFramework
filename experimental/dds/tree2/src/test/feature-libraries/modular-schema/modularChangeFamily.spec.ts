@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -17,9 +16,6 @@ import {
 	ModularChangeset,
 	RevisionInfo,
 } from "../../../feature-libraries";
-// TODO: this is not the file being tests, importing it should not be required here.
-// eslint-disable-next-line import/no-internal-modules
-import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
@@ -32,11 +28,13 @@ import {
 	UpPath,
 	mintRevisionTag,
 	tagRollbackInverse,
+	assertIsRevisionTag,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
+import { makeCodecFamily, noopValidator } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
+	EncodingTestData,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
@@ -45,33 +43,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
-
-type ValueChangeset = FieldKinds.ReplaceOp<number>;
-
-const valueHandler: FieldChangeHandler<ValueChangeset> = {
-	rebaser: FieldKinds.replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-
-	intoDelta: (change, deltaFromChild) =>
-		change === 0
-			? []
-			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
-			  ],
-
-	isEmpty: (change) => change === 0,
-};
-
-const valueField = new FieldKind(
-	brand("Value"),
-	Multiplicity.Value,
-	valueHandler,
-	(a, b) => false,
-	new Set(),
-);
+// Allows typechecking test data used in modulaChangeFamily's codecs.
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
+import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -169,6 +144,21 @@ const nodeChange3: NodeChangeset = {
 	fieldChanges: new Map([
 		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
 	]),
+};
+
+const nodeChange4: NodeChangeset = {
+	fieldChanges: new Map([
+		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+	]),
+	nodeExistsConstraint: {
+		violated: false,
+	},
+};
+
+const nodeChangeWithoutFieldChanges: NodeChangeset = {
+	nodeExistsConstraint: {
+		violated: false,
+	},
 };
 
 const rootChange1a: ModularChangeset = {
@@ -270,6 +260,36 @@ const rootChange3: ModularChangeset = {
 			{
 				fieldKind: singleNodeField.identifier,
 				change: brand(nodeChange3),
+			},
+		],
+	]),
+};
+
+const dummyMaxId = 10;
+const dummyRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+const rootChange4: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChange4),
+			},
+		],
+	]),
+};
+
+const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChangeWithoutFieldChanges),
 			},
 		],
 	]),
@@ -604,10 +624,14 @@ describe("ModularChangeFamily", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: [string, ModularChangeset][] = [
-			["without constrain", rootChange1a],
-			["with constrain", rootChange3],
-		];
+		const encodingTestData: EncodingTestData<ModularChangeset, EncodedModularChangeset> = {
+			successes: [
+				["without constrain", rootChange1a],
+				["with constrain", rootChange3],
+				["with node existence constraint", rootChange4],
+				["without node field changes", rootChangeWithoutNodeFieldChanges],
+			],
+		};
 
 		makeEncodingTestSuite(family.codecs, encodingTestData);
 	});

@@ -17,18 +17,17 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties as ITelemetryProperties_2 } from '@fluidframework/common-definitions';
-import { Lazy } from '@fluidframework/common-utils';
+import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
@@ -43,10 +42,28 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
 export const connectedEventName = "connected";
 
 // @public
+export function createChildLogger(props?: {
+    logger?: ITelemetryBaseLogger;
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt;
+
+// @public (undocumented)
+export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
+
+// @public
+export function createMultiSinkLogger(props: {
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+    loggers?: (ITelemetryBaseLogger | undefined)[];
+    tryInheritProperties?: true;
+}): ITelemetryLoggerExt;
+
+// @public @deprecated
 export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinDebugLogger(namespace: string, logger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -60,12 +77,18 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
 }
 
+// @public (undocumented)
+export const eventNamespaceSeparator: ":";
+
 // @public
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
     message: string;
     errorType?: string | undefined;
     stack?: string | undefined;
 };
+
+// @public (undocumented)
+export function formatTick(tick: number): number;
 
 // @public
 export function generateErrorWithStack(): Error;
@@ -110,10 +133,10 @@ export interface IFluidErrorAnnotations {
 
 // @public
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties_2) => void;
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties_2;
+    getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;
@@ -254,9 +277,9 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-// @public
+// @public @deprecated
 export class MultiSinkLogger extends TelemetryLogger {
-    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags);
+    constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags, loggers?: ITelemetryBaseLogger[], tryInheritProperties?: true);
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
@@ -268,6 +291,9 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
+
+// @public
+export function numberFromString(str: string | null | undefined): string | number | undefined;
 
 // @public
 export class PerformanceEvent {
@@ -309,6 +335,18 @@ export class SampledTelemetryHelper implements IDisposable {
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
+// @public (undocumented)
+export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {
+        value: Exclude<T[P], undefined>;
+        tag: TelemetryDataTag.CodeArtifact;
+    } | (T[P] extends undefined ? undefined : never); };
+
+// @public (undocumented)
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyTypeExt>>(tag: T, values: V) => { [P in keyof V]: {
+        value: Exclude<V[P], undefined>;
+        tag: T;
+    } | (V[P] extends undefined ? undefined : never); };
+
 // @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
@@ -331,15 +369,16 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
-// @public
+// @public @deprecated
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
-    static readonly eventNamespaceSeparator = ":";
-    // (undocumented)
+    static readonly eventNamespaceSeparator: ":";
+    // @deprecated (undocumented)
     static formatTick(tick: number): number;
     // (undocumented)
     protected readonly namespace?: string | undefined;
+    // @deprecated
     static numberFromString(str: string | null | undefined): string | number | undefined;
     static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
     // (undocumented)
@@ -357,7 +396,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     }, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
@@ -369,7 +408,7 @@ export class TelemetryNullLogger implements ITelemetryLoggerExt {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class TelemetryUTLogger implements ITelemetryLoggerExt {
     // (undocumented)
     debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;

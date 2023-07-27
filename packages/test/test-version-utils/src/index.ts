@@ -47,3 +47,7 @@ export {
 	getDriverApi,
 	getLoaderApi,
 } from "./testApi.js";
+export {
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
+} from "./itSkipsOnFailure.js";

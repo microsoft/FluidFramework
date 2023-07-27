@@ -80,13 +80,20 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
+						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
 					},
 					err,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
 					DriverErrorType.genericError,
-					{ driverVersion: pkgVersion, fetchCallName },
+					{
+						driverVersion: pkgVersion,
+						fetchCallName,
+						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
+						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
+					},
 				);
 			}
 

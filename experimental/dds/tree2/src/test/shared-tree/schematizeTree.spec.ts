@@ -12,7 +12,7 @@ import { typeboxValidator } from "../../external-utilities";
 const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 const builder = new SchemaBuilder("Schematize Tree Tests");
 
-const root = builder.primitive("root", ValueSchema.Number);
+const root = builder.leaf("root", ValueSchema.Number);
 const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");

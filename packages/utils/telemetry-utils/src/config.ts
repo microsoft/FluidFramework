@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/common-utils";
-import { TelemetryDataTag } from "./logger";
+import { Lazy } from "@fluidframework/core-utils";
+import { createChildLogger, tagCodeArtifacts } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -222,11 +222,10 @@ export class CachedConfigProvider implements IConfigProvider {
 					this.logger?.send({
 						category: "generic",
 						eventName: "ConfigRead",
-						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
-						configValue: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: JSON.stringify(parsed),
-						},
+						...tagCodeArtifacts({
+							configName: name,
+							configValue: JSON.stringify(parsed),
+						}),
 					});
 					return parsed;
 				}
@@ -286,4 +285,10 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
 	const maybeConfig = obj as Partial<IConfigProviderBase> | undefined;
 	return typeof maybeConfig?.getRawConfig === "function";
+}
+
+export function createChildMonitoringContext(
+	props: Parameters<typeof createChildLogger>[0],
+): MonitoringContext {
+	return loggerToMonitoringContext(createChildLogger(props));
 }

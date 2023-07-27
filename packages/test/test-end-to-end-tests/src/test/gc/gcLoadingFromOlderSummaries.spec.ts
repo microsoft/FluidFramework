@@ -147,6 +147,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -223,6 +224,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -309,6 +311,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -388,6 +391,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -462,6 +466,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
