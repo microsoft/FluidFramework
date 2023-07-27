@@ -45,7 +45,7 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		applyUndoRedoEdit(tree, contents);
 		return state;
 	},
-	synchronize: async (state) => {
+	synchronizeTrees: async (state) => {
 		applySynchronizationOp(state);
 		return state;
 	},

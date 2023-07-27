@@ -83,7 +83,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		applyUndoRedoEdit(tree, contents);
 		return state;
 	},
-	synchronize: async (state) => {
+	synchronizeTrees: async (state) => {
 		applySynchronizationOp(state);
 		return state;
 	},

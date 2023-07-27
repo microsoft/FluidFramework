@@ -85,7 +85,7 @@ export interface RedoOp {
 }
 
 export interface Synchronize {
-	type: "synchronize";
+	type: "synchronizeTrees";
 }
 
 export interface NodeRangePath {
