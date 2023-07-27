@@ -99,7 +99,7 @@ export function getPrimaryField(
 	schema: TreeStoredSchema,
 ): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
-	const field = schema.fields.get(EmptyKey);
+	const field = schema.structFields.get(EmptyKey);
 	if (field === undefined) {
 		return undefined;
 	}
@@ -108,7 +108,7 @@ export function getPrimaryField(
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
 export function getFieldSchema(field: FieldKey, schema: TreeStoredSchema): FieldStoredSchema {
-	return schema.fields.get(field) ?? schema.extraFields;
+	return schema.structFields.get(field) ?? schema.mapFields;
 }
 
 export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
@@ -494,7 +494,7 @@ export function applyTypesFromContext(
 			}
 		}
 
-		for (const key of schema.fields.keys()) {
+		for (const key of schema.structFields.keys()) {
 			if (data[key] === undefined) {
 				setFieldForKey(key, context, schema, fields);
 			}

@@ -1925,11 +1925,11 @@ const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	localFields: {
+	structFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
-	extraFields: fieldSchema(FieldKinds.sequence),
-	value: ValueSchema.Serializable,
+	mapFields: fieldSchema(FieldKinds.sequence),
+	leafValue: ValueSchema.Serializable,
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
@@ -2002,7 +2002,7 @@ function setTestValue(branch: ISharedTreeView, value: TreeValue): void {
 
 const testValueSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	value: ValueSchema.Serializable,
+	leafValue: ValueSchema.Serializable,
 });
 
 /**

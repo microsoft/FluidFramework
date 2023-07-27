@@ -174,12 +174,12 @@ export interface TreeStoredSchema {
 	 * This refers to the FieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
-	 * It also interoperates well with extraFields being used as a map with arbitrary data as keys.
+	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly fields: ReadonlyMap<FieldKey, FieldStoredSchema>;
+	readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
 
 	/**
-	 * Constraint for local fields not mentioned in `localFields`.
+	 * Constraint for local fields not mentioned in `structFields`.
 	 *
 	 * Allows using using the local fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this FieldStoredSchema.
@@ -192,7 +192,7 @@ export interface TreeStoredSchema {
 	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
 	 * and can be useful in special cases (like a default stored schema when none is specified).
 	 */
-	readonly extraFields: FieldStoredSchema;
+	readonly mapFields: FieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree

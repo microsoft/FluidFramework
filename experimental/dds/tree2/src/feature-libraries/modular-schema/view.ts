@@ -143,17 +143,17 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
-		const localFields: Map<FieldKey, FieldStoredSchema> = new Map();
-		for (const [key, schema] of original.fields) {
-			// TODO: support missing field adapters for local fields.
-			localFields.set(key, this.adaptField(schema));
+		const structFields: Map<FieldKey, FieldStoredSchema> = new Map();
+		for (const [key, schema] of original.structFields) {
+			// TODO: support missing field adapters.
+			structFields.set(key, this.adaptField(schema));
 		}
 		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
 		// so copying the data over manually is better.
 		return {
-			extraFields: original.extraFields,
+			mapFields: original.mapFields,
 			value: original.value,
-			fields: localFields,
+			structFields,
 		};
 	}
 }
@@ -163,8 +163,8 @@ export class ViewSchema {
  * @alpha
  */
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
-	readonly fields: ReadonlyMap<FieldKey, IFieldSchema>;
-	readonly extraFields: IFieldSchema;
+	readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
+	readonly mapFields: IFieldSchema;
 }
 
 /**

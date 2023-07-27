@@ -48,42 +48,42 @@ describe("Schema Comparison", () => {
 	 * Note that children under the fields (and global fields) still have to be in schema.
 	 */
 	const anyTree: TreeStoredSchema = {
-		fields: emptyMap,
-		extraFields: anyField,
+		structFields: emptyMap,
+		mapFields: anyField,
 		value: ValueSchema.Serializable,
 	};
 
 	const neverTree2: TreeStoredSchema = {
-		fields: new Map([[brand("x"), neverField]]),
-		extraFields: emptyField,
+		structFields: new Map([[brand("x"), neverField]]),
+		mapFields: emptyField,
 		value: ValueSchema.Serializable,
 	};
 
 	const emptyTree: NamedTreeSchema = {
 		name: brand("empty"),
-		fields: emptyMap,
-		extraFields: emptyField,
+		structFields: emptyMap,
+		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
 	const emptyLocalFieldTree: NamedTreeSchema = {
 		name: brand("emptyLocalFieldTree"),
-		fields: new Map([[brand("x"), emptyField]]),
-		extraFields: emptyField,
+		structFields: new Map([[brand("x"), emptyField]]),
+		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
 	const optionalLocalFieldTree: NamedTreeSchema = {
 		name: brand("optionalLocalFieldTree"),
-		fields: new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
-		extraFields: emptyField,
+		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
+		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
 	const valueLocalFieldTree: NamedTreeSchema = {
 		name: brand("valueLocalFieldTree"),
-		fields: new Map([[brand("x"), fieldSchema(FieldKinds.value, [emptyTree.name])]]),
-		extraFields: emptyField,
+		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.value, [emptyTree.name])]]),
+		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
@@ -132,8 +132,8 @@ describe("Schema Comparison", () => {
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
 		assert(
 			isNeverTree(defaultSchemaPolicy, repo, {
-				fields: emptyMap,
-				extraFields: neverField,
+				structFields: emptyMap,
+				mapFields: neverField,
 				value: ValueSchema.Nothing,
 			}),
 		);
@@ -141,8 +141,8 @@ describe("Schema Comparison", () => {
 		assert(isNeverTree(defaultSchemaPolicy, repo, undefined));
 		assert.equal(
 			isNeverTree(defaultSchemaPolicy, repo, {
-				fields: emptyMap,
-				extraFields: emptyField,
+				structFields: emptyMap,
+				mapFields: emptyField,
 				value: ValueSchema.Nothing,
 			}),
 			false,
@@ -168,7 +168,7 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive")]);
 		const recursiveType = treeSchema({
-			extraFields: recursiveField,
+			mapFields: recursiveField,
 		});
 		updateTreeSchema(repo, brand("recursive"), recursiveType);
 		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
@@ -178,7 +178,7 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive"), emptyTree.name]);
 		const recursiveType = treeSchema({
-			extraFields: recursiveField,
+			mapFields: recursiveField,
 		});
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		updateTreeSchema(repo, brand("recursive"), recursiveType);

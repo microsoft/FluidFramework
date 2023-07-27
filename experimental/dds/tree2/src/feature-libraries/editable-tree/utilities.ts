@@ -27,8 +27,8 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 	// Since the above is not done yet, use use a heuristic:
 	return (
 		schema.value !== ValueSchema.Nothing &&
-		schema.fields.size === 0 &&
-		schema.extraFields.kind.identifier === FieldKinds.forbidden.identifier
+		schema.structFields.size === 0 &&
+		schema.mapFields.kind.identifier === FieldKinds.forbidden.identifier
 	);
 }
 

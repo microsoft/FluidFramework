@@ -1129,9 +1129,9 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 // @alpha (undocumented)
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
     // (undocumented)
-    readonly extraFields: IFieldSchema;
+    readonly mapFields: IFieldSchema;
     // (undocumented)
-    readonly fields: ReadonlyMap<FieldKey, IFieldSchema>;
+    readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
 }
 
 // @alpha
@@ -1161,13 +1161,13 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
 // @alpha (undocumented)
 export const jsonArray: TreeSchema<"Json.Array", {
-fields: {
+structFields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
-fields: {};
+structFields: {};
 }>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
@@ -1194,7 +1194,7 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 
 // @alpha (undocumented)
 export const jsonNull: TreeSchema<"Json.Null", {
-fields: {};
+structFields: {};
 }>;
 
 // @alpha (undocumented)
@@ -1204,14 +1204,14 @@ value: ValueSchema.Number;
 
 // @alpha (undocumented)
 export const jsonObject: TreeSchema<"Json.Object", {
-extraFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
-fields: {
+mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
+structFields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
 value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
-fields: {};
+structFields: {};
 }>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
@@ -1221,7 +1221,7 @@ value: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
-fields: {};
+structFields: {};
 }>, TreeSchema<"Json.Boolean", {
 value: ValueSchema.Boolean;
 }>]>;
@@ -1640,12 +1640,12 @@ export class SchemaBuilder {
     addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
-        fields: {
+        structFields: {
             [""]: T;
         };
     }>;
     fieldNodeRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
-        fields: {
+        structFields: {
             [""]: T;
         };
     }>;
@@ -1659,18 +1659,18 @@ export class SchemaBuilder {
         value: T;
     }>;
     map<Name extends string, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<Name, {
-        extraFields: T;
+        mapFields: T;
     }>;
     mapRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
-        extraFields: T;
+        mapFields: T;
     }>;
     // (undocumented)
     readonly name: string;
     struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(name: Name, t: T): TreeSchema<Name, {
-        fields: T;
+        structFields: T;
     }>;
     structRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, {
-        fields: T;
+        structFields: T;
     }>;
 }
 
@@ -1895,15 +1895,15 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly builder: Named<string>;
     // (undocumented)
-    readonly extraFields: FieldSchema;
-    // (undocumented)
-    readonly fields: ObjectToMap<NormalizeFields<Assume<T, TreeSchemaSpecification>["fields"]>, FieldKey, FieldSchema>;
-    // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
-    readonly localFieldsObject: NormalizeFields<Assume<T, TreeSchemaSpecification>["fields"]>;
+    readonly mapFields: FieldSchema;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
+    // (undocumented)
+    readonly structFields: ObjectToMap<NormalizeFields<Assume<T, TreeSchemaSpecification>["structFields"]>, FieldKey, FieldSchema>;
+    // (undocumented)
+    readonly structFieldsObject: NormalizeFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
     // (undocumented)
     readonly value: WithDefault<Assume<T, TreeSchemaSpecification>["value"], ValueSchema.Nothing>;
 }
@@ -1911,13 +1911,13 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
 // @alpha
 export interface TreeSchemaBuilder {
     // (undocumented)
-    readonly extraFields: FieldStoredSchema;
+    readonly leafValue?: ValueSchema;
     // (undocumented)
-    readonly localFields?: {
+    readonly mapFields: FieldStoredSchema;
+    // (undocumented)
+    readonly structFields?: {
         [key: string]: FieldStoredSchema;
     };
-    // (undocumented)
-    readonly value?: ValueSchema;
 }
 
 // @alpha
@@ -1926,17 +1926,17 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 // @alpha
 interface TreeSchemaSpecification {
     // (undocumented)
-    readonly extraFields?: FieldSchema;
+    readonly mapFields?: FieldSchema;
     // (undocumented)
-    readonly fields?: RestrictiveReadonlyRecord<string, FieldSchema>;
+    readonly structFields?: RestrictiveReadonlyRecord<string, FieldSchema>;
     // (undocumented)
     readonly value?: ValueSchema;
 }
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
-    readonly extraFields: FieldStoredSchema;
-    readonly fields: ReadonlyMap<FieldKey, FieldStoredSchema>;
+    readonly mapFields: FieldStoredSchema;
+    readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
     readonly value: ValueSchema;
 }
 
@@ -1978,7 +1978,7 @@ TFields extends {
 ][_InlineTrick];
 
 // @alpha
-type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
+type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
 
 // @alpha
 export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {

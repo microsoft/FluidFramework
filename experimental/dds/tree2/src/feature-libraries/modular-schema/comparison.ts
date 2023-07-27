@@ -38,34 +38,34 @@ export function allowsTreeSuperset(
 	if (!allowsValueSuperset(original.value, superset.value)) {
 		return false;
 	}
-	if (!allowsFieldSuperset(policy, originalData, original.extraFields, superset.extraFields)) {
+	if (!allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields)) {
 		return false;
 	}
 
 	if (
 		!compareSets({
-			a: original.fields,
-			b: superset.fields,
+			a: original.structFields,
+			b: superset.structFields,
 			aExtra: (originalField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.fields.get(originalField) ?? fail("missing expected field"),
-					superset.extraFields,
+					original.structFields.get(originalField) ?? fail("missing expected field"),
+					superset.mapFields,
 				),
 			bExtra: (supersetField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.extraFields,
-					superset.fields.get(supersetField) ?? fail("missing expected field"),
+					original.mapFields,
+					superset.structFields.get(supersetField) ?? fail("missing expected field"),
 				),
 			same: (sameField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.fields.get(sameField) ?? fail("missing expected field"),
-					superset.fields.get(sameField) ?? fail("missing expected field"),
+					original.structFields.get(sameField) ?? fail("missing expected field"),
+					superset.structFields.get(sameField) ?? fail("missing expected field"),
 				),
 		})
 	) {
@@ -235,12 +235,12 @@ export function isNeverTreeRecursive(
 	try {
 		parentTypeStack.add(tree);
 		if (
-			(policy.fieldKinds.get(tree.extraFields.kind.identifier) ?? fail("missing field kind"))
+			(policy.fieldKinds.get(tree.mapFields.kind.identifier) ?? fail("missing field kind"))
 				.multiplicity === Multiplicity.Value
 		) {
 			return true;
 		}
-		for (const field of tree.fields.values()) {
+		for (const field of tree.structFields.values()) {
 			// TODO: this can recurse infinitely for schema that include themselves in a value field.
 			// This breaks even if there are other allowed types.
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).

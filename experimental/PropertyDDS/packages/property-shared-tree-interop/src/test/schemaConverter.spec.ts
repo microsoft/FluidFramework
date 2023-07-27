@@ -61,11 +61,12 @@ describe("schema converter", () => {
 					const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
 					assert(propertySchema !== undefined);
 					if (typeName === "NamedProperty") {
-						assert(propertySchema.extraFields.types !== undefined);
-						assert.equal(propertySchema.extraFields.types.size, 0);
-						assert.equal(propertySchema.extraFields.kind, FieldKinds.forbidden);
+						assert(propertySchema.mapFields.types !== undefined);
+						assert.equal(propertySchema.mapFields.types.size, 0);
+						assert.equal(propertySchema.mapFields.kind, FieldKinds.forbidden);
 						const idFieldSchema =
-							propertySchema.fields.get(brand("guid")) ?? fail("expected field");
+							propertySchema.structFields.get(brand("guid")) ??
+							fail("expected field");
 						assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
 						assert.deepEqual(
 							[...(idFieldSchema.types ?? fail("expected types"))],
@@ -73,17 +74,18 @@ describe("schema converter", () => {
 						);
 					} else {
 						if (typeName === "NodeProperty") {
-							assert(propertySchema.extraFields.types === undefined);
-							assert.deepEqual(propertySchema.extraFields.kind, FieldKinds.optional);
-							assert.deepEqual([...propertySchema.fields], []);
+							assert(propertySchema.mapFields.types === undefined);
+							assert.deepEqual(propertySchema.mapFields.kind, FieldKinds.optional);
+							assert.deepEqual([...propertySchema.structFields], []);
 						} else {
 							assert.deepEqual(
-								propertySchema.fields.get(brand(nodePropertyField))?.types,
+								propertySchema.structFields.get(brand(nodePropertyField))?.types,
 								new Set([nodePropertySchema.name]),
 							);
-							assert.equal(propertySchema.extraFields.kind, FieldKinds.forbidden);
+							assert.equal(propertySchema.mapFields.kind, FieldKinds.forbidden);
 							const idFieldSchema =
-								propertySchema.fields.get(brand("guid")) ?? fail("expected field");
+								propertySchema.structFields.get(brand("guid")) ??
+								fail("expected field");
 							assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
 							assert.deepEqual(
 								[...(idFieldSchema.types ?? fail("expected types"))],
@@ -91,7 +93,7 @@ describe("schema converter", () => {
 							);
 							if (typeName === "RelationshipProperty") {
 								const toFieldSchema =
-									propertySchema.fields.get(brand("to")) ??
+									propertySchema.structFields.get(brand("to")) ??
 									fail("expected field");
 								assert.deepEqual(toFieldSchema.kind, FieldKinds.value);
 								assert.deepEqual(
@@ -147,7 +149,7 @@ describe("schema converter", () => {
 					fullSchemaData.treeSchema.get(brand("map<Any>")) ??
 					fail("expected tree schema");
 
-				assert.deepEqual([...(anyMap.extraFields as FieldSchema).allowedTypes], [Any]);
+				assert.deepEqual([...(anyMap.mapFields as FieldSchema).allowedTypes], [Any]);
 			}
 		});
 
@@ -199,10 +201,10 @@ describe("schema converter", () => {
 			);
 			const neverTreeSchema = fullSchemaData.treeSchema.get(brand("Test:NeverType-1.0.0"));
 			assert(neverTreeSchema !== undefined);
-			assert.deepEqual([...(neverTreeSchema.fields ?? fail("expected empty map"))], []);
-			assert.deepEqual(neverTreeSchema.extraFields.kind, FieldKinds.forbidden);
+			assert.deepEqual([...(neverTreeSchema.structFields ?? fail("expected empty map"))], []);
+			assert.deepEqual(neverTreeSchema.mapFields.kind, FieldKinds.forbidden);
 			assert.deepEqual(
-				[...(neverTreeSchema.extraFields.types ?? fail("expected empty set"))],
+				[...(neverTreeSchema.mapFields.types ?? fail("expected empty set"))],
 				[],
 			);
 		});
@@ -228,9 +230,9 @@ describe("schema converter", () => {
 			const testOptional = fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0"));
 
 			assert.equal(nodeProperty, nodePropertySchema);
-			assert.equal(testOptional?.extraFields.kind, FieldKinds.forbidden);
+			assert.equal(testOptional?.mapFields.kind, FieldKinds.forbidden);
 
-			const miscField = testOptional?.fields.get(brand("misc"));
+			const miscField = testOptional?.structFields.get(brand("misc"));
 			assert(miscField?.types !== undefined);
 			assert.deepEqual(
 				miscField.types,
@@ -243,7 +245,7 @@ describe("schema converter", () => {
 				]),
 			);
 
-			const mapField = testOptional?.fields.get(brand(nodePropertyField));
+			const mapField = testOptional?.structFields.get(brand(nodePropertyField));
 			assert(mapField?.types !== undefined);
 			assert.deepEqual(mapField.types, new Set([nodePropertySchema.name]));
 		});
@@ -278,7 +280,7 @@ describe("schema converter", () => {
 				fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0")) ??
 				fail("missing schema");
 			const arrayField =
-				(nodeSchema.fields.get(brand("childArray")) as FieldSchema) ??
+				(nodeSchema.structFields.get(brand("childArray")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(arrayField.kind, FieldKinds.optional);
 			const arrayTypeName: TreeSchemaIdentifier = brand("array<Test:Child-1.0.0>");
@@ -286,7 +288,7 @@ describe("schema converter", () => {
 			const arraySchema = fullSchemaData.treeSchema.get(arrayTypeName);
 			assert(arraySchema !== undefined);
 			assert.equal(arraySchema.value, ValueSchema.Nothing);
-			assert.equal(arraySchema.fields.size, 1);
+			assert.equal(arraySchema.structFields.size, 1);
 			const primary = getPrimaryField(arraySchema);
 			assert(primary !== undefined);
 			assert.deepEqual(primary.schema.kind, FieldKinds.sequence);
@@ -305,19 +307,19 @@ describe("schema converter", () => {
 				fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0")) ??
 				fail("missing schema");
 			const mapField =
-				(nodeSchema.fields.get(brand("childMap")) as FieldSchema) ??
+				(nodeSchema.structFields.get(brand("childMap")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(mapField.kind, FieldKinds.optional);
 			const mapTypeName: TreeSchemaIdentifier = brand("map<Test:Child-1.0.0>");
 			assert.deepEqual([...(mapField.types ?? fail("expected types"))], [mapTypeName]);
 			const mapSchema = fullSchemaData.treeSchema.get(mapTypeName);
 			assert(mapSchema !== undefined);
-			assert.deepEqual(mapSchema.extraFields.kind, FieldKinds.optional);
+			assert.deepEqual(mapSchema.mapFields.kind, FieldKinds.optional);
 			assert.deepEqual(
-				[...(mapSchema.extraFields.types ?? fail("expected types"))],
+				[...(mapSchema.mapFields.types ?? fail("expected types"))],
 				["Test:Child-1.0.0"],
 			);
-			assert.deepEqual([...mapSchema.fields], []);
+			assert.deepEqual([...mapSchema.structFields], []);
 			assert.equal(mapSchema.value, ValueSchema.Nothing);
 		});
 
@@ -339,19 +341,19 @@ describe("schema converter", () => {
 			const extraTypeSchema =
 				fullSchemaData.treeSchema.get(extraTypeName) ?? fail("expected tree schema");
 			const anyField =
-				(extraTypeSchema?.fields.get(brand("any")) as FieldSchema) ??
+				(extraTypeSchema?.structFields.get(brand("any")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(anyField?.kind, FieldKinds.optional);
 			assert(anyField.types === undefined);
 			assert.deepEqual([...anyField.allowedTypes], [Any]);
 
 			const mapOfAnyField =
-				(extraTypeSchema?.fields.get(brand("mapOfAny")) as FieldSchema) ??
+				(extraTypeSchema?.structFields.get(brand("mapOfAny")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual([...(mapOfAnyField.types ?? fail("expected types"))], ["map<Any>"]);
 
 			const arrayOfAnyField =
-				(extraTypeSchema?.fields.get(brand("arrayOfAny")) as FieldSchema) ??
+				(extraTypeSchema?.structFields.get(brand("arrayOfAny")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(
 				[...(arrayOfAnyField.types ?? fail("expected types"))],
@@ -413,7 +415,7 @@ describe("schema converter", () => {
 			const mapOfEnums = fullSchemaData.treeSchema.get(brand(`map<enum<${enumTypeName}>>`));
 			assert(mapOfEnums);
 			assert.deepEqual(
-				[...(mapOfEnums.extraFields as FieldSchema).allowedTypes][0],
+				[...(mapOfEnums.mapFields as FieldSchema).allowedTypes][0],
 				enumSchema,
 			);
 		});
@@ -433,7 +435,7 @@ describe("schema converter", () => {
 			const parentSchema =
 				fullSchemaData.treeSchema.get(parentTypeName) ?? fail("expected tree schema");
 			const childFieldSchema =
-				parentSchema.fields.get(childFieldKey) ?? fail("expected field schema");
+				parentSchema.structFields.get(childFieldKey) ?? fail("expected field schema");
 			assert.deepEqual(
 				[...(childFieldSchema.types ?? fail("expected types"))],
 				[childTypeName],
@@ -442,13 +444,13 @@ describe("schema converter", () => {
 			const childSchema =
 				fullSchemaData.treeSchema.get(childTypeName) ?? fail("expected tree schema");
 			const parentFieldSchema =
-				childSchema.fields.get(parentFieldKey) ?? fail("expected field schema");
+				childSchema.structFields.get(parentFieldKey) ?? fail("expected field schema");
 			assert.deepEqual(
 				[...(parentFieldSchema.types ?? fail("expected types"))],
 				[parentTypeName, childTypeName],
 			);
 			const childOfChildFieldSchema =
-				childSchema.fields.get(childFieldKey) ?? fail("expected field schema");
+				childSchema.structFields.get(childFieldKey) ?? fail("expected field schema");
 			assert.deepEqual(childOfChildFieldSchema, childFieldSchema);
 		});
 

@@ -189,11 +189,11 @@ function tryShapeForSchema(
 		return cached;
 	}
 	const treeSchema = schema.treeSchema.get(type) ?? fail("missing schema");
-	if (treeSchema.extraFields !== undefined) {
+	if (treeSchema.mapFields !== undefined) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
-	for (const [key, field] of treeSchema.fields) {
+	for (const [key, field] of treeSchema.structFields) {
 		const fieldShape = tryShapeForFieldSchema(schema, policy, field, key, shapes);
 		if (fieldShape === undefined) {
 			return polymorphic;

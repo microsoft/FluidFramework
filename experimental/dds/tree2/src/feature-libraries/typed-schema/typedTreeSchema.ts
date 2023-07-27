@@ -47,17 +47,17 @@ export class TreeSchema<
 > implements ITreeSchema
 {
 	// Allows reading fields through the normal map, but without losing type information.
-	public readonly fields: ObjectToMap<
-		NormalizeFields<Assume<T, TreeSchemaSpecification>["fields"]>,
+	public readonly structFields: ObjectToMap<
+		NormalizeFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
 		FieldKey,
 		FieldSchema
 	>;
 
-	public readonly localFieldsObject: NormalizeFields<
-		Assume<T, TreeSchemaSpecification>["fields"]
+	public readonly structFieldsObject: NormalizeFields<
+		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
-	public readonly extraFields: FieldSchema;
+	public readonly mapFields: FieldSchema;
 	public readonly value: WithDefault<
 		Assume<T, TreeSchemaSpecification>["value"],
 		ValueSchema.Nothing
@@ -70,11 +70,11 @@ export class TreeSchema<
 	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
-		this.localFieldsObject = normalizeLocalFields<Assume<T, TreeSchemaSpecification>["fields"]>(
-			this.info.fields,
-		);
-		this.fields = objectToMapTyped(this.localFieldsObject);
-		this.extraFields = normalizeField(this.info.extraFields);
+		this.structFieldsObject = normalizeLocalFields<
+			Assume<T, TreeSchemaSpecification>["structFields"]
+		>(this.info.structFields);
+		this.structFields = objectToMapTyped(this.structFieldsObject);
+		this.mapFields = normalizeField(this.info.mapFields);
 		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
 			Assume<T, TreeSchemaSpecification>["value"],
 			ValueSchema.Nothing
@@ -153,8 +153,8 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
  * @alpha
  */
 export interface TreeSchemaSpecification {
-	readonly fields?: RestrictiveReadonlyRecord<string, FieldSchema>;
-	readonly extraFields?: FieldSchema;
+	readonly structFields?: RestrictiveReadonlyRecord<string, FieldSchema>;
+	readonly mapFields?: FieldSchema;
 	readonly value?: ValueSchema;
 }
 

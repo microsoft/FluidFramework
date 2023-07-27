@@ -108,7 +108,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 	private *findKeys(node: EditableTree): Iterable<[key: LocalNodeKey, node: EditableTree]> {
 		const key = node[localNodeKeySymbol];
 		if (key !== undefined) {
-			const field = node[typeSymbol].fields.get(this.fieldKey);
+			const field = node[typeSymbol].structFields.get(this.fieldKey);
 			assert(field !== undefined, 0x6e2 /* Found node key that is not in schema */);
 			assert(
 				field.kind.identifier === FieldKinds.nodeKey.identifier,
@@ -122,7 +122,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 			yield [key, node];
 		} else {
 			assert(
-				!node[typeSymbol].fields.has(this.fieldKey),
+				!node[typeSymbol].structFields.has(this.fieldKey),
 				0x6e3 /* Node key absent but required by schema */,
 			);
 		}

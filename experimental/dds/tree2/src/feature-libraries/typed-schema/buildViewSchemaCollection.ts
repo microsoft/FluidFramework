@@ -126,7 +126,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 		validateRootField(collection, collection.rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
-		for (const [key, field] of tree.fields) {
+		for (const [key, field] of tree.structFields) {
 			validateField(
 				collection,
 				field,
@@ -135,15 +135,15 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 				errors,
 			);
 		}
-		if (tree.extraFields !== FieldSchema.empty) {
+		if (tree.mapFields !== FieldSchema.empty) {
 			validateField(
 				collection,
-				tree.extraFields,
+				tree.mapFields,
 				() =>
 					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if (tree.extraFields.kind === FieldKinds.value) {
+			if (tree.mapFields.kind === FieldKinds.value) {
 				errors.push(
 					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible local field keys to have a value under them.`,
 				);
