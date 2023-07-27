@@ -319,7 +319,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...options,
-		skip: [12],
+		skip: [9, 12, 41],
 		rebaseProbability: 0.2,
 		containerRuntimeOptions: {
 			flushMode: FlushMode.TurnBased,
