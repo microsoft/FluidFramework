@@ -94,12 +94,12 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge three adjacent moves ", () => {
 		const factory = new SF.MarkListFactory();
-		const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
-		const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
-		const moveOut3: SF.Detach = { type: "MoveOut", id: brand(2), count: 1 };
-		const moveIn1: SF.Mark = { type: "MoveIn", id: brand(0), count: 1 };
-		const moveIn2: SF.Mark = { type: "MoveIn", id: brand(1), count: 1 };
-		const moveIn3: SF.Mark = { type: "MoveIn", id: brand(2), count: 1 };
+		const moveOut1 = Mark.moveOut(1, brand(0));
+		const moveOut2 = Mark.moveOut(1, brand(1));
+		const moveOut3 = Mark.moveOut(1, brand(2));
+		const moveIn1 = Mark.moveIn(1, brand(0));
+		const moveIn2 = Mark.moveIn(1, brand(1));
+		const moveIn3 = Mark.moveIn(1, brand(2));
 		factory.pushContent(moveOut1);
 		factory.pushContent(moveOut2);
 		factory.pushContent(moveOut3);
