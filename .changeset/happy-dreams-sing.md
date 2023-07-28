@@ -23,4 +23,6 @@ const result1 = endpointIndex.previousInterval(pos);
 const result2 = endpointIndex.nextInterval(pos);
 ```
 
-3. Deprecate API `CreateBackwardIteratorWithEndPosition`, `CreateBackwardIteratorWithStartPosition`, `CreateForwardIteratorWithEndPosition` and `CreateForwardIteratorWithStartPosition` from `IntervalCollection`. Only the default iterator will be supported in the future, and it will no longer maintain the sequence.
+3. Deprecate API `CreateBackwardIteratorWithEndPosition`, `CreateBackwardIteratorWithStartPosition`, `CreateForwardIteratorWithEndPosition` and `CreateForwardIteratorWithStartPosition` from `IntervalCollection`. Only the default iterator will be supported in the future, and it will no longer preserve sequence order.
+
+Equivalent functionality to these three methods is provided by `IOverlappingIntervalIndex.gatherIterationResults`.
