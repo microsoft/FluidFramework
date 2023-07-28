@@ -40,7 +40,6 @@ import {
 	AttachMark,
 	DeleteMark,
 	DetachMark,
-	DetachedCellMark,
 	EffectMark,
 	EmptyInputCellMark,
 	ExistingCellMark,
@@ -414,14 +413,8 @@ function areMergeableCellIds(
 	lhsCount: number,
 	rhs: CellId | undefined,
 ): boolean {
-	if (lhs === undefined || rhs === undefined) {
-		return lhs === undefined && rhs === undefined;
-	}
-
 	return (
-		lhs.revision === rhs.revision &&
-		(lhs.localId as number) + lhsCount === rhs.localId &&
-		areSameLineage(lhs.lineage, rhs.lineage)
+		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
 	);
 }
 
@@ -693,7 +686,7 @@ export class DetachedNodeTracker {
 		};
 	}
 
-	private updateMark(mark: Mark<unknown> & DetachedCellMark): void {
+	private updateMark(mark: EmptyInputCellMark<unknown>): void {
 		const detachEvent = mark.cellId;
 		const original = { revision: detachEvent.revision, localId: detachEvent.localId };
 		const updated = this.getUpdatedDetach(original);

@@ -79,7 +79,7 @@ export const sequenceFieldEditor = {
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		assert(cellId.revision !== undefined, "Detach event must have a revision");
+		assert(cellId.revision !== undefined, "Target cell must have a revision.");
 		const effect: Reattach<never> = {
 			type: "Revive",
 			content: reviver(cellId.revision, cellId.localId, count),

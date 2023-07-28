@@ -51,11 +51,10 @@ function makeV0Codec<TNodeChange>(
 				) as EncodedEffect;
 			}
 			case "Modify":
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
 					...effect,
 					changes: childCodec.encode(effect.changes),
-				} as EncodedEffect;
+				};
 			case NoopMarkType:
 			case "MoveIn":
 			case "ReturnTo":

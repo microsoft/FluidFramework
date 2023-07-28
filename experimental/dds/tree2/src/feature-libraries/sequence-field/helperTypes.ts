@@ -36,17 +36,13 @@ export type ExistingCellMark<TNodeChange> =
 	| ReviveMark<TNodeChange>
 	| ReturnToMark;
 
-export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
+export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & { cellId: CellId };
 
 /**
  * A mark that spans one or more cells.
  * The spanned cells may be populated (e.g., "Delete") or not (e.g., "Revive").
  */
 export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
-
-export interface DetachedCellMark {
-	cellId: CellId;
-}
 
 export type Generate<TNodeChange> = Insert<TNodeChange> | Revive<TNodeChange>;
 
