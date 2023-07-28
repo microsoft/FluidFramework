@@ -162,7 +162,7 @@ export interface ContainerStateMetadata extends HasContainerKey {
 
 // @internal
 export namespace DataEdit {
-    const MessageType = "SEND_EDIT_DATA";
+    const MessageType = "DATA_EDIT";
     export function createMessage(data: MessageData): Message;
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
