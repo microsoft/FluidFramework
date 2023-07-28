@@ -27,7 +27,11 @@ export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): Web
 				: chunkName;
 			result.set(metricName, {
 				// QUESTION: Should we be summing up the assets for an entryPoint?
-				parsedSize: chunkGroupStats.assets?.reduce((prev, current) => prev + (current?.size ?? 0), 0) ?? 0,
+				parsedSize:
+					chunkGroupStats.assets?.reduce(
+						(prev, current) => prev + (current?.size ?? 0),
+						0,
+					) ?? 0,
 			});
 		});
 
