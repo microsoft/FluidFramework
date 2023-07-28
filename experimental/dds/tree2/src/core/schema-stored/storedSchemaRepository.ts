@@ -61,12 +61,12 @@ export class InMemoryStoredSchemaRepository<TPolicy = unknown>
 	 * There are a couple reasons we might not want this simple solution long term:
 	 * 1. We might want an easy/fast copy.
 	 * 2. We might want a way to reserve a large namespace of schema with the same schema.
-	 * The way extraFields has been structured mitigates the need for this, but it still might be useful.
+	 * The way mapFields has been structured mitigates the need for this, but it still might be useful.
 	 *
 	 * (ex: someone using data as field identifiers might want to
 	 * reserve all fields identifiers starting with "foo." to have a specific schema).
 	 * Combined with support for such namespaces in the allowed sets in the schema objects,
-	 * that might provide a decent alternative to extraFields (which is a bit odd).
+	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
 	public constructor(public readonly policy: TPolicy, data?: SchemaData) {
 		super("StoredSchemaRepository");

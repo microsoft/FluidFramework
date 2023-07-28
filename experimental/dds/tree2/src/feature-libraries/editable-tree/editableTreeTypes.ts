@@ -46,7 +46,7 @@ export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 export const getField: unique symbol = Symbol("editable-tree:getField()");
 
 /**
- * A symbol to get information about where an {@link EditableTree} is parented in contexts where string keys are already in use for fields.
+ * A symbol to get information about where an {@link EditableTree} is parented
  * in contexts where string keys are already in use for fields.
  * @alpha
  */

@@ -4,7 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { FieldKindIdentifierSchema, LocalFieldKeySchema, RevisionTagSchema } from "../../core";
+import { FieldKindIdentifierSchema, FieldKeySchema, RevisionTagSchema } from "../../core";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
@@ -50,7 +50,7 @@ type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
 const EncodedFieldChange = Type.Object(
 	{
-		fieldKey: LocalFieldKeySchema,
+		fieldKey: FieldKeySchema,
 		fieldKind: FieldKindIdentifierSchema,
 		// Implementation note: node and field change encoding is mutually recursive.
 		// This field marks a boundary in that recursion to avoid constructing excessively complex
@@ -75,7 +75,6 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  * This chooses to use lists of named objects instead of maps:
  * this choice is somewhat arbitrary, but avoids user data being used as object keys,
  * which can sometimes be an issue (for example handling that for "__proto__" can require care).
- * It also allows dealing with global vs local field key disambiguation via a flag on the field.
  */
 export type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 

@@ -12,7 +12,6 @@ import {
 	TreeStoredSchema,
 	ValueSchema,
 	FieldStoredSchema,
-	LocalFieldKey,
 	TreeSchemaIdentifier,
 	TreeTypeSet,
 	MapTree,
@@ -98,9 +97,9 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
  */
 export function getPrimaryField(
 	schema: TreeStoredSchema,
-): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
+): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
-	const field = schema.localFields.get(EmptyKey);
+	const field = schema.structFields.get(EmptyKey);
 	if (field === undefined) {
 		return undefined;
 	}
@@ -109,7 +108,7 @@ export function getPrimaryField(
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
 export function getFieldSchema(field: FieldKey, schema: TreeStoredSchema): FieldStoredSchema {
-	return schema.localFields.get(field) ?? schema.extraLocalFields;
+	return schema.structFields.get(field) ?? schema.mapFields;
 }
 
 export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
@@ -301,7 +300,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys as strings.
 	 *
-	 * Allow unbranded local field keys and a convenience for literals.
+	 * Allow unbranded field keys as a convenience for literals.
 	 */
 	[key: string]: ContextuallyTypedFieldData;
 }
@@ -341,7 +340,7 @@ function shallowCompatibilityTest(
 	// For now, consider all not explicitly typed objects shallow compatible.
 	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
 
-	// Special case primitive schema to not be compatible with data with local fields.
+	// Special case primitive schema to not be compatible with data with fields.
 	if (isPrimitive(schema)) {
 		if (fieldKeysFromData(data).length > 0) {
 			return false;
@@ -495,7 +494,7 @@ export function applyTypesFromContext(
 			}
 		}
 
-		for (const key of schema.localFields.keys()) {
+		for (const key of schema.structFields.keys()) {
 			if (data[key] === undefined) {
 				setFieldForKey(key, context, schema, fields);
 			}
