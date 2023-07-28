@@ -82,15 +82,6 @@ const testKey2 = "another test key";
 const testValue = "test value";
 const testIncrementValue = 5;
 
-const getPendingStateWithoutClose = async (container: IContainerExperimental): Promise<string> => {
-	const containerClose = container.close;
-	container.close = (message) => assert(message === undefined);
-	const pendingState = await container.closeAndGetPendingLocalState?.();
-	assert(typeof pendingState === "string");
-	container.close = containerClose;
-	return pendingState;
-};
-
 type SharedObjCallback = (
 	container: IContainer,
 	dataStore: ITestFluidObject,
@@ -118,7 +109,7 @@ const getPendingOps = async (
 
 	let pendingState: string | undefined;
 	if (send) {
-		pendingState = await getPendingStateWithoutClose(container);
+		pendingState = await container.getPendingLocalState?.();
 		await args.ensureSynchronized();
 		container.close();
 	} else {
@@ -875,7 +866,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
 		],
 		async () => {
-			const container = await provider.loadTestContainer(testContainerConfig);
+			const container: IContainerExperimental = await provider.loadTestContainer(
+				testContainerConfig,
+			);
 			const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 			// Force to write mode to get a leave message
 			dataStore.root.set("forceWrite", true);
@@ -889,7 +882,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-			const pendingState = await getPendingStateWithoutClose(container);
+			const pendingState = await container.getPendingLocalState?.();
 
 			const container2 = await loader.resolve({ url }, pendingState);
 
@@ -1032,7 +1025,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
 			});
 
-			const container2 = await loader.resolve({ url }, pendingOps);
+			const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
 			const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 			const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			await waitForContainerConnection(container2);
@@ -1058,7 +1051,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			assert(dataStore2.runtime.deltaManager.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-			const morePendingOps = await getPendingStateWithoutClose(container2);
+			const morePendingOps = await container2.getPendingLocalState?.();
 			assert.ok(morePendingOps);
 
 			const container3 = await loader.resolve({ url }, morePendingOps);
@@ -1111,6 +1104,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("close while uploading blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		// force write mode
+		dataStore.root.set("forceWrite", true);
+		await provider.ensureSynchronized();
 
 		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
@@ -1124,6 +1120,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		await provider.ensureSynchronized();
 		assert.strictEqual(
+			bufferToString(await map1.get("blob handle").get(), "utf8"),
+			"blob contents",
+		);
+		assert.strictEqual(
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
 			"blob contents",
 		);
@@ -1132,6 +1132,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("close while uploading multiple blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		// force write mode
+		dataStore.root.set("forceWrite", true);
+		await provider.ensureSynchronized();
 
 		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
@@ -1147,6 +1150,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
+			assert.strictEqual(
+				bufferToString(await map1.get(`blob handle ${i}`).get(), "utf8"),
+				`blob contents ${i}`,
+			);
 			assert.strictEqual(
 				bufferToString(await map2.get(`blob handle ${i}`).get(), "utf8"),
 				`blob contents ${i}`,

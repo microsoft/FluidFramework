@@ -48,7 +48,7 @@ class DedupeStorage extends BaseMockBlobStorage {
 	public minTTL: number = MIN_TTL;
 
 	public async createBlob(blob: ArrayBufferLike) {
-		const id = await gitHashFile(blob as any);
+		const id = await gitHashFile(blob as Buffer);
 		this.blobs.set(id, blob);
 		return { id, minTTLInSeconds: this.minTTL };
 	}
@@ -71,9 +71,11 @@ class MockRuntime
 		public mc: MonitoringContext,
 		snapshot: IBlobManagerLoadInfo = {},
 		attached = false,
+		stashed: any[] = [[], {}],
 	) {
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
+		this.ops = stashed[0];
 		this.blobManager = new BlobManager(
 			undefined as any, // routeContext
 			snapshot,
@@ -82,7 +84,7 @@ class MockRuntime
 			() => undefined,
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
-			undefined,
+			stashed[1],
 			() => (this.closed = true),
 		);
 	}
@@ -141,6 +143,10 @@ class MockRuntime
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
 		return this.blobManager.getBlob(blobId);
+	}
+
+	public getPendingState() {
+		return [[...this.ops], this.blobManager.getPendingBlobs()];
 	}
 
 	public blobManager: BlobManager;
@@ -273,6 +279,8 @@ describe("BlobManager", () => {
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
 	let mc: MonitoringContext;
 	let injectedSettings: Record<string, ConfigTypes> = {};
+	// TODO: simplify these tests. Consider creating multiple files
+	let skipAfterEach = false;
 
 	beforeEach(() => {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -281,6 +289,7 @@ describe("BlobManager", () => {
 		mc = mixinMonitoringContext(createChildLogger(), configProvider(injectedSettings));
 		runtime = new MockRuntime(mc);
 		handlePs.length = 0;
+		skipAfterEach = false;
 
 		// ensures this blob will be processed next time runtime.processBlobs() is called
 		waitForBlob = async (blob) => {
@@ -310,6 +319,10 @@ describe("BlobManager", () => {
 	});
 
 	afterEach(async () => {
+		if (skipAfterEach) {
+			// for shutdown tests we have no way to clean the pending list
+			return;
+		}
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
 	});
@@ -641,6 +654,103 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
 		await runtime.processAll();
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+	});
+
+	describe("Shutdown", () => {
+		it("shutdown while uploading blob", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob);
+			const shutdownP = runtime.blobManager.shutdownPendingBlobs();
+			await runtime.processHandles();
+			await assert.doesNotReject(handleP);
+			await shutdownP;
+			const pendingState = runtime.getPendingState();
+			const pendingBlobs = pendingState[1];
+			assert.strictEqual(Object.keys(pendingBlobs).length, 1);
+			assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
+			assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
+			assert.strictEqual(Object.values<any>(pendingBlobs)[0].uploadTime, undefined);
+
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+
+			const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
+			await runtime2.attach();
+			await runtime2.connect();
+			await runtime2.processAll();
+
+			const summaryData2 = validateSummary(runtime2);
+			assert.strictEqual(summaryData2.ids.length, 1);
+			assert.strictEqual(summaryData2.redirectTable.size, 1);
+			skipAfterEach = true;
+		});
+
+		it("shutdown while waiting for op", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob);
+			await runtime.processBlobs();
+			const shutdownP = runtime.blobManager.shutdownPendingBlobs();
+			await runtime.processHandles();
+			await assert.doesNotReject(handleP);
+			await shutdownP;
+			const pendingState = runtime.getPendingState();
+			const pendingBlobs = pendingState[1];
+			assert.strictEqual(Object.keys(pendingBlobs).length, 1);
+			assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
+			assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
+			assert.ok(Object.values<any>(pendingBlobs)[0].uploadTime);
+
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+
+			const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
+			await runtime2.attach();
+			await runtime2.connect();
+			await runtime2.processAll();
+
+			const summaryData2 = validateSummary(runtime2);
+			assert.strictEqual(summaryData2.ids.length, 1);
+			assert.strictEqual(summaryData2.redirectTable.size, 1);
+			skipAfterEach = true;
+		});
+
+		it("shutdown multiple blobs", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const blob = IsoBuffer.from("blob", "utf8");
+			const handleP = runtime.createBlob(blob);
+			await runtime.processBlobs();
+			const blob2 = IsoBuffer.from("blob2", "utf8");
+			const handleP2 = runtime.createBlob(blob2);
+			const shutdownP = runtime.blobManager.shutdownPendingBlobs();
+			await runtime.processHandles();
+			await assert.doesNotReject(handleP);
+			await assert.doesNotReject(handleP2);
+			await shutdownP;
+			const pendingState = runtime.getPendingState();
+			const pendingBlobs = pendingState[1];
+			assert.strictEqual(Object.keys(pendingBlobs).length, 2);
+
+			const summaryData = validateSummary(runtime);
+			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.redirectTable, undefined);
+
+			const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
+			await runtime2.attach();
+			await runtime2.connect();
+			await runtime2.processAll();
+
+			const summaryData2 = validateSummary(runtime2);
+			assert.strictEqual(summaryData2.ids.length, 2);
+			assert.strictEqual(summaryData2.redirectTable.size, 2);
+			skipAfterEach = true;
+		});
 	});
 
 	describe("Abort Signal", () => {

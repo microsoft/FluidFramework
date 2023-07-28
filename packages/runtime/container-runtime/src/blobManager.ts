@@ -21,7 +21,7 @@ import {
 	assert,
 	bufferToString,
 	Deferred,
-	stringToBuffer,
+	IsoBuffer,
 	TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import {
@@ -150,6 +150,7 @@ interface PendingBlob {
 export interface IPendingBlobs {
 	[id: string]: {
 		blob: string;
+		storageId?: string;
 		uploadTime?: number;
 		minTTLInSeconds?: number;
 		attached?: boolean;
@@ -250,9 +251,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
-			const blob = stringToBuffer(entry.blob, "base64");
+			const blob = IsoBuffer.from(entry.blob, "utf8"); // stringToBuffer(entry.blob, "utf8");
 			const attached = entry.attached;
 			const acked = entry.acked;
+			const storageId = entry.storageId; // entry.storageId = response.id
 			if (entry.minTTLInSeconds && entry.uploadTime) {
 				const timeLapseSinceLocalUpload = (Date.now() - entry.uploadTime) / 1000;
 				// stashed entries with more than half-life in storage will not be reuploaded
@@ -261,6 +263,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						blob,
 						status: PendingBlobStatus.OfflinePendingOp,
 						handleP: new Deferred(),
+						storageId,
 						uploadP: undefined,
 						uploadTime: entry.uploadTime,
 						minTTLInSeconds: entry.minTTLInSeconds,
@@ -380,20 +383,22 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	public async shutdownPendingBlobs(): Promise<void> {
 		for (const [localId, entry] of this.pendingBlobs) {
-			if (
-				entry.status === PendingBlobStatus.OnlinePendingOp ||
-				entry.status === PendingBlobStatus.OnlinePendingUpload
-			) {
-				// This will submit another BlobAttach op for this blob. This is necessary because the one we sent
-				// already didn't have the local ID.
-				this.transitionToOffline(localId);
+			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+				this.sendBlobAttachOp(localId, entry.storageId);
+				entry.status = PendingBlobStatus.OfflinePendingUpload;
+				entry.handleP.resolve(this.getBlobHandle(localId));
+			} else if (entry.status === PendingBlobStatus.OnlinePendingOp) {
+				entry.status = PendingBlobStatus.OfflinePendingOp;
+				entry.handleP.resolve(this.getBlobHandle(localId));
 			}
 		}
 		return new Promise<void>((resolve) => {
 			if (this.allBlobsAttached) {
 				resolve();
 			} else {
-				this.on("allBlobsAttached", () => resolve());
+				this.on("allBlobsAttached", () => {
+					resolve();
+				});
 			}
 		});
 	}
@@ -696,12 +701,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
-			assert(
-				pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-					!!pendingEntry?.storageId,
-				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-			);
-			return this.sendBlobAttachOp(localId, pendingEntry.storageId);
+			if (
+				!(
+					pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
+					!!pendingEntry?.storageId
+				)
+			) {
+				assert(
+					pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
+						!!pendingEntry?.storageId,
+					0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
+				);
+			}
+			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
 	}
@@ -717,7 +729,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				return;
 			}
 		}
-		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
+		if (blobId === undefined)
+			assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
 		// Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
 		// requested from the server.
@@ -1033,7 +1046,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
 			blobs[key] = {
-				blob: bufferToString(entry.blob, "base64"),
+				blob: bufferToString(entry.blob, "utf8"),
+				storageId: entry.storageId,
 				attached: entry.attached,
 				acked: entry.acked,
 				minTTLInSeconds: entry.minTTLInSeconds,

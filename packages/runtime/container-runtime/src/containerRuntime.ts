@@ -3646,12 +3646,12 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public async getPendingLocalState(close?: boolean): Promise<unknown> {
+	public async getPendingLocalState(props?: { shutdownBlobUpload?: boolean }): Promise<unknown> {
 		this.verifyNotClosed();
 		if (this._orderSequentiallyCalls !== 0) {
 			throw new UsageError("can't get state during orderSequentially");
 		}
-		if (close) {
+		if (props?.shutdownBlobUpload) {
 			await this.blobManager.shutdownPendingBlobs();
 		}
 		// Flush pending batch.
