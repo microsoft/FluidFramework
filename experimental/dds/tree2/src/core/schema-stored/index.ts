@@ -6,9 +6,7 @@
 export {
 	FieldStoredSchema,
 	ValueSchema,
-	GlobalFieldKey,
 	TreeStoredSchema,
-	GlobalFieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	LocalFieldKey,
@@ -16,21 +14,18 @@ export {
 	NamedTreeSchema,
 	Named,
 	TreeTypeSet,
-	SchemaPolicy,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	SchemaData,
-	NamedFieldSchema,
 	PrimitiveValueSchema,
+	forbiddenFieldKindIdentifier,
+	storedEmptyFieldSchema,
 } from "./schema";
 export {
 	StoredSchemaRepository,
-	lookupGlobalFieldSchema,
-	lookupTreeSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
-	SchemaDataAndPolicy,
 	SchemaEvents,
 } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

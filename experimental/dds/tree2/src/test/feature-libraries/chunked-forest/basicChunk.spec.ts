@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	TestField,
+	mapSchema,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite";
@@ -87,7 +88,7 @@ describe("basic chunk", () => {
 		true,
 	);
 
-	const schema: TreeSchemaIdentifier = brand("fakeSchema");
+	const schema: TreeSchemaIdentifier = mapSchema.name;
 
 	const hybridData: TestField<BasicChunk>[] = [];
 	for (const data of testData) {
