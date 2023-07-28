@@ -218,7 +218,7 @@ function createInsertMark<TChange = never>(
 	const mark: SF.InsertMark<TChange> = {
 		count: content.length,
 		cellId: cellIdObject,
-		effect: [{ ...effect, ...overrides }],
+		effects: [{ ...effect, ...overrides }],
 	};
 	return mark;
 }
@@ -246,7 +246,7 @@ function createReviveMark<TChange = never>(
 	};
 	const mark: SF.ReviveMark<TChange> = {
 		count: content.length,
-		effect: [effect],
+		effects: [effect],
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
@@ -275,7 +275,7 @@ function createDeleteMark<TChange = never>(
 	}
 	const mark: SF.DeleteMark<TChange> = {
 		count,
-		effect: [{ ...effect, ...overrides }],
+		effects: [{ ...effect, ...overrides }],
 	};
 	return mark;
 }
@@ -301,7 +301,7 @@ function createMoveOutMark<TChange = never>(
 	}
 	const mark: SF.MoveOutMark<TChange> = {
 		count,
-		effect: [{ ...effect, ...overrides }],
+		effects: [{ ...effect, ...overrides }],
 	};
 	return mark;
 }
@@ -328,7 +328,7 @@ function createMoveInMark(
 	const mark: SF.MoveInMark = {
 		count,
 		cellId: cellIdObject,
-		effect: [{ ...effect, ...overrides }],
+		effects: [{ ...effect, ...overrides }],
 	};
 	return mark;
 }
@@ -353,7 +353,7 @@ function createReturnFromMark<TChange = never>(
 	}
 	const mark: SF.ReturnFromMark<TChange> = {
 		count,
-		effect: [{ ...effect, ...overrides }],
+		effects: [{ ...effect, ...overrides }],
 	};
 	return mark;
 }
@@ -381,7 +381,7 @@ function createReturnToMark(
 	}
 	const mark: SF.ReturnToMark = {
 		count,
-		effect: [{ ...effect, ...overrides }],
+		effects: [{ ...effect, ...overrides }],
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
@@ -396,7 +396,7 @@ function createReturnToMark(
 function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.ModifyMark<TChange> {
 	const mark: SF.ModifyMark<TChange> = {
 		count: 1,
-		effect: [{ type: "Modify", changes }],
+		effects: [{ type: "Modify", changes }],
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;

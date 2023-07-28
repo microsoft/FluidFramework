@@ -62,7 +62,7 @@ export type NodeChangeFromEffect<TEffect extends Effect<unknown>> = TEffect exte
 	? TNodeChange
 	: never;
 export type EffectMark<TEffect extends Effect<unknown>> = Mark<NodeChangeFromEffect<TEffect>> & {
-	effect: [TEffect];
+	effects: [TEffect];
 };
 
 export type ModifyMark<TNodeChange> = EffectMark<Modify<TNodeChange>>;

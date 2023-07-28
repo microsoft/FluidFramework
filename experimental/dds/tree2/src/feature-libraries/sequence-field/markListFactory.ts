@@ -34,7 +34,7 @@ export class MarkListFactory<TNodeChange> {
 	}
 
 	public pushMark(mark: Mark<TNodeChange>): void {
-		if (mark.effect === undefined) {
+		if (mark.effects === undefined) {
 			this.pushOffset(mark.count);
 		} else {
 			if (this.offset > 0) {

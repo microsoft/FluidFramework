@@ -179,7 +179,7 @@ export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId 
 				ingest(mark.cellId.localId);
 			}
 			if (SF.isDetachMark(mark)) {
-				ingest(mark.effect[0].id);
+				ingest(mark.effects[0].id);
 			}
 		}
 	}

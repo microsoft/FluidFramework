@@ -133,7 +133,7 @@ function invertMark<TNodeChange>(
 								localId: effect.transientDetach.localId,
 							},
 							count: mark.count,
-							effect: [inverseEffect],
+							effects: [inverseEffect],
 						},
 						invertNodeChange(effect.changes, inputIndex, invertChild),
 					),
@@ -142,7 +142,7 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						count: mark.count,
-						effect: [{ type: "Delete", id: mark.cellId.localId }],
+						effects: [{ type: "Delete", id: mark.cellId.localId }],
 					},
 					invertNodeChange(effect.changes, inputIndex, invertChild),
 				);
@@ -157,7 +157,7 @@ function invertMark<TNodeChange>(
 					{
 						cellId: { revision: effect.revision ?? revision, localId: effect.id },
 						count: mark.count,
-						effect: [
+						effects: [
 							{
 								type: "Revive",
 								content: reviver(revision, inputIndex, mark.count),
@@ -190,7 +190,7 @@ function invertMark<TNodeChange>(
 									localId: effect.transientDetach.localId,
 								},
 								count: mark.count,
-								effect: [
+								effects: [
 									{
 										type: "Revive",
 										content: reviver(revision, inputIndex, mark.count),
@@ -209,7 +209,7 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						count: mark.count,
-						effect: [
+						effects: [
 							{
 								type: "Delete",
 								id: mark.cellId.localId,
@@ -224,7 +224,7 @@ function invertMark<TNodeChange>(
 				? invertMark(
 						{
 							count: mark.count,
-							effect: [
+							effects: [
 								{
 									type: "Delete",
 									revision: effect.transientDetach.revision ?? revision,
@@ -287,7 +287,7 @@ function invertMark<TNodeChange>(
 						localId: effect.id,
 					},
 					count: mark.count,
-					effect: [
+					effects: [
 						{
 							type: "ReturnTo",
 							id: effect.id,
@@ -315,7 +315,7 @@ function invertMark<TNodeChange>(
 
 			const invertedMark: ReturnFromMark<TNodeChange> = {
 				count: mark.count,
-				effect: [
+				effects: [
 					{
 						type: "ReturnFrom",
 						id: effect.id,
@@ -390,7 +390,7 @@ function invertModifyOrSkip<TNodeChange>(
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
 		const modify: Modify<TNodeChange> = { type: "Modify", changes: inverter(changes, index) };
-		const mark: Mark<TNodeChange> = { count: 1, effect: [modify] };
+		const mark: Mark<TNodeChange> = { count: 1, effects: [modify] };
 		if (detachEvent !== undefined) {
 			mark.cellId = detachEvent;
 		}

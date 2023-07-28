@@ -181,7 +181,7 @@ function composeMarks<TNodeChange>(
 		if (isGenerate(newMark)) {
 			// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
 			const nonTransient = withNodeChange(baseMark, nodeChange) as GenerateMark<TNodeChange>;
-			delete nonTransient.effect[0].transientDetach;
+			delete nonTransient.effects[0].transientDetach;
 			return nonTransient;
 		}
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
@@ -198,7 +198,7 @@ function composeMarks<TNodeChange>(
 			// a given cell. The presence of a transient mark tells us that node just got deleted. Return marks that
 			// attempt to move a deleted node end up being muted.
 			assert(
-				newMark.effect[0].isSrcConflicted ?? false,
+				newMark.effects[0].isSrcConflicted ?? false,
 				"Invalid active ReturnTo mark after transient",
 			);
 			return baseMark;
@@ -318,12 +318,12 @@ function composeMarks<TNodeChange>(
 		return withNodeChange(
 			{
 				...baseMark,
-				effect: [
+				effects: [
 					{
-						...baseMark.effect[0],
+						...baseMark.effects[0],
 						transientDetach: {
 							revision: newMarkRevision,
-							localId: newMark.effect[0].id,
+							localId: newMark.effects[0].id,
 						},
 					},
 				],
@@ -346,7 +346,7 @@ function composeMarks<TNodeChange>(
 			// We will remove the placeholder during `amendCompose`.
 			return {
 				...baseMark,
-				effect: [
+				effects: [
 					{
 						type: "Placeholder",
 						revision: baseEffect.revision,
@@ -377,7 +377,7 @@ function createModifyMark<TNodeChange>(
 
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
 	const modify: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
-	const mark: ModifyMark<TNodeChange> = { count: 1, effect: [modify] };
+	const mark: ModifyMark<TNodeChange> = { count: 1, effects: [modify] };
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}
@@ -561,7 +561,7 @@ export class ComposeQueue<T> {
 		}
 		for (const mark of newMarks) {
 			if (isInsert(mark)) {
-				const newRev = mark.effect[0].revision ?? this.newRevision;
+				const newRev = mark.effects[0].revision ?? this.newRevision;
 				const newIntention = getIntention(newRev, revisionMetadata);
 				if (newIntention !== undefined && deletes.has(newIntention)) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -590,7 +590,7 @@ export class ComposeQueue<T> {
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			let baseCellId: ChangeAtomId;
 			if (markIsTransient(baseMark)) {
-				baseCellId = baseMark.effect[0].transientDetach;
+				baseCellId = baseMark.effects[0].transientDetach;
 			} else if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
 				const baseRevision = getRevision(baseMark) ?? this.baseMarks.revision;
@@ -609,13 +609,13 @@ export class ComposeQueue<T> {
 				}
 				baseCellId = {
 					revision: baseIntention,
-					localId: baseMark.effect[0].id,
+					localId: baseMark.effects[0].id,
 				};
 			} else if (isMoveIn(baseMark)) {
 				const baseRevision = getRevision(baseMark) ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				assert(baseIntention !== undefined, 0x706 /* Base mark must have an intention */);
-				baseCellId = { revision: baseIntention, localId: baseMark.effect[0].id };
+				baseCellId = { revision: baseIntention, localId: baseMark.effects[0].id };
 			} else {
 				assert(
 					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
@@ -841,8 +841,8 @@ function areInverseMovesAtIntermediateLocation(
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
-	const baseType = baseMark.effect[0].type;
-	const newType = newMark.effect[0].type;
+	const baseType = baseMark.effects[0].type;
+	const newType = newMark.effects[0].type;
 	assert(
 		(baseType === "MoveIn" || baseType === "ReturnTo") &&
 			(newType === "MoveOut" || newType === "ReturnFrom"),

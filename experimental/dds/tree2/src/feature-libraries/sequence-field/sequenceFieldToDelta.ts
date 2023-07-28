@@ -30,7 +30,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else if (
 			areInputCellsEmpty(mark) &&
 			areOutputCellsEmpty(mark) &&
-			(!markIsTransient(mark) || mark.effect[0].changes === undefined)
+			(!markIsTransient(mark) || mark.effects[0].changes === undefined)
 		) {
 		} else {
 			const effect = tryGetEffect(mark);

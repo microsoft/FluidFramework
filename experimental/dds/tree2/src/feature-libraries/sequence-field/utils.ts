@@ -65,13 +65,13 @@ export function isEmpty<T>(change: Changeset<T>): boolean {
 }
 
 export function getEffect<TEffect extends Effect<unknown>>(mark: EffectMark<TEffect>): TEffect {
-	return mark.effect[0];
+	return mark.effects[0];
 }
 
 export function tryGetEffect<TNodeChange>(
 	mark: Mark<TNodeChange>,
 ): Effect<TNodeChange> | undefined {
-	return mark.effect === undefined ? undefined : mark.effect[0];
+	return mark.effects === undefined ? undefined : mark.effects[0];
 }
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is ModifyMark<TNodeChange> {
@@ -191,9 +191,9 @@ export function getCellId(
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
 	const clone = { ...mark };
-	if (clone.effect !== undefined) {
-		const effect = { ...clone.effect[0] };
-		clone.effect = [effect];
+	if (clone.effects !== undefined) {
+		const effect = { ...clone.effects[0] };
+		clone.effects = [effect];
 		if (effect.type === "Insert" || effect.type === "Revive") {
 			effect.content = [...effect.content];
 		}
@@ -280,7 +280,7 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 }
 
 export function markIsTransient<T>(mark: Mark<T>): mark is TransientGenerateMark<T> {
-	return isGenerate(mark) && mark.effect[0].transientDetach !== undefined;
+	return isGenerate(mark) && mark.effects[0].transientDetach !== undefined;
 }
 
 export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T> {
@@ -586,10 +586,10 @@ export class DetachedNodeTracker {
 								new: {
 									revision:
 										change.rollbackOf ??
-										mark.effect[0].revision ??
+										mark.effects[0].revision ??
 										change.revision ??
 										fail("Unable to track detached nodes"),
-									localId: brand((mark.effect[0].id as number) + (k - index)),
+									localId: brand((mark.effects[0].id as number) + (k - index)),
 								},
 							});
 						}
@@ -913,8 +913,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		return [{ count: length }, { count: remainder }] as [TMark, TMark];
 	}
 	const [effect1, effect2] = splitEffect(effect, length);
-	const mark1: Mark<T> = { count: length, effect: [effect1] };
-	const mark2: Mark<T> = { count: remainder, effect: [effect2] };
+	const mark1: Mark<T> = { count: length, effects: [effect1] };
+	const mark2: Mark<T> = { count: remainder, effects: [effect2] };
 	if (mark.cellId !== undefined) {
 		mark1.cellId = mark.cellId;
 		mark2.cellId = higherCellId(mark.cellId, length);
@@ -1040,19 +1040,19 @@ export function withNodeChange<TNodeChange>(
 	if (changes === undefined) {
 		const effect = tryGetEffect(newMark);
 		if (effect === undefined || effect.type === "Modify") {
-			delete newMark.effect;
+			delete newMark.effects;
 			return newMark;
 		}
 		if (effect.type !== "MoveIn" && effect.type !== "ReturnTo") {
 			const newEffect = { ...effect };
 			delete newEffect.changes;
-			return { ...newMark, effect: [newEffect] };
+			return { ...newMark, effects: [newEffect] };
 		}
 	} else {
 		assert(mark.count === 1, "Only length 1 marks can carry nested changes");
 		const effect = tryGetEffect(mark);
 		if (effect === undefined) {
-			return { ...mark, effect: [{ type: "Modify", changes }] };
+			return { ...mark, effects: [{ type: "Modify", changes }] };
 		}
 		const type = effect.type;
 		switch (type) {
@@ -1067,7 +1067,7 @@ export function withNodeChange<TNodeChange>(
 			case "Revive":
 			case "Placeholder": {
 				const newEffect = { ...effect, changes };
-				newMark.effect = [newEffect];
+				newMark.effects = [newEffect];
 				break;
 			}
 			default:
@@ -1101,7 +1101,7 @@ export function withRevision<TMark extends Mark<unknown>>(
 
 export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
 	if (isMoveMark(mark)) {
-		return mark.effect[0].id;
+		return mark.effects[0].id;
 	}
 
 	return undefined;

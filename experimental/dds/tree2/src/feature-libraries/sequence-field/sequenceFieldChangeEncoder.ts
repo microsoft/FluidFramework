@@ -114,13 +114,13 @@ function makeV0Codec<TNodeChange>(
 		encode: (changeset) => {
 			const jsonMarks: JsonCompatible[] = [];
 			for (const mark of changeset) {
-				const effect = mark.effect;
+				const effect = mark.effects;
 				if (effect === undefined) {
 					jsonMarks.push(mark as JsonCompatibleMark);
 				} else {
 					const encodedMark: JsonCompatibleMark = {
 						count: mark.count,
-						effect: effect.map((e) => encodeEffect(e)),
+						effects: effect.map((e) => encodeEffect(e)),
 					};
 					if (mark.cellId !== undefined) {
 						encodedMark.cellId = mark.cellId;
@@ -134,12 +134,12 @@ function makeV0Codec<TNodeChange>(
 			const marks: Changeset<TNodeChange> = [];
 			const array = changeset as unknown as Changeset<JsonCompatibleReadOnly>;
 			for (const mark of array) {
-				if (mark.effect === undefined) {
+				if (mark.effects === undefined) {
 					marks.push(mark as Mark<TNodeChange>);
 				} else {
 					const decodedMark: Mark<TNodeChange> = {
 						count: mark.count,
-						effect: mark.effect.map((e) => decodeEffect(e)),
+						effects: mark.effects.map((e) => decodeEffect(e)),
 					};
 					if (mark.cellId !== undefined) {
 						decodedMark.cellId = mark.cellId;

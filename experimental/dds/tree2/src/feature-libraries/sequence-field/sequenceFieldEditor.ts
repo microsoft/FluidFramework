@@ -125,7 +125,7 @@ export const sequenceFieldEditor = {
 		const id = brand<MoveId>(0);
 		const returnFrom: ReturnFromMark<never> = {
 			count,
-			effect: [
+			effects: [
 				{
 					type: "ReturnFrom",
 					id,
@@ -136,7 +136,7 @@ export const sequenceFieldEditor = {
 		const returnTo: ReturnToMark = {
 			count,
 			cellId,
-			effect: [
+			effects: [
 				{
 					type: "ReturnTo",
 					id,
@@ -169,7 +169,7 @@ function markAtIndex<TNodeChange>(
 	if (count === 0) {
 		return [];
 	}
-	const mark: Mark<TNodeChange> = { count, effect: [effect] };
+	const mark: Mark<TNodeChange> = { count, effects: [effect] };
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}
