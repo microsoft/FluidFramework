@@ -5,7 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { Type } from "@sinclair/typebox";
-import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
+import { JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Effect, Mark, NoopMarkType } from "./format";
@@ -13,13 +13,14 @@ import { Changeset, Effect, Mark, NoopMarkType } from "./format";
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
 
-type JsonCompatibleEffect = JsonCompatible & Effect<JsonCompatible | JsonCompatibleReadOnly>;
-type JsonCompatibleMark = JsonCompatible & Mark<JsonCompatible | JsonCompatibleReadOnly>;
+type EncodedEffect = JsonCompatibleReadOnly & Effect<JsonCompatibleReadOnly>;
+type EncodedMark = JsonCompatibleReadOnly & Mark<JsonCompatibleReadOnly>;
+type EncodedChangeset = JsonCompatibleReadOnly & Changeset<JsonCompatibleReadOnly>;
 
 function makeV0Codec<TNodeChange>(
 	childCodec: IJsonCodec<TNodeChange>,
 ): IJsonCodec<Changeset<TNodeChange>> {
-	function encodeEffect(effect: Effect<TNodeChange>): JsonCompatibleEffect {
+	function encodeEffect(effect: Effect<TNodeChange>): EncodedEffect {
 		const type = effect.type;
 		switch (type) {
 			case "Insert":
@@ -33,7 +34,7 @@ function makeV0Codec<TNodeChange>(
 								changes: childCodec.encode(effect.changes),
 						  }
 						: effect
-				) as JsonCompatibleEffect;
+				) as EncodedEffect;
 			case "Revive": {
 				const content = effect.content.map(jsonableTreeFromCursor);
 				return (
@@ -47,18 +48,18 @@ function makeV0Codec<TNodeChange>(
 								...effect,
 								content,
 						  }
-				) as JsonCompatibleEffect;
+				) as EncodedEffect;
 			}
 			case "Modify":
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
 					...effect,
 					changes: childCodec.encode(effect.changes),
-				} as JsonCompatibleEffect;
+				} as EncodedEffect;
 			case NoopMarkType:
 			case "MoveIn":
 			case "ReturnTo":
-				return effect as JsonCompatibleEffect;
+				return effect as EncodedEffect;
 			case "Placeholder":
 				fail("Should not have placeholders in serialized changeset");
 			default:
@@ -112,42 +113,39 @@ function makeV0Codec<TNodeChange>(
 
 	return {
 		encode: (changeset) => {
-			const jsonMarks: JsonCompatible[] = [];
+			const encodedMarks: EncodedMark[] = [];
 			for (const mark of changeset) {
-				const effect = mark.effects;
-				if (effect === undefined) {
-					jsonMarks.push(mark as JsonCompatibleMark);
-				} else {
-					const encodedMark: JsonCompatibleMark = {
-						count: mark.count,
-						effects: effect.map((e) => encodeEffect(e)),
-					};
-					if (mark.cellId !== undefined) {
-						encodedMark.cellId = mark.cellId;
-					}
-					jsonMarks.push(encodedMark as JsonCompatibleMark);
+				const encodedMark: EncodedMark = {
+					count: mark.count,
+				};
+				const encodedEffects = mark.effects?.map((e) => encodeEffect(e));
+				if (encodedEffects !== undefined && encodedEffects.length > 0) {
+					encodedMark.effects = encodedEffects;
 				}
+				if (mark.cellId !== undefined) {
+					encodedMark.cellId = mark.cellId;
+				}
+				encodedMarks.push(encodedMark);
 			}
-			return jsonMarks;
+			return encodedMarks;
 		},
 		decode: (changeset) => {
-			const marks: Changeset<TNodeChange> = [];
-			const array = changeset as unknown as Changeset<JsonCompatibleReadOnly>;
-			for (const mark of array) {
-				if (mark.effects === undefined) {
-					marks.push(mark as Mark<TNodeChange>);
-				} else {
-					const decodedMark: Mark<TNodeChange> = {
-						count: mark.count,
-						effects: mark.effects.map((e) => decodeEffect(e)),
-					};
-					if (mark.cellId !== undefined) {
-						decodedMark.cellId = mark.cellId;
-					}
-					marks.push(decodedMark);
+			const decodedMarks: Changeset<TNodeChange> = [];
+			const marks = changeset as EncodedChangeset;
+			for (const mark of marks) {
+				const decodedMark: Mark<TNodeChange> = {
+					count: mark.count,
+				};
+				const decodedEffects = mark.effects?.map((e) => decodeEffect(e));
+				if (decodedEffects !== undefined && decodedEffects.length > 0) {
+					decodedMark.effects = decodedEffects;
 				}
+				if (mark.cellId !== undefined) {
+					decodedMark.cellId = mark.cellId;
+				}
+				decodedMarks.push(decodedMark);
 			}
-			return marks;
+			return decodedMarks;
 		},
 		encodedSchema: Changeset(childCodec.encodedSchema ?? Type.Any()),
 	};
