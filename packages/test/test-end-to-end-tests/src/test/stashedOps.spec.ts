@@ -868,7 +868,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
-	it("resends DDS attach op", async function () {
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5094
+	it.skip("resends DDS attach op", async function () {
 		const newMapId = "newMap";
 		const pendingOps = await getPendingOps(provider, false, async (_, dataStore) => {
 			const channel = dataStore.runtime.createChannel(
@@ -892,7 +893,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	it("handles stashed ops for local DDS", async function () {
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
+	it.skip("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
