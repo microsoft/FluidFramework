@@ -100,6 +100,7 @@ export const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(Lineag
  * @alpha
  */
 export interface CellId extends ChangeAtomId, HasLineage {}
+
 export const CellId = Type.Composite([EncodedChangeAtomId, HasLineage]);
 
 export interface HasChanges<TNodeChange = NodeChangeType> {
@@ -326,18 +327,6 @@ export interface MovePlaceholder<TNodeChange>
 		HasChanges<TNodeChange> {
 	type: "Placeholder";
 }
-export const MovePlaceholder = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasRevisionTag,
-			HasMoveId,
-			HasChanges(tNodeChange),
-			Type.Object({
-				type: Type.Literal("Placeholder"),
-			}),
-		],
-		noAdditionalProps,
-	);
 
 export interface Modify<TNodeChange = NodeChangeType> {
 	type: "Modify";
@@ -358,12 +347,7 @@ export type Effect<TNodeChange = NodeChangeType> =
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;
 export const Effect = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([
-		Modify(tNodeChange),
-		MovePlaceholder(tNodeChange),
-		Attach(tNodeChange),
-		Detach(tNodeChange),
-	]);
+	Type.Union([Modify(tNodeChange), Attach(tNodeChange), Detach(tNodeChange)]);
 
 export interface Mark<TNodeChange> {
 	count: CellCount;

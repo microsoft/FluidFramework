@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { brand, fail, Mutable } from "../../util";
+import { brand, fail, asMutable } from "../../util";
 import {
 	ChangeAtomId,
 	CrossFieldManager,
@@ -53,7 +53,6 @@ import {
 	isReturnTo,
 	getRevision,
 	isMoveIn,
-	isReturnFrom,
 	getCellId,
 	isInsert,
 	tryGetEffect,
@@ -416,7 +415,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		cloned.cellId.revision === undefined &&
 		revision !== undefined
 	) {
-		(cloned.cellId as Mutable<CellId>).revision = revision;
+		asMutable(cloned.cellId).revision = revision;
 	}
 	const effect = tryGetEffect(cloned);
 	if (effect !== undefined) {
@@ -851,11 +850,11 @@ function areInverseMovesAtIntermediateLocation(
 		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
 
-	if (isReturnTo(baseMark) && baseMark.cellId?.revision === newIntention) {
+	if (baseType === "ReturnTo" && baseMark.cellId?.revision === newIntention) {
 		return true;
 	}
 
-	if (isReturnFrom(newMark) && newMark.cellId?.revision === baseIntention) {
+	if (newType === "ReturnFrom" && newMark.cellId?.revision === baseIntention) {
 		return true;
 	}
 
