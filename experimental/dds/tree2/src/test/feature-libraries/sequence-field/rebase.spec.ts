@@ -327,13 +327,7 @@ describe("SequenceField - Rebase", () => {
 				Mark.moveOut(1, brand(0)),
 			),
 			Mark.moveOut(1, brand(1)),
-			Mark.onEmptyCell(
-				{
-					revision: tag1,
-					localId: brand(2),
-				},
-				Mark.moveOut(1, brand(2)),
-			),
+			Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.moveOut(1, brand(2))),
 			Mark.moveOut(1, brand(3)),
 			Mark.onEmptyCell(
 				{

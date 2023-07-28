@@ -193,7 +193,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 }
 
 /**
- * @param countOrContent - The content to revive.
+ * @param countOrContent - The content to insert.
  * If a number is passed, that many dummy nodes will be generated.
  * @param cellId - The first cell to insert the content into (potentially includes lineage information).
  * Also defines the ChangeAtomId to associate with the mark.
