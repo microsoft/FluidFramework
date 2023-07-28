@@ -6,4 +6,8 @@
 import { ChangeAtomId } from "../rebase";
 import { FieldKey } from "../tree";
 
+/**
+ * A function which will be called when repair data should be generated.
+ * @alpha
+ */
 export type RepairDataHander = (changeId: ChangeAtomId) => FieldKey;

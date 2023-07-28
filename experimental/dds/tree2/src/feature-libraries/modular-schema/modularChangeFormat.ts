@@ -5,6 +5,7 @@
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import {
+	ChangesetLocalId,
 	FieldKindIdentifierSchema,
 	GlobalFieldKeySchema,
 	LocalFieldKeySchema,
@@ -15,7 +16,6 @@ import {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 } from "../../util";
-import { ChangesetLocalId } from "./modularChangeTypes";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

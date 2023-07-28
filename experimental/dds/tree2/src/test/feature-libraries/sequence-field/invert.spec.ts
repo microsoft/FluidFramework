@@ -4,11 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
+import { ChangesetLocalId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
 import { brand } from "../../../util";
-import { ChangesetLocalId } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 

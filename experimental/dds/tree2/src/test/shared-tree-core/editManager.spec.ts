@@ -14,6 +14,7 @@ import {
 	mintRevisionTag,
 	ChangeFamilyEditor,
 	Delta,
+	EmptyKey,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -784,7 +785,10 @@ function runUnitTestScenario(
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
-						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
+						manager.changeFamily.intoDelta(
+							manager.localBranch.getHead().change,
+							() => EmptyKey,
+						),
 						asDelta([seq]),
 					);
 					break;
@@ -929,7 +933,7 @@ function addSequencedChange(
 	let delta: Delta.Root = emptyDelta;
 	const offChange = editManager.localBranch.on("change", ({ change }) => {
 		if (change !== undefined) {
-			delta = editManager.changeFamily.intoDelta(change);
+			delta = editManager.changeFamily.intoDelta(change, () => EmptyKey);
 		}
 	});
 	editManager.addSequencedChange(...args);

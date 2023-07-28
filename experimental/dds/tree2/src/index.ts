@@ -22,6 +22,7 @@ export {
 	FieldUpPath,
 	Anchor,
 	RootField,
+	ChangesetLocalId,
 	ChildCollection,
 	ChildLocation,
 	FieldMapObject,
@@ -138,7 +139,6 @@ export {
 
 export {
 	buildForest,
-	ChangesetLocalId,
 	emptyField,
 	IdAllocator,
 	neverTree,

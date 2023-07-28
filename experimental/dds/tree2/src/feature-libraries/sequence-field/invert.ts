@@ -4,15 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import {
-	ChangeAtomId,
-	CrossFieldManager,
-	CrossFieldTarget,
-	IdAllocator,
-	NodeReviver,
-} from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
 import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {

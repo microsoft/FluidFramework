@@ -31,6 +31,7 @@ import {
 	ChangeFamilyEditor,
 	IRepairDataStoreProvider,
 	GraphCommit,
+	EmptyKey,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -191,7 +192,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			}
 
 			if (change !== undefined) {
-				this.changeEvents.emit("newLocalState", this.changeFamily.intoDelta(change));
+				this.changeEvents.emit(
+					"newLocalState",
+					this.changeFamily.intoDelta(change, () => EmptyKey),
+				);
 			}
 		});
 

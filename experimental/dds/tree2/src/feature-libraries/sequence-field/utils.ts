@@ -4,12 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import { brand, fail, getFirstFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
 import {
 	addCrossFieldQuery,
-	ChangeAtomId,
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,

@@ -5,14 +5,11 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../../domains";
-import {
-	ChangesetLocalId,
-	SequenceField as SF,
-	singleTextCursor,
-} from "../../../feature-libraries";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 import { TestChange } from "../../testChange";
+import { ChangesetLocalId } from "../../../core";
 import { TestChangeset } from "./testEdits";
 
 const id: ChangesetLocalId = brand(0);

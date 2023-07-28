@@ -4,9 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey } from "../core";
+import { ChangeAtomId, FieldKey } from "../core";
 import { brand } from "../util";
-import { ChangeAtomId } from "./modular-schema";
 
 export class TreeIndex {
 	private readonly detachedFields = new Map<ChangeAtomId, FieldKey>();

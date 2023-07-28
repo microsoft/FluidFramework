@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
+import { ChangesetLocalId, FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
 import { Brand } from "../../util";
 
 /**

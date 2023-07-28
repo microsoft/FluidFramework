@@ -4,10 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
+import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { brand, fail } from "../../util";
 import {
-	ChangeAtomId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
