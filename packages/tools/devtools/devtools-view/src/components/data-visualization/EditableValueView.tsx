@@ -157,7 +157,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	}
 
 	/**
-	 * Converts editType to
+	 * Converts editType to the corresponding UI
 	 * @returns React.ReactElement which matches the desired editing type to the corresponding UI
 	 */
 	function editTypeToEditUi(): React.ReactElement {
