@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalFieldKey } from "../schema-stored";
-import { FieldKey, NodeData } from "./types";
+import { FieldKey } from "../schema-stored";
+import { NodeData } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -67,7 +67,7 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
  * @alpha
  */
 export interface GenericFieldsNode<TChild> {
-	[FieldScope.local]?: FieldMapObject<TChild>;
+	fields?: FieldMapObject<TChild>;
 }
 
 /**
@@ -80,13 +80,6 @@ export interface GenericFieldsNode<TChild> {
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 
 /**
- * Derives the scope using the type of `key`.
- */
-export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey] {
-	return [FieldScope.local, key];
-}
-
-/**
  * Get a field from `node`, optionally modifying the tree to create it if missing.
  */
 export function getGenericTreeField<T>(
@@ -94,28 +87,19 @@ export function getGenericTreeField<T>(
 	key: FieldKey,
 	createIfMissing: boolean,
 ): T[] {
-	const [scope, keyString] = scopeFromKey(key);
-	const children = getGenericTreeFieldMap(node, scope, createIfMissing);
+	const children = getGenericTreeFieldMap(node, createIfMissing);
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
-	if (Object.prototype.hasOwnProperty.call(children, keyString)) {
-		return children[keyString];
+	if (Object.prototype.hasOwnProperty.call(children, key)) {
+		return children[key];
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {
 		return [];
 	}
 	const newField: T[] = [];
-	children[keyString] = newField;
+	children[key] = newField;
 	return newField;
-}
-
-/**
- * The scope of a {@link FieldKey}.
- * @alpha
- */
-export const enum FieldScope {
-	local = "fields",
 }
 
 /**
@@ -123,15 +107,14 @@ export const enum FieldScope {
  */
 function getGenericTreeFieldMap<T>(
 	node: GenericFieldsNode<T>,
-	scope: FieldScope,
 	createIfMissing: boolean,
 ): FieldMapObject<T> {
-	let children = node[scope];
+	let children = node.fields;
 	if (children === undefined) {
 		children = {};
 		// Handle missing fields:
 		if (createIfMissing) {
-			node[scope] = children;
+			node.fields = children;
 		}
 	}
 
@@ -146,10 +129,9 @@ export function setGenericTreeField<T>(
 	key: FieldKey,
 	content: T[],
 ): void {
-	const [scope, keyString] = scopeFromKey(key);
-	const children = getGenericTreeFieldMap(node, scope, true);
+	const children = getGenericTreeFieldMap(node, true);
 	// like `children[keyString] = content;` except safe when keyString == "__proto__".
-	Object.defineProperty(children, keyString, {
+	Object.defineProperty(children, key, {
 		enumerable: true,
 		configurable: true,
 		writable: true,
@@ -161,16 +143,16 @@ export function setGenericTreeField<T>(
  * @returns keys for fields of `tree`.
  */
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
-	const local = tree[FieldScope.local];
+	const fields = tree.fields;
 	// This function is used when iterating through a tree.
 	// This means that this is often called on nodes with no keys
 	// (most trees are a large portion leaf nodes).
 	// Therefore this function special cases empty fields objects as an optimization.
-	if (local === undefined) {
+	if (fields === undefined) {
 		return [];
 	}
 
-	return Object.keys(local) as LocalFieldKey[];
+	return Object.keys(fields) as FieldKey[];
 }
 
 /**
@@ -182,16 +164,14 @@ export function genericTreeDeleteIfEmpty<T>(
 	key: FieldKey,
 	removeMapObject: boolean,
 ): void {
-	const [scope, keyString] = scopeFromKey(key);
-	const children = getGenericTreeFieldMap(node, scope, false);
-	if (Object.prototype.hasOwnProperty.call(children, keyString)) {
-		if (children[keyString].length === 0) {
+	const children = getGenericTreeFieldMap(node, false);
+	if (Object.prototype.hasOwnProperty.call(children, key)) {
+		if (children[key].length === 0) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete children[keyString];
+			delete children[key];
 			if (removeMapObject) {
 				if (Object.keys(children).length === 0) {
-					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-					delete node[scope];
+					delete node.fields;
 				}
 			}
 		}

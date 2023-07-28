@@ -23,24 +23,24 @@ import {
 
 const stringSchema = namedTreeSchema({
 	name: brand("String"),
-	extraLocalFields: emptyField,
-	value: ValueSchema.String,
+	mapFields: emptyField,
+	leafValue: ValueSchema.String,
 });
 
 export const childSchema = namedTreeSchema({
 	name: brand("Test:Opsize-Bench-Child"),
-	localFields: {
+	structFields: {
 		data: fieldSchema(FieldKinds.value, [stringSchema.name]),
 	},
-	extraLocalFields: emptyField,
+	mapFields: emptyField,
 });
 
 export const parentSchema = namedTreeSchema({
 	name: brand("Test:Opsize-Bench-Root"),
-	localFields: {
+	structFields: {
 		children: fieldSchema(FieldKinds.sequence, [childSchema.name]),
 	},
-	extraLocalFields: emptyField,
+	mapFields: emptyField,
 });
 
 export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);

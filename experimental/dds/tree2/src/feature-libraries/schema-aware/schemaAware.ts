@@ -276,7 +276,7 @@ export type TypedNode<
 		Mode,
 		TypedFields<
 			Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode,
-			TSchema["localFieldsObject"]
+			TSchema["structFieldsObject"]
 		>,
 		TSchema["value"],
 		TSchema["name"]

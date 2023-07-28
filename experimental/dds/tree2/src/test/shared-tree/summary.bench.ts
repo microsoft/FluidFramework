@@ -204,7 +204,7 @@ function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),

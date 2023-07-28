@@ -6,14 +6,13 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
-import { StoredSchemaRepository } from "../schema-stored";
+import { StoredSchemaRepository, FieldKey } from "../schema-stored";
 import {
 	Anchor,
 	AnchorSet,
 	Delta,
 	DetachedField,
 	detachedFieldAsKey,
-	FieldKey,
 	ITreeCursor,
 	rootField,
 } from "../tree";

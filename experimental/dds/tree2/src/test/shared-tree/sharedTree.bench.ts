@@ -21,15 +21,9 @@ import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
-import {
-	AllowedUpdateType,
-	LocalFieldKey,
-	moveToDetachedField,
-	rootFieldKey,
-	UpPath,
-} from "../../core";
+import { AllowedUpdateType, FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../../core";
 
-const localFieldKey: LocalFieldKey = brand("foo");
+const localFieldKey: FieldKey = brand("foo");
 
 // number of nodes in test for wide trees
 const nodesCountWide = [

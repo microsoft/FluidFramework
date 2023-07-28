@@ -5,7 +5,7 @@
 
 import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, FieldKindIdentifier, LocalFieldKey } from "../../core";
+import { FieldKey, FieldKindIdentifier } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
 import {
 	ICodecFamily,
@@ -83,7 +83,7 @@ function makeV0Codec(
 				fail("Encoded change didn't pass schema validation.");
 			}
 
-			const fieldKey: LocalFieldKey = field;
+			const fieldKey: FieldKey = field;
 			const encodedField: EncodedFieldChange = {
 				fieldKey,
 				fieldKind: fieldChange.fieldKind,
@@ -120,7 +120,7 @@ function makeV0Codec(
 			}
 			const fieldChangeset = codec.json.decode(field.change);
 
-			const fieldKey: FieldKey = brand<LocalFieldKey>(field.fieldKey);
+			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
 
 			decodedFields.set(fieldKey, {
 				fieldKind: field.fieldKind,
