@@ -635,10 +635,10 @@ export function expectJsonTree(
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	localFields: {
+	structFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),

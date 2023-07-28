@@ -469,7 +469,7 @@ describe("Schema Evolution Examples", () => {
 	// 		// and don't exclude the old ones.
 	// 		// TODO: add an automated way to determine that this is the needed upgrade (some way to union schema?).
 	// 		const positionedCanvasItemTolerant = treeSchema({
-	// 			localFields: {
+	// 			structFields: {
 	// 				position: fieldSchema(FieldKinds.value, [pointIdentifier]),
 	// 				// Note that we are specifically supporting both formats here.
 	// 				content: fieldSchema(FieldKinds.value, [
@@ -477,7 +477,7 @@ describe("Schema Evolution Examples", () => {
 	// 					textIdentifier,
 	// 				]),
 	// 			},
-	// 			extraLocalFields: emptyField,
+	// 			mapFields: emptyField,
 	// 		});
 	// 		assert(
 	// 			stored.tryUpdateTreeSchema(

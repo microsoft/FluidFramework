@@ -11,7 +11,7 @@ const builder = new SchemaBuilder("example");
 // Declare a simple type which just holds a number.
 const numberSchema = builder.leaf("number", ValueSchema.Number);
 
-// Declare an aggregate type with local fields
+// Declare struct
 const ballSchema = builder.struct("Ball", {
 	x: SchemaBuilder.fieldValue(numberSchema),
 	y: SchemaBuilder.fieldValue(numberSchema),
@@ -20,12 +20,12 @@ const ballSchema = builder.struct("Ball", {
 // We can inspect the schema.
 // Note that the inferred type here actually includes the FieldKind's editor,
 // So it would be possible to derive a type safe editing API from this type.
-const xField = ballSchema.localFields.get("x");
+const xField = ballSchema.structFields.get("x");
 
 // @ts-expect-error This is an error since this field does not exist:
-const invalidChildSchema = ballSchema.localFields.get("z");
+const invalidChildSchema = ballSchema.structFields.get("z");
 
-// Declare an recursive aggregate type via local fields.
+// Declare an recursive aggregate type via struct fields.
 // Note that the type name can be used instead of the schema to allow recursion.
 const diagramSchema = builder.structRecursive("Diagram", {
 	children: SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => diagramSchema, ballSchema),

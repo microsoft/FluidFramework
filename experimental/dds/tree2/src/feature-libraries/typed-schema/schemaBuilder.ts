@@ -105,8 +105,8 @@ export class SchemaBuilder {
 	public struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: T }> {
-		const schema = new TreeSchema(this, name, { local: t });
+	): TreeSchema<Name, { structFields: T }> {
+		const schema = new TreeSchema(this, name, { structFields: t });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -120,11 +120,11 @@ export class SchemaBuilder {
 	public structRecursive<Name extends string, T>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: T }> {
+	): TreeSchema<Name, { structFields: T }> {
 		return this.struct(
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, FieldSchema>,
-		) as unknown as TreeSchema<Name, { local: T }>;
+		) as unknown as TreeSchema<Name, { structFields: T }>;
 	}
 
 	/**
@@ -145,8 +145,8 @@ export class SchemaBuilder {
 	public map<Name extends string, T extends FieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): TreeSchema<Name, { extraLocalFields: T }> {
-		const schema = new TreeSchema(this, name, { extraLocalFields: fieldSchema });
+	): TreeSchema<Name, { mapFields: T }> {
+		const schema = new TreeSchema(this, name, { mapFields: fieldSchema });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -160,10 +160,10 @@ export class SchemaBuilder {
 	public mapRecursive<Name extends string, T>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { extraLocalFields: T }> {
+	): TreeSchema<Name, { mapFields: T }> {
 		return this.map(name, t as unknown as FieldSchema) as unknown as TreeSchema<
 			Name,
-			{ extraLocalFields: T }
+			{ mapFields: T }
 		>;
 	}
 
@@ -202,8 +202,8 @@ export class SchemaBuilder {
 	public fieldNode<Name extends string, T extends FieldSchema>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: { [""]: T } }> {
-		const schema = new TreeSchema(this, name, { local: { [""]: t } });
+	): TreeSchema<Name, { structFields: { [""]: T } }> {
+		const schema = new TreeSchema(this, name, { structFields: { [""]: t } });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -217,10 +217,10 @@ export class SchemaBuilder {
 	public fieldNodeRecursive<Name extends string, T>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: { [""]: T } }> {
+	): TreeSchema<Name, { structFields: { [""]: T } }> {
 		return this.fieldNode(name, t as unknown as FieldSchema) as unknown as TreeSchema<
 			Name,
-			{ local: { [""]: T } }
+			{ structFields: { [""]: T } }
 		>;
 	}
 
