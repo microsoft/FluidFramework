@@ -43,6 +43,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries: registry,
 			existing,
+			containerScope: context.scope,
 			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
 				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
 				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
