@@ -16,8 +16,8 @@ import {
 	IContainerRuntime,
 	IDataStoreWithBindToContext_Deprecated,
 } from "@fluidframework/container-runtime-definitions";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { FluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IResponseException, requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -161,9 +161,17 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				() => true,
 				"Slashes should not be supported",
 			);
-			await assert.rejects(
-				getAliasedDataStore(dataObject1, wrongAlias, /* wait */ false),
-				() => true,
+
+			let dataStore: FluidObject | undefined;
+			let error: unknown;
+			try {
+				dataStore = await getAliasedDataStore(dataObject1, wrongAlias, /* wait */ false);
+			} catch (e) {
+				// back-compat - getRootDataStore throws an error with 404 code if the data store doesn't exist.
+				error = e;
+			}
+			assert(
+				dataStore === undefined || (error as IResponseException)?.code === 404,
 				"The aliasing should not have happened",
 			);
 		});
@@ -226,6 +234,9 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 							alias,
 							/* wait */ false,
 						);
+						if (datastore === undefined) {
+							throw new Error("Aliased data store doesn't exist yet");
+						}
 						return datastore;
 					} catch (err) {
 						const newDataStore = await runtimeOf(dataObject1).createDataStore(
@@ -399,8 +410,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		 * above scenario.
 		 */
 		it("Aliasing a bound datastore marks it as root correctly", async () => {
-			const containerRuntime1 = runtimeOf(dataObject1);
-			const aliasableDataStore1 = await containerRuntime1.createDataStore(packageName);
+			const aliasableDataStore1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const aliasedDataStoreResponse1 = await aliasableDataStore1.request({ url: "/" });
 			const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
 			// Casting any to repro a race condition where bindToContext is called before summarization,
@@ -410,18 +420,16 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			).fluidDataStoreChannel?.bindToContext?.();
 			await provider.ensureSynchronized();
 
-			const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
-			let callFailed = false;
+			let dataStore: FluidObject | undefined;
+			let error: unknown;
 			try {
-				// This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
-				// the isRootDataStore property in the dataStoreContext
-				await (containerRuntime2.getAliasedDataStore?.(aliasedDataStore1.runtime.id) ??
-					containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id));
+				dataStore = await getAliasedDataStore(dataObject2, aliasedDataStore1.runtime.id);
 			} catch (e) {
-				callFailed = true;
+				// back-compat - getRootDataStore throws an error with 404 code if the data store doesn't exist.
+				error = e;
 			}
 			assert(
-				callFailed,
+				dataStore === undefined || (error as IResponseException)?.code === 404,
 				"Expected getAliasedDataStore to fail as the datastore is not yet a root datastore",
 			);
 
@@ -436,17 +444,13 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 
 			// Should be able to retrieve root datastore from remote
 			assert.doesNotThrow(
-				async () =>
-					containerRuntime2.getAliasedDataStore?.(_alias) ??
-					containerRuntime2.getRootDataStore(_alias),
+				async () => getAliasedDataStore(dataObject2, _alias),
 				"A remote aliased datastore should be a root datastore",
 			);
 
 			// Should be able to retrieve local root datastore
 			assert.doesNotThrow(
-				async () =>
-					containerRuntime1.getAliasedDataStore?.(_alias) ??
-					containerRuntime1.getRootDataStore(_alias),
+				async () => getAliasedDataStore(dataObject1, _alias),
 				"A local aliased datastore should be a root datastore",
 			);
 		});
