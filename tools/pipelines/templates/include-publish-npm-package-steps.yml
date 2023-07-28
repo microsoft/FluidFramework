@@ -145,6 +145,17 @@ steps:
               break
             fi
             rm publish_log
+            az rest --method patch --uri https://pkgs.dev.azure.com/{organization}/_apis/packaging/feeds/{feedId}/npm/$packageName/versions/{packageVersion}?api-version=7.1-preview.1 --body '{
+              "views": {
+                "op": "add",
+                "path": "/views/-",
+                "value": "Release"
+              }
+            }'
+            if [ $? -ne 0 ]; then
+              echo "Failed to promote package to Release view"
+              exit 1
+            fi
           done
         fi
       done
