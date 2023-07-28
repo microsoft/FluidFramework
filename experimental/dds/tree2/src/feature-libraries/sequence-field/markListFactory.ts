@@ -21,11 +21,7 @@ export class MarkListFactory<TNodeChange> {
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
-			if (isNoop(item)) {
-				this.pushOffset(item.count);
-			} else {
-				this.pushMark(item);
-			}
+			this.pushMark(item);
 		}
 	}
 
@@ -34,7 +30,7 @@ export class MarkListFactory<TNodeChange> {
 	}
 
 	public pushMark(mark: Mark<TNodeChange>): void {
-		if (mark.effects === undefined) {
+		if (isNoop(mark)) {
 			this.pushOffset(mark.count);
 		} else {
 			if (this.offset > 0) {

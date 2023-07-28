@@ -112,19 +112,9 @@ function invertMark<TNodeChange>(
 	}
 	switch (effect.type) {
 		case "Insert": {
+			assert(mark.cellId !== undefined, "Insert marks must target empty cells");
 			if (effect.transientDetach !== undefined) {
 				assert(revision !== undefined, "Unable to revert to undefined revision");
-				const inverseEffect: Effect<never> = {
-					type: "Revive",
-					content: reviver(revision, inputIndex, effect.content.length),
-					inverseOf: effect.revision ?? revision,
-				};
-				if (mark.cellId !== undefined) {
-					inverseEffect.transientDetach = {
-						revision: mark.cellId.revision ?? revision,
-						localId: mark.cellId.localId,
-					};
-				}
 				return [
 					withNodeChange(
 						{
@@ -133,12 +123,22 @@ function invertMark<TNodeChange>(
 								localId: effect.transientDetach.localId,
 							},
 							count: mark.count,
-							effects: [inverseEffect],
+							effects: [
+								{
+									type: "Revive",
+									content: reviver(revision, inputIndex, effect.content.length),
+									inverseOf: effect.revision ?? revision,
+									transientDetach: {
+										revision: mark.cellId.revision ?? revision,
+										localId: mark.cellId.localId,
+									},
+								},
+							],
 						},
 						invertNodeChange(effect.changes, inputIndex, invertChild),
 					),
 				];
-			} else if (mark.cellId !== undefined) {
+			} else {
 				const inverse = withNodeChange(
 					{
 						count: mark.count,
@@ -148,7 +148,6 @@ function invertMark<TNodeChange>(
 				);
 				return [inverse];
 			}
-			return [];
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);

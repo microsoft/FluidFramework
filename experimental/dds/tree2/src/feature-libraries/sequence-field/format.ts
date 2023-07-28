@@ -357,6 +357,11 @@ export interface Mark<TNodeChange> {
 	 * Undefined if the target cells are not empty in this mark's input context.
 	 */
 	cellId?: CellId;
+	/**
+	 * The effects to be applied to the target cells or the nodes within them.
+	 * Undefined if no effect is to be applied the the cells.
+	 * Empty is equivalent to undefined, with empty being preferred for terseness.
+	 */
 	effects?: Effect<TNodeChange>[];
 }
 
