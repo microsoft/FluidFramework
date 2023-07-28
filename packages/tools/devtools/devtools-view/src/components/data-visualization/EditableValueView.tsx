@@ -135,7 +135,7 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	/**
 	 * Input field for editing
 	 * @param textBox - whether the input field should be of type "number" or "text"
-	 * @returns - React.ReactEllment which is an input field with the desired properites for editing
+	 * @returns React.ReactElement which is an input field with the desired properties for editing
 	 */
 	function inputEdit(textBox: boolean): React.ReactElement {
 		return (
