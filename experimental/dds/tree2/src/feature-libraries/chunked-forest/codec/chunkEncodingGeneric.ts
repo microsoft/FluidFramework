@@ -128,12 +128,20 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
  *
  * @remarks
  * Deduplication of shapes is done after the output is otherwise generated (including identifier dictionary encoding).
- * To avoid having to decode the decode the data array to determine which data is a shape and which is some other object,
+ * To avoid having to decode the data array to determine which data is a shape and which is some other object,
  * some recognizable representation is required.
  * Using a class and checking its prototype works for this, and is why Shape is a class.
  *
  * Note that deduplication compares shapes by object identity not by content, so encoders must ensure shapes are not duplicated to achieve efficient encoding.
  * Comparison by content would be difficult due to shape containing references to other shapes.
+ *
+ * @privateRemarks
+ * Unlike with identifiers, conversion from the initial form (this class / IdentifierToken) is done by the `encodeShape` method, not by general purpose logic in `handleShapesAndIdentifiers`.
+ * For `handleShapesAndIdentifiers` to do the conversion without help from `encodeShape`,
+ * instances of this Shape class would have to either be or output an object that is identical to the `TEncodedShape` format except with all shape references as object references instead of indexes.
+ * Those objects would have to be deeply traversed looking for shape objects to replace with reference indexes.
+ * This is possible, but making it type safe would involve generating derived types from the `TEncodedShape` deeply replacing any shape references, as well as requiring deep traversal of all objects in the encoded output.
+ * Such an approach seemed less maintainable and readable than the design taken here which avoids the need for those derived types.
  */
 export abstract class Shape<TEncodedShape> {
 	/**
