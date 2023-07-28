@@ -362,7 +362,8 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
-		const shape: EncodedNestedArray = shapes.valueToIndex.get(this.inner.shape) ?? fail("");
+		const shape: EncodedNestedArray =
+			shapes.valueToIndex.get(this.inner.shape) ?? fail("index for shape not found in table");
 		return {
 			a: shape,
 		};

@@ -19,7 +19,7 @@ import {
  * @remarks
  * Compression of Identifiers is done after the output is otherwise generated to enable counting all the usages.
  * To avoid having to decode the decode the data array to determine which data is an identifier and which is some other string,
- * some recognizable representing is required.
+ * some recognizable representation is required.
  * Using a class and checking its prototype works for this, and is why IdentifierToken is a class.
  */
 export class IdentifierToken {
@@ -121,22 +121,30 @@ export function handleShapesAndIdentifiers<TEncodedShape>(
 }
 
 /**
- * A tree shape which can have references to it deduplicated using {@link Counter}.
+ * A tree shape.
+ * This similar to a schema for a tree, though it may be more or less specific than the actual schema system used.
+ * Can be encoded into a `TEncodedShape`: when doing so encodes references to shapes (if needed) using {@link Counter}:
+ * this can include recursive references (direct or indirect).
  *
  * @remarks
  * Deduplication of shapes is done after the output is otherwise generated (including identifier dictionary encoding).
  * To avoid having to decode the decode the data array to determine which data is a shape and which is some other object,
- * some recognizable representing is required.
+ * some recognizable representation is required.
  * Using a class and checking its prototype works for this, and is why Shape is a class.
  *
  * Note that deduplication compares shapes by object identity not by content, so encoders must ensure shapes are not duplicated to achieve efficient encoding.
+ * Comparison by content would be difficult due to shape containing references to other shapes.
  */
 export abstract class Shape<TEncodedShape> {
 	/**
 	 * Count this shape's contents.
 	 *
-	 * Used to discover referenced shapes (which need to be included),
+	 * Used to discover referenced shapes (to ensure they are included in the `shapes` passed to `encodeShape`),
 	 * as well as count usages of shapes and identifiers for more efficient dictionary encoding. See {@link Counter}.
+	 *
+	 * @param shapes - must be invoked with each directly referenced shape (which must provided to `encodeShape`).
+	 * Can be invoked multiple times if a shape is referenced more than once for more efficient dictionary encoding.
+	 * Should not be invoked with `this` unless this shape references itself.
 	 */
 	public abstract count(
 		identifiers: Counter<string>,

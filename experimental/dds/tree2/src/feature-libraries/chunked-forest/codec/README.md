@@ -11,14 +11,14 @@ Two main algorithms are used:
 -   [Dictionary Coding](https://go-compression.github.io/algorithms/dictionary/) using `Counter` from [chunkCodexUtilities.ts](./chunkCodecUtilities.ts)
     is applied to Identifiers (such a type names and field keys) and Shapes.
 
-The main challenge is deciding what shapes to use, since if too much information is captured in the shape, there will need to be more shapes which take up more space,
-but if too little information is captured in the shapes.
+The main challenge is deciding what shapes to use: if too much information is captured in the shape, there will be more shapes which take up more space,
+but if too little information is captured in the shapes, the size of the encoded tree will be large.
 
 Balancing this involves making strategic choices about what to include in the shape, and what not to.
 A few implementations are included which make different choices here:
 
 -   [uncompressedEncode.ts](uncompressedEncode.ts): the simplest implementation, which captures nothing in the shape and does no Dictionary Coding of identifiers.
-    This makes for more human readable data as well as a simple reference implementation which.
+    This makes for more human readable data as well as a simple reference implementation.
 -   [compressedEncode.ts](compressedEncode.ts): some utilities for actual compressed encoding, but does not contain any advanced strategies (instead they must be provided to it via the `EncoderCache`)
 -   [schemaBasedEncoding.ts](schemaBasedEncoding.ts): a strategy for compressedEncode using schema to infer commonly used shapes.
 
