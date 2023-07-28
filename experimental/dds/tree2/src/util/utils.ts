@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
+import { cloneDeep } from "lodash";
 import {
 	generateStableId as runtimeGenerateStableId,
 	assertIsStableId,
@@ -33,6 +34,7 @@ export type RecursiveReadonly<T> = {
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export function clone<T>(original: T): T {
+	cloneDeep(original);
 	return structuredClone(original);
 }
 
