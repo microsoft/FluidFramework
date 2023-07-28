@@ -79,7 +79,7 @@ class OpPerfTelemetry {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		const samplingConfiguration = new Map<string, number>([["OpRoundtripTime", 5]]);
+		const samplingConfiguration = new Map<string, number>([["OpRoundtripTime", 500]]);
 		this.logger = createChildLogger({ logger, namespace: "OpPerf", samplingConfiguration });
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
