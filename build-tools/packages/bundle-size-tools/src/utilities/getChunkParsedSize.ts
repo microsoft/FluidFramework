@@ -18,7 +18,7 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 		// Make sure to only look at js files and not source maps (assumes source maps don't end in .js)
 		if (asset.name.endsWith(".js")) {
 			// Assumes only a single chunk per asset, this may not hold for all apps.
-			return asset.chunks?.[0] === chunkId;
+			return asset.chunks?.includes(chunkId);
 		}
 
 		return false;
