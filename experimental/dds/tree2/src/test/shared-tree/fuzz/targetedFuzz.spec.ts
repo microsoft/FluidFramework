@@ -35,7 +35,7 @@ import {
 	fuzzReducer,
 } from "./fuzzEditReducers";
 import { onCreate, initialTreeState } from "./fuzzUtils";
-import { Operation, TreeOperation } from "./operationTypes";
+import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
 	firstAnchor?: Anchor;
@@ -96,14 +96,14 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe("Fuzz - Targeted", () => {
+describe.only("Fuzz - Targeted", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 20;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<TreeOperation, AbortFuzzTestState>;
+		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
@@ -280,7 +280,7 @@ describe("Fuzz - Targeted", () => {
 	});
 
 	describe("out of order undo matches the initial state", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, UndoRedoFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
