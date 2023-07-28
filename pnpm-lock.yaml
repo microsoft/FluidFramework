@@ -4913,6 +4913,7 @@ importers:
       react-virtualized-auto-sizer: 1.0.7
       require-from-string: ^2.0.2
       rimraf: ^4.4.0
+      sinon: ^7.4.2
       source-map-loader: ^2.0.0
       source-map-support: ^0.5.16
       svg-sprite-loader: ^6.0.11
@@ -4984,6 +4985,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       rimraf: 4.4.1
+      sinon: 7.5.0
       source-map-loader: 2.0.2_webpack@5.83.0
       source-map-support: 0.5.21
       svg-sprite-loader: 6.0.11
