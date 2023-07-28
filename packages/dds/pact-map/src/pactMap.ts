@@ -35,11 +35,9 @@ interface IAcceptedPactInternal<T> {
 	value: T | undefined;
 
 	/**
-	 * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
+	 * The sequence number when the value was accepted, which will normally coincide with one of two possibilities:
 	 * - The sequence number of the "accept" op from the final client we expected signoff from
 	 * - The sequence number of the ClientLeave of the final client we expected signoff from
-	 * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
-	 * was connected when the op was sequenced)
 	 *
 	 * For values set in detached state, it will be 0.
 	 */
