@@ -18,7 +18,7 @@ export namespace DataEdit {
 	 *
 	 * @internal
 	 */
-	export const MessageType = "SEND_EDIT_DATA";
+	export const MessageType = "DATA_EDIT";
 
 	/**
 	 * Message data format used by {@link DataEdit.Message}.
