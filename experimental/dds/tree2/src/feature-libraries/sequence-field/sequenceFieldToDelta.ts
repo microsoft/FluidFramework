@@ -12,7 +12,6 @@ import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
-	getMarkLength,
 	getNodeChange,
 	markIsTransient,
 	tryGetEffect,
@@ -27,7 +26,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
-			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
+			out.push(deltaFromNodeChange(getNodeChange(mark), mark.count, deltaFromChild));
 		} else if (
 			areInputCellsEmpty(mark) &&
 			areOutputCellsEmpty(mark) &&

@@ -248,7 +248,7 @@ function areSameLineage(
  * @returns The number of nodes within the output context of the mark.
  */
 export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = false): number {
-	return areOutputCellsEmpty(mark) ? 0 : getMarkLength(mark);
+	return areOutputCellsEmpty(mark) ? 0 : mark.count;
 }
 
 export function getRevision(mark: Mark<unknown>): RevisionTag | undefined {
@@ -264,7 +264,7 @@ export function getRevision(mark: Mark<unknown>): RevisionTag | undefined {
  * @returns The number of nodes within the input context of the mark.
  */
 export function getInputLength(mark: Mark<unknown>): number {
-	return areInputCellsEmpty(mark) ? 0 : getMarkLength(mark);
+	return areInputCellsEmpty(mark) ? 0 : mark.count;
 }
 
 export function markEmptiesCells(mark: Mark<unknown>): boolean {
@@ -304,10 +304,6 @@ export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
-	if (isNewAttach(mark)) {
-		return true;
-	}
-
 	return mark.cellId !== undefined;
 }
 
@@ -345,10 +341,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		default:
 			unreachableCase(type);
 	}
-}
-
-export function getMarkLength(mark: Mark<unknown>): number {
-	return mark.count;
 }
 
 export function isNoop(mark: Mark<unknown>): mark is NoopMark {
@@ -538,7 +530,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				lhsRevive.inverseOf === rhsEffect.inverseOf &&
 				areMergeableChangeAtoms(
 					lhsRevive.transientDetach,
-					getMarkLength(lhs),
+					lhs.count,
 					rhsEffect.transientDetach,
 				)
 			) {
@@ -682,7 +674,7 @@ export class DetachedNodeTracker {
 			const cloned = cloneMark(mark);
 			if (areInputCellsEmpty(cloned) && !isNewAttach(cloned)) {
 				let remainder = cloned;
-				while (getMarkLength(remainder) > 1) {
+				while (remainder.count > 1) {
 					const [head, tail] = splitMark(remainder, 1);
 					this.updateMark(head);
 					factory.push(head);
@@ -910,7 +902,7 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
  * such that the first returned mark has input length `length`.
  */
 export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number): [TMark, TMark] {
-	const markLength = getMarkLength(mark);
+	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
 		fail("Unable to split mark due to lengths");
