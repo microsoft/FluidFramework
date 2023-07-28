@@ -386,9 +386,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	public async refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
-		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
-		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLoggerExt,
+		fetchLatestSnapshotAndClose: () => Promise<IFetchSnapshotResult>,
 	): Promise<RefreshSummaryResult> {
 		const eventProps: {
 			proposalHandle: string | undefined;
@@ -433,17 +431,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 							summaryRefSeq,
 						};
 					}
-
-					const props = {
-						summaryRefSeq,
-						pendingSize: this.pendingSummaries.size ?? undefined,
-					};
-					this.logger.sendTelemetryEvent({
-						eventName: "PendingSummaryNotFound",
-						proposalHandle,
-						referenceSequenceNumber: this.referenceSequenceNumber,
-						details: JSON.stringify(props),
-					});
 				}
 
 				// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
@@ -455,36 +442,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
 				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
-					await fetchLatestSnapshot();
+				await fetchLatestSnapshotAndClose();
 
-				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
-				// snapshot is older than the latest tracked summary, ignore it.
-				if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
-					eventProps.latestSummaryUpdated = false;
-					event.end(eventProps);
-					return { latestSummaryUpdated: false };
-				}
-
-				await this.refreshLatestSummaryFromSnapshot(
-					fetchedSnapshotRefSeq,
-					snapshotTree,
-					undefined,
-					EscapedPath.create(""),
-					correlatedSummaryLogger,
-					readAndParseBlob,
-				);
-
-				eventProps.latestSummaryUpdated = true;
-				eventProps.wasSummaryTracked = false;
-				eventProps.summaryRefSeq = fetchedSnapshotRefSeq;
-				event.end(eventProps);
-				return {
-					latestSummaryUpdated: true,
-					wasSummaryTracked: false,
-					snapshotTree,
-					summaryRefSeq: fetchedSnapshotRefSeq,
-				};
+				return { latestSummaryUpdated: false };
 			},
 			{ start: true, end: true, cancel: "error" },
 		);

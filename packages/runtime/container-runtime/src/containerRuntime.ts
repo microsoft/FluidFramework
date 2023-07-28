@@ -3475,7 +3475,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorage(
+				fetchResult = await this.fetchSnapshotFromStorageAndClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3582,10 +3582,15 @@ export class ContainerRuntime
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorage(logger, event, readAndParseBlob, null /* latest */);
+		return this.fetchSnapshotFromStorageAndClose(
+			logger,
+			event,
+			readAndParseBlob,
+			null /* latest */,
+		);
 	}
 
-	private async fetchSnapshotFromStorage(
+	private async fetchSnapshotFromStorageAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
@@ -3641,24 +3646,23 @@ export class ContainerRuntime
 		// We choose to close the summarizer after the snapshot cache is updated to avoid
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod === "restart") {
-			this.mc.logger.sendTelemetryEvent(
-				{
-					...event,
-					eventName: "ClosingSummarizerOnSummaryStale",
-					codePath: event.eventName,
-					message: "Stopping fetch from storage",
-					versionId: versionId != null ? versionId : undefined,
-					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-				},
-				new GenericError("Restarting summarizer instead of refreshing"),
-			);
+		// TODO: remove this error event
+		this.mc.logger.sendTelemetryEvent(
+			{
+				...event,
+				eventName: "ClosingSummarizerOnSummaryStale",
+				codePath: event.eventName,
+				message: "Stopping fetch from storage",
+				versionId: versionId != null ? versionId : undefined,
+				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
+			},
+			new GenericError("Restarting summarizer instead of refreshing"),
+		);
 
-			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(this.closeSummarizerDelayMs);
-			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
-		}
+		// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.closeFn();
 
 		return snapshotResults;
 	}
