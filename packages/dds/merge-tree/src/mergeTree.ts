@@ -125,7 +125,7 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
 interface IReferenceSearchInfo {
 	mergeTree: MergeTree;
 	tileLabel: string;
-	tilePrecedesPos?: boolean;
+	posPrecedesTile?: boolean;
 	tile?: ReferencePosition;
 }
 
@@ -223,9 +223,9 @@ function tileShift(
 		}
 	} else {
 		const block = <IHierBlock>node;
-		const marker = searchInfo.tilePrecedesPos
-			? <Marker>block.rightmostTiles[searchInfo.tileLabel]
-			: <Marker>block.leftmostTiles[searchInfo.tileLabel];
+		const marker = searchInfo.posPrecedesTile
+			? <Marker>block.leftmostTiles[searchInfo.tileLabel]
+			: <Marker>block.rightmostTiles[searchInfo.tileLabel];
 		if (marker !== undefined) {
 			searchInfo.tile = marker;
 		}
@@ -1256,16 +1256,16 @@ export class MergeTree {
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param tileLabel - Label of the tile to search for
-	 * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
+	 * @param posPrecedesTile - Whether the desired tile comes before (false) or after (true) `startPos`
 	 */
-	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
+	public findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile = true) {
 		const searchInfo: IReferenceSearchInfo = {
 			mergeTree: this,
-			tilePrecedesPos,
+			posPrecedesTile,
 			tileLabel,
 		};
 
-		if (tilePrecedesPos) {
+		if (posPrecedesTile) {
 			this.search(
 				startPos,
 				UniversalSequenceNumber,
@@ -1285,7 +1285,7 @@ export class MergeTree {
 
 		if (
 			searchInfo.tile &&
-			!((startPos === this.length && !tilePrecedesPos) || (startPos === 0 && tilePrecedesPos))
+			!((startPos === this.length && !posPrecedesTile) || (startPos === 0 && posPrecedesTile))
 		) {
 			let pos: number;
 			if (searchInfo.tile.isLeaf()) {
