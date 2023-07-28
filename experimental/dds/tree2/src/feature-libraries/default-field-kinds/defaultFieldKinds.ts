@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, ITreeCursor } from "../../core";
+import { FieldKindIdentifier, Delta, ITreeCursor, forbiddenFieldKindIdentifier } from "../../core";
 import { fail } from "../../util";
 import {
 	FieldKind,
@@ -195,7 +195,11 @@ export interface NodeKeyFieldKind
  * @alpha
  */
 export interface Forbidden
-	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
+	extends BrandedFieldKind<
+		typeof forbiddenFieldKindIdentifier,
+		Multiplicity.Forbidden,
+		FieldEditor<any>
+	> {}
 
 /**
  * Default FieldKinds with their editor types erased.
