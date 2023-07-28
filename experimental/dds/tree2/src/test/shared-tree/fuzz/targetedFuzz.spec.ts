@@ -29,6 +29,7 @@ import { ISharedTree, SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import {
 	applyFieldEdit,
+	applySynchronizationOp,
 	applyTransactionEdit,
 	applyUndoRedoEdit,
 	fuzzReducer,
@@ -80,6 +81,10 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		const { contents } = operation;
 		const tree = state.channel;
 		applyUndoRedoEdit(tree, contents);
+		return state;
+	},
+	synchronizeTrees: async (state) => {
+		applySynchronizationOp(state);
 		return state;
 	},
 });
@@ -152,7 +157,7 @@ describe("Fuzz - Targeted", () => {
 	};
 
 	describe("Composed vs individual changes converge to the same tree", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, BranchedTreeFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, BranchedTreeFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
 
 		const model: DDSFuzzModel<
@@ -193,7 +198,7 @@ describe("Fuzz - Targeted", () => {
 	};
 
 	describe.skip("Inorder undo/redo matches the initial/final state", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, UndoRedoFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
@@ -275,7 +280,7 @@ describe("Fuzz - Targeted", () => {
 	});
 
 	describe("out of order undo matches the initial state", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, UndoRedoFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
