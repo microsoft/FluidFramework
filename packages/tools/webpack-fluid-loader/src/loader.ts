@@ -363,18 +363,26 @@ export async function start(
 }
 
 async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
-	const response = await container.request({
-		headers: {
-			mountableView: true,
-		},
-		url,
-	});
+	const entryPoint = await container.getEntryPoint?.();
 
-	if (response.status !== 200 || !(response.mimeType === "fluid/object")) {
-		return false;
+	let fluidObject: FluidObject<IFluidMountableView>;
+	if (entryPoint === undefined) {
+		const response = await container.request({
+			headers: {
+				mountableView: true,
+			},
+			url,
+		});
+
+		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			return false;
+		}
+
+		fluidObject = response.value;
+	} else {
+		fluidObject = entryPoint;
 	}
 
-	const fluidObject: FluidObject<IFluidMountableView> = response.value;
 	if (fluidObject === undefined) {
 		return;
 	}

@@ -3,34 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import {
+	IFluidDataStoreChannel,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 
 const dataStoreId = "modelDataStore";
 
 export type ViewCallback<T> = (fluidModel: T) => any;
-
-const makeViewRequestHandler =
-	<T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
-	async (request: RequestParser, runtime: IContainerRuntime) => {
-		if (request.pathParts.length === 0) {
-			const objectRequest = RequestParser.create({
-				url: ``,
-				headers: request.headers,
-			});
-			// TODO type the requestFluidObject
-			const fluidObject = await requestFluidObject<T>(
-				await runtime.getRootDataStore(dataStoreId),
-				objectRequest,
-			);
-			const viewResponse = viewCallback(fluidObject);
-			return { status: 200, mimeType: "fluid/view", value: viewResponse };
-		}
-	};
 
 /**
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
@@ -44,9 +27,27 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 	) {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]), undefined, [
-			mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
-		]);
+		super(
+			new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			undefined,
+			undefined,
+			undefined,
+			async (containerRuntime: IContainerRuntime) => {
+				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
+				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
+				const dataStore: IFluidDataStoreChannel = (await containerRuntime.getRootDataStore(
+					dataStoreId,
+				)) as IFluidDataStoreChannel;
+
+				// TODO: better type discovery
+				const fluidObject: T = (await dataStore.entryPoint?.get()) as T;
+				if (fluidObject === undefined) {
+					throw new Error("DataStore did not set its EntryPoint");
+				}
+
+				return new MountableView(viewCallback(fluidObject));
+			} /* initializeEntryPoint */,
+		);
 	}
 
 	/**

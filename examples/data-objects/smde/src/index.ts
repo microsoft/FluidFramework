@@ -11,6 +11,7 @@ import {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { MountableView } from "@fluidframework/view-adapters";
 
 import React from "react";
 
@@ -53,13 +54,11 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 					throw new Error("DataStore did not set its EntryPoint");
 				}
 
-				return {
-					status: 200,
-					mimeType: "fluid/view",
-					value: React.createElement(SmdeReactView, {
+				return new MountableView(
+					React.createElement(SmdeReactView, {
 						smdeDataObject,
 					}),
-				};
+				);
 			},
 		});
 

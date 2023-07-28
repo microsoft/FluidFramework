@@ -6,16 +6,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-	IFluidLoadable,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-	IFluidHandle,
-	FluidObject,
-} from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
+import { IFluidLoadable, IFluidHandle, FluidObject } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IMergeTreeInsertMsg,
@@ -71,10 +63,7 @@ function createTreeMarkerOps(
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class ProseMirror
-	extends EventEmitter
-	implements IFluidLoadable, IFluidRouter, IProvideRichTextEditor
-{
+export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
@@ -91,9 +80,6 @@ export class ProseMirror
 	}
 
 	public get IFluidLoadable() {
-		return this;
-	}
-	public get IFluidRouter() {
 		return this;
 	}
 	public get IRichTextEditor() {
@@ -118,10 +104,6 @@ export class ProseMirror
 		super();
 
 		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
-	}
-
-	public async request(request: IRequest): Promise<IResponse> {
-		return defaultFluidObjectRequestHandler(this, request);
 	}
 
 	private async initialize(existing: boolean) {
@@ -161,12 +143,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
-			const router = await routerP;
-			return router.request(request);
-		});
-
-		const runtime = new runtimeClass(
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -175,9 +152,8 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			async (_: IFluidDataStoreRuntime) => ProseMirror.load(runtime, context, existing),
 		);
-		const routerP = ProseMirror.load(runtime, context, existing);
-
 		return runtime;
 	}
 }
