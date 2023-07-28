@@ -13,15 +13,13 @@ import {
 	Any,
 } from "../feature-libraries";
 import {
-	LocalFieldKey,
-	EmptyKey,
 	FieldKey,
+	EmptyKey,
 	JsonableTree,
 	ITreeCursor,
 	CursorLocationType,
 	rootFieldKey,
 	setGenericTreeField,
-	isLocalKey,
 	UpPath,
 	compareFieldUpPaths,
 	FieldUpPath,
@@ -49,14 +47,14 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["string with escaped characters", { type: leaf.name, value: '\\"\b\f\n\r\t' }],
 	["string with emoticon", { type: leaf.name, value: "😀" }],
 	[
-		"local field",
+		"field",
 		{
 			type: mapSchema.name,
 			fields: { x: [{ type: emptySchema.name }, { type: leaf.name, value: 6 }] },
 		},
 	],
 	[
-		"multiple local fields",
+		"multiple fields",
 		{
 			type: mapSchema.name,
 			fields: {
@@ -159,12 +157,6 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
  * Collection of builders for special cases.
  */
 export interface SpecialCaseBuilder<TData> {
-	/**
-	 * Build data for a tree which has the provided keys on its root node.
-	 * The content of the tree under these keys is arbitrary and up to the implementation.
-	 */
-	withLocalKeys?(keys: LocalFieldKey[]): TData;
-
 	/**
 	 * Build data for a tree which has the provided keys on its root node.
 	 * The content of the tree under these keys is arbitrary and up to the implementation.
@@ -274,12 +266,6 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 						  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						  (keys) => [0, config.builders.withKeys!(keys)]
 						: undefined,
-				withLocalKeys:
-					config.builders.withLocalKeys !== undefined
-						? // This is known to be non-null from check above, but typescript can't infer it.
-						  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						  (keys) => [0, config.builders.withLocalKeys!(keys)]
-						: undefined,
 			},
 			cursorFactory: (data: [number, TData]): TCursor => {
 				const cursor = config.cursorFactory(data[1]);
@@ -292,7 +278,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 	});
 }
 
-const unusedKey: LocalFieldKey = brand("unusedKey");
+const unusedKey: FieldKey = brand("unusedKey");
 const testKeys: readonly FieldKey[] = [
 	// keys likely to cause issues due to JS object non-own keys
 	brand("__proto__"),
@@ -364,8 +350,6 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 					}
 					return builder(root);
 			  };
-	const withLocalKeys =
-		withKeys ?? (typeof builder === "object" ? builder.withLocalKeys : undefined);
 
 	const parent = !extraRoot
 		? undefined
@@ -534,17 +518,15 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				});
 			});
 		}
-		if (withLocalKeys !== undefined) {
+		if (withKeys !== undefined) {
 			describe("key tests", () => {
-				const unrelatedKey: LocalFieldKey = brand("unrelated");
+				const unrelatedKey: FieldKey = brand("unrelated");
 				for (const key of testKeys) {
 					it(`returns no values for key: ${key.toString()}`, () => {
 						// Test an empty tree, and one with unrelated fields
-						const trees: TData[] = [withLocalKeys([]), withLocalKeys([unrelatedKey])];
-						// If we have a builder, use to make a tree with unrelatedKey.
-						if (withKeys !== undefined) {
-							trees.push(withKeys([unrelatedKey]));
-						}
+						const trees: TData[] = [withKeys([]), withKeys([unrelatedKey])];
+						// We have a builder: use it to make a tree with unrelatedKey.
+						trees.push(withKeys([unrelatedKey]));
 
 						for (const data of trees) {
 							const cursor = cursorFactory(data);
@@ -553,11 +535,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						}
 					});
 
-					const dataFactory = isLocalKey(key)
-						? () => withLocalKeys([key])
-						: withKeys !== undefined
-						? () => withKeys([key])
-						: undefined;
+					const dataFactory = () => withKeys([key]);
+
 					if (dataFactory !== undefined) {
 						it(`handles values for key: ${key.toString()}`, () => {
 							const dataWithKey = dataFactory();
@@ -577,14 +556,14 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			});
 
 			it("traverse with no keys", () => {
-				const data = withLocalKeys([]);
+				const data = withKeys([]);
 				const cursor = cursorFactory(data);
 				checkTraversal(cursor, parent);
 			});
 
 			describe("cursor prefix tests", () => {
 				it("at root", () => {
-					const data = withLocalKeys([]);
+					const data = withKeys([]);
 					const cursor = cursorFactory(data);
 					expectEqualPaths(cursor.getPath(), parent);
 

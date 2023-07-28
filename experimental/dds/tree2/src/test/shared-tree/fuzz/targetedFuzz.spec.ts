@@ -326,7 +326,7 @@ describe("Fuzz - Targeted", () => {
 					parent: {
 						parent: undefined,
 						parentIndex: 0,
-						parentField: rootFieldKeySymbol,
+						parentField: rootFieldKey,
 					},
 					parentField: brand("foo"),
 					parentIndex: 1,
