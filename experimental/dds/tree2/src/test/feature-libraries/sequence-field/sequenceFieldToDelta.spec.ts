@@ -323,7 +323,7 @@ describe("SequenceField - toDelta", () => {
 		const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 
 		it("delete", () => {
-			const deletion = [Mark.delete(2, brand(0), { cellId })];
+			const deletion = [Mark.onEmptyCell(cellId, Mark.delete(2, brand(0)))];
 
 			const actual = toDelta(deletion);
 			const expected: Delta.MarkList = [];
@@ -342,7 +342,7 @@ describe("SequenceField - toDelta", () => {
 			const move = [
 				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
 				{ count: 1 },
-				Mark.moveOut(1, brand(0), { cellId }),
+				Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0))),
 			];
 
 			const actual = toDelta(move);
