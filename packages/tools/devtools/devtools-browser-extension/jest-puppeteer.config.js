@@ -17,6 +17,7 @@ module.exports = {
 			"--disable-setuid-sandbox",
 
 			// Ensure our extension is loaded into the browser environment
+			"--disable-extensions-except=./dist/bundle",
 			"--load-extension=./dist/bundle",
 		],
 		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined, // output browser console to cmd line

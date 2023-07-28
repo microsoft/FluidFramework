@@ -51,11 +51,18 @@ describe("End to end tests", () => {
 	});
 
 	// TODO
-	// it("Smoke: verify Devtools extension view can be launched", async () => {
-	// 	const targets = await browser.targets();
-	// 	console.log(targets);
-	// 	// chrome-extension://inmobceohkedafljagjfnbojplmlmgbk/devtools_app.html
-	// 	// document.querySelector("#containers-menu-section");
-	// 	// document.querySelector("#telemetry-menu-section");
-	// });
+	it("Determine if telemetry pane is rendered on the extension", async () => {
+		const targets = await browser.targets();
+		console.log("targets:", targets);
+		const extensionTarget = targets.find((target) => target.type() === "service_worker");
+		console.log("extensionTarget:", extensionTarget);
+		const partialExtensionUrl = extensionTarget?.url() || "";
+		console.log("partialExtensionUrl:", partialExtensionUrl);
+		const [, , extensionId] = partialExtensionUrl.split("/");
+		console.log("extensionId:", extensionId);
+
+		const extPage = await browser.newPage();
+		const extensionUrl = `chrome-extension://${extensionId}/`;
+		await extPage.goto(extensionUrl, { waitUntil: "load" });
+	});
 });
