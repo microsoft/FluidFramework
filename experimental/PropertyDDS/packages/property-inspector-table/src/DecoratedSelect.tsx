@@ -125,15 +125,11 @@ export interface IDecoratedSelectOptionType {
 }
 
 // Those two types are only exported so users can type their options arrays:
-type GroupedOptionsType<
-	Option = unknown,
-	Group extends GroupBase<Option> = GroupBase<Option>,
+export type DecoratedSelectGroupedOptionsType<
+	Group extends GroupBase<IDecoratedSelectOptionType> = GroupBase<IDecoratedSelectOptionType>,
 > = readonly Group[];
-export type DecoratedSelectGroupedOptionsType = GroupedOptionsType<IDecoratedSelectOptionType>;
 export type DecoratedSelectOptionsType = OptionsType<IDecoratedSelectOptionType>;
 export type DecoratedSelectValueType = ValueType<IDecoratedSelectOptionType>;
-
-export { OptionsType, GroupedOptionsType };
 
 // This interface is also exported for convenience only:
 export type DecoratedSelectProps = SelectProps<IDecoratedSelectOptionType, false>;
