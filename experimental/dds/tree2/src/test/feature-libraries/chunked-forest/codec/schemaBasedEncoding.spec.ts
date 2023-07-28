@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
-import { SchemaBuilder } from "../../../../feature-libraries";
+import { SchemaBuilder, defaultSchemaPolicy } from "../../../../feature-libraries";
 
 import {
 	buildCache,
@@ -34,18 +34,18 @@ import { assertChunkCursorEquals, fieldCursorFromJsonableTrees } from "../fieldC
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 import {
-	hasExtraLocalFields,
 	hasOptionalField,
 	library,
 	minimal,
 	numeric,
+	numericMap,
 	recursiveType,
 	testTrees,
 } from "./testTrees";
 
-const anyNodeShape = new NodeShape(undefined, undefined, [], [], anyFieldEncoder, anyFieldEncoder);
-const onlyTypeShape = new NodeShape(undefined, false, [], [], undefined, undefined);
-const numericShape = new NodeShape(numeric.name, true, [], [], undefined, undefined);
+const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
+const numericShape = new NodeShape(numeric.name, true, [], undefined);
 
 describe("schemaBasedEncoding", () => {
 	it("oneFromSet", () => {
@@ -138,7 +138,12 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 			);
-			const shape = treeShaper(library, { shapeFromField: () => fail() }, minimal.name);
+			const shape = treeShaper(
+				library,
+				defaultSchemaPolicy,
+				{ shapeFromField: () => fail() },
+				minimal.name,
+			);
 			const buffer = checkNodeEncode(shape, cache, { type: minimal.name });
 			assert.deepEqual(buffer, []);
 		});
@@ -151,6 +156,7 @@ describe("schemaBasedEncoding", () => {
 			const log: FieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
+				defaultSchemaPolicy,
 				{
 					shapeFromField(field: FieldStoredSchema): FieldEncoder {
 						log.push(field);
@@ -165,8 +171,6 @@ describe("schemaBasedEncoding", () => {
 					hasOptionalField.name,
 					false,
 					[{ key: brand("field"), shape: cache.nestedArray(numericShape) }],
-					[],
-					undefined,
 					undefined,
 				),
 			);
@@ -187,29 +191,23 @@ describe("schemaBasedEncoding", () => {
 			const log: FieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
+				defaultSchemaPolicy,
 				{
 					shapeFromField(field: FieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},
 				},
-				hasExtraLocalFields.name,
+				numericMap.name,
 			);
 			assert.deepEqual(
 				shape,
-				new NodeShape(
-					hasExtraLocalFields.name,
-					false,
-					[],
-					[],
-					cache.nestedArray(numericShape),
-					undefined,
-				),
+				new NodeShape(numericMap.name, false, [], cache.nestedArray(numericShape)),
 			);
-			const bufferEmpty = checkNodeEncode(shape, cache, { type: hasExtraLocalFields.name });
+			const bufferEmpty = checkNodeEncode(shape, cache, { type: numericMap.name });
 			assert.deepEqual(bufferEmpty, [[]]);
 			const bufferFull = checkNodeEncode(shape, cache, {
-				type: hasExtraLocalFields.name,
+				type: numericMap.name,
 				fields: { extra: [{ type: numeric.name, value: 5 }] },
 			});
 			assert.deepEqual(bufferFull, [[new IdentifierToken("extra"), [5]]]);
@@ -217,7 +215,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	it("recursiveType", () => {
-		const cache = buildCache(library);
+		const cache = buildCache(library, defaultSchemaPolicy);
 		const shape = cache.shapeFromTree(recursiveType.name);
 		const bufferEmpty = checkNodeEncode(shape, cache, { type: recursiveType.name });
 		assert.deepEqual(bufferEmpty, [0]);
@@ -229,15 +227,17 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
-		for (const { name, schema, tree, schemaData } of testTrees) {
+		for (const { name, schema, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
+				const tree = treeFactory();
 				// Check with checkFieldEncode
-				const cache = buildCache(schemaData);
+				const cache = buildCache(schemaData, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
 				// End to end test
 				const encoded = schemaCompressedEncode(
 					schemaData,
+					defaultSchemaPolicy,
 					fieldCursorFromJsonableTrees(tree),
 				);
 				const json = JSON.stringify(encoded);

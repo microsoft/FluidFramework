@@ -6,14 +6,9 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
-	GlobalFieldKey,
 	ITreeCursorSynchronous,
-	LocalFieldKey,
 	TreeSchemaIdentifier,
 	forEachField,
-	isGlobalFieldKey,
-	keyFromSymbol,
-	symbolFromKey,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric";
@@ -29,23 +24,15 @@ import {
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
-	private readonly fields: KeyedFieldEncoder<FieldKey>[];
 	private readonly explicitKeys: Set<FieldKey>;
 
 	public constructor(
 		public readonly type: undefined | TreeSchemaIdentifier,
 		public readonly value: EncodedValueShape,
-		public readonly local: readonly KeyedFieldEncoder<LocalFieldKey>[],
-		public readonly global: readonly KeyedFieldEncoder<GlobalFieldKey>[],
+		public readonly fields: readonly KeyedFieldEncoder[],
 		public readonly extraLocal: undefined | FieldEncoder,
-		public readonly extraGlobal: undefined | FieldEncoder,
 	) {
 		super();
-
-		this.fields = [...this.local];
-		for (const field of this.global) {
-			this.fields.push({ key: symbolFromKey(field.key), shape: field.shape });
-		}
 		this.explicitKeys = new Set(this.fields.map((f) => f.key));
 	}
 
@@ -69,34 +56,21 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 
 		const localBuffer: BufferFormat<EncodedChunkShape> = [];
-		const globalBuffer: BufferFormat<EncodedChunkShape> = [];
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
 			if (!this.explicitKeys.has(key)) {
-				if (isGlobalFieldKey(key)) {
-					assert(
-						this.extraGlobal !== undefined,
-						"had extra global fields when shape does not support them",
-					);
-					globalBuffer.push(new IdentifierToken(keyFromSymbol(key)));
-					this.extraGlobal.encodeField(cursor, cache, globalBuffer);
-				} else {
-					assert(
-						this.extraLocal !== undefined,
-						"had extra local fields when shape does not support them",
-					);
-					localBuffer.push(new IdentifierToken(key));
-					this.extraLocal.encodeField(cursor, cache, localBuffer);
-				}
+				assert(
+					this.extraLocal !== undefined,
+					"had extra local fields when shape does not support them",
+				);
+				localBuffer.push(new IdentifierToken(key));
+				this.extraLocal.encodeField(cursor, cache, localBuffer);
 			}
 		});
 
 		if (this.extraLocal !== undefined) {
 			outputBuffer.push(localBuffer);
-		}
-		if (this.extraGlobal !== undefined) {
-			outputBuffer.push(globalBuffer);
 		}
 	}
 
@@ -108,10 +82,8 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			c: {
 				type: encodeOptionalIdentifier(this.type, identifiers),
 				value: this.value,
-				local: encodeFieldShapes(this.local, identifiers, shapes),
-				global: encodeFieldShapes(this.global, identifiers, shapes),
-				extraLocal: encodeOptionalFieldShape(this.extraLocal, shapes),
-				extraGlobal: encodeOptionalFieldShape(this.extraGlobal, shapes),
+				fields: encodeFieldShapes(this.fields, identifiers, shapes),
+				extraFields: encodeOptionalFieldShape(this.extraLocal, shapes),
 			},
 		};
 	}
@@ -123,17 +95,14 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		if (this.type !== undefined) {
 			identifiers.add(this.type);
 		}
-		for (const fields of [this.local, this.global]) {
-			for (const field of fields) {
-				identifiers.add(field.key);
-				shapes(field.shape.shape);
-			}
+
+		for (const field of this.fields) {
+			identifiers.add(field.key);
+			shapes(field.shape.shape);
 		}
+
 		if (this.extraLocal !== undefined) {
 			shapes(this.extraLocal.shape);
-		}
-		if (this.extraGlobal !== undefined) {
-			shapes(this.extraGlobal.shape);
 		}
 	}
 
@@ -143,7 +112,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 }
 
 export function encodeFieldShapes(
-	fields: readonly KeyedFieldEncoder<string>[],
+	fields: readonly KeyedFieldEncoder[],
 	identifiers: DeduplicationTable<string>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): EncodedFieldShape[] {

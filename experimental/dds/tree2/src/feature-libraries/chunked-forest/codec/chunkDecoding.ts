@@ -5,14 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { assertValidIndex } from "../../../util";
-import {
-	FieldKey,
-	GlobalFieldKey,
-	LocalFieldKey,
-	TreeSchemaIdentifier,
-	Value,
-	symbolFromKey,
-} from "../../../core";
+import { FieldKey, TreeSchemaIdentifier, Value } from "../../../core";
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
@@ -233,12 +226,8 @@ export class TreeDecoder implements ChunkDecoder {
 		this.type = shape.type === undefined ? undefined : cache.identifier(shape.type);
 
 		const fieldDecoders: BasicFieldDecoder[] = [];
-		for (const field of shape.local) {
-			const key: LocalFieldKey = cache.identifier(field.key);
-			fieldDecoders.push(fieldDecoder(cache, key, field.shape));
-		}
-		for (const field of shape.global) {
-			const key = symbolFromKey(cache.identifier<GlobalFieldKey>(field.key));
+		for (const field of shape.fields) {
+			const key: FieldKey = cache.identifier(field.key);
 			fieldDecoders.push(fieldDecoder(cache, key, field.shape));
 		}
 		this.fieldDecoders = fieldDecoders;
@@ -266,20 +255,11 @@ export class TreeDecoder implements ChunkDecoder {
 			addField(key, content);
 		}
 
-		if (this.shape.extraLocal !== undefined) {
-			const decoder = decoders[this.shape.extraLocal];
+		if (this.shape.extraFields !== undefined) {
+			const decoder = decoders[this.shape.extraFields];
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
-				const key: LocalFieldKey = readStreamIdentifier(inner, this.cache);
-				addField(key, decoder.decode(decoders, inner));
-			}
-		}
-
-		if (this.shape.extraGlobal !== undefined) {
-			const decoder = decoders[this.shape.extraGlobal];
-			const inner = readStreamStream(stream);
-			while (inner.offset !== inner.data.length) {
-				const key = symbolFromKey(readStreamIdentifier(inner, this.cache));
+				const key: FieldKey = readStreamIdentifier(inner, this.cache);
 				addField(key, decoder.decode(decoders, inner));
 			}
 		}

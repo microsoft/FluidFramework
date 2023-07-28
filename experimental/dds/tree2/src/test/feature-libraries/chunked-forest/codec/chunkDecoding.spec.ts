@@ -260,8 +260,7 @@ describe("chunkDecoding", () => {
 			const decoder = new TreeDecoder(
 				{
 					value: false,
-					local: [],
-					global: [],
+					fields: [],
 				},
 				cache,
 			);
@@ -276,8 +275,7 @@ describe("chunkDecoding", () => {
 				{
 					type: "baz",
 					value: false,
-					local: [],
-					global: [],
+					fields: [],
 				},
 				cache,
 			);
@@ -290,17 +288,11 @@ describe("chunkDecoding", () => {
 			const cache = new DecoderContext(["b", "d"], []);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
-			const globalChunk = new BasicChunk(brand("global"), new Map());
-			const decoders = [
-				makeLoggingDecoder(log, localChunk),
-				makeLoggingDecoder(log, globalChunk),
-			];
+			const decoders = [makeLoggingDecoder(log, localChunk)];
 			const decoder = new TreeDecoder(
 				{
-					local: [],
-					global: [],
-					extraLocal: 0,
-					extraGlobal: 1,
+					fields: [],
+					extraFields: 0,
 				},
 				cache,
 			);
@@ -323,14 +315,9 @@ describe("chunkDecoding", () => {
 						a: [{ type: brand("local") }],
 						b: [{ type: brand("local") }],
 					},
-					globalFields: {
-						c: [{ type: brand("global") }],
-						d: [{ type: brand("global") }],
-						e: [{ type: brand("global") }],
-					},
 				},
 			]);
-			assert.deepEqual(log, ["l1", "l2", "g1", "g2", "g3"]);
+			assert.deepEqual(log, ["l1", "l2"]);
 		});
 
 		it("fixed fields", () => {
@@ -341,15 +328,10 @@ describe("chunkDecoding", () => {
 			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
-			const globalChunk = new BasicChunk(brand("global"), new Map());
-			const decoders = [
-				makeLoggingDecoder(log, localChunk),
-				makeLoggingDecoder(log, globalChunk),
-			];
+			const decoders = [makeLoggingDecoder(log, localChunk)];
 			const decoder = new TreeDecoder(
 				{
-					local: [{ shape: 0, key: 0 }],
-					global: [{ shape: 1, key: 0 }],
+					fields: [{ shape: 0, key: 0 }],
 					value: false,
 				},
 				cache,
@@ -365,12 +347,9 @@ describe("chunkDecoding", () => {
 					fields: {
 						key: [{ type: brand("local") }],
 					},
-					globalFields: {
-						key: [{ type: brand("global") }],
-					},
 				},
 			]);
-			assert.deepEqual(log, ["l1", "g1"]);
+			assert.deepEqual(log, ["l1"]);
 		});
 	});
 });

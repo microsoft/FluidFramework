@@ -27,7 +27,7 @@ import { checkNodeEncode } from "./checkEncode";
 describe("nodeShape", () => {
 	describe("NodeShape", () => {
 		it("empty node", () => {
-			const shape = new NodeShape(undefined, false, [], [], undefined, undefined);
+			const shape = new NodeShape(undefined, false, [], undefined);
 			const identifierCounter = new Counter<string>();
 			shape.count(identifierCounter, () => fail());
 			assert(identifierCounter.buildTable().indexToValue.length === 0);
@@ -44,7 +44,7 @@ describe("nodeShape", () => {
 		});
 
 		it("typed node with value", () => {
-			const shape = new NodeShape(brand("foo"), true, [], [], undefined, undefined);
+			const shape = new NodeShape(brand("foo"), true, [], undefined);
 
 			const identifierCounter = new Counter<string>();
 			shape.count(identifierCounter, () => fail());
@@ -66,21 +66,10 @@ describe("nodeShape", () => {
 				() => fail(),
 			);
 
-			// Different shapes for local and global extra fields so we can ensure the correct shape is used for each.
 			const fieldShapeLocal = cache.nestedArray(
-				new NodeShape(undefined, false, [], [], undefined, undefined),
+				new NodeShape(undefined, false, [], undefined),
 			);
-			const fieldShapeGlobal = cache.nestedArray(
-				new NodeShape(undefined, [5], [], [], undefined, undefined),
-			);
-			const shape = new NodeShape(
-				undefined,
-				undefined,
-				[],
-				[],
-				fieldShapeLocal,
-				fieldShapeGlobal,
-			);
+			const shape = new NodeShape(undefined, undefined, [], fieldShapeLocal);
 
 			const tree: JsonableTree = {
 				type: brand("type"),
@@ -88,10 +77,6 @@ describe("nodeShape", () => {
 				fields: {
 					a: [{ type: brand("l1") }],
 					b: [{ type: brand("l2") }, { type: brand("l3") }],
-				},
-				globalFields: {
-					c: [{ type: brand("g1"), value: 5 }],
-					d: [{ type: brand("g2"), value: 5 }],
 				},
 			};
 
@@ -106,12 +91,6 @@ describe("nodeShape", () => {
 					new IdentifierToken("b"),
 					[new IdentifierToken("l2"), new IdentifierToken("l3")],
 				],
-				[
-					new IdentifierToken("c"),
-					[new IdentifierToken("g1")],
-					new IdentifierToken("d"),
-					[new IdentifierToken("g2")],
-				],
 			]);
 		});
 
@@ -123,10 +102,10 @@ describe("nodeShape", () => {
 
 			// Shape which encodes to nothing.
 			const fieldShape1: FieldEncoder = asFieldEncoder(
-				new NodeShape(brand("1"), false, [], [], undefined, undefined),
+				new NodeShape(brand("1"), false, [], undefined),
 			);
 			// Shape which encodes to just the value.
-			const shapeValueOnly = new NodeShape(brand("2"), true, [], [], undefined, undefined);
+			const shapeValueOnly = new NodeShape(brand("2"), true, [], undefined);
 
 			// Shape which encodes to nested array of values.
 			const shapeValues = cache.nestedArray(shapeValueOnly);
@@ -138,9 +117,8 @@ describe("nodeShape", () => {
 				[
 					{ key: brand("nothing"), shape: fieldShape1 },
 					{ key: brand("shapeValueOnly"), shape: asFieldEncoder(shapeValueOnly) },
+					{ key: brand("shapeValues"), shape: shapeValues },
 				],
-				[{ key: brand("shapeValues"), shape: shapeValues }],
-				undefined,
 				undefined,
 			);
 
@@ -150,8 +128,6 @@ describe("nodeShape", () => {
 				fields: {
 					nothing: [{ type: brand("1") }],
 					shapeValueOnly: [{ type: brand("2"), value: "v" }],
-				},
-				globalFields: {
 					shapeValues: [{ type: brand("2"), value: 6 }],
 				},
 			};

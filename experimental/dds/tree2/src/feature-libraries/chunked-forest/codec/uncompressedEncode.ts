@@ -3,14 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITreeCursorSynchronous,
-	TreeValue,
-	forEachField,
-	forEachNode,
-	isGlobalFieldKey,
-	keyFromSymbol,
-} from "../../../core";
+import { ITreeCursorSynchronous, TreeValue, forEachField, forEachNode } from "../../../core";
 import { EncodedChunk, version, EncodedTreeShape, EncodedNestedArray } from "./format";
 import { ShapeIndex } from "./formatGeneric";
 
@@ -36,10 +29,8 @@ const treeIndex: ShapeIndex = 0;
 const arrayIndex: ShapeIndex = 1;
 
 const anyTreeShape: EncodedTreeShape = {
-	extraGlobal: arrayIndex,
-	extraLocal: arrayIndex,
-	local: [],
-	global: [],
+	extraFields: arrayIndex,
+	fields: [],
 };
 
 const anyArray: EncodedNestedArray = treeIndex;
@@ -54,21 +45,11 @@ function encodeSequence(cursor: ITreeCursorSynchronous): TreeValue[] {
 			data.push(value);
 		}
 		const local: TreeValue[] = [];
-		const global: TreeValue[] = [];
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
-			let output: TreeValue[];
-			let keyString: string;
-			if (isGlobalFieldKey(key)) {
-				output = global;
-				keyString = keyFromSymbol(key);
-			} else {
-				output = local;
-				keyString = key;
-			}
-			output.push(keyString, encodeSequence(cursor));
+			local.push(key, encodeSequence(cursor));
 		});
-		data.push(local, global);
+		data.push(local);
 	});
 	return data;
 }

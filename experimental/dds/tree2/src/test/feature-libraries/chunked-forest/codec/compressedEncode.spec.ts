@@ -51,10 +51,10 @@ import {
 import { brand } from "../../../../util";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
-const anyNodeShape = new NodeShape(undefined, undefined, [], [], anyFieldEncoder, anyFieldEncoder);
-const onlyTypeShape = new NodeShape(undefined, false, [], [], undefined, undefined);
+const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 
-const constantFooShape = new NodeShape(brand("foo"), false, [], [], undefined, undefined);
+const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
 
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
@@ -111,7 +111,7 @@ describe("compressedEncode", () => {
 			() => fail(),
 		);
 		const buffer = checkNodeEncode(anyNodeEncoder, cache, { type: brand("foo") });
-		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, [], []]);
+		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
 	});
 
 	describe("InlineArrayShape", () => {

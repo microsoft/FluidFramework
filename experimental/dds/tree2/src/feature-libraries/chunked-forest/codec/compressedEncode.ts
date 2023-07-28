@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	CursorLocationType,
+	FieldKey,
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
 	TreeSchemaIdentifier,
@@ -52,8 +53,8 @@ export type Shape = ShapeGeneric<EncodedChunkShape>;
 /**
  * Like {@link FieldEncoder}, except data will be prefixed with the key.
  */
-export interface KeyedFieldEncoder<TKey> {
-	readonly key: TKey;
+export interface KeyedFieldEncoder {
+	readonly key: FieldKey;
 	readonly shape: FieldEncoder;
 }
 
