@@ -28,6 +28,7 @@ import {
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
@@ -42,7 +43,6 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,
-	SendEditData,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
 import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
@@ -342,8 +342,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			return false;
 		},
 
-		[SendEditData.MessageType]: async (untypedMessage) => {
-			const message = untypedMessage as SendEditData.Message;
+		[DataEdit.MessageType]: async (untypedMessage) => {
+			const message = untypedMessage as DataEdit.Message;
 			if (message.data.containerKey === this.containerKey) {
 				await this.editData(message.data.edit);
 				return true;

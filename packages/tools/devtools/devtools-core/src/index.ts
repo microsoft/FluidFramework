@@ -79,6 +79,7 @@ export {
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,
@@ -102,7 +103,6 @@ export {
 	isDevtoolsMessage,
 	MessageLoggingOptions,
 	RootDataVisualizations,
-	SendEditData,
 	TelemetryEvent,
 	TelemetryHistory,
 } from "./messaging";

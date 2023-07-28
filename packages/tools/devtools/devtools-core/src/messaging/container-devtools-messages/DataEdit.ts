@@ -8,26 +8,26 @@ import { SharedObjectEdit } from "../../data-visualization";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
- * Encapsulates types and logic related to {@link SendEditData.Message}.
+ * Encapsulates types and logic related to {@link DataEdit.Message}.
  *
  * @internal
  */
-export namespace SendEditData {
+export namespace DataEdit {
 	/**
-	 * {@link SendEditData.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link DataEdit.Message} {@link IDevtoolsMessage."type"}.
 	 *
 	 * @internal
 	 */
 	export const MessageType = "SEND_EDIT_DATA";
 
 	/**
-	 * Message data format used by {@link SendEditData.Message}.
+	 * Message data format used by {@link DataEdit.Message}.
 	 *
 	 * @internal
 	 */
 	export interface MessageData extends HasContainerKey {
 		/**
-		 * TODO
+		 * edit includes a {@link SharedObjectEdit} which constains the information necesary to preform an edit
 		 */
 		edit: SharedObjectEdit;
 	}
@@ -47,7 +47,7 @@ export namespace SendEditData {
 	}
 
 	/**
-	 * Creates a {@link SendEditData.Message} from the provided {@link SendEditData.MessageData}.
+	 * Creates a {@link DataEdit.Message} from the provided {@link DataEdit.MessageData}.
 	 *
 	 * @internal
 	 */

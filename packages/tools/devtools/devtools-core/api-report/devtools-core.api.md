@@ -161,6 +161,18 @@ export interface ContainerStateMetadata extends HasContainerKey {
 }
 
 // @internal
+export namespace DataEdit {
+    const MessageType = "SEND_EDIT_DATA";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerKey {
+        edit: SharedObjectEdit;
+    }
+}
+
+// @internal
 export namespace DataVisualization {
     const MessageType = "DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
@@ -450,18 +462,6 @@ export namespace RootDataVisualizations {
 
 // @public
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
-
-// @internal
-export namespace SendEditData {
-    const MessageType = "SEND_EDIT_DATA";
-    export function createMessage(data: MessageData): Message;
-    export interface Message extends IDevtoolsMessage<MessageData> {
-        type: typeof MessageType;
-    }
-    export interface MessageData extends HasContainerKey {
-        edit: SharedObjectEdit;
-    }
-}
 
 // @internal
 export interface SharedObjectEdit extends Edit, HasFluidObjectId {
