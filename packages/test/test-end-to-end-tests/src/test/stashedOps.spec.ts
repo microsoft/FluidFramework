@@ -868,6 +868,73 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5094
+	it.skip("resends DDS attach op", async function () {
+		const newMapId = "newMap";
+		const pendingOps = await getPendingOps(provider, false, async (_, dataStore) => {
+			const channel = dataStore.runtime.createChannel(
+				newMapId,
+				"https://graph.microsoft.com/types/map",
+			);
+			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+			((await channel.handle.get()) as SharedObject).bindToContext();
+			assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+			(channel as SharedMap).set(testKey, testValue);
+		});
+
+		const container2 = await loader.resolve({ url }, pendingOps);
+		await waitForContainerConnection(container2);
+
+		// get new DDS from first container
+		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map2 = await requestFluidObject<SharedMap>(dataStore1.runtime, newMapId);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map2.get(testKey), testValue);
+	});
+
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
+	it.skip("handles stashed ops for local DDS", async function () {
+		const newCounterId = "newCounter";
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+		const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+
+		await provider.opProcessingController.pauseProcessing(container);
+
+		// create new DDS
+		const channel = defaultDataStore.runtime.createChannel(
+			newCounterId,
+			"https://graph.microsoft.com/types/counter",
+		);
+		assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+		((await channel.handle.get()) as SharedObject).bindToContext();
+		assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+
+		// op referencing new DDS is submitted at some later time (not in the same JS turn, so not batched)
+		await Promise.resolve();
+		(channel as SharedCounter).increment(0);
+		const stashP = new Promise<string>((resolve) => {
+			container.on("op", (op) => {
+				// Stash right after we see the DDS attach op. If we stash the DDS attach op, it will be applied
+				// first and everything will work fine. If ops are arriving on the network, there's no guarantee
+				// of how small this window is.
+				if (JSON.stringify(op).includes("attach")) {
+					resolve(container.closeAndGetPendingLocalState());
+				}
+			});
+		});
+		provider.opProcessingController.resumeProcessing(container);
+		const stashedOps = await stashP;
+
+		// when this container tries to apply the stashed DDS op, it will not have replayed the DDS attach
+		// op yet, because the reference sequence number of the DDS op is lower than the sequence number
+		// of the attach op
+		const container2 = await loader.resolve({ url }, stashedOps);
+		await waitForContainerConnection(container2);
+	});
+
 	it("cannot capture the pending local state during ordersequentially", async () => {
 		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore1.getSharedObject<SharedMap>(mapId);
