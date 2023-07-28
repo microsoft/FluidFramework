@@ -133,12 +133,37 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 	);
 
 	/**
-	 * Input field for editing
-	 * @param textBox - whether the input field should be of type "number" or "text"
-	 * @returns - React.ReactEllment which is an input field with the desired properites for editing
+	 * Converts editType to the Input form type.
+	 *
+	 * @remarks Will return `undefined` if the input edit type is not one the system knows about.
 	 */
-	function inputEdit(textBox: boolean): React.ReactElement {
+	function editTypeToInputType(): "number" | "text" | undefined {
+		switch (editType) {
+			case "number":
+				return "number";
+			case "string":
+				return "text";
+			default:
+				console.warn(`Unrecognized editType value "${editType}".`);
+				return undefined;
+		}
+	}
+
+	const inputType = editTypeToInputType();
+	if (inputType === undefined) {
+		// If the edit type is not one we recognize, do not allow (unsafe) editing.
 		return (
+			<TreeHeader
+				label={label}
+				nodeTypeMetadata={node.typeMetadata}
+				inlineValue={String(node.value)}
+			/>
+		);
+	}
+
+	return (
+		<>
+			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
 			<Input
 				size="small"
 				appearance="underline"
@@ -151,33 +176,8 @@ export function EditableValueView(props: EditableValueViewProps): React.ReactEle
 				onFocus={onFocus}
 				onBlur={onBlur}
 				onKeyDown={onKeyDown}
-				type={textBox ? "text" : "number"}
+				type={inputType}
 			/>
-		);
-	}
-
-	/**
-	 * Converts editType to the corresponding UI
-	 * @returns React.ReactElement which matches the desired editing type to the corresponding UI
-	 */
-	function editTypeToEditUi(): React.ReactElement {
-		switch (editType) {
-			case "number":
-				return inputEdit(false);
-				break;
-			case "string":
-				return inputEdit(true);
-				break;
-			default:
-				return <span>{String(node.value)}</span>;
-				throw new Error("TODO");
-		}
-	}
-
-	return (
-		<>
-			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata}></TreeHeader>
-			{editTypeToEditUi()}
 		</>
 	);
 }
