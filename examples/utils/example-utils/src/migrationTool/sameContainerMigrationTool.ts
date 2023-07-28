@@ -320,10 +320,9 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._acceptedP = new Promise<void>((resolve) => {
-			if (this.pactMap.get(newVersionKey) !== undefined) {
-				if (this._acceptedSeqNum === undefined) {
-					this._acceptedSeqNum = this.pactMap.getDetails(newVersionKey)?.sequenceNumber;
-				}
+			const pactWithDetails = this.pactMap.getWithDetails(newVersionKey);
+			if (pactWithDetails !== undefined) {
+				this._acceptedSeqNum = pactWithDetails.acceptedSequenceNumber;
 				console.log(
 					"Resolving this._acceptedP: Acceptance already exists at load time at sequence number:",
 					this._acceptedSeqNum,
@@ -332,10 +331,11 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				return;
 			}
 
-			const watchForAccepted = (key: string, sequenceNumber: number) => {
+			const watchForAccepted = (key: string) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("accepted", watchForAccepted);
-					this._acceptedSeqNum = sequenceNumber;
+					this._acceptedSeqNum =
+						this.pactMap.getWithDetails(newVersionKey)?.acceptedSequenceNumber;
 					console.log(
 						"Resolving this._acceptedP: Saw acceptance during run time at sequence number:",
 						this._acceptedSeqNum,

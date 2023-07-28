@@ -12,28 +12,26 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 	/**
 	 * Notifies when a new value goes pending or has been accepted.
 	 */
-	(event: "pending" | "accepted", listener: (key: string, sequenceNumber: number) => void);
+	(event: "pending" | "accepted", listener: (key: string) => void);
 }
 
 /**
  * Details of the accepted pact.
  */
-export interface IAcceptedPactDetails<T> {
+export interface IAcceptedPact<T> {
 	/**
 	 * The accepted value of the given type or undefined (typically in case of delete).
 	 */
-	value: T;
+	value: T | undefined;
 
 	/**
-	 * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
+	 * The sequence number when the value was accepted, which will normally coincide with one of two possibilities:
 	 * - The sequence number of the "accept" op from the final client we expected signoff from
 	 * - The sequence number of the ClientLeave of the final client we expected signoff from
-	 * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
-	 * was connected when the op was sequenced)
 	 *
 	 * For values set in detached state, it will be 0.
 	 */
-	sequenceNumber: number;
+	acceptedSequenceNumber: number;
 }
 
 /**
@@ -53,10 +51,10 @@ export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	get(key: string): T | undefined;
 
 	/**
-	 * Gets the accepted value for the given key.
+	 * Gets the accepted value and details for the given key.
 	 * @param key - The key to retrieve from
 	 */
-	getDetails(key: string): IAcceptedPactDetails<T> | undefined;
+	getWithDetails(key: string): IAcceptedPact<T> | undefined;
 
 	/**
 	 * Returns whether there is a pending value for the given key.  Can be used to distinguish a pending delete vs.

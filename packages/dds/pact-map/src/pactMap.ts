@@ -23,12 +23,12 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { PactMapFactory } from "./pactMapFactory";
-import { IAcceptedPactDetails, IPactMap, IPactMapEvents } from "./interfaces";
+import { IAcceptedPact, IPactMap, IPactMapEvents } from "./interfaces";
 
 /**
  * The accepted pact information, if any.
  */
-interface IAcceptedPact<T> {
+interface IAcceptedPactInternal<T> {
 	/**
 	 * The accepted value of the given type or undefined (typically in case of delete).
 	 */
@@ -65,9 +65,9 @@ interface IPendingPact<T> {
  * Internal format of the values stored in the PactMap.
  */
 type Pact<T> =
-	| { accepted: IAcceptedPact<T>; pending: undefined }
+	| { accepted: IAcceptedPactInternal<T>; pending: undefined }
 	| { accepted: undefined; pending: IPendingPact<T> }
-	| { accepted: IAcceptedPact<T>; pending: IPendingPact<T> };
+	| { accepted: IAcceptedPactInternal<T>; pending: IPendingPact<T> };
 
 /**
  * PactMap operation formats
@@ -209,18 +209,18 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	}
 
 	/**
-	 * {@inheritDoc IPactMap.getDetails}
+	 * {@inheritDoc IPactMap.getWithDetails}
 	 */
-	public getDetails(key: string): IAcceptedPactDetails<T> | undefined {
-		// Note: We return type `IAcceptedPactDetails` instead of `IAcceptedPact` since we may want to diverge
+	public getWithDetails(key: string): IAcceptedPact<T> | undefined {
+		// Note: We return type `IAcceptedPact` instead of `IAcceptedPactInternal` since we may want to diverge
 		// the interfaces in the future.
 		const acceptedPact = this.values.get(key)?.accepted;
-		if (acceptedPact?.value === undefined) {
+		if (acceptedPact === undefined) {
 			return undefined;
 		}
 		return {
 			value: acceptedPact.value,
-			sequenceNumber: acceptedPact.sequenceNumber,
+			acceptedSequenceNumber: acceptedPact.sequenceNumber,
 		};
 	}
 
@@ -342,7 +342,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 				accepted: { value, sequenceNumber: setSequenceNumber },
 				pending: undefined,
 			});
-			this.emit("accepted", key, setSequenceNumber);
+			this.emit("accepted", key);
 		} else if (
 			this.runtime.clientId !== undefined &&
 			expectedSignoffs.includes(this.runtime.clientId)
@@ -380,7 +380,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 				accepted: { value: pending.value, sequenceNumber },
 				pending: undefined,
 			});
-			this.emit("accepted", key, sequenceNumber);
+			this.emit("accepted", key);
 		}
 	};
 
@@ -402,7 +402,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 						},
 						pending: undefined,
 					});
-					this.emit("accepted", key, clientLeaveSequenceNumber);
+					this.emit("accepted", key);
 				}
 			}
 		}
@@ -421,9 +421,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 			return (
 				// Items have an effect if they are still pending, have a real value, or some client may try to
 				// reference state before the value was accepted.  Otherwise they can be dropped.
-				pact.pending !== undefined ||
-				pact.accepted.value !== undefined ||
-				pact.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
+				pact.pending !== undefined || pact.accepted !== undefined
 			);
 		});
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(summaryEntries));

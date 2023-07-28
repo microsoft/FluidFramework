@@ -16,24 +16,24 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
-export interface IAcceptedPactDetails<T> {
-    sequenceNumber: number;
-    value: T;
+export interface IAcceptedPact<T> {
+    acceptedSequenceNumber: number;
+    value: T | undefined;
 }
 
 // @public
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
     delete(key: string): void;
     get(key: string): T | undefined;
-    getDetails(key: string): IAcceptedPactDetails<T> | undefined;
     getPending(key: string): T | undefined;
+    getWithDetails(key: string): IAcceptedPact<T> | undefined;
     isPending(key: string): boolean;
     set(key: string, value: T | undefined): void;
 }
 
 // @public
 export interface IPactMapEvents extends ISharedObjectEvents {
-    (event: "pending" | "accepted", listener: (key: string, sequenceNumber: number) => void): any;
+    (event: "pending" | "accepted", listener: (key: string) => void): any;
 }
 
 // @public
@@ -44,9 +44,9 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
     static create(runtime: IFluidDataStoreRuntime, id?: string): PactMap;
     delete(key: string): void;
     get(key: string): T | undefined;
-    getDetails(key: string): IAcceptedPactDetails<T> | undefined;
     static getFactory(): IChannelFactory;
     getPending(key: string): T | undefined;
+    getWithDetails(key: string): IAcceptedPact<T> | undefined;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     isPending(key: string): boolean;
