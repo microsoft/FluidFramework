@@ -15,9 +15,11 @@ export class TreeIndex {
 
 	public getFieldKey(changeAtomId: ChangeAtomId, id: string): FieldKey {
 		assert(!this.detachedFields.has(changeAtomId), "Detached field already exists");
+		return brand(`${this.name}-${id}`);
+	}
 
-		const fieldKey: FieldKey = brand(`${this.name}-${id}`);
+	public setFieldKey(changeAtomId: ChangeAtomId, fieldKey: FieldKey): void {
+		assert(!this.detachedFields.has(changeAtomId), "Detached field already exists");
 		this.detachedFields.set(changeAtomId, fieldKey);
-		return fieldKey;
 	}
 }
