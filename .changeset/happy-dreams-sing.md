@@ -13,7 +13,7 @@ const result2 = [];
 overlappingIntervalsIndex.gatherIterationResults(result2, true);
 ```
 
-2. Deprecate API `previousInterval` and `nextInterval` from `IntervalCollection`, these functionalities are moved to the `OverlappingIntervalsIndex`. Users are advised to independently attach the index to the collection and utilize the API accordingly, for instance:
+2. Deprecate API `previousInterval` and `nextInterval` from `IntervalCollection`, these functionalities are moved to the `EndpointIndex`. Users are advised to independently attach the index to the collection and utilize the API accordingly, for instance:
 
 ```typescript
 const endpointIndex = createEndpointIndex(client, helpers);
