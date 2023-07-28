@@ -295,7 +295,7 @@ describe("BlobManager", () => {
 		waitForBlob = async (blob) => {
 			if (!runtime.unprocessedBlobs.has(blob)) {
 				await new Promise<void>((resolve) =>
-					runtime.once("blob", () => {
+					runtime.on("blob", () => {
 						if (!runtime.unprocessedBlobs.has(blob)) {
 							resolve();
 						}

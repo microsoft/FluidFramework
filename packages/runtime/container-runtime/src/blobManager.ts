@@ -396,7 +396,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			if (this.allBlobsAttached) {
 				resolve();
 			} else {
-				this.on("allBlobsAttached", () => {
+				this.once("allBlobsAttached", () => {
 					resolve();
 				});
 			}
