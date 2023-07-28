@@ -55,7 +55,7 @@ const useStyles = makeStyles(
 );
 
 // Style api of react-select library
-const reactSelectStyles: StylesConfig<IDecoratedSelectOptionType> = {
+const reactSelectStyles: StylesConfig<IDecoratedSelectOptionType, false> = {
 	container: (provided) => ({
 		...provided,
 		backgroundColor: "transparent",
@@ -131,10 +131,13 @@ export type DecoratedSelectGroupedOptionsType<
 export type DecoratedSelectOptionsType = OptionsType<IDecoratedSelectOptionType>;
 export type DecoratedSelectValueType = ValueType<IDecoratedSelectOptionType>;
 
-// This interface is also exported for convenience only:
+// This interfaces are also exported for convenience only:
 export type DecoratedSelectProps = SelectProps<IDecoratedSelectOptionType, false>;
+export type DecoratedOptionProps = OptionProps<IDecoratedSelectOptionType, false>;
+export type DecoratedSingleValueProps = SingleValueProps<IDecoratedSelectOptionType, false>;
+export type DecoratedDropdownProps = DropdownIndicatorProps<IDecoratedSelectOptionType, false>;
 
-const CustomOption: React.FunctionComponent<OptionProps<IDecoratedSelectOptionType>> = (props) => {
+const CustomOption: React.FunctionComponent<DecoratedOptionProps> = (props) => {
 	const classes = useStyles();
 	return (
 		<Option {...props}>
@@ -144,7 +147,7 @@ const CustomOption: React.FunctionComponent<OptionProps<IDecoratedSelectOptionTy
 	);
 };
 
-const CustomSingleValue: React.FunctionComponent<SingleValueProps<IDecoratedSelectOptionType>> = ({
+const CustomSingleValue: React.FunctionComponent<DecoratedSingleValueProps> = ({
 	children,
 	...props
 }) => {
@@ -156,9 +159,7 @@ const CustomSingleValue: React.FunctionComponent<SingleValueProps<IDecoratedSele
 	);
 };
 
-const CustomDropdownIndicator: React.FunctionComponent<
-	DropdownIndicatorProps<IDecoratedSelectOptionType>
-> = (props) => {
+const CustomDropdownIndicator: React.FunctionComponent<DecoratedDropdownProps> = (props) => {
 	const classes = useStyles();
 	return (
 		<SvgIcon
