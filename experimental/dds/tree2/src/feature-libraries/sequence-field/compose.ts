@@ -14,16 +14,7 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	EmptyInputCellMark,
-	Modify,
-	MoveId,
-	NoopMarkType,
-	CellId,
-} from "./format";
+import { Changeset, Mark, MarkList, Modify, MoveId, NoopMarkType, CellId } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -58,10 +49,10 @@ import {
 	markEmptiesCells,
 	splitMark,
 	markIsTransient,
-	GenerativeMark,
 	isGenerativeMark,
 	areOverlappingIdRanges,
 } from "./utils";
+import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
 
 /**
  * @alpha
