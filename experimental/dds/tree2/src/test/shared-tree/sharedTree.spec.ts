@@ -75,7 +75,7 @@ describe("SharedTree", () => {
 		assert.equal(readCursor.nextNode(), false);
 		readCursor.free();
 	});
-
+	// Test comment to see if CI passes.
 	it("can be connected to another tree", async () => {
 		const provider = await TestTreeProvider.create(2);
 		assert(provider.trees[0].isAttached());
