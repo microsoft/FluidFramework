@@ -1360,9 +1360,6 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 // @alpha
-export const neverTree: TreeStoredSchema;
-
-// @alpha
 export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
 
 // @alpha (undocumented)
