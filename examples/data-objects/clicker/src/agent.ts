@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidRunnable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidRouter, IFluidRunnable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 
 // Sample agent to run.
-export class ClickerAgent implements IFluidRunnable {
+export class ClickerAgent implements IFluidRouter, IFluidRunnable {
 	constructor(private readonly counter: SharedCounter) {}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
-	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -32,9 +29,6 @@ export class ClickerAgent implements IFluidRunnable {
 		this.counter.off("incremented", this.logIncrement);
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return {
 			mimeType: "fluid/object",

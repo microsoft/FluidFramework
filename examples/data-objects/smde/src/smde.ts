@@ -6,7 +6,13 @@
 import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
-import { IFluidLoadable, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IFluidLoadable,
+	IFluidRouter,
+	IRequest,
+	IResponse,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
@@ -23,7 +29,7 @@ import "simplemde/dist/simplemde.min.css";
 /**
  * Data object storing the data to back a SimpleMDE editor.  Primarily just a SharedString.
  */
-export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
+export class SmdeDataObject extends EventEmitter implements IFluidLoadable, IFluidRouter {
 	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
 		const collection = new SmdeDataObject(runtime);
 		await collection.initialize(existing);
@@ -43,9 +49,6 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 		return this;
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
-	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -63,9 +66,6 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 		this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return defaultFluidObjectRequestHandler(this, request);
 	}

@@ -5,7 +5,13 @@
 
 import { EventEmitter } from "events";
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { IFluidLoadable, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IFluidLoadable,
+	IFluidRouter,
+	IRequest,
+	IResponse,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
@@ -23,7 +29,7 @@ import { PresenceManager } from "./presence";
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
+export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable, IFluidRouter {
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		context: IFluidDataStoreContext,
@@ -39,9 +45,6 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 		return this;
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
-	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -71,9 +74,6 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 		this.presenceManager = new PresenceManager(runtime);
 	}
 
-	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return defaultFluidObjectRequestHandler(this, request);
 	}
