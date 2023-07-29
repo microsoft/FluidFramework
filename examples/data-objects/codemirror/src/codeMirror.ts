@@ -44,7 +44,6 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 	public get IFluidLoadable() {
 		return this;
 	}
-
 	public get IFluidRouter() {
 		return this;
 	}
