@@ -30,10 +30,16 @@ interface ISingleHandleItem {
 function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
 	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
 		const packagePath = [...context.packagePath, subFactory.type];
-		const router = await context.containerRuntime.createDataStore(packagePath);
-		const object = await requestFluidObject<IFluidLoadable>(router, "/");
+		const dataStore = await context.containerRuntime.createDataStore(packagePath);
+
+		if (dataStore.entryPoint !== undefined) {
+			return {
+				handle: dataStore.entryPoint as IFluidHandle,
+			};
+		}
+
 		return {
-			handle: object.handle,
+			handle: (await requestFluidObject<IFluidLoadable>(dataStore, "/")).handle,
 		};
 	};
 }
