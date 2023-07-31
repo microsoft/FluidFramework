@@ -7830,9 +7830,9 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1039.1000
+      '@fluidframework/gitresources': ^1.0.0
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-base': ^0.1039.1000
+      '@fluidframework/protocol-base': ^1.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver-previous': npm:@fluidframework/routerlicious-driver@2.0.0-internal.5.2.0
       '@fluidframework/server-services-client': ^1.0.0
@@ -7871,8 +7871,8 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1039.1000
-      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/gitresources': 1.0.0
+      '@fluidframework/protocol-base': 1.0.0
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/server-services-client': 1.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
