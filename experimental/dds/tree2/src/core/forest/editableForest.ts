@@ -63,7 +63,7 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 }
 
 /**
- * Wrapper around DetachedField that can be detected at runtime.
+ * Location of a field within a tree that is not a detached/root field.
  * @alpha
  */
 export interface FieldLocation {
