@@ -1,6 +1,4 @@
 ---
-"@fluidframework/map": major
-"@fluidframework/sequence": major
 "@fluidframework/test-runtime-utils": major
 ---
 
