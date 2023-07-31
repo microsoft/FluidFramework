@@ -242,9 +242,6 @@ stages:
               fi
 
         - template: include-use-node-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            version: '16.16.0'
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml
@@ -463,6 +460,7 @@ stages:
           - task: Npm@1
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)

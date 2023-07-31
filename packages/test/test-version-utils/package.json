@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-version-utils",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,7 +20,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log node_modules/.legacy",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\" node_modules/.legacy",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -95,7 +95,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.38",
 		"@types/semver": "^7.5.0",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",

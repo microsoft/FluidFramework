@@ -14,15 +14,7 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	EmptyInputCellMark,
-	Modify,
-	MoveId,
-	NoopMarkType,
-} from "./format";
+import { Changeset, Mark, MarkList, Modify, MoveId, NoopMarkType, CellId } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -57,10 +49,10 @@ import {
 	markEmptiesCells,
 	splitMark,
 	markIsTransient,
-	GenerativeMark,
 	isGenerativeMark,
 	areOverlappingIdRanges,
 } from "./utils";
+import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
 
 /**
  * @alpha
@@ -192,10 +184,7 @@ function composeMarks<TNodeChange>(
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
 		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
-			assert(
-				newMark.detachEvent !== undefined,
-				"Invalid node-targeting mark after transient",
-			);
+			assert(newMark.cellId !== undefined, "Invalid node-targeting mark after transient");
 			return baseMark;
 		}
 		if (newMark.type === "ReturnTo") {
@@ -363,7 +352,7 @@ function createModifyMark<TNodeChange>(
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
 	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
 	if (cellId !== undefined) {
-		mark.detachEvent = cellId;
+		mark.cellId = cellId;
 	}
 	return mark;
 }
@@ -585,7 +574,7 @@ export class ComposeQueue<T> {
 					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
 					0x696 /* Mark with empty output must either be a detach or also have input empty */,
 				);
-				baseCellId = baseMark.detachEvent;
+				baseCellId = baseMark.cellId;
 			}
 			const cmp = compareCellPositions(
 				baseCellId,
@@ -805,11 +794,11 @@ function areInverseMovesAtIntermediateLocation(
 		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
 
-	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
+	if (baseMark.type === "ReturnTo" && baseMark.cellId?.revision === newIntention) {
 		return true;
 	}
 
-	if (newMark.type === "ReturnFrom" && newMark.detachEvent?.revision === baseIntention) {
+	if (newMark.type === "ReturnFrom" && newMark.cellId?.revision === baseIntention) {
 		return true;
 	}
 
@@ -826,14 +815,15 @@ function areInverseMovesAtIntermediateLocation(
  * are before the first cell of `newMark`.
  */
 function compareCellPositions(
-	baseCellId: ChangeAtomId,
+	baseCellId: CellId,
 	baseMark: Mark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
 ): number {
 	const newCellId = getCellId(newMark, newIntention);
-	if (newCellId !== undefined && baseCellId.revision === newCellId.revision) {
+	assert(newCellId !== undefined, "Should have cell ID");
+	if (baseCellId.revision === newCellId.revision) {
 		if (isNewAttach(newMark)) {
 			// There is some change foo that is being cancelled out as part of a rebase sandwich.
 			// The marks that make up this change (and its inverse) may be broken up differently between the base
@@ -859,31 +849,27 @@ function compareCellPositions(
 		}
 	}
 
-	if (newCellId !== undefined) {
-		const offset = getOffsetInCellRange(
-			baseMark.lineage,
-			newCellId.revision,
-			newCellId.localId,
-			getMarkLength(newMark),
-		);
-		if (offset !== undefined) {
-			return offset > 0 ? offset : -Infinity;
-		}
+	const offsetInBase = getOffsetInCellRange(
+		baseCellId.lineage,
+		newCellId.revision,
+		newCellId.localId,
+		getMarkLength(newMark),
+	);
+	if (offsetInBase !== undefined) {
+		return offsetInBase > 0 ? offsetInBase : -Infinity;
 	}
 
-	{
-		const offset = getOffsetInCellRange(
-			newMark.lineage,
-			baseCellId.revision,
-			baseCellId.localId,
-			getMarkLength(baseMark),
-		);
-		if (offset !== undefined) {
-			return offset > 0 ? -offset : Infinity;
-		}
+	const offsetInNew = getOffsetInCellRange(
+		newCellId.lineage,
+		baseCellId.revision,
+		baseCellId.localId,
+		getMarkLength(baseMark),
+	);
+	if (offsetInNew !== undefined) {
+		return offsetInNew > 0 ? -offsetInNew : Infinity;
 	}
 
-	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
+	const cmp = compareLineages(baseCellId.lineage, newCellId.lineage);
 	if (cmp !== 0) {
 		return Math.sign(cmp) * Infinity;
 	}

@@ -5,9 +5,9 @@
 
 import { FieldKey, UpPath } from "../../../core";
 
-export type Operation = TreeOperation;
+export type Operation = TreeOperation | Synchronize;
 
-export type TreeOperation = TreeEdit | TransactionBoundary;
+export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
 
 export interface TreeEdit {
 	type: "edit";
@@ -17,6 +17,11 @@ export interface TreeEdit {
 export interface TransactionBoundary {
 	type: "transaction";
 	contents: FuzzTransactionType;
+}
+
+export interface UndoRedo {
+	type: "undoRedo";
+	contents: FuzzUndoRedoType;
 }
 
 export type FuzzFieldChange = FuzzInsert | FuzzDelete;
@@ -67,6 +72,23 @@ export interface TransactionCommitOp {
 
 export interface TransactionAbortOp {
 	fuzzType: "transactionAbort";
+}
+
+export type FuzzUndoRedoType = UndoOp | RedoOp;
+
+export interface UndoOp {
+	type: "undo";
+}
+
+export interface RedoOp {
+	type: "redo";
+}
+
+/**
+ * This Synchronize interface was duplicated from the ddsFuzzHarness code for use cases which requires more control over how the synchronize op is generated.
+ */
+export interface Synchronize {
+	type: "synchronizeTrees";
 }
 
 export interface NodeRangePath {

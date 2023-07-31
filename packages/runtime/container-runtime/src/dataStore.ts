@@ -62,6 +62,9 @@ class DataStore implements IDataStore {
 	private readonly pendingAliases: Map<string, Promise<AliasResult>>;
 	private aliasResult: Promise<AliasResult> | undefined;
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.trySetAlias}
+	 */
 	async trySetAlias(alias: string): Promise<AliasResult> {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);

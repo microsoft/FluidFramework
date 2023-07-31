@@ -5,12 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import {
-	AllowedUpdateType,
-	JsonableTree,
-	LocalFieldKey,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { AllowedUpdateType, JsonableTree, FieldKey, TreeSchemaIdentifier } from "../../../core";
 import { createSharedTreeView, ISharedTree } from "../../../shared-tree";
 import { brand, clone } from "../../../util";
 import {
@@ -26,8 +21,8 @@ import {
 	SchemaBuilder,
 	FieldKindTypes,
 	TypedSchemaCollection,
-	GlobalFieldSchema,
 	UnwrappedEditableField,
+	FieldSchema,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -47,8 +42,8 @@ import {
 	personSchemaLibrary,
 } from "./mockData";
 
-const localFieldKey: LocalFieldKey = brand("foo");
-const otherFieldKey: LocalFieldKey = brand("foo2");
+const localFieldKey: FieldKey = brand("foo");
+const otherFieldKey: FieldKey = brand("foo2");
 
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
@@ -62,7 +57,7 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 }
 
 function createSharedTree(
-	schemaData: TypedSchemaCollection<GlobalFieldSchema>,
+	schemaData: TypedSchemaCollection<FieldSchema>,
 	data?: JsonableTree[],
 ): ISharedTree {
 	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests
@@ -117,7 +112,7 @@ describe("editable-tree: editing", () => {
 		// ambiguous type since there are multiple options which are numbers:
 		assert.throws(
 			() => (maybePerson.salary = 99.99),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"data compatible with more than one type allowed by the schema",
@@ -426,7 +421,8 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field], ["first", "second", "third"]);
 			assert.throws(
 				() => field.insertNodes(5, ["x"]),
-				(e) => validateAssertionError(e, "Index must be less than or equal to length."),
+				(e: Error) =>
+					validateAssertionError(e, "Index must be less than or equal to length."),
 				"Expected exception was not thrown",
 			);
 		});
@@ -444,7 +440,7 @@ describe("editable-tree: editing", () => {
 
 			assert.throws(
 				() => field.replaceNodes(1, ["x"]),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"Index must be less than length or, if the field is empty, be 0.",
@@ -564,7 +560,7 @@ describe("editable-tree: editing", () => {
 					assert(isEditableTree(root));
 					field.content = ["foo", "foo"];
 				},
-				(e) => validateAssertionError(e, /incompatible/),
+				(e: Error) => validateAssertionError(e, /incompatible/),
 			);
 
 			// Using .content
@@ -635,7 +631,7 @@ describe("editable-tree: editing", () => {
 					assert(isEditableTree(root));
 					field.content = ["foo", "foo"];
 				},
-				(e) => validateAssertionError(e, /incompatible/),
+				(e: Error) => validateAssertionError(e, /incompatible/),
 			);
 
 			// Using .content

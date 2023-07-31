@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { EmptyKey, Value, FieldKey, rootFieldKeySymbol, JsonableTree } from "../../../core";
+import { EmptyKey, Value, FieldKey, rootFieldKey, JsonableTree } from "../../../core";
 import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
 	EditableTree,
@@ -419,7 +419,7 @@ describe("editable-tree: read-only", () => {
 			expectFieldEquals(forest.schema, context.unwrappedRoot, []);
 			assert.throws(
 				() => (context.unwrappedRoot as EditableField).getNode(0),
-				(e) =>
+				(e: Error) =>
 					validateAssertionError(
 						e,
 						"A child node must exist at index to get it without unwrapping.",
@@ -455,7 +455,7 @@ describe("editable-tree: read-only", () => {
 			assert.equal(index, 0);
 			expectFieldEquals(context.schema, rootParent, [personJsonableTree()]);
 			assert.equal(rootParent.parent, undefined);
-			assert.equal(rootParent.fieldKey, rootFieldKeySymbol);
+			assert.equal(rootParent.fieldKey, rootFieldKey);
 		});
 
 		it("child field", () => {
@@ -590,10 +590,9 @@ describe("editable-tree: read-only", () => {
 		// assert its schema follows the primary field schema and get the primary key from it
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
-		assert.deepEqual(simplePhonesSchema.extraLocalFields.types, new Set());
-		assert.deepEqual([...simplePhonesSchema.globalFields], []);
-		assert.equal(simplePhonesSchema.localFields.size, 1);
-		const simplePhonesPrimaryKey = [...simplePhonesSchema.localFields.keys()][0];
+		assert.deepEqual(simplePhonesSchema.mapFields.types, new Set());
+		assert.equal(simplePhonesSchema.structFields.size, 1);
+		const simplePhonesPrimaryKey = [...simplePhonesSchema.structFields.keys()][0];
 		// primary key must be the same across the schema
 		assert.equal(simplePhonesPrimaryKey, phonesPrimary.key);
 		// get the primary field
