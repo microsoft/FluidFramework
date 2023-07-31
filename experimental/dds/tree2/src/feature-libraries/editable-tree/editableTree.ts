@@ -198,7 +198,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			if (key === rootFieldKey) {
 				fieldSchema = this.context.schema.rootFieldSchema;
 			} else {
-				// Treat all detached sequences other than the special default root as sequences of any.
+				// All fields (in the editable tree API) have a schema.
+				// Since currently there is no known schema for detached sequences other than the special default root:
+				// give all other detached fields a schema of sequence of any.
+				// That schema is the only one that is safe since its the only field schema that allows any possible field content.
+				//
 				// TODO:
 				// if any of the following are done this schema will need to be more specific:
 				// 1. Editing APIs start exposing user created detached sequences.
