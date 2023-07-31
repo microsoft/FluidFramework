@@ -63,6 +63,7 @@ export class RestGitService {
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly storageName?: string,
 		private readonly storageUrl?: string,
+		private readonly isEphemeralContainer?: boolean,
 	) {
 		const defaultHeaders: AxiosRequestHeaders =
 			storageName !== undefined
@@ -81,6 +82,11 @@ export class RestGitService {
 			);
 			defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
 		}
+
+		// We set the flag only for ephemeral containers
+		if (this.isEphemeralContainer) {
+			defaultHeaders.IsEphemeralContainer = this.isEphemeralContainer;
+		}
 		this.lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: this.tenantId,
 			[BaseTelemetryProperties.documentId]: this.documentId,
@@ -93,6 +99,7 @@ export class RestGitService {
 				"BaseUrl": baseUrl,
 				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 				"Storage-Name": this.storageName,
+				"IsEphemeralContainer": this.isEphemeralContainer,
 			})}`,
 		);
 
@@ -101,6 +108,7 @@ export class RestGitService {
 				"BaseUrl": baseUrl,
 				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 				"Storage-Name": this.storageName,
+				"IsEphemeralContainer": this.isEphemeralContainer,
 			})}`,
 			this.lumberProperties,
 		);
@@ -232,6 +240,7 @@ export class RestGitService {
 		summaryParams: IWholeSummaryPayload,
 		initial?: boolean,
 	): Promise<IWriteSummaryResponse> {
+		Lumberjack.info(`CreateSummary isEphemeral: ${this.isEphemeralContainer}`);
 		const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
 			`/repos/${this.getRepoPath()}/git/summaries`,
 			summaryParams,

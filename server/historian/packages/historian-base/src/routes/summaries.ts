@@ -22,6 +22,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICache, ITenantService } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
@@ -37,6 +38,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
+	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
@@ -106,6 +108,8 @@ export function create(
 		params: IWholeSummaryPayload,
 		initial?: boolean,
 		storageName?: string,
+		isEphemeralContainer?: boolean,
+		ignoreEphemeralFlag?: boolean,
 	): Promise<IWriteSummaryResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -117,6 +121,8 @@ export function create(
 			asyncLocalStorage,
 			initialUpload: initial,
 			storageName,
+			isEphemeralContainer,
+			ignoreEphemeralFlag,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -187,12 +193,38 @@ export function create(
 					? request.query.initial
 					: request.query.initial === "true";
 
+			const isEphemeralFromRequest = request.get("IsEphemeralContainer");
+			// We treat these cases where we did not get the header as non-ephemeral containers
+			const isEphemeral: boolean =
+				typeof isEphemeralFromRequest === "undefined"
+					? false
+					: typeof isEphemeralFromRequest === "boolean"
+					? isEphemeralFromRequest
+					: isEphemeralFromRequest === "true";
+
+			// Only the initial post summary has a valid IsEphemeralContainer flag which we store in cache
+			// For the other cases, we set the flag to undefined so that it can fetched from cache/storage
+			const isEphemeralContainer: boolean | undefined = !ignoreEphemeralFlag
+				? initial
+					? isEphemeral
+					: undefined
+				: false;
+
+			const lumberjackProperties = {
+				[BaseTelemetryProperties.tenantId]: request.params.tenantId,
+				[Constants.IsEphemeralContainer]: isEphemeralContainer,
+				[Constants.isInitialSummary]: initial,
+			};
+			Lumberjack.info(`Calling createSummary`, lumberjackProperties);
+
 			const summaryP = createSummary(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
 				initial,
 				request.get("StorageName"),
+				isEphemeralContainer,
+				ignoreEphemeralFlag,
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

@@ -392,6 +392,7 @@ export class GitWholeSummaryManager {
 				version.treeId,
 				this.repoManager,
 			);
+			readSummaryMetric.setProperty("treeId", version.treeId);
 			readSummaryMetric.success("GitWholeSummaryManager succeeded in reading summary");
 			return {
 				id: version.id,
@@ -604,7 +605,9 @@ export class GitWholeSummaryManager {
 				baseDir: "/usr/gitrest",
 				useRepoOwner: true,
 			},
-			inMemoryFsManagerFactory,
+			{
+				defaultFileSystemManagerFactory: inMemoryFsManagerFactory,
+			},
 			new NullExternalStorageManager(),
 			true /* repoPerDocEnabled */,
 			false /* enableRepositoryManagerMetrics */,

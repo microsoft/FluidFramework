@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as isomorphicGit from "isomorphic-git";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as isomorphicGit from "isomorphic-git";
 import { IExternalStorageManager } from "../externalStorageManager";
-import * as helpers from "./helpers";
-import * as conversions from "./isomorphicgitConversions";
 import {
 	IExternalWriterConfig,
-	IRepositoryManager,
 	IFileSystemManager,
-	IFileSystemManagerFactory,
+	IFileSystemManagerFactories,
+	IRepositoryManager,
 	IStorageDirectoryConfig,
 } from "./definitions";
 import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
+import * as helpers from "./helpers";
+import * as conversions from "./isomorphicgitConversions";
 import { RepositoryManagerBase } from "./repositoryManagerBase";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
@@ -379,7 +379,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<void> {
 	constructor(
 		storageDirectoryConfig: IStorageDirectoryConfig,
-		fileSystemManagerFactory: IFileSystemManagerFactory,
+		fileSystemManagerFactories: IFileSystemManagerFactories,
 		externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
@@ -388,7 +388,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 	) {
 		super(
 			storageDirectoryConfig,
-			fileSystemManagerFactory,
+			fileSystemManagerFactories,
 			externalStorageManager,
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,

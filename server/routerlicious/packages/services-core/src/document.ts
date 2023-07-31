@@ -42,6 +42,7 @@ export interface IDocumentStorage {
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean,
+		isEphemeralContainer: boolean,
 	): Promise<IDocumentDetails>;
 }
 
@@ -144,6 +145,8 @@ export interface IDocument {
 
 	// name of the storage to save the document durable artifacts
 	storageName?: string;
+
+	isEphemeralContainer?: boolean;
 }
 
 export interface ICheckpoint {
