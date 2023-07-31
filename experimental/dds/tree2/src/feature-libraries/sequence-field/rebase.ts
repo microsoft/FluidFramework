@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
@@ -16,8 +17,6 @@ import {
 } from "../modular-schema";
 import {
 	getInputLength,
-	getOutputLength,
-	isAttach,
 	isDetachMark,
 	isNewAttach,
 	cloneMark,
@@ -32,8 +31,8 @@ import {
 	getNodeChange,
 	withNodeChange,
 	getMarkMoveId,
-	isNoopMark,
 	areOverlappingIdRanges,
+	areOutputCellsEmpty,
 } from "./utils";
 import {
 	Changeset,
@@ -133,105 +132,57 @@ function rebaseMarkList<TNodeChange>(
 	const lineageEntries: IdRange[] = [];
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
-		if (baseMark !== undefined && "revision" in baseMark) {
+		if ("revision" in baseMark) {
 			// TODO support rebasing over composite changeset
 			assert(
 				baseMark.revision === baseRevision,
 				0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
 			);
 		}
-		if (baseMark === undefined) {
-			assert(
-				currMark !== undefined,
-				0x4f4 /* Non-empty queue should return at least one mark */,
-			);
-			if (areInputCellsEmpty(currMark)) {
-				const rebasedMark = cloneMark(currMark);
-				handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
-				factory.push(rebasedMark);
-			} else {
-				factory.push(cloneMark(currMark));
-			}
-		} else if (currMark === undefined) {
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x708 /* Only detach marks should empty cells */);
-				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
-			} else if (isAttach(baseMark)) {
-				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
-					const movedMark = getMovedMark(
-						moveEffects,
-						baseMark.revision ?? baseRevision,
-						baseMark.id,
-						baseMark.count,
-					);
-					if (movedMark !== undefined) {
-						factory.push(movedMark);
-					} else {
-						factory.pushOffset(getOutputLength(baseMark));
-					}
-				} else if (baseMark.transientDetach === undefined) {
-					factory.pushOffset(getOutputLength(baseMark));
-				}
-				lineageRecipients.length = 0;
-				lineageEntries.length = 0;
-			}
-		} else {
-			assert(
-				getInputLength(baseMark) === getInputLength(currMark),
-				0x4f6 /* The two marks should be the same size */,
-			);
+		assert(
+			getInputLength(baseMark) === getInputLength(currMark),
+			0x4f6 /* The two marks should be the same size */,
+		);
 
-			const rebasedMark = rebaseMark(
-				currMark,
-				baseMark,
-				baseRevision,
-				baseIntention,
-				rebaseChild,
-				moveEffects,
-				nodeExistenceState,
-			);
+		const rebasedMark = rebaseMark(
+			currMark,
+			baseMark,
+			baseRevision,
+			baseIntention,
+			rebaseChild,
+			moveEffects,
+			nodeExistenceState,
+		);
 
-			// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
-			// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
-			// `rebasedMark` should already have a detach event for `baseMark`.
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
-				addLineageToRecipients(
-					lineageRecipients,
-					baseIntention,
-					baseMark.id,
-					baseMark.count,
-				);
-			}
+		// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
+		// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
+		// `rebasedMark` should already have a detach event for `baseMark`.
+		if (markEmptiesCells(baseMark)) {
+			assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
+			addLineageToRecipients(lineageRecipients, baseIntention, baseMark.id, baseMark.count);
+		}
 
-			if (areInputCellsEmpty(rebasedMark)) {
-				handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
-			}
-			factory.push(rebasedMark);
+		if (areInputCellsEmpty(rebasedMark)) {
+			handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
+		}
+		factory.push(rebasedMark);
 
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
-				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
-			} else {
-				lineageRecipients.length = 0;
-				lineageEntries.length = 0;
-			}
+		if (markEmptiesCells(baseMark)) {
+			assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
+			lineageEntries.push({ id: baseMark.id, count: baseMark.count });
+		} else if (!areOutputCellsEmpty(baseMark)) {
+			lineageRecipients.length = 0;
+			lineageEntries.length = 0;
 		}
 	}
 
-	let found = false;
-	let index = factory.list.length - 1;
-	while (index >= 0 && !found) {
-		if (!isNoopMark(factory.list[index])) {
-			found = true;
-			break;
-		}
+	return factory.list;
+}
 
-		index--;
-	}
-
-	const listWithoutTrailingNoOps = factory.list.slice(0, index + 1);
-	return listWithoutTrailingNoOps;
+function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark {
+	const length = getMarkLength(mark);
+	const cellId = getCellId(mark, revision);
+	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
 
 interface IdRange {
@@ -263,54 +214,37 @@ class RebaseQueue<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 
-		if (baseMark === undefined && newMark === undefined) {
-			return {};
-		} else if (baseMark === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const dequeuedMark = this.newMarks.tryDequeue()!;
-			const cellId = getCellId(dequeuedMark, undefined);
-			const length = getMarkLength(dequeuedMark);
-			const generatedBaseMark =
-				cellId === undefined ? { count: length } : { count: length, cellId };
+		assert(
+			!(baseMark === undefined && newMark === undefined),
+			"Should return at least one mark",
+		);
+
+		if (baseMark === undefined) {
+			const dequeuedNewMark = this.newMarks.dequeue();
 			return {
-				baseMark: generatedBaseMark,
-				newMark: dequeuedMark,
+				baseMark: generateNoOpWithCellId(dequeuedNewMark),
+				newMark: dequeuedNewMark,
 			};
 		} else if (newMark === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const dequeuedMark = this.baseMarks.tryDequeue()!;
-			const cellId = getCellId(dequeuedMark, undefined);
-			const length = getMarkLength(dequeuedMark);
-			const generatedNewMark =
-				cellId === undefined ? { count: length } : { count: length, cellId };
+			const dequeuedBaseMark = this.baseMarks.dequeue();
 			return {
-				baseMark: dequeuedMark,
-				newMark: generatedNewMark,
+				baseMark: dequeuedBaseMark,
+				newMark: generateNoOpWithCellId(dequeuedBaseMark, this.baseIntention),
 			};
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark);
 			if (cmp < 0) {
 				const dequeuedBaseMark = this.baseMarks.dequeueUpTo(-cmp);
-				if (isAttach(dequeuedBaseMark)) {
-					return { baseMark: dequeuedBaseMark };
-				} else {
-					const cellId = getCellId(dequeuedBaseMark, this.baseIntention);
-					return {
-						baseMark: dequeuedBaseMark,
-						newMark: { count: getMarkLength(dequeuedBaseMark), cellId },
-					};
-				}
+				return {
+					baseMark: dequeuedBaseMark,
+					newMark: generateNoOpWithCellId(dequeuedBaseMark, this.baseIntention),
+				};
 			} else if (cmp > 0) {
 				const dequeuedNewMark = this.newMarks.dequeueUpTo(cmp);
-				if (isAttach(dequeuedNewMark)) {
-					return { newMark: dequeuedNewMark };
-				} else {
-					const cellId = getCellId(dequeuedNewMark, this.baseIntention);
-					return {
-						newMark: dequeuedNewMark,
-						baseMark: { count: getMarkLength(dequeuedNewMark), cellId },
-					};
-				}
+				return {
+					newMark: dequeuedNewMark,
+					baseMark: generateNoOpWithCellId(dequeuedNewMark),
+				};
 			} else {
 				return this.dequeueBoth();
 			}
@@ -327,8 +261,6 @@ class RebaseQueue<T> {
 		const baseMark = this.baseMarks.dequeue();
 		const cellId = getCellId(baseMark, this.baseIntention);
 		return { baseMark, newMark: { count: getMarkLength(baseMark), cellId } };
-
-		// return { baseMark: this.baseMarks.dequeue() };
 	}
 
 	private dequeueNew(): RebaseMarks<T> {
@@ -357,8 +289,8 @@ class RebaseQueue<T> {
  * If `baseMark` and `newMark` are both defined, then they are `SizedMark`s covering the same range of nodes.
  */
 interface RebaseMarks<T> {
-	baseMark?: Mark<T>;
-	newMark?: Mark<T>;
+	baseMark: Mark<T>;
+	newMark: Mark<T>;
 }
 
 function rebaseMark<TNodeChange>(
@@ -422,6 +354,20 @@ function rebaseMark<TNodeChange>(
 			isExistingCellMark(rebasedMark),
 			0x69e /* Only an ExistingCellMark can target an empty cell */,
 		);
+
+		if (isMoveMark(baseMark)) {
+			const movedMark = getMovedMark(
+				moveEffects,
+				baseMark.revision ?? baseRevision,
+				baseMark.id,
+				baseMark.count,
+			);
+
+			if (movedMark !== undefined) {
+				return movedMark;
+			}
+		}
+
 		if (isMoveMark(rebasedMark)) {
 			if (
 				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
@@ -588,10 +534,6 @@ function makeDetachedMark<T>(
 	detachIntention: RevisionTag,
 	detachId: ChangesetLocalId,
 ): Mark<T> {
-	// if (isNoopMark(mark)) {
-	// 	return { count: 0 };
-	// }
-
 	assert(mark.cellId === undefined, 0x69f /* Expected mark to be attached */);
 	return { ...mark, cellId: { revision: detachIntention, localId: detachId } };
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Mark, MarkList } from "./format";
+import { Mark, MarkList, NoopMark } from "./format";
 import { isNoopMark, tryExtendMark } from "./utils";
 
 /**
@@ -21,8 +21,10 @@ export class MarkListFactory<TNodeChange> {
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
-			if (isNoopMark(item) && item.cellId === undefined) {
-				this.pushOffset(item.count);
+			if (isNoopMark(item)) {
+				if (item.cellId === undefined) {
+					this.pushOffset(item.count);
+				}
 			} else {
 				this.pushContent(item);
 			}
@@ -33,7 +35,7 @@ export class MarkListFactory<TNodeChange> {
 		this.offset += offset;
 	}
 
-	public pushContent(mark: Mark<TNodeChange>): void {
+	public pushContent(mark: Exclude<Mark<TNodeChange>, NoopMark>): void {
 		if (this.offset > 0) {
 			this.list.push({ count: this.offset });
 			this.offset = 0;

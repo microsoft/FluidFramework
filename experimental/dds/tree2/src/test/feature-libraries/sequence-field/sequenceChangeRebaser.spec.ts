@@ -134,7 +134,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 deepFreeze(testChanges);
 
 // TODO: Refactor these tests to support moves
-describe.skip("SequenceField - Rebaser Axioms", () => {
+describe("SequenceField - Rebaser Axioms", () => {
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */

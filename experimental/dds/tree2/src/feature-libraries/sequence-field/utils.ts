@@ -369,14 +369,13 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	}
 	const type = rhs.type;
 	if (type === NoopMarkType) {
-		if (getCellId(lhs, undefined) === getCellId(rhs, undefined)) {
+		if (areEqualCellIds(getCellId(lhs, undefined), getCellId(rhs, undefined))) {
 			(lhs as NoopMark).count += rhs.count;
 			return true;
 		} else {
 			return false;
 		}
 	}
-	assert(type !== undefined, "no noops here");
 	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
 		return false;
 	}
@@ -844,11 +843,15 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 	}
 	const type = mark.type;
 	switch (type) {
-		case NoopMarkType:
-			return [
-				{ ...mark, count: length },
-				{ ...mark, count: remainder },
-			] as [TMark, TMark];
+		case NoopMarkType: {
+			// Split the detach event
+			const mark1 = { ...mark, count: length };
+			const mark2 = { ...mark, count: remainder };
+			if (mark.cellId !== undefined) {
+				(mark2 as NoopMark).cellId = splitDetachEvent(mark.cellId, length);
+			}
+			return [mark1, mark2];
+		}
 		case "Modify":
 			fail("Unable to split Modify mark of length 1");
 		case "Insert": {
