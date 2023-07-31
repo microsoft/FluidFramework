@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-definitions",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Fluid driver definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -64,6 +64,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

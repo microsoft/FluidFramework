@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-definitions",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Fluid container definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -73,11 +73,21 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_ILoaderHeader": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerLoadMode": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IContainer": {
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IDeltaManager": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICodeAllowList": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

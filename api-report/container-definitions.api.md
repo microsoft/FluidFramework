@@ -91,12 +91,6 @@ export interface IBatchMessage {
     referenceSequenceNumber?: number;
 }
 
-// @public @deprecated
-export interface ICodeAllowList {
-    // @deprecated (undocumented)
-    testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
-}
-
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
@@ -120,8 +114,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
-    // @deprecated (undocumented)
-    closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
@@ -200,8 +192,6 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void): any;
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
-    // @deprecated (undocumented)
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     (event: "disconnected", listener: () => void): any;
     (event: "attaching", listener: () => void): any;
     (event: "attached", listener: () => void): any;
@@ -218,7 +208,8 @@ export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
     // (undocumented)
-    opsBeforeReturn?: undefined | "cached" | "all";
+    opsBeforeReturn?: undefined | "sequenceNumber" | "cached" | "all";
+    pauseAfterLoad?: boolean;
 }
 
 // @public
@@ -393,7 +384,6 @@ export interface ILoaderHeader {
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
-    // (undocumented)
     [LoaderHeader.sequenceNumber]: number;
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
@@ -509,7 +499,6 @@ export enum LoaderHeader {
     loadMode = "loadMode",
     // (undocumented)
     reconnect = "fluid-reconnect",
-    // (undocumented)
     sequenceNumber = "fluid-sequence-number",
     version = "version"
 }

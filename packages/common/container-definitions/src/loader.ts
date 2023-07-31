@@ -86,18 +86,6 @@ export interface IFluidCodeResolver {
 }
 
 /**
- * Code AllowListing Interface
- *
- * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
- */
-export interface ICodeAllowList {
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
-	 */
-	testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
-}
-
-/**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
  */
 export interface IContainerEvents extends IEvent {
@@ -140,11 +128,6 @@ export interface IContainerEvents extends IEvent {
 		event: "codeDetailsProposed",
 		listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void,
 	);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	(event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
 
 	/**
 	 * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
@@ -371,16 +354,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	close(error?: ICriticalContainerError): void;
 
 	/**
-	 * @deprecated - This is moved to the IContainerExperimental interface. To access you should cast IContainerExperimental before attempting to use
-	 *
-	 * Closes the container and returns serialized local state intended to be
-	 * given to a newly loaded container.
-	 * @experimental
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
-	 */
-	closeAndGetPendingLocalState(): string;
-
-	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
 	 *
 	 * The returned promise will be true when the proposal is accepted, and false if the proposal is rejected.
@@ -532,12 +505,13 @@ export type ILoaderOptions = {
 	[key in string | number]: any;
 } & {
 	/**
+	 * @deprecated This option has been deprecated and will be removed in a future release
 	 * Set caching behavior for the loader. If true, we will load a container from cache if one
 	 * with the same id/version exists or create a new container and cache it if it does not. If
 	 * false, always load a new container and don't cache it. If the container has already been
 	 * closed, it will not be cached. A cache option in the LoaderHeader for an individual
 	 * request will override the Loader's value.
-	 * Defaults to true.
+	 * Defaults to false.
 	 */
 	cache?: boolean;
 
@@ -561,7 +535,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 * Override the Loader's default caching behavior for this container.
 	 */
 	cache = "fluid-cache",
@@ -573,6 +547,10 @@ export enum LoaderHeader {
 	 */
 	loadMode = "loadMode",
 	reconnect = "fluid-reconnect",
+	/**
+	 * Loads the container to at least the specified sequence number.
+	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
+	 */
 	sequenceNumber = "fluid-sequence-number",
 
 	/**
@@ -590,6 +568,11 @@ export interface IContainerLoadMode {
 	 * Default value.
 	 */
 	| undefined
+		/*
+		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
+		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
+		 */
+		| "sequenceNumber"
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -623,6 +606,11 @@ export interface IContainerLoadMode {
 		 * Default value.
 		 */
 		| undefined;
+
+	/**
+	 * If set to true, will indefinitely pause all incoming and outgoing after the container is loaded.
+	 */
+	pauseAfterLoad?: boolean;
 }
 
 /**
@@ -630,11 +618,15 @@ export interface IContainerLoadMode {
  */
 export interface ILoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 */
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
+	/**
+	 * Loads the container to at least the specified sequence number.
+	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
+	 */
 	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.version]: string | undefined;

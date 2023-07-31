@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { getFileLink } from "../getFileLink";
 import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 describe("getFileLink", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
-	const logger = new TelemetryUTLogger();
+	const logger = new MockLogger();
 	const storageTokenFetcher = async () => "StorageToken";
 	const fileItemResponse = {
 		webDavUrl: "fetchDavUrl",
@@ -19,10 +19,18 @@ describe("getFileLink", () => {
 		sharepointIds: { listItemUniqueId: "fetchFileId" },
 	};
 
+	afterEach(() => {
+		logger.assertMatchNone([{ category: "error" }]);
+	});
+
 	it("should return share link with existing access", async () => {
 		const result = await mockFetchMultiple(
 			async () =>
-				getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, logger),
+				getFileLink(
+					storageTokenFetcher,
+					{ siteUrl, driveId, itemId: "itemId4" },
+					logger.toTelemetryLogger(),
+				),
 			[
 				async () => okResponse({}, fileItemResponse),
 				async () => okResponse({}, { d: { directUrl: "sharelink" } }),
@@ -42,7 +50,7 @@ describe("getFileLink", () => {
 					getFileLink(
 						storageTokenFetcher,
 						{ siteUrl, driveId, itemId: "itemId5" },
-						logger,
+						logger.toTelemetryLogger(),
 					),
 				[
 					async () => okResponse({}, {}),
@@ -60,7 +68,7 @@ describe("getFileLink", () => {
 				return getFileLink(
 					storageTokenFetcher,
 					{ siteUrl, driveId, itemId: "itemId6" },
-					logger,
+					logger.toTelemetryLogger(),
 				);
 			}, notFound),
 			"File link should reject when not found",

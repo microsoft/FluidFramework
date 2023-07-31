@@ -106,8 +106,11 @@ export class SnapshotLoader {
 			// this is for back compat, so we change the singular id to an array
 			// this will only cause problems if there is an overlapping delete
 			// spanning the snapshot, which should be rare
-			if (spec.removedClient !== undefined) {
-				seg.removedClientIds = [this.client.getOrAddShortClientId(spec.removedClient)];
+			const specAsBuggyFormat: IJSONSegmentWithMergeInfo & { removedClient?: string } = spec;
+			if (specAsBuggyFormat.removedClient !== undefined) {
+				seg.removedClientIds = [
+					this.client.getOrAddShortClientId(specAsBuggyFormat.removedClient),
+				];
 			}
 			if (spec.removedClientIds !== undefined) {
 				seg.removedClientIds = spec.removedClientIds?.map((sid) =>
