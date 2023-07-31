@@ -54,9 +54,7 @@ describe("Schema Comparison", () => {
 
 	/**
 	 * TreeStoredSchema which is impossible for any data to be in schema with.
-	 * @alpha
 	 */
-	// TODO: remove need for this.
 	const neverTree: TreeStoredSchema = {
 		structFields: emptyMap,
 		mapFields: neverField,
