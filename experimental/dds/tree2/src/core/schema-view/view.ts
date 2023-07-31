@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	GlobalFieldKey,
-	TreeSchemaIdentifier,
-	SchemaPolicy,
-	SchemaData,
-	FieldStoredSchema,
-} from "../schema-stored";
+import { TreeSchemaIdentifier, SchemaData } from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -60,16 +54,6 @@ export interface TreeAdapter {
 }
 
 /**
- * @alpha
- */
-export interface FieldAdapter {
-	readonly field: GlobalFieldKey;
-
-	convert(stored: FieldStoredSchema): FieldStoredSchema;
-	// TODO: include actual adapter functionality (to provide the missing values), not just what types it converts
-}
-
-/**
  * Minimal selection of adapters (nothing for general out of schema, field level adjustments etc.).
  * Would be used with schematize and have actual conversion/update functionality.
  *
@@ -79,33 +63,6 @@ export interface FieldAdapter {
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];
-	/**
-	 * Handlers for when a fields is missing.
-	 */
-	readonly fieldAdapters?: ReadonlyMap<GlobalFieldKey, FieldAdapter>;
-}
-
-/**
- * A collection of View information for schema, including policy.
- */
-export abstract class ViewSchemaData<TPolicy extends SchemaPolicy = SchemaPolicy> {
-	public constructor(public readonly policy: TPolicy, public readonly adapters: Adapters) {}
-
-	/**
-	 * Determines the compatibility of a stored document
-	 * (based on its stored schema) with a viewer (based on its view schema).
-	 *
-	 * Adapters can be provided to handle differences between the two schema.
-	 * Adapters should only use to types in the `view` SchemaRepository.
-	 *
-	 * TODO: this API violates the parse don't validate design philosophy.
-	 * It should be wrapped with (or replaced by) a parse style API.
-	 */
-	public abstract checkCompatibility(stored: SchemaData): {
-		read: Compatibility;
-		write: Compatibility;
-		writeAllowingStoredSchemaUpdates: Compatibility;
-	};
 }
 
 /**

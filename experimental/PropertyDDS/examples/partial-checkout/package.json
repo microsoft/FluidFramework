@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/partial-checkout",
-	"version": "2.0.0-internal.5.3.0",
+	"version": "2.0.0-internal.5.4.0",
 	"private": true,
 	"description": "A sample using property-dds and property-binder to create a reactive application.",
 	"homepage": "https://fluidframework.com",
@@ -16,7 +16,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
-		"clean": "rimraf dist *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

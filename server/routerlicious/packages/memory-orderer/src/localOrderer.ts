@@ -54,6 +54,7 @@ const DefaultScribe: IScribe = {
 	sequenceNumber: -1,
 	lastSummarySequenceNumber: 0,
 	validParentSummaries: undefined,
+	isCorrupt: false,
 };
 
 const DefaultDeli: IDeliState = {

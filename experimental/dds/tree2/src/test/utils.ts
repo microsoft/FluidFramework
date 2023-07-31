@@ -30,7 +30,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer, generateStableId } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ISharedTree,
@@ -65,9 +65,7 @@ import {
 	JsonableTree,
 	SchemaData,
 	fieldSchema,
-	GlobalFieldKey,
 	rootFieldKey,
-	rootFieldKeySymbol,
 	Value,
 	compareUpPaths,
 	UpPath,
@@ -82,8 +80,8 @@ import {
 	InMemoryStoredSchemaRepository,
 	TaggedChange,
 } from "../core";
-import { JsonCompatible, brand, makeArray } from "../util";
-import { ICodecFamily } from "../codec";
+import { JsonCompatible, Mutable, brand, makeArray } from "../util";
+import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
@@ -353,7 +351,8 @@ export class TestTreeProviderLite {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
-			const runtime = new MockFluidDataStoreRuntime();
+			const runtime = new MockFluidDataStoreRuntime({ clientId: generateStableId() });
+			(runtime as Mutable<MockFluidDataStoreRuntime>).id = "tree-provider-lite-data-store";
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
@@ -577,7 +576,7 @@ export function makeTreeFromCursor(
 	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
 	const field = tree.editor.sequenceField({
 		parent: undefined,
-		field: rootFieldKeySymbol,
+		field: rootFieldKey,
 	});
 	if (!Array.isArray(cursor) || cursor.length > 0) {
 		field.insert(0, cursor);
@@ -612,13 +611,13 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  * @param value - The value of the inserted node.
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
 }
 
@@ -633,23 +632,17 @@ export function expectJsonTree(
 	}
 }
 
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	localFields: {
+	structFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
+	rootFieldSchema,
 };
 
 /**
@@ -665,7 +658,7 @@ export function initializeTestTree(
 	if (state) {
 		// Apply an edit to the tree which inserts a node with a value
 		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 		field.insert(0, writeCursor);
 	}
 }
@@ -748,7 +741,9 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
- * It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ *
+ * @privateRemarks - It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
  * they require assert.deepEqual to be a valid comparison.
  * This can be problematic for some cases (for example edits containing cursors).
@@ -768,6 +763,15 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
+			// A common pattern to avoid validating the same portion of encoded data multiple times
+			// is for a codec to either validate its data is in schema itself and not return `encodedSchema`,
+			// or for it to not validate its own data but return an `encodedSchema` and let the caller use that.
+			// This block makes sure we still validate the encoded data schema for codecs following the latter
+			// pattern.
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					describe(
@@ -775,11 +779,11 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 						() => {
 							for (const [name, data] of encodingTestData.successes) {
 								it(name, () => {
-									let encoded = codec.json.encode(data);
+									let encoded = jsonCodec.encode(data);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									const decoded = codec.json.decode(encoded);
+									const decoded = jsonCodec.decode(encoded);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -803,7 +807,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData] of failureCases) {
 						it(name, () => {
-							assert.throws(() => codec.json.decode(encodedData as JsonCompatible));
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
 						});
 					}
 				});

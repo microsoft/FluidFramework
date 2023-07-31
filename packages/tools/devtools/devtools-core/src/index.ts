@@ -43,8 +43,6 @@ export {
 	VisualNodeKind,
 	VisualTreeNode,
 	VisualValueNode,
-	VisualizeChildData,
-	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
 export {

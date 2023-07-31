@@ -29,6 +29,11 @@ export namespace DevtoolsFeatures {
 		 * Describes the set of features supported by the {@link IFluidDevtools} instance.
 		 */
 		features: Features;
+
+		/**
+		 * Package version of devtools-core.
+		 */
+		devtoolsVersion?: string;
 	}
 
 	/**

@@ -142,6 +142,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	BrandedFieldKind,
+	ChangeAtomId,
 } from "./modular-schema";
 
 export {
@@ -151,7 +152,6 @@ export {
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,

@@ -9,7 +9,6 @@ import {
 	ValueSchema,
 	brand,
 	EmptyKey,
-	lookupTreeSchema,
 	FieldKinds,
 	TreeSchemaIdentifier,
 } from "@fluid-experimental/tree2";
@@ -94,9 +93,9 @@ describe("LlsSchemaConverter", () => {
 
 	it("Enum", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
+		const table = fullSchemaData.treeSchema.get(tableTypeName);
 		assert(table !== undefined);
-		const encoding = table.localFields.get(brand("encoding"));
+		const encoding = table.structFields.get(brand("encoding"));
 		assert(encoding !== undefined);
 		assert(encoding.types !== undefined);
 		assert(encoding.types.has(brand("Enum")));
@@ -106,9 +105,9 @@ describe("LlsSchemaConverter", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const typeNames = new Set(fullSchemaData.treeSchema.keys());
 		for (const typeName of typeNames) {
-			const treeSchema = lookupTreeSchema(fullSchemaData, typeName);
+			const treeSchema = fullSchemaData.treeSchema.get(typeName);
 			assert(treeSchema !== undefined);
-			treeSchema.localFields.forEach((field, fieldKey) => {
+			treeSchema.structFields.forEach((field, fieldKey) => {
 				if (field.types) {
 					field.types.forEach((type) => {
 						assert(
@@ -118,8 +117,8 @@ describe("LlsSchemaConverter", () => {
 					});
 				}
 			});
-			if (treeSchema.extraLocalFields.types) {
-				treeSchema.extraLocalFields.types.forEach((type) => {
+			if (treeSchema.mapFields.types) {
+				treeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
 						`Missing type "${type}" in tree schema "${typeName}" for extra local fields`,
@@ -131,42 +130,39 @@ describe("LlsSchemaConverter", () => {
 
 	it("Check Structure", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
+		const table = fullSchemaData.treeSchema.get(tableTypeName);
 		assert(table !== undefined);
-		assert(table.localFields !== undefined);
+		assert(table.structFields !== undefined);
 
-		const extendedRows = table.localFields.get(brand("extendedRows"));
+		const extendedRows = table.structFields.get(brand("extendedRows"));
 		assert(extendedRows !== undefined);
 		assert(extendedRows.types !== undefined);
 		assert(extendedRows.types.has(brand("array<Test:ExtendedRow-1.0.0>")));
 
-		const extendedRowsSchema = lookupTreeSchema(
-			fullSchemaData,
-			brand("Test:ExtendedRow-1.0.0"),
-		);
+		const extendedRowsSchema = fullSchemaData.treeSchema.get(brand("Test:ExtendedRow-1.0.0"));
 		assert(extendedRowsSchema !== undefined);
-		const info = extendedRowsSchema.localFields.get(brand("info"));
+		const info = extendedRowsSchema.structFields.get(brand("info"));
 		assert(info !== undefined);
 		assert(info.types !== undefined);
 		assert(info.types.has(brand("map<Test:RowInfo-1.0.0>")));
-		const infoType = lookupTreeSchema(fullSchemaData, brand("Test:RowInfo-1.0.0"));
+		const infoType = fullSchemaData.treeSchema.get(brand("Test:RowInfo-1.0.0"));
 		assert(infoType !== undefined);
 
-		const uint64 = infoType.localFields.get(brand("value"));
+		const uint64 = infoType.structFields.get(brand("value"));
 		assert(uint64 !== undefined);
 		assert(uint64.types !== undefined);
 		expect(uint64.types.has(brand("Uint64"))).toBeTruthy();
 		assert(uint64.types.has(brand("Uint64")));
-		const uint64Type = lookupTreeSchema(fullSchemaData, brand("Uint64"));
-		assert(uint64Type.value === ValueSchema.Number);
+		const uint64Type = fullSchemaData.treeSchema.get(brand("Uint64"));
+		assert(uint64Type?.value === ValueSchema.Number);
 	});
 
 	it("Inheritance Translation", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const row = lookupTreeSchema(fullSchemaData, brand("array<Test:Row-1.0.0>"));
+		const row = fullSchemaData.treeSchema.get(brand("array<Test:Row-1.0.0>"));
 		assert(row !== undefined);
-		assert(row.localFields !== undefined);
-		const field = row.localFields.get(EmptyKey);
+		assert(row.structFields !== undefined);
+		const field = row.structFields.get(EmptyKey);
 		assert(field !== undefined);
 		assert(field.types !== undefined);
 		assert(field.types.has(brand("Test:Row-1.0.0")));

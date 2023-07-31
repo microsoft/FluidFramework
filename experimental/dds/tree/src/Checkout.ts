@@ -4,7 +4,7 @@
  */
 
 import { assert } from '@fluidframework/common-utils';
-import { ChildLogger, EventEmitterWithErrorHandling, ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IDisposable, ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
@@ -125,7 +125,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 			this.tree.emit('error', error);
 		});
 		this.tree = tree;
-		this.logger = ChildLogger.create(this.tree.logger, 'Checkout');
+		this.logger = createChildLogger({ logger: this.tree.logger, namespace: 'Checkout' });
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;
 		}

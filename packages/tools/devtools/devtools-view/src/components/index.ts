@@ -16,6 +16,7 @@ export * from "./ContainerHistoryView";
 export * from "./ContainerSummaryView";
 export * from "./LandingView";
 export * from "./Menu";
+export * from "./NoDevtoolsErrorBar";
 export * from "./TelemetryView";
 export * from "./SettingsView";
 export * from "./Waiting";
