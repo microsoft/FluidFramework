@@ -459,10 +459,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, {
-						...defaultVisualizers,
-						...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
-				  });
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers, defaultEditors);
+
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
@@ -570,7 +568,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	}
 
 	/**
-	 * Begins the process of changing data inside a DDS by using {@link Edit}
+	 * Applies an {@link Edit} to a {@link SharedObject}
 	 */
 	private async editData(edit: SharedObjectEdit): Promise<void> {
 		return this.dataVisualizer?.applyEdit(edit);

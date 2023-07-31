@@ -96,14 +96,14 @@ export interface SharedObjectVisualizers {
 }
 
 /**
- * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
+ * Specifies editors for different {@link @fluidframework/shared-object-base#ISharedObject} types.
  *
  * @remarks
  *
  * - `key`: The type of Shared object ({@link @fluidframework/datastore-definitions#IChannelFactory.Type}).
  *
- * - `value`: A renderer that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
- * specified type and generates a corresponding {@link VisualizerNode} for it.
+ * - `value`: A editor that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
+ * specified type and preforms the corresponding edit for it.
  */
 export interface SharedObjectEditors {
 	/**
@@ -366,6 +366,11 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		 * Encapsulates the policies for rendering different kinds of DDSs.
 		 */
 		private readonly visualizeSharedObject: VisualizeSharedObject,
+
+		/**
+		 * Callback for editing {@link VisualizerNode.sharedObject}.
+		 * Encapsulates the policies for editing different kinds of DDSs.
+		 */
 		private readonly editSharedObject: EditSharedObject,
 
 		/**

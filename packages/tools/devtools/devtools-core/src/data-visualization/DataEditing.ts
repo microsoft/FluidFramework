@@ -23,8 +23,9 @@ export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Prom
 export interface Edit {
 	/**
 	 * Type contains the {@link EditType} of the edit being preformed
+	 * If not present it will assume the type is the type of the data
 	 */
-	type?: EditType;
+	type?: EditType | string;
 
 	/**
 	 * Data contains the new data that will be edited into the DDS

@@ -122,7 +122,6 @@
 			"EnumDeclaration_ContainerDevtoolsFeature": {
 				"backCompat": false
 			},
-		
 			"ClassDeclaration_DevtoolsLogger": {
 				"backCompat": false
 			},

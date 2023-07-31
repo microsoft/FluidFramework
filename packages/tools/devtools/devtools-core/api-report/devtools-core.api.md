@@ -12,10 +12,10 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -236,13 +236,13 @@ export namespace DisconnectContainer {
 // @internal
 export interface Edit {
     data: Serializable<unknown>;
-    type?: EditType;
+    type?: EditType | string;
 }
 
 // @internal
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
-// @public
+// @internal
 export enum EditType {
     // (undocumented)
     Boolean = "boolean",
