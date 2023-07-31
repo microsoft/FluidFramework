@@ -428,7 +428,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 
 	/**
 	 * Edits a {@link @fluidframework/shared-object-base#ISharedObject}
-	 * @param edit - is a Edit object that describes an edit to a Fluid object.
+	 * @param edit - Describes an edit to a Fluid object.
 	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
 	public async applyEdit(edit: Edit): Promise<void> {
