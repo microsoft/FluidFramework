@@ -18,7 +18,7 @@ This library has 2 primary entry-points:
 #### Git LFS
 
 The [Visual Regression Tests](#visual-regression-tests) utilized by this package generate image assets that are tracked using [Git LFS](https://git-lfs.com/).
-Before running those tests in this package, ensure you have installed LFS (run `git lfs install`).
+Before running those tests in this package, ensure you have installed LFS (run `git lfs install` if you're on a UNIX-based environment; in Windows, [Git for Windows](https://gitforwindows.org/) installs it by default).
 
 ### Build
 
