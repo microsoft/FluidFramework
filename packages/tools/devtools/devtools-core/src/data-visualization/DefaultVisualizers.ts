@@ -37,18 +37,23 @@ import {
 export const visualizeSharedCell: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
+): Promise<FluidObjectNodeBase> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
 
 	const renderedData = await visualizeChildData(data);
 
-	return {
-		fluidObjectId: sharedCell.id,
-		children: { data: renderedData },
-		typeMetadata: "SharedCell",
-		nodeKind: VisualNodeKind.FluidTreeNode,
-	};
+	if (renderedData.nodeKind === VisualNodeKind.TreeNode) {
+		return {
+			...renderedData,
+			fluidObjectId: sharedCell.id,
+			typeMetadata: "SharedCell",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
+	}
+
+	// REturn value view
+	
 };
 
 /**
