@@ -46,7 +46,8 @@ import {
 } from "@fluidframework/container-utils";
 import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
-import { OnlyValidTermValue } from "./protocol";
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+export const OnlyValidTermValue = 1 as const;
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;

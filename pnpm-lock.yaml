@@ -240,7 +240,7 @@ importers:
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^1.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-tools': ^0.2.158186
@@ -296,7 +296,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
-      '@fluidframework/server-local-server': 0.1038.4001
+      '@fluidframework/server-local-server': 1.0.0
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1

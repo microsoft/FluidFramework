@@ -117,11 +117,13 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
-	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
+
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+export const OnlyValidTermValue = 1 as const;
 
 const detachedContainerRefSeqNumber = 0;
 
