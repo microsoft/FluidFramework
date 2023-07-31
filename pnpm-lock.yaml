@@ -41138,7 +41138,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1_webpack-cli@4.10.0
+      webpack: 5.88.1
     dev: true
 
   /terser/4.8.1:
