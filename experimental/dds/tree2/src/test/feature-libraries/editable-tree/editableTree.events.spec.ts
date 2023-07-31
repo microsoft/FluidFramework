@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 
 import {
 	FieldKey,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
 	AnchorEvents,
 	AnchorNode,
@@ -34,11 +34,7 @@ describe("editable-tree: event subscription", () => {
 		const unsubscribeChanging = address[on]("changing", (upPath: UpPath) => {
 			log.push(upPath);
 		});
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
+		const { emitter, node } = accessEmitters(forest, [rootFieldKey, 0], [fieldAddress, 0]);
 		emitter.emit("childrenChanging", node);
 		unsubscribeChanging();
 		emitter.emit("childrenChanging", node);
@@ -51,11 +47,7 @@ describe("editable-tree: event subscription", () => {
 		const unsubscribeChanging = address[on]("subtreeChanging", (upPath: UpPath) => {
 			log.push(upPath);
 		});
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
+		const { emitter, node } = accessEmitters(forest, [rootFieldKey, 0], [fieldAddress, 0]);
 		emitter.emit("subtreeChanging", node);
 		unsubscribeChanging();
 		emitter.emit("subtreeChanging", node);
@@ -66,11 +58,7 @@ describe("editable-tree: event subscription", () => {
 		const { address, forest } = retrieveAddressNode();
 		const log: UpPath[] = [];
 		const visitLog: UpPath[] = [];
-		const { emitter, node } = accessEmitters(
-			forest,
-			[rootFieldKeySymbol, 0],
-			[fieldAddress, 0],
-		);
+		const { emitter, node } = accessEmitters(forest, [rootFieldKey, 0], [fieldAddress, 0]);
 		const unsubscribeChanging = address[on]("subtreeChanging", (upPath: UpPath) => {
 			log.push(upPath);
 			const visitor: PathVisitor = {

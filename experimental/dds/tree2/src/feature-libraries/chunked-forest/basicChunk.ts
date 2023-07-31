@@ -92,11 +92,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * Even levels in the stack (starting from 0) are keys and odd levels are sequences of nodes.
 	 * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
 	 * @param indexOfChunkStack - Index of chunk in array of chunks. Only for Node levels.
-	 * @param indexWithinChunkStack - Index withing chunk selected by indexOfChunkStack. Only for Node levels.
+	 * @param indexWithinChunkStack - Index within chunk selected by indexOfChunkStack. Only for Node levels.
 	 * @param siblings - Siblings at the current level (not included in `siblingStack`).
 	 * @param index - Index into `siblings`.
 	 * @param indexOfChunk - Index of chunk in array of chunks. Only for Nodes mode.
-	 * @param indexWithinChunk - Index withing chunk selected by indexOfChunkStack. Only for Nodes mode.
+	 * @param indexWithinChunk - Index within chunk selected by indexOfChunkStack. Only for Nodes mode.
 	 * @param nestedCursor - When the outer cursor (this `BasicChunkCursor` cursor)
 	 * navigates into a chunk it does not natively understand (currently anything other than `BasicChunk`s)
 	 * it creates the `nestedCursor` over that chunk, and delegates all operations to it.

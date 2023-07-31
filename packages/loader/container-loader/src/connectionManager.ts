@@ -25,6 +25,7 @@ import {
 	getRetryDelayFromError,
 	logNetworkFailure,
 	isRuntimeMessage,
+	calculateMaxWaitTime,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -48,7 +49,6 @@ import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
-const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
@@ -608,7 +608,7 @@ export class ConnectionManager implements IConnectionManager {
 					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
 					await new Promise<void>((resolve) => {
 						setTimeout(resolve, delayMs);
-						delayMs = Math.min(delayMs * 2, MaxReconnectDelayInMs);
+						delayMs = Math.min(delayMs * 2, calculateMaxWaitTime(origError));
 					});
 				}
 

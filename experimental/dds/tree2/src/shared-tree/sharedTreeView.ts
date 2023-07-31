@@ -24,7 +24,6 @@ import {
 	IDefaultEditBuilder,
 	StableNodeKey,
 	EditableTree,
-	GlobalFieldSchema,
 	DefaultChangeset,
 	NodeKeyIndex,
 	buildForest,
@@ -40,6 +39,7 @@ import {
 	ForestRepairDataStore,
 	ModularChangeset,
 	nodeKeyFieldKey,
+	FieldSchema,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -285,9 +285,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TRoot extends GlobalFieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
+	schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
 }
 
 /**
@@ -465,7 +463,7 @@ export class SharedTreeView implements ISharedTreeView {
 		this.branch.redo();
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
+	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);

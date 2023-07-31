@@ -35,17 +35,25 @@ import {
 	MoveId,
 	Revive,
 	Delete,
-	EmptyInputCellMark,
-	ExistingCellMark,
 	NoopMarkType,
 	Transient,
-	DetachedCellMark,
 	CellTargetingMark,
 	CellId,
 	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
+import {
+	GenerativeMark,
+	TransientMark,
+	ExistingCellMark,
+	EmptyInputCellMark,
+	DetachedCellMark,
+} from "./helperTypes";
+
+export function isEmpty<T>(change: Changeset<T>): boolean {
+	return change.length === 0;
+}
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
 	return mark.type === "Modify";
@@ -54,12 +62,6 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
 	return mark.type === "Insert" || mark.type === "MoveIn";
 }
-
-export type GenerativeMark<TNodeChange> = Insert<TNodeChange> | Revive<TNodeChange>;
-
-export type TransientMark<TNodeChange> = GenerativeMark<TNodeChange> & Transient;
-
-export type EmptyOutputCellMark<TNodeChange> = TransientMark<TNodeChange> | Detach<TNodeChange>;
 
 export function isGenerativeMark<TNodeChange>(
 	mark: Mark<TNodeChange>,

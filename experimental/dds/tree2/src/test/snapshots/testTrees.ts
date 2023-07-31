@@ -5,7 +5,7 @@
 
 import { SharedTreeTestFactory, TestTreeProviderLite, initializeTestTree } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, UpPath, ValueSchema, rootFieldKeySymbol } from "../../core";
+import { FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
 import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 
@@ -84,7 +84,7 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 					tree.storedSchema.update(docSchema);
 					const field = tree.editor.optionalField({
 						parent: undefined,
-						field: rootFieldKeySymbol,
+						field: rootFieldKey,
 					});
 					field.set(
 						singleTextCursor({ type: handleSchema.name, value: tree.handle }),
