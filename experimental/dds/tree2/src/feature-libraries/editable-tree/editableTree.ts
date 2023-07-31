@@ -8,13 +8,11 @@ import {
 	Value,
 	Anchor,
 	FieldKey,
-	symbolIsFieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	TreeStoredSchema,
-	lookupTreeSchema,
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
@@ -24,14 +22,9 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import {
-	getFieldKind,
-	getFieldSchema,
-	typeNameSymbol,
-	valueSymbol,
-	allowsValue,
-} from "../contextuallyTyped";
+import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
+import { neverTree } from "../default-field-kinds";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -131,19 +124,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	}
 
 	public get type(): TreeStoredSchema {
-		return lookupTreeSchema(this.context.schema, this.typeName);
+		return (
+			this.context.schema.treeSchema.get(this.typeName) ??
+			fail("requested type does not exist in schema")
+		);
 	}
 
 	public get value(): Value {
 		return this.cursor.value;
-	}
-
-	public set value(value: Value) {
-		assert(
-			allowsValue(this.type.value, value),
-			0x5b2 /* Out of schema value can not be set on tree */,
-		);
-		this.context.editor.setValue(this.anchorNode, value);
 	}
 
 	public get currentIndex(): number {
@@ -155,7 +143,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	}
 
 	public getFieldSchema(field: FieldKey): FieldStoredSchema {
-		return getFieldSchema(field, this.context.schema, this.type);
+		return getFieldSchema(field, this.type);
 	}
 
 	public getFieldKeys(): FieldKey[] {
@@ -184,11 +172,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
-			makeField(
-				this.context,
-				getFieldSchema(cursor.getFieldKey(), this.context.schema, type),
-				cursor,
-			),
+			makeField(this.context, getFieldSchema(cursor.getFieldKey(), type), cursor),
 		).values();
 	}
 
@@ -201,13 +185,16 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		const index = cursor.fieldIndex;
 		cursor.exitNode();
 		const key = cursor.getFieldKey();
+		// TODO: make this work properly for root
 		cursor.exitField();
 		const parentType = cursor.type;
 		cursor.enterField(key);
+		// TODO: this should error if schema is not found.
+		// For now this suppresses the error to work around root handling issues.
 		const fieldSchema = getFieldSchema(
 			key,
-			this.context.schema,
-			lookupTreeSchema(this.context.schema, parentType),
+			this.context.schema.treeSchema.get(parentType) ?? neverTree,
+			// fail("requested schema that does not exist"),
 		);
 		const proxifiedField = makeField(this.context, fieldSchema, this.cursor);
 		this.cursor.enterNode(index);
@@ -221,20 +208,16 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
-				return () => {
-					unsubscribeFromValueChange();
-					unsubscribeFromChildrenChange();
-				};
+				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
@@ -250,7 +233,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
  */
 const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	get: (target: NodeProxyTarget, key: string | symbol): unknown => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			// All string keys are fields
 			return target.unwrappedField(brand(key));
 		}
@@ -286,27 +269,19 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		value: NewFieldContent,
 		receiver: NodeProxyTarget,
 	): boolean => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		assert(
+			key !== valueSymbol,
+			0x703 /* The value of a node can only be changed by replacing the node */,
+		);
+		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			if (fieldKey === localNodeKeySymbol) {
-				// TODO: this is not very type safe. Can we do better?
-				assert(typeof key === "number", 0x6d9 /* Invalid local node key */);
-				const localNodeKey = key as unknown as LocalNodeKey;
-				const stableNodeKey = target.context.nodeKeys.stabilizeNodeKey(localNodeKey);
-				target.getField(fieldKey).content = stableNodeKey;
-			} else {
-				target.getField(fieldKey).content = value;
-			}
-
-			return true;
-		} else if (key === valueSymbol) {
-			target.value = value;
+			target.getField(fieldKey).content = value;
 			return true;
 		}
 		return false;
 	},
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
 			target.getField(fieldKey).delete();
 			return true;
@@ -315,7 +290,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	},
 	// Include documented symbols (except value when value is undefined) and all non-empty fields.
 	has: (target: NodeProxyTarget, key: string | symbol): boolean => {
-		if (typeof key === "string" || symbolIsFieldKey(key)) {
+		if (typeof key === "string") {
 			return target.has(brand(key));
 		}
 		// utility symbols
@@ -350,7 +325,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		// but it is an TypeError to return non-configurable for properties that do not exist on target,
 		// so they must return true.
 
-		if ((typeof key === "string" || symbolIsFieldKey(key)) && target.has(brand(key))) {
+		if (typeof key === "string" && target.has(brand(key))) {
 			const field = target.unwrappedField(brand(key));
 			return {
 				configurable: true,

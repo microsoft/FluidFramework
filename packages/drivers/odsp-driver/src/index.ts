@@ -10,7 +10,6 @@ export {
 	ClpCompliantAppHeader,
 	IClpCompliantAppHeader,
 	ISharingLinkHeader,
-	ISocketStorageDiscovery,
 	OdspFluidDataStoreLocator,
 	SharingLinkHeader,
 } from "./contractsPublic";

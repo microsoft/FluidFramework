@@ -50,7 +50,7 @@ data:
             "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }},
             "enableRedisFsMetrics": {{ .Values.gitrest.git.enableRedisFsMetrics }},
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
-        }
+        },
         "redis": {
             "host": "{{ .Values.gitrest.redis.url }}",
             "port": "{{ .Values.gitrest.redis.port }}",
@@ -58,5 +58,5 @@ data:
             "maxRetriesPerRequest": "{{ .Values.gitrest.redis.maxRetriesPerRequest }}",
             "enableAutoPipelining": "{{ .Values.gitrest.redis.enableAutoPipelining }}",
             "enableOfflineQueue": "{{ .Values.gitrest.redis.enableOfflineQueue }}"
-        },
+        }
     }

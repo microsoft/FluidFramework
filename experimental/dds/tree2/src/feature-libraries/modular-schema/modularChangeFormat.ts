@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
-import {
-	FieldKindIdentifierSchema,
-	GlobalFieldKeySchema,
-	LocalFieldKeySchema,
-	RevisionTagSchema,
-} from "../../core";
+import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+import { FieldKindIdentifierSchema, FieldKeySchema, RevisionTagSchema } from "../../core";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 } from "../../util";
 import { ChangesetLocalId } from "./modularChangeTypes";
+
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
@@ -24,13 +21,13 @@ export const EncodedChangeAtomId = Type.Object(
 		/**
 		 * Uniquely identifies the changeset within which the change was made.
 		 */
-		revision: Type.Union([RevisionTagSchema, Type.Undefined()]),
+		revision: Type.Optional(RevisionTagSchema),
 		/**
 		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 		 */
 		localId: ChangesetLocalIdSchema,
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 
 const EncodedValueChange = Type.Object(
@@ -38,7 +35,7 @@ const EncodedValueChange = Type.Object(
 		revision: Type.Optional(RevisionTagSchema),
 		value: Type.Optional(JsonCompatibleReadOnlySchema),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 type EncodedValueChange = Static<typeof EncodedValueChange>;
 
@@ -47,19 +44,21 @@ const EncodedValueConstraint = Type.Object(
 		value: Type.Optional(JsonCompatibleReadOnlySchema),
 		violated: Type.Boolean(),
 	},
-	{ additionalProperties: false },
+	noAdditionalProps,
 );
 type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
-const EncodedFieldChange = Type.Object({
-	fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
-	keyIsGlobal: Type.Boolean(),
-	fieldKind: FieldKindIdentifierSchema,
-	// Implementation note: node and field change encoding is mutually recursive.
-	// This field marks a boundary in that recursion to avoid constructing excessively complex
-	// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.
-	change: JsonCompatibleReadOnlySchema,
-});
+const EncodedFieldChange = Type.Object(
+	{
+		fieldKey: FieldKeySchema,
+		fieldKind: FieldKindIdentifierSchema,
+		// Implementation note: node and field change encoding is mutually recursive.
+		// This field marks a boundary in that recursion to avoid constructing excessively complex
+		// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.
+		change: JsonCompatibleReadOnlySchema,
+	},
+	noAdditionalProps,
+);
 
 export interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
 	/**
@@ -76,7 +75,6 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  * This chooses to use lists of named objects instead of maps:
  * this choice is somewhat arbitrary, but avoids user data being used as object keys,
  * which can sometimes be an issue (for example handling that for "__proto__" can require care).
- * It also allows dealing with global vs local field key disambiguation via a flag on the field.
  */
 export type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
@@ -85,27 +83,36 @@ const EncodedNodeExistsConstraint = Type.Object({
 });
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
-export const EncodedNodeChangeset = Type.Object({
-	valueChange: Type.Optional(EncodedValueChange),
-	fieldChanges: Type.Optional(EncodedFieldChangeMap),
-	valueConstraint: Type.Optional(EncodedValueConstraint),
-	nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
-});
+export const EncodedNodeChangeset = Type.Object(
+	{
+		valueChange: Type.Optional(EncodedValueChange),
+		fieldChanges: Type.Optional(EncodedFieldChangeMap),
+		valueConstraint: Type.Optional(EncodedValueConstraint),
+		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
+	},
+	noAdditionalProps,
+);
 
 /**
  * Format for encoding as json.
  */
 export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
-const EncodedRevisionInfo = Type.Object({
-	revision: Type.Readonly(RevisionTagSchema),
-	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
-});
+const EncodedRevisionInfo = Type.Object(
+	{
+		revision: Type.Readonly(RevisionTagSchema),
+		rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
+	},
+	noAdditionalProps,
+);
 
-export const EncodedModularChangeset = Type.Object({
-	maxId: Type.Optional(ChangesetLocalIdSchema),
-	changes: EncodedFieldChangeMap,
-	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
-});
+export const EncodedModularChangeset = Type.Object(
+	{
+		maxId: Type.Optional(ChangesetLocalIdSchema),
+		changes: EncodedFieldChangeMap,
+		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+	},
+	noAdditionalProps,
+);
 
 export type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;

@@ -25,6 +25,7 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
+	enableOfflineLoad: booleanCases,
 };
 
 export function applyOverrides<T>(
@@ -100,7 +101,6 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: [undefined, true],
 		enableGroupedBatching: [true, false],
-		enableBatchRebasing: [true],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

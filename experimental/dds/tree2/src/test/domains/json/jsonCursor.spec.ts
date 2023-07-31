@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { singleJsonCursor, cursorToJsonObject } from "../../..";
+// eslint-disable-next-line import/no-internal-modules
+import { singleJsonCursor, cursorToJsonObject } from "../../../domains/json";
 import { JsonCompatible } from "../../../util";
 import { testSpecializedCursor } from "../../cursorTestSuite";
 
@@ -63,7 +64,7 @@ testSpecializedCursor({
 	dataFromCursor: cursorToJsonObject,
 	testData: cursors,
 	builders: {
-		withLocalKeys: (keys) => {
+		withKeys: (keys) => {
 			const obj = {};
 			for (const key of keys) {
 				Object.defineProperty(obj, key, {

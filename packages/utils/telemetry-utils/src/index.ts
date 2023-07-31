@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 export {
+	createChildMonitoringContext,
 	MonitoringContext,
 	IConfigProviderBase,
 	sessionStorageConfigProvider,
@@ -41,14 +42,21 @@ export {
 	isValidLegacyError,
 } from "./fluidErrorBase";
 export {
+	eventNamespaceSeparator,
 	BaseTelemetryNullLogger,
 	ChildLogger,
+	createChildLogger,
+	createMultiSinkLogger,
+	formatTick,
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,
 	MultiSinkLogger,
+	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
+	tagData,
+	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
 	TelemetryLogger,

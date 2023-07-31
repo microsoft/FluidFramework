@@ -28,6 +28,7 @@ import { validateRequestParams, handleResponse } from "@fluidframework/server-se
 import { Router } from "express";
 import winston from "winston";
 import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
 	ISession,
 	NetworkError,
@@ -118,17 +119,16 @@ export function create(
 				getParam(request.params, "tenantId") || appTenants[0].id,
 				getParam(request.params, "id"),
 			);
-			documentP.then(
-				(document) => {
+			documentP
+				.then((document) => {
 					if (!document || document.scheduledDeletionTime) {
 						response.status(404);
 					}
 					response.status(200).json(document);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(400).json(error);
-				},
-			);
+				});
 		},
 	);
 
@@ -165,7 +165,13 @@ export function create(
 				: (request.body.id as string) || uuid();
 
 			// Summary information
-			const summary = request.body.summary;
+			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+				: request.body.summary;
+
+			Lumberjack.info(
+				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
 
 			// Protocol state
 			const {

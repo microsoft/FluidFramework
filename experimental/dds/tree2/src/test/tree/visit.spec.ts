@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { singleTextCursor } from "../../feature-libraries";
-import { FieldKey, Delta, DeltaVisitor, visitDelta, rootFieldKeySymbol } from "../../core";
+import { FieldKey, Delta, DeltaVisitor, visitDelta, rootFieldKey } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
@@ -27,7 +27,6 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 	"onInsert",
 	"onMoveOut",
 	"onMoveIn",
-	"onSetValue",
 	"enterNode",
 	"exitNode",
 	"enterField",
@@ -70,42 +69,6 @@ const content = [singleTextCursor(nodeX)];
 describe("visit", () => {
 	it("empty delta", () => {
 		testTreeVisit([], []);
-	});
-
-	it("set root value", () => {
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
-		const expected: VisitScript = [
-			["enterNode", 0],
-			["onSetValue", 1],
-			["exitNode", 0],
-		];
-		testTreeVisit([mark], expected);
-	});
-
-	it("set child value", () => {
-		const mark: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
-		const delta: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
-		const expected: VisitScript = [
-			["enterNode", 0],
-			["enterField", fooKey],
-			["enterNode", 42],
-			["onSetValue", 1],
-			["exitNode", 42],
-			["exitField", fooKey],
-			["exitNode", 0],
-		];
-		testTreeVisit(delta, expected);
 	});
 
 	it("insert root", () => {
@@ -217,23 +180,16 @@ describe("visit", () => {
 			type: Delta.MarkType.Insert,
 			content,
 		};
-		const set: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			setValue: 1,
-		};
 		const delta: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [del, 3, ins, 1, set]]]),
+				fields: new Map([[fooKey, [del, 3, ins]]]),
 			},
 		];
 		const expected: VisitScript = [
 			["enterNode", 0],
 			["enterField", fooKey],
 			["onInsert", 13, content],
-			["enterNode", 15],
-			["onSetValue", 1],
-			["exitNode", 15],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -263,18 +219,18 @@ describe("visit", () => {
 			moveId,
 		};
 
-		const delta = new Map([[rootFieldKeySymbol, [1, moveOut, 1, moveIn]]]);
+		const delta = new Map([[rootFieldKey, [1, moveOut, 1, moveIn]]]);
 
 		const expected: VisitScript = [
-			["enterField", rootFieldKeySymbol],
+			["enterField", rootFieldKey],
 			["onMoveOut", 1, 1, moveId],
 
 			// TODO: optimize out needless exit then enter
-			["exitField", rootFieldKeySymbol],
-			["enterField", rootFieldKeySymbol],
+			["exitField", rootFieldKey],
+			["enterField", rootFieldKey],
 
 			["onMoveIn", 2, 1, moveId],
-			["exitField", rootFieldKeySymbol],
+			["exitField", rootFieldKey],
 		];
 
 		testVisit(delta, expected);
@@ -377,7 +333,6 @@ describe("visit", () => {
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
-			setValue: 42,
 			moveId,
 		};
 
@@ -403,9 +358,6 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["enterNode", 6],
-			["onSetValue", 42],
-			["exitNode", 6],
 			["onMoveOut", 6, 1, moveId],
 			["exitField", fooKey],
 			["exitNode", 0],
@@ -680,6 +632,44 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 
+		testVisit(delta, expected);
+	});
+
+	it("transient insert", () => {
+		const mark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content,
+			isTransient: true,
+		};
+
+		const delta: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([[fooKey, [42, mark]]]),
+					},
+				],
+			],
+		]);
+
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onInsert", 42, content],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onDelete", 42, 1],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		];
 		testVisit(delta, expected);
 	});
 

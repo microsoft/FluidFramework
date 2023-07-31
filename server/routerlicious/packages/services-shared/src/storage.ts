@@ -242,6 +242,7 @@ export class DocumentStorage implements IDocumentStorage {
 			// the initial summary would not be accepted as a valid parent because lastClientSummaryHead is undefined and latest
 			// summary is a service summary. However, initial summary _is_ a valid parent in this scenario.
 			validParentSummaries: [initialSummaryVersionId],
+			isCorrupt: false,
 		};
 
 		const session: ISession = {
@@ -475,7 +476,7 @@ export class DocumentStorage implements IDocumentStorage {
 				// Duplicate key errors are ignored
 				if (error.code !== 11000) {
 					// Needs to be a full rejection here
-					return Promise.reject(error);
+					throw error;
 				}
 			});
 			winston.info(`Inserted ${dbOps.length} ops into deltas DB`);

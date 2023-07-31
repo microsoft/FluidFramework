@@ -1,0 +1,31 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { ISerializableInterval } from "../intervals";
+
+/**
+ * Collection of intervals.
+ *
+ * Implementers of this interface will typically implement additional APIs to support efficiently querying a collection
+ * of intervals in some manner, for example:
+ * - "find all intervals with start endpoint between these two points"
+ * - "find all intervals which overlap this range"
+ * etc.
+ */
+export interface IntervalIndex<TInterval extends ISerializableInterval> {
+	/**
+	 * Adds an interval to the index.
+	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
+	 */
+	add(interval: TInterval): void;
+
+	/**
+	 * Removes an interval from the index.
+	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
+	 */
+	remove(interval: TInterval): void;
+}

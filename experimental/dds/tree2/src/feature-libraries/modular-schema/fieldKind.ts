@@ -6,12 +6,12 @@
 import {
 	FieldStoredSchema,
 	FieldKindIdentifier,
-	SchemaPolicy,
 	fieldSchema,
 	SchemaData,
 	FieldKindSpecifier,
 	TreeTypeSet,
 } from "../../core";
+import { brand } from "../../util";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 
@@ -85,7 +85,7 @@ export class FieldKind<
  * The app must ensure consistency for all users of the document.
  * @alpha
  */
-export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy {
 	/**
 	 * Policy information about FieldKinds:
 	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
@@ -144,4 +144,35 @@ export enum Multiplicity {
 	 * See {@link emptyField} for a constant, reusable field using Forbidden.
 	 */
 	Forbidden,
+}
+
+/**
+ * @alpha
+ */
+export type BrandedFieldKind<
+	TName extends string,
+	TMultiplicity extends Multiplicity,
+	TEditor extends FieldEditor<any>,
+> = FieldKind<TEditor, TMultiplicity> & {
+	identifier: TName & FieldKindIdentifier;
+};
+
+export function brandedFieldKind<
+	TName extends string,
+	TMultiplicity extends Multiplicity,
+	TEditor extends FieldEditor<any>,
+>(
+	identifier: TName,
+	multiplicity: TMultiplicity,
+	changeHandler: FieldChangeHandler<any, TEditor>,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
+	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
+): BrandedFieldKind<TName, TMultiplicity, TEditor> {
+	return new FieldKind<TEditor, TMultiplicity>(
+		brand(identifier),
+		multiplicity,
+		changeHandler,
+		allowsTreeSupersetOf,
+		handlesEditsFrom,
+	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
 }

@@ -49,6 +49,7 @@ alfred:
   enforceServerGeneratedDocumentId: false
   socketIo:
     perMessageDeflate: true
+  getDeltasRequestMaxOpsRange: 2000
 
 storage:
   enableWholeSummaryUpload: false
@@ -56,6 +57,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
+  checkpointsTTLInSeconds: 864000
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -80,7 +82,9 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  maxLogtailLength: 2000
   verifyLastOpPersistence: false
+  disableTransientTenantFiltering: true
   checkpointHeuristics:
     enable: false
     idleTime: 10000

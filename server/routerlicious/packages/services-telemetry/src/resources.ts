@@ -91,6 +91,7 @@ export enum CommonProperties {
 	telemetryGroupName = "telemetryGroupName",
 	totalBatchSize = "totalBatchSize",
 	isEphemeralContainer = "isEphemeralContainer",
+	restartReason = "restartReason",
 }
 
 export enum ThrottlingTelemetryProperties {

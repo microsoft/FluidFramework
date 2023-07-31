@@ -116,5 +116,5 @@ and not about how to use those options to actually build a schema system.
 
 ## Ways to update existing schema:
 
--   Could support op that changes a schema in a way where all data that was accepted by the old schema is accepted by the new one (ex: add optional fields (if compatible with extra fields), move required field into extraFields, add a type to a field).
+-   Could support op that changes a schema in a way where all data that was accepted by the old schema is accepted by the new one (ex: add optional fields (if compatible with extra fields), move required field into mapFields, add a type to a field).
 -   Could even do things like apply a change to all nodes with a specific type to enable edits which modify a schema and update data atomically (ex: alter table like from sql). This does not work with partial views well.

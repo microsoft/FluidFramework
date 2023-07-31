@@ -24,9 +24,7 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 		return false;
 	});
 
-	if (matchingAsset === undefined) {
-		throw new Error(`Could not find asset for chunk with id '${chunkId}' in the webpack stats`);
-	}
-
-	return matchingAsset.size;
+	// If there's no matching asset it could be that it was removed in the new version of the bundle, not necessarily an
+	// error. In that case return 0 as its size.
+	return matchingAsset?.size ?? 0;
 }

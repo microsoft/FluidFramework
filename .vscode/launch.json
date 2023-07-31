@@ -95,7 +95,16 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["exec", "--releaseGroup", "build-tools", "--no-private", "--", "pwd"],
+		},
+		{
+			// Runs the `flub test-only-filter` command with a debugger attached.
+			"name": "flub test-only-filter",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["test-only-filter", "--json", "--all"],
 		},
 		{
 			"name": "flub bump deps",

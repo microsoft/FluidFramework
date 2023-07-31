@@ -16,7 +16,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Value,
 	Delta,
 	UpPath,
 	Anchor,
@@ -24,7 +23,7 @@ import {
 	FieldAnchor,
 	ForestEvents,
 	ITreeSubscriptionCursorState,
-	rootFieldKeySymbol,
+	rootFieldKey,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -54,27 +53,31 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 
 	private readonly events = createEmitter<ForestEvents>();
 
+	/**
+	 * @param roots - dummy node above the root under which detached fields are stored. All content of the forest is reachable from this.
+	 * @param schema - schema which all content in this forest is assumed to comply with.
+	 * @param policy - provides information needed to interpret the schema, mainly multiplicities for each field kind which are used for chunking policy.
+	 * @param anchors - anchorSet used to track location in this forest across changes. Callers of applyDelta must ensure this is updated accordingly.
+	 */
 	public constructor(
 		public roots: BasicChunk,
-		public readonly schema: StoredSchemaRepository<FullSchemaPolicy>,
+		public readonly schema: StoredSchemaRepository,
+		public readonly policy: FullSchemaPolicy,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {
 		super("object-forest.ChunkedForest");
 		// Invalidate forest if schema change.
 		recordDependency(this.dependent, this.schema);
-		this.chunker = makeTreeChunker(schema);
+		this.chunker = makeTreeChunker(schema, policy);
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public clone(
-		schema: StoredSchemaRepository<FullSchemaPolicy>,
-		anchors: AnchorSet,
-	): ChunkedForest {
+	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, anchors);
+		return new ChunkedForest(this.roots, schema, this.policy, anchors);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -152,10 +155,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				moves.delete(id);
 				const countMoved = moveIn(index, toAttach);
 				assert(countMoved === count, 0x533 /* counts must match */);
-			},
-			onSetValue: (value: Value): void => {
-				assert(mutableChunk !== undefined, 0x534 /* should be in node */);
-				mutableChunk.value = value;
 			},
 			enterNode: (index: number): void => {
 				assert(mutableChunk === undefined, 0x535 /* should be in field */);
@@ -394,7 +393,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 
 	public clear(): void {
 		this.state = ITreeSubscriptionCursorState.Cleared;
-		this.setToDetachedSequence(rootFieldKeySymbol);
+		this.setToDetachedSequence(rootFieldKey);
 	}
 }
 
@@ -402,8 +401,9 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildChunkedForest(
-	schema: StoredSchemaRepository<FullSchemaPolicy>,
+	schema: StoredSchemaRepository,
+	policy: FullSchemaPolicy,
 	anchors?: AnchorSet,
 ): IEditableForest {
-	return new ChunkedForest(makeRoot(), schema, anchors);
+	return new ChunkedForest(makeRoot(), schema, policy, anchors);
 }

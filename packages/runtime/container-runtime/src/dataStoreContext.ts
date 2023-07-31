@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
 	IDisposable,
 	FluidObject,
 	IRequest,
 	IResponse,
 	IFluidHandle,
+	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -17,7 +17,8 @@ import {
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -53,19 +54,14 @@ import {
 	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
+import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
-	addBlobToSummary,
-	convertSummaryTreeToITree,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
-import {
-	ChildLogger,
+	createChildMonitoringContext,
 	generateStack,
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,
-	TelemetryDataTag,
+	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -315,9 +311,16 @@ export abstract class FluidDataStoreContext
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(this.logger, "FluidDataStoreContext"),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "FluidDataStoreContext",
+			properties: {
+				all: tagCodeArtifacts({
+					fluidDataStoreId: this.id,
+					fullPackageName: this.pkg?.join("/"),
+				}),
+			},
+		});
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
 			this.mc.logger,
@@ -373,10 +376,13 @@ export abstract class FluidDataStoreContext
 		failedPkgPath?: string,
 		fullPackageName?: readonly string[],
 	): never {
-		throw new LoggingError(reason, {
-			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
-			fullPackageName: packagePathToTelemetryProperty(fullPackageName),
-		});
+		throw new LoggingError(
+			reason,
+			tagCodeArtifacts({
+				failedPkgPath,
+				packagePath: fullPackageName?.join("/"),
+			}),
+		);
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
@@ -388,15 +394,14 @@ export abstract class FluidDataStoreContext
 					error,
 					"realizeFluidDataStoreContext",
 				);
-				errorWrapped.addTelemetryProperties({
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					packageName: packagePathToTelemetryProperty(this.pkg),
-				});
+				errorWrapped.addTelemetryProperties(
+					tagCodeArtifacts({
+						fullPackageName: this.pkg?.join("/"),
+						fluidDataStoreId: this.id,
+					}),
+				);
 				this.channelDeferred?.reject(errorWrapped);
-				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
 		}
 		return this.channelDeferred.promise;
@@ -786,13 +791,9 @@ export abstract class FluidDataStoreContext
 			this.channelDeferred.resolve(this.channel);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
-			this.logger.sendErrorEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
 				},
 				error,
 			);
@@ -916,11 +917,6 @@ export abstract class FluidDataStoreContext
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			type,
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			packageName: packagePathToTelemetryProperty(this.pkg),
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(),
 		});
@@ -942,8 +938,11 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.containerRuntime.uploadBlob(blob);
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.containerRuntime.uploadBlob(blob, signal);
 	}
 }
 

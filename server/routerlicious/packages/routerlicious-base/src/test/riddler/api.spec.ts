@@ -8,8 +8,13 @@ import * as crypto from "crypto";
 import express from "express";
 import request from "supertest";
 import { TestDbFactory } from "@fluidframework/server-test-utils";
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import {
+	EncryptionKeyVersion,
+	MongoManager,
+	ISecretManager,
+} from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
+import Sinon from "sinon";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
@@ -17,6 +22,10 @@ const rawDeltasCollectionName = "testRawDeltas";
 
 class TestSecretManager implements ISecretManager {
 	constructor(private readonly encryptionKey: string) {}
+
+	public getLatestKeyVersion(): EncryptionKeyVersion {
+		return undefined;
+	}
 
 	public decryptSecret(encryptedSecret: string): string {
 		return `test-decrypted-secret with key ${this.encryptionKey}`;
@@ -72,6 +81,9 @@ describe("Routerlicious", () => {
 					const testSecretManager = new TestSecretManager(
 						crypto.randomBytes(32).toString("base64"),
 					);
+					Sinon.useFakeTimers();
+					const testFetchTenantKeyMetricIntervalMs = 60000;
+					const testRiddlerStorageRequestMetricIntervalMs = 60000;
 
 					app = riddlerApp.create(
 						testCollectionName,
@@ -81,8 +93,14 @@ describe("Routerlicious", () => {
 						testExtHistorianUrl,
 						testIntHistorianUrl,
 						testSecretManager,
+						testFetchTenantKeyMetricIntervalMs,
+						testRiddlerStorageRequestMetricIntervalMs,
 					);
 					supertest = request(app);
+				});
+
+				afterEach(() => {
+					Sinon.restore();
 				});
 
 				it("POST /tenants/:id/validate", async () => {

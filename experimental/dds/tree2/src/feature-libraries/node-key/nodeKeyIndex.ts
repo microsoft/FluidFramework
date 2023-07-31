@@ -4,39 +4,41 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { extractFromOpaque } from "../../util";
-import { GlobalFieldKey, SchemaData } from "../../core";
-import { nodeKey } from "../defaultFieldKinds";
+import { FieldKey, SchemaData, ValueSchema } from "../../core";
+import { FieldKinds } from "../default-field-kinds";
 import {
 	EditableTree,
 	EditableTreeContext,
 	localNodeKeySymbol,
 	typeSymbol,
 } from "../editable-tree";
-import { LocalNodeKey } from "./nodeKey";
+import { oneFromSet } from "../../util";
+import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
  * The node key index records nodes with {@link LocalNodeKey}s and allows them to be looked up by key.
  */
-export class NodeKeyIndex<TField extends GlobalFieldKey>
-	implements ReadonlyMap<LocalNodeKey, EditableTree>
-{
+export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 	// TODO: The data structure that holds the nodes can likely be optimized to better support cloning
 	private readonly nodes: Map<LocalNodeKey, EditableTree>;
 
 	public constructor(
-		public readonly fieldKey: TField,
+		public readonly fieldKey: FieldKey,
 		keys: Iterable<[LocalNodeKey, EditableTree]> = [],
 	) {
 		this.nodes = new Map(keys);
 	}
 
 	/**
-	 * Returns true if the given schema contains the global node key field, otherwise false
+	 * Returns true if the given schema contains the node key type, otherwise false
 	 */
-	public static keysAreInSchema(schema: SchemaData, fieldKey: GlobalFieldKey): boolean {
-		const fieldSchema = schema.globalFieldSchema.get(fieldKey);
-		return fieldSchema !== undefined && fieldSchema.kind.identifier === nodeKey.identifier;
+	public static hasNodeKeyTreeSchema(schema: SchemaData): boolean {
+		// TODO: make SchemaData contain ViewSchema and compare by reference to nodeKeyTreeSchema.
+		const treeSchema = schema.treeSchema.get(nodeKeyTreeIdentifier);
+		if (treeSchema === undefined) {
+			return false;
+		}
+		return treeSchema.value === ValueSchema.String;
 	}
 
 	/**
@@ -46,10 +48,13 @@ export class NodeKeyIndex<TField extends GlobalFieldKey>
 	 */
 	// TODO: This can be optimized by responding to deltas/changes to the tree, rather than rescanning the whole tree every time
 	public scanKeys(context: EditableTreeContext): void {
-		if (NodeKeyIndex.keysAreInSchema(context.schema, this.fieldKey)) {
+		if (NodeKeyIndex.hasNodeKeyTreeSchema(context.schema)) {
 			this.nodes.clear();
 			for (let i = 0; i < context.root.length; i++) {
 				for (const [id, node] of this.findKeys(context.root.getNode(i))) {
+					// TODO:
+					// This invariant (that there is only one node with a given key) is not enforced by tree, so it should not assert.
+					// Multiple nodes (including deleted ones), might occur with the same key.
 					assert(!this.nodes.has(id), 0x6e1 /* Encountered duplicate node key */);
 					this.nodes.set(id, node);
 				}
@@ -60,7 +65,7 @@ export class NodeKeyIndex<TField extends GlobalFieldKey>
 	/**
 	 * Create a copy of this index which can be mutated without affecting this one.
 	 */
-	public clone(context: EditableTreeContext): NodeKeyIndex<TField> {
+	public clone(context: EditableTreeContext): NodeKeyIndex {
 		const indexClone = new NodeKeyIndex(this.fieldKey);
 		indexClone.scanKeys(context);
 		return indexClone;
@@ -101,17 +106,23 @@ export class NodeKeyIndex<TField extends GlobalFieldKey>
 	// #endregion ReadonlyMap interface
 
 	private *findKeys(node: EditableTree): Iterable<[key: LocalNodeKey, node: EditableTree]> {
-		const key = node[localNodeKeySymbol] as LocalNodeKey | undefined;
+		const key = node[localNodeKeySymbol];
 		if (key !== undefined) {
-			yield [extractFromOpaque(key), node];
+			const field = node[typeSymbol].structFields.get(this.fieldKey);
+			assert(field !== undefined, 0x6e2 /* Found node key that is not in schema */);
 			assert(
-				node[typeSymbol].extraGlobalFields ||
-					node[typeSymbol].globalFields.has(this.fieldKey),
-				0x6e2 /* Found node key that is not in schema */,
+				field.kind.identifier === FieldKinds.nodeKey.identifier,
+				0x704 /* Found node key that is not in schema */,
 			);
+			assert(
+				oneFromSet(field.types) === nodeKeyTreeIdentifier,
+				0x705 /* Found node key that is not in schema */,
+			);
+
+			yield [key, node];
 		} else {
 			assert(
-				!node[typeSymbol].globalFields.has(this.fieldKey),
+				!node[typeSymbol].structFields.has(this.fieldKey),
 				0x6e3 /* Node key absent but required by schema */,
 			);
 		}
