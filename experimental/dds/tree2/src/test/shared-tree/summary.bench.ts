@@ -19,18 +19,8 @@ import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-lib
 import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
 import { TestTreeProviderLite } from "../utils";
-import {
-	rootFieldKey,
-	rootFieldKeySymbol,
-	TreeValue,
-	fieldSchema,
-	GlobalFieldKey,
-	SchemaData,
-} from "../../core";
-// eslint-disable-next-line import/no-internal-modules
-import { PlacePath } from "../../feature-libraries/sequence-change-family";
-
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+import { TreeValue, fieldSchema, SchemaData, UpPath, rootFieldKey } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 
 enum TreeShape {
 	Wide = "wide",
@@ -99,7 +89,7 @@ describe("Summary benchmarks", () => {
 			benchmarkType: BenchmarkType = BenchmarkType.Perspective,
 		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory();
+			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 			benchmark({
 				title: `a ${shape} tree with ${numberOfNodes} node${
 					numberOfNodes !== 1 ? "s" : ""
@@ -139,16 +129,16 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
 	// Apply an edit to the tree which inserts a node with a value
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 		field.insert(index, writeCursor);
 	});
 }
 
-function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath): void {
+function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: UpPath): void {
 	// Apply an edit to the tree which inserts a node with a value.
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField({ parent: path, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: path, field: rootFieldKey });
 		field.insert(0, writeCursor);
 	});
 }
@@ -191,9 +181,9 @@ export function getInsertsSummaryTree(numberOfNodes: number, shape: TreeShape): 
 function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
 	const seed = 0;
 	const random = makeRandom(seed);
-	let path: PlacePath = {
+	let path: UpPath = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	// loop through and update path for the next insert.
@@ -205,25 +195,20 @@ function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
 		);
 		path = {
 			parent: path,
-			parentField: rootFieldKeySymbol,
+			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
 	}
 }
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
+	rootFieldSchema,
 };
 
 /**
@@ -235,7 +220,7 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
 	// Apply an edit to the tree which inserts a node with a value
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 		field.insert(0, writeCursor);
 	});
 }

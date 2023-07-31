@@ -1,0 +1,12 @@
+{
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"module": "esnext",
+		"outDir": "dist/e2e-tests",
+		"composite": true,
+		"types": ["expect-puppeteer", "jest", "jest-environment-puppeteer", "puppeteer"],
+		"jsx": "react",
+		"forceConsistentCasingInFileNames": true,
+	},
+	"include": ["./**/*"],
+}

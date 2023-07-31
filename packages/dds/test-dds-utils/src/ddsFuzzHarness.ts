@@ -188,6 +188,16 @@ export interface DDSFuzzHarnessEvents {
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
 	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
+
+	/**
+	 * Raised after creating the initialState but prior to performing the fuzzActions..
+	 */
+	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
+
+	/**
+	 * Raised after all fuzzActions have been completed.
+	 */
+	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 }
 
 export interface DDSFuzzSuiteOptions {
@@ -291,9 +301,21 @@ export interface DDSFuzzSuiteOptions {
 	 * createDDSFuzzSuite(model, { only: [42] });
 	 * ```
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}
+	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}.
 	 */
 	only: Iterable<number>;
+
+	/**
+	 * Skips the provided seeds.
+	 * @example
+	 * ```typescript
+	 * // Skips seed 42 for the given model.
+	 * createDDSFuzzSuite(model, { skip: [42] });
+	 * ```
+	 * @remarks
+	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link createDDSFuzzSuite.skip}.
+	 */
+	skip: Iterable<number>;
 
 	/**
 	 * Whether failure files should be saved to disk, and if so, the directory in which they should be saved.
@@ -309,6 +331,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
+	skip: [],
 	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
 	reconnectProbability: 0,
 	saveFailures: false,
@@ -640,7 +663,7 @@ export async function runTestForSeed<
 	TOperation extends BaseOperation,
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation>,
-	options: Omit<DDSFuzzSuiteOptions, "only">,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
 ): Promise<DDSFuzzTestState<TChannelFactory>> {
@@ -672,12 +695,17 @@ export async function runTestForSeed<
 		client: makeUnreachableCodepathProxy("client"),
 	};
 
+	options.emitter.emit("testStart", initialState);
+
 	const finalState = await performFuzzActions(
 		model.generatorFactory(),
 		model.reducer,
 		initialState,
 		saveInfo,
 	);
+
+	options.emitter.emit("testEnd", finalState);
+
 	return finalState;
 }
 
@@ -687,16 +715,19 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	seed: number,
 	saveInfo: SaveInfo | undefined,
 ): void {
-	const itFn = options.only.has(seed) ? it.only : it;
+	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
 		await runTestForSeed(model, options, seed, saveInfo);
 	});
 }
 
-type InternalOptions = Omit<DDSFuzzSuiteOptions, "only"> & { only: Set<number> };
+type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
+	only: Set<number>;
+	skip: Set<number>;
+};
 
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
-	return options.only instanceof Set;
+	return options.only instanceof Set && options.skip instanceof Set;
 }
 
 export async function replayTest<
@@ -713,6 +744,7 @@ export async function replayTest<
 		...defaultDDSFuzzSuiteOptions,
 		...providedOptions,
 		only: new Set(providedOptions?.only ?? []),
+		skip: new Set(providedOptions?.skip ?? []),
 	};
 
 	const _model = mixinSynchronization(
@@ -745,7 +777,8 @@ export function createDDSFuzzSuite<
 	};
 
 	const only = new Set(options.only);
-	options.only = only;
+	const skip = new Set(options.skip);
+	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
 	const model = mixinSynchronization(
@@ -808,4 +841,23 @@ createDDSFuzzSuite.only =
 		createDDSFuzzSuite(ddsModel, {
 			...providedOptions,
 			only: [...seeds, ...(providedOptions?.only ?? [])],
+		});
+
+/**
+ * Skips the provided seeds.
+ * @example
+ * ```typescript
+ * // Skips seed 42 for the given model.
+ * createDDSFuzzSuite(model, { skip: [42] });
+ * ```
+ */
+createDDSFuzzSuite.skip =
+	(...seeds: number[]) =>
+	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+		providedOptions?: Partial<DDSFuzzSuiteOptions>,
+	): void =>
+		createDDSFuzzSuite(ddsModel, {
+			...providedOptions,
+			skip: [...seeds, ...(providedOptions?.skip ?? [])],
 		});

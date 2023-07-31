@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
 
 import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
@@ -16,7 +16,7 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	createLoader,
 	ITestContainerConfig,
@@ -153,7 +153,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 
 				const summaryCollection = new SummaryCollection(
 					summaryContainer.deltaManager,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 				);
 
 				await timeoutPromise((res) => summaryCollection.once("summaryAck", () => res()), {

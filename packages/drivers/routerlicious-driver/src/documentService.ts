@@ -27,7 +27,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { GitManager } from "./gitManager";
 import { Historian } from "./historian";
 import { RestWrapper } from "./restWrapperBase";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -67,7 +67,7 @@ export class DocumentService implements api.IDocumentService {
 		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
-		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
+		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
@@ -247,6 +247,8 @@ export class DocumentService implements api.IDocumentService {
 						client,
 						this.deltaStreamUrl,
 						this.logger,
+						undefined /* timeoutMs */,
+						this.driverPolicies.enableLongPollingDowngrade,
 					);
 				},
 			);

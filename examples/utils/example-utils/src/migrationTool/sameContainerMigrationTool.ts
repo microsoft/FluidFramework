@@ -5,8 +5,10 @@
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import type { IContainer } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
@@ -21,6 +23,14 @@ const newVersionKey = "newVersion";
 
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
+	private readonly _containerP: Promise<IContainer>;
+	private _setContainerRef: ((container: IContainer) => void) | undefined;
+	public get setContainerRef(): (container: IContainer) => void {
+		if (this._setContainerRef === undefined) {
+			throw new Error("_setContainerRef did not initialize properly");
+		}
+		return this._setContainerRef;
+	}
 
 	/**
 	 * A promise that is only defined if the local client has made a proposal, and will resolve when any proposal goes pending.
@@ -100,6 +110,13 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		} else {
 			return "collaborating";
 		}
+	}
+
+	public constructor(props) {
+		super(props);
+		this._containerP = new Promise<IContainer>((resolve) => {
+			this._setContainerRef = (container: IContainer) => resolve(container);
+		});
 	}
 
 	// Once we have the v2 contents in hand, we can work on sending it as the next summary (which will look like a v2
@@ -226,12 +243,21 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
 		// Or at least a callback for it.
 		const version = this.pactMap.get(newVersionKey);
+		if (version === undefined) {
+			throw new Error("PactMap proposal not defined before proposing on the Quorum");
+		}
 		const quorumProposal = { package: version };
 		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
 		this.emit("proposingV2Code");
 		if (!this._anyQuorumProposalSeen) {
-			// TODO: This is where we would want to call container.proposeCodeDetails(quorumProposal).
-			// However, only do so if we are still in this state after fully catching up
+			const container = await this._containerP;
+			// Check again, since we might have seen a proposal while waiting on the container.
+			if (!this._anyQuorumProposalSeen) {
+				// TODO: we should only propose if we are still in this state after fully catching up
+				// TODO: awaiting here may await past an earlier proposal from someone else.  This is probably OK, since we would be waiting for our
+				// own proposal to accept anyway in _quorumApprovalCompleteP but maybe something to think about.
+				await container.proposeCodeDetails(quorumProposal);
+			}
 		}
 		await this._anyQuorumProposalSeenP;
 		this.emit("waitingForV2ProposalCompletion");
@@ -339,7 +365,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
 			// TODO: Consider if there is any better way to watch this happen
 			const watchForQuorumProposal = (op: ISequencedDocumentMessage) => {
-				if (op.type === MessageType.Propose && op.contents.key === "code") {
+				if (
+					op.type === MessageType.Propose &&
+					(op.contents as { key?: unknown }).key === "code"
+				) {
 					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
 					// Or maybe set that up in ensureQuorumCodeDetails().
 					this.context.deltaManager.off("op", watchForQuorumProposal);
@@ -359,7 +388,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// TODO: Consider if there is any better way to watch this happen
 			const proposalSequenceNumbers: number[] = [];
 			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage) => {
-				if (op.type === MessageType.Propose && op.contents.key === "code") {
+				if (
+					op.type === MessageType.Propose &&
+					(op.contents as { key?: unknown }).key === "code"
+				) {
 					proposalSequenceNumbers.push(op.sequenceNumber);
 				}
 				if (

@@ -6,23 +6,24 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder, Any } from "../../feature-libraries";
 import { SharedTreeFactory } from "../../shared-tree";
-import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
+import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import { typeboxValidator } from "../../external-utilities";
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 const builder = new SchemaBuilder("Schematize Tree Tests");
 
-const root = builder.primitive("root", ValueSchema.Number);
+const root = builder.leaf("root", ValueSchema.Number);
 const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.object("root", { value: ValueSchema.Serializable });
+const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Serializable);
 const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 describe("schematizeView", () => {
 	it("initialize tree schema", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		assert(!tree.storedSchema.globalFieldSchema.has(rootFieldKey));
+		assert.equal(tree.storedSchema.rootFieldSchema, storedEmptyFieldSchema);
 
 		const schematized = tree.schematize({
 			allowedSchemaModifications: AllowedUpdateType.None,
@@ -30,7 +31,10 @@ describe("schematizeView", () => {
 			schema,
 		});
 
-		assert(schematized.storedSchema.globalFieldSchema.has(rootFieldKey));
+		assert.deepEqual(
+			schematized.storedSchema.rootFieldSchema,
+			schemaGeneralized.rootFieldSchema,
+		);
 		assert(schematized.storedSchema.treeSchema.has(root.name));
 		assert.equal(schematized.root, 10);
 	});

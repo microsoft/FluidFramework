@@ -12,6 +12,7 @@ import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { DetachedReferencePosition } from "../referencePositions";
 import { LocalReferencePosition, SlidingPreference } from "../localReference";
+import { getSlideToSegoff } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from "./";
 
@@ -24,7 +25,7 @@ function getSlideOnRemoveReferencePosition(
 		referenceSequenceNumber: op.referenceSequenceNumber,
 		clientId: op.clientId,
 	});
-	segoff = client.getSlideToSegment(segoff);
+	segoff = getSlideToSegoff(segoff);
 	return segoff;
 }
 

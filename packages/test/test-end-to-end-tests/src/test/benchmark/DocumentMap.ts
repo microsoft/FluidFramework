@@ -24,7 +24,11 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms, ISummarizer } from "@fluidframework/container-runtime";
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-internal/test-version-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";
@@ -169,9 +173,8 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		const { container: containerClient, summarizer: summarizerClient } = await createSummarizer(
 			this.props.provider,
 			this._mainContainer,
+			undefined,
 			summaryVersion,
-			undefined,
-			undefined,
 			this.logger,
 		);
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);

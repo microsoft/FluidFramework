@@ -32,6 +32,11 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
  * Common properties for a node in a merge tree.
  */
 export interface IMergeNodeCommon {
+	/**
+	 *
+	 * @deprecated - In subsequent releases this will no longer be exported
+	 * @internal
+	 */
 	parent?: IMergeBlock;
 	/**
 	 * The length of the contents of the node.
@@ -49,10 +54,17 @@ export interface IMergeNodeCommon {
 	isLeaf(): this is ISegment;
 }
 
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export type IMergeNode = IMergeBlock | ISegment;
 
 /**
  * Internal (i.e. non-leaf) node in a merge tree.
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
  */
 export interface IMergeBlock extends IMergeNodeCommon {
 	needsScour?: boolean;
@@ -81,6 +93,10 @@ export interface IMergeBlock extends IMergeNodeCommon {
 	setOrdinal(child: IMergeNode, index: number): void;
 }
 
+/**
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface IHierBlock extends IMergeBlock {
 	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
@@ -225,12 +241,20 @@ export interface ISegmentAction<TClientData> {
 		accum: TClientData,
 	): boolean;
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface ISegmentChanges {
 	next?: ISegment;
 	replaceCurrent?: ISegment;
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -244,6 +268,11 @@ export interface BlockAction<TClientData> {
 	): boolean;
 }
 
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface NodeAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
@@ -256,21 +285,36 @@ export interface NodeAction<TClientData> {
 		clientData: TClientData,
 	): boolean;
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface IncrementalSegmentAction<TContext> {
 	(segment: ISegment, state: IncrementalMapState<TContext>);
 }
 
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface IncrementalBlockAction<TContext> {
 	(state: IncrementalMapState<TContext>);
 }
 /**
- * @deprecated - unused and will be removed
- */
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ * */
 export interface BlockUpdateActions {
 	child: (block: IMergeBlock, index: number) => void;
 }
 
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface InsertContext {
 	candidateSegment?: ISegment;
 	prepareEvents?: boolean;
@@ -279,6 +323,11 @@ export interface InsertContext {
 	continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
 }
 
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface SegmentActions<TClientData> {
 	leaf?: ISegmentAction<TClientData>;
 	shift?: NodeAction<TClientData>;
@@ -286,13 +335,22 @@ export interface SegmentActions<TClientData> {
 	pre?: BlockAction<TClientData>;
 	post?: BlockAction<TClientData>;
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface IncrementalSegmentActions<TContext> {
 	leaf: IncrementalSegmentAction<TContext>;
 	pre?: IncrementalBlockAction<TContext>;
 	post?: IncrementalBlockAction<TContext>;
 }
 
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface SearchResult {
 	text: string;
 	pos: number;
@@ -308,6 +366,11 @@ export interface SegmentGroup {
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
 	ordinal: string = "";
+	/**
+	 *
+	 * @deprecated - In subsequent releases this will no longer be exported
+	 * @internal
+	 */
 	parent?: IMergeBlock;
 	cachedLength: number = 0;
 
@@ -315,6 +378,11 @@ export class MergeNode implements IMergeNodeCommon {
 		return false;
 	}
 }
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export function ordinalToArray(ord: string) {
 	const a: number[] = [];
 	if (ord) {
@@ -324,13 +392,20 @@ export function ordinalToArray(ord: string) {
 	}
 	return a;
 }
-
-// Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
-// the MergeTree always inserts first, then checks for overflow and splits if the child count equals
-// `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
-// facilitate splits.)
+/**
+ * Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
+ * the MergeTree always inserts first, then checks for overflow and splits if the child count equals
+ * `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
+ * facilitate splits.)
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export const MaxNodesInBlock = 8;
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export class MergeBlock extends MergeNode implements IMergeBlock {
 	public children: IMergeNode[];
 	public constructor(public childCount: number) {
@@ -395,12 +470,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		collabWindow?: CollaborationWindow,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
+		this.propertyManager ??= new PropertiesManager();
+		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
@@ -616,9 +687,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
 	}
 
 	getId(): string | undefined {
-		if (this.properties && this.properties[reservedMarkerIdKey]) {
-			return this.properties[reservedMarkerIdKey] as string;
-		}
+		return this.properties?.[reservedMarkerIdKey] as string;
 	}
 
 	toString() {
@@ -637,13 +706,21 @@ export class Marker extends BaseSegment implements ReferencePosition {
 		throw new Error("Can not append to marker");
 	}
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export enum IncrementalExecOp {
 	Go,
 	Stop,
 	Yield,
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export class IncrementalMapState<TContext> {
 	op = IncrementalExecOp.Go;
 	constructor(
@@ -701,7 +778,11 @@ export interface IConsensusInfo {
 export interface SegmentAccumulator {
 	segments: ISegment[];
 }
-
+/**
+ *
+ * @deprecated - In subsequent releases this internal interface will no longer be exported
+ * @internal
+ */
 export interface MinListener {
 	minRequired: number;
 	onMinGE(minSeq: number): void;

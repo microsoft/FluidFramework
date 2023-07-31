@@ -4,7 +4,7 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DocumentType,
 	BenchmarkType,
@@ -20,9 +20,9 @@ import {
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { DocumentMap } from "./DocumentMap";
-import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
-
+import { DocumentMap } from "./DocumentMap.js";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
+import { DocumentMatrix } from "./DocumentMatrix.js";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
@@ -56,14 +56,17 @@ export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
  * @param props - Properties for initializing the Document Creator.
  */
 export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
-	const logger = ChildLogger.create(getTestLogger?.(), undefined, {
-		all: {
-			driverType: props.provider.driver.type,
-			driverEndpointName: props.provider.driver.endpointName,
-			benchmarkType: props.benchmarkType,
-			testDocument: props.testName,
-			testDocumentType: props.documentType,
-			details: JSON.stringify(props.documentTypeInfo),
+	const logger = createChildLogger({
+		logger: getTestLogger?.(),
+		properties: {
+			all: {
+				driverType: props.provider.driver.type,
+				driverEndpointName: props.provider.driver.endpointName,
+				benchmarkType: props.benchmarkType,
+				testDocument: props.testName,
+				testDocumentType: props.documentType,
+				details: JSON.stringify(props.documentTypeInfo),
+			},
 		},
 	});
 	const documentProps: IDocumentProps = { ...props, logger };
@@ -73,6 +76,8 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			return new DocumentMap(documentProps);
 		case "DocumentMultipleDataStores":
 			return new DocumentMultipleDds(documentProps);
+		case "DocumentMatrix":
+			return new DocumentMatrix(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}

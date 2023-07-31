@@ -22,8 +22,8 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that the unreferenced timestamp is correctly set in the GC summary tree. Also, the timestamp is removed
@@ -222,6 +222,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			const { summarizer: summarizer2 } = await createSummarizer(
 				provider,
 				mainContainer,
+				undefined,
 				summaryResult2.summaryVersion,
 			);
 

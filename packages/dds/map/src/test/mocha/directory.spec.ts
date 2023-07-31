@@ -18,6 +18,7 @@ import {
 import { MapFactory } from "../../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
 import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
@@ -444,7 +445,7 @@ describe("Directory", () => {
 
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				const serialized = serialize(directory);
-				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":-1,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"ci":{"csn":-1,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":-1,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
 				assert.equal(serialized, expected);
 			});
 
@@ -466,7 +467,7 @@ describe("Directory", () => {
 
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				const serialized = serialize(directory);
-				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":-1,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"ci":{"csn":-1,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":-1,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
 				assert.equal(serialized, expected);
 			});
 		});
@@ -730,6 +731,55 @@ describe("Directory", () => {
 				);
 			});
 
+			it("Should populate with csn as 0 and then process the create op", async () => {
+				directory.createSubDirectory("nested");
+				const serialized = serialize(directory);
+
+				// Now populate a new directory with contents of above to simulate processing of attach op
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+				const containerRuntime2 =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				const services2 = MockSharedObjectServices.createFromSummary(
+					directory.getAttachSummary().summary,
+				);
+				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+
+				const directory2 = new SharedDirectory(
+					"directory2",
+					dataStoreRuntime2,
+					DirectoryFactory.Attributes,
+				);
+				await directory2.load(services2);
+
+				// Now load another directory to send op from that.
+				const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+				const containerRuntime3 =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+				const services3 = MockSharedObjectServices.createFromSummary(
+					directory.getAttachSummary().summary,
+				);
+				services3.deltaConnection = containerRuntime3.createDeltaConnection();
+
+				const directory3 = new SharedDirectory(
+					"directory3",
+					dataStoreRuntime3,
+					DirectoryFactory.Attributes,
+				);
+				await directory3.load(services3);
+				containerRuntimeFactory.processAllMessages();
+
+				// Now send create op
+				directory3.getSubDirectory("nested")?.createSubDirectory("nested2");
+				containerRuntimeFactory.processAllMessages();
+
+				// Other directory should process the create op.
+				assert(
+					directory2.getSubDirectory("nested")?.getSubDirectory("nested2") !== undefined,
+					"/nested/nested2 should be present",
+				);
+			});
+
 			/**
 			 * These tests test the scenario found in the following bug:
 			 * {@link https://github.com/microsoft/FluidFramework/issues/2400}.
@@ -810,7 +860,7 @@ describe("Directory", () => {
 				);
 			});
 
-			it("should correctly process a sub directory operation sent in local state", async () => {
+			it("should correctly process subdirectory operations sent in local state", async () => {
 				// Set the data store runtime to local.
 				dataStoreRuntime.local = true;
 
@@ -850,10 +900,15 @@ describe("Directory", () => {
 					directory.getSubDirectory(subDirName),
 					"The first directory does not have sub directory",
 				);
-				assert.ok(
-					directory2.getSubDirectory(subDirName),
-					"The second directory does not have sub directory",
-				);
+				const subDir2 = directory2.getSubDirectory(subDirName);
+
+				assert.ok(subDir2, "The second directory does not have sub directory");
+
+				subDir2.set("foo", "bar");
+
+				containerRuntimeFactory.processAllMessages();
+
+				assertEquivalentDirectories(directory, directory2);
 
 				// Delete the subdirectory in the second SharedDirectory.
 				directory2.deleteSubDirectory(subDirName);

@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IFluidHandle,
+	IFluidLoadable,
+	IProvideFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import { FluidObjectId } from "../CommonInterfaces";
@@ -47,7 +52,7 @@ export type SharedObjectType = string;
  *
  * @returns A visual tree representation of the provided `sharedObject`.
  *
- * @public
+ * @internal
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
@@ -68,7 +73,7 @@ export type VisualizeSharedObject = (
  *
  * @returns A visual tree representation of the input `data`.
  *
- * @public
+ * @internal
  */
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 

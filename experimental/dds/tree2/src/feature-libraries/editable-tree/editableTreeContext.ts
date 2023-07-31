@@ -6,18 +6,17 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	IEditableForest,
-	lookupGlobalFieldSchema,
-	rootFieldKey,
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
-	SchemaDataAndPolicy,
 	ForestEvents,
 	FieldStoredSchema,
 	FieldKey,
+	SchemaData,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultEditBuilder } from "../defaultChangeFamily";
+import { DefaultEditBuilder } from "../default-field-kinds";
+import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
@@ -78,10 +77,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * Schema used within this context.
 	 * All data must conform to these schema.
-	 *
-	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaDataAndPolicy;
+	readonly schema: SchemaData;
 
 	/**
 	 * Call before editing.
@@ -125,10 +122,15 @@ export class ProxyContext implements EditableTreeContext {
 	/**
 	 * @param forest - the Forest
 	 * @param editor - an editor that makes changes to the forest.
+	 * @param nodeKeys - an object which handles node key generation and conversion
+	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
 		public readonly editor: DefaultEditBuilder,
+		public readonly nodeKeys: NodeKeyManager,
+		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -188,7 +190,7 @@ export class ProxyContext implements EditableTreeContext {
 	private getRoot(unwrap: false): EditableField;
 	private getRoot(unwrap: true): UnwrappedEditableField;
 	private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
-		const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
+		const rootSchema = this.schema.rootFieldSchema;
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const proxifiedField = unwrap
@@ -198,7 +200,7 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaDataAndPolicy {
+	public get schema(): SchemaData {
 		return this.forest.schema;
 	}
 
@@ -212,12 +214,17 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
+ * @param nodeKeyManager - an object which handles node key generation and conversion
+ * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+ * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
+	nodeKeyManager: NodeKeyManager,
+	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, editor);
+	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
 }

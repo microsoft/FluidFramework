@@ -8,35 +8,22 @@ import { fail } from "../util";
 import {
 	EmptyKey,
 	FieldKey,
-	isGlobalFieldKey,
-	keyFromSymbol,
 	Value,
 	TreeStoredSchema,
 	ValueSchema,
 	FieldStoredSchema,
-	LocalFieldKey,
-	SchemaDataAndPolicy,
-	lookupGlobalFieldSchema,
 	TreeSchemaIdentifier,
-	lookupTreeSchema,
 	TreeTypeSet,
 	MapTree,
-	symbolIsFieldKey,
 	ITreeCursorSynchronous,
-	symbolFromKey,
+	SchemaData,
 } from "../core";
 // TODO:
-// This module currently is assuming use of defaultFieldKinds.
+// This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./defaultFieldKinds";
-import {
-	AllowedTypes,
-	FieldKind,
-	FieldSchema,
-	Multiplicity,
-	TreeSchema,
-	allowedTypesToTypeSet,
-} from "./modular-schema";
+import { fieldKinds } from "./default-field-kinds";
+import { FieldKind, Multiplicity } from "./modular-schema";
+import { AllowedTypes, FieldSchema, TreeSchema, allowedTypesToTypeSet } from "./typed-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
 import { areCursors, isPrimitive } from "./editable-tree";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
@@ -110,9 +97,9 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
  */
 export function getPrimaryField(
 	schema: TreeStoredSchema,
-): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
+): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
-	const field = schema.localFields.get(EmptyKey);
+	const field = schema.structFields.get(EmptyKey);
 	if (field === undefined) {
 		return undefined;
 	}
@@ -120,19 +107,8 @@ export function getPrimaryField(
 }
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
-export function getFieldSchema(
-	field: FieldKey,
-	schemaData: SchemaDataAndPolicy,
-	schema?: TreeStoredSchema,
-): FieldStoredSchema {
-	if (isGlobalFieldKey(field)) {
-		return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
-	}
-	assert(
-		schema !== undefined,
-		0x423 /* The field is a local field, a parent schema is required. */,
-	);
-	return schema.localFields.get(field) ?? schema.extraLocalFields;
+export function getFieldSchema(field: FieldKey, schema: TreeStoredSchema): FieldStoredSchema {
+	return schema.structFields.get(field) ?? schema.mapFields;
 }
 
 export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
@@ -146,7 +122,7 @@ export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
  * @returns all allowed child types for `typeSet`.
  */
 export function getAllowedTypes(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	typeSet: TreeTypeSet,
 ): ReadonlySet<TreeSchemaIdentifier> {
 	// TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
@@ -246,7 +222,7 @@ export interface TreeDataContext {
 	/**
 	 * Schema for the document which the tree will be used in.
 	 */
-	readonly schema: SchemaDataAndPolicy;
+	readonly schema: SchemaData;
 
 	/**
 	 * Procedural data generator for fields.
@@ -324,7 +300,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys as strings.
 	 *
-	 * Allow unbranded local field keys and a convenience for literals.
+	 * Allow unbranded field keys as a convenience for literals.
 	 */
 	[key: string]: ContextuallyTypedFieldData;
 }
@@ -337,7 +313,7 @@ export interface ContextuallyTypedNodeDataObject {
  * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
  */
 function shallowCompatibilityTest(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	type: TreeSchemaIdentifier,
 	data: ContextuallyTypedNodeData,
 ): boolean {
@@ -346,7 +322,8 @@ function shallowCompatibilityTest(
 		data !== undefined,
 		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
-	const schema = lookupTreeSchema(schemaData, type);
+	const schema =
+		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 	if (isPrimitiveValue(data)) {
 		return isPrimitive(schema) && allowsValue(schema.value, data);
 	}
@@ -363,7 +340,7 @@ function shallowCompatibilityTest(
 	// For now, consider all not explicitly typed objects shallow compatible.
 	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
 
-	// Special case primitive schema to not be compatible with data with local fields.
+	// Special case primitive schema to not be compatible with data with fields.
 	if (isPrimitive(schema)) {
 		if (fieldKeysFromData(data).length > 0) {
 			return false;
@@ -409,7 +386,7 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	schema: T,
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
@@ -440,7 +417,7 @@ export function cursorsFromContextualData(
  * @alpha
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	schema: T,
 	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
@@ -478,7 +455,8 @@ export function applyTypesFromContext(
 	);
 
 	const type = possibleTypes[0];
-	const schema = lookupTreeSchema(context.schema, type);
+	const schema =
+		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 
 	if (isPrimitiveValue(data)) {
 		// This check avoids returning an out of schema node
@@ -508,7 +486,7 @@ export function applyTypesFromContext(
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {
 			assert(!fields.has(key), 0x6b3 /* Keys should not be duplicated */);
-			const childSchema = getFieldSchema(key, context.schema, schema);
+			const childSchema = getFieldSchema(key, schema);
 			const children = applyFieldTypesFromContext(context, childSchema, data[key]);
 
 			if (children.length > 0) {
@@ -516,14 +494,7 @@ export function applyTypesFromContext(
 			}
 		}
 
-		for (const key of schema.globalFields.keys()) {
-			const currentKey = symbolFromKey(key);
-			if (data[currentKey] === undefined) {
-				setFieldForKey(currentKey, context, schema, fields);
-			}
-		}
-
-		for (const key of schema.localFields.keys()) {
+		for (const key of schema.structFields.keys()) {
 			if (data[key] === undefined) {
 				setFieldForKey(key, context, schema, fields);
 			}
@@ -544,7 +515,7 @@ function setFieldForKey(
 	schema: TreeStoredSchema,
 	fields: Map<FieldKey, MapTree[]>,
 ): void {
-	const requiredFieldSchema = getFieldSchema(key, context.schema, schema);
+	const requiredFieldSchema = getFieldSchema(key, schema);
 	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
 	if (multiplicity === Multiplicity.Value && context.fieldSource !== undefined) {
 		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
@@ -557,7 +528,7 @@ function setFieldForKey(
 
 function fieldKeysFromData(data: ContextuallyTypedNodeDataObject): FieldKey[] {
 	const keys: (string | symbol)[] = Reflect.ownKeys(data).filter(
-		(key) => typeof key === "string" || symbolIsFieldKey(key),
+		(key) => typeof key === "string",
 	);
 	return keys as FieldKey[];
 }

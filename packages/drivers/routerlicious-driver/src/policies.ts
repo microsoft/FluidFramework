@@ -49,6 +49,12 @@ export interface IRouterliciousDriverPolicies {
 	 */
 	enableInternalSummaryCaching: boolean;
 	/**
+	 * Enable downgrading socket connection to long-polling
+	 * when websocket connection cannot be established.
+	 * Default: true
+	 */
+	enableLongPollingDowngrade: boolean;
+  /**
 	 * Indicates that the container is ephemeral.
 	 * Artifacts relates to the container are limited to container lifetime.
 	 * Default: false

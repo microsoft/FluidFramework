@@ -22,8 +22,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 	const tests = (tombstoneEnabled: boolean = false) => {
@@ -95,13 +95,10 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			);
 
 			// Create a summarizer
-			const { summarizer: mainSummarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				undefined,
-				gcOptions,
-				configProvider,
-			);
+			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider },
+			});
 
 			// Reference datastore and blob
 			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
@@ -130,9 +127,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
+				{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				summary1.summaryVersion,
-				gcOptions,
-				configProvider,
 			);
 
 			// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are unreferenced
@@ -147,7 +143,6 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
 		});
 
-		// Note: we should not need an itExpects here as this error should not have fired.
 		itExpects(
 			`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
 				tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
@@ -187,9 +182,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer: mainSummarizer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined,
-					gcOptions,
-					configProvider,
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				);
 
 				// Make the datastore and blob live and unreferenced
@@ -226,9 +219,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 					summary1.summaryVersion,
-					gcOptions,
-					configProvider,
 				);
 
 				// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are referenced

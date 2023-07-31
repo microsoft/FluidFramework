@@ -20,8 +20,8 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that when GC is disabled on a document that had run GC previously, the GC state is removed from summary
@@ -205,14 +205,11 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
 		// Load a new summarizer from the last summary with GC disabled.
 		summarizer1.close();
-		const { summarizer: summarizer2 } = await createSummarizer(
-			provider,
-			mainContainer,
-			summaryVersion,
-			{
-				disableGC: true,
+		const { summarizer: summarizer2 } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: {
+				gcOptions: { disableGC: true },
 			},
-		);
+		});
 
 		// Validate that GC does not run and the summary is regenerated because GC was disabled.
 		await summarizeAndValidateGCState(
@@ -238,12 +235,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
-		const { summarizer: summarizer1 } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			{ disableGC: true },
-		);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions: { disableGC: true } },
+		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
 		const newDataStore = await requestFluidObject<ITestDataObject>(
@@ -267,6 +261,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryVersion,
 		);
 
@@ -293,10 +288,8 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer3 } = await createSummarizer(
 			provider,
 			mainContainer,
+			{ runtimeOptions: { gcOptions: { disableGC: true } } },
 			summaryVersion,
-			{
-				disableGC: true,
-			},
 		);
 		// Validate that GC does not run and the summary is regenerated.
 		await summarizeAndValidateGCState(
@@ -340,9 +333,14 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		// Create a summarizer with GC disabled and another one with GC enabled from the above summary where GC was
 		// enabled.
 		const { container: containerGCDisabled, summarizer: summarizerGCDisabled } =
-			await createSummarizer(provider, mainContainer, summaryVersion, { disableGC: true });
+			await createSummarizer(
+				provider,
+				mainContainer,
+				{ runtimeOptions: { gcOptions: { disableGC: true } } },
+				summaryVersion,
+			);
 		const { container: containerGCEnabled2, summarizer: summarizerGCEnabled2 } =
-			await createSummarizer(provider, mainContainer, summaryVersion);
+			await createSummarizer(provider, mainContainer, undefined, summaryVersion);
 
 		// Close the previous summarizer such that the summarizer with GC disabled is chosen as the current summarizer.
 		summarizerGCEnabled.close();
@@ -381,12 +379,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
-		const { summarizer } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			{ gcAllowed: false },
-		);
+		const { summarizer } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions: { gcAllowed: false } },
+		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
 		const newDataStore = await requestFluidObject<ITestDataObject>(
@@ -411,12 +406,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		await waitForContainerConnection(mainContainer);
 
 		// Get a new summarizer that sets gcAllowed option to true.
-		const { summarizer } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			{ gcAllowed: true },
-		);
+		const { summarizer } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions: { gcAllowed: true } },
+		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
 		const newDataStore = await requestFluidObject<ITestDataObject>(

@@ -2,55 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
-import {
-	AsyncGenerator,
-	takeAsync as take,
-	IRandom,
-	SaveInfo,
-} from "@fluid-internal/stochastic-test-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import {
-	JsonableTree,
-	fieldSchema,
-	SchemaData,
-	rootFieldKey,
-	rootFieldKeySymbol,
-} from "../../../core";
+import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
 import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
-import { FuzzTestState, EditGeneratorOpWeights } from "./fuzzEditGenerators";
-import { Operation } from "./operationTypes";
-
-export function runFuzzBatch(
-	opGenerator: (
-		editGeneratorOpWeights?: Partial<EditGeneratorOpWeights>,
-	) => AsyncGenerator<Operation, FuzzTestState>,
-	fuzzActions: (
-		generatorFactory: AsyncGenerator<Operation, FuzzTestState>,
-		seed: number,
-		saveInfo?: SaveInfo,
-	) => Promise<FuzzTestState>,
-	opsPerRun: number,
-	runsPerBatch: number,
-	random: IRandom,
-	editGeneratorOpWeights?: Partial<EditGeneratorOpWeights>,
-): void {
-	const seed = random.integer(1, 1000000);
-	for (let i = 0; i < runsPerBatch; i++) {
-		const runSeed = seed + i;
-		const generatorFactory = () => take(opsPerRun, opGenerator(editGeneratorOpWeights));
-		const saveInfo: SaveInfo = {
-			saveOnFailure: false, // Change to true to save failing runs.
-			saveOnSuccess: false, // Change to true to save successful runs.
-			filepath: path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`),
-		};
-		it(`with seed ${runSeed}`, async () => {
-			await fuzzActions(generatorFactory(), runSeed, saveInfo);
-		}).timeout(20000);
-	}
-}
+import { ISharedTree } from "../../../shared-tree";
 
 export const initialTreeState: JsonableTree = {
 	type: brand("Node"),
@@ -71,20 +26,16 @@ export const initialTreeState: JsonableTree = {
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
 	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 
 export const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+	rootFieldSchema,
 };
 
-export function makeTree(initialState: JsonableTree): ISharedTree {
-	const factory = new SharedTreeFactory();
-	const runtime = new MockFluidDataStoreRuntime();
-	const tree = factory.create(runtime, "TestSharedTree");
+export const onCreate = (tree: ISharedTree) => {
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-	field.insert(0, singleTextCursor(initialState));
-	return tree;
-}
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	field.insert(0, singleTextCursor(initialTreeState));
+};

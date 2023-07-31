@@ -15,7 +15,6 @@ import {
 	defaultVisualizers,
 	FluidObjectNode,
 	RootHandleNode,
-	VisualizeSharedObject,
 } from "./data-visualization";
 import { IContainerDevtools } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -70,19 +69,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 */
 	containerData?: Record<string, IFluidLoadable>;
 
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link ContainerDevtoolsProps.containerData}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * Any visualizer configurations specified here will take precedence over system defaults, as well as any
-	 * provided when initializing the Devtools.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	// TODO: Add ability for customers to specify custom visualizer overrides
 }
 
 /**
@@ -156,7 +143,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 *
 	 * @remarks
 	 *
-	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
+	 * This map is assumed to be immutable. The devtools will not make any modifications to its contents.
 	 */
 	public readonly containerData?: Record<string, IFluidLoadable>;
 
@@ -177,7 +164,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	/**
 	 * Manages state visualization for {@link ContainerDevtools.containerData}, if any was provided.
 	 *
-	 * @remarks Will only be `undefined` if `containerData` was not provided, or if the debugger has been disposed.
+	 * @remarks Will only be `undefined` if `containerData` was not provided, or if the devtools has been disposed.
 	 */
 	private dataVisualizer: DataVisualizerGraph | undefined;
 
@@ -269,7 +256,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	// #region Window event handlers
 
 	/**
-	 * Handlers for inbound messages related to the debugger.
+	 * Handlers for inbound messages related to the devtools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		[GetContainerDevtoolsFeatures.MessageType]: async (untypedMessage) => {
@@ -299,7 +286,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
+				this.container.disconnect(/* TODO: Specify devtools reason here once it is supported */);
 				return true;
 			}
 			return false;
@@ -307,7 +294,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[CloseContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
+				this.container.close(/* TODO: Specify devtools reason here once it is supported */);
 				return true;
 			}
 			return false;
@@ -433,7 +420,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	// #endregion
 
 	/**
-	 * Message logging options used by the debugger.
+	 * Message logging options used by the devtools.
 	 */
 	private get messageLoggingOptions(): MessageLoggingOptions {
 		return { context: `Container Devtools (${this.containerKey})` };
@@ -453,17 +440,14 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.containerData = props.containerData;
 		this.container = props.container;
 
-		// TODO: would it be useful to log the states (and timestamps) at time of debugger initialize?
+		// TODO: would it be useful to log the states (and timestamps) at time of devtools initialize?
 		this._connectionStateLog = [];
 		this._audienceChangeLog = [];
 
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, {
-						...defaultVisualizers,
-						...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
-				  });
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging

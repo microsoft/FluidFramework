@@ -11,9 +11,11 @@ import {
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
+import { v4 as uuid } from "uuid";
+
+import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
@@ -21,7 +23,7 @@ export interface AzureClientConfig {
 	connEndpoint?: string;
 	userId?: string;
 	userName?: string;
-	logger?: TelemetryLogger;
+	logger?: ITelemetryLogger;
 	tenantId?: string;
 	tenantKey?: string;
 	functionUrl?: string;
@@ -119,7 +121,10 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 		}
 	} else {
 		connectionProps = {
-			tokenProvider: new InsecureTokenProvider("fooBar", generateTestUser()),
+			tokenProvider: new InsecureTokenProvider("fooBar", {
+				id: uuid(),
+				name: uuid(),
+			}),
 			endpoint: config.connEndpoint,
 			type: "local",
 		};
@@ -135,4 +140,91 @@ export async function createContainer(
 	const schema = loadInitialObjSchema(s);
 	const r = await ac.createContainer(schema);
 	return r.container;
+}
+
+export type ScenarioRunnerTelemetryEventNames =
+	| RouterliciousDriverTelemetryEventNames
+	| FluidContainerTelemetryEventNames
+	| FluidSummarizerTelemetryEventNames;
+
+export enum FluidSummarizerTelemetryEventNames {
+	Summarize = "fluid:telemetry:Summarizer:Running:Summarize",
+}
+
+export enum FluidContainerTelemetryEventNames {
+	Request = "fluid:telemetry:Container:Request",
+	ConnectionStateChange = "fluid:telemetry:Container:ConnectionStateChange",
+}
+
+export enum RouterliciousDriverTelemetryEventNames {
+	FetchOrdererToken = "fluid:telemetry:RouterliciousDriver:FetchOrdererToken",
+	FetchStorageToken = "fluid:telemetry:RouterliciousDriver:FetchStorageToken",
+	CreateNew = "fluid:telemetry:RouterliciousDriver:CreateNew",
+	DocPostCreateCallback = "fluid:telemetry:RouterliciousDriver:DocPostCreateCallback",
+	DiscoverSession = "fluid:telemetry:RouterliciousDriver:DiscoverSession",
+	uploadSummaryWithContext = "fluid:telemetry:RouterliciousDriver:uploadSummaryWithContext",
+	getWholeFlatSummary = "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
+	GetDeltas = "fluid:telemetry:RouterliciousDriver:GetDeltas",
+	GetDeltaStreamToken = "fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
+	ConnectToDeltaStream = "fluid:telemetry:RouterliciousDriver:ConnectToDeltaStream",
+}
+
+export function getScenarioRunnerTelemetryEventMap(
+	scenario?: string,
+): Map<ScenarioRunnerTelemetryEventNames, string> {
+	const scenarioName = scenario ? `:${scenario}` : "";
+	return new Map<ScenarioRunnerTelemetryEventNames, string>([
+		[
+			RouterliciousDriverTelemetryEventNames.FetchOrdererToken,
+			`scenario:runner${scenarioName}:Attach:FetchOrdererToken`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.CreateNew,
+			`scenario:runner${scenarioName}:Attach:CreateNew`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.DiscoverSession,
+			`scenario:runner${scenarioName}:Load:DiscoverSession`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.FetchStorageToken,
+			`scenario:runner${scenarioName}:Attach:FetchStorageToken`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.getWholeFlatSummary,
+			`scenario:runner${scenarioName}:Load:GetSummary`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltas,
+			`scenario:runner${scenarioName}:Load:GetDeltas`,
+		],
+		[
+			FluidContainerTelemetryEventNames.Request,
+			`scenario:runner${scenarioName}:Load:RequestDataObject`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.DocPostCreateCallback,
+			`scenario:runner${scenarioName}:Attach:DocPostCreateCallback`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltaStreamToken,
+			`scenario:runner${scenarioName}:Connection:GetDeltaStreamToken`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.ConnectToDeltaStream,
+			`scenario:runner${scenarioName}:Connection:ConnectToDeltaStream`,
+		],
+		[
+			FluidContainerTelemetryEventNames.ConnectionStateChange,
+			`scenario:runner${scenarioName}:Connection:ConnectionStateChange`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltas,
+			`scenario:runner${scenarioName}:Summarize:UploadSummary`,
+		],
+		[
+			FluidSummarizerTelemetryEventNames.Summarize,
+			`scenario:runner${scenarioName}:Summarize:Summarized`,
+		],
+	]);
 }

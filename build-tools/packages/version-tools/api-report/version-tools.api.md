@@ -30,11 +30,19 @@ export function fromInternalScheme(internalVersion: semver.SemVer | string, allo
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
 
+// Warning: (ae-forgotten-export) The symbol "TagPrefix" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions?: boolean, log?: boolean): boolean;
+
 // @public
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases?: boolean): string;
 
 // @public
 export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined, ReleaseVersion | undefined];
+
+// @public
+export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, patch: boolean): string;
 
 // @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;

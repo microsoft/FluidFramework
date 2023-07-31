@@ -70,6 +70,7 @@ export {
 	generateStableId,
 	useDeterministicStableId,
 	objectToMap,
+	oneFromSet,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -81,4 +82,15 @@ export {
 	_RecursiveTrick,
 	FlattenKeys,
 	AllowOptionalNotFlattened,
+	RestrictiveReadonlyRecord,
 } from "./typeUtils";
+
+export {
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	getOrCreateSlotContent,
+	brandedSlot,
+} from "./brandedMap";
+
+export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";

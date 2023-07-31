@@ -7,11 +7,7 @@ export {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	AnchorKeyBrand,
 	AnchorSlot,
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
 	AnchorNode,
 	anchorSlot,
 	AnchorEvents,
@@ -33,15 +29,10 @@ export {
 	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
-export {
-	GlobalFieldKeySymbol,
-	keyFromSymbol,
-	symbolFromKey,
-	symbolIsFieldKey,
-} from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
+	topDownPath,
 	getDepth,
 	UpPath,
 	FieldUpPath,
@@ -51,27 +42,17 @@ export {
 } from "./pathTree";
 export {
 	FieldMapObject,
-	FieldScope,
 	GenericFieldsNode,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
 	GenericTreeNode,
 	getGenericTreeField,
-	isGlobalFieldKey,
 	JsonableTree,
-	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
-export {
-	EncodedFieldMapObject,
-	EncodedGenericFieldsNode,
-	EncodedGenericTreeNode,
-	EncodedJsonableTree,
-	EncodedNodeData,
-} from "./persistedTreeTextFormat";
+export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	ChildLocation,
 	DetachedField,
@@ -83,9 +64,7 @@ export {
 	keyAsDetachedField,
 	rootFieldKey,
 	NodeData,
-	rootFieldKeySymbol,
 	rootField,
-	isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 export { PathVisitor } from "./visitPath";

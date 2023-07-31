@@ -22,7 +22,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { defaultGCConfig } from "./gcTestConfigs";
+import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
  * Validates that unchanged Fluid objects are not summarized again. Basically, only objects that have changed since
@@ -133,6 +133,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryVersion,
 		);
 
@@ -150,6 +151,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer3 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryVersion,
 		);
 
@@ -197,6 +199,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryVersion,
 		);
 
@@ -212,6 +215,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer3 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryVersion,
 		);
 
@@ -239,9 +243,8 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 			const { summarizer: summarizer1 } = await createSummarizer(
 				provider,
 				mainContainer,
-				undefined /* summaryVersion */,
-				undefined /* gcOptions */,
-				undefined /* configProvider */,
+				undefined /** config */,
+				undefined /** summaryVersion */,
 				mockLogger,
 			);
 

@@ -10,10 +10,8 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
-	LocalFieldKey,
 	TreeStoredSchema,
 	ValueSchema,
-	lookupTreeSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -31,13 +29,13 @@ import {
 	cursorFromContextualData,
 	cursorsFromContextualData,
 } from "../contextuallyTyped";
-import { FieldKinds } from "../defaultFieldKinds";
-import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
+	FieldKinds,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-} from "../defaultChangeFamily";
+} from "../default-field-kinds";
+import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -76,7 +74,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  */
 function getPrimaryArrayKey(
 	type: TreeStoredSchema,
-): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
+): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
 		return undefined;
@@ -304,8 +302,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.insert(0, content);
 				break;
 			}
-			case FieldKinds.nodeIdentifier: {
-				fail("Cannot set identifier field: Identifiers are immutable.");
+			case FieldKinds.nodeKey: {
+				fail("Cannot set node key field: node keys are immutable.");
 			}
 			default:
 				fail(`Cannot set content of fields of "${this.kind.identifier}" kind.`);
@@ -602,7 +600,9 @@ function unwrappedTree(
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableTree {
 	const nodeTypeName = cursor.type;
-	const nodeType = lookupTreeSchema(context.schema, nodeTypeName);
+	const nodeType =
+		context.schema.treeSchema.get(nodeTypeName) ??
+		fail("requested type does not exist in schema");
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
 	if (isPrimitive(nodeType)) {
 		const nodeValue = cursor.value;

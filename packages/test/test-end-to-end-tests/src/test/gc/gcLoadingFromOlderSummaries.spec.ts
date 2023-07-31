@@ -25,8 +25,8 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that that reference state of nodes is correct irrespective of whether a summarizer loads from the latest
@@ -147,6 +147,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -223,6 +224,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -309,6 +311,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -388,6 +391,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 
@@ -462,6 +466,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
+			undefined,
 			summaryResult1.summaryVersion,
 		);
 

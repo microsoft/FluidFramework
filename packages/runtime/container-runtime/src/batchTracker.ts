@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -21,7 +21,7 @@ export class BatchTracker {
 		batchCountSamplingRate: number,
 		dateTimeProvider: () => number = () => performance.now(),
 	) {
-		this.logger = ChildLogger.create(logger, "Batching");
+		this.logger = createChildLogger({ logger, namespace: "Batching" });
 
 		this.batchEventEmitter.on("batchBegin", (message: ISequencedDocumentMessage) => {
 			this.startBatchSequenceNumber = message.sequenceNumber;

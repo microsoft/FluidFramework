@@ -6,21 +6,16 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import {
-	IGCRuntimeOptions,
-	ISummarizer,
-	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { ISummarizer, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
+import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -90,6 +85,7 @@ export async function createSummarizerFromFactory(
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
+	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
@@ -102,32 +98,9 @@ export async function createSummarizerFromFactory(
 	);
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
-		configProvider: mockConfigProvider(),
+		configProvider,
 		logger,
 	});
-	return createSummarizerCore(container, loader, summaryVersion);
-}
-
-/**
- * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
- * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
- */
-export async function createSummarizer(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	summaryVersion?: string,
-	gcOptions?: IGCRuntimeOptions,
-	configProvider: IConfigProviderBase = mockConfigProvider(),
-	logger?: ITelemetryBaseLogger,
-): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: defaultSummaryOptions,
-			gcOptions,
-		},
-		loaderProps: { configProvider, logger },
-	};
-	const loader = provider.makeTestLoader(testContainerConfig);
 	return createSummarizerCore(container, loader, summaryVersion);
 }
 
@@ -137,22 +110,22 @@ export async function createSummarizer(
  *
  * Can pass in a test config provider to enable/disable features.
  */
-export async function createSummarizerWithTestConfig(
+export async function createSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
-	config: ITestContainerConfig,
+	config?: ITestContainerConfig,
 	summaryVersion?: string,
 	logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const testContainerConfig: ITestContainerConfig = {
 		...config,
 		runtimeOptions: {
-			...config.runtimeOptions,
-			summaryOptions: defaultSummaryOptions,
+			...config?.runtimeOptions,
+			summaryOptions: config?.runtimeOptions?.summaryOptions ?? defaultSummaryOptions,
 		},
 		loaderProps: {
-			...config.loaderProps,
-			configProvider: config.loaderProps?.configProvider ?? mockConfigProvider(),
+			...config?.loaderProps,
+			configProvider: config?.loaderProps?.configProvider ?? mockConfigProvider(),
 			logger,
 		},
 	};
@@ -169,6 +142,7 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
+		submitResult.error.data = submitResult.data;
 		throw submitResult.error;
 	}
 	assert(

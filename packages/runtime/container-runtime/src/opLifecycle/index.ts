@@ -11,7 +11,7 @@ export {
 	IChunkedOp,
 	IMessageProcessingResult,
 } from "./definitions";
-export { Outbox } from "./outbox";
+export { Outbox, getLongStack } from "./outbox";
 export { OpCompressor } from "./opCompressor";
 export { OpDecompressor } from "./opDecompressor";
 export { OpSplitter, splitOp } from "./opSplitter";

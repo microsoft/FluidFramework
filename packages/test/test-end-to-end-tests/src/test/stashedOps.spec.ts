@@ -82,7 +82,7 @@ const testKey2 = "another test key";
 const testValue = "test value";
 const testIncrementValue = 5;
 
-const getPendingStateWithoutClose = (container: IContainer): string => {
+const getPendingStateWithoutClose = (container: IContainerExperimental): string => {
 	const containerClose = container.close;
 	container.close = (message) => assert(message === undefined);
 	const pendingState = container.closeAndGetPendingLocalState();
@@ -102,7 +102,7 @@ const getPendingOps = async (
 	send: boolean,
 	cb: SharedObjCallback = () => undefined,
 ) => {
-	const container = await args.loadTestContainer(testContainerConfig);
+	const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
 	await waitForContainerConnection(container);
 	const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 
@@ -146,7 +146,7 @@ async function loadOffline(
 	provider: ITestObjectProvider,
 	request: IRequest,
 	pendingLocalState?: string,
-): Promise<{ container: IContainer; connect: () => void }> {
+): Promise<{ container: IContainerExperimental; connect: () => void }> {
 	const p = new Deferred();
 	const documentServiceFactory = provider.driver.createDocumentServiceFactory();
 
@@ -189,7 +189,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
-	let container1: IContainer;
+	let container1: IContainerExperimental;
 	let map1: SharedMap;
 	let string1: SharedString;
 	let cell1: SharedCell;
@@ -507,7 +507,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("resends batched ops", async function () {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
-			(c as any).context.runtime.orderSequentially(() => {
+			(c as any).runtime.orderSequentially(() => {
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
 			});
 		});
@@ -537,7 +537,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("doesn't resend successful batched ops", async function () {
 		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
-			(c as any).context.runtime.orderSequentially(() => {
+			(c as any).runtime.orderSequentially(() => {
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
 			});
 		});
@@ -868,6 +868,73 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5094
+	it.skip("resends DDS attach op", async function () {
+		const newMapId = "newMap";
+		const pendingOps = await getPendingOps(provider, false, async (_, dataStore) => {
+			const channel = dataStore.runtime.createChannel(
+				newMapId,
+				"https://graph.microsoft.com/types/map",
+			);
+			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+			((await channel.handle.get()) as SharedObject).bindToContext();
+			assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+			(channel as SharedMap).set(testKey, testValue);
+		});
+
+		const container2 = await loader.resolve({ url }, pendingOps);
+		await waitForContainerConnection(container2);
+
+		// get new DDS from first container
+		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map2 = await requestFluidObject<SharedMap>(dataStore1.runtime, newMapId);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map2.get(testKey), testValue);
+	});
+
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
+	it.skip("handles stashed ops for local DDS", async function () {
+		const newCounterId = "newCounter";
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+		const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+
+		await provider.opProcessingController.pauseProcessing(container);
+
+		// create new DDS
+		const channel = defaultDataStore.runtime.createChannel(
+			newCounterId,
+			"https://graph.microsoft.com/types/counter",
+		);
+		assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+		((await channel.handle.get()) as SharedObject).bindToContext();
+		assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+
+		// op referencing new DDS is submitted at some later time (not in the same JS turn, so not batched)
+		await Promise.resolve();
+		(channel as SharedCounter).increment(0);
+		const stashP = new Promise<string>((resolve) => {
+			container.on("op", (op) => {
+				// Stash right after we see the DDS attach op. If we stash the DDS attach op, it will be applied
+				// first and everything will work fine. If ops are arriving on the network, there's no guarantee
+				// of how small this window is.
+				if (JSON.stringify(op).includes("attach")) {
+					resolve(container.closeAndGetPendingLocalState());
+				}
+			});
+		});
+		provider.opProcessingController.resumeProcessing(container);
+		const stashedOps = await stashP;
+
+		// when this container tries to apply the stashed DDS op, it will not have replayed the DDS attach
+		// op yet, because the reference sequence number of the DDS op is lower than the sequence number
+		// of the attach op
+		const container2 = await loader.resolve({ url }, stashedOps);
+		await waitForContainerConnection(container2);
+	});
+
 	it("cannot capture the pending local state during ordersequentially", async () => {
 		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore1.getSharedObject<SharedMap>(mapId);
@@ -1123,6 +1190,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
+		if (provider.driver.type === "local") {
+			// TODO:AB#4746: Resolve flakiness of this test on localserver CI.
+			this.skip();
+		}
+
 		// upload blob offline so an entry is added to redirect table
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
@@ -1286,7 +1358,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 	it("works for detached container", async function () {
 		const loader2 = provider.makeTestLoader(testContainerConfig);
-		const detachedContainer = await loader2.createDetachedContainer(
+		const detachedContainer: IContainerExperimental = await loader2.createDetachedContainer(
 			provider.defaultCodeDetails,
 		);
 		const dataStore = await requestFluidObject<ITestFluidObject>(detachedContainer, "default");
@@ -1315,7 +1387,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		const summary = detachedContainer.serialize();
 		detachedContainer.close();
-		const rehydratedContainer = await loader2.rehydrateDetachedContainerFromSnapshot(summary);
+		const rehydratedContainer: IContainerExperimental =
+			await loader2.rehydrateDetachedContainerFromSnapshot(summary);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(
 			rehydratedContainer,
 			"default",
@@ -1364,7 +1437,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("can stash between summary op and ack", async function () {
 		map1.set("test op 1", "test op 1");
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container: IContainerExperimental = await provider.loadTestContainer(
+			testContainerConfig,
+		);
 		const pendingOps = await new Promise<string>((resolve, reject) =>
 			container.on("op", (op) => {
 				if (op.type === "summarize") {
@@ -1389,7 +1464,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		let pendingState;
 		// always delete stash blob on "connected" event
 		container.on("connected", (clientId: string) => {
-			pendingState = container.getPendingLocalState();
+			pendingState = container.getPendingLocalState?.();
 			// the pending data in the stash blob may not have changed, but the clientId should match our new
 			// clientId, which will now be used to attempt to resubmit pending changes
 			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
@@ -1431,7 +1506,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		let pendingState;
 		// always delete stash blob on "connected" event
 		container.on("connected", (clientId: string) => {
-			pendingState = container.getPendingLocalState();
+			pendingState = container.getPendingLocalState?.();
 			// the pending data in the stash blob may not have changed, but the clientId should match our new
 			// clientId, which will now be used to attempt to resubmit pending changes
 			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
@@ -1464,7 +1539,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);
-		const container = await createAndAttachContainer(
+		const container: IContainerExperimental = await createAndAttachContainer(
 			provider2.defaultCodeDetails,
 			loader2,
 			provider2.driver.createCreateNewRequest(createDocumentId()),

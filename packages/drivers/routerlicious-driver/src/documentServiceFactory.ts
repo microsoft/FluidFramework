@@ -13,7 +13,7 @@ import {
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
@@ -21,7 +21,7 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
@@ -37,7 +37,7 @@ import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl }
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -50,7 +50,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableWholeSummaryUpload: false,
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
-	isEphemeralContainer: false,
+	enableLongPollingDowngrade: true,
+  isEphemeralContainer: false,
 };
 
 /**
@@ -60,7 +61,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
-	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary> = new NullCache();
+	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
 	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
 
 	constructor(
@@ -77,7 +78,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		this.blobCache = new InMemoryCache<ArrayBufferLike>();
 		if (this.driverPolicies.enableInternalSummaryCaching) {
 			if (this.driverPolicies.enableWholeSummaryUpload) {
-				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSummary>(
+				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(
 					snapshotCacheExpiryMs,
 				);
 			} else {
@@ -119,7 +120,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -249,8 +250,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`,
 			);
 		}
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver", {
-			all: { driverVersion },
+		const logger2 = createChildLogger({
+			logger,
+			namespace: "RouterliciousDriver",
+			properties: {
+				all: { driverVersion },
+			},
 		});
 
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(

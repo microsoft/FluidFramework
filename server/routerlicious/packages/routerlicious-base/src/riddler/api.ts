@@ -24,6 +24,7 @@ export function create(
 	defaultHistorianUrl: string,
 	defaultInternalHistorianUrl: string,
 	secretManager: ISecretManager,
+	fetchTenantKeyMetricInterval: number,
 	cache?: ICache,
 ): Router {
 	const router: Router = Router();
@@ -34,6 +35,7 @@ export function create(
 		defaultHistorianUrl,
 		defaultInternalHistorianUrl,
 		secretManager,
+		fetchTenantKeyMetricInterval,
 		cache,
 	);
 

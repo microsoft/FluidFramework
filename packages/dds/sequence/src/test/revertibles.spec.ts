@@ -19,8 +19,9 @@ import {
 	SharedStringRevertible,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
-import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalType, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
 describe("Sequence.Revertibles with Local Edits", () => {
@@ -222,6 +223,65 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 	});
+	it("local only text remove, no ack, move interval out of range", () => {
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(2, 4, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		sharedString.removeRange(0, 5);
+		collection.change(id, 1, 2);
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+	});
+	it("change interval out of removed range - local refs are out of range so revert should not happen", () => {
+		sharedString.insertText(0, "hello world");
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		const id = collection.add(5, 8, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 1, 3);
+		sharedString.removeRange(5, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 4, end: 4 }]);
+	});
+	it("change interval into removed range - revert should move interval out of detached case into remaining string", () => {
+		sharedString.insertText(0, "hello world");
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		const id = collection.add(1, 3, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 4, 8);
+		sharedString.removeRange(4, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
+	});
 });
 describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
@@ -273,7 +333,28 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		collection = sharedString.getIntervalCollection("test");
 		collection2 = sharedString2.getIntervalCollection("test");
 	});
+	it("interval change, range remove, ack, revert change interval", () => {
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
 
+		collection.change(id, 6, 8);
+		sharedString2.removeRange(0, 5);
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		containerRuntimeFactory.processAllMessages();
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+	});
 	it("remote string remove interacting with reverting an interval remove", () => {
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
@@ -690,6 +771,30 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const interval = collection.add(6, 8, IntervalType.SlideOnRemove);
 			containerRuntimeFactory.processAllMessages();
 
+			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 9);
+			sharedString.removeRange(5, 7);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 6, end: 9 }]);
+			containerRuntimeFactory.processAllMessages();
+			assertIntervals(sharedString2, collection2, [{ start: 6, end: 9 }]);
+		});
+		it("does not restore start that would be after end", () => {
+			sharedString.insertText(0, "hello world");
+
+			sharedString.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+				}
+			});
+
+			const interval = collection.add(6, 8, IntervalType.SlideOnRemove);
+			containerRuntimeFactory.processAllMessages();
+
 			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 3);
 			sharedString.removeRange(5, 7);
 			containerRuntimeFactory.processAllMessages();
@@ -698,11 +803,33 @@ describe("Undo/redo for string remove containing intervals", () => {
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 			assert.equal(sharedString.getText(), "hello world");
-			// Intervals don't currently enforce that start >= end,
-			// so this happens since only start was within the restored range
-			assertIntervals(sharedString, collection, [{ start: 6, end: 3 }]);
+			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [{ start: 6, end: 3 }]);
+			assertIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
+		});
+		it("does not restore end that would be before start", () => {
+			sharedString.insertText(0, "hello world");
+
+			sharedString.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+				}
+			});
+
+			const interval = collection.add(4, 6, IntervalType.SlideOnRemove);
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 8, 9);
+			sharedString.removeRange(5, 7);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 8, end: 9 }]);
+			containerRuntimeFactory.processAllMessages();
+			assertIntervals(sharedString2, collection2, [{ start: 8, end: 9 }]);
 		});
 	});
 

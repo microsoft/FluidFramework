@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PromiseCache } from "@fluidframework/common-utils";
+import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IOdspResolvedUrl,
 	IFileEntry,
 	IEntry,
 	IPersistedCache,
 	ICacheEntry,
+	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /**

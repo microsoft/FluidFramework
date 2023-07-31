@@ -4,7 +4,7 @@
  */
 /* eslint-disable @rushstack/no-new-null */
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
@@ -106,7 +106,7 @@ export class OrderedClientCollection
 		quorum: Pick<IQuorumClients, "getMembers" | "on">,
 	) {
 		super();
-		this.logger = ChildLogger.create(logger, "OrderedClientCollection");
+		this.logger = createChildLogger({ logger, namespace: "OrderedClientCollection" });
 		const members = quorum.getMembers();
 		for (const [clientId, client] of members) {
 			this.addClient(clientId, client);
@@ -372,7 +372,7 @@ export class OrderedClientElection
 			// Override the initially elected client with the initial state.
 			if (initialClient?.clientId !== initialState.electedClientId) {
 				// Cannot find initially elected client, so elect undefined.
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientNotFound",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -382,7 +382,7 @@ export class OrderedClientElection
 			} else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
 				// Initially elected client is ineligible, so elect next eligible client.
 				initialClient = initialParent = this.findFirstEligibleParent(initialParent);
-				logger.sendErrorEvent({
+				this.logger.sendErrorEvent({
 					eventName: "InitialElectedClientIneligible",
 					electionSequenceNumber: initialState.electionSequenceNumber,
 					expectedClientId: initialState.electedClientId,
@@ -416,13 +416,6 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
-			this.logger.sendTelemetryEvent({
-				eventName: "SummarizerClientElected",
-				electedClientId: this._electedClient?.clientId,
-				electedParentId: this._electedParent?.clientId,
-				electionSequenceNumber: sequenceNumber,
-				isSummarizerClient,
-			});
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
@@ -430,12 +423,6 @@ export class OrderedClientElection
 	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
 		if (this._electedParent !== client) {
 			this._electedParent = client;
-			this.logger.sendTelemetryEvent({
-				eventName: "SummarizerParentElected",
-				electedClientId: this._electedClient?.clientId,
-				electedParentId: this._electedParent?.clientId,
-				electionSequenceNumber: sequenceNumber,
-			});
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
 	}
