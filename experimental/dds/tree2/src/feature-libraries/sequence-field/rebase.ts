@@ -40,11 +40,9 @@ import {
 	Changeset,
 	Mark,
 	MarkList,
-	ExistingCellMark,
 	NoopMark,
 	MoveId,
 	Modify,
-	EmptyInputCellMark,
 	NoopMarkType,
 	HasLineage,
 } from "./format";
@@ -59,6 +57,7 @@ import {
 	PairedMarkUpdate,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
+import { ExistingCellMark, EmptyInputCellMark } from "./helperTypes";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.

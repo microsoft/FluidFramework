@@ -222,6 +222,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			const { summarizer: summarizer2 } = await createSummarizer(
 				provider,
 				mainContainer,
+				undefined,
 				summaryResult2.summaryVersion,
 			);
 

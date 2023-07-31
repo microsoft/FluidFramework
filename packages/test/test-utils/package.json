@@ -114,6 +114,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_createSummarizerWithTestConfig": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

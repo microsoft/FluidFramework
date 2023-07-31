@@ -4,7 +4,7 @@
  */
 
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import {
 	createChildLogger,
@@ -97,7 +97,7 @@ export class SummaryManager implements IDisposable {
 			SummaryCollection,
 			"opsSinceLastAck" | "addOpListener" | "removeOpListener"
 		>,
-		parentLogger: ITelemetryLoggerExt,
+		parentLogger: ITelemetryBaseLogger,
 		/** Creates summarizer by asking interactive container to spawn summarizing container and
 		 * get back its Summarizer instance. */
 		private readonly requestSummarizerFn: () => Promise<ISummarizer>,

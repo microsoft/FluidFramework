@@ -12,7 +12,6 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
@@ -94,7 +93,6 @@ export namespace ContainerDevtoolsFeatures {
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 // @public
@@ -196,6 +194,7 @@ export namespace DevtoolsFeatures {
         type: typeof MessageType;
     }
     export interface MessageData {
+        devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
     }
 }
@@ -221,39 +220,38 @@ export namespace DisconnectContainer {
 
 // @public
 export interface FluidDevtoolsProps {
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
 }
 
-// @public
+// @internal
 export interface FluidHandleNode extends VisualNodeBase {
     fluidObjectId: string;
     nodeKind: VisualNodeKind.FluidHandleNode;
 }
 
-// @public
+// @internal
 export type FluidObjectId = string;
 
-// @public
+// @internal
 export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
 
-// @public
+// @internal
 export interface FluidObjectNodeBase extends VisualNodeBase {
     fluidObjectId: FluidObjectId;
 }
 
-// @public
+// @internal
 export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidTreeNode;
 }
 
-// @public
+// @internal
 export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidValueNode;
 }
 
-// @public
+// @internal
 export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidUnknownObjectNode;
 }
@@ -411,7 +409,7 @@ export interface MessageLoggingOptions {
     context?: string;
 }
 
-// @public
+// @internal
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
 // @internal
@@ -426,7 +424,7 @@ export namespace RootDataVisualizations {
     }
 }
 
-// @public
+// @internal
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @internal
@@ -458,41 +456,35 @@ export namespace TelemetryHistory {
     }
 }
 
-// @public
+// @internal
 export interface TreeNodeBase extends VisualNodeBase {
     children: Record<string, VisualChildNode>;
 }
 
-// @public
+// @internal
 export interface UnknownObjectNode extends VisualNodeBase {
     nodeKind: VisualNodeKind.UnknownObjectNode;
 }
 
-// @public
+// @internal
 export interface ValueNodeBase extends VisualNodeBase {
     value: Primitive;
 }
 
-// @public
+// @internal
 export type VisualChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
 
-// @public
-export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
-
-// @public
-export type VisualizeSharedObject = (sharedObject: ISharedObject, visualizeChildData: VisualizeChildData) => Promise<FluidObjectNode>;
-
-// @public
+// @internal
 export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
 
-// @public
+// @internal
 export interface VisualNodeBase {
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
     typeMetadata?: string;
 }
 
-// @public
+// @internal
 export enum VisualNodeKind {
     // (undocumented)
     FluidHandleNode = "FluidHandleNode",
@@ -510,12 +502,12 @@ export enum VisualNodeKind {
     ValueNode = "ValueNode"
 }
 
-// @public
+// @internal
 export interface VisualTreeNode extends TreeNodeBase {
     nodeKind: VisualNodeKind.TreeNode;
 }
 
-// @public
+// @internal
 export interface VisualValueNode extends ValueNodeBase {
     nodeKind: VisualNodeKind.ValueNode;
 }

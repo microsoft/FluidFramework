@@ -27,7 +27,7 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { ChangeFamily, ChangeFamilyEditor, rootFieldKeySymbol } from "../../core";
+import { ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
 import { DefaultChangeset, DefaultEditBuilder, singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
@@ -374,7 +374,7 @@ describe("SharedTreeCore", () => {
 function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
 }
 

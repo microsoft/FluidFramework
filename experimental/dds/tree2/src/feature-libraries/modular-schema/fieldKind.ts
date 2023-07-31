@@ -6,7 +6,6 @@
 import {
 	FieldStoredSchema,
 	FieldKindIdentifier,
-	SchemaPolicy,
 	fieldSchema,
 	SchemaData,
 	FieldKindSpecifier,
@@ -86,7 +85,7 @@ export class FieldKind<
  * The app must ensure consistency for all users of the document.
  * @alpha
  */
-export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy {
 	/**
 	 * Policy information about FieldKinds:
 	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.

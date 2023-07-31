@@ -81,6 +81,7 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  maxLogtailLength: 2000
   verifyLastOpPersistence: false
   disableTransientTenantFiltering: true
   checkpointHeuristics:

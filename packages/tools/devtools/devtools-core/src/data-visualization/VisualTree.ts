@@ -20,7 +20,7 @@ import { FluidObjectId } from "../CommonInterfaces";
  * Note: for forwards compatability reasons, consumers of this should not assume it is exhaustive.
  * I.e. consumers should gracefully handle the case where
  *
- * @public
+ * @internal
  */
 export enum VisualNodeKind {
 	FluidTreeNode = "FluidTreeNode",
@@ -37,7 +37,7 @@ export enum VisualNodeKind {
  *
  * @remarks Used for data / metadata in {@link VisualNodeBase}s.
  *
- * @public
+ * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
@@ -45,7 +45,7 @@ export type Primitive = bigint | number | boolean | null | string | symbol | und
 /**
  * Base interface for all {@link VisualNode}s.
  *
- * @public
+ * @internal
  */
 export interface VisualNodeBase {
 	/**
@@ -73,7 +73,7 @@ export interface VisualNodeBase {
 /**
  * Base interface for visual leaf nodes containing an inline value.
  *
- * @public
+ * @internal
  */
 export interface ValueNodeBase extends VisualNodeBase {
 	/**
@@ -85,7 +85,7 @@ export interface ValueNodeBase extends VisualNodeBase {
 /**
  * Base interface for visual parent nodes containing child nodes.
  *
- * @public
+ * @internal
  */
 export interface TreeNodeBase extends VisualNodeBase {
 	/**
@@ -98,7 +98,7 @@ export interface TreeNodeBase extends VisualNodeBase {
 /**
  * A visual tree with children, which should be displayed beneath this item in the visual tree.
  *
- * @public
+ * @internal
  */
 export interface VisualTreeNode extends TreeNodeBase {
 	/**
@@ -110,7 +110,7 @@ export interface VisualTreeNode extends TreeNodeBase {
 /**
  * Terminal node containing a simple value to display.
  *
- * @public
+ * @internal
  */
 export interface VisualValueNode extends ValueNodeBase {
 	/**
@@ -124,7 +124,7 @@ export interface VisualValueNode extends ValueNodeBase {
  *
  * @remarks I.e. it is not a {@link @fluidframework/shared-object-base#ISharedObject}.
  *
- * @public
+ * @internal
  */
 export interface UnknownObjectNode extends VisualNodeBase {
 	/**
@@ -136,7 +136,7 @@ export interface UnknownObjectNode extends VisualNodeBase {
 /**
  * Base interface for nodes referencing Fluid objects.
  *
- * @public
+ * @internal
  */
 export interface FluidObjectNodeBase extends VisualNodeBase {
 	/**
@@ -153,7 +153,7 @@ export interface FluidObjectNodeBase extends VisualNodeBase {
  * A DDS like {@link @fluidframework/map#SharedMap}, which stores a series of "child" entries might use this
  * to display each of its entries nested under it.
  *
- * @public
+ * @internal
  */
 export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
 	/**
@@ -170,7 +170,7 @@ export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
  * A DDS like {@link @fluidframework/counter#SharedCounter}, which strictly stores a simple primitive value might use
  * this to inline its value (rather than creating unnecessary visual nesting).
  *
- * @public
+ * @internal
  */
 export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
 	/**
@@ -184,7 +184,7 @@ export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase
  *
  * @remarks Allows consumers to add special handling for unknown data.
  *
- * @public
+ * @internal
  */
 export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 	/**
@@ -196,7 +196,7 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 /**
  * Node pointing to another Fluid object via a unique identifier.
  *
- * @public
+ * @internal
  */
 export interface FluidHandleNode extends VisualNodeBase {
 	/**
@@ -215,7 +215,7 @@ export interface FluidHandleNode extends VisualNodeBase {
 /**
  * A node in a visual metadata tree.
  *
- * @public
+ * @internal
  */
 export type VisualNode =
 	| VisualTreeNode
@@ -229,14 +229,14 @@ export type VisualNode =
 /**
  * A visual tree describing a Fluid object.
  *
- * @public
+ * @internal
  */
 export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
 
 /**
  * A visual tree that can be the child of a {@link FluidObjectNodeBase}.
  *
- * @public
+ * @internal
  */
 export type VisualChildNode =
 	| VisualTreeNode
@@ -247,7 +247,7 @@ export type VisualChildNode =
 /**
  * A visual tree node representing a root data object provided to the devtools at initialization time.
  *
- * @public
+ * @internal
  */
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 

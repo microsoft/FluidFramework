@@ -51,10 +51,10 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
+import { SequenceInterval } from "./intervals";
 import {
 	IIntervalCollection,
 	IntervalCollection,
-	SequenceInterval,
 	SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";

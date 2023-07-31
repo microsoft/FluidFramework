@@ -35,18 +35,25 @@ import {
 	MoveId,
 	Revive,
 	Delete,
-	EmptyInputCellMark,
-	ExistingCellMark,
 	NoopMarkType,
 	Transient,
-	DetachedCellMark,
 	CellTargetingMark,
 	CellId,
-	HasPlaceFields,
 	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
+import {
+	GenerativeMark,
+	TransientMark,
+	ExistingCellMark,
+	EmptyInputCellMark,
+	DetachedCellMark,
+} from "./helperTypes";
+
+export function isEmpty<T>(change: Changeset<T>): boolean {
+	return change.length === 0;
+}
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
 	return mark.type === "Modify";
@@ -55,12 +62,6 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
 	return mark.type === "Insert" || mark.type === "MoveIn";
 }
-
-export type GenerativeMark<TNodeChange> = Insert<TNodeChange> | Revive<TNodeChange>;
-
-export type TransientMark<TNodeChange> = GenerativeMark<TNodeChange> & Transient;
-
-export type EmptyOutputCellMark<TNodeChange> = TransientMark<TNodeChange> | Detach<TNodeChange>;
 
 export function isGenerativeMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
@@ -144,20 +145,6 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 		}
 	}
 	return clone;
-}
-
-/**
- * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
- */
-export function isEqualPlace(
-	lhs: Readonly<HasPlaceFields>,
-	rhs: Readonly<HasPlaceFields>,
-): boolean {
-	return (
-		lhs.heed === rhs.heed &&
-		lhs.tiebreak === rhs.tiebreak &&
-		areSameLineage(lhs.lineage, rhs.lineage)
-	);
 }
 
 function haveEqualReattachFields(
@@ -419,7 +406,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if (
-				isEqualPlace(lhsInsert, rhs) &&
+				areSameLineage(lhsInsert.lineage, rhs.lineage) &&
 				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id &&
 				areMergeableChangeAtoms(
 					lhsInsert.transientDetach,
@@ -435,7 +422,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				isEqualPlace(lhsMoveIn, rhs) &&
+				areSameLineage(lhsMoveIn.lineage, rhs.lineage) &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsMoveIn.count === rhs.id
 			) {

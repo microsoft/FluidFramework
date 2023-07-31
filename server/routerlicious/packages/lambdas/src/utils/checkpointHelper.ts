@@ -12,6 +12,7 @@ export enum CheckpointReason {
 	MaxMessages,
 	ClearCache,
 	NoClients,
+	MarkAsCorrupt,
 }
 
 // Used to control checkpoint logic

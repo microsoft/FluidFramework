@@ -14,16 +14,16 @@
 # - If a commit cannot be merged cleanly, open a PR at the _previous_ commit.
 # - Once that PR is merged, then the next time the workflow runs, it will detect the conflicting commit and open a PR
 #   with that commit only.
-# 
+#
 # Each time the workflow runs, the tool will determine the commits to merge based entirely on the git repo state.
 
 name: Sync branches
 
 on:
   schedule:
-    # At 0 minutes past the hour, every 2 hours, Monday through Friday. Cron timezone is in UTC.
+    # At 0 minutes past the hour, every 1 hour, Monday through Friday. Cron timezone is in UTC.
     - cron: "0 */1 * * 1-5"
-  
+
   # Each commit to next should trigger a run, so we create new PRs as quickly as possible.
   push:
     branches:
@@ -52,7 +52,7 @@ jobs:
   sync-branches:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'microsoft'
-    steps: 
+    steps:
       - run: |
           echo "TARGET_BRANCH: $TARGET_BRANCH"
           echo "SOURCE_BRANCH: $SOURCE_BRANCH"
@@ -71,7 +71,7 @@ jobs:
           node-version-file: .nvmrc
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
-      
+
       - name: Install Fluid build tools
         continue-on-error: true
         run: |
@@ -82,20 +82,20 @@ jobs:
           cd packages/build-cli/bin
           echo "$(pwd)" >> $GITHUB_PATH
 
-      # the `url.https://${secret}@github.com/.insteadOf` configuration is used to substitute the default GitHub URL 
-      # with a custom URL that includes a secret token for secure authentication and authorization during Git operations, 
+      # the `url.https://${secret}@github.com/.insteadOf` configuration is used to substitute the default GitHub URL
+      # with a custom URL that includes a secret token for secure authentication and authorization during Git operations,
       # such as pushing to a remote repository on GitHub.
       # https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtinsteadOf
       - name: Set Git config
-        env: 
+        env:
           TOKEN: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
         run: |
           git config user.name $USERNAME
           git config user.email $EMAIL
-          git config url.https://${{ env.TOKEN }}@github.com/.insteadOf https://github.com/ 
-      
+          git config url.https://${{ env.TOKEN }}@github.com/.insteadOf https://github.com/
+
       - name: Run merge command
-        env: 
+        env:
           # PAT is loaded automatically from env variable
           GITHUB_PAT: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
         run: |
