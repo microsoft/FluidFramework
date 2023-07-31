@@ -22,6 +22,8 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	ChangesetLocalId,
+	RepairDataHandler,
+	EmptyKey,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -712,16 +714,16 @@ export class ModularChangeFamily
 	}
 
 	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
-		anchors.applyDelta(this.intoDelta(over));
+		anchors.applyDelta(this.intoDelta(over, () => EmptyKey));
 	}
 
-	public intoDelta(change: ModularChangeset): Delta.Root {
+	public intoDelta(change: ModularChangeset, repairDataHandler: RepairDataHandler): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
-		return this.intoDeltaImpl(change.fieldChanges);
+		return this.intoDeltaImpl(change.fieldChanges, repairDataHandler);
 	}
 
 	/**
@@ -730,25 +732,33 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
+	private intoDeltaImpl(
+		change: FieldChangeMap,
+		repairDataHandler: RepairDataHandler,
+	): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
-				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
+				(childChange): Delta.Modify =>
+					this.deltaFromNodeChange(childChange, repairDataHandler),
+				repairDataHandler,
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+	private deltaFromNodeChange(
+		change: NodeChangeset,
+		repairDataHandler: RepairDataHandler,
+	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairDataHandler);
 		}
 
 		return modify;

@@ -13,6 +13,7 @@ import {
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	RepairDataHandler,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -45,8 +46,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.codecs;
 	}
 
-	public intoDelta(change: DefaultChangeset): Delta.Root {
-		return this.modularFamily.intoDelta(change);
+	public intoDelta(change: DefaultChangeset, repairDataHandler: RepairDataHandler): Delta.Root {
+		return this.modularFamily.intoDelta(change, repairDataHandler);
 	}
 
 	public buildEditor(

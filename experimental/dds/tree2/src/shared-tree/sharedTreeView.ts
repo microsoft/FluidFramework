@@ -16,6 +16,7 @@ import {
 	assertIsRevisionTag,
 	UndoRedoManager,
 	LocalCommitSource,
+	EmptyKey,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -316,10 +317,11 @@ export function createSharedTreeView(args?: {
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
+	// TODO: remove
 	const repairDataStoreProvider =
 		args?.repairProvider ??
 		new ForestRepairDataStoreProvider(forest, schema, (change) =>
-			changeFamily.intoDelta(change),
+			changeFamily.intoDelta(change, () => EmptyKey),
 		);
 	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
@@ -431,8 +433,9 @@ export class SharedTreeView implements ISharedTreeView {
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => {
 			this.branch.startTransaction(
+				// TODO: remove
 				new ForestRepairDataStore(this.forest, (change) =>
-					this.changeFamily.intoDelta(change),
+					this.changeFamily.intoDelta(change, () => EmptyKey),
 				),
 			);
 			this.branch.editor.enterTransaction();
@@ -479,10 +482,11 @@ export class SharedTreeView implements ISharedTreeView {
 		const anchors = new AnchorSet();
 		const storedSchema = this._storedSchema.clone();
 		const forest = this._forest.clone(storedSchema, anchors);
+		// TODO: remove
 		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
 			forest,
 			storedSchema,
-			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
+			(change: ModularChangeset) => this.changeFamily.intoDelta(change, () => EmptyKey),
 		);
 		const branch = this.branch.fork(repairDataStoreProvider, anchors);
 		const context = getEditableTreeContext(

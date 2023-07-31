@@ -21,6 +21,7 @@ import {
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
 	IForestSubscription,
+	EmptyKey,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -90,10 +91,11 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(runtime, forest);
 		const changeFamily = new DefaultChangeFamily(options);
+		// TODO: remove
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
 			schema,
-			(change: ModularChangeset) => changeFamily.intoDelta(change),
+			(change: ModularChangeset) => changeFamily.intoDelta(change, () => EmptyKey),
 		);
 		super(
 			[schemaSummarizer, forestSummarizer],
