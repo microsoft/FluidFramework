@@ -27,7 +27,7 @@ import {
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
-	LocalFieldKey,
+	FieldKey,
 	EmptyKey,
 	JsonableTree,
 	IEditableForest,
@@ -141,8 +141,7 @@ export type Address = EditableTree &
 		},
 		"editable-tree.Test:Address-1.0.0"
 	>;
-export type Friends = EditableTree &
-	Brand<Record<LocalFieldKey, string>, "editable-tree.Map<String>">;
+export type Friends = EditableTree & Brand<Record<FieldKey, string>, "editable-tree.Map<String>">;
 
 export type Person = EditableTree &
 	Brand<

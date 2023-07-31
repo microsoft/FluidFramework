@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { LocalFieldKey, TreeStoredSchema, ValueSchema } from "../../core";
+import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
@@ -27,8 +27,8 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 	// Since the above is not done yet, use use a heuristic:
 	return (
 		schema.value !== ValueSchema.Nothing &&
-		schema.localFields.size === 0 &&
-		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
+		schema.structFields.size === 0 &&
+		schema.mapFields.kind.identifier === FieldKinds.forbidden.identifier
 	);
 }
 
@@ -78,7 +78,7 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
  * @returns the {@link StableNodeKey} on `node`, or undefined if there is none.
  */
 export function getStableNodeKey(
-	nodeKeyFieldKey: LocalFieldKey,
+	nodeKeyFieldKey: FieldKey,
 	node: EditableTree,
 ): StableNodeKey | undefined {
 	if (nodeKeyFieldKey in node) {

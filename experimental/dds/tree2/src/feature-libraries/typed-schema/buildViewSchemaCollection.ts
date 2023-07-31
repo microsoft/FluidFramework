@@ -126,26 +126,25 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 		validateRootField(collection, collection.rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
-		for (const [key, field] of tree.localFields) {
+		for (const [key, field] of tree.structFields) {
 			validateField(
 				collection,
 				field,
 				() =>
-					`Local field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`,
+					`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
 		}
-		if (tree.extraLocalFields !== FieldSchema.empty) {
+		if (tree.mapFields !== FieldSchema.empty) {
 			validateField(
 				collection,
-				tree.extraLocalFields,
-				() =>
-					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}"`,
+				tree.mapFields,
+				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if (tree.extraLocalFields.kind === FieldKinds.value) {
+			if (tree.mapFields.kind === FieldKinds.value) {
 				errors.push(
-					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible local field keys to have a value under them.`,
+					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind "value". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
 			}
 		}

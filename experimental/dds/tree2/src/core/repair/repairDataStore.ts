@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, UpPath, FieldKey } from "../tree";
+import { FieldKey } from "../schema-stored";
+import { Delta, UpPath } from "../tree";
 
 /**
  * An object that can queried for document data that was deleted in prior revisions.

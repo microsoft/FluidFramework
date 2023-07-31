@@ -37,6 +37,10 @@ module.exports = {
 				],
 			},
 		],
+
+		// Forbid new imports from legacy FluentUI react package.
+		// We have a couple of components that still use it, but new usages should not be added without due consideration.
+		"no-restricted-imports": ["error", "@fluentui/react"],
 	},
 	overrides: [
 		{

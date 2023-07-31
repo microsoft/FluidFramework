@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { FieldKey } from "../schema-stored";
 import {
 	AnchorSet,
-	FieldKey,
 	DetachedField,
 	Delta,
 	Anchor,
