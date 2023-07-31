@@ -93,6 +93,9 @@
 			},
 			"InterfaceDeclaration_IScribe": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISequencedOperationMessage": {
+				"backCompat": false
 			}
 		}
 	}
