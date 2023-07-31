@@ -38,7 +38,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
-	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
+	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
@@ -204,7 +204,7 @@ export function create(
 
 			// Only the initial post summary has a valid IsEphemeralContainer flag which we store in cache
 			// For the other cases, we set the flag to undefined so that it can fetched from cache/storage
-			const isEphemeralContainer: boolean | undefined = !ignoreEphemeralFlag
+			const isEphemeralContainer: boolean | undefined = !ignoreIsEphemeralFlag
 				? initial
 					? isEphemeral
 					: undefined
@@ -224,7 +224,7 @@ export function create(
 				initial,
 				request.get("StorageName"),
 				isEphemeralContainer,
-				ignoreEphemeralFlag,
+				ignoreIsEphemeralFlag,
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

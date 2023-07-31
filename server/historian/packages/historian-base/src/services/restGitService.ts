@@ -240,7 +240,6 @@ export class RestGitService {
 		summaryParams: IWholeSummaryPayload,
 		initial?: boolean,
 	): Promise<IWriteSummaryResponse> {
-		Lumberjack.info(`CreateSummary isEphemeral: ${this.isEphemeralContainer}`);
 		const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
 			`/repos/${this.getRepoPath()}/git/summaries`,
 			summaryParams,
