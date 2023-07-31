@@ -117,7 +117,7 @@ describe("SequenceField - Rebase", () => {
 		checkDeltaEquality(actual, expected);
 	});
 
-	it.only("revive ↷ delete", () => {
+	it("revive ↷ delete", () => {
 		const revive = composeAnonChanges([
 			Change.revive(0, 1, { revision: tag1, localId: brand(0) }, rebaseRepair),
 			Change.revive(3, 1, { revision: tag1, localId: brand(1) }, rebaseRepair),

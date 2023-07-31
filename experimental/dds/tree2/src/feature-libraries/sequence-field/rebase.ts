@@ -267,16 +267,25 @@ class RebaseQueue<T> {
 			return {};
 		} else if (baseMark === undefined) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const length = getInputLength(newMark!);
+			const dequeuedMark = this.newMarks.tryDequeue()!;
+			const cellId = getCellId(dequeuedMark, undefined);
+			const length = getMarkLength(dequeuedMark);
+			const generatedBaseMark =
+				cellId === undefined ? { count: length } : { count: length, cellId };
 			return {
-				baseMark: length > 0 ? { count: length } : undefined,
-				newMark: this.newMarks.tryDequeue(),
+				baseMark: generatedBaseMark,
+				newMark: dequeuedMark,
 			};
 		} else if (newMark === undefined) {
-			const length = getInputLength(baseMark);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dequeuedMark = this.baseMarks.tryDequeue()!;
+			const cellId = getCellId(dequeuedMark, undefined);
+			const length = getMarkLength(dequeuedMark);
+			const generatedNewMark =
+				cellId === undefined ? { count: length } : { count: length, cellId };
 			return {
-				baseMark: this.baseMarks.tryDequeue(),
-				newMark: length > 0 ? { count: length } : undefined,
+				baseMark: dequeuedMark,
+				newMark: generatedNewMark,
 			};
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark);
@@ -292,7 +301,16 @@ class RebaseQueue<T> {
 					};
 				}
 			} else if (cmp > 0) {
-				return { newMark: this.newMarks.dequeueUpTo(cmp) };
+				const dequeuedNewMark = this.newMarks.dequeueUpTo(cmp);
+				if (isAttach(dequeuedNewMark)) {
+					return { newMark: dequeuedNewMark };
+				} else {
+					const cellId = getCellId(dequeuedNewMark, this.baseIntention);
+					return {
+						newMark: dequeuedNewMark,
+						baseMark: { count: getMarkLength(dequeuedNewMark), cellId },
+					};
+				}
 			} else {
 				return this.dequeueBoth();
 			}
@@ -306,16 +324,16 @@ class RebaseQueue<T> {
 	}
 
 	private dequeueBase(): RebaseMarks<T> {
-		// const baseMark = this.baseMarks.dequeue();
-		// const cellId = getCellId(baseMark, this.baseIntention);
-		// return { baseMark, newMark: { count: getMarkLength(baseMark), cellId } };
+		const baseMark = this.baseMarks.dequeue();
+		const cellId = getCellId(baseMark, this.baseIntention);
+		return { baseMark, newMark: { count: getMarkLength(baseMark), cellId } };
 
-		return { baseMark: this.baseMarks.dequeue() };
+		// return { baseMark: this.baseMarks.dequeue() };
 	}
 
 	private dequeueNew(): RebaseMarks<T> {
 		const newMark = this.newMarks.dequeue();
-		const cellId = getCellId(newMark, this.baseIntention);
+		const cellId = getCellId(newMark, undefined);
 		return { newMark, baseMark: { count: getMarkLength(newMark), cellId } };
 	}
 
