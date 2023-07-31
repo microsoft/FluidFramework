@@ -76,6 +76,7 @@ scriptorium:
   name: scriptorium
   replicas: 8
   restartOnCheckpointFailure: true
+  logSavedOpsTimeIntervalMs: 60000
 
 scribe:
   name: scribe

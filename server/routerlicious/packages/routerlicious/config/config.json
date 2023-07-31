@@ -205,7 +205,8 @@
 		"checkpointTimeIntervalMsec": 1000,
 		"enableTelemetry": true,
 		"maxDbBatchSize": 1000,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"logSavedOpsTimeIntervalMs": 60000
 	},
 	"copier": {
 		"topic": "rawdeltas",
