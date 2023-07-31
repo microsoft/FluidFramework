@@ -8,10 +8,8 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKindIdentifierSchema,
 	FieldStoredSchema,
-	GlobalFieldKey,
-	GlobalFieldKeySchema,
-	LocalFieldKey,
-	LocalFieldKeySchema,
+	FieldKey,
+	FieldKeySchema,
 	Named,
 	SchemaData,
 	TreeStoredSchema,
@@ -33,21 +31,11 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
 
-const NamedLocalFieldSchemaFormat = Type.Composite(
+const NamedFieldSchemaFormat = Type.Composite(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
-			name: LocalFieldKeySchema,
-		}),
-	],
-	noAdditionalProps,
-);
-
-const NamedGlobalFieldSchemaFormat = Type.Composite(
-	[
-		FieldSchemaFormatBase,
-		Type.Object({
-			name: GlobalFieldKeySchema,
+			name: FieldKeySchema,
 		}),
 	],
 	noAdditionalProps,
@@ -56,9 +44,8 @@ const NamedGlobalFieldSchemaFormat = Type.Composite(
 const TreeSchemaFormat = Type.Object(
 	{
 		name: TreeSchemaIdentifierSchema,
-		localFields: Type.Array(NamedLocalFieldSchemaFormat),
-		globalFields: Type.Array(GlobalFieldKeySchema),
-		extraLocalFields: FieldSchemaFormat,
+		structFields: Type.Array(NamedFieldSchemaFormat),
+		mapFields: FieldSchemaFormat,
 		// TODO: don't use external type here.
 		value: Type.Enum(ValueSchema),
 	},
@@ -78,7 +65,7 @@ const Format = Type.Object(
 	{
 		version: Type.Literal(version),
 		treeSchema: Type.Array(TreeSchemaFormat),
-		globalFieldSchema: Type.Array(NamedGlobalFieldSchemaFormat),
+		rootFieldSchema: FieldSchemaFormat,
 	},
 	noAdditionalProps,
 );
@@ -86,8 +73,7 @@ const Format = Type.Object(
 type Format = Static<typeof Format>;
 type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
 type TreeSchemaFormat = Static<typeof TreeSchemaFormat>;
-type NamedLocalFieldSchemaFormat = Static<typeof NamedLocalFieldSchemaFormat>;
-type NamedGlobalFieldSchemaFormat = Static<typeof NamedGlobalFieldSchemaFormat>;
+type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;
 
 const Versioned = Type.Object({
 	version: Type.String(),
@@ -96,19 +82,15 @@ type Versioned = Static<typeof Versioned>;
 
 function encodeRepo(repo: SchemaData): Format {
 	const treeSchema: TreeSchemaFormat[] = [];
-	const globalFieldSchema: NamedGlobalFieldSchemaFormat[] = [];
+	const rootFieldSchema = encodeField(repo.rootFieldSchema);
 	for (const [name, schema] of repo.treeSchema) {
 		treeSchema.push(encodeTree(name, schema));
 	}
-	for (const [name, schema] of repo.globalFieldSchema) {
-		globalFieldSchema.push(encodeNamedField(name, schema));
-	}
 	treeSchema.sort(compareNamed);
-	globalFieldSchema.sort(compareNamed);
 	return {
 		version,
 		treeSchema,
-		globalFieldSchema,
+		rootFieldSchema,
 	};
 }
 
@@ -125,9 +107,8 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
 	const out: TreeSchemaFormat = {
 		name,
-		extraLocalFields: encodeField(schema.extraLocalFields),
-		globalFields: [...schema.globalFields].sort(),
-		localFields: [...schema.localFields]
+		mapFields: encodeField(schema.mapFields),
+		structFields: [...schema.structFields]
 			.map(([k, v]) => encodeNamedField(k, v))
 			.sort(compareNamed),
 		value: schema.value,
@@ -153,16 +134,12 @@ function encodeNamedField<T>(name: T, schema: FieldStoredSchema): FieldSchemaFor
 }
 
 function decode(f: Format): SchemaData {
-	const globalFieldSchema: Map<GlobalFieldKey, FieldStoredSchema> = new Map();
 	const treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema> = new Map();
-	for (const field of f.globalFieldSchema) {
-		globalFieldSchema.set(field.name, decodeField(field));
-	}
 	for (const tree of f.treeSchema) {
 		treeSchema.set(brand(tree.name), decodeTree(tree));
 	}
 	return {
-		globalFieldSchema,
+		rootFieldSchema: decodeField(f.rootFieldSchema),
 		treeSchema,
 	};
 }
@@ -178,10 +155,9 @@ function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
 
 function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
 	const out: TreeStoredSchema = {
-		extraLocalFields: decodeField(schema.extraLocalFields),
-		globalFields: new Set(schema.globalFields),
-		localFields: new Map(
-			schema.localFields.map((field): [LocalFieldKey, FieldStoredSchema] => [
+		mapFields: decodeField(schema.mapFields),
+		structFields: new Map(
+			schema.structFields.map((field): [FieldKey, FieldStoredSchema] => [
 				brand(field.name),
 				decodeField(field),
 			]),
