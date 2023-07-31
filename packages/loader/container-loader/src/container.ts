@@ -1072,17 +1072,16 @@ export class Container
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
 		this.disconnect(); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
-		const pendingState = await this.getPendingLocalStateCore({ waitBlobsToAttach: true });
+		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
 		this.close();
 		return pendingState;
 	}
 
 	public async getPendingLocalState(): Promise<string> {
-		const pendingState = await this.getPendingLocalStateCore({ waitBlobsToAttach: false });
-		return pendingState;
+		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
 
-	private async getPendingLocalStateCore(props: { waitBlobsToAttach: boolean }) {
+	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}

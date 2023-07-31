@@ -21,7 +21,7 @@ import {
 	assert,
 	bufferToString,
 	Deferred,
-	IsoBuffer,
+	stringToBuffer,
 	TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import {
@@ -251,7 +251,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
-			const blob = IsoBuffer.from(entry.blob, "utf8"); // stringToBuffer(entry.blob, "utf8");
+			const blob = stringToBuffer(entry.blob, "base64");
 			const attached = entry.attached;
 			const acked = entry.acked;
 			const storageId = entry.storageId; // entry.storageId = response.id
@@ -701,18 +701,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
-			if (
-				!(
-					pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-					!!pendingEntry?.storageId
-				)
-			) {
-				assert(
-					pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-						!!pendingEntry?.storageId,
-					0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-				);
-			}
+			assert(
+				pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
+					!!pendingEntry?.storageId,
+				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
+			);
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
@@ -729,8 +722,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				return;
 			}
 		}
-		if (blobId === undefined)
-			assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
+		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
 		// Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
 		// requested from the server.
@@ -1049,7 +1041,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
 			blobs[key] = {
-				blob: bufferToString(entry.blob, "utf8"),
+				blob: bufferToString(entry.blob, "base64"),
 				storageId: entry.storageId,
 				attached: entry.attached,
 				acked: entry.acked,

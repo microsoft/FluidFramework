@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
-import { Deferred, gitHashFile, IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+	bufferToString,
+	Deferred,
+	gitHashFile,
+	IsoBuffer,
+	TypedEventEmitter,
+} from "@fluidframework/common-utils";
 import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -48,7 +54,8 @@ class DedupeStorage extends BaseMockBlobStorage {
 	public minTTL: number = MIN_TTL;
 
 	public async createBlob(blob: ArrayBufferLike) {
-		const id = await gitHashFile(blob as Buffer);
+		const s = bufferToString(blob, "base64");
+		const id = await gitHashFile(IsoBuffer.from(s, "base64"));
 		this.blobs.set(id, blob);
 		return { id, minTTLInSeconds: this.minTTL };
 	}

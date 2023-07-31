@@ -65,6 +65,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 	let pendingState: string | undefined;
 	if (send) {
 		pendingState = await container.getPendingLocalState?.();
+		assert.strictEqual(container.closed, false);
 		await args.ensureSynchronized();
 		container.close();
 	} else {

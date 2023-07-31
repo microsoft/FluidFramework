@@ -148,7 +148,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
     getPendingLocalState(props?: {
-        waitBlobsToAttach: boolean;
+        notifyImminentClosure: boolean;
     }): Promise<unknown>;
     // (undocumented)
     getQuorum(): IQuorumClients;
