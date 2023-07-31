@@ -16,7 +16,10 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown> = {
 	successes: [
 		["with child change", Change.modify(1, TestChange.mint([], 1))],
 		["without child change", Change.delete(2, 2)],
-		["with repair data", Change.revive(0, 1, mintRevisionTag(), brand(10), fakeRepair)],
+		[
+			"with repair data",
+			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }, fakeRepair),
+		],
 		// TODO: Include revive case here or in other encode/decode tests in this file.
 		// It's likely we need a different notion of equality, as revive involves a ProtoNode type
 		// and deep equality of that test case fails on comparing two `StackCursor`s.

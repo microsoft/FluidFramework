@@ -20,7 +20,6 @@ import {
 	Detach,
 	HasChanges,
 	HasRevisionTag,
-	HasTiebreakPolicy,
 	Insert,
 	LineageEvent,
 	Mark,
@@ -42,6 +41,9 @@ import {
 	Transient,
 	DetachedCellMark,
 	CellTargetingMark,
+	CellId,
+	HasPlaceFields,
+	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -89,8 +91,8 @@ export function isConflictedReattach<TNodeChange>(mark: Mark<TNodeChange>): bool
 // TODO: Name is misleading
 export function isReattachConflicted(mark: Reattach<unknown>): boolean {
 	return (
-		mark.detachEvent === undefined ||
-		(mark.inverseOf !== undefined && mark.inverseOf !== mark.detachEvent.revision)
+		mark.cellId === undefined ||
+		(mark.inverseOf !== undefined && mark.inverseOf !== mark.cellId.revision)
 	);
 }
 
@@ -98,20 +100,22 @@ export function isReturnMuted(mark: ReturnTo): boolean {
 	return mark.isSrcConflicted ?? isReattachConflicted(mark);
 }
 
-export function areEqualDetachEvents(a: ChangeAtomId, b: ChangeAtomId): boolean {
-	return a.localId === b.localId && a.revision === b.revision;
+export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
+	if (a === undefined || b === undefined) {
+		return a === b;
+	}
+	return (
+		a.localId === b.localId && a.revision === b.revision && areSameLineage(a.lineage, b.lineage)
+	);
 }
 
 export function getCellId(
 	mark: Mark<unknown>,
 	revision: RevisionTag | undefined,
-): ChangeAtomId | undefined {
+): CellId | undefined {
 	if (isNewAttach(mark)) {
 		const rev = mark.revision ?? revision;
-		if (rev !== undefined) {
-			return { revision: rev, localId: mark.id };
-		}
-		return undefined;
+		return { revision: rev, localId: mark.id, lineage: mark.lineage };
 	}
 
 	if (markEmptiesCells(mark)) {
@@ -121,7 +125,7 @@ export function getCellId(
 			: { revision: mark.revision ?? revision, localId: mark.id };
 	}
 
-	return mark.detachEvent;
+	return mark.cellId;
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -129,27 +133,52 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	if (clone.type === "Insert" || clone.type === "Revive") {
 		clone.content = [...clone.content];
 	}
-	if (isAttach(clone) && clone.lineage !== undefined) {
-		clone.lineage = [...clone.lineage];
+	if (isNewAttach(clone)) {
+		if (clone.lineage !== undefined) {
+			clone.lineage = [...clone.lineage];
+		}
+	} else if (clone.cellId !== undefined) {
+		clone.cellId = { ...clone.cellId };
+		if (clone.cellId.lineage !== undefined) {
+			clone.cellId.lineage = [...clone.cellId.lineage];
+		}
 	}
 	return clone;
 }
 
 /**
- * @returns `true` iff `lhs` and `rhs`'s `HasTiebreakPolicy` fields are structurally equal.
+ * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
  */
 export function isEqualPlace(
-	lhs: Readonly<HasTiebreakPolicy>,
-	rhs: Readonly<HasTiebreakPolicy>,
+	lhs: Readonly<HasPlaceFields>,
+	rhs: Readonly<HasPlaceFields>,
 ): boolean {
 	return (
 		lhs.heed === rhs.heed &&
 		lhs.tiebreak === rhs.tiebreak &&
-		areSameLineage(lhs.lineage ?? [], rhs.lineage ?? [])
+		areSameLineage(lhs.lineage, rhs.lineage)
 	);
 }
 
-function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boolean {
+function haveEqualReattachFields(
+	lhs: Readonly<HasReattachFields>,
+	rhs: Readonly<HasReattachFields>,
+): boolean {
+	return lhs.inverseOf === rhs.inverseOf && areEqualCellIds(lhs.cellId, rhs.cellId);
+}
+
+function areSameLineage(
+	lineage1: LineageEvent[] | undefined,
+	lineage2: LineageEvent[] | undefined,
+): boolean {
+	if (lineage1 === undefined && lineage2 === undefined) {
+		return true;
+	}
+
+	if (lineage1 === undefined || lineage2 === undefined) {
+		return false;
+	}
+
 	if (lineage1.length !== lineage2.length) {
 		return false;
 	}
@@ -224,7 +253,7 @@ export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark
 		return true;
 	}
 
-	return mark.detachEvent !== undefined;
+	return mark.cellId !== undefined;
 }
 
 export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
@@ -241,17 +270,17 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return true;
 		case "Modify":
 		case "Placeholder":
-			return mark.detachEvent !== undefined;
+			return mark.cellId !== undefined;
 		case "ReturnFrom":
-			return mark.detachEvent !== undefined || !mark.isDstConflicted;
+			return mark.cellId !== undefined || !mark.isDstConflicted;
 		case "ReturnTo":
 			return (
-				mark.detachEvent !== undefined &&
+				mark.cellId !== undefined &&
 				((mark.isSrcConflicted ?? false) || isReattachConflicted(mark))
 			);
 		case "Revive":
 			return (
-				(mark.detachEvent !== undefined && isReattachConflicted(mark)) ||
+				(mark.cellId !== undefined && isReattachConflicted(mark)) ||
 				mark.transientDetach !== undefined
 			);
 		default:
@@ -374,13 +403,13 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 
 	if (isExistingCellMark(lhs)) {
 		assert(isExistingCellMark(rhs), 0x6a6 /* Should be existing cell mark */);
-		if (lhs.detachEvent?.revision !== rhs.detachEvent?.revision) {
+		if (lhs.cellId?.revision !== rhs.cellId?.revision) {
 			return false;
 		}
 
 		if (
-			lhs.detachEvent !== undefined &&
-			(lhs.detachEvent.localId as number) + getMarkLength(lhs) !== rhs.detachEvent?.localId
+			lhs.cellId !== undefined &&
+			(lhs.cellId.localId as number) + getMarkLength(lhs) !== rhs.cellId?.localId
 		) {
 			return false;
 		}
@@ -403,9 +432,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			}
 			break;
 		}
-		case "MoveIn":
-		case "ReturnTo": {
-			const lhsMoveIn = lhs as MoveIn | ReturnTo;
+		case "MoveIn": {
+			const lhsMoveIn = lhs as MoveIn;
 			if (
 				isEqualPlace(lhsMoveIn, rhs) &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
@@ -415,6 +443,17 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				return true;
 			}
 			break;
+		}
+		case "ReturnTo": {
+			const lhsReturnTo = lhs as ReturnTo;
+			if (
+				haveEqualReattachFields(lhsReturnTo, rhs) &&
+				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
+				(lhsReturnTo.id as number) + lhsReturnTo.count === rhs.id
+			) {
+				lhsReturnTo.count += rhs.count;
+				return true;
+			}
 		}
 		case "Delete": {
 			const lhsDetach = lhs as Detach;
@@ -466,8 +505,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
  */
 export class DetachedNodeTracker {
 	// Maps the index for a node to its last characterization as a reattached node.
-	private nodes: Map<number, ChangeAtomId> = new Map();
-	private readonly equivalences: { old: ChangeAtomId; new: ChangeAtomId }[] = [];
+	private nodes: Map<number, CellId> = new Map();
+	private readonly equivalences: { old: CellId; new: CellId }[] = [];
 
 	public constructor() {}
 
@@ -482,7 +521,7 @@ export class DetachedNodeTracker {
 			const inputLength: number = getInputLength(mark);
 			if (markEmptiesCells(mark)) {
 				assert(isDetachMark(mark), 0x70d /* Only detach marks should empty cells */);
-				const newNodes: Map<number, ChangeAtomId> = new Map();
+				const newNodes: Map<number, CellId> = new Map();
 				const after = index + inputLength;
 				for (const [k, v] of this.nodes) {
 					if (k >= index) {
@@ -514,7 +553,7 @@ export class DetachedNodeTracker {
 		for (const mark of change.change) {
 			const inputLength: number = getInputLength(mark);
 			if (isActiveReattach(mark)) {
-				const newNodes: Map<number, ChangeAtomId> = new Map();
+				const newNodes: Map<number, CellId> = new Map();
 				for (const [k, v] of this.nodes) {
 					if (k >= index) {
 						newNodes.set(k + inputLength, v);
@@ -522,7 +561,7 @@ export class DetachedNodeTracker {
 						newNodes.set(k, v);
 					}
 				}
-				const detachEvent = mark.detachEvent ?? fail("Unable to track detached nodes");
+				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
 				for (let i = 0; i < mark.count; ++i) {
 					newNodes.set(index + i, {
 						revision: detachEvent.revision,
@@ -546,11 +585,11 @@ export class DetachedNodeTracker {
 	public isApplicable(change: Changeset<unknown>): boolean {
 		for (const mark of change) {
 			if (isActiveReattach(mark)) {
-				const detachEvent = mark.detachEvent ?? fail("Unable to track detached nodes");
+				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
 				const revision = detachEvent.revision;
 				for (let i = 0; i < mark.count; ++i) {
 					const localId = brand<ChangesetLocalId>((detachEvent.localId as number) + i);
-					const original: ChangeAtomId = { revision, localId };
+					const original: CellId = { revision, localId };
 					const updated = this.getUpdatedDetach(original);
 					for (const detached of this.nodes.values()) {
 						if (
@@ -603,15 +642,15 @@ export class DetachedNodeTracker {
 	}
 
 	private updateMark(mark: CellTargetingMark & DetachedCellMark): void {
-		const detachEvent = mark.detachEvent;
+		const detachEvent = mark.cellId;
 		const original = { revision: detachEvent.revision, localId: detachEvent.localId };
 		const updated = this.getUpdatedDetach(original);
 		if (updated.revision !== original.revision || updated.localId !== original.localId) {
-			mark.detachEvent = { ...updated };
+			mark.cellId = { ...updated };
 		}
 	}
 
-	private getUpdatedDetach(detach: ChangeAtomId): ChangeAtomId {
+	private getUpdatedDetach(detach: CellId): CellId {
 		let curr = detach;
 		for (const eq of this.equivalences) {
 			if (curr.revision === eq.old.revision && curr.localId === eq.old.localId) {
@@ -642,8 +681,8 @@ export function areRebasable(branch: Changeset<unknown>, target: Changeset<unkno
 		if (isActiveReattach(mark)) {
 			const list = getOrAddEmptyToMap(indexToReattach, index);
 			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.detachEvent ?? fail("Unable to track detached nodes");
-				const entry: ChangeAtomId = {
+				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
+				const entry: CellId = {
 					...detachEvent,
 					localId: brand((detachEvent.localId as number) + i),
 				};
@@ -664,8 +703,8 @@ export function areRebasable(branch: Changeset<unknown>, target: Changeset<unkno
 		if (isActiveReattach(mark)) {
 			const list = getOrAddEmptyToMap(indexToReattach, index);
 			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.detachEvent ?? fail("Unable to track detached nodes");
-				const entry: ChangeAtomId = {
+				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
+				const entry: CellId = {
 					...detachEvent,
 					localId: brand((detachEvent.localId as number) + i),
 				};
@@ -842,8 +881,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			const mark1: TMark = { ...mark, count: length };
 			const mark2: TMark = { ...mark, id: (mark.id as number) + length, count: remainder };
 			if (mark.type === "ReturnTo") {
-				if (mark.detachEvent !== undefined) {
-					(mark2 as ReturnTo).detachEvent = splitDetachEvent(mark.detachEvent, length);
+				if (mark.cellId !== undefined) {
+					(mark2 as ReturnTo).cellId = splitDetachEvent(mark.cellId, length);
 				}
 
 				return [mark1, mark2];
@@ -858,8 +897,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 				count: remainder,
 			};
 
-			if (mark.detachEvent !== undefined) {
-				(mark2 as Revive).detachEvent = splitDetachEvent(mark.detachEvent, length);
+			if (mark.cellId !== undefined) {
+				(mark2 as Revive).cellId = splitDetachEvent(mark.cellId, length);
 			}
 			if (mark.transientDetach !== undefined) {
 				(mark2 as Transient).transientDetach = {
@@ -874,8 +913,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			const id2: ChangesetLocalId = brand((mark.id as number) + length);
 			const mark2 = { ...mark, id: id2, count: remainder };
 			const mark2Delete = mark2 as Delete<T>;
-			if (mark2Delete.detachEvent !== undefined) {
-				mark2Delete.detachEvent = splitDetachEvent(mark2Delete.detachEvent, length);
+			if (mark2Delete.cellId !== undefined) {
+				mark2Delete.cellId = splitDetachEvent(mark2Delete.cellId, length);
 			}
 
 			if (mark2Delete.detachIdOverride !== undefined) {
@@ -894,8 +933,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 				id: (mark.id as number) + length,
 				count: remainder,
 			};
-			if (mark.detachEvent !== undefined) {
-				(mark2 as Detach).detachEvent = splitDetachEvent(mark.detachEvent, length);
+			if (mark.cellId !== undefined) {
+				(mark2 as Detach).cellId = splitDetachEvent(mark.cellId, length);
 			}
 
 			if (mark2.type === "ReturnFrom") {
@@ -916,7 +955,7 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 	}
 }
 
-function splitDetachEvent(detachEvent: ChangeAtomId, length: number): ChangeAtomId {
+function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
 }
 

@@ -21,7 +21,7 @@ import {
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
-	TelemetryNullLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
@@ -266,7 +266,7 @@ describe("BlobManager", () => {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		mc = mixinMonitoringContext(new TelemetryNullLogger(), configProvider(injectedSettings));
+		mc = mixinMonitoringContext(createChildLogger(), configProvider(injectedSettings));
 		runtime = new MockRuntime(mc);
 		handlePs.length = 0;
 

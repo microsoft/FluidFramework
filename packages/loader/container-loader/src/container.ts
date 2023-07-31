@@ -85,7 +85,7 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	ChildLogger,
+	createChildLogger,
 	EventEmitterWithErrorHandling,
 	PerformanceEvent,
 	raiseConnectedEvent,
@@ -93,7 +93,7 @@ import {
 	connectedEventName,
 	normalizeError,
 	MonitoringContext,
-	loggerToMonitoringContext,
+	createChildMonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
@@ -473,7 +473,7 @@ export class Container
 	private readonly codeLoader: ICodeDetailsLoader;
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	private readonly subLogger: TelemetryLogger;
+	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 
@@ -769,42 +769,45 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(subLogger, undefined, {
-			all: {
-				clientType, // Differentiating summarizer container from main container
-				containerId: uuid(),
-				docId: () => this.resolvedUrl?.id,
-				containerAttachState: () => this._attachState,
-				containerLifecycleState: () => this._lifecycleState,
-				containerConnectionState: () => ConnectionState[this.connectionState],
-				serializedContainer: pendingLocalState !== undefined,
-			},
-			// we need to be judicious with our logging here to avoid generating too much data
-			// all data logged here should be broadly applicable, and not specific to a
-			// specific error or class of errors
-			error: {
-				// load information to associate errors with the specific load point
-				dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
-				dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
-				dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-				containerLoadedFromVersionId: () => this._loadedFromVersion?.id,
-				containerLoadedFromVersionDate: () => this._loadedFromVersion?.date,
-				// message information to associate errors with the specific execution state
-				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
-				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
-				dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
-				dmLastMsqSeqClientId: () =>
-					this.deltaManager?.lastMessage?.clientId === null
-						? "null"
-						: this.deltaManager?.lastMessage?.clientId,
-				dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
-				connectionStateDuration: () =>
-					performance.now() - this.connectionTransitionTimes[this.connectionState],
+		this.subLogger = createChildLogger({
+			logger: subLogger,
+			properties: {
+				all: {
+					clientType, // Differentiating summarizer container from main container
+					containerId: uuid(),
+					docId: () => this.resolvedUrl?.id,
+					containerAttachState: () => this._attachState,
+					containerLifecycleState: () => this._lifecycleState,
+					containerConnectionState: () => ConnectionState[this.connectionState],
+					serializedContainer: pendingLocalState !== undefined,
+				},
+				// we need to be judicious with our logging here to avoid generating too much data
+				// all data logged here should be broadly applicable, and not specific to a
+				// specific error or class of errors
+				error: {
+					// load information to associate errors with the specific load point
+					dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+					dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
+					dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+					containerLoadedFromVersionId: () => this._loadedFromVersion?.id,
+					containerLoadedFromVersionDate: () => this._loadedFromVersion?.date,
+					// message information to associate errors with the specific execution state
+					// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
+					dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
+					dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
+					dmLastMsqSeqClientId: () =>
+						this.deltaManager?.lastMessage?.clientId === null
+							? "null"
+							: this.deltaManager?.lastMessage?.clientId,
+					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
+					connectionStateDuration: () =>
+						performance.now() - this.connectionTransitionTimes[this.connectionState],
+				},
 			},
 		});
 
 		// Prefix all events in this file with container-loader
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
+		this.mc = createChildMonitoringContext({ logger: this.subLogger, namespace: "Container" });
 
 		this._deltaManager = this.createDeltaManager();
 
@@ -1779,7 +1782,10 @@ export class Container
 			this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
 		);
 
-		const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
+		const protocolLogger = createChildLogger({
+			logger: this.subLogger,
+			namespace: "ProtocolHandler",
+		});
 
 		protocol.quorum.on("error", (error) => {
 			protocolLogger.sendErrorEvent(error);
@@ -1890,7 +1896,7 @@ export class Container
 		const serviceProvider = () => this.service;
 		const deltaManager = new DeltaManager<ConnectionManager>(
 			serviceProvider,
-			ChildLogger.create(this.subLogger, "DeltaManager"),
+			createChildLogger({ logger: this.subLogger, namespace: "DeltaManager" }),
 			() => this.activeConnection(),
 			(props: IConnectionManagerFactoryArgs) =>
 				new ConnectionManager(
@@ -1898,7 +1904,7 @@ export class Container
 					() => this.isDirty,
 					this.client,
 					this._canReconnect,
-					ChildLogger.create(this.subLogger, "ConnectionManager"),
+					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
 				),
 		);
