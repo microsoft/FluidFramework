@@ -7,14 +7,12 @@
 import { ContainerKey } from '@fluid-experimental/devtools-core';
 import { DevtoolsLogger } from '@fluid-experimental/devtools-core';
 import { HasContainerKey } from '@fluid-experimental/devtools-core';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
-import { VisualizeSharedObject } from '@fluid-experimental/devtools-core';
 
 // @public
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 export { ContainerKey }
@@ -23,7 +21,6 @@ export { DevtoolsLogger }
 
 // @public
 export interface DevtoolsProps {
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
 }
@@ -38,7 +35,5 @@ export interface IDevtools extends IDisposable {
 
 // @public (undocumented)
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
-
-export { VisualizeSharedObject }
 
 ```

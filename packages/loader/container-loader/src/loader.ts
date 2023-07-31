@@ -4,19 +4,17 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
-	DebugLogger,
 	IConfigProviderBase,
-	loggerToMonitoringContext,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 	sessionStorageConfigProvider,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryBaseLogger,
 	FluidObject,
 	IFluidRouter,
 	IRequest,
@@ -44,6 +42,7 @@ import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
+import { DebugLogger } from "./debugLogger";
 
 function canUseCache(request: IRequest): boolean {
 	if (request.headers === undefined) {
@@ -343,7 +342,10 @@ export class Loader implements IHostLoader {
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
 		};
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
+		this.mc = createChildMonitoringContext({
+			logger: this.services.subLogger,
+			namespace: "Loader",
+		});
 	}
 
 	public get IFluidRouter(): IFluidRouter {
@@ -407,16 +409,23 @@ export class Loader implements IHostLoader {
 		this.containers.set(key, containerP);
 		containerP
 			.then((container) => {
-				// If the container is closed or becomes closed after we resolve it, remove it from the cache.
-				if (container.closed) {
+				// If the container is closed/disposed or becomes closed/disposed after we resolve it,
+				// remove it from the cache.
+				if (container.closed || container.disposed) {
 					this.containers.delete(key);
 				} else {
 					container.once("closed", () => {
 						this.containers.delete(key);
 					});
+					container.once("disposed", () => {
+						this.containers.delete(key);
+					});
 				}
 			})
-			.catch((error) => {});
+			.catch((error) => {
+				// If an error occured while resolving the container request, then remove it from the cache.
+				this.containers.delete(key);
+			});
 	}
 
 	private async resolveCore(

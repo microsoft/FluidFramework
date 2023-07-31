@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/benchmark",
-	"version": "0.48.0",
+	"version": "0.49.0",
 	"description": "Benchmarking tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,7 +19,7 @@
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -62,5 +62,5 @@
 		"rimraf": "^2.6.2",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e"
+	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267"
 }

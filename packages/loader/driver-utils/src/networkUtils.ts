@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 

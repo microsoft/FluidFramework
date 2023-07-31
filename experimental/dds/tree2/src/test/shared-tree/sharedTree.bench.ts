@@ -16,20 +16,14 @@ import {
 	cursorForTypedData,
 	cursorForTypedTreeData,
 } from "../../feature-libraries";
-import { jsonNumber, jsonSchema } from "../../domains";
+import { jsonNumber, jsonSchema, singleJsonCursor } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
-import {
-	AllowedUpdateType,
-	LocalFieldKey,
-	moveToDetachedField,
-	rootFieldKeySymbol,
-	UpPath,
-} from "../../core";
+import { AllowedUpdateType, FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../../core";
 
-const localFieldKey: LocalFieldKey = brand("foo");
+const localFieldKey: FieldKey = brand("foo");
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -47,18 +41,14 @@ const nodesCountDeep = [
 const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", jsonSchema);
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	local: {
-		foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
-	},
+const linkedListSchema = deepBuilder.structRecursive("linkedList", {
+	foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
 });
 
 const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", jsonSchema);
 
-const wideRootSchema = wideBuilder.object("WideRoot", {
-	local: {
-		foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
-	},
+const wideRootSchema = wideBuilder.struct("WideRoot", {
+	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 });
 
 const wideSchema = wideBuilder.intoDocumentSchema(
@@ -310,12 +300,14 @@ describe("SharedTree benchmarks", () => {
 							initialTree: makeJsDeepTree(numberOfNodes, 1),
 							schema: deepSchema,
 						});
-						const path = deepPath(numberOfNodes + 1);
+						const path = deepPath(numberOfNodes);
 
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							tree.editor.setValue(path, value);
+							tree.editor
+								.valueField({ parent: path, field: localFieldKey })
+								.set(singleJsonCursor(value));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -324,7 +316,7 @@ describe("SharedTree benchmarks", () => {
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedData(
 								tree.storedSchema,
-								deepSchema.root.schema.allowedTypes,
+								deepSchema.rootFieldSchema.allowedTypes,
 								makeJsDeepTree(numberOfNodes, setCount),
 							),
 						);
@@ -360,12 +352,22 @@ describe("SharedTree benchmarks", () => {
 							schema: wideSchema,
 						});
 
-						const path = wideLeafPath(numberOfNodes - 1);
+						const rootPath = {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 0,
+						};
+						const nodeIndex = numberOfNodes - 1;
+						const editor = tree.editor.sequenceField({
+							parent: rootPath,
+							field: localFieldKey,
+						});
 
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							tree.editor.setValue(path, setCount);
+							editor.delete(nodeIndex, 1);
+							editor.insert(nodeIndex, [singleJsonCursor(value)]);
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -530,7 +532,7 @@ function deepPath(depth: number): UpPath {
 	assert(depth > 0);
 	let path: UpPath = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	for (let i = 0; i < depth - 1; i++) {
@@ -551,7 +553,7 @@ function wideLeafPath(index: number): UpPath {
 	const path = {
 		parent: {
 			parent: undefined,
-			parentField: rootFieldKeySymbol,
+			parentField: rootFieldKey,
 			parentIndex: 0,
 		},
 		parentField: localFieldKey,

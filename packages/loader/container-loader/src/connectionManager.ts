@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDeltaQueue,
@@ -26,6 +25,7 @@ import {
 	getRetryDelayFromError,
 	logNetworkFailure,
 	isRuntimeMessage,
+	calculateMaxWaitTime,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -43,17 +43,12 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	ITelemetryLoggerExt,
-	TelemetryLogger,
-	normalizeError,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, formatTick, normalizeError } from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
-const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
@@ -553,7 +548,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent({
 					eventName: "ConnectionAttemptCancelled",
 					attempts: connectRepeatCount,
-					duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performance.now() - connectStartTime),
 					connectionEstablished: false,
 				});
 				return;
@@ -593,7 +588,7 @@ export class ConnectionManager implements IConnectionManager {
 						attempts: connectRepeatCount,
 						delay: delayMs, // milliseconds
 						eventName: "DeltaConnectionFailureToConnect",
-						duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+						duration: formatTick(performance.now() - connectStartTime),
 					},
 					origError,
 				);
@@ -613,7 +608,7 @@ export class ConnectionManager implements IConnectionManager {
 					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
 					await new Promise<void>((resolve) => {
 						setTimeout(resolve, delayMs);
-						delayMs = Math.min(delayMs * 2, MaxReconnectDelayInMs);
+						delayMs = Math.min(delayMs * 2, calculateMaxWaitTime(origError));
 					});
 				}
 
@@ -639,7 +634,7 @@ export class ConnectionManager implements IConnectionManager {
 				{
 					eventName: "MultipleDeltaConnectionFailures",
 					attempts: connectRepeatCount,
-					duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performance.now() - connectStartTime),
 				},
 				lastError,
 			);
@@ -651,7 +646,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
 				attempts: connectRepeatCount,
-				duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+				duration: formatTick(performance.now() - connectStartTime),
 				connectionEstablished: true,
 			});
 			return;

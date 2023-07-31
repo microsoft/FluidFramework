@@ -5,18 +5,23 @@
 
 import { FieldKey, UpPath } from "../../../core";
 
-export type Operation = TreeOperation;
+export type Operation = TreeOperation | Synchronize;
 
-export type TreeOperation = TreeEdit | TransactionBoundary;
+export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
 
 export interface TreeEdit {
 	type: "edit";
-	contents: FieldEdit | NodeEdit;
+	contents: FieldEdit;
 }
 
 export interface TransactionBoundary {
 	type: "transaction";
 	contents: FuzzTransactionType;
+}
+
+export interface UndoRedo {
+	type: "undoRedo";
+	contents: FuzzUndoRedoType;
 }
 
 export type FuzzFieldChange = FuzzInsert | FuzzDelete;
@@ -55,34 +60,6 @@ export interface FuzzDelete extends NodeRangePath {
 	type: "delete";
 }
 
-export type FuzzNodeEditChange = SequenceNodeEdit | ValueNodeEdit | OptionalNodeEdit;
-
-export interface NodeEdit {
-	type: "nodeEdit";
-	edit: FuzzNodeEditChange;
-}
-
-export interface FuzzSetPayload {
-	nodeEditType: "setPayload";
-	path: UpPath;
-	value: number;
-}
-
-export interface SequenceNodeEdit {
-	type: "sequence";
-	edit: FuzzSetPayload;
-}
-
-export interface ValueNodeEdit {
-	type: "value";
-	edit: FuzzSetPayload;
-}
-
-export interface OptionalNodeEdit {
-	type: "optional";
-	edit: FuzzSetPayload;
-}
-
 export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;
 
 export interface TransactionStartOp {
@@ -97,6 +74,23 @@ export interface TransactionAbortOp {
 	fuzzType: "transactionAbort";
 }
 
+export type FuzzUndoRedoType = UndoOp | RedoOp;
+
+export interface UndoOp {
+	type: "undo";
+}
+
+export interface RedoOp {
+	type: "redo";
+}
+
+/**
+ * This Synchronize interface was duplicated from the ddsFuzzHarness code for use cases which requires more control over how the synchronize op is generated.
+ */
+export interface Synchronize {
+	type: "synchronizeTrees";
+}
+
 export interface NodeRangePath {
 	firstNode: UpPath;
 	count: number;
@@ -105,7 +99,6 @@ export interface NodeRangePath {
 export interface EditGeneratorOpWeights {
 	insert: number;
 	delete: number;
-	setPayload: number;
 	start: number;
 	commit: number;
 	abort: number;

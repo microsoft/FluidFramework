@@ -68,7 +68,7 @@ but it was decided that it makes more sense to build up this more featureful DDS
 
 Currently existing DDS implementations can not support cross DDS transactions.
 For example, moving part of a sequence from one sequence DDS to another cannot be done transactionally, meaning if the source of the move conflicts, the destination half can't be updated or aborted if it's in a different DDS.
-Cross DDS moves also currently can't be as efficient as moves withing a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
+Cross DDS moves also currently can't be as efficient as moves within a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
 There are also some significant per DDS performance and storage costs that make this approach much more costly than using a single DDS.
 
 One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to view a subset of the data) with features from DDSes (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
@@ -322,6 +322,7 @@ flowchart
         direction TB
         subgraph core ["core libraries"]
             direction TB
+            schema-view
             forest-->schema-stored
             rebase-->tree
             change-family-->repair
@@ -330,8 +331,8 @@ flowchart
             schema-view-->schema-stored
             dependency-tracking
             forest-->tree
-            undo-->change-family
             undo-->rebase
+            undo-->change-family
         end
         core-->events-->util
         core-->id-compressor-->util

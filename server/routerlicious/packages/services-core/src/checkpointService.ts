@@ -31,62 +31,102 @@ export class CheckpointService implements ICheckpointService {
 		service: DocumentLambda,
 		checkpoint: IScribe | IDeliState,
 		isLocal: boolean = false,
+		markAsCorrupt: boolean = false,
+	) {
+		// services may not be able to process documents in corrupted state
+		// so we write to local and global databases when marking document as corrupt
+		if (markAsCorrupt) {
+			await this.writeGlobalCheckpoint(
+				documentId,
+				tenantId,
+				service,
+				checkpoint,
+				this.localCheckpointEnabled,
+			);
+			if (this.localCheckpointEnabled && this.checkpointRepository) {
+				await this.writeLocalCheckpoint(documentId, tenantId, checkpoint);
+			}
+			return;
+		}
+
+		if (!this.localCheckpointEnabled || !this.checkpointRepository) {
+			// Write to global collection when local checkpoints are disabled or there is no checkpoint repository
+			await this.writeGlobalCheckpoint(
+				documentId,
+				tenantId,
+				service,
+				checkpoint,
+				this.localCheckpointEnabled,
+			);
+			return;
+		}
+
+		await (isLocal
+			? this.writeLocalCheckpoint(documentId, tenantId, checkpoint)
+			: this.writeGlobalCheckpoint(
+					documentId,
+					tenantId,
+					service,
+					checkpoint,
+					this.localCheckpointEnabled,
+			  ));
+	}
+
+	private async writeLocalCheckpoint(
+		documentId: string,
+		tenantId: string,
+		checkpoint: IScribe | IDeliState,
+	) {
+		await this.checkpointRepository
+			.writeCheckpoint(documentId, tenantId, checkpoint)
+			.catch((error) => {
+				Lumberjack.error(
+					`Error writing checkpoint to local database`,
+					getLumberBaseProperties(documentId, tenantId),
+					error,
+				);
+			});
+	}
+
+	private async writeGlobalCheckpoint(
+		documentId: string,
+		tenantId: string,
+		service: string,
+		checkpoint: IScribe | IDeliState,
+		localCheckpointEnabled: boolean,
 	) {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+
 		const checkpointFilter = {
 			documentId,
 			tenantId,
 		};
-
 		const checkpointData = {
 			// stored as stringified JSON
 			[service]: JSON.stringify(checkpoint),
 		};
 
-		if (!this.localCheckpointEnabled || !this.checkpointRepository) {
-			// Write to global collection when local checkpoints are disabled or there is no checkpoint repository
-			await this.documentRepository
-				.updateOne(checkpointFilter, checkpointData, null)
+		await this.documentRepository
+			.updateOne(checkpointFilter, checkpointData, null)
+			.catch((error) => {
+				Lumberjack.error(
+					`Error writing checkpoint to the global database.`,
+					lumberProperties,
+					error,
+				);
+			});
+
+		if (localCheckpointEnabled) {
+			await this.checkpointRepository
+				.deleteCheckpoint(documentId, tenantId)
 				.catch((error) => {
 					Lumberjack.error(
-						`Error writing checkpoint to global collection.`,
+						`Error removing checkpoint data from the local database.`,
 						lumberProperties,
 						error,
 					);
 				});
-			return;
 		}
-
-		await (isLocal
-			? this.checkpointRepository
-					.writeCheckpoint(documentId, tenantId, checkpoint)
-					.catch((error) => {
-						Lumberjack.error(
-							`Error writing checkpoint to local database`,
-							lumberProperties,
-							error,
-						);
-					})
-			: Promise.all([
-					this.checkpointRepository
-						.deleteCheckpoint(documentId, tenantId)
-						.catch((error) => {
-							Lumberjack.error(
-								`Error removing checkpoint data from the local database.`,
-								lumberProperties,
-								error,
-							);
-						}),
-					this.documentRepository
-						.updateOne(checkpointFilter, checkpointData, null)
-						.catch((error) => {
-							Lumberjack.error(
-								`Error writing checkpoint to the global database.`,
-								lumberProperties,
-								error,
-							);
-						}),
-			  ]));
 	}
 
 	async clearCheckpoint(
@@ -158,7 +198,7 @@ export class CheckpointService implements ICheckpointService {
 					const globalCheckpoint: IDeliState | IScribe = JSON.parse(document[service]);
 
 					// Compare local and global checkpoints to use latest version
-					if (localCheckpoint.logOffset < globalCheckpoint.logOffset) {
+					if (localCheckpoint.sequenceNumber < globalCheckpoint.sequenceNumber) {
 						// if local checkpoint is behind global, use global
 						lastCheckpoint = globalCheckpoint;
 						checkpointSource = "latestFoundInGlobalCollection";
@@ -251,6 +291,7 @@ export interface ICheckpointService {
 		service: string,
 		checkpoint: IScribe | IDeliState,
 		isLocal: boolean,
+		markAsCorrupt?: boolean,
 	): Promise<void>;
 	clearCheckpoint(
 		documentId: string,

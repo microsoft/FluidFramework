@@ -15,8 +15,9 @@ import {
 	BrandedMapSubset,
 	brandedSlot,
 } from "../../util";
+import { FieldKey } from "../schema-stored";
 import { UpPath } from "./pathTree";
-import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
+import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
 import { visitDelta, DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";
@@ -663,17 +664,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				moveTable.delete(id);
 				this.moveChildren(sourcePath, { parent, parentField, parentIndex: start }, count);
-			},
-			onSetValue: (value: Value): void => {
-				maybeWithNode((p) => {
-					p.events.emit("valueChanging", p, value);
-				});
-				assert(parent !== undefined, 0x5e9 /* Must be in a node to set its value */);
-				for (const visitors of pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.onSetValue(parent, value);
-					}
-				}
 			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);

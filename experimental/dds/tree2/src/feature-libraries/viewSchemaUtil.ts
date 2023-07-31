@@ -11,7 +11,7 @@ import {
 	Named,
 	treeSchema,
 } from "../core";
-import { emptyField } from "./defaultSchema";
+import { emptyField } from "./default-field-kinds";
 
 /**
  * Helper for building {@link NamedTreeSchema}.
@@ -22,7 +22,7 @@ export function namedTreeSchema(
 ): NamedTreeSchema {
 	return {
 		name: data.name,
-		...treeSchema({ extraLocalFields: emptyField, ...data }),
+		...treeSchema({ mapFields: emptyField, ...data }),
 	};
 }
 

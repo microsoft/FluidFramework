@@ -115,6 +115,9 @@ export interface IScribe {
 
 	// Refs of the service summaries generated since the last client generated summary.
 	validParentSummaries: string[] | undefined;
+
+	// Is document corrupted?
+	isCorrupt: boolean;
 }
 
 export interface IDocument {

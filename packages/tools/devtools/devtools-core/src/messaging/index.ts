@@ -21,6 +21,7 @@ export {
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
@@ -29,7 +30,6 @@ export {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	RootDataVisualizations,
-	SendEditData,
 } from "./container-devtools-messages";
 export {
 	ContainerList,

@@ -52,8 +52,6 @@ export {
 	VisualNodeKind,
 	VisualTreeNode,
 	VisualValueNode,
-	VisualizeChildData,
-	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
 export {
@@ -79,6 +77,7 @@ export {
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,
@@ -102,7 +101,6 @@ export {
 	isDevtoolsMessage,
 	MessageLoggingOptions,
 	RootDataVisualizations,
-	SendEditData,
 	TelemetryEvent,
 	TelemetryHistory,
 } from "./messaging";

@@ -29,7 +29,7 @@ export interface HasContainerKey {
 /**
  * A unique ID for a Fluid object
  *
- * @public
+ * @internal
  */
 export type FluidObjectId = string;
 
@@ -50,7 +50,7 @@ export interface HasFluidObjectId {
  * Base interface used in message data for edits allowed by a particular Fluid object (DDS) via
  * an enum.
  *
- * @public
+ * @internal
  */
 export enum EditType {
 	Number = "number",

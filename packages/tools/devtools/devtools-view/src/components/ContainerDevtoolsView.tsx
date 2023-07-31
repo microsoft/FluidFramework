@@ -27,6 +27,7 @@ import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
+import { useLogger } from "../TelemetryUtils";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -151,7 +152,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const { containerKey, supportedFeatures } = props;
 
 	const styles = useStyles();
-
+	const usageLogger = useLogger();
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
@@ -183,6 +184,10 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
 		setInnerViewSelection(data.value);
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: `Container_${data.value}Tab` },
+		});
 	};
 
 	return (

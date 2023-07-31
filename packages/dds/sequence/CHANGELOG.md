@@ -1,5 +1,25 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.5.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.5.2.0
+
+### Minor Changes
+
+-   Deprecate ISegment.parent ([#16097](https://github.com/microsoft/FluidFramework/issues/16097)) [9486bec0ea](https://github.com/microsoft/FluidFramework/commits/9486bec0ea2f9f1dd3e40fc3b4c42af6b6a44697)
+
+    This change deprecates the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
+
+    There are some circumstances where a consumer may wish to know if a segment is still in the underlying tree and were using the parent property to determine that.
+
+    Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
+
+-   slide parameter in changeInterval event ([#16117](https://github.com/microsoft/FluidFramework/issues/16117)) [46f74fe568](https://github.com/microsoft/FluidFramework/commits/46f74fe5684e44df436ed28ea41c98ca146b03cc)
+
+    The changeInterval event listener has a new parameter "slide" that is true if the event was caused by the interval endpoint sliding from a removed range.
+
 ## 2.0.0-internal.5.1.0
 
 ### Minor Changes

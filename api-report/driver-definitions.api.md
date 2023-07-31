@@ -8,7 +8,7 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -20,7 +20,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
@@ -200,6 +200,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 // @public
 export interface IDriverErrorBase {
     canRetry: boolean;
+    endpointReached?: boolean;
     readonly errorType: DriverErrorType;
     readonly message: string;
     online?: string;

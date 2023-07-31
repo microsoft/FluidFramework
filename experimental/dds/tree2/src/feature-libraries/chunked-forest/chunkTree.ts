@@ -8,19 +8,16 @@ import {
 	FieldKey,
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
-	lookupTreeSchema,
-	lookupGlobalFieldSchema,
 	mapCursorFields,
-	SchemaDataAndPolicy,
 	TreeSchemaIdentifier,
 	ValueSchema,
-	symbolFromKey,
 	SimpleObservingDependent,
 	recordDependency,
 	Value,
 	TreeValue,
 	StoredSchemaRepository,
 	CursorLocationType,
+	SchemaData,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
 import { fail } from "../../util";
@@ -40,10 +37,12 @@ export interface Disposable {
  * Creates a ChunkPolicy which responds to schema changes.
  */
 export function makeTreeChunker(
-	schema: StoredSchemaRepository<FullSchemaPolicy>,
+	schema: StoredSchemaRepository,
+	policy: FullSchemaPolicy,
 ): ChunkPolicy & Disposable {
 	return new Chunker(
 		schema,
+		policy,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
@@ -88,7 +87,8 @@ class Chunker implements ChunkPolicy, Disposable {
 	private readonly dependent: SimpleObservingDependent;
 
 	public constructor(
-		public readonly schema: StoredSchemaRepository<FullSchemaPolicy>,
+		public readonly schema: StoredSchemaRepository,
+		public readonly policy: FullSchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
@@ -102,7 +102,7 @@ class Chunker implements ChunkPolicy, Disposable {
 			return cached;
 		}
 		recordDependency(this.dependent, this.schema);
-		return tryShapeForSchema(this.schema, schema, this.typeShapes);
+		return tryShapeForSchema(this.schema, this.policy, schema, this.typeShapes);
 	}
 
 	public dispose(): void {
@@ -163,11 +163,12 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 }
 
 export function shapesFromSchema(
-	schema: SchemaDataAndPolicy<FullSchemaPolicy>,
+	schema: SchemaData,
+	policy: FullSchemaPolicy,
 ): Map<TreeSchemaIdentifier, ShapeInfo> {
 	const shapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
 	for (const identifier of schema.treeSchema.keys()) {
-		tryShapeForSchema(schema, identifier, shapes);
+		tryShapeForSchema(schema, policy, identifier, shapes);
 	}
 	return shapes;
 }
@@ -178,7 +179,8 @@ export function shapesFromSchema(
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
 function tryShapeForSchema(
-	schema: SchemaDataAndPolicy<FullSchemaPolicy>,
+	schema: SchemaData,
+	policy: FullSchemaPolicy,
 	type: TreeSchemaIdentifier,
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
@@ -186,21 +188,13 @@ function tryShapeForSchema(
 	if (cached) {
 		return cached;
 	}
-	const treeSchema = lookupTreeSchema(schema, type);
-	if (treeSchema.extraGlobalFields || treeSchema.extraLocalFields !== undefined) {
+	const treeSchema = schema.treeSchema.get(type) ?? fail("missing schema");
+	if (treeSchema.mapFields !== undefined) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
-	for (const [key, field] of treeSchema.localFields) {
-		const fieldShape = tryShapeForFieldSchema(schema, field, key, shapes);
-		if (fieldShape === undefined) {
-			return polymorphic;
-		}
-		fieldsArray.push(fieldShape);
-	}
-	for (const key of treeSchema.globalFields) {
-		const field = lookupGlobalFieldSchema(schema, key);
-		const fieldShape = tryShapeForFieldSchema(schema, field, symbolFromKey(key), shapes);
+	for (const [key, field] of treeSchema.structFields) {
+		const fieldShape = tryShapeForFieldSchema(schema, policy, field, key, shapes);
 		if (fieldShape === undefined) {
 			return polymorphic;
 		}
@@ -218,12 +212,13 @@ function tryShapeForSchema(
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
 function tryShapeForFieldSchema(
-	schema: SchemaDataAndPolicy<FullSchemaPolicy>,
+	schema: SchemaData,
+	policy: FullSchemaPolicy,
 	type: FieldStoredSchema,
 	key: FieldKey,
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
-	const kind = schema.policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
+	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
 	if (kind.multiplicity !== Multiplicity.Value) {
 		return undefined;
 	}
@@ -231,7 +226,7 @@ function tryShapeForFieldSchema(
 		return undefined;
 	}
 	const childType = [...type.types][0];
-	const childShape = tryShapeForSchema(schema, childType, shapes);
+	const childShape = tryShapeForSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}

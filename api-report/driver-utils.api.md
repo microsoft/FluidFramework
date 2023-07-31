@@ -29,9 +29,9 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
+import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
@@ -89,6 +89,9 @@ export class BlobTreeEntry {
 
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
+
+// @public
+export function calculateMaxWaitTime(error: unknown): number;
 
 // @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;

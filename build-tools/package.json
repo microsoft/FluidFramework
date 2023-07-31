@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.20.0",
+	"version": "0.22.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,8 +23,8 @@
 		"ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
 		"ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
 		"clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
-		"clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
-		"clean:nyc": "rimraf nyc/**",
+		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
+		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
 		"format": "npm run prettier:fix",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
@@ -66,13 +66,13 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^17.6.5",
-		"@commitlint/config-conventional": "^17.6.5",
+		"@commitlint/cli": "^17.6.6",
+		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/test-tools": "^0.2.158186",
-		"@microsoft/api-documenter": "^7.22.18",
-		"@microsoft/api-extractor": "^7.35.3",
+		"@fluidframework/build-tools": "^0.21.0",
+		"@microsoft/api-documenter": "^7.22.24",
+		"@microsoft/api-extractor": "^7.36.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^7.6.0",
@@ -86,18 +86,24 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^9.8.4",
+		"syncpack": "^9.8.6",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
+	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
 		"node": ">=14.17.0"
+	},
+	"dependenciesComments": {
+		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
 	},
 	"pnpm": {
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"eslint": "8.6.0"
-			}
+			},
+			"ignoreMissing": [
+				"fluid-framework"
+			]
 		},
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",

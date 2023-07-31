@@ -43,7 +43,7 @@
 			},
 			"Driver-Utils": {
 				"packages": ["@fluidframework/driver-utils"],
-				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils"]
+				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils", "Core-Utils"]
 			},
 			"Framework-Utils": {
 				"packages": ["@fluidframework/view-adapters", "@fluidframework/view-interfaces"],
@@ -61,7 +61,7 @@
 			},
 			"Telemetry-Utils": {
 				"packages": ["@fluidframework/telemetry-utils"],
-				"deps": ["Base-Utils", "Base-Definitions"]
+				"deps": ["Base-Utils", "Base-Definitions", "Core-Utils"]
 			},
 			"Container-Utils": {
 				"packages": ["@fluidframework/container-utils"],
@@ -165,10 +165,7 @@
 				"deps": ["Server-Tools"]
 			},
 			"Azure-Examples": {
-				"packages": [
-					"@fluid-example/presence-tracker",
-					"@fluid-example/app-integration-external-controller"
-				],
+				"packages": ["@fluid-example/app-integration-external-controller"],
 				"deps": ["UberPackage", "AzureClient", "ServiceClients"]
 			}
 		}

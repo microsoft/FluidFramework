@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldKindIdentifier, RevisionTag, Value } from "../../core";
+import { FieldKey, FieldKindIdentifier, RevisionTag } from "../../core";
 import { Brand } from "../../util";
 
 /**
@@ -23,7 +23,7 @@ export interface ChangeAtomId {
 	 * Uniquely identifies the changeset within which the change was made.
 	 * Only undefined when referring to an anonymous changesets.
 	 */
-	readonly revision: RevisionTag | undefined;
+	readonly revision?: RevisionTag;
 	/**
 	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 	 */
@@ -73,33 +73,7 @@ export interface NodeExistsConstraint {
  * @alpha
  */
 export interface NodeChangeset extends HasFieldChanges {
-	valueChange?: ValueChange;
-	valueConstraint?: ValueConstraint;
 	nodeExistsConstraint?: NodeExistsConstraint;
-}
-
-/**
- * @alpha
- */
-export interface ValueConstraint {
-	value: Value;
-	violated: boolean;
-}
-
-/**
- * @alpha
- */
-export interface ValueChange {
-	/**
-	 * The revision in which this change occurred.
-	 * Undefined when it can be inferred from context.
-	 */
-	revision?: RevisionTag;
-
-	/**
-	 * Can be left unset to represent the value being cleared.
-	 */
-	value?: Value;
 }
 
 /**

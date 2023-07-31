@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IFluidHandle,
+	IFluidLoadable,
+	IProvideFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import { FluidObjectId } from "../CommonInterfaces";
@@ -48,7 +53,7 @@ export type SharedObjectType = string;
  *
  * @returns A visual tree representation of the provided `sharedObject`.
  *
- * @public
+ * @internal
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
@@ -69,7 +74,7 @@ export type VisualizeSharedObject = (
  *
  * @returns A visual tree representation of the input `data`.
  *
- * @public
+ * @internal
  */
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 
@@ -91,18 +96,18 @@ export interface SharedObjectVisualizers {
 }
 
 /**
- * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
+ * Specifies editors for different {@link @fluidframework/shared-object-base#ISharedObject} types.
  *
  * @remarks
  *
  * - `key`: The type of Shared object ({@link @fluidframework/datastore-definitions#IChannelFactory.Type}).
  *
- * - `value`: A renderer that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
- * specified type and generates a corresponding {@link VisualizerNode} for it.
+ * - `value`: A editor that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
+ * specified type and preforms the corresponding edit for it.
  */
 export interface SharedObjectEditors {
 	/**
-	 * Individual Fluid object visualizers, keyed by {@link SharedObjectType}.
+	 * Individual Fluid object editors, keyed by {@link SharedObjectType}.
 	 */
 	[k: SharedObjectType]: EditSharedObject;
 }
@@ -229,7 +234,7 @@ export class DataVisualizerGraph
 	}
 
 	/**
-	 * Begins the process of applying an edit to a Fluid object.
+	 * Applies an edit to a Fluid object.
 	 * @param edit - is a Edit object that describes an edit to a Fluid object.
 	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
@@ -361,6 +366,11 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		 * Encapsulates the policies for rendering different kinds of DDSs.
 		 */
 		private readonly visualizeSharedObject: VisualizeSharedObject,
+
+		/**
+		 * Callback for editing {@link VisualizerNode.sharedObject}.
+		 * Encapsulates the policies for editing different kinds of DDSs.
+		 */
 		private readonly editSharedObject: EditSharedObject,
 
 		/**
@@ -423,7 +433,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 
 	/**
 	 * Edits a {@link @fluidframework/shared-object-base#ISharedObject}
-	 * @param edit - is a Edit object that describes an edit to a Fluid object.
+	 * @param edit - Describes an edit to a Fluid object.
 	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
 	public async applyEdit(edit: Edit): Promise<void> {

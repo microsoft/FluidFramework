@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { ParallelRequests } from "../parallelRequests";
 
@@ -28,11 +28,13 @@ describe("Parallel Requests", () => {
 		let requests = 0;
 		let dispatches = 0;
 
+		const logger = new MockLogger();
+
 		const manager = new ParallelRequests<number>(
 			from,
 			knownTo ? to : undefined,
 			payloadSize,
-			new TelemetryUTLogger(),
+			logger,
 			async (request: number, _from: number, _to: number) => {
 				let length = _to - _from;
 				requests++;
@@ -47,7 +49,7 @@ describe("Parallel Requests", () => {
 						length = Math.min(length, payloadSize / 2 + 1);
 						break;
 					case HowMany.TooMany:
-						length += 2;
+						length = 2 * length + 2;
 						break;
 					case HowMany.Exact:
 						break;
@@ -84,6 +86,7 @@ describe("Parallel Requests", () => {
 		assert(nextElement === to);
 		assert(!knownTo || dispatches === requests);
 		assert.equal(requests, expectedRequests, "expected requests");
+		logger.assertMatchNone([{ category: "error" }]);
 	}
 
 	async function testCancel(
@@ -96,12 +99,13 @@ describe("Parallel Requests", () => {
 		let nextElement = from;
 		let requests = 0;
 		let dispatches = 0;
+		const logger = new MockLogger();
 
 		const manager = new ParallelRequests<number>(
 			from,
 			to,
 			payloadSize,
-			new TelemetryUTLogger(),
+			logger,
 			async (request: number, _from: number, _to: number) => {
 				const length = _to - _from;
 				requests++;
@@ -136,6 +140,7 @@ describe("Parallel Requests", () => {
 
 		assert(dispatches <= requests);
 		assert(requests === expectedRequests);
+		logger.assertMatchNone([{ category: "error" }]);
 	}
 
 	it("no concurrency, single request, over", async () => {
@@ -197,11 +202,13 @@ describe("Parallel Requests", () => {
 	});
 
 	it("exception in request", async () => {
+		const logger = new MockLogger();
+
 		const manager = new ParallelRequests<number>(
 			1,
 			100,
 			10,
-			new TelemetryUTLogger(),
+			logger,
 			async (request: number, _from: number, _to: number) => {
 				throw new Error("request");
 			},
@@ -218,14 +225,17 @@ describe("Parallel Requests", () => {
 			assert(error.message === "request");
 		}
 		assert(!success);
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	it("exception in response", async () => {
+		const logger = new MockLogger();
+
 		const manager = new ParallelRequests<number>(
 			1,
 			100,
 			10,
-			new TelemetryUTLogger(),
+			logger,
 			async (request: number, _from: number, _to: number) => {
 				return { cancel: false, partial: false, payload: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
 			},
@@ -242,5 +252,6 @@ describe("Parallel Requests", () => {
 			assert(error.message === "response");
 		}
 		assert(!success);
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 });

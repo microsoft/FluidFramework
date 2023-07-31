@@ -16,7 +16,6 @@ import {
 	defaultEditors,
 	FluidObjectNode,
 	RootHandleNode,
-	VisualizeSharedObject,
 	SharedObjectEdit,
 } from "./data-visualization";
 import { IContainerDevtools } from "./IContainerDevtools";
@@ -28,6 +27,7 @@ import {
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
@@ -42,7 +42,6 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,
-	SendEditData,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
 import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
@@ -73,19 +72,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 */
 	containerData?: Record<string, IFluidLoadable>;
 
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link ContainerDevtoolsProps.containerData}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * Any visualizer configurations specified here will take precedence over system defaults, as well as any
-	 * provided when initializing the Devtools.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	// TODO: Add ability for customers to specify custom visualizer overrides
 }
 
 /**
@@ -342,8 +329,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			return false;
 		},
 
-		[SendEditData.MessageType]: async (untypedMessage) => {
-			const message = untypedMessage as SendEditData.Message;
+		[DataEdit.MessageType]: async (untypedMessage) => {
+			const message = untypedMessage as DataEdit.Message;
 			if (message.data.containerKey === this.containerKey) {
 				await this.editData(message.data.edit);
 				return true;
@@ -472,16 +459,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(
-						props.containerData,
-						{
-							...defaultVisualizers,
-							...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
-						},
-						{
-							...defaultEditors,
-						},
-				  );
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers, defaultEditors);
+
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
@@ -589,7 +568,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	}
 
 	/**
-	 * Begins the process of changing data inside a DDS by using {@link Edit}
+	 * Applies an {@link Edit} to a {@link SharedObject}
 	 */
 	private async editData(edit: SharedObjectEdit): Promise<void> {
 		return this.dataVisualizer?.applyEdit(edit);

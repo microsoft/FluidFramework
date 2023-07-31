@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, PathVisitor, ProtoNodes, TreeValue, UpPath, topDownPath } from "../../core";
+import { FieldKey, PathVisitor, ProtoNodes, UpPath, topDownPath } from "../../core";
 import { Events, ISubscribable } from "../../events";
 import { brand, getOrCreate } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
@@ -16,7 +16,6 @@ import { EditableTree, on } from "./editableTreeTypes";
 export interface OperationBinderEvents {
 	delete(context: DeleteBindingContext): void;
 	insert(context: InsertBindingContext): void;
-	setValue(context: SetValueBindingContext): void;
 	batch(context: BatchBindingContext): void;
 }
 
@@ -208,10 +207,7 @@ export type BindPath = DownPath;
  *
  * @alpha
  */
-export type VisitorBindingContext =
-	| DeleteBindingContext
-	| InsertBindingContext
-	| SetValueBindingContext;
+export type VisitorBindingContext = DeleteBindingContext | InsertBindingContext;
 
 /**
  * Enumeration of binding categories
@@ -221,7 +217,6 @@ export type VisitorBindingContext =
 export const BindingType = {
 	Delete: "delete",
 	Insert: "insert",
-	SetValue: "setValue",
 	Invalidation: "invalidation",
 	Batch: "batch",
 } as const;
@@ -262,17 +257,6 @@ export interface InsertBindingContext extends BindingContext {
 	readonly type: typeof BindingType.Insert;
 	readonly path: UpPath;
 	readonly content: ProtoNodes;
-}
-
-/**
- * The binding context for a set value event
- *
- * @alpha
- */
-export interface SetValueBindingContext extends BindingContext {
-	readonly type: typeof BindingType.SetValue;
-	readonly path: UpPath;
-	readonly value: TreeValue;
 }
 
 /**
@@ -318,7 +302,6 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	public constructor(protected readonly options: BinderOptions) {}
 	public abstract onDelete(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
-	public abstract onSetValue(path: UpPath, value: TreeValue): void;
 	public registerListener(
 		contextType: BindingContextType,
 		trees: BindTree[],
@@ -334,7 +317,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					listeners: new Set(),
 					children: new Map(),
 				};
-				assert(contextRoots !== undefined, "expected contextRoots to be defined");
+				assert(contextRoots !== undefined, 0x6da /* expected contextRoots to be defined */);
 				contextRoots.set(tree.field, newRoot);
 				this.bindTree(contextType, tree, listener, newRoot);
 			} else {
@@ -387,7 +370,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 				foundTree.listeners.delete(listener);
 			} else {
 				tree.children.forEach((childTree, fieldKey) => {
-					assert(foundTree !== undefined, "expected foundTree to be defined");
+					assert(foundTree !== undefined, 0x6db /* expected foundTree to be defined */);
 					const childCallTree = foundTree.children.get(fieldKey);
 					if (childCallTree !== undefined) {
 						this.unregisterListener(contextType, childTree, listener, childCallTree);
@@ -488,13 +471,6 @@ class DirectPathVisitor extends AbstractPathVisitor {
 			type: BindingType.Insert,
 		});
 	}
-
-	public onSetValue(path: UpPath, value: TreeValue): void {
-		this.processRegisteredPaths(path, BindingType.SetValue, {
-			value,
-			type: BindingType.SetValue,
-		});
-	}
 }
 
 /**
@@ -521,10 +497,6 @@ class InvalidatingPathVisitor
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		this.processRegisteredPaths(path);
-	}
-
-	public onSetValue(path: UpPath, value: TreeValue): void {
 		this.processRegisteredPaths(path);
 	}
 
@@ -576,19 +548,6 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 				path,
 				content,
 				type: BindingType.Insert,
-				listeners,
-			});
-		}
-	}
-
-	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toDownPath(path);
-		const listeners = this.getListeners(BindingType.SetValue, current);
-		if (listeners !== undefined) {
-			this.eventQueue.push({
-				path,
-				value,
-				type: BindingType.SetValue,
 				listeners,
 			});
 		}
@@ -666,7 +625,7 @@ class AbstractDataBinder<
 			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
 				anchor[on]("subtreeChanging", (upPath: UpPath) => {
-					assert(newVisitor !== undefined, "visitor expected to be defined");
+					assert(newVisitor !== undefined, 0x6dc /* visitor expected to be defined */);
 					if (!this.visitorLocations.has(newVisitor)) {
 						this.visitorLocations.set(newVisitor, upPath);
 					}
@@ -728,8 +687,8 @@ class BufferingDataBinder<E extends Events<E>>
 		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
 			const pathA = this.visitorLocations.get(a);
 			const pathB = this.visitorLocations.get(b);
-			assert(pathA !== undefined, "pathA expected to be defined");
-			assert(pathB !== undefined, "pathB expected to be defined");
+			assert(pathA !== undefined, 0x6dd /* pathA expected to be defined */);
+			assert(pathB !== undefined, 0x6de /* pathB expected to be defined */);
 			return sortFn(pathA, pathB);
 		};
 		const sortedVisitors: BufferingPathVisitor[] = nativeSort(unsortedVisitors, compareFn);

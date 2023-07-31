@@ -31,21 +31,18 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;
 	const { containerFeatureFlags } = useContainerFeaturesContext();
 	const editingEnabled =
-		containerFeatureFlags[ContainerDevtoolsFeature.ContainerDataEditing] === true;
+		containerFeatureFlags[ContainerDevtoolsFeature.ContainerDataEditing] === true &&
+		node.editProps !== undefined;
 	const header = (
 		<>
 			{editingEnabled === true ? (
-				<EditableValueView
-					label={label}
-					containerKey={containerKey}
-					node={node}
-				></EditableValueView>
+				<EditableValueView label={label} containerKey={containerKey} node={node} />
 			) : (
 				<TreeHeader
 					label={label}
 					nodeTypeMetadata={node.typeMetadata}
 					inlineValue={String(node.value)}
-				></TreeHeader>
+				/>
 			)}
 		</>
 	);
