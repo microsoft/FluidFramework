@@ -10,7 +10,6 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-	IResponseException,
 	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";

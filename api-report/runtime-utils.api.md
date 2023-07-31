@@ -102,22 +102,6 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
-export interface IResponseException extends Error {
-    // (undocumented)
-    code: number;
-    // (undocumented)
-    errorFromRequestFluidObject: true;
-    // (undocumented)
-    message: string;
-    // (undocumented)
-    stack?: string;
-    // (undocumented)
-    underlyingResponseHeaders?: {
-        [key: string]: any;
-    };
-}
-
-// @public (undocumented)
 export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
 // @public

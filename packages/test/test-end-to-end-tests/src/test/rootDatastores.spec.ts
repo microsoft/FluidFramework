@@ -17,7 +17,7 @@ import {
 	IDataStoreWithBindToContext_Deprecated,
 } from "@fluidframework/container-runtime-definitions";
 import { FluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
-import { IResponseException, requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -167,11 +167,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			try {
 				dataStore = await getAliasedDataStore(dataObject1, wrongAlias, /* wait */ false);
 			} catch (e) {
-				// back-compat - getRootDataStore throws an error with 404 code if the data store doesn't exist.
+				// back-compat - getRootDataStore throws an error if the data store doesn't exist.
 				error = e;
 			}
 			assert(
-				dataStore === undefined || (error as IResponseException)?.code === 404,
+				dataStore === undefined || error !== undefined,
 				"The aliasing should not have happened",
 			);
 		});
@@ -425,11 +425,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			try {
 				dataStore = await getAliasedDataStore(dataObject2, aliasedDataStore1.runtime.id);
 			} catch (e) {
-				// back-compat - getRootDataStore throws an error with 404 code if the data store doesn't exist.
+				// back-compat - getRootDataStore throws an error if the data store doesn't exist.
 				error = e;
 			}
 			assert(
-				dataStore === undefined || (error as IResponseException)?.code === 404,
+				dataStore === undefined || error !== undefined,
 				"Expected getAliasedDataStore to fail as the datastore is not yet a root datastore",
 			);
 
