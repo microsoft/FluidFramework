@@ -4,18 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
+	ITestContainerConfig,
 	ITestObjectProvider,
+	mockConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -24,6 +22,7 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -37,6 +36,12 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;
 	let dataStoreA: ITestDataObject;
+
+	const settings = { "Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10 };
+	const testConfig: ITestContainerConfig = {
+		...defaultGCConfig,
+		loaderProps: { configProvider: mockConfigProvider(settings) },
+	};
 
 	/**
 	 * Returns the reference state for all the nodes in the given summary tree.
@@ -58,32 +63,6 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	}
 
 	/**
-	 * Returns the unreferenced timestamp for all the nodes in the given summary tree.
-	 * If a node is referenced, the unreferenced timestamp is undefined.
-	 * @returns a map of nodePath to its unreferenced timestamp.
-	 */
-	async function getUnreferencedTimestamps(summaryTree: ISummaryTree) {
-		const gcState = getGCStateFromSummary(summaryTree);
-		assert(gcState !== undefined, "GC tree is not available in the summary");
-
-		const nodeTimestamps: Map<string, number | undefined> = new Map();
-		for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
-			nodeTimestamps.set(nodePath.slice(1), nodeData.unreferencedTimestampMs);
-		}
-		return nodeTimestamps;
-	}
-
-	/*
-	 * Utility function that returns the sequence number of a summary from the summary metadata.
-	 */
-	function getSummarySequenceNumber(summaryTree: ISummaryTree) {
-		const metadataBlob = summaryTree.tree[".metadata"];
-		assert(metadataBlob.type === SummaryType.Blob, "Container runtime metadata is not a blob");
-		const metadata = JSON.parse(metadataBlob.content as string) as Record<string, unknown>;
-		return (metadata.message as ISequencedDocumentMessage).sequenceNumber;
-	}
-
-	/**
 	 * Reconnects the summarizer so that it is elected as the current summarizer. This is needed for two reasons:
 	 * 1. In ODSP, when a summary is submitted, the previous one may be deleted based on heuristics. Since these tests
 	 * need to load a container from an older summary, we need to load a summarizer with the old summary before a new
@@ -100,7 +79,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		mainContainer = await provider.makeTestContainer(defaultGCConfig);
+		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(
 			mainContainer,
 			"default",
@@ -146,7 +125,9 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			undefined,
+			{
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 			summaryResult1.summaryVersion,
 		);
 
@@ -177,8 +158,13 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		// Summarize - summary3 with the new summarizer. Before it summarizes, it will catch up to latest and so the
 		// reference state of the data stores should be the same as in summary2.
 		// Also, note that while catching up, it will download summary2 and update state from it.
-		const result = summarizer2.summarizeOnDemand({ reason: "test" });
-		await result.summarySubmitted;
+		const containerClose = new Deferred<IErrorBase | undefined>();
+		container2.on("disposed", (error) => {
+			containerClose.resolve(error);
+		});
+		summarizer2.summarizeOnDemand({ reason: "test" });
+		const result = await containerClose.promise;
 		assert(container2.closed, "Summarizer should close");
+		assert(result === undefined, "Summarizer should close");
 	});
 });
