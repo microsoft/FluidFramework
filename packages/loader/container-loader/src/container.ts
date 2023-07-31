@@ -1806,7 +1806,9 @@ export class Container
 						eventName: "CodeProposalNotIFluidCodeDetails",
 					});
 				}
-				this.processCodeProposal().catch((error) => {
+				this.processCodeProposal().then(() => {
+					this.emit("approveProposal", sequenceNumber, key, value);
+				}).catch((error) => {
 					const normalizedError = normalizeError(error);
 					this.close(normalizedError);
 					throw error;

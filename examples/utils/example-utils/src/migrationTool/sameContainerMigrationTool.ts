@@ -360,58 +360,27 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._anyQuorumProposalSeenP = new Promise<void>((resolve) => {
-			// Here we want to watch the quorum and resolve on the first sequenced proposal.
-			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
-			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
-			// TODO: Consider if there is any better way to watch this happen
-			const watchForQuorumProposal = (op: ISequencedDocumentMessage) => {
-				if (
-					op.type === MessageType.Propose &&
-					(op.contents as { key?: unknown }).key === "code"
-				) {
-					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
-					// Or maybe set that up in ensureQuorumCodeDetails().
-					this.context.deltaManager.off("op", watchForQuorumProposal);
-					this._anyQuorumProposalSeen = true;
-					console.log("Resolving this._anyQuorumProposalSeenP");
-					resolve();
-				}
+			const container = await this._containerP;
+			const watchForCodeDetailsProposed = () => {
+				container.off("codeDetailsProposed", watchForCodeDetailsProposed);
+				this._anyQuorumProposalSeen = true;
+				console.log("Resolving this._anyQuorumProposalSeenP");
+				resolve();
 			};
-			// TODO: Consider if watching container.on("codeDetailsProposed", ...) might be more appropriate.
-			this.context.deltaManager.on("op", watchForQuorumProposal);
+			
+			container.on("codeDetailsProposed", watchForCodeDetailsProposed);
 		});
 
 		this._quorumApprovalCompleteP = new Promise<void>((resolve) => {
-			// Here we want to watch the quorum and track all proposals, and resolve on the MSN advancing past the last one's sequence number.
-			// This is even more awkward than the proposal tracking, because there is no event for proposal acceptance on the Container, only on the QuorumProposals.
-			// Again for now, spying on the deltaManager and using insider knowledge.
-			// TODO: Consider if there is any better way to watch this happen
-			const proposalSequenceNumbers: number[] = [];
-			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage) => {
-				if (
-					op.type === MessageType.Propose &&
-					(op.contents as { key?: unknown }).key === "code"
-				) {
-					proposalSequenceNumbers.push(op.sequenceNumber);
-				}
-				if (
-					proposalSequenceNumbers.length > 0 &&
-					proposalSequenceNumbers.every(
-						(sequenceNumber) => sequenceNumber <= op.minimumSequenceNumber,
-					)
-				) {
-					this.context.deltaManager.off("op", watchForLastQuorumAccept);
-					this._quorumApprovalComplete = true;
-					console.log("Resolving this._quorumApprovalCompleteP");
-					resolve();
-				}
+			const container = await this._containerP;
+			const watchForApproveProposal = () => {
+				container.off("approveProposal", watchForApproveProposal);
+				this._quorumApprovalComplete = true;
+				console.log("Resolving this._quorumApprovalCompleteP");
+				resolve();
 			};
-			// TODO: Consider if watching container.on("codeDetailsProposed", ...) might be more appropriate.
-			// Note container.on("codeDetailsProposed", (, proposal) => { proposal.sequenceNumber })
-			// This will let us learn the sequence number of each proposal that comes in.
-			// Unfortunately no event on proposal acceptance (from the container) but we can still watch the MSN
-			// ourselves to know when we're done processing them?
-			this.context.deltaManager.on("op", watchForLastQuorumAccept);
+
+			container.on("approveProposal", watchForApproveProposal);
 		});
 
 		this._v2SummaryP = new Promise<void>((resolve) => {

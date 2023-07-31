@@ -228,7 +228,7 @@ export class QuorumProposals
 
 	/**
 	 * Proposes a new value. Returns a promise that will either:
-	 * - Resolve when the proposal is accepted
+	 * - Resolve when a proposal with a matching key is accepted
 	 * - Reject if the proposal fails to send or if the QuorumProposals is disposed
 	 */
 	public async propose(key: string, value: any): Promise<void> {
@@ -255,6 +255,7 @@ export class QuorumProposals
 					this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
 					this.stateEvents.off("disconnected", disconnectedHandler);
 					this.stateEvents.on("localProposalApproved", localProposalApprovedHandler);
+					this.stateEvents.on("proposalApproved", proposalApprovedHandler);
 				}
 			};
 			const localProposalApprovedHandler = (sequenceNumber: number) => {
@@ -264,6 +265,13 @@ export class QuorumProposals
 					removeListeners();
 				}
 			};
+
+			const proposalApprovedHandler = (acceptedProposalKey: string) => {
+				if(key === acceptedProposalKey){
+					resolve();
+					removeListeners();
+				}
+			}
 
 			// There are two error flows we consider:  disconnect and disposal.
 			// If we get disconnected before the proposal is sequenced, it has one of two possible futures:
@@ -297,6 +305,7 @@ export class QuorumProposals
 			const removeListeners = () => {
 				this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
 				this.stateEvents.off("localProposalApproved", localProposalApprovedHandler);
+				this.stateEvents.off("proposalApproved", proposalApprovedHandler);
 				this.stateEvents.off("disconnected", disconnectedHandler);
 				this.stateEvents.off("disposed", disposedHandler);
 			};
@@ -352,6 +361,7 @@ export class QuorumProposals
 		}
 		completed.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
 
+		let firstProposalAccepted = false;
 		for (const proposal of completed) {
 			const committedProposal: ICommittedProposal = {
 				approvalSequenceNumber: message.sequenceNumber,
@@ -368,15 +378,23 @@ export class QuorumProposals
 			// clear the values cache
 			this.valuesSnapshotCache = undefined;
 
-			this.emit(
-				"approveProposal",
-				committedProposal.sequenceNumber,
-				committedProposal.key,
-				committedProposal.value,
-				committedProposal.approvalSequenceNumber,
-			);
-
-			this.proposals.delete(proposal.sequenceNumber);
+			// accept first proposal with matching key and delete all other proposals with key
+			for (const [sequenceNumber, p] of this.proposals) {
+				if (p.key === committedProposal.key) {
+					if(!firstProposalAccepted){
+						this.emit(
+							"approveProposal",
+							committedProposal.sequenceNumber,
+							committedProposal.key,
+							committedProposal.value,
+							committedProposal.approvalSequenceNumber,
+						);
+						this.stateEvents.emit("proposalApproved", proposal.key);
+						firstProposalAccepted = true;
+					}
+					this.proposals.delete(sequenceNumber);
+				}
+			}
 
 			// clear the proposals cache
 			this.proposalsSnapshotCache = undefined;
