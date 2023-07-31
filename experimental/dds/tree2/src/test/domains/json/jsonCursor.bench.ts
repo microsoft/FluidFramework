@@ -113,7 +113,7 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(schema);
+						const forest = buildChunkedForest(schema, defaultSchemaPolicy);
 						initializeForest(forest, [singleTextCursor(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
