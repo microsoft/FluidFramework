@@ -53,7 +53,7 @@ export type SharedObjectType = string;
  *
  * @returns A visual tree representation of the provided `sharedObject`.
  *
- * @public
+ * @internal
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
@@ -74,7 +74,7 @@ export type VisualizeSharedObject = (
  *
  * @returns A visual tree representation of the input `data`.
  *
- * @public
+ * @internal
  */
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 

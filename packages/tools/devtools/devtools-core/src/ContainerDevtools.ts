@@ -16,7 +16,6 @@ import {
 	defaultEditors,
 	FluidObjectNode,
 	RootHandleNode,
-	VisualizeSharedObject,
 	SharedObjectEdit,
 } from "./data-visualization";
 import { IContainerDevtools } from "./IContainerDevtools";
@@ -73,19 +72,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 */
 	containerData?: Record<string, IFluidLoadable>;
 
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link ContainerDevtoolsProps.containerData}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * Any visualizer configurations specified here will take precedence over system defaults, as well as any
-	 * provided when initializing the Devtools.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	// TODO: Add ability for customers to specify custom visualizer overrides
 }
 
 /**
@@ -472,16 +459,10 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(
-						props.containerData,
-						{
-							...defaultVisualizers,
-							...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
-						},
-						{
-							...defaultEditors,
-						},
-				  );
+				: new DataVisualizerGraph(props.containerData, {
+						...defaultVisualizers,
+						...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
+				  });
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging

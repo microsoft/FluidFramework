@@ -39,6 +39,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
+	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -99,6 +100,44 @@ export interface IMockContainerRuntimePendingMessage {
 }
 
 /**
+ * Options for the container runtime mock.
+ */
+export interface IMockContainerRuntimeOptions {
+	/**
+	 * Configures the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
+	 * and then sent them as a single batch when `flush()` is called on the runtime.
+	 *
+	 * By default, flush mode is Immediate.
+	 */
+	readonly flushMode?: FlushMode;
+	/**
+	 * If configured, it will simulate group batching by forcing all ops within a batch to have
+	 * the same sequence number.
+	 *
+	 * By default, the value is `false`
+	 */
+	readonly enableGroupedBatching?: boolean;
+}
+
+const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
+	flushMode: FlushMode.Immediate,
+	enableGroupedBatching: false,
+};
+
+const makeContainerRuntimeOptions = (
+	mockContainerRuntimeOptions: IMockContainerRuntimeOptions,
+): Required<IMockContainerRuntimeOptions> => ({
+	...defaultMockContainerRuntimeOptions,
+	...mockContainerRuntimeOptions,
+});
+
+interface IInternalMockRuntimeMessage {
+	content: any;
+	localOpMetadata: unknown;
+}
+
+/**
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
@@ -109,10 +148,16 @@ export class MockContainerRuntime {
 	private readonly deltaManager: MockDeltaManager;
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+	private readonly outbox: IInternalMockRuntimeMessage[] = [];
+	/**
+	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
+	 */
+	protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
+		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
@@ -124,47 +169,119 @@ export class MockContainerRuntime {
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
 		this.dataStoreRuntime.deltaManager = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
+		this.dataStoreRuntime.containerRuntime = this;
 		// FluidDataStoreRuntime already creates a clientId, reuse that so they are in sync.
 		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
 		factory.quorum.addMember(this.clientId, {});
+		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+		assert(
+			this.runtimeOptions.flushMode !== FlushMode.Immediate ||
+				!this.runtimeOptions.enableGroupedBatching,
+			"Grouped batching is not compatible with FlushMode.Immediate",
+		);
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
-		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown) =>
-				this.submit(messageContent, localOpMetadata),
-			() => this.dirty(),
+		assert(
+			this.dataStoreRuntime.createDeltaConnection !== undefined,
+			"Unsupported datastore runtime version",
 		);
+		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
-		const clientSequenceNumber = this.clientSequenceNumber++;
-		const msg: Partial<ISequencedDocumentMessage> = {
-			clientId: this.clientId,
-			clientSequenceNumber,
-			contents: messageContent,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-			type: MessageType.Operation,
+		const clientSequenceNumber = this.clientSequenceNumber;
+		const message = {
+			content: messageContent,
+			localOpMetadata,
 		};
-		this.factory.pushMessage(msg);
 
-		this.addPendingMessage(messageContent, localOpMetadata, clientSequenceNumber);
+		switch (this.runtimeOptions.flushMode) {
+			case FlushMode.Immediate: {
+				this.submitInternal(message);
+				this.clientSequenceNumber++;
+				break;
+			}
+
+			case FlushMode.TurnBased: {
+				this.outbox.push(message);
+				break;
+			}
+
+			default:
+				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
+		}
 
 		return clientSequenceNumber;
 	}
 
 	public dirty(): void {}
 
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
+	 * this method was called. Otherwise, calling the method does nothing.
+	 */
+	public flush?() {
+		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
+			return;
+		}
+
+		while (this.outbox.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.submitInternal(this.outbox.shift()!);
+		}
+	}
+
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will rebase the current batch by resubmitting them
+	 * to the data stores. Otherwise, calling the method does nothing.
+	 *
+	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
+	 */
+	public rebase?() {
+		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
+			return;
+		}
+
+		assert(
+			this.runtimeOptions.enableGroupedBatching,
+			"Rebasing is not supported when group batching is disabled",
+		);
+
+		const messagesToRebase = this.outbox.slice();
+		this.outbox.length = 0;
+
+		messagesToRebase.forEach((message) =>
+			this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
+		);
+	}
+
+	private submitInternal(message: IInternalMockRuntimeMessage) {
+		this.factory.pushMessage({
+			clientId: this.clientId,
+			clientSequenceNumber: this.clientSequenceNumber,
+			contents: message.content,
+			referenceSequenceNumber: this.referenceSequenceNumber,
+			type: MessageType.Operation,
+		});
+		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
+	}
+
 	public process(message: ISequencedDocumentMessage) {
 		this.deltaManager.lastSequenceNumber = message.sequenceNumber;
 		this.deltaManager.lastMessage = message;
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
-		this.deltaConnections.forEach((dc) => {
-			dc.process(message, local, localOpMetadata);
-		});
+		this.dataStoreRuntime.process(message, local, localOpMetadata);
+
+		if (this.runtimeOptions.enableGroupedBatching) {
+			// If the grouped batching scenario is enabled, we need to advance the
+			// client sequence number when we process a remote op. Sending ops will
+			// not increment this value.
+			this.clientSequenceNumber++;
+		}
 	}
 
 	protected addPendingMessage(
@@ -193,6 +310,13 @@ export class MockContainerRuntime {
 		}
 		return [local, localOpMetadata];
 	}
+
+	/**
+	 * The current reference sequence number observed by this runtime instance.
+	 */
+	protected get referenceSequenceNumber() {
+		return this.deltaManager.lastSequenceNumber;
+	}
 }
 
 /**
@@ -215,6 +339,20 @@ export class MockContainerRuntimeFactory {
 	protected messages: ISequencedDocumentMessage[] = [];
 	protected readonly runtimes: MockContainerRuntime[] = [];
 
+	/**
+	 * The container runtime options which will be provided to the all runtimes
+	 * created by this factory and also drive the way the ops are processed.
+	 *
+	 * See {@link IMockContainerRuntimeOptions}
+	 */
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+
+	constructor(
+		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
+	) {
+		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
+	}
+
 	public get outstandingMessageCount() {
 		return this.messages.length;
 	}
@@ -230,7 +368,11 @@ export class MockContainerRuntimeFactory {
 	public createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 	): MockContainerRuntime {
-		const containerRuntime = new MockContainerRuntime(dataStoreRuntime, this);
+		const containerRuntime = new MockContainerRuntime(
+			dataStoreRuntime,
+			this,
+			this.runtimeOptions,
+		);
 		this.runtimes.push(containerRuntime);
 		return containerRuntime;
 	}
@@ -246,6 +388,31 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
+	private processFirstMessage() {
+		assert(this.messages.length > 0, "The message queue should not be empty");
+
+		// Explicitly JSON clone the value to match the behavior of going thru the wire.
+		const message = JSON.parse(
+			JSON.stringify(this.messages.shift()),
+		) as ISequencedDocumentMessage;
+
+		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
+		this.advanceForFlushMode(FlushMode.Immediate);
+		message.sequenceNumber = this.sequenceNumber;
+		message.minimumSequenceNumber = this.getMinSeq();
+		for (const runtime of this.runtimes) {
+			runtime.process(message);
+		}
+	}
+
+	private advanceForFlushMode(flushMode: FlushMode) {
+		if (this.runtimeOptions.flushMode === flushMode) {
+			this.sequenceNumber++;
+		}
+	}
+
 	/**
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
@@ -254,19 +421,8 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process a message that did not exist");
 		}
 
-		let msg = this.messages.shift();
-
-		// Explicitly JSON clone the value to match the behavior of going thru the wire.
-		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
-
-		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		this.minSeq.set(msg.clientId as string, msg.referenceSequenceNumber);
-		msg.sequenceNumber = ++this.sequenceNumber;
-		msg.minimumSequenceNumber = this.getMinSeq();
-		for (const runtime of this.runtimes) {
-			runtime.process(msg);
-		}
+		this.advanceForFlushMode(FlushMode.TurnBased);
+		this.processFirstMessage();
 	}
 
 	/**
@@ -278,8 +434,10 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
+		this.advanceForFlushMode(FlushMode.TurnBased);
+
 		for (let i = 0; i < count; i++) {
-			this.processOneMessage();
+			this.processFirstMessage();
 		}
 	}
 
@@ -287,8 +445,10 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
+		this.advanceForFlushMode(FlushMode.TurnBased);
+
 		while (this.messages.length > 0) {
-			this.processOneMessage();
+			this.processFirstMessage();
 		}
 	}
 }
@@ -432,6 +592,17 @@ export class MockFluidDataStoreRuntime
 		namespace: "fluid:MockFluidDataStoreRuntime",
 	});
 	public quorum = new MockQuorumClients();
+	public containerRuntime?: MockContainerRuntime;
+	private readonly deltaConnections: MockDeltaConnection[] = [];
+	public createDeltaConnection?(): MockDeltaConnection {
+		const deltaConnection = new MockDeltaConnection(
+			(messageContent: any, localOpMetadata: unknown) =>
+				this.submitMessageInternal(messageContent, localOpMetadata),
+			() => this.setChannelDirty(),
+		);
+		this.deltaConnections.push(deltaConnection);
+		return deltaConnection;
+	}
 
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
@@ -524,12 +695,30 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
+		assert(
+			this.containerRuntime !== undefined,
+			"The container runtime has not been initialized",
+		);
+		return this.containerRuntime.submit(messageContent, localOpMetadata);
+	}
+
+	private setChannelDirty(): void {
+		assert(
+			this.containerRuntime !== undefined,
+			"The container runtime has not been initialized",
+		);
+		return this.containerRuntime.dirty();
+	}
+
 	public submitSignal(type: string, content: any) {
 		return null;
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean): void {
-		return;
+	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+		this.deltaConnections.forEach((dc) => {
+			dc.process(message, local, localOpMetadata);
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {
@@ -606,12 +795,15 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
-		return;
+		this.deltaConnections.forEach((dc) => {
+			dc.reSubmit(content, localOpMetadata);
+		});
 	}
 
 	public async applyStashedOp(content: any) {
 		return;
 	}
+
 	public rollback?(message: any, localOpMetadata: unknown): void {
 		return;
 	}

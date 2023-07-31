@@ -162,30 +162,6 @@ use_old_InterfaceDeclaration_IDevtools(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeSharedObject": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_VisualizeSharedObject():
-    TypeOnly<old.VisualizeSharedObject>;
-declare function use_current_TypeAliasDeclaration_VisualizeSharedObject(
-    use: TypeOnly<current.VisualizeSharedObject>);
-use_current_TypeAliasDeclaration_VisualizeSharedObject(
-    get_old_TypeAliasDeclaration_VisualizeSharedObject());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeSharedObject": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_VisualizeSharedObject():
-    TypeOnly<current.VisualizeSharedObject>;
-declare function use_old_TypeAliasDeclaration_VisualizeSharedObject(
-    use: TypeOnly<old.VisualizeSharedObject>);
-use_old_TypeAliasDeclaration_VisualizeSharedObject(
-    get_current_TypeAliasDeclaration_VisualizeSharedObject());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_initializeDevtools": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_initializeDevtools():

@@ -152,7 +152,6 @@ export {
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,

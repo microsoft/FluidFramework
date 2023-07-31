@@ -57,7 +57,7 @@ This avoids the need to use a Proxy for any of the node implementations, as well
 ### Annotation Pattern
 
 ExtraGlobalFields in the previous design existed to support an "annotations pattern" where an app could opt some or all of their schema into allowing annotation subtrees to be placed on nodes.
-This addressed use-cases where multiple users of the same tree (might be different applications entirely, or just different views withing the same app, different versions of an app etc.) want to store extra data ("annotations") on a tree, without interfering with each-other.
+This addressed use-cases where multiple users of the same tree (might be different applications entirely, or just different views within the same app, different versions of an app etc.) want to store extra data ("annotations") on a tree, without interfering with each-other.
 
 ExtraGlobalFields isn't really a full solution to this.
 The real challenge is that different applications may have different view schema, each with a different set of known annotations.

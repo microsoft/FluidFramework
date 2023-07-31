@@ -19,7 +19,7 @@ import {
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
 import {
-	rootFieldKeySymbol,
+	rootFieldKey,
 	ITreeCursor,
 	moveToDetachedField,
 	JsonableTree,
@@ -64,7 +64,7 @@ describe("Node Key Index Benchmarks", () => {
 				});
 				const field = tree.editor.sequenceField({
 					parent: undefined,
-					field: rootFieldKeySymbol,
+					field: rootFieldKey,
 				});
 
 				return [tree, field, provider];
