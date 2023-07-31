@@ -107,7 +107,7 @@ export interface SharedObjectVisualizers {
  */
 export interface SharedObjectEditors {
 	/**
-	 * Individual Fluid object visualizers, keyed by {@link SharedObjectType}.
+	 * Individual Fluid object editors, keyed by {@link SharedObjectType}.
 	 */
 	[k: SharedObjectType]: EditSharedObject;
 }
@@ -234,7 +234,7 @@ export class DataVisualizerGraph
 	}
 
 	/**
-	 * Begins the process of applying an edit to a Fluid object.
+	 * Applies an edit to a Fluid object.
 	 * @param edit - is a Edit object that describes an edit to a Fluid object.
 	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
