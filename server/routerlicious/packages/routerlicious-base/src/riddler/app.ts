@@ -24,6 +24,7 @@ export function create(
 	defaultInternalHistorianUrl: string,
 	secretManager: ISecretManager,
 	fetchTenantKeyMetricInterval: number,
+	riddlerStorageRequestMetricInterval: number,
 	cache?: ICache,
 ) {
 	// Express app configuration
@@ -58,6 +59,7 @@ export function create(
 			defaultInternalHistorianUrl,
 			secretManager,
 			fetchTenantKeyMetricInterval,
+			riddlerStorageRequestMetricInterval,
 			cache,
 		),
 	);
