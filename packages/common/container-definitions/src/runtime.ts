@@ -97,7 +97,7 @@ export interface IRuntime extends IDisposable {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(props?: { shutdownBlobUpload?: boolean }): unknown;
+	getPendingLocalState(props?: { waitBlobsToAttach?: boolean }): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state

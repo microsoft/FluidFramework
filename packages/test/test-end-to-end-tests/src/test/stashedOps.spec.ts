@@ -1455,6 +1455,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			container.connect();
 			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
 		}
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
 		container.close();
 		// no pending changes went through
 		for (let i = 5; i--; ) {
@@ -1463,7 +1464,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
 		// should be safe to use
-		await pendingState;
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
@@ -1502,9 +1502,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			container.connect();
 			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
 		}
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
 		container.close();
 
-		await pendingState;
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
 		// should be safe to use
 		const container2 = await loader.resolve({ url }, pendingState);

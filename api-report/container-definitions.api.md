@@ -445,7 +445,7 @@ export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint?(): Promise<FluidObject | undefined>;
     getPendingLocalState(props?: {
-        shutdownBlobUpload?: boolean;
+        waitBlobsToAttach?: boolean;
     }): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;

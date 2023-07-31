@@ -1071,13 +1071,18 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		this.disconnect(); // TODO investigate side effects
-		const pendingState = await this.getPendingLocalState({ shutdownBlobUpload: true });
+		this.disconnect(); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
+		const pendingState = await this.getPendingLocalStateCore({ waitBlobsToAttach: true });
 		this.close();
 		return pendingState;
 	}
 
-	public async getPendingLocalState(props?: { shutdownBlobUpload?: boolean }): Promise<string> {
+	public async getPendingLocalState(): Promise<string> {
+		const pendingState = await this.getPendingLocalStateCore({ waitBlobsToAttach: false });
+		return pendingState;
+	}
+
+	private async getPendingLocalStateCore(props: { waitBlobsToAttach: boolean }) {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
@@ -2462,7 +2467,7 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState?(props?: { shutdownBlobUpload?: boolean }): Promise<string>;
+	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
