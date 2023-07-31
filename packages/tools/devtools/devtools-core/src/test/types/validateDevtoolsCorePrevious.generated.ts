@@ -1001,6 +1001,78 @@ use_old_FunctionDeclaration_DataVisualization_createMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DevtoolsDisposed.Message": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_DevtoolsDisposed_Message():
+    TypeOnly<old.DevtoolsDisposed.Message>;
+declare function use_current_InterfaceDeclaration_DevtoolsDisposed_Message(
+    use: TypeOnly<current.DevtoolsDisposed.Message>);
+use_current_InterfaceDeclaration_DevtoolsDisposed_Message(
+    get_old_InterfaceDeclaration_DevtoolsDisposed_Message());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DevtoolsDisposed.Message": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_DevtoolsDisposed_Message():
+    TypeOnly<current.DevtoolsDisposed.Message>;
+declare function use_old_InterfaceDeclaration_DevtoolsDisposed_Message(
+    use: TypeOnly<old.DevtoolsDisposed.Message>);
+use_old_InterfaceDeclaration_DevtoolsDisposed_Message(
+    get_current_InterfaceDeclaration_DevtoolsDisposed_Message());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DevtoolsDisposed.MessageType": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_DevtoolsDisposed_MessageType():
+    TypeOnly<typeof old.DevtoolsDisposed.MessageType>;
+declare function use_current_VariableDeclaration_DevtoolsDisposed_MessageType(
+    use: TypeOnly<typeof current.DevtoolsDisposed.MessageType>);
+use_current_VariableDeclaration_DevtoolsDisposed_MessageType(
+    get_old_VariableDeclaration_DevtoolsDisposed_MessageType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DevtoolsDisposed.MessageType": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_DevtoolsDisposed_MessageType():
+    TypeOnly<typeof current.DevtoolsDisposed.MessageType>;
+declare function use_old_VariableDeclaration_DevtoolsDisposed_MessageType(
+    use: TypeOnly<typeof old.DevtoolsDisposed.MessageType>);
+use_old_VariableDeclaration_DevtoolsDisposed_MessageType(
+    get_current_VariableDeclaration_DevtoolsDisposed_MessageType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_DevtoolsDisposed.createMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_DevtoolsDisposed_createMessage():
+    TypeOnly<typeof old.DevtoolsDisposed.createMessage>;
+declare function use_current_FunctionDeclaration_DevtoolsDisposed_createMessage(
+    use: TypeOnly<typeof current.DevtoolsDisposed.createMessage>);
+use_current_FunctionDeclaration_DevtoolsDisposed_createMessage(
+    get_old_FunctionDeclaration_DevtoolsDisposed_createMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_DevtoolsDisposed.createMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_DevtoolsDisposed_createMessage():
+    TypeOnly<typeof current.DevtoolsDisposed.createMessage>;
+declare function use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
+    use: TypeOnly<typeof old.DevtoolsDisposed.createMessage>);
+use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
+    get_current_FunctionDeclaration_DevtoolsDisposed_createMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_DevtoolsFeature": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_DevtoolsFeature():
@@ -1164,6 +1236,7 @@ declare function get_current_ClassDeclaration_DevtoolsLogger():
 declare function use_old_ClassDeclaration_DevtoolsLogger(
     use: TypeOnly<old.DevtoolsLogger>);
 use_old_ClassDeclaration_DevtoolsLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DevtoolsLogger());
 
 /*
@@ -1284,6 +1357,7 @@ declare function get_current_InterfaceDeclaration_FluidDevtoolsProps():
 declare function use_old_InterfaceDeclaration_FluidDevtoolsProps(
     use: TypeOnly<old.FluidDevtoolsProps>);
 use_old_InterfaceDeclaration_FluidDevtoolsProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*

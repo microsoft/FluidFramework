@@ -16,7 +16,7 @@ import {
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
@@ -131,10 +131,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
 		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
 		// Create and setup a summary collection that will be used to track and wait for summaries.
-		summaryCollection = new SummaryCollection(
-			mainContainer.deltaManager,
-			new TelemetryNullLogger(),
-		);
+		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 
 		const loadStatEvents = mockLogger.events.filter(
 			(event) => event.eventName === "fluid:telemetry:ContainerLoadStats",
@@ -221,10 +218,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		mainContainer = await loadContainer(summaryVersion);
 		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
 		// Create and setup a summary collection that will be used to track and wait for summaries.
-		summaryCollection = new SummaryCollection(
-			mainContainer.deltaManager,
-			new TelemetryNullLogger(),
-		);
+		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 		validateLoadStats(2, 1, 1, "Second container should load with correct data store stats");
 
 		// Wait for summary and validate that the new summarizer loads from summary number 2 as well.

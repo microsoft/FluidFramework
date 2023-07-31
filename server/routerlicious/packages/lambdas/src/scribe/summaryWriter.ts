@@ -58,6 +58,7 @@ export class SummaryWriter implements ISummaryWriter {
 		private readonly lastSummaryMessages: ISequencedDocumentMessage[],
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly maxRetriesOnError: number = 6,
+		private readonly maxLogtailLength: number = 2000,
 	) {
 		this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 	}
@@ -91,7 +92,7 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
 		this.setSummaryProperties(clientSummaryMetric, op);
-		const content = JSON.parse(op.contents) as ISummaryContent;
+		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
 			// two summaries at the same time. In this case the first one wins.
@@ -130,7 +131,7 @@ export class SummaryWriter implements ISummaryWriter {
 									existingRef ? existingRef.object.sha : "n/a"
 								}" nor other valid parent summaries "[${
 									checkpoint.validParentSummaries?.join(",") ?? ""
-								}]".`,
+								}] nor the last known client summary "${lastSummaryHead}".`,
 								summaryProposal: {
 									summarySequenceNumber: op.sequenceNumber,
 								},
@@ -580,11 +581,19 @@ export class SummaryWriter implements ISummaryWriter {
 	}
 
 	private async generateLogtailEntries(
-		from: number,
-		to: number,
+		gt: number,
+		lt: number,
 		pending: ISequencedOperationMessage[],
 		lastSummaryMessages: ISequencedDocumentMessage[] | undefined,
 	): Promise<ITreeEntry[]> {
+		let to = lt;
+		const from = gt;
+		const LogtailRequestedLength = to - from - 1;
+
+		if (LogtailRequestedLength > this.maxLogtailLength) {
+			Lumberjack.warning(`Limiting logtail length`, this.lumberProperties);
+			to = from + this.maxLogtailLength + 1;
+		}
 		const logTail = await this.getLogTail(from, to, pending);
 
 		// Some ops would be missing if we switch cluster during routing.
@@ -713,7 +722,14 @@ export class SummaryWriter implements ISummaryWriter {
 		let logTail: ISequencedDocumentMessage[] = [];
 
 		if (this.getDeltasViaAlfred) {
-			logTail = await this.deltaService.getDeltas("", this.tenantId, this.documentId, gt, lt);
+			logTail = await this.deltaService.getDeltas(
+				"",
+				this.tenantId,
+				this.documentId,
+				gt,
+				lt,
+				"scribe",
+			);
 		} else {
 			const query = {
 				"documentId": this.documentId,

@@ -7,18 +7,19 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 import {
 	TelemetryLogger,
 	MultiSinkLogger,
-	ChildLogger,
 	ITelemetryLoggerPropertyBags,
+	formatTick,
+	createChildLogger,
 } from "./logger";
-
 /**
  * Implementation of debug logger
+ * @deprecated - DebugLogger is internal and will no longer be exported.
  */
 export class DebugLogger extends TelemetryLogger {
 	/**
@@ -57,31 +58,25 @@ export class DebugLogger extends TelemetryLogger {
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
 	 * @param propertyGetters - Getters to add additional properties to all events
-	 * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
+	 * @param logger - Base logger to output events (in addition to debug logger being created). Can be undefined.
 	 */
 	public static mixinDebugLogger(
 		namespace: string,
-		baseLogger?: ITelemetryBaseLogger,
+		logger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
-		if (!baseLogger) {
+		if (!logger) {
 			return DebugLogger.create(namespace, properties);
 		}
 
-		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
-		multiSinkLogger.addLogger(
-			DebugLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+		const multiSinkLogger = new MultiSinkLogger(
+			undefined,
+			properties,
+			[createChildLogger({ logger, namespace }), DebugLogger.create(namespace)],
+			true,
 		);
-		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
 		return multiSinkLogger;
-	}
-
-	private static tryGetBaseLoggerProps(baseLogger?: ITelemetryBaseLogger) {
-		if (baseLogger instanceof TelemetryLogger) {
-			return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags }).properties;
-		}
-		return undefined;
 	}
 
 	constructor(
@@ -111,7 +106,7 @@ export class DebugLogger extends TelemetryLogger {
 		newEvent.eventName = undefined;
 
 		let tick = "";
-		tick = `tick=${TelemetryLogger.formatTick(performance.now())}`;
+		tick = `tick=${formatTick(performance.now())}`;
 
 		// Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
 		const stack = newEvent.stack ? newEvent.stack : "";

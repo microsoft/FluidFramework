@@ -10,7 +10,7 @@ import {
 	unreachableCase,
 } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	ISummaryTree,
 	IWholeSummaryTree,
@@ -21,6 +21,8 @@ import {
 	IWholeFlatSummaryTree,
 	IWholeFlatSummary,
 	INormalizedWholeSummary,
+	IWholeSummaryTreeValueEntry,
+	IWholeSummaryBlob,
 } from "./storageContracts";
 
 /**
@@ -143,13 +145,13 @@ export function convertSummaryTreeToWholeSummaryTree(
 }
 
 /**
- * Build a tree heirarchy from a flat tree.
+ * Build a tree hierarchy from a flat tree.
  *
  * @param flatTree - a flat tree
  * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
-function buildSummaryTreeHeirarchy(
+function buildSummaryTreeHierarchy(
 	flatTree: IWholeFlatSummaryTree,
 	treePrefixToRemove: string,
 ): ISnapshotTree {
@@ -206,11 +208,91 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 	}
 	const flatSummaryTree = flatSummary.trees?.[0];
 	const sequenceNumber = flatSummaryTree?.sequenceNumber;
-	const snapshotTree = buildSummaryTreeHeirarchy(flatSummaryTree, treePrefixToRemove);
+	const snapshotTree = buildSummaryTreeHierarchy(flatSummaryTree, treePrefixToRemove);
 
 	return {
 		blobs,
 		snapshotTree,
 		sequenceNumber,
 	};
+}
+
+/**
+ * Validates whether the entry is an IWholeSummaryTreeEntry with a value field
+ * @param obj - object to be evaluated
+ * @returns Whether the value is of IWholeSummaryTreeEntry type
+ */
+function isWholeSummaryTreeValueEntry(obj: any): obj is IWholeSummaryTreeValueEntry {
+	return obj && typeof obj === "object" && "value" in obj;
+}
+
+/**
+ * Validates whether a specific value is of IWholeSummaryBlob type.
+ * @param obj - object to be evaluated
+ * @returns Whether the value is of IWholeSummaryBlob type
+ */
+function isWholeSummaryBlob(obj: unknown): obj is IWholeSummaryBlob {
+	return obj && typeof obj === "object" && "content" in obj;
+}
+
+/**
+ * Validates whether a specific value is of IWholeSummaryBlob type.
+ * @param obj - object to be evaluated
+ * @returns Whether the value is of IWholeSummaryBlob type
+ */
+function isWholeSummaryTree(obj: any): obj is IWholeSummaryTree {
+	return obj && typeof obj === "object" && "type" in obj;
+}
+
+/**
+ * Converts existing IWholeSummaryTree to ISummaryTree for the first summary (without Handle entries)
+ * @param wholeSummaryTree - wholeSummaryTree used on the payload for creating and uploading a document.
+ * @returns Summary tree to be used when creating a new document.
+ */
+export function convertFirstSummaryWholeSummaryTreeToSummaryTree(
+	wholeSummaryTree: IWholeSummaryTree,
+	unreferenced?: true | undefined,
+): ISummaryTree {
+	const tree: { [path: string]: SummaryObject } = {};
+	for (const entry of wholeSummaryTree.entries) {
+		switch (entry.type) {
+			case "blob": {
+				assert(isWholeSummaryTreeValueEntry(entry), "Invalid entry type");
+				assert(isWholeSummaryBlob(entry.value), "entry value is not an IWholeSummaryBlob");
+				const blobPayload = entry.value;
+				tree[entry.path] = {
+					type: SummaryType.Blob,
+					content:
+						blobPayload.encoding === "base64"
+							? new Uint8Array(stringToBuffer(blobPayload.content, "base64"))
+							: blobPayload.content,
+				};
+				break;
+			}
+			case "tree": {
+				assert(isWholeSummaryTreeValueEntry(entry), "Invalid entry type");
+				assert(isWholeSummaryTree(entry.value), "entry value is not an IWholeSummaryTree");
+				const treePayload = entry.value;
+				const nodeReferenced = entry.unreferenced;
+				tree[entry.path] = convertFirstSummaryWholeSummaryTreeToSummaryTree(
+					treePayload,
+					nodeReferenced,
+				);
+				break;
+			}
+			default: {
+				throw new Error(`Unsupported tree type for first summary`);
+			}
+		}
+	}
+	return unreferenced
+		? {
+				type: SummaryType.Tree,
+				tree,
+				unreferenced,
+		  }
+		: {
+				type: SummaryType.Tree,
+				tree,
+		  };
 }

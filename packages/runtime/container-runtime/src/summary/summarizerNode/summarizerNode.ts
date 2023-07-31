@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
@@ -23,10 +23,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
+	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -85,30 +86,28 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
-		baseLogger: ITelemetryLoggerExt,
+		baseLogger: ITelemetryBaseLogger,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
 		private _changeSequenceNumber: number,
 		/** Undefined means created without summary */
 		private _latestSummary?: SummaryNode,
 		private readonly initialSummary?: IInitialSummary,
-		protected wipSummaryLogger?: ITelemetryLoggerExt,
+		protected wipSummaryLogger?: ITelemetryBaseLogger,
 		/** A unique id of this node to be logged when sending telemetry. */
 		protected telemetryNodeId?: string,
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
 		// All logs posted by the summarizer node should include the telemetryNodeId.
-		this.logger = ChildLogger.create(baseLogger, undefined /* namespace */, {
-			all: {
-				id: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: this.telemetryNodeId,
-				},
+		this.logger = createChildLogger({
+			logger: baseLogger,
+			properties: {
+				all: tagCodeArtifacts({ id: this.telemetryNodeId }),
 			},
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
+	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryBaseLogger) {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -243,9 +242,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 	private wasSummarizeMissed(parentSkipRecursion: boolean): boolean {
 		assert(
 			this.wipSummaryLogger !== undefined,
-			"wipSummaryLogger should have been set in startSummary or ctor",
+			0x6fc /* wipSummaryLogger should have been set in startSummary or ctor */,
 		);
-		assert(this.wipReferenceSequenceNumber !== undefined, "Not tracking a summary");
+		assert(this.wipReferenceSequenceNumber !== undefined, 0x6fd /* Not tracking a summary */);
 
 		// If the parent node skipped recursion, it did not call summarize on this node. So, summarize was not missed
 		// but was intentionally not called.
@@ -335,7 +334,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		// If localPathsToUse is undefined, it means summarize didn't run for this node and in that case the validate
 		// step should have failed.
-		assert(localPathsToUse !== undefined, "summarize didn't run for node");
+		assert(localPathsToUse !== undefined, 0x6fe /* summarize didn't run for node */);
 		const summary = new SummaryNode({
 			...localPathsToUse,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
@@ -809,10 +808,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const error = new LoggingError(eventProps.eventName, {
 			...eventProps,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
-			id: {
-				tag: TelemetryDataTag.CodeArtifact,
-				value: this.telemetryNodeId,
-			},
+			...tagCodeArtifacts({
+				id: this.telemetryNodeId,
+			}),
 		});
 		this.logger.sendErrorEvent(eventProps, error);
 		throw error;

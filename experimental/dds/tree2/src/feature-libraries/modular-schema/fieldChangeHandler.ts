@@ -96,6 +96,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
+		existenceState?: NodeExistenceState,
 	): TChangeset;
 
 	/**

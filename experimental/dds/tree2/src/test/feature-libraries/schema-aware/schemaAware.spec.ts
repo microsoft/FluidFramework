@@ -54,7 +54,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const builder = new SchemaBuilder("Schema Aware tests");
 
 	// Declare a simple type which just holds a number.
-	const numberSchema = builder.primitive("number", ValueSchema.Number);
+	const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 	// Check the various ways to refer to child types produce the same results
 	{
@@ -74,27 +74,21 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Simple object
 	{
-		const simpleObject = builder.object("simple", {
-			local: {
-				x: SchemaBuilder.fieldValue(numberSchema),
-			},
+		const simpleObject = builder.struct("simple", {
+			x: SchemaBuilder.fieldValue(numberSchema),
 		});
 	}
 
-	const ballSchema = builder.object("ball", {
-		local: {
-			// Test schema objects in as well as lazy functions
-			x: SchemaBuilder.fieldValue(numberSchema),
-			y: SchemaBuilder.fieldValue(() => numberSchema),
-			size: SchemaBuilder.fieldOptional(numberSchema),
-		},
+	const ballSchema = builder.struct("ball", {
+		// Test schema objects in as well as lazy functions
+		x: SchemaBuilder.fieldValue(numberSchema),
+		y: SchemaBuilder.fieldValue(() => numberSchema),
+		size: SchemaBuilder.fieldOptional(numberSchema),
 	});
 
 	// Recursive case:
-	const boxSchema = builder.objectRecursive("box", {
-		local: {
-			children: SchemaBuilder.fieldRecursive(sequence, ballSchema, () => boxSchema),
-		},
+	const boxSchema = builder.structRecursive("box", {
+		children: SchemaBuilder.fieldRecursive(sequence, ballSchema, () => boxSchema),
 	});
 
 	{
@@ -217,10 +211,10 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test polymorphic cases:
 	{
 		const builder2 = new SchemaBuilder("Schema Aware polymorphic");
-		const bool = builder2.primitive("bool", ValueSchema.Boolean);
-		const str = builder2.primitive("str", ValueSchema.String);
+		const bool = builder2.leaf("bool", ValueSchema.Boolean);
+		const str = builder2.leaf("str", ValueSchema.String);
 		const parentField = SchemaBuilder.fieldValue(str, bool);
-		const parent = builder2.object("parent", { local: { child: parentField } });
+		const parent = builder2.struct("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
@@ -284,8 +278,8 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test simple recursive cases:
 	{
 		const builder2 = new SchemaBuilder("Schema Aware recursive");
-		const rec = builder2.objectRecursive("rec", {
-			local: { x: SchemaBuilder.fieldRecursive(optional, () => rec) },
+		const rec = builder2.structRecursive("rec", {
+			x: SchemaBuilder.fieldRecursive(optional, () => rec),
 		});
 
 		type RecObjectSchema = typeof rec;
@@ -460,11 +454,9 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
 		const builder = new SchemaBuilder("SchemaAware");
-		const stringSchema = builder.primitive("string", ValueSchema.String);
-		const rootNodeSchema = builder.object("Test", {
-			local: {
-				children: SchemaBuilder.fieldSequence(stringSchema),
-			},
+		const stringSchema = builder.leaf("string", ValueSchema.String);
+		const rootNodeSchema = builder.struct("Test", {
+			children: SchemaBuilder.fieldSequence(stringSchema),
 		});
 		const schema = builder.intoDocumentSchema(
 			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),

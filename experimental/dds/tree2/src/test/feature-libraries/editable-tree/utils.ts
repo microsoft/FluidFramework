@@ -127,7 +127,7 @@ export function expectFieldEquals(
 	if (field.length === 0) {
 		assert.throws(
 			() => field.getNode(0),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"A child node must exist at index to get it without unwrapping.",

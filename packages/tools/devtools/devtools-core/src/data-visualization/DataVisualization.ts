@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IFluidHandle,
+	IFluidLoadable,
+	IProvideFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import { FluidObjectId } from "../CommonInterfaces";

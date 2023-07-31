@@ -8,7 +8,8 @@ import * as path from "path";
 
 import { existsSync, globFn, readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { LeafWithDoneFileTask } from "./leafTask";
+import { getInstalledPackageVersion } from "../../../common/taskUtils";
 
 export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
@@ -104,7 +105,10 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				return { name, hash };
 			});
 			const hashes = await Promise.all(hashesP);
-			return JSON.stringify(hashes);
+			return JSON.stringify({
+				version: await getInstalledPackageVersion("prettier", this.node.pkg.directory),
+				hashes,
+			});
 		} catch (e) {
 			this.traceExec(`error generating done file content. ${e}`);
 			return undefined;

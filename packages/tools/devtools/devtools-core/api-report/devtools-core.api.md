@@ -8,11 +8,13 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -211,12 +213,13 @@ export namespace DevtoolsFeatures {
         type: typeof MessageType;
     }
     export interface MessageData {
+        devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
     }
 }
 
 // @public @sealed
-export class DevtoolsLogger extends TelemetryLogger {
+export class DevtoolsLogger implements ITelemetryBaseLogger {
     constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
 }
