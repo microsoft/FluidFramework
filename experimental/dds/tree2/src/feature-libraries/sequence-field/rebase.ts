@@ -220,7 +220,19 @@ function rebaseMarkList<TNodeChange>(
 		}
 	}
 
-	return factory.list;
+	let found = false;
+	let index = factory.list.length - 1;
+	while (index >= 0 && !found) {
+		if (!isNoopMark(factory.list[index])) {
+			found = true;
+			break;
+		}
+
+		index--;
+	}
+
+	const listWithoutTrailingNoOps = factory.list.slice(0, index + 1);
+	return listWithoutTrailingNoOps;
 }
 
 interface IdRange {
@@ -270,7 +282,16 @@ class RebaseQueue<T> {
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark);
 			if (cmp < 0) {
-				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
+				const dequeuedBaseMark = this.baseMarks.dequeueUpTo(-cmp);
+				if (isAttach(dequeuedBaseMark)) {
+					return { baseMark: dequeuedBaseMark };
+				} else {
+					const cellId = getCellId(dequeuedBaseMark, this.baseIntention);
+					return {
+						baseMark: dequeuedBaseMark,
+						newMark: { count: getMarkLength(dequeuedBaseMark), cellId },
+					};
+				}
 			} else if (cmp > 0) {
 				return { newMark: this.newMarks.dequeueUpTo(cmp) };
 			} else {
@@ -294,7 +315,9 @@ class RebaseQueue<T> {
 	}
 
 	private dequeueNew(): RebaseMarks<T> {
-		return { newMark: this.newMarks.dequeue() };
+		const newMark = this.newMarks.dequeue();
+		const cellId = getCellId(newMark, this.baseIntention);
+		return { newMark, baseMark: { count: getMarkLength(newMark), cellId } };
 	}
 
 	private dequeueBoth(): RebaseMarks<T> {

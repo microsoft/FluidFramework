@@ -240,7 +240,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
-			return false;
+			return mark.cellId !== undefined;
 		case "Insert":
 			return mark.transientDetach !== undefined;
 		case "MoveIn":
@@ -369,6 +369,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	if (type === NoopMarkType) {
 		if (getCellId(lhs, undefined) === getCellId(rhs, undefined)) {
 			(lhs as NoopMark).count += rhs.count;
+			return true;
 		} else {
 			return false;
 		}
@@ -842,7 +843,10 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
-			return [{ count: length }, { count: remainder }] as [TMark, TMark];
+			return [
+				{ ...mark, count: length },
+				{ ...mark, count: remainder },
+			] as [TMark, TMark];
 		case "Modify":
 			fail("Unable to split Modify mark of length 1");
 		case "Insert": {
