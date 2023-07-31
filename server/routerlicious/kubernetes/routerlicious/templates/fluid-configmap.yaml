@@ -214,7 +214,8 @@ data:
             "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
-            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }},
+            "logSavedOpsTimeIntervalMs": {{ .Values.scriptorium.logSavedOpsTimeIntervalMs }}
         },
         "riddler": {
             "port": 5000

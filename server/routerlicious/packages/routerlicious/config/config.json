@@ -274,7 +274,8 @@
 		"enableTelemetry": true,
 		"shouldLogInitialSuccessVerbose": false,
 		"maxDbBatchSize": 1000,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"logSavedOpsTimeIntervalMs": 60000
 	},
 	"copier": {
 		"topic": "rawdeltas",
