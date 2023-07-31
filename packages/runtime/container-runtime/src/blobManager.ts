@@ -381,7 +381,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async shutdownPendingBlobs(): Promise<void> {
+	private async shutdownPendingBlobs(): Promise<void> {
 		for (const [localId, entry] of this.pendingBlobs) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.sendBlobAttachOp(localId, entry.storageId);
@@ -1042,7 +1042,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public getPendingBlobs(): IPendingBlobs {
+	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
+		if (waitBlobsToAttach) {
+			await this.shutdownPendingBlobs();
+		}
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
 			blobs[key] = {

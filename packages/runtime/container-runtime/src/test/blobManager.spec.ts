@@ -145,8 +145,9 @@ export class MockRuntime
 		return this.blobManager.getBlob(blobId);
 	}
 
-	public getPendingState() {
-		return [[...this.ops], this.blobManager.getPendingBlobs()];
+	public async getPendingLocalState(waitBlobsToAttach: boolean) {
+		const pendingBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+		return [[...this.ops], pendingBlobs];
 	}
 
 	public blobManager: BlobManager;

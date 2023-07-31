@@ -5,8 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	ConfigTypes,
-	IConfigProviderBase,
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
@@ -14,28 +12,24 @@ import {
 import { IsoBuffer } from "@fluidframework/common-utils";
 import { MockRuntime, validateSummary } from "./blobManager.spec";
 
-describe("Shutdown", () => {
+describe("getPendingLocalState", () => {
 	let runtime: MockRuntime;
 	let mc: MonitoringContext;
 
 	beforeEach(() => {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
-		mc = mixinMonitoringContext(createChildLogger(), configProvider({}));
+		mc = mixinMonitoringContext(createChildLogger(), undefined);
 		runtime = new MockRuntime(mc);
 	});
 
-	it("shutdown while uploading blob", async () => {
+	it("get blobs while uploading", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
-		const shutdownP = runtime.blobManager.shutdownPendingBlobs();
+		const pendingStateP = runtime.getPendingLocalState(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
-		await shutdownP;
-		const pendingState = runtime.getPendingState();
+		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1];
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
@@ -56,17 +50,16 @@ describe("Shutdown", () => {
 		assert.strictEqual(summaryData2.redirectTable.size, 1);
 	});
 
-	it("shutdown while waiting for op", async () => {
+	it("get blobs and wait for blob attach while waiting for op", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs();
-		const shutdownP = runtime.blobManager.shutdownPendingBlobs();
+		const pendingStateP = runtime.getPendingLocalState(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
-		await shutdownP;
-		const pendingState = runtime.getPendingState();
+		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1];
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
@@ -86,7 +79,6 @@ describe("Shutdown", () => {
 		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable.size, 1);
 	});
-
 	it("shutdown multiple blobs", async () => {
 		await runtime.attach();
 		await runtime.connect();
@@ -95,12 +87,11 @@ describe("Shutdown", () => {
 		await runtime.processBlobs();
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
-		const shutdownP = runtime.blobManager.shutdownPendingBlobs();
+		const pendingStateP = runtime.getPendingLocalState(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		await assert.doesNotReject(handleP2);
-		await shutdownP;
-		const pendingState = runtime.getPendingState();
+		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1];
 		assert.strictEqual(Object.keys(pendingBlobs).length, 2);
 
