@@ -40,6 +40,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStore?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+    // @deprecated
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     readonly isDirty: boolean;
     // (undocumented)

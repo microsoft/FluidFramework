@@ -2260,6 +2260,12 @@ export class ContainerRuntime
 		this.dataStores.processSignal(envelope.address, transformed, local);
 	}
 
+	/**
+	 * Returns the runtime of the data store.
+	 * @param id - Id supplied during creating the data store.
+	 * @param wait - True if you want to wait for it.
+	 * @deprecated - Use getAliasedDataStore instead to get an aliased data store.
+	 */
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
