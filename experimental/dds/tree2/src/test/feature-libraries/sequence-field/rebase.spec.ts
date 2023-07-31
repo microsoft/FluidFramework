@@ -10,7 +10,7 @@ import { createFakeRepair, fakeRepair } from "../../utils";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
 import { checkDeltaEquality, composeAnonChanges, rebaseTagged, rebase as rebaseI } from "./utils";
-import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
+import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -175,26 +175,14 @@ describe("SequenceField - Rebase", () => {
 		);
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(revive, deletion, tag3);
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 1, 1),
-				count: 1,
-				inverseOf: tag1,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 2, 1),
-				count: 1,
-				inverseOf: tag1,
-				cellId: { revision: tag3, localId: brand(0) },
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 3, 1),
-				count: 1,
-				inverseOf: tag1,
-			},
+		const expected = [
+			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
+			Mark.revive(
+				fakeRepair(tag1, 2, 1),
+				{ revision: tag3, localId: brand(0) },
+				{ inverseOf: tag1 },
+			),
+			Mark.revive(fakeRepair(tag1, 3, 1), undefined, { inverseOf: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -209,27 +197,18 @@ describe("SequenceField - Rebase", () => {
 		);
 		const revive2 = Change.revive(0, 1, { revision: tag2, localId: brand(2) }, fakeRepair);
 		const actual = rebase(revive1, revive2, tag2);
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				inverseOf: tag1,
-				cellId: { revision: tag2, localId: brand(1) },
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 1, 1),
-				count: 1,
-				inverseOf: tag1,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 2, 1),
-				count: 1,
-				inverseOf: tag1,
-				cellId: { revision: tag2, localId: brand(3) },
-			},
+		const expected = [
+			Mark.revive(
+				fakeRepair(tag1, 0, 1),
+				{ revision: tag2, localId: brand(1) },
+				{ inverseOf: tag1 },
+			),
+			Mark.revive(fakeRepair(tag1, 1, 1), undefined, { inverseOf: tag1 }),
+			Mark.revive(
+				fakeRepair(tag1, 2, 1),
+				{ revision: tag2, localId: brand(3) },
+				{ inverseOf: tag1 },
+			),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -289,28 +268,13 @@ describe("SequenceField - Rebase", () => {
 		]);
 		const actual = rebase(deleteA, deleteB, tag1);
 		// Deletes --E-G
-		const expected: SF.Changeset<never> = [
+		const expected = [
 			{ count: 2 },
-			{
-				type: "Delete",
-				id: brand(0),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(1) },
-			},
-			{ type: "Delete", id: brand(1), count: 1 },
-			{
-				type: "Delete",
-				id: brand(2),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(2) },
-			},
-			{ type: "Delete", id: brand(3), count: 1 },
-			{
-				type: "Delete",
-				id: brand(4),
-				count: 1,
-				cellId: { revision: tag1, localId: brand(3) },
-			},
+			Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(1) } }),
+			Mark.delete(1, brand(1)),
+			Mark.delete(1, brand(2), { cellId: { revision: tag1, localId: brand(2) } }),
+			Mark.delete(1, brand(3)),
+			Mark.delete(1, brand(4), { cellId: { revision: tag1, localId: brand(3) } }),
 		];
 		checkDeltaEquality(actual, expected);
 	});
@@ -347,41 +311,30 @@ describe("SequenceField - Rebase", () => {
 		const actual = rebase(move, deletion, tag1);
 
 		// Moves --E-G
-		const expected: SF.Changeset<never> = [
-			{ type: "MoveIn", count: 1, id: brand(0), isSrcConflicted: true },
-			{ type: "MoveIn", count: 1, id: brand(1) },
-			{ type: "MoveIn", count: 1, id: brand(2), isSrcConflicted: true },
-			{ type: "MoveIn", count: 1, id: brand(3) },
-			{ type: "MoveIn", count: 1, id: brand(4), isSrcConflicted: true },
+		const expected = [
+			Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
+			Mark.moveIn(1, brand(1)),
+			Mark.moveIn(1, brand(2), { isSrcConflicted: true }),
+			Mark.moveIn(1, brand(3)),
+			Mark.moveIn(1, brand(4), { isSrcConflicted: true }),
 			{ count: 2 },
-			{
-				type: "MoveOut",
-				count: 1,
-				id: brand(0),
+			Mark.moveOut(1, brand(0), {
 				cellId: {
 					revision: tag1,
 					localId: brand(1),
 					lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
 				},
-			},
-			{ type: "MoveOut", count: 1, id: brand(1) },
-			{
-				type: "MoveOut",
-				count: 1,
-				id: brand(2),
-				cellId: { revision: tag1, localId: brand(2) },
-			},
-			{ type: "MoveOut", count: 1, id: brand(3) },
-			{
-				type: "MoveOut",
-				count: 1,
-				id: brand(4),
+			}),
+			Mark.moveOut(1, brand(1)),
+			Mark.moveOut(1, brand(2), { cellId: { revision: tag1, localId: brand(2) } }),
+			Mark.moveOut(1, brand(3)),
+			Mark.moveOut(1, brand(4), {
 				cellId: {
 					revision: tag1,
 					localId: brand(3),
 					lineage: [{ revision: tag1, id: brand(4), count: 1, offset: 0 }],
 				},
-			},
+			}),
 		];
 		assert.deepEqual(actual, expected);
 	});

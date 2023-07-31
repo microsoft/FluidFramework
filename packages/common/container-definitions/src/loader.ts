@@ -505,12 +505,13 @@ export type ILoaderOptions = {
 	[key in string | number]: any;
 } & {
 	/**
+	 * @deprecated This option has been deprecated and will be removed in a future release
 	 * Set caching behavior for the loader. If true, we will load a container from cache if one
 	 * with the same id/version exists or create a new container and cache it if it does not. If
 	 * false, always load a new container and don't cache it. If the container has already been
 	 * closed, it will not be cached. A cache option in the LoaderHeader for an individual
 	 * request will override the Loader's value.
-	 * Defaults to true.
+	 * Defaults to false.
 	 */
 	cache?: boolean;
 
@@ -534,7 +535,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 * Override the Loader's default caching behavior for this container.
 	 */
 	cache = "fluid-cache",
@@ -617,7 +618,7 @@ export interface IContainerLoadMode {
  */
 export interface ILoaderHeader {
 	/**
-	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 * @deprecated This header has been deprecated and will be removed in a future release
 	 */
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
