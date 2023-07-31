@@ -216,7 +216,6 @@ function registerContainerWithDevtools(
 	devtools.registerContainerDevtools({
 		container,
 		containerKey,
-		dataVisualizers: undefined, // Use defaults
 	});
 }
 
