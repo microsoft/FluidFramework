@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { ICheckpointRepository, IDocumentRepository } from "./database";
 import { IDeliState, IDocument, IScribe } from "./document";
-import { runWithRetry } from "./runWithRetry";
 
 type DocumentLambda = "deli" | "scribe";
 
@@ -86,16 +85,7 @@ export class CheckpointService implements ICheckpointService {
 	) {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		try {
-			await runWithRetry(
-				async () =>
-					this.checkpointRepository.writeCheckpoint(documentId, tenantId, checkpoint),
-				"checkpointServiceWriteLocalCheckpoint",
-				3 /* maxRetries */,
-				1000 /* retryAfterMs */,
-				lumberProperties,
-				undefined /* shouldIgnoreError */,
-				(error) => true /* shouldRetry */,
-			);
+			await this.checkpointRepository.writeCheckpoint(documentId, tenantId, checkpoint);
 		} catch (error) {
 			Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
 			throw error;
@@ -121,16 +111,7 @@ export class CheckpointService implements ICheckpointService {
 		};
 
 		try {
-			await runWithRetry(
-				async () =>
-					this.documentRepository.updateOne(checkpointFilter, checkpointData, null),
-				"checkpointServiceUpdateDocumentRepository",
-				3 /* maxRetries */,
-				1000 /* retryAfterMs */,
-				lumberProperties,
-				undefined /* shouldIgnoreError */,
-				(error) => true /* shouldRetry */,
-			);
+			await this.documentRepository.updateOne(checkpointFilter, checkpointData, null);
 		} catch (error) {
 			Lumberjack.error(
 				`Error writing checkpoint to the global database.`,
@@ -142,15 +123,7 @@ export class CheckpointService implements ICheckpointService {
 
 		if (localCheckpointEnabled) {
 			try {
-				await runWithRetry(
-					async () => this.checkpointRepository.deleteCheckpoint(documentId, tenantId),
-					"checkpointServiceDeleteLocalCheckpoint",
-					3,
-					1000,
-					lumberProperties,
-					undefined,
-					(error) => true,
-				);
+				await this.checkpointRepository.deleteCheckpoint(documentId, tenantId);
 			} catch (error) {
 				Lumberjack.error(
 					`Error removing checkpoint data from the local database.`,
@@ -216,14 +189,9 @@ export class CheckpointService implements ICheckpointService {
 			} else {
 				// Search checkpoints collection for checkpoint
 				try {
-					checkpoint = await runWithRetry(
-						async () => this.checkpointRepository.getCheckpoint(documentId, tenantId),
-						"checkpointServiceRestoreFromCheckpoint",
-						3 /* max retries */,
-						1000 /* retryAfterMs */,
-						getLumberBaseProperties(documentId, tenantId),
-						undefined,
-						(error) => true,
+					checkpoint = await this.checkpointRepository.getCheckpoint(
+						documentId,
+						tenantId,
 					);
 				} catch (error) {
 					checkpoint = undefined;
