@@ -395,7 +395,7 @@ export class QuorumProposals
 			);
 
 			// emit approveProposalComplete when all pending proposals are processed
-			if (!proposalSettled) {
+			if (proposalSettled) {
 				this.emit(
 					"approveProposalComplete",
 					committedProposal.sequenceNumber,
