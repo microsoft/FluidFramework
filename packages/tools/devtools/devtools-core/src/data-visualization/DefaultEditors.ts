@@ -15,7 +15,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { Edit, EditSharedObject } from "./DataEditing";
 
 /**
- * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
+ * Default {@link EditSharedObject} for {@link SharedCounter}.
  */
 export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
