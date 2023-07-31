@@ -430,7 +430,7 @@ describe("Runtime", () => {
 			});
 
 			describe("Refresh Latest Summary", () => {
-				it("Should refresh from tree when no proposal handle provided", async () => {
+				it("Should not refresh when no proposal handle provided", async () => {
 					createRoot();
 					const result = await rootNode.refreshLatestSummary(
 						undefined,
@@ -439,35 +439,10 @@ describe("Runtime", () => {
 						readAndParseBlob,
 						logger,
 					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
+					assert(result.latestSummaryUpdated === false, "should not update");
 				});
 
-				it("Should use the ref seq number of the fetched snapshot", async () => {
-					createRoot();
-					snapshotRefSeq = summaryRefSeq + 1;
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === snapshotRefSeq,
-						"summary ref seq should be the snapshot ref seq",
-					);
-				});
-
-				it("Should refresh from tree when proposal handle not pending", async () => {
+				it("Should not refresh when proposal handle not pending", async () => {
 					createRoot();
 					const result = await rootNode.refreshLatestSummary(
 						"test-handle",
@@ -476,13 +451,7 @@ describe("Runtime", () => {
 						readAndParseBlob,
 						logger,
 					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
+					assert(result.latestSummaryUpdated === false, "should not update");
 				});
 
 				it("Should not refresh latest if already passed ref seq number", async () => {
