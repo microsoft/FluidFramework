@@ -8,7 +8,9 @@
 /// <reference types="jest" />
 
 import { globals } from "../jest.config";
+// import { launch } from "../jest-puppeteer.config.js"; 
 import { retryWithEventualValue } from "@fluidframework/test-utils";
+// import puppeteer from "puppeteer";
 
 describe("End to end tests", () => {
 	/**
@@ -40,8 +42,10 @@ describe("End to end tests", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitFor(() => window["fluidStarted"]); // verify if this only launches the application 
 		await page.waitForSelector(".text-area");
+
+		// load the extension 
 	});
 
 	it("Smoke: verify test app can be launched", async () => {
@@ -52,17 +56,38 @@ describe("End to end tests", () => {
 
 	// TODO
 	it("Determine if telemetry pane is rendered on the extension", async () => {
+		// const browser = await puppeteer.launch({
+		// 	headless: false,
+		// 	launch.args: ["--disable-extensions-except=./dist/bundle", "--load-extension=./dist/bundle"],
+		// });
+
+		const appPage = await browser.newPage();
+		await appPage.goto(globals.PATH, { waitUntil: "load" });
+
 		const targets = await browser.targets();
 		console.log("targets:", targets);
 		const extensionTarget = targets.find((target) => target.type() === "service_worker");
-		console.log("extensionTarget:", extensionTarget);
 		const partialExtensionUrl = extensionTarget?.url() || "";
-		console.log("partialExtensionUrl:", partialExtensionUrl);
 		const [, , extensionId] = partialExtensionUrl.split("/");
-		console.log("extensionId:", extensionId);
 
 		const extPage = await browser.newPage();
-		const extensionUrl = `chrome-extension://${extensionId}/`;
+		const extensionUrl = `chrome-extension://${extensionId}/devtools.html`; // different -> devtools.html
 		await extPage.goto(extensionUrl, { waitUntil: "load" });
+		await extPage.bringToFront();
+
+		// const targets = await browser.targets();
+		// console.log("targets:", targets);
+		// const extensionTarget = targets.find((target) => target.type() === "service_worker");
+		// console.log("extensionTarget:", extensionTarget);
+		// const partialExtensionUrl = extensionTarget?.url() || "";
+		// console.log("partialExtensionUrl:", partialExtensionUrl);
+		// const [, , extensionId] = partialExtensionUrl.split("/");
+		// console.log("extensionId:", extensionId);
+
+		// const extensionId = `figfgckchmklgfakpkagobfabojlmbfh`;
+
+		// const extPage = await browser.newPage();
+		// const extensionUrl = `chrome-extension://${extensionId}/`;
+		// await extPage.goto(extensionUrl, { waitUntil: "load" });
 	});
 });
