@@ -144,8 +144,9 @@ steps:
               rm publish_log
               break
             fi
+            packageVersion=$(grep -oP 'npm notice : \K.*' publish_log)
             rm publish_log
-            az rest --method patch --uri https://pkgs.dev.azure.com/{organization}/_apis/packaging/feeds/{feedId}/npm/$packageName/versions/{packageVersion}?api-version=7.1-preview.1 --body '{
+            az rest --method patch --uri https://pkgs.dev.azure.com/fluidframework/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/$packageName/versions/$packageVersion?api-version=7.1-preview.1 --body '{
               "views": {
                 "op": "add",
                 "path": "/views/-",
