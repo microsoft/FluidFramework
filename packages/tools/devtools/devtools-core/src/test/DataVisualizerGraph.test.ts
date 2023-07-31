@@ -19,6 +19,7 @@ import {
 	VisualNodeKind,
 	defaultEditors,
 } from "../data-visualization";
+import { EditType } from "../CommonInterfaces";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
@@ -48,6 +49,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 0,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childTree).to.deep.equal(expectedChildTree);
 
@@ -186,6 +188,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 42,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childCounterTree).to.deep.equal(expectedChildCounterTree);
 
