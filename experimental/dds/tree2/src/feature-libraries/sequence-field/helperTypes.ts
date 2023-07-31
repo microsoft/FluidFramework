@@ -42,7 +42,7 @@ export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & { cellId: Cell
  * A mark that spans one or more cells.
  * The spanned cells may be populated (e.g., "Delete") or not (e.g., "Revive").
  */
-export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
+export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttachMark<TNodeChange>>;
 
 export type Generate<TNodeChange> = Insert<TNodeChange> | Revive<TNodeChange>;
 
