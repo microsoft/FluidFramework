@@ -333,12 +333,12 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint?: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	readonly IFluidRouter: IFluidRouter;
 }

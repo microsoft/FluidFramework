@@ -59,7 +59,7 @@ export enum AttachState {
 export interface IRuntime extends IDisposable {
 	/**
 	 * Executes a request against the runtime
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
