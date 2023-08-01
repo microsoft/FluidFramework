@@ -74,7 +74,8 @@ data:
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
         },
         "apiCounters": {
-            "fetchTenantKeyMetricMs": 60000
+            "fetchTenantKeyMetricMs": 60000,
+            "riddlerStorageRequestMetricMs": 60000
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
@@ -152,7 +153,8 @@ data:
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
             "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
-            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }},
+            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }}
         },
         "system": {
             "httpServer": {

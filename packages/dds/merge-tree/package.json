@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -190,6 +190,36 @@
 			},
 			"RemovedFunctionDeclaration_ordinalToArray": {
 				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_BaseSegment": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConsensusInfo": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ITrackingGroup": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SegmentGroupCollection": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_Trackable": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TrackingGroup": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
 				"backCompat": false
 			}
 		}

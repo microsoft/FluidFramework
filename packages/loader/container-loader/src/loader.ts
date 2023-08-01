@@ -6,7 +6,6 @@
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
-	DebugLogger,
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
@@ -43,13 +42,10 @@ import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
+import { DebugLogger } from "./debugLogger";
 
 function canUseCache(request: IRequest): boolean {
-	if (request.headers === undefined) {
-		return true;
-	}
-
-	return request.headers[LoaderHeader.cache] !== false;
+	return request.headers?.[LoaderHeader.cache] === true;
 }
 
 function ensureResolvedUrlDefined(
@@ -409,16 +405,23 @@ export class Loader implements IHostLoader {
 		this.containers.set(key, containerP);
 		containerP
 			.then((container) => {
-				// If the container is closed or becomes closed after we resolve it, remove it from the cache.
-				if (container.closed) {
+				// If the container is closed/disposed or becomes closed/disposed after we resolve it,
+				// remove it from the cache.
+				if (container.closed || container.disposed) {
 					this.containers.delete(key);
 				} else {
 					container.once("closed", () => {
 						this.containers.delete(key);
 					});
+					container.once("disposed", () => {
+						this.containers.delete(key);
+					});
 				}
 			})
-			.catch((error) => {});
+			.catch((error) => {
+				// If an error occured while resolving the container request, then remove it from the cache.
+				this.containers.delete(key);
+			});
 	}
 
 	private async resolveCore(
@@ -449,9 +452,10 @@ export class Loader implements IHostLoader {
 		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
+		const cacheHeader = request.headers[LoaderHeader.cache];
 		const canCache =
-			this.cachingEnabled &&
-			request.headers[LoaderHeader.cache] !== false &&
+			// Take header value if present, else use ILoaderOptions.cache value
+			(cacheHeader !== undefined ? cacheHeader === true : this.cachingEnabled) &&
 			pendingLocalState === undefined;
 		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as
 			| number
@@ -491,7 +495,7 @@ export class Loader implements IHostLoader {
 	}
 
 	private get cachingEnabled() {
-		return this.services.options.cache !== false;
+		return this.services.options.cache === true;
 	}
 
 	private async loadContainer(

@@ -5,12 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import {
-	AllowedUpdateType,
-	JsonableTree,
-	LocalFieldKey,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { AllowedUpdateType, JsonableTree, FieldKey, TreeSchemaIdentifier } from "../../../core";
 import { createSharedTreeView, ISharedTree } from "../../../shared-tree";
 import { brand, clone } from "../../../util";
 import {
@@ -26,8 +21,8 @@ import {
 	SchemaBuilder,
 	FieldKindTypes,
 	TypedSchemaCollection,
-	GlobalFieldSchema,
 	UnwrappedEditableField,
+	FieldSchema,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -47,8 +42,8 @@ import {
 	personSchemaLibrary,
 } from "./mockData";
 
-const localFieldKey: LocalFieldKey = brand("foo");
-const otherFieldKey: LocalFieldKey = brand("foo2");
+const localFieldKey: FieldKey = brand("foo");
+const otherFieldKey: FieldKey = brand("foo2");
 
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
@@ -62,7 +57,7 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 }
 
 function createSharedTree(
-	schemaData: TypedSchemaCollection<GlobalFieldSchema>,
+	schemaData: TypedSchemaCollection<FieldSchema>,
 	data?: JsonableTree[],
 ): ISharedTree {
 	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests

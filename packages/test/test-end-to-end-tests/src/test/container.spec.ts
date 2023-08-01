@@ -26,7 +26,7 @@ import {
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-	IFluidResolvedUrl,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	LocalCodeLoader,
@@ -339,7 +339,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.ok(pendingString);
 		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
+		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IResolvedUrl).url);
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {

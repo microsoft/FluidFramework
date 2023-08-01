@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/data-object-grid",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"private": true,
 	"description": "Data object grid creates child data objects from a registry and lays them out in a grid.",
 	"homepage": "https://fluidframework.com",
@@ -56,7 +56,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
 		"office-ui-fabric-react": "7.199.6",
-		"prop-types": "^15.7.2",
+		"prop-types": "^15.8.1",
 		"react": "^17.0.1",
 		"react-collapsible": "^2.7.0",
 		"react-dom": "^17.0.1",
