@@ -186,7 +186,6 @@ export {
 	prefixPath,
 	prefixFieldPath,
 	singleTextCursor,
-	namedTreeSchema,
 	singleStackTreeCursor,
 	CursorAdapter,
 	CursorWithNode,

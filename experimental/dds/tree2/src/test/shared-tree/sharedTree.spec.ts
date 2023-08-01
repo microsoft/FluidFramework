@@ -14,7 +14,6 @@ import {
 	singleTextCursor,
 	makeSchemaCodec,
 	jsonableTreeFromCursor,
-	namedTreeSchema,
 	on,
 	SchemaBuilder,
 	Any,
@@ -26,6 +25,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	namedTreeSchema,
 } from "../utils";
 import {
 	ISharedTree,
@@ -1921,9 +1921,8 @@ describe("SharedTree", () => {
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
+	name: "TestValue",
 	structFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
@@ -2000,7 +1999,7 @@ function setTestValue(branch: ISharedTreeView, value: TreeValue): void {
 }
 
 const testValueSchema = namedTreeSchema({
-	name: brand("TestValue"),
+	name: "TestValue",
 	leafValue: ValueSchema.Serializable,
 });
 
