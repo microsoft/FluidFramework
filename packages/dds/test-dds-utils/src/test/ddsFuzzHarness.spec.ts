@@ -30,6 +30,8 @@ import {
 	runTestForSeed,
 	Synchronize,
 	DDSFuzzHarnessEvents,
+	mixinRebase,
+	TriggerRebase,
 } from "../ddsFuzzHarness";
 import { Operation, SharedNothingFactory, baseModel } from "./sharedNothing";
 
@@ -341,6 +343,30 @@ describe("DDS Fuzz Harness", () => {
 				finalState.clients.map((c) => c.containerRuntime.connected),
 				[false, true, true],
 			);
+		});
+	});
+
+	describe("mixinRebase", () => {
+		const options = { ...defaultDDSFuzzSuiteOptions, rebaseProbability: 0.5 };
+		it("generates rebasing ops", async () => {
+			const count = 20;
+			const { model, generatedOperations } = mixinSpying(
+				mixinClientSelection(
+					mixinRebase(
+						{
+							...baseModel,
+							generatorFactory: () => takeAsync(count, baseModel.generatorFactory()),
+						},
+						options,
+					),
+					options,
+				),
+			);
+			await runTestForSeed(model, options, 0);
+			const rebaseOps: TriggerRebase[] = generatedOperations.filter<TriggerRebase>(
+				(op): op is TriggerRebase => op !== done && op.type === "rebase",
+			);
+			assert(rebaseOps.length > 0 && rebaseOps.length <= count / 2);
 		});
 	});
 

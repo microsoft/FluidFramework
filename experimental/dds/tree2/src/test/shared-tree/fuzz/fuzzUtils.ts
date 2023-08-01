@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
-import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
+import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree } from "../../../shared-tree";
+import { namedTreeSchema } from "../../utils";
 
 export const initialTreeState: JsonableTree = {
 	type: brand("Node"),
@@ -25,7 +26,7 @@ export const initialTreeState: JsonableTree = {
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
+	name: "TestValue",
 	mapFields: fieldSchema(FieldKinds.sequence),
 });
 

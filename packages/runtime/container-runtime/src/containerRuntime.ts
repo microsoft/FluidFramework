@@ -542,7 +542,7 @@ const defaultChunkSizeInBytes = 204800;
  * of the current system, we should close the summarizer and let it recover.
  * This delay's goal is to prevent tight restart loops
  */
-const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
+const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -2039,6 +2039,14 @@ export class ContainerRuntime
 		// There might be no change of state due to Container calling this API after loading runtime.
 		const changeOfState = this._connected !== connected;
 		const reconnection = changeOfState && !connected;
+
+		// We need to flush the ops currently collected by Outbox to preserve original order.
+		// This flush NEEDS to happen before we set the ContainerRuntime to "connected".
+		// We want these ops to get to the PendingStateManager without sending to service and have them return to the Outbox upon calling "replayPendingStates".
+		if (changeOfState && connected) {
+			this.flush();
+		}
+
 		this._connected = connected;
 
 		if (!connected) {
@@ -2178,9 +2186,7 @@ export class ContainerRuntime
 					}
 			}
 
-			if (runtimeMessage || this.groupedBatchingEnabled) {
-				this.emit("op", message, runtimeMessage);
-			}
+			this.emit("op", message, runtimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -3475,7 +3481,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorage(
+				fetchResult = await this.fetchSnapshotFromStorageAndClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3582,10 +3588,15 @@ export class ContainerRuntime
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorage(logger, event, readAndParseBlob, null /* latest */);
+		return this.fetchSnapshotFromStorageAndClose(
+			logger,
+			event,
+			readAndParseBlob,
+			null /* latest */,
+		);
 	}
 
-	private async fetchSnapshotFromStorage(
+	private async fetchSnapshotFromStorageAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
@@ -3641,7 +3652,7 @@ export class ContainerRuntime
 		// We choose to close the summarizer after the snapshot cache is updated to avoid
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod === "restart") {
+		if (this.summaryStateUpdateMethod !== "refreshFromSnapshot") {
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3654,10 +3665,10 @@ export class ContainerRuntime
 				new GenericError("Restarting summarizer instead of refreshing"),
 			);
 
-			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
+			this.disposeFn();
 		}
 
 		return snapshotResults;

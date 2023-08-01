@@ -1351,16 +1351,10 @@ export interface NamedComputation {
 export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
 
 // @alpha
-export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>): NamedTreeSchema;
-
-// @alpha
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @alpha
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
-
-// @alpha
-export const neverTree: TreeStoredSchema;
 
 // @alpha
 export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;

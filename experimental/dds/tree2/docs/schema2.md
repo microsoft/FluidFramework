@@ -98,9 +98,9 @@ Workstream 1
 Workstream 2
 
 1. (Done) Replace existing usages of global field keys with string constants.
-2. Implement alternative design for root field.
-3. Remove support for global fields.
-4. Cleanup code now that it can assume only local fields (ex: extra objects to separate local and global can be renamed or removed).
+2. (Done) Implement alternative design for root field.
+3. (Done) Remove support for global fields.
+4. (Done) Cleanup code now that it can assume only local fields (ex: extra objects to separate local and global can be renamed or removed).
 
 Workstream 3
 
