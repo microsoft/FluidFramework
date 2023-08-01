@@ -1091,6 +1091,7 @@ declare function get_current_EnumDeclaration_DevtoolsFeature():
 declare function use_old_EnumDeclaration_DevtoolsFeature(
     use: TypeOnly<old.DevtoolsFeature>);
 use_old_EnumDeclaration_DevtoolsFeature(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DevtoolsFeature());
 
 /*

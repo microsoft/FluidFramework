@@ -123,6 +123,9 @@
 			},
 			"InterfaceDeclaration_FluidDevtoolsProps": {
 				"backCompat": false
+			},
+			"EnumDeclaration_DevtoolsFeature": {
+				"backCompat": false
 			}
 		}
 	}

@@ -39,6 +39,7 @@ import {
 	Waiting,
 	MenuSection,
 	MenuItem,
+	OpLatencyView,
 } from "./components";
 import { useMessageRelay } from "./MessageRelayContext";
 import {
@@ -48,7 +49,6 @@ import {
 	useLogger,
 } from "./TelemetryUtils";
 import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
-import { DynamicComposedChart } from "./components/graphs";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -453,67 +453,7 @@ function View(props: ViewProps): React.ReactElement {
 			view = <LandingView />;
 			break;
 		case "opLatencyMenuSelection":
-			view = (
-				<div style={{ width: "600px", height: "400px" }}>
-					<h3>Op Latency</h3>
-					<DynamicComposedChart
-						stackedGraphType="bar"
-						dataSets={[
-							{
-								graphType: "area",
-								schema: {
-									displayName: "Duration outbound",
-									uuid: "Duration outbound",
-									xAxisDataKey: "y",
-									yAxisDataKey: "x",
-								},
-								data: [
-									{ x: "12:00:00", y: 10 },
-									{ x: "12:00:02", y: 15 },
-									{ x: "12:00:04", y: 12 },
-									{ x: "12:00:05", y: 12 },
-									{ x: "12:00:06", y: 10 },
-									{ x: "12:00:08", y: 11 },
-								],
-							},
-							{
-								graphType: "bar",
-								schema: {
-									displayName: "Duration Inbound",
-									uuid: "Duration Inbound",
-									xAxisDataKey: "x",
-									yAxisDataKey: "y",
-								},
-								data: [
-									{ x: "12:00:00", y: 3 },
-									{ x: "12:00:02", y: 1 },
-									{ x: "12:00:04", y: 0 },
-									{ x: "12:00:05", y: 0 },
-									{ x: "12:00:06", y: 1 },
-									{ x: "12:00:08", y: 1 },
-								],
-							},
-							{
-								graphType: "line",
-								schema: {
-									displayName: "Duration Network",
-									uuid: "Duration Network",
-									xAxisDataKey: "x",
-									yAxisDataKey: "y",
-								},
-								data: [
-									{ x: "12:00:00", y: 1 },
-									{ x: "12:00:02", y: 0 },
-									{ x: "12:00:04", y: 0 },
-									{ x: "12:00:05", y: 1 },
-									{ x: "12:00:06", y: 0 },
-									{ x: "12:00:08", y: 0 },
-								],
-							},
-						]}
-					/>
-				</div>
-			);
+			view = <OpLatencyView />;
 			break;
 		default:
 			view = <LandingView />;
@@ -623,6 +563,14 @@ function Menu(props: MenuProps): React.ReactElement {
 		});
 	}
 
+	function onOpLatencyClicked(): void {
+		setSelection({ type: "opLatencyMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_OpLatency" },
+		});
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -650,6 +598,16 @@ function Menu(props: MenuProps): React.ReactElement {
 				/>
 			</MenuSection>,
 		);
+
+		if (supportedFeatures[DevtoolsFeature.OpLatencyTelemetry] === true) {
+			menuSections.push(
+				<MenuSection
+					header="Op Latency"
+					key="op-latency-menu-section"
+					onHeaderClick={onOpLatencyClicked}
+				/>,
+			);
+		}
 	}
 
 	menuSections.push(

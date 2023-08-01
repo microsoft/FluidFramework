@@ -13,6 +13,10 @@ export enum DevtoolsFeature {
 	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid telemetry events.
 	 */
 	Telemetry = "telemetry",
+	/**
+	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid Op Latency telemetry events
+	 */
+	OpLatencyTelemetry = "opLatencyTelemetry",
 }
 
 /**

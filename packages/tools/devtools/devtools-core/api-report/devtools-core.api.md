@@ -180,6 +180,7 @@ export namespace DevtoolsDisposed {
 
 // @internal
 export enum DevtoolsFeature {
+    OpLatencyTelemetry = "opLatencyTelemetry",
     Telemetry = "telemetry"
 }
 

@@ -90,6 +90,17 @@ export interface DynamicComposedChartProps {
 	 * The unit that will be displayed on the y axis
 	 */
 	yAxisUnitDisplayName?: string;
+
+	/**
+	 * The amount of margin around the chart SVG.
+	 */
+	margin?: {
+		top: number;
+		right: number;
+		left: number;
+		bottom: number;
+	};
+	legendStyle?: React.CSSProperties;
 }
 
 /**
@@ -373,12 +384,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 		<ResponsiveContainer width="100%" height="100%">
 			<ComposedChart
 				data={mergeDataSets(props.dataSets)}
-				margin={{
-					top: 15,
-					right: 30,
-					left: 50,
-					bottom: 40,
-				}}
+				margin={props.margin}
+				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
 				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
@@ -390,7 +397,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					}}
 				/>
 				<Legend
-					wrapperStyle={{ bottom: "-10px", fontSize: "16px" }}
+					wrapperStyle={{ bottom: "-10px", fontSize: "14px", ...props.legendStyle }}
 					onClick={handleLegendClick}
 					content={renderLegend}
 				/>
