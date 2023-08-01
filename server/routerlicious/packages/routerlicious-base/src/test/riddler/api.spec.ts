@@ -14,6 +14,7 @@ import {
 	ISecretManager,
 } from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
+import Sinon from "sinon";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
@@ -80,6 +81,9 @@ describe("Routerlicious", () => {
 					const testSecretManager = new TestSecretManager(
 						crypto.randomBytes(32).toString("base64"),
 					);
+					Sinon.useFakeTimers();
+					const testFetchTenantKeyMetricIntervalMs = 60000;
+					const testRiddlerStorageRequestMetricIntervalMs = 60000;
 
 					app = riddlerApp.create(
 						testCollectionName,
@@ -89,8 +93,14 @@ describe("Routerlicious", () => {
 						testExtHistorianUrl,
 						testIntHistorianUrl,
 						testSecretManager,
+						testFetchTenantKeyMetricIntervalMs,
+						testRiddlerStorageRequestMetricIntervalMs,
 					);
 					supertest = request(app);
+				});
+
+				afterEach(() => {
+					Sinon.restore();
 				});
 
 				it("POST /tenants/:id/validate", async () => {

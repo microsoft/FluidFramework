@@ -26,6 +26,8 @@ import {
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
+import { useLogger } from "../TelemetryUtils";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -100,6 +102,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
 				if (message.data.containerKey === containerKey) {
 					setSupportedFeatures(message.data.features);
+
 					return true;
 				}
 				return false;
@@ -149,7 +152,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const { containerKey, supportedFeatures } = props;
 
 	const styles = useStyles();
-
+	const usageLogger = useLogger();
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
@@ -161,7 +164,13 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
-			innerView = <DataObjectsView containerKey={containerKey} />;
+			innerView = (
+				<ContainerFeatureFlagContext.Provider
+					value={{ containerFeatureFlags: supportedFeatures }}
+				>
+					<DataObjectsView containerKey={containerKey} />
+				</ContainerFeatureFlagContext.Provider>
+			);
 			break;
 		case PanelView.Audience:
 			innerView = <AudienceView containerKey={containerKey} />;
@@ -175,6 +184,10 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
 		setInnerViewSelection(data.value);
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: `Container_${data.value}Tab` },
+		});
 	};
 
 	return (

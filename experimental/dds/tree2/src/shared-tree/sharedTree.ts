@@ -34,13 +34,13 @@ import {
 	DefaultChangeset,
 	buildForest,
 	ForestRepairDataStoreProvider,
-	GlobalFieldSchema,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	NewFieldContent,
 	ModularChangeset,
 	nodeKeyFieldKey,
+	FieldSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -152,7 +152,7 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
+	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
@@ -170,8 +170,10 @@ export class SharedTree
 		return this.view.fork();
 	}
 
-	public merge(fork: SharedTreeView): void {
-		this.view.merge(fork);
+	public merge(view: SharedTreeView): void;
+	public merge(view: SharedTreeView, disposeView: boolean): void;
+	public merge(view: SharedTreeView, disposeView = true): void {
+		this.view.merge(view, disposeView);
 	}
 
 	public rebase(fork: SharedTreeView): void {

@@ -6,19 +6,16 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	IEditableForest,
-	lookupGlobalFieldSchema,
-	rootFieldKey,
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
-	SchemaDataAndPolicy,
 	ForestEvents,
 	FieldStoredSchema,
 	FieldKey,
-	LocalFieldKey,
+	SchemaData,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultEditBuilder } from "../defaultChangeFamily";
+import { DefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
@@ -80,10 +77,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * Schema used within this context.
 	 * All data must conform to these schema.
-	 *
-	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaDataAndPolicy;
+	readonly schema: SchemaData;
 
 	/**
 	 * Call before editing.
@@ -135,7 +130,7 @@ export class ProxyContext implements EditableTreeContext {
 		public readonly forest: IEditableForest,
 		public readonly editor: DefaultEditBuilder,
 		public readonly nodeKeys: NodeKeyManager,
-		public readonly nodeKeyFieldKey?: LocalFieldKey,
+		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -195,7 +190,7 @@ export class ProxyContext implements EditableTreeContext {
 	private getRoot(unwrap: false): EditableField;
 	private getRoot(unwrap: true): UnwrappedEditableField;
 	private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
-		const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
+		const rootSchema = this.schema.rootFieldSchema;
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const proxifiedField = unwrap
@@ -205,7 +200,7 @@ export class ProxyContext implements EditableTreeContext {
 		return proxifiedField;
 	}
 
-	public get schema(): SchemaDataAndPolicy {
+	public get schema(): SchemaData {
 		return this.forest.schema;
 	}
 
@@ -229,7 +224,7 @@ export function getEditableTreeContext(
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey?: LocalFieldKey,
+	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
 	return new ProxyContext(forest, editor, nodeKeyManager, nodeKeyFieldKey);
 }

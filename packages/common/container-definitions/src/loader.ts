@@ -339,9 +339,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
 	/**
-	 * Returns true if the container has been closed, otherwise false.
+	 * Returns true if the container has been closed and/or disposed, otherwise false.
 	 */
 	readonly closed: boolean;
+
+	/**
+	 * Returns true if the container has been disposed, otherwise false.
+	 */
+	readonly disposed?: boolean;
 
 	/**
 	 * Whether or not there are any local changes that have not been saved.
@@ -527,6 +532,7 @@ export type ILoaderOptions = {
 	[key in string | number]: any;
 } & {
 	/**
+	 * @deprecated This option has been deprecated and will be removed in a future release
 	 * Set caching behavior for the loader. If true, we will load a container from cache if one
 	 * with the same id/version exists or create a new container and cache it if it does not. If
 	 * false, always load a new container and don't cache it. If the container has already been

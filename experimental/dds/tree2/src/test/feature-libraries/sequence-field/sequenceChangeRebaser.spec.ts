@@ -4,10 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
-import { mintRevisionTag, RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
+import {
+	ChangesetLocalId,
+	SequenceField as SF,
+	singleTextCursor,
+} from "../../../feature-libraries";
+import {
+	mintRevisionTag,
+	RevisionTag,
+	tagChange,
+	tagRollbackInverse,
+	TreeSchemaIdentifier,
+} from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { deepFreeze, isDeltaVisible } from "../../utils";
 import { brand } from "../../../util";
 import {
 	checkDeltaEquality,
@@ -17,8 +27,9 @@ import {
 	rebaseTagged,
 	toDelta,
 } from "./utils";
-import { ChangeMaker as Change } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 
+const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -55,29 +66,69 @@ function generateLineage(
 }
 
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
-	["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
+	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
 	[
 		"MInsert",
 		(i) =>
 			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
 	],
 	["Insert", (i) => Change.insert(i, 2, 42)],
+	[
+		"TransientInsert",
+		(i) => [
+			{ count: i },
+			Mark.insert([singleTextCursor({ type, value: 1 })], brand(0), {
+				transientDetach: { revision: tag1, localId: brand(0) },
+			}),
+		],
+	],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
 		(i, max) =>
-			Change.revive(2, 2, tag1, brand(i), undefined, generateLineage(tag1, brand(i), 2, max)),
+			Change.revive(2, 2, {
+				revision: tag1,
+				localId: brand(i),
+				lineage: generateLineage(tag1, brand(i), 2, max),
+			}),
 	],
-	["ConflictedRevive", (i) => Change.redundantRevive(2, 2, tag2, brand(i), undefined)],
+	[
+		"TransientRevive",
+		(i) => [
+			{ count: i },
+			Mark.revive(
+				[singleTextCursor({ type, value: 1 })],
+				{
+					revision: tag1,
+					localId: brand(0),
+				},
+				{ transientDetach: { revision: tag1, localId: brand(0) } },
+			),
+		],
+	],
+	[
+		"ConflictedRevive",
+		(i) => Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
+	],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
 	[
 		"ReturnFrom",
-		(i, max) => Change.return(i, 2, 1, tag4, brand(i), generateLineage(tag4, brand(i), 2, max)),
+		(i, max) =>
+			Change.return(i, 2, 1, {
+				revision: tag4,
+				localId: brand(i),
+				lineage: generateLineage(tag4, brand(i), 2, max),
+			}),
 	],
 	[
 		"ReturnTo",
-		(i, max) => Change.return(1, 2, i, tag4, brand(i), generateLineage(tag4, brand(1), 2, max)),
+		(i, max) =>
+			Change.return(1, 2, i, {
+				revision: tag4,
+				localId: brand(i),
+				lineage: generateLineage(tag4, brand(1), 2, max),
+			}),
 	],
 ];
 deepFreeze(testChanges);
@@ -90,6 +141,14 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("A ↷ [B, B⁻¹] === A", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
+				if (
+					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Transient") && name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
@@ -124,6 +183,14 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("A ↷ [B, undo(B)] => A", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
+				if (
+					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
+					(name1.startsWith("Transient") && name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				const title = `${name1} ↷ [${name2}), undo(${name2}] => ${name1}`;
 				it(title, () => {
 					const maxOffset = 4;
@@ -161,6 +228,13 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
+				if (
+					(name1.startsWith("Transient") || name2.startsWith("Transient")) &&
+					(name1.startsWith("Return") || name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}
 				if (name2 === "Revive") {
 					it.skip(title, () => {
 						/**
@@ -221,7 +295,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				assert.deepEqual(isDeltaVisible(delta), false);
 			});
 		}
 	});
@@ -281,7 +355,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), tag1);
 		const delABC = tagChange(Change.delete(0, 3), tag2);
-		const revABC = tagChange(Change.revive(0, 3, tag2, id0), tag4);
+		const revABC = tagChange(Change.revive(0, 3, { revision: tag2, localId: id0 }), tag4);
 		const delABC2 = rebaseTagged(delABC, delB);
 		const invDelABC = tagRollbackInverse(invert(delABC), tag3, delABC2.revision);
 		const revABC2 = rebaseTagged(revABC, invDelABC);
@@ -296,7 +370,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Move ABC, Return ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), tag1);
 		const movABC = tagChange(Change.move(0, 3, 1), tag2);
-		const retABC = tagChange(Change.return(1, 3, 0, tag2, id0), tag4);
+		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
 		const movABC2 = rebaseTagged(movABC, delB);
 		const invMovABC = invert(movABC);
 		const retABC2 = rebaseTagged(retABC, tagRollbackInverse(invMovABC, tag3, movABC2.revision));
@@ -311,7 +385,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
 		const addB = tagChange(Change.insert(1, 1), tag1);
 		const delAC = tagChange(Change.delete(0, 2), tag2);
-		const revAC = tagChange(Change.revive(0, 2, tag2, id0), tag4);
+		const revAC = tagChange(Change.revive(0, 2, { revision: tag2, localId: id0 }), tag4);
 		const delAC2 = rebaseTagged(delAC, addB);
 		const invDelAC = invert(delAC);
 		const revAC2 = rebaseTagged(revAC, tagRollbackInverse(invDelAC, tag3, delAC2.revision));

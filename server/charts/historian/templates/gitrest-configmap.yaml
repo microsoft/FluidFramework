@@ -31,6 +31,9 @@ data:
             "lib": {
                 "name": "{{ .Values.gitrest.git.lib.name }}"
             },
+            "filesystem": {
+                "name": "{{ .Values.gitrest.git.filesystem.name }}"
+            },
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
             "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }},
@@ -41,6 +44,16 @@ data:
             "enableLowIoWrite": {{ .Values.gitrest.git.enableLowIoWrite }},
             {{- end }}
             "enableOptimizedInitialSummary": {{ .Values.gitrest.git.enableOptimizedInitialSummary }},
-            "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }}
+            "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }},
+            "enableRedisFsMetrics": {{ .Values.gitrest.git.enableRedisFsMetrics }},
+            "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
+        },
+        "redis": {
+            "host": "{{ .Values.gitrest.redis.url }}",
+            "port": "{{ .Values.gitrest.redis.port }}",
+            "connectTimeout": {{ .Values.gitrest.redis.connectTimeout }},
+            "maxRetriesPerRequest": "{{ .Values.gitrest.redis.maxRetriesPerRequest }}",
+            "enableAutoPipelining": "{{ .Values.gitrest.redis.enableAutoPipelining }}",
+            "enableOfflineQueue": "{{ .Values.gitrest.redis.enableOfflineQueue }}"
         }
     }

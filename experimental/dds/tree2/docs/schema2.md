@@ -57,7 +57,7 @@ This avoids the need to use a Proxy for any of the node implementations, as well
 ### Annotation Pattern
 
 ExtraGlobalFields in the previous design existed to support an "annotations pattern" where an app could opt some or all of their schema into allowing annotation subtrees to be placed on nodes.
-This addressed use-cases where multiple users of the same tree (might be different applications entirely, or just different views withing the same app, different versions of an app etc.) want to store extra data ("annotations") on a tree, without interfering with each-other.
+This addressed use-cases where multiple users of the same tree (might be different applications entirely, or just different views within the same app, different versions of an app etc.) want to store extra data ("annotations") on a tree, without interfering with each-other.
 
 ExtraGlobalFields isn't really a full solution to this.
 The real challenge is that different applications may have different view schema, each with a different set of known annotations.
@@ -91,15 +91,16 @@ and does not involve exposing any stored schema editing to users.
 Workstream 1
 
 1. (Done) Add the 4 node type builders to SchemaBuilder. Use the existing schema features, but just limit which features each can use (like is already done for primitive).
-2. (In progress) Update all schema to use new API.
-3. Remove old schema builder API.
+2. (Done) Update all schema to use new API.
+3. (Done) Remove old schema builder API.
 4. Capture which kind of node schema the view schema are in the data and type produced by the schema builder.
 
 Workstream 2
 
-1. Replace existing usages of global field keys with string constants.
-2. Remove support for global fields
-3. Cleanup code now that it can assume only local fields (ex: extra objects to separate local and global can be renamed or removed).
+1. (Done) Replace existing usages of global field keys with string constants.
+2. (Done) Implement alternative design for root field.
+3. (Done) Remove support for global fields.
+4. (Done) Cleanup code now that it can assume only local fields (ex: extra objects to separate local and global can be renamed or removed).
 
 Workstream 3
 

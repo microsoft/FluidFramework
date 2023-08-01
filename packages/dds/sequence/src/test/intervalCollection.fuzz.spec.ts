@@ -18,8 +18,10 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IIntervalCollection, IntervalStickiness, SequenceInterval } from "../intervalCollection";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalStickiness, SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -40,6 +42,7 @@ import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimizati
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
 ): Generator<Operation, ClientOpState> {
 	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
 
@@ -59,6 +62,12 @@ export function makeOperationGenerator(
 	function exclusiveRange(state: ClientOpState): RangeSpec {
 		const start = startPosition(state);
 		const end = state.random.integer(start + 1, state.channel.getLength());
+		return { start, end };
+	}
+
+	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
+		const start = state.random.integer(0, state.channel.getLength() - 2);
+		const end = state.random.integer(start + 1, state.channel.getLength() - 1);
 		return { start, end };
 	}
 
@@ -113,6 +122,10 @@ export function makeOperationGenerator(
 
 	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
+	}
+
+	async function removeRangeLeaveChar(state: ClientOpState): Promise<RemoveRange> {
+		return { type: "removeRange", ...exclusiveRangeLeaveChar(state) };
 	}
 
 	async function addInterval(state: ClientOpState): Promise<AddInterval> {
@@ -185,7 +198,15 @@ export function makeOperationGenerator(
 	const usableWeights = optionsParam?.weights ?? defaultOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
-		[removeRange, usableWeights.removeRange, hasNonzeroLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+				  })
+				: hasNonzeroLength,
+		],
 		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
 		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
@@ -280,13 +301,42 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		skip: [80],
+		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
+		skip: [80, 9, 12, 44],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
 
 	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
 		...options,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+	});
+});
+
+/**
+ * Disabled as all tests are failing due to eventual consistency issues.
+ * ADO:5083 to deal with the failures.
+ */
+describe.skip("IntervalCollection fuzz testing with rebased batches", () => {
+	const noReconnectWithRebaseModel = {
+		...baseModel,
+		workloadName: "interval collection with rebasing",
+	};
+
+	createDDSFuzzSuite(noReconnectWithRebaseModel, {
+		...defaultFuzzOptions,
+		reconnectProbability: 0.0,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
+		},
+		rebaseProbability: 0.2,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});

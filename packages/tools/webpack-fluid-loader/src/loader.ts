@@ -22,7 +22,6 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -30,6 +29,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -287,7 +287,7 @@ export async function start(
 				async () => options.odspAccessToken ?? null,
 				odspPersistantCache,
 				false /** forceAccessTokenViaAuthorizationHeader */,
-				new BaseTelemetryNullLogger(),
+				createChildLogger(),
 				undefined,
 			);
 			assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
@@ -318,10 +318,6 @@ export async function start(
 
 	// Load and render the Fluid object.
 	await getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv);
-	// Handle the code upgrade scenario (which fires contextChanged)
-	container1.on("contextChanged", () => {
-		getFluidObjectAndRender(container1, fluidObjectUrl, leftDiv).catch(() => {});
-	});
 
 	// We have rendered the Fluid object. If the container is detached, attach it now.
 	if (container1.attachState === AttachState.Detached) {
@@ -363,11 +359,6 @@ export async function start(
 		containers.push(container2);
 
 		await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
-		// Handle the code upgrade scenario (which fires contextChanged)
-		container2.on("contextChanged", () => {
-			assert(rightDiv !== undefined, 0x31c /* rightDiv is undefined */);
-			getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => {});
-		});
 	}
 }
 
@@ -483,12 +474,6 @@ async function attachContainer(
 				currentLeftDiv = newLeftDiv;
 				// Load and render the component.
 				await getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv);
-				// Handle the code upgrade scenario (which fires contextChanged)
-				currentContainer.on("contextChanged", () => {
-					getFluidObjectAndRender(currentContainer, fluidObjectUrl, newLeftDiv).catch(
-						() => {},
-					);
-				});
 			};
 		};
 

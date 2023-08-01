@@ -17,11 +17,11 @@ import {
 	UndoRedoManager,
 	tagChange,
 	TaggedChange,
-	UndoRedoManagerCommitType,
+	LocalCommitSource,
 	rebaseBranch,
 	RevisionTag,
 } from "../core";
-import { EventEmitter } from "../events";
+import { EventEmitter, ISubscribable } from "../events";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -94,6 +94,11 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	change(change: SharedTreeBranchChange<TChange>): void;
 
 	/**
+	 * Fired when a revertible change is made to this branch.
+	 */
+	revertible(type: LocalCommitSource): void;
+
+	/**
 	 * Fired when this branch forks
 	 * @param fork - the new branch that forked off of this branch
 	 */
@@ -158,13 +163,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		change: TChange,
 		revision: RevisionTag,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
-		return this.applyChange(change, revision, UndoRedoManagerCommitType.Undoable);
+		return this.applyChange(change, revision, LocalCommitSource.Default);
 	}
 
 	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
-		undoRedoType: UndoRedoManagerCommitType | undefined,
+		undoRedoType: LocalCommitSource | undefined,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -186,6 +191,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
 			this.undoRedoManager?.trackCommit(this.head, undoRedoType);
+			this.emit("revertible", undoRedoType);
 		}
 
 		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
@@ -212,7 +218,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// state of the branch at the start of the transaction.
 			this.repairDataStoreProvider.freeze();
 		}
-		this.transactions.push(this.head.revision, repairStore);
+		const forks = new Set<SharedTreeBranch<TEditor, TChange>>();
+		const onDisposeUnSubscribes: (() => void)[] = [];
+		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
+			forks.add(fork);
+			onDisposeUnSubscribes.push(fork.on("dispose", () => forks.delete(fork)));
+		});
+		this.transactions.push(
+			this.head.revision,
+			() => {
+				forks.forEach((fork) => fork.dispose());
+				onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+				onForkUnSubscribe();
+			},
+			repairStore,
+		);
 		this.editor.enterTransaction();
 	}
 
@@ -256,7 +276,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
 		if (!this.isTransacting()) {
 			if (this.undoRedoManager !== undefined) {
-				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
+				this.undoRedoManager.trackCommit(this.head, LocalCommitSource.Default);
+				this.emit("revertible", LocalCommitSource.Default);
 			}
 		}
 
@@ -287,6 +308,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
+
 		if (commits.length === 0) {
 			return [undefined, []];
 		}
@@ -346,7 +368,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const undoChange = this.undoRedoManager?.undo(this.getHead());
 		if (undoChange !== undefined) {
-			return this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
+			return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
 		}
 
 		return undefined;
@@ -369,7 +391,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const redoChange = this.undoRedoManager?.redo(this.getHead());
 		if (redoChange !== undefined) {
-			return this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
+			return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
 		}
 
 		return undefined;
@@ -381,6 +403,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
 	 * provided, then it will be cloned from this branch.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
+	 *
+	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
 	 */
 	public fork(
 		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
@@ -401,6 +425,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Rebase the changes that have been applied to this branch over divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
+	 *
+	 * @remarks
+	 * This operation can change the relative ordering between revertible commits therefore, the revertible event
+	 * is not emitted during this operation.
+	 *
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
 	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase,
@@ -448,6 +477,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/**
 	 * Apply all the divergent changes on the given branch to this branch.
+	 *
+	 * @remarks
+	 * Revertible events are emitted for new local commits merged into this branch.
+	 *
 	 * @param branch - the branch to merge into this branch
 	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
 	 * or undefined if nothing changed
@@ -456,6 +489,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		branch: SharedTreeBranch<TEditor, TChange>,
 	): [change: TChange, newCommits: GraphCommit<TChange>[]] | undefined {
 		this.assertNotDisposed();
+		branch.assertNotDisposed();
 		assert(
 			!branch.isTransacting(),
 			0x597 /* Branch may not be merged while transaction is in progress */,
@@ -477,6 +511,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
 			);
 			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+
+			for (const commit of sourceCommits) {
+				const type = this.undoRedoManager.getCommitType(commit.revision);
+				if (type !== undefined) {
+					this.emit("revertible", type);
+				}
+			}
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
@@ -516,10 +557,20 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	/**
 	 * Dispose this branch, freezing its state.
-	 * Attempts to further mutate or dispose the branch will error.
+	 *
+	 * @remarks
+	 * Attempts to further mutate the branch will error.
+	 * Any transactions in progress will be aborted.
+	 * Calling dispose more than once has no effect.
 	 */
 	public dispose(): void {
-		this.assertNotDisposed();
+		if (this.disposed) {
+			return;
+		}
+
+		while (this.isTransacting()) {
+			this.abortTransaction();
+		}
 		this.disposed = true;
 		this.emit("dispose");
 	}
@@ -535,4 +586,26 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private assertNotDisposed(): void {
 		assert(!this.disposed, 0x66e /* Branch is disposed */);
 	}
+}
+
+/**
+ * Registers an event listener that fires when the given forkable object forks.
+ * The listener will also fire when any of those forks fork, and when those forks of forks fork, and so on.
+ * @param forkable - an object that emits an event when it is forked
+ * @param onFork - the fork event listener
+ * @returns a function which when called will deregister all registrations (including transitive) created by this function.
+ * The deregister function has undefined behavior if called more than once.
+ */
+export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void }>>(
+	forkable: T,
+	onFork: (fork: T) => void,
+): () => void {
+	const offs: (() => void)[] = [];
+	offs.push(
+		forkable.on("fork", (fork) => {
+			offs.push(onForkTransitive(fork, onFork));
+			onFork(fork);
+		}),
+	);
+	return () => offs.forEach((off) => off());
 }

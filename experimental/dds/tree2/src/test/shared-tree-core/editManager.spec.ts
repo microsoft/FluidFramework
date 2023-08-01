@@ -269,24 +269,24 @@ describe("EditManager", () => {
 
 			it("Evicts trunk commits according to a provided minimum sequence number", () => {
 				const { manager } = editManagerFactory({});
-				for (let i = 0; i < 10; ++i) {
+				for (let i = 1; i <= 10; ++i) {
 					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
 
 				assert.equal(manager.getTrunkChanges().length, 10);
 				manager.advanceMinimumSequenceNumber(brand(5));
-				assert.equal(manager.getTrunkChanges().length, 5);
+				assert.equal(manager.getTrunkChanges().length, 6);
 				manager.advanceMinimumSequenceNumber(brand(10));
-				assert.equal(manager.getTrunkChanges().length, 0);
-				for (let i = 10; i < 20; ++i) {
+				assert.equal(manager.getTrunkChanges().length, 1);
+				for (let i = 11; i <= 20; ++i) {
 					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
 
-				assert.equal(manager.getTrunkChanges().length, 10);
+				assert.equal(manager.getTrunkChanges().length, 11);
 				manager.advanceMinimumSequenceNumber(brand(15));
-				assert.equal(manager.getTrunkChanges().length, 5);
+				assert.equal(manager.getTrunkChanges().length, 6);
 				manager.advanceMinimumSequenceNumber(brand(20));
-				assert.equal(manager.getTrunkChanges().length, 0);
+				assert.equal(manager.getTrunkChanges().length, 1);
 			});
 
 			it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
@@ -329,6 +329,13 @@ describe("EditManager", () => {
 				// We'll fail when trying to rebase if the branch was not already updated and is referencing evicted commits.
 				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
 				checkChangeList(manager, [3, 4]);
+			});
+
+			it("disregards branches which are already forked off of the origin commit", () => {
+				// This is a regression test for an assert in trunk eviction which would throw even during the following valid scenario:
+				// There are no sequenced commits that require eviction, but there are one or more outstanding branches which are already based off of the origin commit.
+				// See "TODO:#4918:" in editManager.ts
+				editManagerFactory({}).manager.localBranch.fork().fork().dispose();
 			});
 
 			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
@@ -384,6 +391,73 @@ describe("EditManager", () => {
 				brand(1),
 			);
 			assert.equal(manager.localBranch.getHead(), manager.getTrunkHead());
+		});
+
+		describe("Reports correct max branch length", () => {
+			it("When there are no branches", () => {
+				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				assert.equal(manager.getLongestBranchLength(), 0);
+			});
+			it("When the local branch is longest", () => {
+				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const sequencedLocalChange = mintRevisionTag();
+				manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
+				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(1),
+					brand(0),
+				);
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+						sessionId: manager.localSessionId,
+					},
+					brand(2),
+					brand(0),
+				);
+				assert.equal(manager.getLongestBranchLength(), 2);
+			});
+			it("When a peer branch is longest", () => {
+				const { manager } = editManagerFactory({ rebaser: new NoOpChangeRebaser() });
+				const sequencedLocalChange = mintRevisionTag();
+				manager.localBranch.apply(TestChange.emptyChange, sequencedLocalChange);
+				manager.localBranch.apply(TestChange.emptyChange, mintRevisionTag());
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: sequencedLocalChange,
+						sessionId: manager.localSessionId,
+					},
+					brand(1),
+					brand(0),
+				);
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(2),
+					brand(0),
+				);
+				manager.addSequencedChange(
+					{
+						change: TestChange.emptyChange,
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(3),
+					brand(0),
+				);
+				assert.equal(manager.getLongestBranchLength(), 2);
+			});
 		});
 	});
 

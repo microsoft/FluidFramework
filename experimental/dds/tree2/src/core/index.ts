@@ -19,7 +19,6 @@ export {
 
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	Value,
 	TreeValue,
@@ -35,18 +34,10 @@ export {
 	NodeData,
 	GenericTreeNode,
 	JsonableTree,
-	EncodedFieldMapObject,
-	EncodedNodeData,
-	EncodedGenericFieldsNode,
-	EncodedGenericTreeNode,
 	EncodedJsonableTree,
 	Delta,
 	rootFieldKey,
 	rootField,
-	FieldScope,
-	GlobalFieldKeySymbol,
-	symbolFromKey,
-	keyFromSymbol,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -57,17 +48,14 @@ export {
 	getGenericTreeField,
 	genericTreeDeleteIfEmpty,
 	getDepth,
-	symbolIsFieldKey,
 	mapCursorField,
 	mapCursorFields,
-	isGlobalFieldKey,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
 	setGenericTreeField,
-	rootFieldKeySymbol,
 	DeltaVisitor,
 	PathVisitor,
 	SparseNode,
@@ -75,7 +63,6 @@ export {
 	compareUpPaths,
 	clonePath,
 	topDownPath,
-	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
 	forEachField,
@@ -111,16 +98,15 @@ export {
 } from "./forest";
 
 export {
-	LocalFieldKey,
-	LocalFieldKeySchema,
-	GlobalFieldKey,
-	GlobalFieldKeySchema,
+	FieldKey,
+	FieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,
 	Named,
 	FieldStoredSchema,
 	ValueSchema,
+	PrimitiveValueSchema,
 	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
@@ -128,18 +114,16 @@ export {
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
-	SchemaPolicy,
-	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	fieldSchema,
-	lookupTreeSchema,
-	lookupGlobalFieldSchema,
 	TreeSchemaBuilder,
 	emptyMap,
 	emptySet,
 	treeSchema,
 	SchemaEvents,
+	forbiddenFieldKindIdentifier,
+	storedEmptyFieldSchema,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
@@ -170,14 +154,12 @@ export {
 
 export {
 	Adapters,
-	ViewSchemaData,
 	AdaptedViewSchema,
 	Compatibility,
-	FieldAdapter,
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";
 
 export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
-export { UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
+export { UndoRedoManager, LocalCommitSource } from "./undo";

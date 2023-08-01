@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
@@ -25,7 +25,7 @@ import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceTy
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
-import { MergeTree } from "../mergeTree";
+import { getSlideToSegoff, MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
@@ -71,7 +71,7 @@ export class TestClient extends Client {
 	): Promise<TestClient> {
 		const snapshot = new SnapshotLegacy(
 			client1.mergeTree,
-			DebugLogger.create("fluid:snapshot"),
+			createChildLogger({ namespace: "fluid:snapshot" }),
 		);
 		snapshot.extractSync();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -139,7 +139,7 @@ export class TestClient extends Client {
 
 	private readonly textHelper: MergeTreeTextHelper;
 	constructor(options?: PropertySet, specToSeg = specToSegment) {
-		super(specToSeg, DebugLogger.create("fluid:testClient"), options);
+		super(specToSeg, createChildLogger({ namespace: "fluid:testClient" }), options);
 		this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
 		this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
@@ -409,7 +409,7 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
+		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
 		if (segoff.segment === undefined || segoff.offset === undefined) {
 			return DetachedReferencePosition;
 		}

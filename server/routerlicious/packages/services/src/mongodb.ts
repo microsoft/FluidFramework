@@ -14,7 +14,12 @@ import {
 	MongoClientOptions,
 	OptionalUnlessRequiredId,
 } from "mongodb";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
+import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
@@ -52,12 +57,31 @@ const errorResponseKeysAllowList = new Set([
 ]);
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
+	private readonly apiCounter = new InMemoryApiCounters();
+	private readonly failedApiCounterSuffix = ".Failed";
 	constructor(
 		private readonly collection: Collection<T>,
 		public readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) {}
+		private readonly collectionName: string,
+		private readonly apiCounterIntervalMS: number,
+		private readonly apiFailureRateTerminationThreshold: number,
+		private readonly apiMinimumCountToEnableTermination: number,
+	) {
+		setInterval(() => {
+			if (!this.apiCounter.countersAreActive) {
+				return;
+			}
+			const counters = this.apiCounter.getCounters();
+			this.apiCounter.resetAllCounters();
+			Lumberjack.info(
+				`MongoCollection counter for collection ${this.collectionName}`,
+				counters,
+			);
+			this.terminateBasedOnCounterThreshold(counters);
+		}, this.apiCounterIntervalMS);
+	}
 
 	public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
 		const req = async () =>
@@ -353,19 +377,26 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		queryOrFilter?: any,
 	): Promise<TOut> {
 		const telemetryProperties = this.getTelemetryPropertiesFromQuery(queryOrFilter);
-		return core.runWithRetry<TOut>(
-			request,
-			callerName,
-			MaxRetryAttempts, // maxRetries
-			InitialRetryIntervalInMs, // retryAfterMs
-			telemetryProperties,
-			(e) => e.code === 11000, // shouldIgnoreError
-			(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
-			(error: any, numRetries: number, retryAfterInterval: number) =>
-				numRetries * retryAfterInterval, // calculateIntervalMs
-			(error) => this.sanitizeError(error) /* onErrorFn */,
-			this.telemetryEnabled, // telemetryEnabled
-		);
+		try {
+			const result = await core.runWithRetry<TOut>(
+				request,
+				callerName,
+				MaxRetryAttempts, // maxRetries
+				InitialRetryIntervalInMs, // retryAfterMs
+				telemetryProperties,
+				(e) => e.code === 11000, // shouldIgnoreError
+				(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
+				(error: any, numRetries: number, retryAfterInterval: number) =>
+					numRetries * retryAfterInterval, // calculateIntervalMs
+				(error) => this.sanitizeError(error) /* onErrorFn */,
+				this.telemetryEnabled, // telemetryEnabled
+			);
+			this.apiCounter.incrementCounter(callerName);
+			return result;
+		} catch (err: any) {
+			this.apiCounter.incrementCounter(`${callerName}${this.failedApiCounterSuffix}`);
+			throw err;
+		}
 	}
 
 	private getTelemetryPropertiesFromQuery(
@@ -410,6 +441,37 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			}
 		}
 	}
+
+	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
+		if (this.apiFailureRateTerminationThreshold > 1) {
+			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
+		}
+		let totalCount = 0;
+		let totalFailedCount = 0;
+		for (const [apiName, apiCounter] of Object.entries(counters)) {
+			totalCount += apiCounter;
+			if (apiName.endsWith(this.failedApiCounterSuffix)) {
+				totalFailedCount += apiCounter;
+			}
+		}
+
+		if (totalCount < this.apiMinimumCountToEnableTermination) {
+			// too little requests to consider
+			return;
+		}
+		const failureRate = totalFailedCount / totalCount;
+		if (failureRate <= this.apiFailureRateTerminationThreshold) {
+			// OK, no need to terminate
+			return;
+		}
+
+		// This logic is to automate the process of terminates application if db become unfunctional, so
+		// kubernetes would automatically handle the restart process.
+		Lumberjack.warning(
+			`Failure rate ${failureRate} more than threshold ${this.apiFailureRateTerminationThreshold}`,
+		);
+		process.kill(process.pid, "SIGTERM");
+	}
 }
 
 export class MongoDb implements core.IDb {
@@ -418,6 +480,9 @@ export class MongoDb implements core.IDb {
 		private readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
+		private readonly apiCounterIntervalMS: number,
+		private readonly apiFailureRateTerminationThreshold: number,
+		private readonly apiMinimumCountToEnableTermination: number,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -436,6 +501,10 @@ export class MongoDb implements core.IDb {
 			this.retryEnabled,
 			this.telemetryEnabled,
 			this.mongoErrorRetryAnalyzer,
+			name,
+			this.apiCounterIntervalMS,
+			this.apiFailureRateTerminationThreshold,
+			this.apiMinimumCountToEnableTermination,
 		);
 	}
 
@@ -445,6 +514,41 @@ export class MongoDb implements core.IDb {
 }
 
 export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
+const DefaultMongoDbMonitoringEvents = [
+	"serverOpening",
+	"serverClosed",
+	"serverDescriptionChanged",
+	"topologyOpening",
+	"topologyClosed",
+	"topologyDescriptionChanged",
+	"serverHeartbeatStarted",
+	"serverHeartbeatSucceeded",
+	"serverHeartbeatFailed",
+	// "commandStarted", Comment out because this will be too often
+	// "commandSucceeded", Comment out because this will be too often
+	// "commandFailed", Comment out because this will be too often
+	"connectionPoolCreated",
+	"connectionPoolReady",
+	"connectionPoolClosed",
+	"connectionCreated",
+	"connectionReady",
+	"connectionClosed",
+	// "connectionCheckOutStarted", Comment out because this will be too often
+	"connectionCheckOutFailed",
+	// "connectionCheckedOut", Comment out because this will be too often
+	// "connectionCheckedIn", Comment out because this will be too often
+	"connectionPoolCleared",
+];
+const DefaultHeartbeatFrequencyMS = 30000;
+const DefaultKeepAliveInitialDelay = 60000;
+const DefaultSocketTimeoutMS = 100000;
+const DefaultConnectionTimeoutMS = 120000;
+const DefaultMinHeartbeatFrequencyMS = 10000;
+const DefaultApiCounterIntervalMS = 60000;
+// 1 means 100%, using 2 just for safety for incorrect calculations and meaning this feature disabled
+const DefaultApiFailureRateTerminationThreshold = 2;
+const DefaultApiMinimumCountToEnableTermination = 100;
+const DefaultServerSelectionTimeoutMS = 30000;
 
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
@@ -457,6 +561,16 @@ interface IMongoDBConfig {
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
 	connectionNotAvailableMode?: ConnectionNotAvailableMode;
+	dbMonitoringEventsList?: string[];
+	heartbeatFrequencyMS?: number;
+	keepAliveInitialDelay?: number;
+	socketTimeoutMS?: number;
+	connectionTimeoutMS?: number;
+	minHeartbeatFrequencyMS?: number;
+	apiCounterIntervalMS?: number;
+	apiFailureRateTerminationThreshold?: number;
+	apiMinimumCountToEnableTermination?: number;
+	serverSelectionTimeoutMS?: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -469,6 +583,17 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly telemetryEnabled: boolean = false;
 	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
 	private readonly retryRuleOverride: Map<string, boolean>;
+	private readonly dbMonitoringEventsList: string[];
+	private readonly heartbeatFrequencyMS: number;
+	private readonly keepAliveInitialDelay: number;
+	private readonly socketTimeoutMS: number;
+	private readonly connectionTimeoutMS: number;
+	private readonly minHeartbeatFrequencyMS: number;
+	private readonly apiCounterIntervalMS: number;
+	private readonly apiFailureRateTerminationThreshold: number;
+	private readonly apiMinimumCountToEnableTermination: number;
+	private readonly serverSelectionTimeoutMS: number;
+
 	constructor(config: IMongoDBConfig) {
 		const {
 			operationsDbEndpoint,
@@ -478,6 +603,16 @@ export class MongoDbFactory implements core.IDbFactory {
 			connectionPoolMaxSize,
 			directConnection,
 			connectionNotAvailableMode,
+			dbMonitoringEventsList,
+			heartbeatFrequencyMS,
+			keepAliveInitialDelay,
+			socketTimeoutMS,
+			connectionTimeoutMS,
+			minHeartbeatFrequencyMS,
+			apiCounterIntervalMS,
+			apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination,
+			serverSelectionTimeoutMS,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -493,6 +628,18 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
 			? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
 			: new Map();
+		this.dbMonitoringEventsList = dbMonitoringEventsList ?? DefaultMongoDbMonitoringEvents;
+		this.heartbeatFrequencyMS = heartbeatFrequencyMS ?? DefaultHeartbeatFrequencyMS;
+		this.keepAliveInitialDelay = keepAliveInitialDelay ?? DefaultKeepAliveInitialDelay;
+		this.socketTimeoutMS = socketTimeoutMS ?? DefaultSocketTimeoutMS;
+		this.connectionTimeoutMS = connectionTimeoutMS ?? DefaultConnectionTimeoutMS;
+		this.minHeartbeatFrequencyMS = minHeartbeatFrequencyMS ?? DefaultMinHeartbeatFrequencyMS;
+		this.apiCounterIntervalMS = apiCounterIntervalMS ?? DefaultApiCounterIntervalMS;
+		this.apiFailureRateTerminationThreshold =
+			apiFailureRateTerminationThreshold ?? DefaultApiFailureRateTerminationThreshold;
+		this.apiMinimumCountToEnableTermination =
+			apiMinimumCountToEnableTermination ?? DefaultApiMinimumCountToEnableTermination;
+		this.serverSelectionTimeoutMS = serverSelectionTimeoutMS ?? DefaultServerSelectionTimeoutMS;
 	}
 
 	public async connect(global = false): Promise<core.IDb> {
@@ -505,8 +652,12 @@ export class MongoDbFactory implements core.IDbFactory {
 		const options: MongoClientOptions = {
 			directConnection: this.directConnection ?? false,
 			keepAlive: true,
-			keepAliveInitialDelay: 180000,
-			socketTimeoutMS: 120000,
+			keepAliveInitialDelay: this.keepAliveInitialDelay,
+			socketTimeoutMS: this.socketTimeoutMS,
+			connectTimeoutMS: this.connectionTimeoutMS,
+			heartbeatFrequencyMS: this.heartbeatFrequencyMS,
+			minHeartbeatFrequencyMS: this.minHeartbeatFrequencyMS,
+			serverSelectionTimeoutMS: this.serverSelectionTimeoutMS,
 		};
 		if (this.connectionPoolMinSize) {
 			options.minPoolSize = this.connectionPoolMinSize;
@@ -520,12 +671,32 @@ export class MongoDbFactory implements core.IDbFactory {
 			global ? this.globalDbEndpoint : this.operationsDbEndpoint,
 			options,
 		);
+		for (const monitoringEvent of this.dbMonitoringEventsList) {
+			connection.on(monitoringEvent, (event) => {
+				// Using an event here so that we can use geneva monitoring in the future if we want to build alerts.
+				const eventWithName = { ...event, MonitoringEventName: monitoringEvent };
+				const metric = Lumberjack.newLumberMetric(
+					LumberEventName.MongoMonitoring,
+					eventWithName,
+				);
+				metric.success(`Event recorded for ${monitoringEvent}`);
+			});
+		}
+		Lumberjack.info("Added event listeners", this.dbMonitoringEventsList);
 
 		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(
 			this.retryRuleOverride,
 			this.connectionNotAvailableMode,
 		);
 
-		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
+		return new MongoDb(
+			connection,
+			this.retryEnabled,
+			this.telemetryEnabled,
+			retryAnalyzer,
+			this.apiCounterIntervalMS,
+			this.apiFailureRateTerminationThreshold,
+			this.apiMinimumCountToEnableTermination,
+		);
 	}
 }

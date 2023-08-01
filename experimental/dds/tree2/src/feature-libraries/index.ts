@@ -2,15 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export {
-	DefaultChangeset,
-	DefaultChangeFamily,
-	DefaultEditBuilder,
-	IDefaultEditBuilder,
-	ValueFieldEditBuilder,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-} from "./defaultChangeFamily";
+
 export {
 	EditableField,
 	EditableTree,
@@ -55,7 +47,6 @@ export {
 	VisitorBindingContext,
 	DeleteBindingContext,
 	InsertBindingContext,
-	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
 	OperationBinderEvents,
@@ -110,8 +101,6 @@ export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
-export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
-
 export {
 	ChangesetLocalId,
 	idAllocatorFromMaxId,
@@ -144,33 +133,35 @@ export {
 	RevisionMetadataSource,
 	RevisionInfo,
 	HasFieldChanges,
-	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
 	SchemaCollection,
 	IFieldSchema,
 	ITreeSchema,
+	Sourced,
+	NodeExistsConstraint,
+	NodeExistenceState,
+	BrandedFieldKind,
+	ChangeAtomId,
+} from "./modular-schema";
+
+export {
 	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	Sourced,
-	NodeExistsConstraint,
 	LazyTreeSchema,
-	NodeExistenceState,
-} from "./modular-schema";
+	InternalTypedSchemaTypes,
+} from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
 export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
-
-export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
@@ -188,14 +179,22 @@ export {
 
 export {
 	FieldKinds,
-	BrandedFieldKind,
 	ValueFieldKind,
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
 	FieldKindTypes,
-} from "./defaultFieldKinds";
+	DefaultChangeset,
+	DefaultChangeFamily,
+	DefaultEditBuilder,
+	IDefaultEditBuilder,
+	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
+	SequenceFieldEditBuilder,
+	defaultSchemaPolicy,
+	emptyField,
+} from "./default-field-kinds";
 
 export {
 	UntypedField,
