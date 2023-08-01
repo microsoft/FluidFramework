@@ -188,14 +188,18 @@ export function getCellId(
 	return mark.cellId;
 }
 
+export function cloneEffect<TNodeChange>(effect: Effect<TNodeChange>): Effect<TNodeChange> {
+	const clone = { ...effect };
+	if (clone.type === "Insert" || clone.type === "Revive") {
+		clone.content = [...clone.content];
+	}
+	return clone;
+}
+
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
 	const clone = { ...mark };
 	if (clone.effects !== undefined) {
-		const effect = { ...clone.effects[0] };
-		clone.effects = [effect];
-		if (effect.type === "Insert" || effect.type === "Revive") {
-			effect.content = [...effect.content];
-		}
+		clone.effects = clone.effects.map((e) => cloneEffect(e));
 		if (clone.cellId !== undefined) {
 			clone.cellId = { ...clone.cellId };
 			if (clone.cellId.lineage !== undefined) {
@@ -255,7 +259,7 @@ export function getRevision(mark: Mark<unknown>): RevisionTag | undefined {
 	if (effect === undefined) {
 		return undefined;
 	}
-	return effect?.type === "Modify" ? undefined : effect.revision;
+	return effect.type === "Modify" ? undefined : effect.revision;
 }
 
 /**
@@ -313,8 +317,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	}
 	const type = effect.type;
 	switch (type) {
-		case NoopMarkType:
-			return false;
 		case "Insert":
 			return effect.transientDetach !== undefined;
 		case "MoveIn":
@@ -1007,7 +1009,7 @@ export function getNodeChange<TNodeChange>(mark: Mark<TNodeChange>): TNodeChange
 	if (effect === undefined) {
 		return undefined;
 	}
-	const type = effect?.type;
+	const type = effect.type;
 	switch (type) {
 		case "MoveIn":
 		case "ReturnTo":
