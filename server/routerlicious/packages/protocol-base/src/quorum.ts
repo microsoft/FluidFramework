@@ -254,15 +254,7 @@ export class QuorumProposals
 					thisProposalSequenceNumber = sequenceNumber;
 					this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
 					this.stateEvents.off("disconnected", disconnectedHandler);
-					this.stateEvents.on("localProposalApproved", localProposalApprovedHandler);
 					this.stateEvents.on("proposalApproved", proposalApprovedHandler);
-				}
-			};
-			const localProposalApprovedHandler = (sequenceNumber: number) => {
-				// Proposals can be uniquely identified by the sequenceNumber they were assigned.
-				if (sequenceNumber === thisProposalSequenceNumber) {
-					resolve();
-					removeListeners();
 				}
 			};
 
@@ -304,7 +296,6 @@ export class QuorumProposals
 			// Convenience function to clean up our listeners.
 			const removeListeners = () => {
 				this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
-				this.stateEvents.off("localProposalApproved", localProposalApprovedHandler);
 				this.stateEvents.off("proposalApproved", proposalApprovedHandler);
 				this.stateEvents.off("disconnected", disconnectedHandler);
 				this.stateEvents.off("disposed", disposedHandler);
@@ -398,9 +389,6 @@ export class QuorumProposals
 
 			// clear the proposals cache
 			this.proposalsSnapshotCache = undefined;
-			if (proposal.local) {
-				this.stateEvents.emit("localProposalApproved", proposal.sequenceNumber);
-			}
 		}
 	}
 
