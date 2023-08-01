@@ -152,16 +152,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryTreeToWholeSummaryTree(
-							undefined,
-							appSummary,
-							"",
-							"",
-						),
+						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
 
