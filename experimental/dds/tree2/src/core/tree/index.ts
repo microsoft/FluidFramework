@@ -29,12 +29,6 @@ export {
 	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
-export {
-	GlobalFieldKeySymbol,
-	keyFromSymbol,
-	symbolFromKey,
-	symbolIsFieldKey,
-} from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
@@ -48,21 +42,17 @@ export {
 } from "./pathTree";
 export {
 	FieldMapObject,
-	FieldScope,
 	GenericFieldsNode,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
 	GenericTreeNode,
 	getGenericTreeField,
-	isGlobalFieldKey,
 	JsonableTree,
-	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
 export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	ChildLocation,
 	DetachedField,
@@ -74,9 +64,7 @@ export {
 	keyAsDetachedField,
 	rootFieldKey,
 	NodeData,
-	rootFieldKeySymbol,
 	rootField,
-	isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 export { PathVisitor } from "./visitPath";

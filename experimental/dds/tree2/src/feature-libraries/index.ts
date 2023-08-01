@@ -152,7 +152,6 @@ export {
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,
@@ -197,8 +196,6 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	emptyField,
-	neverField,
-	neverTree,
 } from "./default-field-kinds";
 
 export {

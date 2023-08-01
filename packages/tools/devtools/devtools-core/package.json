@@ -124,6 +124,14 @@
 			"InterfaceDeclaration_FluidDevtoolsProps": {
 				"backCompat": false
 			},
+			"RemovedTypeAliasDeclaration_VisualizeChildData": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_VisualizeSharedObject": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
 			"EnumDeclaration_DevtoolsFeature": {
 				"backCompat": false
 			}

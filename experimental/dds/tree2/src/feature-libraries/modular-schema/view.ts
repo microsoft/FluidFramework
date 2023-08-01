@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { fail, requireAssignableTo } from "../../util";
+import { fail } from "../../util";
 import {
 	FieldStoredSchema,
-	LocalFieldKey,
+	FieldKey,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	SchemaData,
-	GlobalFieldKey,
 	Adapters,
-	ViewSchemaData,
 	AdaptedViewSchema,
 	Compatibility,
-	FieldAdapter,
-	SchemaDataAndPolicy,
 	Named,
 	NamedTreeSchema,
 	TreeTypeSet,
@@ -27,14 +23,12 @@ import { allowsRepoSuperset, isNeverTree } from "./comparison";
 /**
  * A collection of View information for schema, including policy.
  */
-export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
+export class ViewSchema {
 	public constructor(
-		policy: FullSchemaPolicy,
-		adapters: Adapters,
+		public readonly policy: FullSchemaPolicy,
+		public readonly adapters: Adapters,
 		public readonly schema: SchemaCollection,
-	) {
-		super(policy, adapters);
-	}
+	) {}
 
 	/**
 	 * Determines the compatibility of a stored document
@@ -104,24 +98,16 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 		// and its impossible for an adapter to be correctly implemented if its output type is never
 		// (unless its input is also never).
 		for (const adapter of this.adapters?.tree ?? []) {
-			if (
-				isNeverTree(
-					this.policy,
-					this.schema,
-					this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema,
-				)
-			) {
+			if (isNeverTree(this.policy, this.schema, this.schema.treeSchema.get(adapter.output))) {
 				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}
+
 		const adapted = {
-			globalFieldSchema: new Map<GlobalFieldKey, FieldStoredSchema>(),
+			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
 			treeSchema: new Map<TreeSchemaIdentifier, TreeStoredSchema>(),
 		};
-		for (const [key, schema] of stored.globalFieldSchema) {
-			const adaptedField = this.adaptField(schema, this.adapters.fieldAdapters?.get(key));
-			adapted.globalFieldSchema.set(key, adaptedField);
-		}
+
 		for (const [key, schema] of stored.treeSchema) {
 			const adapatedTree = this.adaptTree(schema);
 			adapted.treeSchema.set(key, adapatedTree);
@@ -134,10 +120,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 	/**
 	 * Adapt original such that it allows member types which can be adapted to its specified types.
 	 */
-	private adaptField(
-		original: FieldStoredSchema,
-		adapter: FieldAdapter | undefined,
-	): FieldStoredSchema {
+	private adaptField(original: FieldStoredSchema): FieldStoredSchema {
 		if (original.types !== undefined) {
 			const types: Set<TreeSchemaIdentifier> = new Set(original.types);
 			for (const treeAdapter of this.adapters?.tree ?? []) {
@@ -147,26 +130,23 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 				}
 			}
 
-			return (
-				adapter?.convert?.({ kind: original.kind, types }) ?? { kind: original.kind, types }
-			);
+			return { kind: original.kind, types };
 		}
-		return adapter?.convert?.(original) ?? original;
+		return original;
 	}
 
 	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
-		const localFields: Map<LocalFieldKey, FieldStoredSchema> = new Map();
-		for (const [key, schema] of original.localFields) {
-			// TODO: support missing field adapters for local fields.
-			localFields.set(key, this.adaptField(schema, undefined));
+		const structFields: Map<FieldKey, FieldStoredSchema> = new Map();
+		for (const [key, schema] of original.structFields) {
+			// TODO: support missing field adapters.
+			structFields.set(key, this.adaptField(schema));
 		}
 		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
 		// so copying the data over manually is better.
 		return {
-			globalFields: original.globalFields,
-			extraLocalFields: original.extraLocalFields,
+			mapFields: original.mapFields,
 			value: original.value,
-			localFields,
+			structFields,
 		};
 	}
 }
@@ -176,9 +156,8 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
  * @alpha
  */
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
-	readonly localFields: ReadonlyMap<LocalFieldKey, IFieldSchema>;
-	readonly globalFields: ReadonlySet<GlobalFieldKey>;
-	readonly extraLocalFields: IFieldSchema;
+	readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
+	readonly mapFields: IFieldSchema;
 }
 
 /**
@@ -202,19 +181,11 @@ export interface IFieldSchema {
  * Schema data that can be be used to view a document.
  * @alpha
  */
-export interface SchemaCollection {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
+export interface SchemaCollection extends SchemaData {
+	readonly rootFieldSchema: IFieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
 	readonly policy: FullSchemaPolicy;
 	readonly adapters: Adapters;
-}
-
-{
-	// SchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
-	// but want to be compatible with it, so check that here:
-	type _test0 = requireAssignableTo<IFieldSchema, FieldStoredSchema>;
-	type _test1 = requireAssignableTo<SchemaCollection, SchemaData>;
-	type _test2 = requireAssignableTo<SchemaCollection, SchemaDataAndPolicy<FullSchemaPolicy>>;
 }
 
 /**

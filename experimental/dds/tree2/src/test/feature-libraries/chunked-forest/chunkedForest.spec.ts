@@ -23,7 +23,7 @@ import {
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	Delta,
 	IForestSubscription,
 } from "../../../core";
@@ -41,8 +41,7 @@ import { mockIntoDelta } from "../../utils";
 describe("ChunkedForest", () => {
 	testForest({
 		suiteName: "ChunkedForest forest suite",
-		factory: () =>
-			buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema)),
+		factory: (schema) => buildChunkedForest(schema, defaultSchemaPolicy),
 		skipCursorErrorCheck: true,
 	});
 
@@ -50,6 +49,7 @@ describe("ChunkedForest", () => {
 		const initialState: JsonableTree = { type: brand("Node") };
 		const forest = buildChunkedForest(
 			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema),
+			defaultSchemaPolicy,
 		);
 		const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
 
@@ -67,7 +67,7 @@ describe("ChunkedForest", () => {
 
 		const repairStore = new ForestRepairDataStore(forest, mockIntoDelta);
 		const delta: Delta.Root = new Map([
-			[rootFieldKeySymbol, [{ type: Delta.MarkType.Delete, count: 1 }]],
+			[rootFieldKey, [{ type: Delta.MarkType.Delete, count: 1 }]],
 		]);
 
 		const revision = mintRevisionTag();
@@ -81,7 +81,7 @@ describe("ChunkedForest", () => {
 		compareForest(forest, []);
 
 		// Confirm the data from the repair store is chunk
-		const data = repairStore.getNodes(revision, undefined, rootFieldKeySymbol, 0, 1);
+		const data = repairStore.getNodes(revision, undefined, rootFieldKey, 0, 1);
 		const chunk2 = tryGetChunk(data[0]);
 		assert(chunk === chunk2);
 

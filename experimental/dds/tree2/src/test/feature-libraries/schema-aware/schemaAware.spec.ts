@@ -128,7 +128,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
 
 	{
-		type XField = typeof ballSchema["localFieldsObject"]["x"];
+		type XField = typeof ballSchema["structFieldsObject"]["x"];
 		type XMultiplicity = XField["kind"]["multiplicity"];
 		type XContent = TypedField<XField, ApiMode.Simple>;
 		type XChild = XField["allowedTypes"];
@@ -140,7 +140,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	{
 		// A concrete example for the "x" field:
-		type BallXFieldInfo = typeof ballSchema.localFieldsObject.x;
+		type BallXFieldInfo = typeof ballSchema.structFieldsObject.x;
 		type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
 		type check_ = requireAssignableTo<BallXFieldTypes, [typeof numberSchema]>;
 
@@ -283,7 +283,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		});
 
 		type RecObjectSchema = typeof rec;
-		type RecFieldSchema = typeof rec.localFieldsObject.x;
+		type RecFieldSchema = typeof rec.structFieldsObject.x;
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
@@ -353,7 +353,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 		// Check child handling
 		{
-			type ChildSchema = typeof boxSchema.localFieldsObject.children;
+			type ChildSchema = typeof boxSchema.structFieldsObject.children;
 			type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types>
 				? Types
 				: never;
@@ -386,11 +386,11 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 					type BoxChildTypeFields = TypedFields<
 						ApiMode.Flexible,
-						typeof boxSchema.localFieldsObject
+						typeof boxSchema.structFieldsObject
 					>;
 
 					type BoxChildTypeField = TypedField<
-						typeof boxSchema.localFieldsObject.children,
+						typeof boxSchema.structFieldsObject.children,
 						ApiMode.Flexible
 					>;
 				}

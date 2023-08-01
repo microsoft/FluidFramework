@@ -59,7 +59,8 @@
 		"ignoreCheckpointFlushException": false
 	},
 	"apiCounters": {
-		"fetchTenantKeyMetricMs": 60000
+		"fetchTenantKeyMetricMs": 60000,
+		"riddlerStorageRequestMetricMs": 60000
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
