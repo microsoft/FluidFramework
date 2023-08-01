@@ -18,6 +18,7 @@ import {
 	StoredSchemaRepository,
 	CursorLocationType,
 	SchemaData,
+	forbiddenFieldKindIdentifier,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
 import { fail } from "../../util";
@@ -201,8 +202,6 @@ export function shapesFromSchema(
  * If `schema` has only one shape, return it.
  *
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
- *
- * TODO: tests for this
  */
 export function tryShapeForSchema(
 	schema: SchemaData,
@@ -215,7 +214,7 @@ export function tryShapeForSchema(
 		return cached;
 	}
 	const treeSchema = schema.treeSchema.get(type) ?? fail("missing schema");
-	if (treeSchema.mapFields !== undefined) {
+	if (treeSchema.mapFields.kind.identifier !== forbiddenFieldKindIdentifier) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
@@ -237,7 +236,7 @@ export function tryShapeForSchema(
  *
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
-function tryShapeForFieldSchema(
+export function tryShapeForFieldSchema(
 	schema: SchemaData,
 	policy: FullSchemaPolicy,
 	type: FieldStoredSchema,

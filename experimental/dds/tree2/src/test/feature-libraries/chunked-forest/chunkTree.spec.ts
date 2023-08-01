@@ -4,9 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { CursorLocationType, EmptyKey, mapCursorField, Value } from "../../../core";
+import { CursorLocationType, EmptyKey, mapCursorField, Value, ValueSchema } from "../../../core";
 import { jsonNull, jsonObject } from "../../../domains";
-import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
+import {
+	defaultSchemaPolicy,
+	jsonableTreeFromCursor,
+	SchemaBuilder,
+	singleTextCursor,
+	TreeChunk,
+} from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
 // eslint-disable-next-line import/no-internal-modules
@@ -18,6 +24,9 @@ import {
 	defaultChunkPolicy,
 	insertValues,
 	polymorphic,
+	ShapeInfo,
+	tryShapeForFieldSchema,
+	tryShapeForSchema,
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
@@ -33,6 +42,24 @@ import {
 	numberSequenceField,
 } from "./fieldCursorTestUtilities";
 import { polygonTree, testData } from "./uniformChunkTestData";
+
+const builder = new SchemaBuilder("chunkTree");
+const leaf = builder.leaf("leaf", ValueSchema.Serializable);
+const empty = builder.struct("empty", {});
+const valueField = SchemaBuilder.fieldValue(leaf);
+const structValue = builder.struct("structValue", { x: valueField });
+const optionalField = SchemaBuilder.fieldOptional(leaf);
+const structOptional = builder.struct("structOptional", { x: optionalField });
+const schema = builder.intoLibrary();
+
+function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
+	assert.deepEqual(a, b);
+	if (a instanceof TreeShape) {
+		assert(b instanceof TreeShape);
+		assert(a.equals(b));
+		assert(b.equals(a));
+	}
+}
 
 describe("chunkTree", () => {
 	// Ensure handling of various shapes works properly
@@ -240,6 +267,63 @@ describe("chunkTree", () => {
 			const chunks = chunkRange(cursor, defaultChunkPolicy, 1, false);
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
+		});
+	});
+
+	describe("tryShapeForSchema", () => {
+		it("leaf", () => {
+			const info = tryShapeForSchema(schema, defaultSchemaPolicy, leaf.name, new Map());
+			expectEqual(info, new TreeShape(leaf.name, true, []));
+		});
+		it("empty", () => {
+			const info = tryShapeForSchema(schema, defaultSchemaPolicy, empty.name, new Map());
+			expectEqual(info, new TreeShape(empty.name, false, []));
+		});
+		it("structValue", () => {
+			const info = tryShapeForSchema(
+				schema,
+				defaultSchemaPolicy,
+				structValue.name,
+				new Map(),
+			);
+			expectEqual(
+				info,
+				new TreeShape(structValue.name, false, [
+					[brand("x"), new TreeShape(leaf.name, true, []), 1],
+				]),
+			);
+		});
+		it("structOptional", () => {
+			const info = tryShapeForSchema(
+				schema,
+				defaultSchemaPolicy,
+				structOptional.name,
+				new Map(),
+			);
+			expectEqual(info, polymorphic);
+		});
+	});
+
+	describe("tryShapeForFieldSchema", () => {
+		it("valueField", () => {
+			const info = tryShapeForFieldSchema(
+				schema,
+				defaultSchemaPolicy,
+				valueField,
+				brand("key"),
+				new Map(),
+			);
+			assert.deepEqual(info, ["key", new TreeShape(leaf.name, true, []), 1]);
+		});
+		it("optionalField", () => {
+			const info = tryShapeForFieldSchema(
+				schema,
+				defaultSchemaPolicy,
+				optionalField,
+				brand("key"),
+				new Map(),
+			);
+			assert.equal(info, undefined);
 		});
 	});
 });
