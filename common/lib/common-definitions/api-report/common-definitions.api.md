@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @public @deprecated
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // @public @deprecated
@@ -13,31 +13,31 @@ export interface IDisposable {
     readonly disposed: boolean;
 }
 
-// @public
+// @public @deprecated
 export interface IErrorEvent extends IEvent {
     // @eventProperty
     (event: "error", listener: (message: any) => void): any;
 }
 
-// @public
+// @public @deprecated
 export interface IEvent {
     // @eventProperty
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @public
+// @public @deprecated
 export interface IEventProvider<TEvent extends IEvent> {
     readonly off: IEventTransformer<this, TEvent>;
     readonly on: IEventTransformer<this, TEvent>;
     readonly once: IEventTransformer<this, TEvent>;
 }
 
-// @public
+// @public @deprecated
 export type IEventThisPlaceHolder = {
     thisPlaceHolder: "thisPlaceHolder";
 };
 
-// @public
+// @public @deprecated
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: infer E0, listener: (...args: infer A0) => void): any;
     (event: infer E1, listener: (...args: infer A1) => void): any;
@@ -251,7 +251,7 @@ export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
-// @public
+// @public @deprecated
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
@@ -262,7 +262,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // @public @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
-// @public
+// @public @deprecated
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 ```
