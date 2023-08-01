@@ -588,13 +588,10 @@ export class FluidDataStoreRuntime
 	}
 
 	private createRemoteChannelContext(message) {
-		const attachMessage = message.contents ?? message.content as IAttachMessage; // (??????)
+		const attachMessage = (message.contents ?? message.content) as IAttachMessage;
 		const id = attachMessage.id;
 		const flatBlobs = new Map<string, ArrayBufferLike>();
-		const snapshotTree = buildSnapshotTree(
-			attachMessage.snapshot.entries,
-			flatBlobs,
-		);
+		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
 		return new RemoteChannelContext(
 			this,
@@ -1010,14 +1007,17 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.Attach: {
 				const context = this.createRemoteChannelContext(content);
 				const id = (content.content as IAttachMessage).id;
-                this.pendingAttach.set(id, "not a real attach message" as any);
-                this.contexts.set(id, context);
-                return;
+				this.pendingAttach.set(id, "not a real attach message" as any);
+				this.contexts.set(id, context);
+				return;
 			}
 			case DataStoreMessageType.ChannelOp: {
 				const envelope = content.content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+				assert(
+					!!channelContext,
+					0x184 /* "There should be a channel context for the op" */,
+				);
 				await channelContext.getChannel();
 				return channelContext.applyStashedOp(envelope.contents);
 			}
