@@ -12,8 +12,10 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -69,7 +71,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 
 // @internal
 export enum ContainerDevtoolsFeature {
-    ContainerData = "container-data"
+    ContainerData = "container-data",
+    ContainerDataEditing = "container-data-editing"
 }
 
 // @internal
@@ -156,6 +159,18 @@ export interface ContainerStateMetadata extends HasContainerKey {
 }
 
 // @internal
+export namespace DataEdit {
+    const MessageType = "DATA_EDIT";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerKey {
+        edit: SharedObjectEdit;
+    }
+}
+
+// @internal
 export namespace DataVisualization {
     const MessageType = "DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
@@ -216,6 +231,25 @@ export namespace DisconnectContainer {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerKey;
+}
+
+// @internal
+export interface Edit {
+    data: Serializable<unknown>;
+    type?: EditType | string;
+}
+
+// @internal
+export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
+
+// @internal
+export enum EditType {
+    // (undocumented)
+    Boolean = "boolean",
+    // (undocumented)
+    Number = "number",
+    // (undocumented)
+    String = "string"
 }
 
 // @public
@@ -428,6 +462,10 @@ export namespace RootDataVisualizations {
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @internal
+export interface SharedObjectEdit extends Edit, HasFluidObjectId {
+}
+
+// @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }
@@ -479,6 +517,9 @@ export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | Fl
 
 // @internal
 export interface VisualNodeBase {
+    editProps?: {
+        editTypes?: EditType[];
+    };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
     typeMetadata?: string;
