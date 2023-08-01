@@ -15,10 +15,10 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
-import { TestTreeProviderLite } from "../utils";
+import { TestTreeProviderLite, namedTreeSchema } from "../utils";
 import { TreeValue, fieldSchema, SchemaData, UpPath, rootFieldKey } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 
@@ -203,7 +203,7 @@ function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
+	name: "TestValue",
 	mapFields: fieldSchema(FieldKinds.sequence),
 });
 const testSchema: SchemaData = {
