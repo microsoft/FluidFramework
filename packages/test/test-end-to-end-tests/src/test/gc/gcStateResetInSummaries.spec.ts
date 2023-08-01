@@ -13,6 +13,7 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
+	mockConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -33,6 +34,9 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
+	const settings = {
+		"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": "refreshFromSnapshot",
+	};
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
 	const createContainer = async (gcAllowed: boolean): Promise<IContainer> => {
@@ -44,6 +48,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 					gcAllowed,
 				},
 			},
+			loaderProps: { configProvider: mockConfigProvider(settings) },
 		};
 		return provider.makeTestContainer(testContainerConfig);
 	};
@@ -336,11 +341,21 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 			await createSummarizer(
 				provider,
 				mainContainer,
-				{ runtimeOptions: { gcOptions: { disableGC: true } } },
+				{
+					runtimeOptions: { gcOptions: { disableGC: true } },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				},
 				summaryVersion,
 			);
 		const { container: containerGCEnabled2, summarizer: summarizerGCEnabled2 } =
-			await createSummarizer(provider, mainContainer, undefined, summaryVersion);
+			await createSummarizer(
+				provider,
+				mainContainer,
+				{
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				},
+				summaryVersion,
+			);
 
 		// Close the previous summarizer such that the summarizer with GC disabled is chosen as the current summarizer.
 		summarizerGCEnabled.close();

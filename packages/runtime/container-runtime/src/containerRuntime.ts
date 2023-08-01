@@ -534,7 +534,7 @@ const defaultChunkSizeInBytes = 204800;
  * of the current system, we should close the summarizer and let it recover.
  * This delay's goal is to prevent tight restart loops
  */
-const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
+const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -3462,7 +3462,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorage(
+				fetchResult = await this.fetchSnapshotFromStorageAndClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3569,10 +3569,15 @@ export class ContainerRuntime
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorage(logger, event, readAndParseBlob, null /* latest */);
+		return this.fetchSnapshotFromStorageAndClose(
+			logger,
+			event,
+			readAndParseBlob,
+			null /* latest */,
+		);
 	}
 
-	private async fetchSnapshotFromStorage(
+	private async fetchSnapshotFromStorageAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
@@ -3628,7 +3633,7 @@ export class ContainerRuntime
 		// We choose to close the summarizer after the snapshot cache is updated to avoid
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod === "restart") {
+		if (this.summaryStateUpdateMethod !== "refreshFromSnapshot") {
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3641,7 +3646,7 @@ export class ContainerRuntime
 				new GenericError("Restarting summarizer instead of refreshing"),
 			);
 
-			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.disposeFn();
