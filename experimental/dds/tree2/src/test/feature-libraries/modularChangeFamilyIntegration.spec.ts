@@ -15,6 +15,7 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
+	unsupportedRepairDataHandler,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import {
@@ -61,8 +62,12 @@ describe("ModularChangeFamily integration", () => {
 			editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
 			const [move, remove, expected] = getChanges();
 			const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
-			const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
-			const expectedDelta = normalizeDelta(family.intoDelta(expected));
+			const rebasedDelta = normalizeDelta(
+				family.intoDelta(rebased, unsupportedRepairDataHandler),
+			);
+			const expectedDelta = normalizeDelta(
+				family.intoDelta(expected, unsupportedRepairDataHandler),
+			);
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
@@ -86,8 +91,12 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [remove, move, expected] = getChanges();
 			const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
-			const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
-			const expectedDelta = normalizeDelta(family.intoDelta(expected));
+			const rebasedDelta = normalizeDelta(
+				family.intoDelta(rebased, unsupportedRepairDataHandler),
+			);
+			const expectedDelta = normalizeDelta(
+				family.intoDelta(expected, unsupportedRepairDataHandler),
+			);
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 	});
@@ -132,7 +141,7 @@ describe("ModularChangeFamily integration", () => {
 				[fieldB, [{ type: Delta.MarkType.MoveIn, count: 1, moveId: brand(0) }]],
 			]);
 
-			const delta = family.intoDelta(composed);
+			const delta = family.intoDelta(composed, unsupportedRepairDataHandler);
 			assert.deepEqual(delta, expected);
 		});
 
@@ -166,7 +175,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
-			const actual = family.intoDelta(composed);
+			const actual = family.intoDelta(composed, unsupportedRepairDataHandler);
 			const expected: Delta.Root = new Map([
 				[fieldA, []],
 				[
@@ -211,8 +220,12 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
-			const actualDelta = normalizeDelta(family.intoDelta(composed));
-			const expectedDelta = normalizeDelta(family.intoDelta(expected));
+			const actualDelta = normalizeDelta(
+				family.intoDelta(composed, unsupportedRepairDataHandler),
+			);
+			const expectedDelta = normalizeDelta(
+				family.intoDelta(expected, unsupportedRepairDataHandler),
+			);
 			assert.deepEqual(actualDelta, expectedDelta);
 		});
 	});

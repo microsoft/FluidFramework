@@ -17,6 +17,8 @@ import {
 	UndoRedoManager,
 	LocalCommitSource,
 	EmptyKey,
+	ChangeAtomId,
+	FieldKey,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -41,6 +43,7 @@ import {
 	ForestRepairDataStore,
 	ModularChangeset,
 	nodeKeyFieldKey,
+	TreeIndex,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -376,8 +379,19 @@ export class SharedTreeView implements ISharedTreeView {
 	) {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
-				const delta = this.changeFamily.intoDelta(change);
+				const newRepairData = new Map<ChangeAtomId, FieldKey>();
+				const delta = this.changeFamily.intoDelta(change, (changeId: ChangeAtomId) => {
+					const fieldKey = this.repairDataIndex.getFieldKey(
+						changeId,
+						`${this.repairDataCounter++}`,
+					);
+					newRepairData.set(changeId, fieldKey);
+					return fieldKey;
+				});
 				this._forest.applyDelta(delta);
+				newRepairData.forEach((fieldKey, changeId) =>
+					this.repairDataIndex.setFieldKey(changeId, fieldKey),
+				);
 				this._nodeKeyIndex.scanKeys(this.context);
 				this._events.emit("afterBatch");
 			}
@@ -409,6 +423,9 @@ export class SharedTreeView implements ISharedTreeView {
 			events,
 		);
 	}
+
+	private readonly repairDataIndex = new TreeIndex("repairData");
+	private repairDataCounter = 0;
 
 	public get events(): ISubscribable<ViewEvents> {
 		return this._events;

@@ -233,6 +233,12 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
 
 // @alpha
+export interface ChangeAtomId {
+    readonly localId: ChangesetLocalId;
+    readonly revision: RevisionTag | undefined;
+}
+
+// @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
@@ -593,7 +599,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairDataHandler: RepairDataHandler): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -1617,6 +1623,9 @@ type RecursiveTreeSchemaSpecification = unknown;
 
 // @alpha
 type _RecursiveTrick = never;
+
+// @alpha
+export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
 
 // @alpha
 export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {

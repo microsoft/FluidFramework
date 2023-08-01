@@ -35,6 +35,9 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 /**
  * A globally unique ID for an atom of change, or a node associated with the atom of change.
  * @alpha
+ *
+ * @privateRemarks
+ * TODO: Rename this to be more general.
  */
 export interface ChangeAtomId {
 	/**

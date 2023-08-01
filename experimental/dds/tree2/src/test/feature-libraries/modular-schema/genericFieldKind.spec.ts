@@ -21,6 +21,7 @@ import {
 } from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
+import { makeRepairDataHandler } from "../repairDataTestUtils";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
 
 const valueFieldKey: FieldKey = brand("Value");
@@ -402,8 +403,14 @@ describe("Generic FieldKind", () => {
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
+		const { repairData, repairDataHandler } = makeRepairDataHandler();
+		const actual = genericFieldKind.changeHandler.intoDelta(
+			input,
+			childToDelta,
+			repairDataHandler,
+		);
 		assert.deepEqual(actual, expected);
+		assert.deepEqual(repairData, new Map());
 	});
 
 	describe("Encoding", () => {

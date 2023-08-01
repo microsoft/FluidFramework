@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "../../util";
 import { ChangeAtomId } from "../rebase";
 import { FieldKey } from "../tree";
 
@@ -11,3 +12,10 @@ import { FieldKey } from "../tree";
  * @alpha
  */
 export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
+
+/**
+ * A repair data handler which will throw an error if called.
+ * This should be used for any change family which does not support repair data.
+ */
+export const unsupportedRepairDataHandler: RepairDataHandler = () =>
+	fail("Unexpected call to repairDataHandler");

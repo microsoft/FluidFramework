@@ -12,13 +12,13 @@ import {
 	IForestSubscription,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
-	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKeySymbol,
 	TaggedChange,
 	UpPath,
+	ChangeAtomId,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
@@ -29,14 +29,13 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
-	ModularChangeset,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
+import { makeRepairDataHandler } from "../repairDataTestUtils";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
-const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
@@ -73,12 +72,6 @@ const root_foo0_foo0: UpPath = {
 	parentIndex: 0,
 };
 
-const root_foo2_foo5: UpPath = {
-	parent: root_foo2,
-	parentField: fooKey,
-	parentIndex: 5,
-};
-
 const root_bar0: UpPath = {
 	parent: root,
 	parentField: barKey,
@@ -92,7 +85,6 @@ const root_bar0_bar0: UpPath = {
 };
 
 const nodeX = { type: jsonString.name, value: "X" };
-const nodeXCursor: ITreeCursorSynchronous = singleTextCursor(nodeX);
 
 function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 	assert.equal(actual.length, expected.length);
@@ -109,6 +101,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	builder: DefaultEditBuilder;
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
+	repairData: Map<ChangeAtomId, FieldKey>;
 } {
 	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = buildForest(schema);
@@ -118,11 +111,12 @@ function initializeEditableForest(data?: JsonableTree): {
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
+	const { repairData, repairDataHandler } = makeRepairDataHandler();
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
 			changes.push({ revision: currentRevision, change });
-			const delta = defaultChangeFamily.intoDelta(change);
+			const delta = defaultChangeFamily.intoDelta(change, repairDataHandler);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();
@@ -134,6 +128,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		builder,
 		changes,
 		deltas,
+		repairData,
 	};
 }
 

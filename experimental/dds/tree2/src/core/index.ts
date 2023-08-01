@@ -182,6 +182,7 @@ export {
 	ReadonlyRepairDataStore,
 	IRepairDataStoreProvider,
 	RepairDataHandler,
+	unsupportedRepairDataHandler,
 } from "./repair";
 
 export { UndoRedoManager, LocalCommitSource } from "./undo";

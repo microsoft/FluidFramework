@@ -11,7 +11,14 @@ import {
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import {
+	ChangesetLocalId,
+	Delta,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+	unsupportedRepairDataHandler,
+} from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertMarkListEqual,
@@ -163,7 +170,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta, unsupportedRepairDataHandler);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

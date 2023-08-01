@@ -29,6 +29,7 @@ import {
 	mintRevisionTag,
 	tagRollbackInverse,
 	assertIsRevisionTag,
+	unsupportedRepairDataHandler,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -619,7 +620,10 @@ describe("ModularChangeFamily", () => {
 				[fieldB, valueDelta2],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			assertDeltaEqual(
+				family.intoDelta(rootChange1a, unsupportedRepairDataHandler),
+				expectedDelta,
+			);
 		});
 	});
 
