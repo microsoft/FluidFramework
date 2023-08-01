@@ -2168,9 +2168,7 @@ export class ContainerRuntime
 					}
 			}
 
-			if (runtimeMessage || this.groupedBatchingEnabled) {
-				this.emit("op", message, runtimeMessage);
-			}
+			this.emit("op", message, runtimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 

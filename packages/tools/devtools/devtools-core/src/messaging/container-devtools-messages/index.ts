@@ -13,6 +13,7 @@ export { ConnectContainer } from "./ConnectContainer";
 export { ContainerDevtoolsFeatures } from "./ContainerDevtoolsFeatures";
 export { ContainerStateChange } from "./ContainerStateChange";
 export { ContainerStateHistory } from "./ContainerStateHistory";
+export { DataEdit } from "./DataEdit";
 export { DataVisualization } from "./DataVisualization";
 export { DisconnectContainer } from "./DisconnectContainer";
 export { GetAudienceSummary } from "./GetAudienceSummary";
