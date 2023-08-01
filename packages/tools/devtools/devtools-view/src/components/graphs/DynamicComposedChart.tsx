@@ -123,8 +123,8 @@ const createGraphColorPalette = (
 	graphColors: string[];
 } => {
 	switch (themeMode) {
-		case "light":
-		case "dark":
+		case "Light":
+		case "Dark":
 		default:
 			return {
 				axisTick: theme.colorNeutralForeground2,
@@ -137,7 +137,7 @@ const createGraphColorPalette = (
 					theme.colorPaletteLavenderForeground2,
 				],
 			};
-		case "highContrast":
+		case "High Contrast":
 			return {
 				axisTick: theme.colorNeutralForeground2,
 				toolTipBackround: theme.colorNeutralBackground1,
