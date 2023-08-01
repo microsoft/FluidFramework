@@ -336,6 +336,9 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					this.pactMap.off("accepted", watchForAccepted);
 					this._acceptedSeqNum =
 						this.pactMap.getWithDetails(newVersionKey)?.acceptedSequenceNumber;
+					if (this._acceptedSeqNum === undefined) {
+						throw new Error("Could not retrieve accepted sequence number");
+					}
 					console.log(
 						"Resolving this._acceptedP: Saw acceptance during run time at sequence number:",
 						this._acceptedSeqNum,
