@@ -8,9 +8,9 @@
 /// <reference types="jest" />
 
 import { globals } from "../jest.config";
-// import { launch } from "../jest-puppeteer.config.js"; 
+// import { launch as puppeteerArgs } from "../jest-puppeteer.config.js";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
-// import puppeteer from "puppeteer";
+import puppeteer from "puppeteer";
 
 describe("End to end tests", () => {
 	/**
@@ -42,10 +42,10 @@ describe("End to end tests", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]); // verify if this only launches the application 
+		await page.waitFor(() => window["fluidStarted"]); // verify if this only launches the application
 		await page.waitForSelector(".text-area");
 
-		// load the extension 
+		// load the extension
 	});
 
 	it("Smoke: verify test app can be launched", async () => {
@@ -60,6 +60,19 @@ describe("End to end tests", () => {
 		// 	headless: false,
 		// 	launch.args: ["--disable-extensions-except=./dist/bundle", "--load-extension=./dist/bundle"],
 		// });
+
+		const browser = await puppeteer.launch({
+			headless: false,
+			args: [
+				// https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
+				"--no-sandbox",
+				"--disable-setuid-sandbox",
+
+				// Ensure our extension is loaded into the browser environment
+				"--disable-extensions-except=./dist/bundle",
+				"--load-extension=./dist/bundle",
+			],
+		});
 
 		const appPage = await browser.newPage();
 		await appPage.goto(globals.PATH, { waitUntil: "load" });
