@@ -17,14 +17,16 @@ export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | nu
 	const matchingAsset = stats.assets.find((asset) => {
 		// Make sure to only look at js files and not source maps (assumes source maps don't end in .js)
 		if (asset.name.endsWith(".js")) {
-			// Assumes only a single chunk per asset, this may not hold for all apps.
+			// If the asset contains the chunk, it should be considered when calculating the total size.
 			return asset.chunks?.includes(chunkId);
 		}
 
 		return false;
 	});
 
-	// If there's no matching asset it could be that it was removed in the new version of the bundle, not necessarily an
-	// error. In that case return 0 as its size.
-	return matchingAsset?.size ?? 0;
+	if (matchingAsset === undefined) {
+		throw new Error(`Could not find asset for chunk with id '${chunkId}' in the webpack stats`);
+	}
+
+	return matchingAsset.size;
 }
