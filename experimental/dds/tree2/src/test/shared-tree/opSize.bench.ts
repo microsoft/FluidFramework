@@ -6,10 +6,10 @@ import { strict as assert } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
 import { brand, getOrAddEmptyToMap } from "../../util";
-import { TestTreeProviderLite } from "../utils";
+import { TestTreeProviderLite, namedTreeSchema } from "../utils";
 import {
 	FieldKey,
 	fieldSchema,
@@ -22,25 +22,22 @@ import {
 } from "../../core";
 
 const stringSchema = namedTreeSchema({
-	name: brand("String"),
-	mapFields: emptyField,
+	name: "String",
 	leafValue: ValueSchema.String,
 });
 
 export const childSchema = namedTreeSchema({
-	name: brand("Test:Opsize-Bench-Child"),
+	name: "Test:Opsize-Bench-Child",
 	structFields: {
 		data: fieldSchema(FieldKinds.value, [stringSchema.name]),
 	},
-	mapFields: emptyField,
 });
 
 export const parentSchema = namedTreeSchema({
-	name: brand("Test:Opsize-Bench-Root"),
+	name: "Test:Opsize-Bench-Root",
 	structFields: {
 		children: fieldSchema(FieldKinds.sequence, [childSchema.name]),
 	},
-	mapFields: emptyField,
 });
 
 export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);
@@ -48,6 +45,7 @@ export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);
 export const fullSchemaData: SchemaData = {
 	treeSchema: new Map([
 		[stringSchema.name, stringSchema],
+		[childSchema.name, childSchema],
 		[parentSchema.name, parentSchema],
 	]),
 	rootFieldSchema: rootSchema,
