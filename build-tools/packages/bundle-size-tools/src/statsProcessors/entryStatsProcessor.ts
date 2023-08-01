@@ -25,13 +25,17 @@ export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): Web
 			const metricName = options.metricNameProvider
 				? options.metricNameProvider(chunkName)
 				: chunkName;
+
+			// Note: we have the getChunkParsedSize function, but the entrypoints objects we're analyzing here already
+			// have a list of the relevant assets and their sizes; no need to take the entrypoints'chunks and pass them to
+			// that function.
+			let totalSize: number = 0;
+			for (const asset of chunkGroupStats.assets ?? []) {
+				totalSize += asset?.size ?? 0;
+			}
+
 			result.set(metricName, {
-				// QUESTION: Should we be summing up the assets for an entryPoint?
-				parsedSize:
-					chunkGroupStats.assets?.reduce(
-						(prev, current) => prev + (current?.size ?? 0),
-						0,
-					) ?? 0,
+				parsedSize: totalSize,
 			});
 		});
 
