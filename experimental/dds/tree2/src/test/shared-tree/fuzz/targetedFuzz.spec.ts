@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
-	chainAsync,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-internal/stochastic-test-utils";
@@ -358,7 +357,7 @@ describe("Fuzz - Targeted", () => {
 
 	describe("synchronization after calling undo on unsequenced edits", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
-			chainAsync(takeAsync(opsPerRun, makeOpGenerator(unSequencedUndoRedoWeights)));
+			takeAsync(opsPerRun, makeOpGenerator(unSequencedUndoRedoWeights));
 
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
