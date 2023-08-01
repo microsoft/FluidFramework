@@ -76,7 +76,7 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 			"bearerSecret": "bear_secret",
 			"npm": "npm.com",
 			"enableWholeSummaryUpload": false,
-			"isEphemeralContainer": false,
+			"isEphemeralContainer": false
 		}
 	}
 }

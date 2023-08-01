@@ -63,7 +63,7 @@ export function getDocumentServiceFactory(
 				isEphemeralContainer:
 					options.mode === "r11s" || options.mode === "docker"
 						? options.isEphemeralContainer
-						: false
+						: false,
 			});
 
 		case "spo":

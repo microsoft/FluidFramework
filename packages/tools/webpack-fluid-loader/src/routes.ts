@@ -104,7 +104,7 @@ export const after = (
 		options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
 		if (options.mode !== "tinylicious") {
 			options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
-			
+
 			options.enableWholeSummaryUpload =
 				options.enableWholeSummaryUpload ??
 				config.get("fluid:webpack:enableWholeSummaryUpload") ??
@@ -127,7 +127,7 @@ export const after = (
 					  config.get("fluid:webpack:docker:tenantSecret") ??
 					  "create-new-tenants-if-going-to-production"
 					: options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
-			
+
 			if (options.mode === "r11s") {
 				options.discoveryEndpoint =
 					options.discoveryEndpoint ?? config.get("fluid:webpack:discoveryEndpoint");
