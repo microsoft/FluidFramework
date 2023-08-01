@@ -196,8 +196,6 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	emptyField,
-	neverField,
-	neverTree,
 } from "./default-field-kinds";
 
 export {
