@@ -542,7 +542,7 @@ const defaultChunkSizeInBytes = 204800;
  * of the current system, we should close the summarizer and let it recover.
  * This delay's goal is to prevent tight restart loops
  */
-const defaultCloseSummarizerDelayMs = 5000; // 10 seconds
+const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
