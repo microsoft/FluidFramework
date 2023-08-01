@@ -89,8 +89,11 @@ export class EditManager<
 		Set<SharedTreeBranch<TEditor, TChangeset>>
 	>();
 
-	/** The sequence number of the newest commit on the trunk that has been received by all peers */
-	private minimumSequenceNumber: SeqNumber = brand(-1);
+	/**
+	 * The sequence number of the newest commit on the trunk that has been received by all peers.
+	 * Defaults to {@link minimumPossibleSequenceNumber} if no commits have been received.
+	 */
+	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
 	/**
 	 * An immutable "origin" commit singleton on which the trunk is based.
@@ -300,7 +303,7 @@ export class EditManager<
 			this.trunk.getHead() === this.trunkBase &&
 			this.peerLocalBranches.size === 0 &&
 			this.localBranch.getHead() === this.trunk.getHead() &&
-			this.minimumSequenceNumber === -1
+			this.minimumSequenceNumber === minimumPossibleSequenceNumber
 		);
 	}
 
@@ -440,6 +443,10 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): void {
+		assert(
+			sequenceNumber > this.minimumSequenceNumber,
+			"Expected change sequence number to exceed the last known minimum sequence number",
+		);
 		if (newCommit.sessionId === this.localSessionId) {
 			const [firstLocalCommit] = getPathFromBase(
 				this.localBranch.getHead(),
