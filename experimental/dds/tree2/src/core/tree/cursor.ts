@@ -38,6 +38,7 @@ export interface ITreeCursor {
 	 * Marks this object as a cursor.
 	 */
 	readonly [CursorMarker]: true;
+
 	/**
 	 * What kind of place the cursor is at.
 	 * Determines which operations are allowed.
