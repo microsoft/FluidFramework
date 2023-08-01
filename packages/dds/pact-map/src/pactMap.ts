@@ -414,15 +414,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const allEntries = [...this.values.entries()];
-		// Filter out items that are ineffectual
-		const summaryEntries = allEntries.filter(([, pact]) => {
-			return (
-				// Items have an effect if they are still pending, have a real value, or some client may try to
-				// reference state before the value was accepted.  Otherwise they can be dropped.
-				pact.pending !== undefined || pact.accepted !== undefined
-			);
-		});
-		return createSingleBlobSummary(snapshotFileName, JSON.stringify(summaryEntries));
+		return createSingleBlobSummary(snapshotFileName, JSON.stringify(allEntries));
 	}
 
 	/**
