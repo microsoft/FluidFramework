@@ -182,7 +182,7 @@ export class FluidDataStoreRuntime
 
 	private readonly contexts = new Map<string, IChannelContext>();
 	private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
-	private readonly pendingAttach = new Map<string, IAttachMessage>();
+	private readonly pendingAttach = new Set<string>();
 
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
@@ -628,10 +628,9 @@ export class FluidDataStoreRuntime
 					// Otherwise mark it as officially attached.
 					if (local) {
 						assert(
-							this.pendingAttach.has(id),
+							this.pendingAttach.delete(id),
 							0x17c /* "Unexpected attach (local) channel OP" */,
 						);
-						this.pendingAttach.delete(id);
 					} else {
 						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
 
@@ -924,7 +923,7 @@ export class FluidDataStoreRuntime
 			snapshot,
 			type: channel.attributes.type,
 		};
-		this.pendingAttach.set(channel.id, message);
+		this.pendingAttach.add(channel.id);
 		this.submit(DataStoreMessageType.Attach, message);
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
@@ -1007,7 +1006,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.Attach: {
 				const context = this.createRemoteChannelContext(content);
 				const id = (content.content as IAttachMessage).id;
-				this.pendingAttach.set(id, "not a real attach message" as any);
+				this.pendingAttach.add(id);
 				this.contexts.set(id, context);
 				return;
 			}
