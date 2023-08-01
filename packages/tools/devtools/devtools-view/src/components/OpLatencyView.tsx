@@ -4,7 +4,6 @@
  */
 
 import React from "react";
-import { Stack } from "@fluentui/react";
 import { Body1, Body1Strong, Subtitle1 } from "@fluentui/react-components";
 import { DynamicComposedChart } from "./graphs";
 
@@ -31,7 +30,7 @@ export function OpLatencyView(): React.ReactElement {
 				dataSets={[]}
 			/>
 			<div style={{ marginTop: "15px" }}>
-				<Stack>
+				<div style={{ display: "flex", flexDirection: "column" }}>
 					<Subtitle1>About</Subtitle1>
 					<Body1>
 						{`This Graph shows Fluid Op Latency metrics.
@@ -45,55 +44,53 @@ export function OpLatencyView(): React.ReactElement {
 							{`Learn more about ops.`}
 						</a>
 					</Body1>
+				</div>
 
-					<div style={{ marginTop: "15px" }}>
-						<Body1Strong>{`Op's in Fluid go through four phases:`}</Body1Strong>
-						<ol>
-							<li>
-								<Body1>Op is added to DeltaManager (DM) buffer.</Body1>
-							</li>
-							<li>
-								<Body1>
-									Op is sent to service (op leaves outbound queue). Note: We do
-									not know for sure when op is sent, we only track when it is
-									added to outbound queue.
-								</Body1>
-							</li>
-							<li>
-								<Body1>
-									Op received from service back (pushed to inbound queue).
-								</Body1>
-							</li>
-							<li>
-								<Body1>Op is processed.</Body1>
-							</li>
-						</ol>
-					</div>
-					<Body1Strong>
-						With the following four phases in mind, these are the definitions for the
-						metrics:
-					</Body1Strong>
+				<div style={{ marginTop: "15px" }}>
+					<Body1Strong>{`Op's in Fluid go through four phases:`}</Body1Strong>
 					<ol>
 						<li>
-							<Stack horizontal>
-								<Body1Strong>{`Duration Outbound:`}&nbsp;</Body1Strong>
-								<Body1>{`Measure time between (1) and (2). The time the outbound op is sitting in queue due to active batch`}</Body1>
-							</Stack>
+							<Body1>Op is added to DeltaManager (DM) buffer.</Body1>
 						</li>
 						<li>
-							<Stack horizontal>
-								<Body1Strong>{`Duration Inbound:`}&nbsp;</Body1Strong>
-								<Body1>{`Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3)`}</Body1>
-							</Stack>
+							<Body1>
+								Op is sent to service (op leaves outbound queue). Note: We do not
+								know for sure when op is sent, we only track when it is added to
+								outbound queue.
+							</Body1>
 						</li>
 						<li>
-							<Stack horizontal>
-								<Body1Strong>{`Duration Network:`}&nbsp;</Body1Strong>
-								<Body1>{`Measure time between (2) and (3) - Track how long it took for op to be acked by service`}</Body1>
-							</Stack>
+							<Body1>Op received from service back (pushed to inbound queue).</Body1>
+						</li>
+						<li>
+							<Body1>Op is processed.</Body1>
 						</li>
 					</ol>
-				</Stack>
+				</div>
+				<Body1Strong>
+					With the following four phases in mind, these are the definitions for the
+					metrics:
+				</Body1Strong>
+				<ol>
+					<li>
+						<div style={{ display: "flex", flexDirection: "row" }}>
+							<Body1Strong>{`Duration Outbound:`}&nbsp;</Body1Strong>
+							<Body1>{`Measure time between (1) and (2). The time the outbound op is sitting in queue due to active batch`}</Body1>
+						</div>
+					</li>
+					<li>
+						<div style={{ display: "flex", flexDirection: "row" }}>
+							<Body1Strong>{`Duration Inbound:`}&nbsp;</Body1Strong>
+							<Body1>{`Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3)`}</Body1>
+						</div>
+					</li>
+					<li>
+						<div style={{ display: "flex", flexDirection: "row" }}>
+							<Body1Strong>{`Duration Network:`}&nbsp;</Body1Strong>
+							<Body1>{`Measure time between (2) and (3) - Track how long it took for op to be acked by service`}</Body1>
+						</div>
+					</li>
+				</ol>
 			</div>
 		</div>
 	);

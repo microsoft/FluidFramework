@@ -74,7 +74,6 @@ describe("DynamicComposedChart component test", () => {
 		},
 	];
 
-	// eslint-disable-next-line jest/expect-expect
 	test("renders without crashing with and without data", () => {
 		render(<DynamicComposedChart dataSets={testDataSets} />);
 		const dynamicComposedChartElement = screen.findByTestId("test-dynamic-composed-chart");
