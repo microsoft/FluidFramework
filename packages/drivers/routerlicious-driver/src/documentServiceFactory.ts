@@ -21,7 +21,7 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
