@@ -3,49 +3,9 @@
  * Licensed under the MIT License.
  */
 import commander from "commander";
-import { v4 as uuid } from "uuid";
-
-import { AzureClient } from "@fluidframework/azure-client";
-import { SharedMap } from "@fluidframework/map";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ContainerFactorySchema } from "./interface";
-import { getLogger } from "./logger";
-import { createAzureClient, delay, loadInitialObjSchema } from "./utils";
-
-const eventMap = new Map([
-	[
-		"fluid:telemetry:RouterliciousDriver:FetchOrdererToken",
-		"scenario:runner:DocLoader:Load:FetchOrdererToken",
-	],
-	[
-		"fluid:telemetry:RouterliciousDriver:DiscoverSession",
-		"scenario:runner:DocLoader:Load:DiscoverSession",
-	],
-	[
-		"fluid:telemetry:RouterliciousDriver:FetchStorageToken",
-		"scenario:runner:DocLoader:Load:FetchStorageToken",
-	],
-	[
-		"fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
-		"scenario:runner:DocLoader:Load:GetSummary",
-	],
-	["fluid:telemetry:RouterliciousDriver:GetDeltas", "scenario:runner:DocLoader:Load:GetDeltas"],
-	["fluid:telemetry:Container:Request", "scenario:runner:DocLoader:Load:RequestDataObject"],
-	[
-		"fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
-		"scenario:runner:DocLoader:Connection:GetDeltaStreamToken",
-	],
-	[
-		"fluid:telemetry:RouterliciousDriver:ConnectToDeltaStream",
-		"scenario:runner:DocLoader:Connection:ConnectToDeltaStream",
-	],
-	[
-		"fluid:telemetry:Container:ConnectionStateChange",
-		"scenario:runner:DocLoader:Connection:ConnectionStateChange",
-	],
-]);
+import { MapTrafficRunner, MapTrafficRunnerRunConfig } from "./MapTrafficRunner";
 
 export interface MapTrafficRunnerConfig {
 	runId: string;
@@ -95,7 +55,7 @@ async function main() {
 		.requiredOption("-v, --verbose", "Enables verbose logging")
 		.parse(process.argv);
 
-	const config = {
+	const config: MapTrafficRunnerRunConfig = {
 		runId: commander.runId,
 		scenarioName: commander.scenarioName,
 		childId: commander.childId,
@@ -111,6 +71,7 @@ async function main() {
 			commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
 		secureTokenProvider: commander.secureTokenProvider,
 		region: commander.region ?? process.env.azure__fluid__relay__service__region,
+		schema: JSON.parse(commander.schema) as ContainerFactorySchema,
 	};
 
 	if (commander.log !== undefined) {
@@ -122,77 +83,8 @@ async function main() {
 		process.exit(-1);
 	}
 
-	const logger = await getLogger(
-		{
-			runId: config.runId,
-			scenarioName: config.scenarioName,
-			endpoint: config.connEndpoint,
-			region: config.region,
-		},
-		["scenario:runner"],
-		eventMap,
-	);
-
-	const ac = await createAzureClient({
-		userId: "testUserId",
-		userName: "testUserName",
-		connType: config.connType,
-		connEndpoint: config.connEndpoint,
-		tenantId: config.tenantId,
-		tenantKey: config.tenantKey,
-		functionUrl: config.functionUrl,
-		secureTokenProvider: config.secureTokenProvider,
-		logger,
-	});
-
-	await execRun(ac, config);
+	await MapTrafficRunner.execRun(config);
 	process.exit(0);
-}
-
-async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise<void> {
-	const msBetweenWrites = 60000 / config.writeRatePerMin;
-	const logger = await getLogger(
-		{
-			runId: config.runId,
-			scenarioName: config.scenarioName,
-			namespace: "scenario:runner:MapTraffic",
-			endpoint: config.connEndpoint,
-			region: config.region,
-		},
-		["scenario:runner"],
-		eventMap,
-	);
-
-	const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
-	const { container } = await PerformanceEvent.timedExecAsync(
-		logger,
-		{ eventName: "ContainerLoad", clientId: config.childId },
-		async (_event) => {
-			return ac.getContainer(config.docId, s);
-		},
-		{ start: true, end: true, cancel: "generic" },
-	);
-
-	const initialObjectsCreate = container.initialObjects;
-	const map = initialObjectsCreate[config.sharedMapKey] as SharedMap;
-
-	for (let i = 0; i < config.totalWriteCount; i++) {
-		await delay(msBetweenWrites);
-		// console.log(`Simulating write ${i} for client ${config.runId}`)
-		map.set(uuid(), "test-value");
-	}
-
-	await PerformanceEvent.timedExecAsync(
-		logger,
-		{ eventName: "Catchup", clientId: config.childId },
-		async (_event) => {
-			await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
-				durationMs: 20000,
-				errorMsg: "datastoreSaveAfterAttach timeout",
-			});
-		},
-		{ start: true, end: true, cancel: "generic" },
-	);
 }
 
 main().catch((error) => {

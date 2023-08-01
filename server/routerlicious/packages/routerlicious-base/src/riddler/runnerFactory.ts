@@ -38,6 +38,7 @@ export class RiddlerResources implements IResources {
 		public readonly defaultInternalHistorianUrl: string,
 		public readonly secretManager: ISecretManager,
 		public readonly fetchTenantKeyMetricIntervalMs: number,
+		public readonly riddlerStorageRequestMetricIntervalMs: number,
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -140,6 +141,9 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
 
 		const fetchTenantKeyMetricIntervalMs = config.get("apiCounters:fetchTenantKeyMetricMs");
+		const riddlerStorageRequestMetricIntervalMs = config.get(
+			"apiCounters:riddlerStorageRequestMetricMs",
+		);
 
 		return new RiddlerResources(
 			config,
@@ -152,6 +156,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			defaultInternalHistorianUrl,
 			secretManager,
 			fetchTenantKeyMetricIntervalMs,
+			riddlerStorageRequestMetricIntervalMs,
 			cache,
 		);
 	}
@@ -170,6 +175,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.defaultInternalHistorianUrl,
 			resources.secretManager,
 			resources.fetchTenantKeyMetricIntervalMs,
+			resources.riddlerStorageRequestMetricIntervalMs,
 			resources.cache,
 		);
 	}

@@ -90,6 +90,9 @@
 			},
 			"InterfaceDeclaration_ITokenRevocationManager": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IScribe": {
+				"forwardCompat": false
 			}
 		}
 	}

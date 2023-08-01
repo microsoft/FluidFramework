@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-loader",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.0.0",
 	"description": "Fluid container loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,6 +72,7 @@
 		"@fluidframework/protocol-base": "^1.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"debug": "^4.1.1",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
