@@ -11016,6 +11016,7 @@ importers:
       '@fluidframework/container-utils': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
@@ -11056,6 +11057,7 @@ importers:
       '@fluidframework/container-utils': link:../../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/protocol-definitions': 1.2.0
@@ -11273,6 +11275,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
@@ -11285,7 +11288,6 @@ importers:
       '@fluidframework/build-common': 1.2.0
       '@fluidframework/build-tools': 0.21.0
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
-      '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
