@@ -25,6 +25,8 @@ export enum BaseGitRestTelemetryProperties {
 	directoryPath = "directoryPath",
 	emptyFullSummary = "emptyFullSummary",
 	fullSummaryirectoryExists = "fullSummaryirectoryExists",
+	isEphemeralContainer = "isEphemeralContainer",
+	isInitial = "isInitial",
 	ref = "ref",
 	repoName = "repoName",
 	repoOwner = "repoOwner",

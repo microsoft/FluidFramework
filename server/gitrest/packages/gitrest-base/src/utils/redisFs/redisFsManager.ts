@@ -239,7 +239,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		await executeRedisFsApi(
-			async () => this.redisFsClient.set(folderpathString, RedisFSConstants.Folder),
+			async () => this.redisFsClient.set(folderpathString, RedisFSConstants.directory),
 			RedisFsApis.Mkdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -261,7 +261,7 @@ export class RedisFs implements IFileSystemPromises {
 
 		const keysToRemove = await executeRedisFsApi(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
-			RedisFsApis.Rmdir,
+			RedisFsApis.KeysByPrefix,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
@@ -270,8 +270,21 @@ export class RedisFs implements IFileSystemPromises {
 			},
 		);
 
-		keysToRemove.forEach((key) => {
-			void this.redisFsClient.delete(key);
+		const deleteP = keysToRemove.map(async (key) => {
+			return executeRedisFsApi(
+				async () => this.redisFsClient.delete(key),
+				RedisFsApis.Rmdir,
+				RedisFSConstants.RedisFsApi,
+				this.redisFsConfig.enableRedisFsMetrics,
+				this.redisFsConfig.redisApiMetricsSamplingPeriod,
+				{
+					folderpathString,
+				},
+			);
+		});
+
+		await Promise.all(deleteP).catch((error) => {
+			Lumberjack.error("An error occurred while deleting keys", null, error);
 		});
 	}
 
@@ -315,7 +328,12 @@ export class RedisFs implements IFileSystemPromises {
 		if (!data) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
-		return getStats();
+
+		const fsEntityType =
+			data.toString() === RedisFSConstants.directory
+				? RedisFSConstants.directory
+				: RedisFSConstants.file;
+		return getStats(fsEntityType);
 	}
 
 	/**
@@ -432,10 +450,12 @@ enum RedisFsApis {
 	Stat = "Stat",
 	Mkdir = "Mkdir",
 	Rmdir = "Rmdir",
+	KeysByPrefix = "keysByPrefix",
 }
 
 enum RedisFSConstants {
-	Folder = "Folder",
+	file = "file",
+	directory = "directory",
 	RedisFsApi = "RedisFsApi",
 }
 
