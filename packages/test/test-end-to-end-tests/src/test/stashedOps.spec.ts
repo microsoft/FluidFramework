@@ -1434,36 +1434,34 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		// pause outgoing ops so we can detect dropped stashed changes
 		await container.deltaManager.outbound.pause();
-		let pendingState;
-
-		const connectedEvent = async (clientId: string): Promise<void> => {
-			pendingState = await container.getPendingLocalState?.();
-			// the pending data in the stash blob may not have changed, but the clientId should match our new
-			// clientId, which will now be used to attempt to resubmit pending changes
-			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
-		};
-
-		container.on("connected", (clientId: string) => {
-			void connectedEvent(clientId);
-		});
-
+		let pendingState: string | undefined;
+		let pendingStateP;
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 		for (let i = 5; i--; ) {
 			map.set(`${i}`, `${i}`);
 			container.disconnect();
 			container.connect();
-			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+			pendingStateP = await new Promise<string>((resolve) => {
+				container.once("connected", (clientId: string) => resolve(clientId));
+			}).then(async (clientId: string) => {
+				pendingState = await container.getPendingLocalState?.();
+				assert(typeof pendingState === "string");
+
+				// the pending data in the stash blob may not have changed, but the clientId should match our new
+				// clientId, which will now be used to attempt to resubmit pending changes
+				assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+
+				return pendingState;
+			});
 		}
-		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		pendingState = await pendingStateP;
 		container.close();
 		// no pending changes went through
 		for (let i = 5; i--; ) {
 			assert.strictEqual(map1.get(`${i}`), undefined);
 		}
 
-		// because the event listener was always refreshing pendingState on "connected", the stash blob
-		// should be safe to use
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
@@ -1482,17 +1480,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		)) as IContainerExperimental;
 
 		let pendingState;
-		// always delete stash blob on "connected" event
-		const connectedEvent = async (clientId: string): Promise<void> => {
-			pendingState = await container.getPendingLocalState?.();
-			// the pending data in the stash blob may not have changed, but the clientId should match our new
-			// clientId, which will now be used to attempt to resubmit pending changes
-			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
-		};
-
-		container.on("connected", (clientId: string) => {
-			void connectedEvent(clientId);
-		});
+		let pendingStateP;
 
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		const counter = await dataStore.getSharedObject<SharedCounter>(counterId);
@@ -1500,9 +1488,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			counter.increment(1);
 			container.disconnect();
 			container.connect();
-			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+			pendingStateP = await new Promise<string>((resolve) => {
+				container.once("connected", (clientId: string) => resolve(clientId));
+			}).then(async (clientId: string) => {
+				pendingState = await container.getPendingLocalState?.();
+				assert(typeof pendingState === "string");
+
+				// the pending data in the stash blob may not have changed, but the clientId should match our new
+				// clientId, which will now be used to attempt to resubmit pending changes
+				assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+
+				return pendingState;
+			});
 		}
-		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		pendingState = await pendingStateP;
 		container.close();
 
 		// because the event listener was always refreshing pendingState on "connected", the stash blob
