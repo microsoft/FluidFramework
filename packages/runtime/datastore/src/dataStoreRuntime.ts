@@ -587,6 +587,37 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
+	private createRemoteChannelContext(message) {
+		const attachMessage = message.contents ?? message.content as IAttachMessage; // (??????)
+		const id = attachMessage.id;
+		const flatBlobs = new Map<string, ArrayBufferLike>();
+		const snapshotTree = buildSnapshotTree(
+			attachMessage.snapshot.entries,
+			flatBlobs,
+		);
+
+		return new RemoteChannelContext(
+			this,
+			this.dataStoreContext,
+			this.dataStoreContext.storage,
+			(content, localContentMetadata) =>
+				this.submitChannelOp(id, content, localContentMetadata),
+			(address: string) => this.setChannelDirty(address),
+			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+				this.addedGCOutboundReference(srcHandle, outboundHandle),
+			id,
+			snapshotTree,
+			this.sharedObjectRegistry,
+			flatBlobs,
+			this.dataStoreContext.getCreateChildSummarizerNodeFn(id, {
+				type: CreateSummarizerNodeSource.FromAttach,
+				sequenceNumber: message.sequenceNumber,
+				snapshot: attachMessage.snapshot,
+			}),
+			attachMessage.type,
+		);
+	}
+
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		this.verifyNotClosed();
 
@@ -594,8 +625,7 @@ export class FluidDataStoreRuntime
 			// catches as data processing error whether or not they come from async pending queues
 			switch (message.type) {
 				case DataStoreMessageType.Attach: {
-					const attachMessage = message.contents as IAttachMessage;
-					const id = attachMessage.id;
+					const id = (message.contents as IAttachMessage).id;
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
@@ -608,33 +638,7 @@ export class FluidDataStoreRuntime
 					} else {
 						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
 
-						const flatBlobs = new Map<string, ArrayBufferLike>();
-						const snapshotTree = buildSnapshotTree(
-							attachMessage.snapshot.entries,
-							flatBlobs,
-						);
-
-						const remoteChannelContext = new RemoteChannelContext(
-							this,
-							this.dataStoreContext,
-							this.dataStoreContext.storage,
-							(content, localContentMetadata) =>
-								this.submitChannelOp(id, content, localContentMetadata),
-							(address: string) => this.setChannelDirty(address),
-							(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-								this.addedGCOutboundReference(srcHandle, outboundHandle),
-							id,
-							snapshotTree,
-							this.sharedObjectRegistry,
-							flatBlobs,
-							this.dataStoreContext.getCreateChildSummarizerNodeFn(id, {
-								type: CreateSummarizerNodeSource.FromAttach,
-								sequenceNumber: message.sequenceNumber,
-								snapshot: attachMessage.snapshot,
-							}),
-							attachMessage.type,
-						);
-
+						const remoteChannelContext = this.createRemoteChannelContext(message);
 						this.contexts.set(id, remoteChannelContext);
 						if (this.contextsDeferred.has(id)) {
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1001,11 +1005,25 @@ export class FluidDataStoreRuntime
 	}
 
 	public async applyStashedOp(content: any): Promise<unknown> {
-		const envelope = content as IEnvelope;
-		const channelContext = this.contexts.get(envelope.address);
-		assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
-		await channelContext.getChannel();
-		return channelContext.applyStashedOp(envelope.contents);
+		const type = content?.type as DataStoreMessageType;
+		switch (type) {
+			case DataStoreMessageType.Attach: {
+				const context = this.createRemoteChannelContext(content);
+				const id = (content.content as IAttachMessage).id;
+                this.pendingAttach.set(id, "not a real attach message" as any);
+                this.contexts.set(id, context);
+                return;
+			}
+			case DataStoreMessageType.ChannelOp: {
+				const envelope = content.content as IEnvelope;
+				const channelContext = this.contexts.get(envelope.address);
+				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+				await channelContext.getChannel();
+				return channelContext.applyStashedOp(envelope.contents);
+			}
+			default:
+				unreachableCase(type);
+		}
 	}
 
 	private setChannelDirty(address: string): void {
