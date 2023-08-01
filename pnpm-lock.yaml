@@ -11626,6 +11626,7 @@ importers:
       '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -11651,6 +11652,7 @@ importers:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
@@ -41517,7 +41519,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1
+      webpack: 5.88.1_webpack-cli@4.10.0
     dev: true
 
   /terser/4.8.1:
