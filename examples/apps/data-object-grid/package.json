@@ -47,7 +47,6 @@
 		"@fluid-example/multiview-slider-coordinate-view": "workspace:~",
 		"@fluid-example/prosemirror": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",

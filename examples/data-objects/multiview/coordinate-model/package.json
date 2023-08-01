@@ -42,7 +42,6 @@
 	"dependencies": {
 		"@fluid-example/multiview-coordinate-interface": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/map": "workspace:~"
 	},
 	"devDependencies": {
