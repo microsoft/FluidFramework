@@ -5,7 +5,7 @@
 
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	ITelemetryLoggerExt,

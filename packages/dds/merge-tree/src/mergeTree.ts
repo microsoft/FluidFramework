@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";

@@ -4,7 +4,7 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISummarizer, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { ITelemetryBaseLogger, FluidObject, IRequest } from "@fluidframework/core-interfaces";

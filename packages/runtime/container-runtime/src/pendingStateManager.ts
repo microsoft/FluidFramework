@@ -4,7 +4,7 @@
  */
 
 import { IDisposable } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { Lazy } from "@fluidframework/core-utils";

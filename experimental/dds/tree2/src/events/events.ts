@@ -4,7 +4,7 @@
  */
 
 import type { IEvent } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { fail, getOrCreate } from "../util";
 
 /**

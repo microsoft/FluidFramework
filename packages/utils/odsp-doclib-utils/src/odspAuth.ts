@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { isFluidError } from "@fluidframework/telemetry-utils";
 import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";

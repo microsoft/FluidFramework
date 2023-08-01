@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryPropertiesExt } from "./telemetryTypes";
 import { createChildLogger } from "./logger";
 

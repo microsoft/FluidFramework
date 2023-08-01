@@ -28,7 +28,7 @@ import {
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
 /*
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic

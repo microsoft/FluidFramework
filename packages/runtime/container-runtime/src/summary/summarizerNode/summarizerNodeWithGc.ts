@@ -9,7 +9,7 @@ import {
 	TelemetryDataTag,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {

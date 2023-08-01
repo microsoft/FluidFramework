@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
 export function computeHierarchicalOrdinal(
 	maxCount: number,

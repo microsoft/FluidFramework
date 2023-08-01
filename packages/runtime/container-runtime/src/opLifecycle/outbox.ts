@@ -4,7 +4,7 @@
  */
 
 import { createChildMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

@@ -11,7 +11,7 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
 
 const reservedIntervalIdKey = "intervalId";

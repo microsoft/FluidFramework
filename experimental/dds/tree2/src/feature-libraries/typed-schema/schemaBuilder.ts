@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { Sourced, SchemaCollection } from "../modular-schema";
 import { requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";

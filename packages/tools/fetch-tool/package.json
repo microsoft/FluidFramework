@@ -32,6 +32,7 @@
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",

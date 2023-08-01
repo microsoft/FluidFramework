@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { StableId, UuidString } from "@fluidframework/runtime-definitions";
 import { v4 } from "uuid";
 

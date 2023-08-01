@@ -16,7 +16,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy, LazyPromise } from "@fluidframework/core-utils";
 import {

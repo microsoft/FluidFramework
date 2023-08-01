@@ -4,7 +4,7 @@
  */
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IIntervalHelpers, ISerializableInterval, IntervalType } from "../intervals";
 import { IntervalIndex } from "./intervalIndex";
 import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";

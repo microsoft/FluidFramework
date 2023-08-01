@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository, FieldKey } from "../schema-stored";

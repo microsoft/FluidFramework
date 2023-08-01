@@ -58,6 +58,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/core-utils": "workspace:~",
 		"best-random": "^1.0.0"
 	},
 	"devDependencies": {

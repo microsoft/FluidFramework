@@ -38,7 +38,8 @@
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-experimental/tree2": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1"
+		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/core-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",

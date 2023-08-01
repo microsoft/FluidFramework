@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

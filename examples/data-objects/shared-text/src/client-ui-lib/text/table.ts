@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
 import {
 	refGetRangeLabels,

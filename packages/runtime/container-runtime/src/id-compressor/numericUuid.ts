@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "./utils";
 import { generateStableId } from "./uuidUtilities";
