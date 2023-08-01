@@ -14,7 +14,6 @@ import {
 	singleTextCursor,
 	makeSchemaCodec,
 	jsonableTreeFromCursor,
-	namedTreeSchema,
 	on,
 	SchemaBuilder,
 	Any,
@@ -26,6 +25,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	namedTreeSchema,
 } from "../utils";
 import {
 	ISharedTree,
