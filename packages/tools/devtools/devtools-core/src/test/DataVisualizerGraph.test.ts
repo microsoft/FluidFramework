@@ -63,6 +63,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childTreeAfterEdit).to.deep.equal(expectedChildTreeAfterEdit);
 	});
