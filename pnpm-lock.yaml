@@ -5801,7 +5801,6 @@ importers:
       '@sinclair/typebox': ^0.29.4
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
-      '@types/lodash': ^4.14.195
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/ungap__structured-clone': ^0.3.0
@@ -5815,7 +5814,6 @@ importers:
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       good-fences: ^1.1.1
-      lodash: ^4.17.21
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -5840,7 +5838,6 @@ importers:
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
       '@sinclair/typebox': 0.29.4
       '@ungap/structured-clone': 0.3.4
-      lodash: 4.17.21
       sorted-btree: 1.8.1
       uuid: 8.3.2
     devDependencies:
@@ -5861,7 +5858,6 @@ importers:
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/diff': 3.5.5
       '@types/easy-table': 0.0.32
-      '@types/lodash': 4.14.196
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
       '@types/ungap__structured-clone': 0.3.0
@@ -16986,7 +16982,7 @@ packages:
       '@fluidframework/server-services-telemetry': 0.1038.4001
       '@types/debug': 4.1.7
       '@types/double-ended-queue': 2.1.2
-      '@types/lodash': 4.14.196
+      '@types/lodash': 4.14.194
       '@types/node': 16.18.38
       '@types/ws': 6.0.4
       assert: 2.0.0
@@ -17014,7 +17010,7 @@ packages:
       '@fluidframework/server-services-telemetry': 0.1039.1000
       '@types/debug': 4.1.7
       '@types/double-ended-queue': 2.1.2
-      '@types/lodash': 4.14.196
+      '@types/lodash': 4.14.194
       '@types/node': 16.18.38
       '@types/ws': 6.0.4
       assert: 2.0.0
@@ -21172,7 +21168,7 @@ packages:
       '@babel/preset-env': 7.21.5_@babel+core@7.21.8
       '@babel/types': 7.21.5
       '@mdx-js/mdx': 1.6.22
-      '@types/lodash': 4.14.196
+      '@types/lodash': 4.14.194
       js-string-escape: 1.0.1
       loader-utils: 2.0.4
       lodash: 4.17.21
@@ -22002,10 +21998,6 @@ packages:
 
   /@types/lodash/4.14.194:
     resolution: {integrity: sha512-r22s9tAS7imvBt2lyHC9B8AGwWnXaYb1tY09oyLkXDs4vArpYJzw09nj8MLx5VfciBPGIb+ZwG0ssYnEPJxn/g==}
-    dev: true
-
-  /@types/lodash/4.14.196:
-    resolution: {integrity: sha512-22y3o88f4a94mKljsZcanlNWPzO0uBsBdzLAngf2tp533LzZcQzb6+eZPJ+vCTt+bqF2XnvT9gejTLsAcJAJyQ==}
 
   /@types/lru-cache/5.1.1:
     resolution: {integrity: sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==}
@@ -29054,7 +29046,7 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@types/chai': 4.3.5
-      '@types/lodash': 4.14.196
+      '@types/lodash': 4.14.194
       '@types/node': 16.18.38
       '@types/sinon': 7.5.2
       lodash: 4.17.21
@@ -41146,7 +41138,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1
+      webpack: 5.88.1_webpack-cli@4.10.0
     dev: true
 
   /terser/4.8.1:

@@ -78,7 +78,6 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@sinclair/typebox": "^0.29.4",
 		"@ungap/structured-clone": "^0.3.4",
-		"lodash": "^4.17.21",
 		"sorted-btree": "^1.8.0",
 		"uuid": "^8.3.1"
 	},
@@ -100,7 +99,6 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
-		"@types/lodash": "^4.14.195",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/ungap__structured-clone": "^0.3.0",
