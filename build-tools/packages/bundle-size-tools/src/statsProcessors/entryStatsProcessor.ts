@@ -27,7 +27,7 @@ export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): Web
 				: chunkName;
 
 			// Note: we have the getChunkParsedSize function, but the entrypoints objects we're analyzing here already
-			// have a list of the relevant assets and their sizes; no need to take the entrypoints'chunks and pass them to
+			// have a list of the relevant assets and their sizes; no need to take the entrypoints' chunks and pass them to
 			// that function.
 			let totalSize: number = 0;
 			for (const asset of chunkGroupStats.assets ?? []) {
