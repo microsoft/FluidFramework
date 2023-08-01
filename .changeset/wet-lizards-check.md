@@ -37,4 +37,4 @@ const resolvedUrl: IRequest = urlResolver.resolve(request);
 const response = container.request(parsedResolvedUrl);
 ```
 
-Status on deprecation of the request pattern is tracked in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+Status on removal of the request pattern is tracked in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
