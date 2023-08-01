@@ -193,7 +193,7 @@ export function create(
 					? request.query.initial
 					: request.query.initial === "true";
 
-			const isEphemeralFromRequest = request.get("IsEphemeralContainer");
+			const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 			// We treat these cases where we did not get the header as non-ephemeral containers
 			const isEphemeral: boolean =
 				typeof isEphemeralFromRequest === "undefined"

@@ -6,6 +6,7 @@
 export {
 	containsPathTraversal,
 	defaultErrorMessage,
+	getBooleanParam,
 	handleResponse,
 	validateRequestParams,
 } from "./http";

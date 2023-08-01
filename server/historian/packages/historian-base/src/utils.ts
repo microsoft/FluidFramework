@@ -37,7 +37,7 @@ export const Constants = Object.freeze({
 	createSummaryThrottleIdPrefix: "createSummary",
 	getSummaryThrottleIdPrefix: "getSummary",
 	generalRestCallThrottleIdPrefix: "generalRestCall",
-	IsEphemeralContainer: "IsEphemeralContainer",
+	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
 });
 

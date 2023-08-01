@@ -27,6 +27,7 @@ export {
 	decodeHeader,
 	defaultErrorMessage,
 	DocumentStorage,
+	getBooleanParam,
 	handleResponse,
 	HttpServer,
 	IHttpServerConfig,

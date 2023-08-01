@@ -76,7 +76,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 		request.get(Constants.StorageRoutingIdHeader),
 	);
 
-	const isEphemeralFromRequest = request.get("IsEphemeralContainer");
+	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 	const isEphemeralContainer: boolean =
 		typeof isEphemeralFromRequest === "undefined"
 			? false

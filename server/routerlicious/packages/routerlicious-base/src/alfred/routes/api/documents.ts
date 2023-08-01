@@ -24,7 +24,11 @@ import {
 	getBooleanFromConfig,
 	getCorrelationIdWithHttpFallback,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import {
+	getBooleanParam,
+	validateRequestParams,
+	handleResponse,
+} from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import {
@@ -183,11 +187,7 @@ export function create(
 
 			const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
 			const isEphemeral: boolean =
-				(typeof isEphemeralContainer === "undefined"
-					? false
-					: typeof isEphemeralContainer === "boolean"
-					? isEphemeralContainer
-					: isEphemeralContainer === "true") && !ignoreEphemeralFlag;
+				getBooleanParam(isEphemeralContainer) && !ignoreEphemeralFlag;
 
 			const createP = storage.createDocument(
 				tenantId,

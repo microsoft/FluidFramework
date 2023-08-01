@@ -85,7 +85,7 @@ export class RestGitService {
 
 		// We set the flag only for ephemeral containers
 		if (this.isEphemeralContainer) {
-			defaultHeaders.IsEphemeralContainer = this.isEphemeralContainer;
+			defaultHeaders["Is-Ephemeral-Container"] = this.isEphemeralContainer;
 		}
 		this.lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: this.tenantId,
@@ -99,7 +99,7 @@ export class RestGitService {
 				"BaseUrl": baseUrl,
 				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 				"Storage-Name": this.storageName,
-				"IsEphemeralContainer": this.isEphemeralContainer,
+				"Is-Ephemeral-Container": this.isEphemeralContainer,
 			})}`,
 		);
 
@@ -108,7 +108,7 @@ export class RestGitService {
 				"BaseUrl": baseUrl,
 				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 				"Storage-Name": this.storageName,
-				"IsEphemeralContainer": this.isEphemeralContainer,
+				"Is-Ephemeral-Container": this.isEphemeralContainer,
 			})}`,
 			this.lumberProperties,
 		);

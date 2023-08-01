@@ -108,7 +108,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			// IsEphemeralContainer header is set only for ephemeral containers
 			// It is not set if it is not ephemeral and when the driver did not send any info
 			if (isEphemeralContainer) {
-				headers.IsEphemeralContainer = isEphemeralContainer;
+				headers["Is-Ephemeral-Container"] = isEphemeralContainer;
 			}
 			return headers;
 		};

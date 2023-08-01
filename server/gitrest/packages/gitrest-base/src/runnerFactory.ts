@@ -59,9 +59,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 	}
 
 	private getFileSystemManagerFactories(config: Provider): IFileSystemManagerFactories {
-		const defaultFileSystemName: string | undefined =
-			config.get("git:filesystem:name") ?? "nodeFs";
-		const ephemeralFileSystemName: string | undefined =
+		const defaultFileSystemName: string = config.get("git:filesystem:name") ?? "nodeFs";
+		const ephemeralFileSystemName: string =
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
 
 		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactory(
