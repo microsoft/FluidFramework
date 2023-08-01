@@ -5,14 +5,9 @@
 
 import { SharedTreeTestFactory, TestTreeProviderLite, initializeTestTree } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, SchemaData, UpPath, ValueSchema, fieldSchema, rootFieldKey } from "../../core";
+import { FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import {
-	FieldKinds,
-	SchemaBuilder,
-	namedTreeSchema,
-	singleTextCursor,
-} from "../../feature-libraries";
+import { FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 
 const fieldKeyA: FieldKey = brand("FieldA");
 const fieldKeyB: FieldKey = brand("FieldB");
@@ -104,17 +99,16 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 		{
 			name: "nested-sequence-change",
 			tree: () => {
+				const builder = new SchemaBuilder("has-sequence-map");
+				const seqMapSchema = builder.mapRecursive(
+					"SeqMap",
+					SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => seqMapSchema),
+				);
+				const docSchema = builder.intoDocumentSchema(
+					SchemaBuilder.fieldSequence(seqMapSchema),
+				);
 				const onCreate = (tree: ISharedTree) => {
-					const rootFieldSchema = fieldSchema(FieldKinds.sequence);
-					const rootNodeSchema = namedTreeSchema({
-						name: brand("Node"),
-						mapFields: fieldSchema(FieldKinds.sequence),
-					});
-					const testSchema: SchemaData = {
-						treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-						rootFieldSchema,
-					};
-					tree.storedSchema.update(testSchema);
+					tree.storedSchema.update(docSchema);
 					tree.transaction.start();
 					// We must make this shallow change to the sequence field as part of the same transaction as the
 					// nested change. Otherwise, the nested change will be represented using the generic field kind.
@@ -123,7 +117,7 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 							parent: undefined,
 							field: rootFieldKey,
 						})
-						.insert(0, [singleTextCursor({ type: brand("Node") })]);
+						.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
 					// The nested change
 					tree.editor
 						.sequenceField({
@@ -134,7 +128,7 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 							},
 							field: brand("foo"),
 						})
-						.insert(0, [singleTextCursor({ type: brand("Node") })]);
+						.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
 					tree.transaction.commit();
 				};
 
