@@ -145,23 +145,6 @@ steps:
               break
             fi
             rm publish_log
-            # packageVersion=$(grep -oP 'npm notice : \K.*' publish_log)
-            # echo "publish_log"
-            # echo cat publish_log
-            # echo "packageVersion"
-            # echo $packageVersion
-            # rm publish_log
-            # az rest --method patch --uri https://pkgs.dev.azure.com/fluidframework/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/$packageName/versions/$packageVersion?api-version=7.1-preview.1 --body '{
-            #   "views": {
-            #     "op": "add",
-            #     "path": "/views/-",
-            #     "value": "Release"
-            #   }
-            # }'
-            # if [ $? -ne 0 ]; then
-            #   echo "Failed to promote package to Release view"
-            #   exit 1
-            # fi
           done
         fi
       done
