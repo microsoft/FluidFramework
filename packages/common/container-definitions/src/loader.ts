@@ -471,7 +471,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 /**
  * The Runtime's view of the Loader, used for loading Containers
  */
-export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
+export interface ILoader extends Partial<IProvideLoader> {
 	/**
 	 * Resolves the resource specified by the URL + headers contained in the request object
 	 * to the underlying container that will resolve the request.
@@ -482,6 +482,16 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 	 * a request against the server found from the resolve step.
 	 */
 	resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
