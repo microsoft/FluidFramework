@@ -5,6 +5,7 @@
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
+	chainAsync,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-internal/stochastic-test-utils";
@@ -193,8 +194,6 @@ describe("Fuzz - Targeted", () => {
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
 		delete: 1,
-		start: 0,
-		commit: 0,
 	};
 
 	describe.skip("Inorder undo/redo matches the initial/final state", () => {
@@ -347,6 +346,47 @@ describe("Fuzz - Targeted", () => {
 			numberOfClients: 3,
 			emitter,
 			skip: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 19],
+		});
+	});
+
+	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		insert: 1,
+		delete: 1,
+		undo: 1,
+		redo: 1,
+	};
+
+	describe.only("synchronization after calling undo on unsequenced edits", () => {
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
+			chainAsync(takeAsync(opsPerRun, makeOpGenerator(unSequencedUndoRedoWeights)));
+
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: () => {},
+		};
+		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
+			// synchronize clients after undo
+			finalState.containerRuntimeFactory.processAllMessages();
+			const expectedTree = toJsonableTree(finalState.summarizerClient.channel);
+			for (const client of finalState.clients) {
+				validateTree(client.channel, expectedTree);
+			}
+		});
+		createDDSFuzzSuite(model, {
+			defaultTestCount: runsPerBatch,
+			numberOfClients: 3,
+			emitter,
+			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 },
+			skip: [2, 5, 7, 8, 10, 12, 18],
 		});
 	});
 });
