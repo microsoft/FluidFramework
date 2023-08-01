@@ -54,7 +54,7 @@ export interface IRouterliciousDriverPolicies {
 	 * Default: true
 	 */
 	enableLongPollingDowngrade: boolean;
-  /**
+	/**
 	 * Indicates that the container is ephemeral.
 	 * Artifacts relates to the container are limited to container lifetime.
 	 * Default: false

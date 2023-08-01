@@ -51,7 +51,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
-  isEphemeralContainer: false,
+	isEphemeralContainer: false,
 };
 
 /**
