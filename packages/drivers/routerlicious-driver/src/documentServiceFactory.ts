@@ -21,8 +21,11 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISession } from "@fluidframework/server-services-client";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ISession,
+	convertSummaryTreeToWholeSummaryTree,
+} from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -32,7 +35,6 @@ import {
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper";
-import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -150,7 +152,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryToCreateNewSummary(appSummary),
+						summary: convertSummaryTreeToWholeSummaryTree(
+							undefined,
+							appSummary,
+							"",
+							"",
+						),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
