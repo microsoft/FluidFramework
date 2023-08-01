@@ -3654,10 +3654,15 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public getPendingLocalState(): unknown {
+	public async getPendingLocalState(props?: {
+		notifyImminentClosure: boolean;
+	}): Promise<unknown> {
+		this.verifyNotClosed();
+		const waitBlobsToAttach = props?.notifyImminentClosure;
 		if (this._orderSequentiallyCalls !== 0) {
 			throw new UsageError("can't get state during orderSequentially");
 		}
+		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 		// to close current batch.
@@ -3665,7 +3670,7 @@ export class ContainerRuntime
 
 		return {
 			pending: this.pendingStateManager.getLocalState(),
-			pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
+			pendingAttachmentBlobs,
 		};
 	}
 
