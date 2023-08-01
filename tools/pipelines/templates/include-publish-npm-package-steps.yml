@@ -144,6 +144,7 @@ steps:
               rm publish_log
               break
             fi
+            rm publish_log
             # packageVersion=$(grep -oP 'npm notice : \K.*' publish_log)
             # echo "publish_log"
             # echo cat publish_log
