@@ -184,10 +184,7 @@ export class ADOSizeComparator {
 			return { message, comparison: undefined };
 		}
 
-		const comparison: BundleComparison[] = await this.createComparisonFromZip(
-			baselineCommit,
-			baselineZip,
-		);
+		const comparison: BundleComparison[] = await this.createComparisonFromZip(baselineZip);
 		console.log(JSON.stringify(comparison));
 
 		const message = getCommentForBundleDiff(comparison, baselineCommit);
@@ -212,10 +209,7 @@ export class ADOSizeComparator {
 		}
 	}
 
-	private async createComparisonFromZip(
-		baselineCommit: string,
-		baselineZip: JSZip,
-	): Promise<BundleComparison[]> {
+	private async createComparisonFromZip(baselineZip: JSZip): Promise<BundleComparison[]> {
 		const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
 
 		const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
