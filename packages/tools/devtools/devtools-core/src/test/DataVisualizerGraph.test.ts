@@ -17,7 +17,9 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	VisualNodeKind,
+	defaultEditors,
 } from "../data-visualization";
+import { EditType } from "../CommonInterfaces";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
@@ -33,6 +35,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				counter: sharedCounter,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -46,6 +49,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 0,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childTree).to.deep.equal(expectedChildTree);
 
@@ -59,6 +63,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childTreeAfterEdit).to.deep.equal(expectedChildTreeAfterEdit);
 	});
@@ -74,6 +79,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				map: sharedMap,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -166,6 +172,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				cell: sharedCell,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -182,6 +189,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 42,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childCounterTree).to.deep.equal(expectedChildCounterTree);
 

@@ -13,7 +13,6 @@ import {
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
@@ -148,7 +147,6 @@ export class RunningSummarizer implements IDisposable {
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
-	private readonly deltaManagerListener;
 	private readonly runtimeListener;
 
 	private constructor(
@@ -239,24 +237,10 @@ export class RunningSummarizer implements IDisposable {
 			this.mc.logger,
 		);
 
-		// Listen to deltaManager for non-runtime ops
-		this.deltaManagerListener = (op) => {
-			if (!isRuntimeMessage(op)) {
-				this.handleOp(op, false);
-			}
+		// Listen to runtime for ops
+		this.runtimeListener = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+			this.handleOp(op, runtimeMessage === true);
 		};
-
-		// Listen to runtime for runtime ops
-		this.runtimeListener = (op, runtimeMessage) => {
-			if (runtimeMessage) {
-				this.handleOp(op, true);
-			}
-		};
-
-		// Purpose of listening to deltaManager is for back-compat
-		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
-		// Tracked by AB#3883
-		this.runtime.deltaManager.on("op", this.deltaManagerListener);
 		this.runtime.on("op", this.runtimeListener);
 	}
 
@@ -351,7 +335,6 @@ export class RunningSummarizer implements IDisposable {
 	}
 
 	public dispose(): void {
-		this.runtime.deltaManager.off("op", this.deltaManagerListener);
 		this.runtime.off("op", this.runtimeListener);
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
