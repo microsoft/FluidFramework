@@ -67,6 +67,7 @@ export interface ChangeRebaser<TChangeset> {
 		isRollback: boolean,
 		// TODO: make the repair store mandatory when all usages of this method have repair data support.
 		repairStore?: ReadonlyRepairDataStore,
+		cache?: boolean,
 	): TChangeset;
 
 	/**

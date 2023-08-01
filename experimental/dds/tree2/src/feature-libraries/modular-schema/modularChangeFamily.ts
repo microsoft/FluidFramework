@@ -66,6 +66,10 @@ export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
 	public readonly codecs: ICodecFamily<ModularChangeset>;
+	private readonly inverseCache: Map<
+		TaggedChange<ModularChangeset>,
+		{ inverse: ModularChangeset; isRollback: boolean; repairStore?: ReadonlyRepairDataStore }
+	> = new Map();
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
@@ -287,10 +291,20 @@ export class ModularChangeFamily
 		change: TaggedChange<ModularChangeset>,
 		isRollback: boolean,
 		repairStore?: ReadonlyRepairDataStore,
+		cache?: boolean,
 	): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
 			return makeModularChangeset(new Map());
+		}
+
+		const inverseCached = this.inverseCache.get(change);
+		if (
+			inverseCached !== undefined &&
+			inverseCached.isRollback === isRollback &&
+			inverseCached.repairStore === repairStore
+		) {
+			return inverseCached.inverse;
 		}
 
 		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
@@ -331,7 +345,7 @@ export class ModularChangeFamily
 		);
 
 		const revInfo = change.change.revisions;
-		return makeModularChangeset(
+		const inverse = makeModularChangeset(
 			invertedFields,
 			idState.maxId,
 			revInfo === undefined
@@ -342,6 +356,11 @@ export class ModularChangeFamily
 				  ).reverse(),
 			change.change.constraintViolationCount,
 		);
+
+		if (cache !== false) {
+			this.inverseCache.set(change, { inverse, isRollback, repairStore });
+		}
+		return inverse;
 	}
 
 	private invertFieldMap(

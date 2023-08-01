@@ -542,7 +542,7 @@ describe("EditManager", () => {
 				});
 			}
 		});
-		describe("Peer commit rebasing", () => {
+		describe.only("Peer commit rebasing", () => {
 			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
 				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
@@ -552,8 +552,7 @@ describe("EditManager", () => {
 						trunkEditCount * rebasedEditCount +
 							rebasedEditCount * (rebasedEditCount - 1),
 					);
-					// TODO: Task4664 Prevent quadratic number of inversions by caching inverses
-					// assert.equal(nbInverted, nbRebased - 1);
+
 					assert.equal(
 						rebaser.invertedCount,
 						((rebasedEditCount - 1) * rebasedEditCount) / 2,
