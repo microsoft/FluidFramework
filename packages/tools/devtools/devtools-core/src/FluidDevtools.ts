@@ -405,6 +405,7 @@ export class FluidDevtools implements IFluidDevtools {
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
 			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+			[DevtoolsFeature.OpLatencyTelemetry]: false,
 		};
 	}
 }
