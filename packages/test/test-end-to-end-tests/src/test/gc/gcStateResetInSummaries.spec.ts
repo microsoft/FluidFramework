@@ -35,7 +35,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	const settings = {
-		"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": "refreshFromSnapshot",
+		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
 	};
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
@@ -378,12 +378,13 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 
 		// Now, this summarizer has GC enabled and was loaded from a snapshot that had GC enabled. So, summary need not
 		// be regenerated from that point. However, it will receive an ack for the summary from the summarizer with GC
-		// disabled and it will refresh state from it. This should result in summary regeneration.
-		await summarizeAndValidateGCState(
-			summarizerGCEnabled2,
-			true /* shouldGCRun */,
-			true /* shouldRegenerateSummary */,
-			[newDataStore._context.id],
+		// disabled and it will close.
+		await summarizerGCEnabled2.summarizeOnDemand({ reason: "gcStateResetTest" })
+			.summarySubmitted;
+
+		assert(
+			containerGCEnabled2.disposed === true,
+			"Container disposed when loaded from an older summary",
 		);
 	});
 

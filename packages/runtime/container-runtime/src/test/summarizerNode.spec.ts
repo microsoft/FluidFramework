@@ -439,50 +439,8 @@ describe("Runtime", () => {
 						readAndParseBlob,
 						logger,
 					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
-				});
-
-				it("Should use the ref seq number of the fetched snapshot", async () => {
-					createRoot();
-					snapshotRefSeq = summaryRefSeq + 1;
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === snapshotRefSeq,
-						"summary ref seq should be the snapshot ref seq",
-					);
-				});
-
-				it("Should refresh from tree when proposal handle not pending", async () => {
-					createRoot();
-					const result = await rootNode.refreshLatestSummary(
-						"test-handle",
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
+					assert(result.latestSummaryUpdated === false, "should update");
+					assert(result.networkFetchMade !== undefined, "should not be tracked");
 				});
 
 				it("Should not refresh latest if already passed ref seq number", async () => {
@@ -495,6 +453,7 @@ describe("Runtime", () => {
 						logger,
 					);
 					assert(result.latestSummaryUpdated === false, "we already got this summary");
+					assert(result.networkFetchMade === false, "we already got this summary");
 				});
 
 				it("Should refresh from pending", async () => {

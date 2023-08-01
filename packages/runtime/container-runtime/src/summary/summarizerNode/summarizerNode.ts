@@ -387,8 +387,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
 		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
-		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLoggerExt,
 	): Promise<RefreshSummaryResult> {
 		const eventProps: {
 			proposalHandle: string | undefined;
@@ -450,41 +448,18 @@ export class SummarizerNode implements IRootSummarizerNode {
 				if (this.referenceSequenceNumber >= summaryRefSeq) {
 					eventProps.latestSummaryUpdated = false;
 					event.end(eventProps);
-					return { latestSummaryUpdated: false };
+					return { latestSummaryUpdated: false, networkFetchMade: false };
 				}
 
 				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
 				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
-					await fetchLatestSnapshot();
+				await fetchLatestSnapshot();
 
 				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
 				// snapshot is older than the latest tracked summary, ignore it.
-				if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
-					eventProps.latestSummaryUpdated = false;
-					event.end(eventProps);
-					return { latestSummaryUpdated: false };
-				}
-
-				await this.refreshLatestSummaryFromSnapshot(
-					fetchedSnapshotRefSeq,
-					snapshotTree,
-					undefined,
-					EscapedPath.create(""),
-					correlatedSummaryLogger,
-					readAndParseBlob,
-				);
-
-				eventProps.latestSummaryUpdated = true;
-				eventProps.wasSummaryTracked = false;
-				eventProps.summaryRefSeq = fetchedSnapshotRefSeq;
+				eventProps.latestSummaryUpdated = false;
 				event.end(eventProps);
-				return {
-					latestSummaryUpdated: true,
-					wasSummaryTracked: false,
-					snapshotTree,
-					summaryRefSeq: fetchedSnapshotRefSeq,
-				};
+				return { latestSummaryUpdated: false, networkFetchMade: false };
 			},
 			{ start: true, end: true, cancel: "error" },
 		);

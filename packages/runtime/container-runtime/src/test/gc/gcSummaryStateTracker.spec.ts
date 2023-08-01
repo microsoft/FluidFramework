@@ -15,7 +15,6 @@ import {
 	IGCStats,
 } from "../../gc";
 import { RefreshSummaryResult } from "../../summary";
-import { parseNothing } from "./gcUnitTestHelpers";
 
 type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
 	latestSummaryGCVersion: GCVersion;
@@ -47,11 +46,7 @@ describe("GCSummaryStateTracker tests", () => {
 				wasSummaryTracked: true,
 				summaryRefSeq: 0,
 			};
-			await tracker.refreshLatestSummary(
-				undefined /* proposalHandle */,
-				refreshSummaryResult,
-				parseNothing,
-			);
+			await tracker.refreshLatestSummary(refreshSummaryResult);
 
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
@@ -104,11 +99,7 @@ describe("GCSummaryStateTracker tests", () => {
 				wasSummaryTracked: true,
 				summaryRefSeq: 0,
 			};
-			await tracker.refreshLatestSummary(
-				undefined /* proposalHandle */,
-				refreshSummaryResult,
-				parseNothing,
-			);
+			await tracker.refreshLatestSummary(refreshSummaryResult);
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
 				false,
@@ -149,11 +140,7 @@ describe("GCSummaryStateTracker tests", () => {
 				wasSummaryTracked: true,
 				summaryRefSeq: 0,
 			};
-			await tracker.refreshLatestSummary(
-				undefined /* proposalHandle */,
-				refreshSummaryResult,
-				parseNothing,
-			);
+			await tracker.refreshLatestSummary(refreshSummaryResult);
 			assert.equal(
 				tracker.doesGCStateNeedReset,
 				false,
@@ -179,11 +166,7 @@ describe("GCSummaryStateTracker tests", () => {
 				wasSummaryTracked: true,
 				summaryRefSeq: 0,
 			};
-			await tracker.refreshLatestSummary(
-				undefined /* proposalHandle */,
-				refreshSummaryResult,
-				parseNothing,
-			);
+			await tracker.refreshLatestSummary(refreshSummaryResult);
 
 			assert.equal(
 				tracker.doesGCStateNeedReset,
@@ -406,11 +389,7 @@ describe("GCSummaryStateTracker tests", () => {
 			wasSummaryTracked: true,
 			summaryRefSeq: 0,
 		};
-		await summaryStateTracker.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			refreshSummaryResult,
-			parseNothing,
-		);
+		await summaryStateTracker.refreshLatestSummary(refreshSummaryResult);
 		assert.strictEqual(
 			summaryStateTracker.updatedDSCountSinceLastSummary,
 			0,

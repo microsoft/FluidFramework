@@ -3521,7 +3521,7 @@ export class ContainerRuntime
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
+		await this.garbageCollector.refreshLatestSummary(result);
 	}
 
 	/**
@@ -3555,11 +3555,7 @@ export class ContainerRuntime
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			result,
-			readAndParseBlob,
-		);
+		await this.garbageCollector.refreshLatestSummary(result);
 
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
 	}
@@ -3633,24 +3629,22 @@ export class ContainerRuntime
 		// We choose to close the summarizer after the snapshot cache is updated to avoid
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod !== "refreshFromSnapshot") {
-			this.mc.logger.sendTelemetryEvent(
-				{
-					...event,
-					eventName: "ClosingSummarizerOnSummaryStale",
-					codePath: event.eventName,
-					message: "Stopping fetch from storage",
-					versionId: versionId != null ? versionId : undefined,
-					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-				},
-				new GenericError("Restarting summarizer instead of refreshing"),
-			);
+		this.mc.logger.sendTelemetryEvent(
+			{
+				...event,
+				eventName: "ClosingSummarizerOnSummaryStale",
+				codePath: event.eventName,
+				message: "Stopping fetch from storage",
+				versionId: versionId != null ? versionId : undefined,
+				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
+			},
+			new GenericError("Restarting summarizer instead of refreshing"),
+		);
 
-			// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(this.closeSummarizerDelayMs);
-			this._summarizer?.stop("latestSummaryStateStale");
-			this.disposeFn();
-		}
+		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.disposeFn();
 
 		return snapshotResults;
 	}

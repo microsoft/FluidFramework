@@ -21,6 +21,7 @@ import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 export type RefreshSummaryResult =
 	| {
 			latestSummaryUpdated: false;
+			networkFetchMade: false;
 	  }
 	| {
 			latestSummaryUpdated: true;
@@ -28,10 +29,8 @@ export type RefreshSummaryResult =
 			summaryRefSeq: number;
 	  }
 	| {
-			latestSummaryUpdated: true;
-			wasSummaryTracked: false;
-			snapshotTree: ISnapshotTree;
-			summaryRefSeq: number;
+			latestSummaryUpdated: false;
+			networkFetchMade: true;
 	  };
 
 /**
