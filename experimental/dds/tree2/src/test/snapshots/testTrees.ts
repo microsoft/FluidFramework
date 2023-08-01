@@ -5,9 +5,14 @@
 
 import { SharedTreeTestFactory, TestTreeProviderLite, initializeTestTree } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
+import { FieldKey, SchemaData, UpPath, ValueSchema, fieldSchema, rootFieldKey } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import {
+	FieldKinds,
+	SchemaBuilder,
+	namedTreeSchema,
+	singleTextCursor,
+} from "../../feature-libraries";
 
 const fieldKeyA: FieldKey = brand("FieldA");
 const fieldKeyB: FieldKey = brand("FieldB");
@@ -90,6 +95,47 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 						singleTextCursor({ type: handleSchema.name, value: tree.handle }),
 						true,
 					);
+				};
+
+				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));
+				return provider.trees[0];
+			},
+		},
+		{
+			name: "nested-sequence-change",
+			tree: () => {
+				const onCreate = (tree: ISharedTree) => {
+					const rootFieldSchema = fieldSchema(FieldKinds.sequence);
+					const rootNodeSchema = namedTreeSchema({
+						name: brand("Node"),
+						mapFields: fieldSchema(FieldKinds.sequence),
+					});
+					const testSchema: SchemaData = {
+						treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+						rootFieldSchema,
+					};
+					tree.storedSchema.update(testSchema);
+					tree.transaction.start();
+					// We must make this shallow change to the sequence field as part of the same transaction as the
+					// nested change. Otherwise, the nested change will be represented using the generic field kind.
+					tree.editor
+						.sequenceField({
+							parent: undefined,
+							field: rootFieldKey,
+						})
+						.insert(0, [singleTextCursor({ type: brand("Node") })]);
+					// The nested change
+					tree.editor
+						.sequenceField({
+							parent: {
+								parent: undefined,
+								parentField: rootFieldKey,
+								parentIndex: 0,
+							},
+							field: brand("foo"),
+						})
+						.insert(0, [singleTextCursor({ type: brand("Node") })]);
+					tree.transaction.commit();
 				};
 
 				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));
