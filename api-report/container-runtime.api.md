@@ -112,7 +112,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get connected(): boolean;
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
