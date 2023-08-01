@@ -5801,7 +5801,7 @@ importers:
       '@sinclair/typebox': ^0.29.4
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
-      '@types/lodash': ^4.14.118
+      '@types/lodash': ^4.14.195
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/ungap__structured-clone': ^0.3.0
@@ -41146,7 +41146,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1_webpack-cli@4.10.0
+      webpack: 5.88.1
     dev: true
 
   /terser/4.8.1:
