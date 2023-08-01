@@ -1806,8 +1806,7 @@ describe("SharedTree", () => {
 				child.transaction.start();
 				pushTestValueDirect(child, "C");
 				child.transaction.commit();
-				// TODO:#4925: It should not be necessary to keep the child undisposed here.
-				parent.merge(child, false);
+				parent.merge(child);
 				assert.deepEqual(getTestValues(parent), ["A", "B", "C"]);
 			};
 			const provider = await TestTreeProvider.create(
