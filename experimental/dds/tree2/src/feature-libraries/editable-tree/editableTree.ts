@@ -19,12 +19,13 @@ import {
 	anchorSlot,
 	AnchorNode,
 	inCursorField,
+	rootFieldKey,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
 import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
-import { neverTree } from "../default-field-kinds";
+import { FieldKinds } from "../default-field-kinds";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -182,20 +183,47 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
 		const cursor = this.cursor;
-		const index = cursor.fieldIndex;
+		const index = this.anchorNode.parentIndex;
+		assert(this.cursor.fieldIndex === index, "mismatched indexes");
+		const key = this.anchorNode.parentField;
+
 		cursor.exitNode();
-		const key = cursor.getFieldKey();
-		// TODO: make this work properly for root
-		cursor.exitField();
-		const parentType = cursor.type;
-		cursor.enterField(key);
-		// TODO: this should error if schema is not found.
-		// For now this suppresses the error to work around root handling issues.
-		const fieldSchema = getFieldSchema(
-			key,
-			this.context.schema.treeSchema.get(parentType) ?? neverTree,
-			// fail("requested schema that does not exist"),
-		);
+		assert(key === cursor.getFieldKey(), "mismatched keys");
+		let fieldSchema: FieldStoredSchema;
+
+		// Check if the current node is in a detached sequence.
+		if (this.anchorNode.parent === undefined) {
+			// Parent field is a detached sequence, and thus needs special handling for its schema.
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (key === rootFieldKey) {
+				fieldSchema = this.context.schema.rootFieldSchema;
+			} else {
+				// All fields (in the editable tree API) have a schema.
+				// Since currently there is no known schema for detached sequences other than the special default root:
+				// give all other detached fields a schema of sequence of any.
+				// That schema is the only one that is safe since its the only field schema that allows any possible field content.
+				//
+				// TODO:
+				// if any of the following are done this schema will need to be more specific:
+				// 1. Editing APIs start exposing user created detached sequences.
+				// 2. Remove (and its inverse) start working on subsequences or fields contents (like everything in a sequence or optional field) and not just single nodes.
+				// 3. Possibly other unknown cases.
+				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
+				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
+				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
+				fieldSchema = { kind: FieldKinds.sequence };
+			}
+		} else {
+			cursor.exitField();
+			const parentType = cursor.type;
+			cursor.enterField(key);
+			fieldSchema = getFieldSchema(
+				key,
+				this.context.schema.treeSchema.get(parentType) ??
+					fail("requested schema that does not exist"),
+			);
+		}
+
 		const proxifiedField = makeField(this.context, fieldSchema, this.cursor);
 		this.cursor.enterNode(index);
 
