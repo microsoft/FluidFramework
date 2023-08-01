@@ -1,6 +1,6 @@
-# Deprecating IFluidRouter
+# Removing IFluidRouter
 
-The interface `IFluidRouter` is being deprecated over the next several internal releases.
+The interface `IFluidRouter` is being deprecated and removed over the next several internal releases.
 It exposes a `request` function and is implemented across Fluid Framework's layers to light up the "request pattern"
 for accessing objects out of a Fluid Container.
 The request pattern is incompatible with [Garbage Collection](../../runtime/container-runtime/src/gc/garbageCollection.md),
