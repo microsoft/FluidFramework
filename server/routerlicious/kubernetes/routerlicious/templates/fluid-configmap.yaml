@@ -74,7 +74,8 @@ data:
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
         },
         "apiCounters": {
-            "fetchTenantKeyMetricMs": 60000
+            "fetchTenantKeyMetricMs": 60000,
+            "riddlerStorageRequestMetricMs": 60000
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",

@@ -29,12 +29,13 @@ import { ISharedTree, SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import {
 	applyFieldEdit,
+	applySynchronizationOp,
 	applyTransactionEdit,
 	applyUndoRedoEdit,
 	fuzzReducer,
 } from "./fuzzEditReducers";
 import { onCreate, initialTreeState } from "./fuzzUtils";
-import { Operation, TreeOperation } from "./operationTypes";
+import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
 	firstAnchor?: Anchor;
@@ -82,6 +83,10 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		applyUndoRedoEdit(tree, contents);
 		return state;
 	},
+	synchronizeTrees: async (state) => {
+		applySynchronizationOp(state);
+		return state;
+	},
 });
 
 /**
@@ -98,7 +103,7 @@ describe("Fuzz - Targeted", () => {
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<TreeOperation, AbortFuzzTestState>;
+		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
@@ -152,7 +157,7 @@ describe("Fuzz - Targeted", () => {
 	};
 
 	describe("Composed vs individual changes converge to the same tree", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, BranchedTreeFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, BranchedTreeFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
 
 		const model: DDSFuzzModel<
@@ -193,7 +198,7 @@ describe("Fuzz - Targeted", () => {
 	};
 
 	describe.skip("Inorder undo/redo matches the initial/final state", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, UndoRedoFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
@@ -275,7 +280,7 @@ describe("Fuzz - Targeted", () => {
 	});
 
 	describe("out of order undo matches the initial state", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, UndoRedoFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
