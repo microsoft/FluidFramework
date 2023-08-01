@@ -153,20 +153,53 @@ export function testForest(config: ForestTestConfiguration): void {
 
 		it("moving a cursor to the root of an empty forest fails", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-			const dependent = new MockDependent("dependent");
-			recordDependency(dependent, forest);
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
 			assert.equal(cursor.firstNode(), false);
+		});
+
+		it("tryMoveCursorToField", () => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
+			);
+
+			initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+			const parentPath: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+
+			const childPath1: UpPath = {
+				parent: parentPath,
+				parentField: EmptyKey,
+				parentIndex: 0,
+			};
+
+			const childPath2: UpPath = {
+				parent: parentPath,
+				parentField: EmptyKey,
+				parentIndex: 1,
+			};
+
+			const parentAnchor = forest.anchors.track(parentPath);
+			const childAnchor1 = forest.anchors.track(childPath1);
+			const childAnchor2 = forest.anchors.track(childPath2);
+
+			const cursor = forest.allocateCursor();
+			assert.equal(forest.tryMoveCursorToNode(parentAnchor, cursor), TreeNavigationResult.Ok);
+			assert.equal(cursor.value, undefined);
+			assert.equal(forest.tryMoveCursorToNode(childAnchor1, cursor), TreeNavigationResult.Ok);
+			assert.equal(cursor.value, 1);
+			assert.equal(forest.tryMoveCursorToNode(childAnchor2, cursor), TreeNavigationResult.Ok);
+			assert.equal(cursor.value, 2);
 		});
 
 		it("anchors creation and use", () => {
 			const forest = factory(
 				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
 			);
-			const dependent = new MockDependent("dependent");
-			recordDependency(dependent, forest);
-
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
 
 			const cursor = forest.allocateCursor();
@@ -232,8 +265,6 @@ export function testForest(config: ForestTestConfiguration): void {
 			const forest = factory(
 				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
 			);
-			const dependent = new MockDependent("dependent");
-			recordDependency(dependent, forest);
 
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
 

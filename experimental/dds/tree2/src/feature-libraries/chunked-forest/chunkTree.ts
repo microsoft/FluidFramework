@@ -39,14 +39,20 @@ export interface Disposable {
 export function makeTreeChunker(
 	schema: StoredSchemaRepository,
 	policy: FullSchemaPolicy,
-): ChunkPolicy & Disposable {
+): IChunker {
 	return new Chunker(
 		schema,
 		policy,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
+		tryShapeForSchema,
 	);
+}
+
+export interface IChunker extends ChunkPolicy, Disposable {
+	readonly schema: StoredSchemaRepository;
+	clone(schema: StoredSchemaRepository): IChunker;
 }
 
 /**
@@ -71,9 +77,9 @@ export const polymorphic = new Polymorphic();
  * Information about the possible shapes a tree could take based on its type.
  * Note that this information is for a specific version of the schema.
  */
-type ShapeInfo = TreeShape | Polymorphic;
+export type ShapeInfo = TreeShape | Polymorphic;
 
-class Chunker implements ChunkPolicy, Disposable {
+export class Chunker implements IChunker {
 	/**
 	 * Cache for information about possible shapes for types.
 	 * Corresponds to the version of the schema in `schema`.
@@ -92,8 +98,26 @@ class Chunker implements ChunkPolicy, Disposable {
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		private readonly tryShapeForSchema: (
+			schema: SchemaData,
+			policy: FullSchemaPolicy,
+			type: TreeSchemaIdentifier,
+			shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+		) => ShapeInfo,
 	) {
 		this.dependent = new SimpleObservingDependent(() => this.schemaChanged());
+	}
+
+	public clone(schema: StoredSchemaRepository): IChunker {
+		return new Chunker(
+			schema,
+			this.policy,
+			this.sequenceChunkSplitThreshold,
+			this.sequenceChunkInlineThreshold,
+			this.uniformChunkNodeCount,
+			this.tryShapeForSchema,
+		);
 	}
 
 	public schemaToShape(schema: TreeSchemaIdentifier): ShapeInfo {
@@ -102,7 +126,7 @@ class Chunker implements ChunkPolicy, Disposable {
 			return cached;
 		}
 		recordDependency(this.dependent, this.schema);
-		return tryShapeForSchema(this.schema, this.policy, schema, this.typeShapes);
+		return this.tryShapeForSchema(this.schema, this.policy, schema, this.typeShapes);
 	}
 
 	public dispose(): void {
@@ -177,8 +201,10 @@ export function shapesFromSchema(
  * If `schema` has only one shape, return it.
  *
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ *
+ * TODO: tests for this
  */
-function tryShapeForSchema(
+export function tryShapeForSchema(
 	schema: SchemaData,
 	policy: FullSchemaPolicy,
 	type: TreeSchemaIdentifier,
