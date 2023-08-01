@@ -2342,9 +2342,22 @@ export class ContainerRuntime
 	}
 
 	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-		return this._createDataStoreWithProps(pkg);
+		const id = uuid();
+		return channelToDataStore(
+			await this.dataStores
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				.realize(),
+			id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
 	}
 
+	/**
+	 * @deprecated 0.16 Issue #1537, #3631
+	 * @internal
+	 */
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
 		props?: any,
