@@ -17,7 +17,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { buildGitTreeHeirarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	GitManager,
 	ISummaryUploadManager,
@@ -73,7 +73,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
-		const tree = buildGitTreeHeirarchy(rawTree, this.blobsShaCache, true);
+		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		return tree;
 	}
 
