@@ -7,7 +7,7 @@ import { SharedTreeTestFactory, TestTreeProviderLite, initializeTestTree } from 
 import { brand, useDeterministicStableId } from "../../util";
 import { FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 
 const fieldKeyA: FieldKey = brand("FieldA");
 const fieldKeyB: FieldKey = brand("FieldB");
@@ -90,6 +90,46 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 						singleTextCursor({ type: handleSchema.name, value: tree.handle }),
 						true,
 					);
+				};
+
+				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));
+				return provider.trees[0];
+			},
+		},
+		{
+			name: "nested-sequence-change",
+			tree: () => {
+				const builder = new SchemaBuilder("has-sequence-map");
+				const seqMapSchema = builder.mapRecursive(
+					"SeqMap",
+					SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => seqMapSchema),
+				);
+				const docSchema = builder.intoDocumentSchema(
+					SchemaBuilder.fieldSequence(seqMapSchema),
+				);
+				const onCreate = (tree: ISharedTree) => {
+					tree.storedSchema.update(docSchema);
+					tree.transaction.start();
+					// We must make this shallow change to the sequence field as part of the same transaction as the
+					// nested change. Otherwise, the nested change will be represented using the generic field kind.
+					tree.editor
+						.sequenceField({
+							parent: undefined,
+							field: rootFieldKey,
+						})
+						.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
+					// The nested change
+					tree.editor
+						.sequenceField({
+							parent: {
+								parent: undefined,
+								parentField: rootFieldKey,
+								parentIndex: 0,
+							},
+							field: brand("foo"),
+						})
+						.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
+					tree.transaction.commit();
 				};
 
 				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));

@@ -128,7 +128,6 @@ export {
 	ChangesetLocalId,
 	emptyField,
 	IdAllocator,
-	neverTree,
 	ModularChangeset,
 	EditDescription,
 	FieldChangeHandler,
