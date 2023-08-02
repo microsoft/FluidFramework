@@ -4,34 +4,34 @@
  */
 
 export {
-    AlfredResources,
-    AlfredResourcesFactory,
-    AlfredRunner,
-    AlfredRunnerFactory,
-    DeltaService,
-    DocumentDeleteService,
-    IAlfredResourcesCustomizations,
-    IDocumentDeleteService,
-    OrdererManager,
+	AlfredResources,
+	AlfredResourcesFactory,
+	AlfredRunner,
+	AlfredRunnerFactory,
+	DeltaService,
+	DocumentDeleteService,
+	IAlfredResourcesCustomizations,
+	IDocumentDeleteService,
+	OrdererManager,
 } from "./alfred";
 
 export * from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
-    ITenantDocument,
-    RiddlerResources,
-    RiddlerResourcesFactory,
-    RiddlerRunner,
-    RiddlerRunnerFactory,
-    TenantManager,
+	ITenantDocument,
+	RiddlerResources,
+	RiddlerResourcesFactory,
+	RiddlerRunner,
+	RiddlerRunnerFactory,
+	TenantManager,
 } from "./riddler";
 export {
-    catch404,
-    Constants,
-    createDocumentRouter,
-    getIdFromRequest,
-    getSession,
-    getTenantIdFromRequest,
-    handleError,
-    IPlugin,
+	catch404,
+	Constants,
+	createDocumentRouter,
+	getIdFromRequest,
+	getSession,
+	getTenantIdFromRequest,
+	handleError,
+	IPlugin,
 } from "./utils";

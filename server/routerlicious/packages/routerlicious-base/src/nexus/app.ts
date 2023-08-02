@@ -18,10 +18,7 @@ import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 
-
-export function create(
-	config: Provider,
-) {
+export function create(config: Provider) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 
@@ -64,7 +61,6 @@ export function create(
 	app.use(urlencoded({ limit: requestSize, extended: false }));
 
 	app.use(bindCorrelationId());
-
 
 	// Catch 404 and forward to error handler
 	app.use(catch404());

@@ -59,9 +59,7 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create the HTTP server and attach alfred to it
-		const alfred = app.create(
-			this.config,
-		);
+		const alfred = app.create(this.config);
 		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);

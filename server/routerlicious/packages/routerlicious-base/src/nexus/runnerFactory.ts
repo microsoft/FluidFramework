@@ -21,9 +21,7 @@ import * as Redis from "ioredis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { NexusRunner } from "./runner";
-import {
-	StorageNameAllocator,
-} from "./services";
+import { StorageNameAllocator } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -127,9 +125,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		config: Provider,
 		customizations?: IAlfredResourcesCustomizations,
 	): Promise<NexusResources> {
-
 		const metricClientConfig = config.get("metric");
-	    // Producer used to publish messages
+		// Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
 		const kafkaLibrary = config.get("kafka:lib:name");
 		const kafkaClientId = config.get("alfred:kafkaClientId");
@@ -156,8 +153,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 
 		const redisConfig = config.get("redis");
-
-
 
 		// Redis connection for client manager and single-use JWTs.
 		const redisConfig2 = config.get("redis2");
@@ -254,8 +249,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			config.get("mongo:collectionNames:reservations"),
 		);
 
-	        const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-	        const authEndpoint = config.get("auth:endpoint");
+		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+		const authEndpoint = config.get("auth:endpoint");
 		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
 		// Redis connection for throttling.
@@ -483,8 +478,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			});
 		}
 
-         	const webSocketLibrary = config.get("alfred:webSocketLib");
-	    
+		const webSocketLibrary = config.get("alfred:webSocketLib");
+
 		return new NexusResources(
 			config,
 			redisConfig,
@@ -526,7 +521,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.socketSubmitSignalThrottler,
 			resources.storage,
 			resources.clientManager,
-		        resources.metricClientConfig,
+			resources.metricClientConfig,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
