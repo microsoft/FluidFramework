@@ -1265,7 +1265,7 @@ describe("Runtime", () => {
 
 				mockLogger.assertMatchAny([
 					{
-						eventName: "ContainerLoadStats",
+						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({
@@ -1292,7 +1292,7 @@ describe("Runtime", () => {
 
 				mockLogger.assertMatchAny([
 					{
-						eventName: "ContainerLoadStats",
+						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({

@@ -313,7 +313,7 @@ export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark
 export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	const effect = tryGetEffect(mark);
 	if (effect === undefined) {
-		return false;
+		return mark.cellId !== undefined;
 	}
 	const type = effect.type;
 	switch (type) {
@@ -902,14 +902,17 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 	if (length < 1 || remainder < 1) {
 		fail("Unable to split mark due to lengths");
 	}
+	let mark1: Mark<T>;
+	let mark2: Mark<T>;
 	const effect = tryGetEffect(mark);
 	if (effect === undefined) {
-		assert(mark.cellId === undefined, "Unexpected CellId on Noop mark");
-		return [{ count: length }, { count: remainder }] as [TMark, TMark];
+		mark1 = { count: length };
+		mark2 = { count: remainder };
+	} else {
+		const [effect1, effect2] = splitEffect(effect, length);
+		mark1 = { count: length, effects: [effect1] };
+		mark2 = { count: remainder, effects: [effect2] };
 	}
-	const [effect1, effect2] = splitEffect(effect, length);
-	const mark1: Mark<T> = { count: length, effects: [effect1] };
-	const mark2: Mark<T> = { count: remainder, effects: [effect2] };
 	if (mark.cellId !== undefined) {
 		mark1.cellId = mark.cellId;
 		mark2.cellId = higherCellId(mark.cellId, length);

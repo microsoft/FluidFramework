@@ -31,7 +31,10 @@ export class MarkListFactory<TNodeChange> {
 
 	public pushMark(mark: Mark<TNodeChange>): void {
 		if (isNoop(mark)) {
-			this.pushOffset(mark.count);
+			// A noop targeting an empty cell can be omitted from the final mark list
+			if (mark.cellId === undefined) {
+				this.pushOffset(mark.count);
+			}
 		} else {
 			if (this.offset > 0) {
 				this.list.push({ count: this.offset });
