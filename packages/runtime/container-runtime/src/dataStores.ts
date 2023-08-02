@@ -455,10 +455,7 @@ export class DataStores implements IDisposable {
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
-			const request: IRequest = {
-				url: id,
-				headers: requestHeaderData,
-			};
+			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
 
@@ -527,10 +524,7 @@ export class DataStores implements IDisposable {
 	private validateNotDeleted(id: string, requestHeaderData?: RuntimeHeaderData) {
 		if (this.checkIfDeleted(id, requestHeaderData)) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const request: IRequest = {
-				url: id,
-				headers: requestHeaderData,
-			};
+			const request: IRequest = { url: id };
 			throw responseToException(
 				createResponseError(404, "DataStore was deleted", request),
 				request,
@@ -579,10 +573,7 @@ export class DataStores implements IDisposable {
 	) {
 		if (this.checkIfTombstoned(context, requestHeaderData)) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const request: IRequest = {
-				url: context.id,
-				headers: requestHeaderData,
-			};
+			const request: IRequest = { url: context.id };
 			const error = responseToException(
 				createResponseError(404, "DataStore was deleted", request, {
 					[TombstoneResponseHeaderKey]: true,

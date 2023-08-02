@@ -2264,7 +2264,7 @@ export class ContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
-	 * @deprecated - Use getAliasedDataStore instead to get an aliased data store.
+	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
@@ -2339,6 +2339,32 @@ export class ContainerRuntime
 			this.flush();
 		}
 		return result;
+	}
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
+	 * data store has been assigned the given alias.
+	 */
+	public async getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined> {
+		await this.dataStores.waitIfPendingAlias(alias);
+		const internalId = this.internalId(alias);
+		const context = await this.dataStores.getDataStoreIfAvailable(internalId, { wait: false });
+		// If the data store is not available or not an alias, return undefined.
+		if (context === undefined || !(await context.isRoot())) {
+			return undefined;
+		}
+
+		const channel = await context.realize();
+		if (channel.entryPoint === undefined) {
+			throw new UsageError(
+				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
+			);
+		}
+		return channel.entryPoint;
 	}
 
 	public createDetachedRootDataStore(

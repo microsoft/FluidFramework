@@ -84,7 +84,7 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 			.containerRuntime as unknown as IContainerRuntime;
 		assert.doesNotThrow(
 			async () =>
-				containerRuntime2.getAliasedDataStore?.(alias) ??
+				containerRuntime2.getAliasedDataStoreEntryPoint?.(alias) ??
 				containerRuntime2.getRootDataStore(alias),
 			"Aliased datastore should be root as it is aliased!",
 		);
