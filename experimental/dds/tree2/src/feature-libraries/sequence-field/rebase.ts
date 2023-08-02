@@ -35,6 +35,7 @@ import {
 	getMarkMoveId,
 	isNoopMark,
 	areOverlappingIdRanges,
+	cloneCellId,
 } from "./utils";
 import {
 	Changeset,
@@ -374,7 +375,7 @@ function rebaseMark<TNodeChange>(
 		const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
 		const detachEvent =
 			baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
-				? baseMark.detachIdOverride
+				? cloneCellId(baseMark.detachIdOverride)
 				: { revision: baseMarkIntention, localId: baseMark.id };
 
 		rebasedMark = makeDetachedMark(rebasedMark, detachEvent);

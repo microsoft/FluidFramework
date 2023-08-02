@@ -161,7 +161,9 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const inv = tagRollbackInverse(invert(change2), tag6, tag5);
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
-							assert.deepEqual(r2.change, change1.change);
+
+							// We do not expect exact equality because r2 may have accumulated some lineage.
+							checkDeltaEquality(r2.change, change1.change);
 						}
 					}
 				});

@@ -139,12 +139,17 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 			clone.lineage = [...clone.lineage];
 		}
 	} else if (clone.cellId !== undefined) {
-		clone.cellId = { ...clone.cellId };
-		if (clone.cellId.lineage !== undefined) {
-			clone.cellId.lineage = [...clone.cellId.lineage];
-		}
+		clone.cellId = cloneCellId(clone.cellId);
 	}
 	return clone;
+}
+
+export function cloneCellId(id: CellId): CellId {
+	const cloned = { ...id };
+	if (cloned.lineage !== undefined) {
+		cloned.lineage = [...cloned.lineage];
+	}
+	return cloned;
 }
 
 function haveEqualReattachFields(
