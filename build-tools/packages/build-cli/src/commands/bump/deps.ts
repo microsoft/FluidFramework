@@ -113,14 +113,13 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const shouldInstall = flags.install && !flags.skipChecks;
 		const shouldCommit = flags.commit && !flags.skipChecks;
 
-		const rgOrPackageName = args.package_or_release_group;
-		if (rgOrPackageName === undefined) {
+		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
 		}
 
-		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
+		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
-			this.error(`Package not found: ${rgOrPackageName}`);
+			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
@@ -155,10 +154,12 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		if (rgOrPackage instanceof MonoRepo) {
 			depsToUpdate.push(...rgOrPackage.packages.map((pkg) => pkg.name));
 		} else {
-			depsToUpdate.push(rgOrPackageName);
-			const pkg = context.fullPackageMap.get(rgOrPackageName);
+			depsToUpdate.push(rgOrPackage.name);
+
+			// Check that the package can be found in the context.
+			const pkg = context.fullPackageMap.get(rgOrPackage.name);
 			if (pkg === undefined) {
-				this.error(`Package not found: ${rgOrPackageName}`);
+				this.error(`Package not found: ${rgOrPackage.name}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
@@ -174,7 +175,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		}
 
 		this.logHr();
-		this.log(`Dependencies: ${chalk.blue(rgOrPackageName)}`);
+		this.log(`Dependencies: ${chalk.blue(rgOrPackage.name)}`);
 		this.log(
 			`Packages: ${chalk.blueBright(flags.releaseGroup ?? flags.package ?? "all packages")}`,
 		);
@@ -191,7 +192,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			context,
 			flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
 			depsToUpdate,
-			isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
+			rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
 			flags.updateType,
 			/* prerelease */ flags.prerelease,
 			/* writeChanges */ true,
@@ -230,7 +231,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 			changedVersionsString.push(
 				"",
-				`Dependencies on ${chalk.blue(rgOrPackageName)} updated:`,
+				`Dependencies on ${chalk.blue(rgOrPackage.name)} updated:`,
 				"",
 			);
 
@@ -242,14 +243,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			if (shouldCommit) {
 				const commitMessage = stripAnsi(
 					`${generateBumpDepsCommitMessage(
-						rgOrPackageName,
+						rgOrPackage.name,
 						flags.updateType,
 						flags.releaseGroup,
 					)}\n\n${changedVersionMessage}`,
 				);
 
 				const bumpBranch = generateBumpDepsBranchName(
-					rgOrPackageName,
+					rgOrPackage.name,
 					flags.updateType,
 					flags.releaseGroup,
 				);
