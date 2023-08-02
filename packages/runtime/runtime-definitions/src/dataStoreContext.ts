@@ -151,13 +151,9 @@ export interface IDataStore {
 	readonly entryPoint?: IFluidHandle<FluidObject>;
 
 	/**
-	 * Issue a request against the DataStore for its "root" object aka its entryPoint. @see {@link IDataStore.entryPoint}.
-	 *
-	 * NOTE: Requesting "/" is idiomatic to some known consumers of Fluid Framework;
-	 * the root URL "/" will not route anywhere in Fluid natively.
-	 * This accomodation is provided as a temporary measure to ease the transition from requests to entryPoint,
-	 * where the paradigm requesting "/" is used.  This paradigm requires additional work to support (using requestHandler)
-	 * and should not be adopted if not already used - rather, use entryPoint directly.
+	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
+	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
+	 * Once that API is mandatory on IDataStore, this overload will be deprecated.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 *
@@ -172,8 +168,9 @@ export interface IDataStore {
 	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
 	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 * IDataStore.request(\{url: "/"\}) is not yet deprecated and may be used as a proxy for getting the entryPoint
-	 * to ease the transition, where this idiom of requesting "/" is already in use.
+	 *
+	 * NOTE: IDataStore.request(\{url: "/"\}) is not yet deprecated. If and only if the DataStore implementation supports it,
+	 * that overload may be used as a proxy for getting the entryPoint until {@link IDataStore.entryPoint} is mandatory.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */

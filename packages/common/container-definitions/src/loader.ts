@@ -385,13 +385,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
-	 * Issue a request against the container for its "root" object aka its entryPoint. @see {@link IContainer.getEntryPoint}.
-	 *
-	 * NOTE: Requesting "/" is idiomatic to some known consumers of Fluid Framework;
-	 * the root URL "/" will not route anywhere in Fluid natively.
-	 * This accomodation is provided as a temporary measure to ease the transition from requests to entryPoint,
-	 * where the paradigm requesting "/" is used.  This paradigm requires additional work to support (using requestHandler)
-	 * and should not be adopted if not already used - rather, use entryPoint directly.
+	 * IMPORTANT: This overload is provided for back-compat where IContainer.request(\{ url: "/" \}) is already implemented and used.
+	 * The functionality it can provide (if the Container implementation is built for it) is redundant with @see {@link IContainer.getEntryPoint}.
+	 * Once that API is mandatory on IContainer, this overload will be deprecated.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 *
@@ -407,8 +403,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
-	 * IContainer.request(\{url: "/"\}) is not yet deprecated and may be used as a proxy for getting the entryPoint
-	 * to ease the transition, where this idiom of requesting "/" is already in use.
+	 *
+	 * NOTE: IContainer.request(\{url: "/"\}) is not yet deprecated. If and only if the Container implementation supports it,
+	 * that overload may be used as a proxy for getting the entryPoint until {@link IContainer.getEntryPoint} is mandatory.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
