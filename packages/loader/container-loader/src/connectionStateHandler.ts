@@ -6,7 +6,6 @@
 import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
@@ -15,7 +14,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { ConnectionState } from "./connectionState";
-import { IConnectionDetailsInternal } from "./contracts";
+import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts";
 import { IProtocolHandler } from "./protocol";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
@@ -33,8 +32,7 @@ export interface IConnectionStateHandlerInputs {
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string | undefined,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -61,14 +59,14 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
-	establishingConnection(reason: string): void;
+	receivedDisconnectEvent(reason: IConnectionStateChangeReason): void;
+	establishingConnection(reason: IConnectionStateChangeReason): void;
 	/**
 	 * Switches state to disconnected when we are still establishing connection during container.load(),
 	 * container connect() or reconnect and the container gets closed or disposed or disconnect happens.
 	 * @param reason - reason for cancelling the connection.
 	 */
-	cancelEstablishingConnection(reason: string): void;
+	cancelEstablishingConnection(reason: IConnectionStateChangeReason): void;
 }
 
 export function createConnectionStateHandler(
@@ -150,15 +148,15 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
-		return this.pimpl.receivedDisconnectEvent(reason, error);
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason) {
+		return this.pimpl.receivedDisconnectEvent(reason);
 	}
 
-	public establishingConnection(reason: string) {
+	public establishingConnection(reason: IConnectionStateChangeReason) {
 		return this.pimpl.establishingConnection(reason);
 	}
 
-	public cancelEstablishingConnection(reason: string) {
+	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
 		return this.pimpl.cancelEstablishingConnection(reason);
 	}
 
@@ -176,10 +174,9 @@ class ConnectionStateHandlerPassThrough
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string | undefined,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	) {
-		return this.inputs.connectionStateChanged(value, oldState, reason, error);
+		return this.inputs.connectionStateChanged(value, oldState, reason);
 	}
 	public shouldClientJoinWrite() {
 		return this.inputs.shouldClientJoinWrite();
@@ -223,8 +220,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string | undefined,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	) {
 		switch (value) {
 			case ConnectionState.Connected:
@@ -268,7 +264,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 			default:
 		}
 		this._connectionState = value;
-		this.inputs.connectionStateChanged(value, oldState, reason, error);
+		this.inputs.connectionStateChanged(value, oldState, reason);
 	}
 
 	private readonly transitionToConnectedState = () => {
@@ -277,11 +273,9 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		assert(state === ConnectionState.Connected, 0x3e5 /* invariant broken */);
 		assert(this._connectionState === ConnectionState.CatchingUp, 0x3e6 /* invariant broken */);
 		this._connectionState = ConnectionState.Connected;
-		this.inputs.connectionStateChanged(
-			ConnectionState.Connected,
-			ConnectionState.CatchingUp,
-			"caught up",
-		);
+		this.inputs.connectionStateChanged(ConnectionState.Connected, ConnectionState.CatchingUp, {
+			description: "caught up",
+		});
 	};
 }
 
@@ -495,12 +489,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason) {
 		this.connection = undefined;
-		this.setConnectionState(ConnectionState.Disconnected, reason, error);
+		this.setConnectionState(ConnectionState.Disconnected, reason);
 	}
 
-	public cancelEstablishingConnection(reason: string) {
+	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
 		assert(
 			this._connectionState === ConnectionState.EstablishingConnection,
 			0x6d3 /* Connection state should be EstablishingConnection */,
@@ -511,14 +505,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
 	}
 
-	public establishingConnection(reason: string) {
+	public establishingConnection(reason: IConnectionStateChangeReason) {
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.EstablishingConnection;
-		this.handler.connectionStateChanged(
-			ConnectionState.EstablishingConnection,
-			oldState,
-			`Establishing Connection due to ${reason}`,
-		);
+		this.handler.connectionStateChanged(ConnectionState.EstablishingConnection, oldState, {
+			description: `Establishing Connection due to ${reason.description}`,
+			error: reason.error,
+		});
 	}
 
 	private shouldWaitForJoinSignal() {
@@ -583,14 +576,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 	private setConnectionState(
 		value: ConnectionState.Disconnected,
-		reason: string,
-		error?: IAnyDriverError,
+		reason: IConnectionStateChangeReason,
 	): void;
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
-		reason?: string,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early
@@ -651,7 +642,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 
 		// Report transition before we propagate event across layers
-		this.handler.connectionStateChanged(this._connectionState, oldState, reason, error);
+		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
 	}
 
 	// Helper method to switch between quorum and audience.

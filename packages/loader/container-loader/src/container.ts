@@ -40,17 +40,16 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
 	IRuntime,
-	isFluidCodeDetails,
-	IThrottlingWarning,
 	ReadOnlyInfo,
+	isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
-	IAnyDriverError,
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
+	IThrottlingWarning,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import {
@@ -102,6 +101,7 @@ import {
 	IConnectionManagerFactoryArgs,
 	getPackageName,
 	IConnectionDetailsInternal,
+	IConnectionStateChangeReason,
 } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
@@ -827,11 +827,11 @@ export class Container
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
-				connectionStateChanged: (value, oldState, reason, error) => {
+				connectionStateChanged: (value, oldState, reason) => {
 					if (value === ConnectionState.Connected) {
 						this._clientId = this.connectionStateHandler.pendingClientId;
 					}
-					this.logConnectionStateChangeTelemetry(value, oldState, reason, error);
+					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this._lifecycleState === "loaded") {
 						this.propagateConnectionState(
 							false /* initial transition */,
@@ -2006,18 +2006,18 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
-		deltaManager.on("establishingConnection", (reason: string) => {
+		deltaManager.on("establishingConnection", (reason: IConnectionStateChangeReason) => {
 			this.connectionStateHandler.establishingConnection(reason);
 		});
 
-		deltaManager.on("cancelEstablishingConnection", (reason: string) => {
+		deltaManager.on("cancelEstablishingConnection", (reason: IConnectionStateChangeReason) => {
 			this.connectionStateHandler.cancelEstablishingConnection(reason);
 		});
 
-		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {
+		deltaManager.on("disconnect", (reason: IConnectionStateChangeReason) => {
 			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
-				this.connectionStateHandler.receivedDisconnectEvent(reason, error);
+				this.connectionStateHandler.receivedDisconnectEvent(reason);
 			}
 		});
 
@@ -2070,8 +2070,7 @@ export class Container
 	private logConnectionStateChangeTelemetry(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	) {
 		// Log actual event
 		const time = performance.now();
@@ -2110,7 +2109,7 @@ export class Container
 				from: ConnectionState[oldState],
 				duration,
 				durationFromDisconnected,
-				reason,
+				reason: reason?.description,
 				connectionInitiationReason,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
 				clientId: this.clientId,
@@ -2125,7 +2124,7 @@ export class Container
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				...this._deltaManager.connectionProps,
 			},
-			error,
+			reason?.error,
 		);
 
 		if (value === ConnectionState.Connected) {
@@ -2133,7 +2132,10 @@ export class Container
 		}
 	}
 
-	private propagateConnectionState(initialTransition: boolean, disconnectedReason?: string) {
+	private propagateConnectionState(
+		initialTransition: boolean,
+		disconnectedReason?: IConnectionStateChangeReason,
+	) {
 		// When container loaded, we want to propagate initial connection state.
 		// After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
@@ -2150,7 +2152,13 @@ export class Container
 
 		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
-		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
+		raiseConnectedEvent(
+			this.mc.logger,
+			this,
+			state,
+			this.clientId,
+			disconnectedReason?.description,
+		);
 	}
 
 	// back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
