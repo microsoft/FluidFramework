@@ -588,7 +588,10 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
-	private createRemoteChannelContext(attachMessage: IAttachMessage, summarizerNodeParams: CreateChildSummarizerNodeParam) {
+	private createRemoteChannelContext(
+		attachMessage: IAttachMessage,
+		summarizerNodeParams: CreateChildSummarizerNodeParam,
+	) {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
@@ -605,7 +608,10 @@ export class FluidDataStoreRuntime
 			snapshotTree,
 			this.sharedObjectRegistry,
 			flatBlobs,
-			this.dataStoreContext.getCreateChildSummarizerNodeFn(attachMessage.id, summarizerNodeParams),
+			this.dataStoreContext.getCreateChildSummarizerNodeFn(
+				attachMessage.id,
+				summarizerNodeParams,
+			),
 			attachMessage.type,
 		);
 	}
@@ -636,7 +642,10 @@ export class FluidDataStoreRuntime
 							snapshot: attachMessage.snapshot,
 						};
 
-						const remoteChannelContext = this.createRemoteChannelContext(attachMessage, summarizerNodeParams);
+						const remoteChannelContext = this.createRemoteChannelContext(
+							attachMessage,
+							summarizerNodeParams,
+						);
 						this.contexts.set(id, remoteChannelContext);
 						if (this.contextsDeferred.has(id)) {
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1008,8 +1017,13 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.Attach: {
 				const attachMessage = content.content as IAttachMessage;
 				// local means this node will throw if summarized; this is fine because only interactive clients will have stashed ops
-				const summarizerNodeParams: CreateChildSummarizerNodeParam = { type: CreateSummarizerNodeSource.Local };
-				const context = this.createRemoteChannelContext(attachMessage, summarizerNodeParams);
+				const summarizerNodeParams: CreateChildSummarizerNodeParam = {
+					type: CreateSummarizerNodeSource.Local,
+				};
+				const context = this.createRemoteChannelContext(
+					attachMessage,
+					summarizerNodeParams,
+				);
 				this.pendingAttach.add(attachMessage.id);
 				this.contexts.set(attachMessage.id, context);
 				return;
