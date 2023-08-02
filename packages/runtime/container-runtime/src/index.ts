@@ -6,6 +6,7 @@
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
+	IContainerRuntimeMessageCompatDetails,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,

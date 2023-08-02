@@ -44,7 +44,6 @@ import {
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
-	isFluidError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -2253,7 +2252,7 @@ export class ContainerRuntime
 				case ContainerMessageType.ChunkedOp:
 				case ContainerMessageType.Rejoin:
 					break;
-				default:
+				default: {
 					if (runtimeMessage) {
 						const error = DataProcessingError.create(
 							// Former assert 0x3ce

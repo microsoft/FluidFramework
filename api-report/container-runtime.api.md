@@ -229,6 +229,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {
+    // Warning: (ae-incompatible-release-tags) The symbol "compatDetails" is marked as @public, but its signature references "IContainerRuntimeMessageCompatDetails" which is marked as @internal
+    //
+    // (undocumented)
+    compatDetails?: IContainerRuntimeMessageCompatDetails;
     // (undocumented)
     contents: any;
     // (undocumented)
@@ -347,6 +351,12 @@ export interface IConnectableRuntime {
     readonly disposed: boolean;
     // (undocumented)
     once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
+}
+
+// @internal
+export interface IContainerRuntimeMessageCompatDetails {
+    // Warning: (ae-forgotten-export) The symbol "CompatModeBehavior" needs to be exported by the entry point index.d.ts
+    behavior: CompatModeBehavior;
 }
 
 // @public
