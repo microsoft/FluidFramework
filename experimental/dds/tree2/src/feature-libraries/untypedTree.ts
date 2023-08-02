@@ -9,8 +9,8 @@ import {
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	ForestEvents,
-	SchemaDataAndPolicy,
 	NamedTreeSchema,
+	SchemaData,
 } from "../core";
 import { ISubscribable } from "../events";
 import { requireAssignableTo } from "../util";
@@ -186,7 +186,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 	 *
 	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaDataAndPolicy;
+	readonly schema: SchemaData;
 
 	/**
 	 * Call before editing.

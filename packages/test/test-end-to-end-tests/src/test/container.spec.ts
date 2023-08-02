@@ -335,7 +335,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
 			testContainerConfig,
 		);
-		const pendingString = container.closeAndGetPendingLocalState?.();
+		const pendingString = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingString);
 		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);

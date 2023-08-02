@@ -25,6 +25,7 @@ export function create(
 	defaultInternalHistorianUrl: string,
 	secretManager: ISecretManager,
 	fetchTenantKeyMetricInterval: number,
+	riddlerStorageRequestMetricInterval: number,
 	cache?: ICache,
 ): Router {
 	const router: Router = Router();
@@ -36,6 +37,7 @@ export function create(
 		defaultInternalHistorianUrl,
 		secretManager,
 		fetchTenantKeyMetricInterval,
+		riddlerStorageRequestMetricInterval,
 		cache,
 	);
 

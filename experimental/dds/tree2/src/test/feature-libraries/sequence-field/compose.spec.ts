@@ -481,7 +481,7 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected = [
-			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
+			Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag2 }),
 			Mark.delete(3, brand(0), { revision: tag1 }),
 		];
 		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
@@ -829,8 +829,8 @@ describe("SequenceField - Compose", () => {
 		const move2 = Change.move(0, 1, 1);
 		const expected = [
 			{ count: 1 },
-			Mark.moveIn(1, brand(0), { revision: tag2 }),
-			Mark.moveOut(1, brand(0), { revision: tag2 }),
+			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
+			Mark.moveOut(1, { localId: brand(0), revision: tag2 }),
 		];
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		assert.deepEqual(actual, expected);
@@ -840,8 +840,8 @@ describe("SequenceField - Compose", () => {
 		const move1 = Change.move(0, 1, 1);
 		const move2 = Change.move(1, 1, 0);
 		const expected = [
-			Mark.moveIn(1, brand(0), { revision: tag2 }),
-			Mark.moveOut(1, brand(0), { revision: tag2 }),
+			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
+			Mark.moveOut(1, { localId: brand(0), revision: tag2 }),
 		];
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		assert.deepEqual(actual, expected);
