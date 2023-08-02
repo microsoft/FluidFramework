@@ -1,6 +1,8 @@
 # Shared Tree
 
-List of documents (to be organized into appropriate sections at a later time):
+SharedTree is a distributed data structure in the Fluid Framework. A description of its planned features are outlined in the [roadmap](./roadmap.md).
+
+List of technical/design documents (to be organized into appropriate sections at a later time):
 
 - [Cell Model of Collaborative Editing](./main/cell-model-of-collaborative-editing.md)
 - [Data Model](./main/data-model.md)
