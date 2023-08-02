@@ -15,7 +15,7 @@ export {
 	OrdererManager,
 } from "./alfred";
 
-export * from "./nexus";
+export { NexusResources, NexusResourcesFactory, NexusRunnerFactory } from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
 	ITenantDocument,
