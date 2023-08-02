@@ -504,7 +504,7 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe.only("invert", () => {
+	describe("invert", () => {
 		const valueInverse1: ValueChangeset = { old: 1, new: 0 };
 		const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 

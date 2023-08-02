@@ -358,7 +358,7 @@ export class ModularChangeFamily
 			change.change.constraintViolationCount,
 		);
 
-		if (cache !== false) {
+		if (cache === true) {
 			this.inverseCache.set(change, { inverse, isRollback, repairStore });
 		}
 		return inverse;
