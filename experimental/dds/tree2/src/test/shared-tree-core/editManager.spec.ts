@@ -542,7 +542,7 @@ describe("EditManager", () => {
 				});
 			}
 		});
-		describe.only("Peer commit rebasing", () => {
+		describe("Peer commit rebasing", () => {
 			for (const { rebasedEditCount, trunkEditCount } of scenarios) {
 				it(`Rebase ${rebasedEditCount} peer commits over ${trunkEditCount} trunk commits`, () => {
 					const rebaser = new NoOpChangeRebaser();
