@@ -1,5 +1,20 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-internal.5.4.0
+
+### Minor Changes
+
+-   Deprecate Internal TelemetryLogger Implementations ([#16385](https://github.com/microsoft/FluidFramework/issues/16385)) [64023cacb1](https://github.com/microsoft/FluidFramework/commits/64023cacb13767c46c0472ecc22559aaad67adad)
+
+    This change deprecates our internal TelemetryLogger implementations and unifies our exported and consumed surface area on our telemetry interfaces.
+
+    For the deprecated implementations the following replacement function should be used:
+
+    -   replace ChildLogger.create, new TelemetryNullLogger, and new BaseTelemetryNullLogger with createChildLogger
+    -   replace new MultiSinkLogger with createMultiSinkLogger
+    -   replace TelemetryUTLogger with MockLogger
+    -   DebugLogger.create will be made internal with no intended replacement
+
 ## 2.0.0-internal.5.3.0
 
 Dependency updates only.
