@@ -355,7 +355,7 @@ describe("Fuzz - Targeted", () => {
 		redo: 1,
 	};
 
-	describe.only("synchronization after calling undo on unsequenced edits", () => {
+	describe("synchronization after calling undo on unsequenced edits", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(unSequencedUndoRedoWeights));
 
