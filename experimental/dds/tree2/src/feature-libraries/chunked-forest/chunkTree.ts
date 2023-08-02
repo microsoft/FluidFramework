@@ -51,6 +51,12 @@ export function makeTreeChunker(
 	);
 }
 
+/**
+ * Extends ChunkPolicy to include stateful details required by ChunkedForest.
+ *
+ * This extra complexity is mostly due to the fact that schema can change over time,
+ * and that chunk policy uses caching which thus needs invalidation.
+ */
 export interface IChunker extends ChunkPolicy, Disposable {
 	readonly schema: StoredSchemaRepository;
 	clone(schema: StoredSchemaRepository): IChunker;
@@ -111,6 +117,8 @@ export class Chunker implements IChunker {
 	}
 
 	public clone(schema: StoredSchemaRepository): IChunker {
+		// This does not preserve the cache.
+		// This is probably fine, but is a potential way it could be optimized in the future (with care to ensure invalidation work properly).
 		return new Chunker(
 			schema,
 			this.policy,
