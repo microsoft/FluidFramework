@@ -13,6 +13,7 @@ import {
 	mintRevisionTag,
 	ChangesetLocalId,
 	unsupportedRepairDataHandler,
+	RepairDataBuilder,
 } from "../../../core";
 import {
 	FieldChange,
@@ -48,21 +49,21 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 
 function toDelta(
 	change: TestChangeset,
-	repairData = { handler: unsupportedRepairDataHandler, marks: new Map() },
+	repairDataBuilder = { handler: unsupportedRepairDataHandler, marks: new Map() },
 ): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, repairData);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta, repairDataBuilder);
 }
 
 function toDeltaShallow(
 	change: TestChangeset,
-	repairData = { handler: unsupportedRepairDataHandler, marks: new Map() },
+	repairDataBuilder = { handler: unsupportedRepairDataHandler, marks: new Map() },
 ): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
 		change,
 		() => fail("Unexpected call to child ToDelta"),
-		repairData,
+		repairDataBuilder,
 	);
 }
 
