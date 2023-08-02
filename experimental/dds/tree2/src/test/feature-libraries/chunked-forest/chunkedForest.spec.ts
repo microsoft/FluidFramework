@@ -22,7 +22,7 @@ import {
 	polymorphic,
 	ShapeInfo,
 	defaultChunkPolicy,
-	tryShapeForSchema,
+	tryShapeFromSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 
@@ -77,7 +77,7 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				1,
-				tryShapeForSchema,
+				tryShapeFromSchema,
 			),
 	],
 	[
@@ -89,7 +89,7 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				tryShapeForSchema,
+				tryShapeFromSchema,
 			),
 	],
 	[
@@ -101,7 +101,7 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 				2,
 				1,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				tryShapeForSchema,
+				tryShapeFromSchema,
 			),
 	],
 ];

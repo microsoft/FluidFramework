@@ -25,8 +25,8 @@ import {
 	insertValues,
 	polymorphic,
 	ShapeInfo,
-	tryShapeForFieldSchema,
-	tryShapeForSchema,
+	tryShapeFromFieldSchema,
+	tryShapeFromSchema,
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
@@ -176,7 +176,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
-				schemaToShape: () => polymorphic,
+				shapeFromSchema: () => polymorphic,
 			};
 
 			const cursor = fieldCursorFromJsonableTrees(numberSequenceField(4));
@@ -225,7 +225,7 @@ describe("chunkTree", () => {
 						sequenceChunkSplitThreshold: threshold,
 						sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 						uniformChunkNodeCount: 0,
-						schemaToShape: () => polymorphic,
+						shapeFromSchema: () => polymorphic,
 					};
 					const field = numberSequenceField(fieldLength);
 					const cursor = fieldCursorFromJsonableTrees(field);
@@ -270,17 +270,17 @@ describe("chunkTree", () => {
 		});
 	});
 
-	describe("tryShapeForSchema", () => {
+	describe("tryShapeFromSchema", () => {
 		it("leaf", () => {
-			const info = tryShapeForSchema(schema, defaultSchemaPolicy, leaf.name, new Map());
+			const info = tryShapeFromSchema(schema, defaultSchemaPolicy, leaf.name, new Map());
 			expectEqual(info, new TreeShape(leaf.name, true, []));
 		});
 		it("empty", () => {
-			const info = tryShapeForSchema(schema, defaultSchemaPolicy, empty.name, new Map());
+			const info = tryShapeFromSchema(schema, defaultSchemaPolicy, empty.name, new Map());
 			expectEqual(info, new TreeShape(empty.name, false, []));
 		});
 		it("structValue", () => {
-			const info = tryShapeForSchema(
+			const info = tryShapeFromSchema(
 				schema,
 				defaultSchemaPolicy,
 				structValue.name,
@@ -294,7 +294,7 @@ describe("chunkTree", () => {
 			);
 		});
 		it("structOptional", () => {
-			const info = tryShapeForSchema(
+			const info = tryShapeFromSchema(
 				schema,
 				defaultSchemaPolicy,
 				structOptional.name,
@@ -304,9 +304,9 @@ describe("chunkTree", () => {
 		});
 	});
 
-	describe("tryShapeForFieldSchema", () => {
+	describe("tryShapeFromFieldSchema", () => {
 		it("valueField", () => {
-			const info = tryShapeForFieldSchema(
+			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
 				valueField,
@@ -316,7 +316,7 @@ describe("chunkTree", () => {
 			assert.deepEqual(info, ["key", new TreeShape(leaf.name, true, []), 1]);
 		});
 		it("optionalField", () => {
-			const info = tryShapeForFieldSchema(
+			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
 				optionalField,
