@@ -34,7 +34,7 @@ async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
 	if (rootPackageManifest.repoPackages.server !== undefined) {
 		if (Array.isArray(rootPackageManifest.repoPackages.server)) {
 			log.warning(
-				`InferRoot: fluid-build settings for the server release proup are an array, which is not expected.`,
+				`InferRoot: fluid-build settings for the server release group are an array, which is not expected.`,
 			);
 			return false;
 		}
