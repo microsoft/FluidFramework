@@ -873,8 +873,9 @@ export class Container
 					// Other possible recovery path - move to connected state (i.e. ConnectionStateHandler.joinOpTimer
 					// to call this.applyForConnectedState("addMemberEvent") for "read" connections)
 					if (mode === "read") {
-						this.disconnect();
-						this.connect();
+						const reason = { text: "NoJoinSignal" };
+						this.disconnectInternal(reason);
+						this.connectInternal({ reason, fetchOpsFromStorage: false });
 					}
 				},
 				clientShouldHaveLeft: (clientId: string) => {
@@ -1071,7 +1072,7 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		this.disconnect(); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
+		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
 		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
 		this.close();
 		return pendingState;
@@ -1267,7 +1268,7 @@ export class Container
 					if (!this.closed) {
 						this.resumeInternal({
 							fetchOpsFromStorage: false,
-							reason: "createDetached",
+							reason: { text: "createDetached" },
 						});
 					}
 				} catch (error) {
@@ -1291,7 +1292,7 @@ export class Container
 		);
 	}
 
-	private setAutoReconnectInternal(mode: ReconnectMode) {
+	private setAutoReconnectInternal(mode: ReconnectMode, reason: IConnectionStateChangeReason) {
 		const currentMode = this._deltaManager.connectionManager.reconnectMode;
 
 		if (currentMode === mode) {
@@ -1310,7 +1311,7 @@ export class Container
 			duration,
 		});
 
-		this._deltaManager.connectionManager.setAutoReconnect(mode);
+		this._deltaManager.connectionManager.setAutoReconnect(mode, reason);
 	}
 
 	public connect() {
@@ -1322,7 +1323,10 @@ export class Container
 			// Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
 			// If there is gap, we will learn about it once connected, but the gap should be small (if any),
 			// assuming that connect() is called quickly after initial container boot.
-			this.connectInternal({ reason: "DocumentConnect", fetchOpsFromStorage: false });
+			this.connectInternal({
+				reason: { text: "DocumentConnect" },
+				fetchOpsFromStorage: false,
+			});
 		}
 	}
 
@@ -1338,23 +1342,23 @@ export class Container
 
 		// Set Auto Reconnect Mode
 		const mode = ReconnectMode.Enabled;
-		this.setAutoReconnectInternal(mode);
+		this.setAutoReconnectInternal(mode, args.reason);
 	}
 
 	public disconnect() {
 		if (this.closed) {
 			throw new UsageError(`The Container is closed and cannot be disconnected`);
 		} else {
-			this.disconnectInternal();
+			this.disconnectInternal({ text: "DocumentDisconnect" });
 		}
 	}
 
-	private disconnectInternal() {
+	private disconnectInternal(reason: IConnectionStateChangeReason) {
 		assert(!this.closed, 0x2c7 /* "Attempting to disconnect() a closed Container" */);
 
 		// Set Auto Reconnect Mode
 		const mode = ReconnectMode.Disabled;
-		this.setAutoReconnectInternal(mode);
+		this.setAutoReconnectInternal(mode, reason);
 	}
 
 	private resumeInternal(args: IConnectionArgs) {
@@ -1506,7 +1510,7 @@ export class Container
 		// A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
 		// B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
 		const connectionArgs: IConnectionArgs = {
-			reason: "DocumentOpen",
+			reason: { text: "DocumentOpen" },
 			mode: "write",
 			fetchOpsFromStorage: false,
 		};
@@ -2109,7 +2113,7 @@ export class Container
 				from: ConnectionState[oldState],
 				duration,
 				durationFromDisconnected,
-				reason: reason?.description,
+				reason: reason?.text,
 				connectionInitiationReason,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
 				clientId: this.clientId,
@@ -2152,13 +2156,7 @@ export class Container
 
 		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
-		raiseConnectedEvent(
-			this.mc.logger,
-			this,
-			state,
-			this.clientId,
-			disconnectedReason?.description,
-		);
+		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason?.text);
 	}
 
 	// back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()

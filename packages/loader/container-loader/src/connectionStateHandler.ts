@@ -274,7 +274,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		assert(this._connectionState === ConnectionState.CatchingUp, 0x3e6 /* invariant broken */);
 		this._connectionState = ConnectionState.Connected;
 		this.inputs.connectionStateChanged(ConnectionState.Connected, ConnectionState.CatchingUp, {
-			description: "caught up",
+			text: "caught up",
 		});
 	};
 }
@@ -509,7 +509,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.EstablishingConnection;
 		this.handler.connectionStateChanged(ConnectionState.EstablishingConnection, oldState, {
-			description: `Establishing Connection due to ${reason.description}`,
+			text: `Establishing Connection due to ${reason.text}`,
 			error: reason.error,
 		});
 	}

@@ -390,7 +390,10 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const disconnectReason = { description: "Closing DeltaManager", error };
+		const disconnectReason: IConnectionStateChangeReason = {
+			text: "Closing DeltaManager",
+			error,
+		};
 
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);
@@ -407,7 +410,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * Enables or disables automatic reconnecting.
 	 * Will throw an error if reconnectMode set to Never.
 	 */
-	public setAutoReconnect(mode: ReconnectMode): void {
+	public setAutoReconnect(mode: ReconnectMode, reason: IConnectionStateChangeReason): void {
 		assert(
 			mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
 			0x278 /* "API is not supported for non-connecting or closed container" */,
@@ -417,7 +420,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (mode !== ReconnectMode.Enabled) {
 			// immediately disconnect - do not rely on service eventually dropping connection.
-			this.disconnectFromDeltaStream({ description: "setAutoReconnect" });
+			this.disconnectFromDeltaStream(reason);
 		}
 	}
 
@@ -464,12 +467,12 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
 				}
 
-				reconnect = this.disconnectFromDeltaStream({ description: "Force readonly" });
+				reconnect = this.disconnectFromDeltaStream({ text: "Force readonly" });
 			}
 			this.props.readonlyChangeHandler(this.readonly);
 			if (reconnect) {
 				// reconnect if we disconnected from before.
-				this.triggerConnect({ description: "Force Readonly" }, "read");
+				this.triggerConnect({ text: "Force Readonly" }, "read");
 			}
 		}
 	}
@@ -740,7 +743,7 @@ export class ConnectionManager implements IConnectionManager {
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
 		this.props.cancelConnectionHandler({
-			description: `Cancel Pending Connection due to ${reason.description}`,
+			text: `Cancel Pending Connection due to ${reason.text}`,
 			error: reason.error,
 		});
 	}
@@ -796,7 +799,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.
-			this.disconnectFromDeltaStream({ description: "ConnectionManager already closed" });
+			this.disconnectFromDeltaStream({ text: "ConnectionManager already closed" });
 			return;
 		}
 
@@ -901,7 +904,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
 	private reconnectOnError(requestedMode: ConnectionMode, error: IAnyDriverError) {
-		this.reconnect(requestedMode, { description: error.message, error }).catch(
+		this.reconnect(requestedMode, { text: error.message, error }).catch(
 			this.props.closeHandler,
 		);
 	}
@@ -927,7 +930,7 @@ export class ConnectionManager implements IConnectionManager {
 		// We will always trigger reconnect, even if canRetry is false.
 		// Any truly fatal error state will result in container close upon attempted reconnect,
 		// which is a preferable to closing abruptly when a live connection fails.
-		if (reason.error !== undefined && !reason.error.canRetry) {
+		if (reason.error?.canRetry === false) {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "reconnectingDespiteFatalError",
@@ -965,10 +968,10 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.triggerConnect(
 			{
-				description:
+				text:
 					reason.error !== undefined
 						? "Reconnecting due to Error"
-						: `Reconnecting due to: ${reason.description}`,
+						: `Reconnecting due to: ${reason.text}`,
 				error: reason.error,
 			},
 			requestedMode,
@@ -1041,7 +1044,7 @@ export class ConnectionManager implements IConnectionManager {
 							// still valid?
 							await this.reconnect(
 								"write", // connectionMode
-								{ description: "Switch to write" }, // message
+								{ text: "Switch to write" }, // message
 							);
 						}
 					})
@@ -1095,7 +1098,7 @@ export class ConnectionManager implements IConnectionManager {
 				// Note - this may close container!
 				this.reconnect(
 					"read", // connectionMode
-					{ description: "Switch to read" }, // message
+					{ text: "Switch to read" }, // message
 				).catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
 				});

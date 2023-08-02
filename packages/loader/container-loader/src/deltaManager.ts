@@ -53,7 +53,7 @@ import { OnlyValidTermValue } from "./protocol";
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
 	fetchOpsFromStorage?: boolean;
-	reason: string;
+	reason: IConnectionStateChangeReason;
 }
 
 /**
@@ -350,6 +350,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
+			deltaManagerState: this._disposed ? "disposed" : this._closed ? "closed" : "open",
 			...this.connectionManager.connectionProps,
 		};
 	}
@@ -591,10 +592,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// on the wire, we might be always behind.
 		// See comment at the end of "connect" handler
 		if (fetchOpsFromStorage) {
-			this.fetchMissingDeltas(args.reason);
+			this.fetchMissingDeltas(args.reason.text);
 		}
 
-		this.connectionManager.connect({ description: args.reason }, args.mode);
+		this.connectionManager.connect(args.reason, args.mode);
 	}
 
 	private async getDeltas(
