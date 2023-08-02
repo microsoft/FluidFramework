@@ -786,7 +786,7 @@ async function getPackagesToUpdate(
  * @internal
  */
 // eslint-disable-next-line max-params
-export async function npmCheckUpdates2(
+export async function npmCheckUpdatesHomegrown(
 	context: Context,
 	releaseGroup: ReleaseGroup | ReleasePackage | undefined,
 	depsToUpdate: ReleasePackage[],

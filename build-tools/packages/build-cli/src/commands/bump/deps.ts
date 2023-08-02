@@ -25,9 +25,9 @@ import {
 	isDependencyUpdateType,
 	npmCheckUpdates,
 } from "../../lib";
-import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
+import { ReleaseGroup } from "../../releaseGroups";
 // eslint-disable-next-line import/no-internal-modules
-import { npmCheckUpdates2 } from "../../lib/package";
+import { npmCheckUpdatesHomegrown } from "../../lib/package";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -198,24 +198,24 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		const { updatedPackages, updatedDependencies } =
 			flags.updateChecker === "homegrown"
-				? await npmCheckUpdates2(
-          context,
-          flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
-          depsToUpdate,
-          rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
-          /* prerelease */ flags.prerelease,
-          this.logger,
-        )
+				? await npmCheckUpdatesHomegrown(
+						context,
+						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+						depsToUpdate,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
+						/* prerelease */ flags.prerelease,
+						this.logger,
+				  )
 				: await npmCheckUpdates(
-          context,
-          flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
-          depsToUpdate,
-          rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
-          flags.updateType,
-          /* prerelease */ flags.prerelease,
-          /* writeChanges */ true,
-          this.logger,
-        );
+						context,
+						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+						depsToUpdate,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
+						flags.updateType,
+						/* prerelease */ flags.prerelease,
+						/* writeChanges */ true,
+						this.logger,
+				  );
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
