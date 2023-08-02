@@ -3,3 +3,5 @@
 ---
 
 Remove support for Global Fields
+
+Support for Global fields has been removed.
