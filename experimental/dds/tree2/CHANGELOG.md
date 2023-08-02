@@ -1,5 +1,17 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.5.4.0
+
+### Minor Changes
+
+-   Remove support for Global Fields ([#16546](https://github.com/microsoft/FluidFramework/issues/16546)) [cade66e2fd](https://github.com/microsoft/FluidFramework/commits/cade66e2fd55e92109e337ad1801e8751000c2bf)
+
+    Support for Global fields has been removed.
+
+-   Old SchemaBuilder APIs removed ([#16373](https://github.com/microsoft/FluidFramework/issues/16373)) [38bcf98635](https://github.com/microsoft/FluidFramework/commits/38bcf98635f35c4e0994798e18ae62389da2a773)
+
+    Remove old SchemaBuilder APIs in favor of Schema2 design.
+
 ## 2.0.0-internal.5.3.0
 
 ### Minor Changes
