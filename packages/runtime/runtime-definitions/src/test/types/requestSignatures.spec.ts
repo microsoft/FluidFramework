@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IDataStore } from "../../dataStoreContext";
-
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint deprecation/deprecation: "error" */
 
-export async function test(dataStore: IDataStore) {
-	// This is ok
-	await dataStore.request({ url: "/" });
+import { IDataStore } from "../../dataStoreContext";
 
-	// These are deprecated
-	// eslint-disable-next-line deprecation/deprecation
-	await dataStore.request({ url: "/", headers: { shouldBeDeprecated: true } });
-	// eslint-disable-next-line deprecation/deprecation
-	await dataStore.request({ url: "/should/be/deprecated" });
-}
+
+declare const dataStore: IDataStore;
+
+// This is ok
+dataStore.request({ url: "/" });
+
+// These are deprecated
+// eslint-disable-next-line deprecation/deprecation
+dataStore.request({ url: "/", headers: { shouldBeDeprecated: true } });
+// eslint-disable-next-line deprecation/deprecation
+dataStore.request({ url: "/should/be/deprecated" });
