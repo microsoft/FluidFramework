@@ -844,7 +844,6 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType: {
-			// Split the detach event
 			const mark1 = { ...mark, count: length };
 			const mark2 = { ...mark, count: remainder };
 			if (mark.cellId !== undefined) {

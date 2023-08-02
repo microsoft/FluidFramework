@@ -179,6 +179,12 @@ function rebaseMarkList<TNodeChange>(
 	return factory.list;
 }
 
+/**
+ * Generates a NoOp mark that targets the same cells as the input mark.
+ * @param mark - The mark the NoOp should target.
+ * @param revision - The revision, if available.
+ * @returns A NoOp mark that targets the same cells as the input mark.
+ */
 function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark {
 	const length = getMarkLength(mark);
 	const cellId = getCellId(mark, revision);
@@ -214,10 +220,7 @@ class RebaseQueue<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 
-		assert(
-			!(baseMark === undefined && newMark === undefined),
-			"Should return at least one mark",
-		);
+		assert(!(baseMark === undefined && newMark === undefined), "Cannot pop from empty queue");
 
 		if (baseMark === undefined) {
 			const dequeuedNewMark = this.newMarks.dequeue();
@@ -259,14 +262,12 @@ class RebaseQueue<T> {
 
 	private dequeueBase(): RebaseMarks<T> {
 		const baseMark = this.baseMarks.dequeue();
-		const cellId = getCellId(baseMark, this.baseIntention);
-		return { baseMark, newMark: { count: getMarkLength(baseMark), cellId } };
+		return { baseMark, newMark: generateNoOpWithCellId(baseMark, this.baseIntention) };
 	}
 
 	private dequeueNew(): RebaseMarks<T> {
 		const newMark = this.newMarks.dequeue();
-		const cellId = getCellId(newMark, undefined);
-		return { newMark, baseMark: { count: getMarkLength(newMark), cellId } };
+		return { newMark, baseMark: generateNoOpWithCellId(newMark) };
 	}
 
 	private dequeueBoth(): RebaseMarks<T> {
