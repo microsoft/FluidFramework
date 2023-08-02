@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-base",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid protocol base",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,7 +22,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -59,7 +59,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "workspace:*",
+		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"events": "^3.1.0"
 	},

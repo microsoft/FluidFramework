@@ -27,20 +27,17 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": ["restart", "default"],
 						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": ["restart", "default"],
 						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false]
 					}
 				},
 				"tinylicious": {
 					"configurations": {
-						"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": ["restart", "default"],
 						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false]
 					}
 				}
@@ -71,7 +68,6 @@
 			"optionOverrides": {
 				"routerlicious": {
 					"configurations": {
-						"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": ["restart", "default"],
 						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false]
 					}
 				}
@@ -101,7 +97,6 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": ["restart", "default"],
 						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false]
 					}
 				}

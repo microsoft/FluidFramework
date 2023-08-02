@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-client",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid server isomorphic services for communicating with Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -59,8 +59,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "workspace:*",
-		"@fluidframework/protocol-base": "workspace:*",
+		"@fluidframework/gitresources": "workspace:~",
+		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"axios": "^0.26.0",
 		"crc-32": "1.2.0",

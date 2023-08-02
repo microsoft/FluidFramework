@@ -58,6 +58,10 @@
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
 	},
+	"apiCounters": {
+		"fetchTenantKeyMetricMs": 60000,
+		"riddlerStorageRequestMetricMs": 60000
+	},
 	"alfred": {
 		"kafkaClientId": "alfred",
 		"maxMessageSize": "16KB",
@@ -111,7 +115,8 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
-		}
+		},
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",
@@ -145,7 +150,8 @@
 		"getDeltasViaAlfred": true,
 		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true,
-		"disableTransientTenantFiltering": true
+		"disableTransientTenantFiltering": true,
+		"maxLogtailLength": 2000
 	},
 	"system": {
 		"httpServer": {

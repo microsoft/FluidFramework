@@ -30,6 +30,17 @@ parameters:
     - default
     - skip
     - force
+- name: interdependencyRange
+  displayName: Range to use for interdependencies (only affects releases) (default = ~)
+  type: string
+  default: "~"
+  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
+  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
+  # empty string.
+  values:
+    - "^"
+    - "~"
+    - " "
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
@@ -87,6 +98,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    interdependencyRange: ${{ parameters.interdependencyRange }}
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false

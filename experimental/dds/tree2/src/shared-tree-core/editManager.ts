@@ -89,8 +89,11 @@ export class EditManager<
 		Set<SharedTreeBranch<TEditor, TChangeset>>
 	>();
 
-	/** The sequence number of the newest commit on the trunk that has been received by all peers */
-	private minimumSequenceNumber: SeqNumber = brand(-1);
+	/**
+	 * The sequence number of the newest commit on the trunk that has been received by all peers.
+	 * Defaults to {@link minimumPossibleSequenceNumber} if no commits have been received.
+	 */
+	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
 	/**
 	 * An immutable "origin" commit singleton on which the trunk is based.
@@ -300,7 +303,7 @@ export class EditManager<
 			this.trunk.getHead() === this.trunkBase &&
 			this.peerLocalBranches.size === 0 &&
 			this.localBranch.getHead() === this.trunk.getHead() &&
-			this.minimumSequenceNumber === -1
+			this.minimumSequenceNumber === minimumPossibleSequenceNumber
 		);
 	}
 
@@ -404,6 +407,25 @@ export class EditManager<
 	}
 
 	/**
+	 * @returns The length of the longest branch maintained by this EditManager.
+	 * This may be the length of a peer branch or the local branch.
+	 * The length is counted from the lowest common ancestor with the trunk such that a fully sequenced branch would
+	 * have length zero.
+	 */
+	public getLongestBranchLength(): number {
+		let max = 0;
+		const trunkHead = this.trunk.getHead();
+		for (const branch of this.peerLocalBranches.values()) {
+			const branchPath = getPathFromBase(branch.getHead(), trunkHead);
+			if (branchPath.length > max) {
+				max = branchPath.length;
+			}
+		}
+		const localPath = getPathFromBase(this.localBranch.getHead(), trunkHead);
+		return Math.max(max, localPath.length);
+	}
+
+	/**
 	 * Needs to be called after a summary is loaded.
 	 * @remarks This is necessary to keep the trunk's repairDataStoreProvider up to date with the
 	 * local's after a summary load.
@@ -421,6 +443,10 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): void {
+		assert(
+			sequenceNumber > this.minimumSequenceNumber,
+			"Expected change sequence number to exceed the last known minimum sequence number",
+		);
 		if (newCommit.sessionId === this.localSessionId) {
 			const [firstLocalCommit] = getPathFromBase(
 				this.localBranch.getHead(),

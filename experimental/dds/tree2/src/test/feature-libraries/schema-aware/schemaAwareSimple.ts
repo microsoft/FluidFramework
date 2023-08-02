@@ -127,7 +127,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
  * @alpha
  */
 export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
-	TypedFields<TSchema["localFieldsObject"]>,
+	TypedFields<TSchema["structFieldsObject"]>,
 	TSchema["value"]
 >;
 

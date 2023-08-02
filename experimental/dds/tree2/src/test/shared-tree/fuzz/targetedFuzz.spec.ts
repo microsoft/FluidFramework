@@ -18,17 +18,24 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	moveToDetachedField,
 	compareUpPaths,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	UpPath,
 	Anchor,
+	JsonableTree,
 } from "../../../core";
 import { brand } from "../../../util";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { SharedTreeView } from "../../../shared-tree";
+import { ISharedTree, SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
-import { applyFieldEdit, applyTransactionEdit, fuzzReducer } from "./fuzzEditReducers";
+import {
+	applyFieldEdit,
+	applySynchronizationOp,
+	applyTransactionEdit,
+	applyUndoRedoEdit,
+	fuzzReducer,
+} from "./fuzzEditReducers";
 import { onCreate, initialTreeState } from "./fuzzUtils";
-import { Operation, TreeOperation } from "./operationTypes";
+import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
 	firstAnchor?: Anchor;
@@ -39,6 +46,14 @@ interface AbortFuzzTestState extends FuzzTestState {
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: SharedTreeView;
+}
+
+/**
+ * This interface is meant to be used for tests that require you to store a branch of a tree
+ */
+interface UndoRedoFuzzTestState extends FuzzTestState {
+	initialTreeState?: JsonableTree[];
+	firstAnchors?: Anchor[];
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
@@ -62,6 +77,16 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		applyTransactionEdit(tree, contents);
 		return state;
 	},
+	undoRedo: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyUndoRedoEdit(tree, contents);
+		return state;
+	},
+	synchronizeTrees: async (state) => {
+		applySynchronizationOp(state);
+		return state;
+	},
 });
 
 /**
@@ -78,7 +103,7 @@ describe("Fuzz - Targeted", () => {
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<TreeOperation, AbortFuzzTestState>;
+		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
@@ -93,16 +118,8 @@ describe("Fuzz - Targeted", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			// building the anchor for anchor stability test
-			const cursor = initialState.clients[0].channel.forest.allocateCursor();
-			moveToDetachedField(initialState.clients[0].channel.forest, cursor);
-			cursor.enterNode(0);
-			cursor.getPath();
-			cursor.firstField();
-			cursor.getFieldKey();
-			cursor.enterNode(1);
-			initialState.firstAnchor = cursor.buildAnchor();
-			cursor.free();
+			const firstAnchor = getFirstAnchor(initialState.clients[0].channel);
+			initialState.firstAnchor = firstAnchor;
 			initialState.clients[0].channel.transaction.start();
 		});
 
@@ -115,7 +132,7 @@ describe("Fuzz - Targeted", () => {
 				parent: {
 					parent: undefined,
 					parentIndex: 0,
-					parentField: rootFieldKeySymbol,
+					parentField: rootFieldKey,
 				},
 				parentField: brand("foo"),
 				parentIndex: 1,
@@ -140,7 +157,7 @@ describe("Fuzz - Targeted", () => {
 	};
 
 	describe("Composed vs individual changes converge to the same tree", () => {
-		const generatorFactory = (): AsyncGenerator<TreeOperation, BranchedTreeFuzzTestState> =>
+		const generatorFactory = (): AsyncGenerator<Operation, BranchedTreeFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(composeVsIndividualWeights));
 
 		const model: DDSFuzzModel<
@@ -172,4 +189,179 @@ describe("Fuzz - Targeted", () => {
 			emitter,
 		});
 	});
+
+	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		insert: 1,
+		delete: 1,
+		start: 0,
+		commit: 0,
+	};
+
+	describe.skip("Inorder undo/redo matches the initial/final state", () => {
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
+			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
+
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: () => {},
+		};
+		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
+			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel);
+			initialState.firstAnchors = [];
+			// creates an initial anchor for each tree
+			for (const client of initialState.clients) {
+				initialState.firstAnchors.push(getFirstAnchor(client.channel));
+			}
+		});
+		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
+			const clients = finalState.clients;
+
+			const finalTreeStates = [];
+			// undo all of the changes and validate against initialTreeState for each tree
+			for (const [i, client] of clients.entries()) {
+				const tree = client.channel;
+
+				// save final tree states to validate redo later
+				finalTreeStates.push(toJsonableTree(tree));
+
+				/**
+				 * TODO: Currently this for loop is used to call undo() "opsPerRun" number of times.
+				 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
+				 */
+				for (let j = 0; j < opsPerRun; j++) {
+					tree.undo();
+				}
+			}
+
+			// synchronize clients after undo
+			finalState.containerRuntimeFactory.processAllMessages();
+
+			// validate the current state of the clients with the initial state, and check anchor stability
+			for (const [i, client] of clients.entries()) {
+				assert(finalState.initialTreeState !== undefined);
+				validateTree(client.channel, finalState.initialTreeState);
+				// check anchor stability
+				const expectedPath: UpPath = {
+					parent: {
+						parent: undefined,
+						parentIndex: 0,
+						parentField: rootFieldKey,
+					},
+					parentField: brand("foo"),
+					parentIndex: 1,
+				};
+				assert(finalState.firstAnchors !== undefined);
+				assert(finalState.firstAnchors[i] !== undefined);
+				const anchorPath = client.channel.locate(finalState.firstAnchors[i]);
+				assert(compareUpPaths(expectedPath, anchorPath));
+			}
+
+			// redo all of the undone changes and validate against the finalTreeState for each tree
+			for (const [i, client] of clients.entries()) {
+				for (let j = 0; j < opsPerRun; j++) {
+					client.channel.redo();
+				}
+				validateTree(client.channel, finalTreeStates[i]);
+			}
+		});
+		createDDSFuzzSuite(model, {
+			defaultTestCount: runsPerBatch,
+			numberOfClients: 3,
+			emitter,
+		});
+	});
+
+	describe("out of order undo matches the initial state", () => {
+		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
+			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
+
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: () => {},
+		};
+		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
+			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel);
+			initialState.firstAnchors = [];
+			// creates an initial anchor for each tree
+			for (const client of initialState.clients) {
+				initialState.firstAnchors.push(getFirstAnchor(client.channel));
+			}
+		});
+		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
+			const clients = finalState.clients;
+
+			/**
+			 * TODO: Currently this array is used to track that undo() is called "opsPerRun" number of times.
+			 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
+			 */
+			const undoOrderByClientIndex = Array.from(
+				{ length: opsPerRun * clients.length },
+				(_, index) => Math.floor(index / opsPerRun),
+			);
+			finalState.random.shuffle(undoOrderByClientIndex);
+			// call undo() until trees contain no more edits to undo
+			for (const clientIndex of undoOrderByClientIndex) {
+				clients[clientIndex].channel.undo();
+			}
+			// synchronize clients after undo
+			finalState.containerRuntimeFactory.processAllMessages();
+
+			// validate the current state of the clients with the initial state, and check anchor stability
+			for (const [i, client] of clients.entries()) {
+				assert(finalState.initialTreeState !== undefined);
+				validateTree(client.channel, finalState.initialTreeState);
+				// check anchor stability
+				const expectedPath: UpPath = {
+					parent: {
+						parent: undefined,
+						parentIndex: 0,
+						parentField: rootFieldKey,
+					},
+					parentField: brand("foo"),
+					parentIndex: 1,
+				};
+				assert(finalState.firstAnchors !== undefined);
+				assert(finalState.firstAnchors[i] !== undefined);
+				const anchorPath = client.channel.locate(finalState.firstAnchors[i]);
+				assert(compareUpPaths(expectedPath, anchorPath));
+			}
+		});
+		createDDSFuzzSuite(model, {
+			defaultTestCount: runsPerBatch,
+			numberOfClients: 3,
+			emitter,
+			// ADO:5083, assert 0x6a1 hit for 13 and 18
+			skip: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+		});
+	});
 });
+
+function getFirstAnchor(tree: ISharedTree): Anchor {
+	// building the anchor for anchor stability test
+	const cursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, cursor);
+	cursor.enterNode(0);
+	cursor.getPath();
+	cursor.firstField();
+	cursor.getFieldKey();
+	cursor.enterNode(1);
+	const anchor = cursor.buildAnchor();
+	cursor.free();
+	return anchor;
+}
