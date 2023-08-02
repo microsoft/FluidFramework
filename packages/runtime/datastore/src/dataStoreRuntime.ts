@@ -39,6 +39,7 @@ import {
 	IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
+	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
@@ -587,9 +588,7 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
-	private createRemoteChannelContext(message) {
-		const attachMessage = (message.contents ?? message.content) as IAttachMessage;
-		const id = attachMessage.id;
+	private createRemoteChannelContext(attachMessage: IAttachMessage, summarizerNodeParams: CreateChildSummarizerNodeParam) {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
@@ -598,19 +597,15 @@ export class FluidDataStoreRuntime
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			(content, localContentMetadata) =>
-				this.submitChannelOp(id, content, localContentMetadata),
+				this.submitChannelOp(attachMessage.id, content, localContentMetadata),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
-			id,
+			attachMessage.id,
 			snapshotTree,
 			this.sharedObjectRegistry,
 			flatBlobs,
-			this.dataStoreContext.getCreateChildSummarizerNodeFn(id, {
-				type: CreateSummarizerNodeSource.FromAttach,
-				sequenceNumber: message.sequenceNumber,
-				snapshot: attachMessage.snapshot,
-			}),
+			this.dataStoreContext.getCreateChildSummarizerNodeFn(attachMessage.id, summarizerNodeParams),
 			attachMessage.type,
 		);
 	}
@@ -622,7 +617,8 @@ export class FluidDataStoreRuntime
 			// catches as data processing error whether or not they come from async pending queues
 			switch (message.type) {
 				case DataStoreMessageType.Attach: {
-					const id = (message.contents as IAttachMessage).id;
+					const attachMessage = message.contents as IAttachMessage;
+					const id = attachMessage.id;
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
@@ -634,7 +630,13 @@ export class FluidDataStoreRuntime
 					} else {
 						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
 
-						const remoteChannelContext = this.createRemoteChannelContext(message);
+						const summarizerNodeParams = {
+							type: CreateSummarizerNodeSource.FromAttach,
+							sequenceNumber: message.sequenceNumber,
+							snapshot: attachMessage.snapshot,
+						};
+
+						const remoteChannelContext = this.createRemoteChannelContext(attachMessage, summarizerNodeParams);
 						this.contexts.set(id, remoteChannelContext);
 						if (this.contextsDeferred.has(id)) {
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1004,10 +1006,12 @@ export class FluidDataStoreRuntime
 		const type = content?.type as DataStoreMessageType;
 		switch (type) {
 			case DataStoreMessageType.Attach: {
-				const context = this.createRemoteChannelContext(content);
-				const id = (content.content as IAttachMessage).id;
-				this.pendingAttach.add(id);
-				this.contexts.set(id, context);
+				const attachMessage = content.content as IAttachMessage;
+				// local means this node will throw if summarized; this is fine because only interactive clients will have stashed ops
+				const summarizerNodeParams: CreateChildSummarizerNodeParam = { type: CreateSummarizerNodeSource.Local };
+				const context = this.createRemoteChannelContext(attachMessage, summarizerNodeParams);
+				this.pendingAttach.add(attachMessage.id);
+				this.contexts.set(attachMessage.id, context);
 				return;
 			}
 			case DataStoreMessageType.ChannelOp: {
