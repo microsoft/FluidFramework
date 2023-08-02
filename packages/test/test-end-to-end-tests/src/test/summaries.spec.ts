@@ -479,7 +479,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) => event.eventName === "fluid:telemetry:SummarizeTelemetry",
+				(event) =>
+					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
