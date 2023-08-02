@@ -368,20 +368,27 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return false;
 	}
 	const type = rhs.type;
-	if (type === NoopMarkType) {
-		if (areEqualCellIds(getCellId(lhs, undefined), getCellId(rhs, undefined))) {
-			(lhs as NoopMark).count += rhs.count;
-			return true;
-		} else {
-			return false;
-		}
+	if (
+		type === NoopMarkType &&
+		areEqualCellIds(getCellId(lhs, undefined), getCellId(rhs, undefined))
+	) {
+		(lhs as NoopMark).count += rhs.count;
+		return true;
 	}
-	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
+
+	if (
+		type !== NoopMarkType &&
+		type !== "Modify" &&
+		rhs.revision !== (lhs as HasRevisionTag).revision
+	) {
 		return false;
 	}
 
 	if (
-		(type !== "MoveIn" && type !== "ReturnTo" && rhs.changes !== undefined) ||
+		(type !== NoopMarkType &&
+			type !== "MoveIn" &&
+			type !== "ReturnTo" &&
+			rhs.changes !== undefined) ||
 		(lhs as Modify | HasChanges).changes !== undefined
 	) {
 		return false;
