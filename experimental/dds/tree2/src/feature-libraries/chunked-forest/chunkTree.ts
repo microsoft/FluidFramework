@@ -63,7 +63,7 @@ export interface IChunker extends ChunkPolicy, Disposable {
 }
 
 /**
- * Indicates that there are multiple possible `TreeShapes` trees with a given type can have.
+ * Indicates that there are multiple possible `TreeShape` trees with a given type can have.
  *
  * @remarks
  * For example, a schema transitively containing a sequence field, optional field, or allowing multiple child types will be Polymorphic.

@@ -178,7 +178,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 						basicChunkTree(cursor, this.chunker),
 					);
 					// TODO: this could fail for really long chunks being split (due to argument count limits).
-					// CUrrent implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
+					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
