@@ -93,6 +93,7 @@
 		"inquirer": "^8.2.5",
 		"jssm": "^5.89.2",
 		"jssm-viz-cli": "^5.89.2",
+		"latest-version": "^5.1.0",
 		"minimatch": "^7.4.6",
 		"npm-check-updates": "^16.10.15",
 		"oclif": "^3.9.1",
@@ -183,6 +184,7 @@
 	"pnpm": {
 		"updateConfig": {
 			"ignoreDependencies": [
+				"latest-version",
 				"read-pkg-up",
 				"type-fest",
 				"typescript"
