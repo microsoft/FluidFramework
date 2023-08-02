@@ -341,7 +341,7 @@ function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
 	repairData?: ReadonlyRepairDataStore,
-	cache: boolean = false,
+	cache?: boolean,
 ): TaggedChange<TChange> {
 	return tagRollbackInverse(
 		changeRebaser.invert(commit, true, repairData, cache),
