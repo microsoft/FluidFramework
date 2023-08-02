@@ -269,24 +269,24 @@ describe("EditManager", () => {
 
 			it("Evicts trunk commits according to a provided minimum sequence number", () => {
 				const { manager } = editManagerFactory({});
-				for (let i = 0; i < 10; ++i) {
+				for (let i = 1; i <= 10; ++i) {
 					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
 
 				assert.equal(manager.getTrunkChanges().length, 10);
 				manager.advanceMinimumSequenceNumber(brand(5));
-				assert.equal(manager.getTrunkChanges().length, 5);
+				assert.equal(manager.getTrunkChanges().length, 6);
 				manager.advanceMinimumSequenceNumber(brand(10));
-				assert.equal(manager.getTrunkChanges().length, 0);
-				for (let i = 10; i < 20; ++i) {
+				assert.equal(manager.getTrunkChanges().length, 1);
+				for (let i = 11; i <= 20; ++i) {
 					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
 
-				assert.equal(manager.getTrunkChanges().length, 10);
+				assert.equal(manager.getTrunkChanges().length, 11);
 				manager.advanceMinimumSequenceNumber(brand(15));
-				assert.equal(manager.getTrunkChanges().length, 5);
+				assert.equal(manager.getTrunkChanges().length, 6);
 				manager.advanceMinimumSequenceNumber(brand(20));
-				assert.equal(manager.getTrunkChanges().length, 0);
+				assert.equal(manager.getTrunkChanges().length, 1);
 			});
 
 			it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {

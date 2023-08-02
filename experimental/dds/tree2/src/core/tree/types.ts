@@ -3,25 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
+import { FieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
-import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
-
-/**
- * Either LocalFieldKey or GlobalFieldKey.
- *
- * To avoid collisions, we can not abstract over local and global field keys using the same format for each
- * (that would make telling them apart impossible).
- * Thus global field keys are using their symbols instead.
- * @alpha
- */
-export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
-
-export function isLocalKey(key: FieldKey): key is LocalFieldKey {
-	return typeof key === "string";
-}
 
 /**
  * @alpha
@@ -36,28 +20,25 @@ export type TreeType = TreeSchemaIdentifier;
  * and in some abstractions the APIs for this field should be inlined onto the node.
  *
  * TODO:
- * This has to be a LocalFieldKey since different nodes will have different FieldStoredSchema for it.
+ * This has to be a FieldKey since different nodes will have different FieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
  * @alpha
  */
-export const EmptyKey: LocalFieldKey = brand("");
+export const EmptyKey: FieldKey = brand("");
 
 /**
- * GlobalFieldKey to use for the root of documents.
+ * FieldKey to use for the root of documents in places that need to refer to detached sequences or the root.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
  * @alpha
  */
-export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
+export const rootFieldKey: FieldKey = brand("rootFieldKey");
+
 /**
  * @alpha
  */
-export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
-/**
- * @alpha
- */
-export const rootField = keyAsDetachedField(rootFieldKeySymbol);
+export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
@@ -96,7 +77,7 @@ export type ChildCollection = FieldKey | RootField;
  * DetachedFields are not valid to use as across edits:
  * they are only valid within the edit in which they were created.
  *
- * In some APIs DetachedFields are used as LocalFieldKeys on a special implicit root node
+ * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
  * @alpha
  */
@@ -110,31 +91,17 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * @alpha
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
-	if (field === rootField) {
-		return rootFieldKeySymbol;
-	}
 	return brand(extractFromOpaque(field));
 }
 
 /**
  * The inverse of {@link detachedFieldAsKey}.
- * Thus must only be used on {@link LocalFieldKey}s which were produced via {@link detachedFieldAsKey},
+ * Thus must only be used on {@link FieldKey}s which were produced via {@link detachedFieldAsKey},
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
  * @alpha
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
-	if (isLocalKey(key)) {
-		assert(
-			key !== (rootFieldKey as string),
-			0x3be /* Root is field key must be a global field key */,
-		);
-		return brand(key);
-	}
-	assert(
-		key === rootFieldKeySymbol,
-		0x3bf /* Root is only allowed global field key as detached field */,
-	);
-	return brand(rootFieldKey);
+	return brand(key);
 }
 
 /**

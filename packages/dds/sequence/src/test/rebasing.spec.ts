@@ -71,11 +71,6 @@ import { SharedStringFactory } from "../sequenceFactory";
 		});
 
 		it("Rebasing ops maintains eventual consistency", async () => {
-			assert(containerRuntime1.rebase !== undefined, "Unsupported test-utils version");
-			assert(containerRuntime1.flush !== undefined, "Unsupported test-utils version");
-			assert(containerRuntime2.rebase !== undefined, "Unsupported test-utils version");
-			assert(containerRuntime2.flush !== undefined, "Unsupported test-utils version");
-
 			sharedString1.insertText(0, "ad");
 			sharedString1.insertText(1, "c");
 			containerRuntime1.flush();

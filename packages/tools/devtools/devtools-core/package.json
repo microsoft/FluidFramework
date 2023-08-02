@@ -71,6 +71,7 @@
 		"@fluidframework/container-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
@@ -118,11 +119,22 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"EnumDeclaration_ContainerDevtoolsFeature": {
+				"backCompat": false
+			},
 			"ClassDeclaration_DevtoolsLogger": {
 				"backCompat": false
 			},
 			"InterfaceDeclaration_FluidDevtoolsProps": {
 				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_VisualizeChildData": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_VisualizeSharedObject": {
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ContainerDevtoolsProps": {
 				"backCompat": false

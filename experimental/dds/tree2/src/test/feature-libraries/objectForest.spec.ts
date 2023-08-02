@@ -7,12 +7,9 @@
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest";
 
-import { InMemoryStoredSchemaRepository } from "../../core";
-import { jsonSchema } from "../../domains";
-import { defaultSchemaPolicy } from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";
 
 testForest({
 	suiteName: "object-forest",
-	factory: () => buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema)),
+	factory: (schema) => buildForest(schema),
 });

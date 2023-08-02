@@ -231,7 +231,7 @@ export interface IContainerRuntimeBase
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
  */
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
 	readonly id: string;
 
 	/**
@@ -331,6 +331,16 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 * the component's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 export type CreateChildSummarizerNodeFn = (

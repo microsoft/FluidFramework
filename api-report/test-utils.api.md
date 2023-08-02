@@ -27,7 +27,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { ILoaderProps } from '@fluidframework/container-loader';
@@ -257,7 +256,7 @@ export const TestContainerRuntimeFactory: {
 };
 
 // @public
-export class TestFluidObject implements ITestFluidObject, IFluidRouter {
+export class TestFluidObject implements ITestFluidObject {
     constructor(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntriesMap: Map<string, IChannelFactory>);
     // (undocumented)
     readonly channel: IFluidDataStoreChannel;
@@ -268,13 +267,13 @@ export class TestFluidObject implements ITestFluidObject, IFluidRouter {
     get handle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
     initialize(existing: boolean): Promise<void>;
     // (undocumented)
     get ITestFluidObject(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     root: ISharedMap;

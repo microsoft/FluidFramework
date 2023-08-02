@@ -52,6 +52,7 @@ export interface EditGeneratorOpWeights {
 	abort: number;
 	undo: number;
 	redo: number;
+	synchronizeTrees: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
@@ -61,6 +62,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	abort: 0,
 	undo: 0,
 	redo: 0,
+	synchronizeTrees: 0,
 };
 
 export const makeFieldEditGenerator = (
@@ -297,6 +299,7 @@ export function makeOpGenerator(
 			makeUndoRedoEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.undo, passedOpWeights.redo]),
 		],
+		[{ type: "synchronizeTrees" }, passedOpWeights.synchronizeTrees],
 	];
 
 	const generatorAssumingTreeIsSelected = createWeightedGenerator<Operation, FuzzTestState>(

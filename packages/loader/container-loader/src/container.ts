@@ -916,8 +916,8 @@ export class Container
 			document !== null &&
 			typeof document.addEventListener === "function" &&
 			document.addEventListener !== null;
-		// keep track of last time page was visible for telemetry
-		if (isDomAvailable) {
+		// keep track of last time page was visible for telemetry (on interactive clients only)
+		if (isDomAvailable && interactive) {
 			this.lastVisible = document.hidden ? performance.now() : undefined;
 			this.visibilityEventHandler = () => {
 				if (document.hidden) {
@@ -1067,16 +1067,21 @@ export class Container
 		}
 	}
 
-	public closeAndGetPendingLocalState(): string {
+	public async closeAndGetPendingLocalState(): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		const pendingState = this.getPendingLocalState();
+		this.disconnect(); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
+		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
 		this.close();
 		return pendingState;
 	}
 
-	public getPendingLocalState(): string {
+	public async getPendingLocalState(): Promise<string> {
+		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
+	}
+
+	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
@@ -1095,8 +1100,9 @@ export class Container
 		);
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 		const pendingState: IPendingContainerState = {
-			pendingRuntimeState: this.runtime.getPendingLocalState(),
+			pendingRuntimeState,
 			baseSnapshot: this.baseSnapshot,
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
@@ -2117,6 +2123,7 @@ export class Container
 						: undefined,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
+				isDirty: this.isDirty,
 				...this._deltaManager.connectionProps,
 			},
 			error,
@@ -2463,7 +2470,7 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState?(): string;
+	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
@@ -2471,5 +2478,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(): string;
+	closeAndGetPendingLocalState?(): Promise<string>;
 }
