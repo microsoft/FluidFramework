@@ -5,10 +5,14 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import { strict as assert } from "assert";
-import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
+import {
+	RequestParser,
+	create404Response,
+	responseToException,
+} from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import { createFluidObjectResponse } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "../request-handlers";
 
@@ -33,16 +37,21 @@ class MockRuntime {
 		throw new Error("No data store");
 	}
 
-	protected async resolveHandle(request: IRequest) {
+	protected async resolveHandle(path: string): Promise<FluidObject> {
+		const request: IRequest = { url: path };
 		const requestParser = RequestParser.create(request);
 
 		if (requestParser.pathParts.length > 0) {
 			const wait =
-				typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+				typeof request?.headers?.wait === "boolean" ? request?.headers.wait : undefined;
 
 			const dataStore = await this.getRootDataStore(requestParser.pathParts[0], wait);
 			const subRequest = requestParser.createSubRequest(1);
-			return dataStore.request(subRequest);
+			const response = await dataStore.request(subRequest);
+			if (response.status === 200) {
+				return response.value as FluidObject;
+			}
+			throw responseToException(response, request);
 		}
 		return create404Response(request);
 	}

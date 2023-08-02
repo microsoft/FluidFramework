@@ -77,7 +77,9 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
 		if (parser.pathParts.length === 0) {
 			try {
 				return createFluidObjectResponse(
-					runtime.IFluidHandleContext.resolveHandle(`/${defaultRootId}${parser.query}`),
+					await runtime.IFluidHandleContext.resolveHandle(
+						`/${defaultRootId}${parser.query}`,
+					),
 				);
 			} catch (e) {
 				return exceptionToResponse(e);
