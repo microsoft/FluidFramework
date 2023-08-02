@@ -404,11 +404,11 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * @param request - The request to be issued against the container
 	 *
 	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
-	 * Instead, access the objects in a Fluid Container by using entryPoint and then navigate from there using
+	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
 	 * IContainer.request(\{url: "/"\}) is not yet deprecated and may be used as a proxy for getting the entryPoint
-	 * to ease the transition, where this idiom or requesting "/" is already in use
+	 * to ease the transition, where this idiom of requesting "/" is already in use.
 	 *
 	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */

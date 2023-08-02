@@ -128,7 +128,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Fluid router for the data store
  * - Can be assigned an alias
  */
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
 	/**
 	 * Attempt to assign an alias to the datastore.
 	 * If the operation succeeds, the datastore can be referenced
@@ -149,6 +149,40 @@ export interface IDataStore extends IFluidRouter {
 	 * the data store's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * Issue a request against the DataStore for its "root" object aka its entryPoint. @see {@link IDataStore.entryPoint}.
+	 *
+	 * NOTE: Requesting "/" is idiomatic to some known consumers of Fluid Framework;
+	 * the root URL "/" will not route anywhere in Fluid natively.
+	 * This accomodation is provided as a temporary measure to ease the transition from requests to entryPoint,
+	 * where the paradigm requesting "/" is used.  This paradigm requires additional work to support (using requestHandler)
+	 * and should not be adopted if not already used - rather, use entryPoint directly.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 *
+	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
+	 */
+	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
+
+	/**
+	 * Issue a request against the DataStore for a resource within it.
+	 * @param request - The request to be issued against the DataStore
+	 *
+	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
+	 * IDataStore.request(\{url: "/"\}) is not yet deprecated and may be used as a proxy for getting the entryPoint
+	 * to ease the transition, where this idiom of requesting "/" is already in use.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
