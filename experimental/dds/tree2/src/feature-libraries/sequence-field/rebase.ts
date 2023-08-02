@@ -220,7 +220,10 @@ class RebaseQueue<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 
-		assert(!(baseMark === undefined && newMark === undefined), 0x722 /* Cannot pop from empty queue */);
+		assert(
+			!(baseMark === undefined && newMark === undefined),
+			0x722 /* Cannot pop from empty queue */,
+		);
 
 		if (baseMark === undefined) {
 			const dequeuedNewMark = this.newMarks.dequeue();

@@ -161,7 +161,10 @@ function invertMark<TNodeChange>(
 					0x707 /* Active reattach should have a detach event */,
 				);
 				if (mark.transientDetach !== undefined) {
-					assert(revision !== undefined, 0x721 /* Unable to revert to undefined revision */);
+					assert(
+						revision !== undefined,
+						0x721 /* Unable to revert to undefined revision */,
+					);
 					return [
 						withNodeChange(
 							{

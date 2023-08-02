@@ -184,7 +184,10 @@ function composeMarks<TNodeChange>(
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
 		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
-			assert(newMark.cellId !== undefined, 0x718 /* Invalid node-targeting mark after transient */);
+			assert(
+				newMark.cellId !== undefined,
+				0x718 /* Invalid node-targeting mark after transient */,
+			);
 			return baseMark;
 		}
 		if (newMark.type === "ReturnTo") {
