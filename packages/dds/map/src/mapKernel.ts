@@ -5,7 +5,8 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,

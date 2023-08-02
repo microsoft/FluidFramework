@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";

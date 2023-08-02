@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/container-utils";
 import {

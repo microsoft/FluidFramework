@@ -5,7 +5,7 @@
 
 import http from "http";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver";

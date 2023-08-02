@@ -7,7 +7,7 @@ import { serializeError } from "serialize-error";
 import { IWebServer } from "@fluidframework/server-services-core";
 import { Lumber, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/server-services-client";
 
 export async function runnerHttpServerStop(
 	server: IWebServer,

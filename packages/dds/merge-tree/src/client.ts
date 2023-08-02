@@ -14,7 +14,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";

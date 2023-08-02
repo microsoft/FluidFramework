@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

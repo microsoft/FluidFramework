@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 

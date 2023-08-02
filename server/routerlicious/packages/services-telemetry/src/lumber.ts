@@ -5,7 +5,7 @@
 
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/server-services-client";
 import { LumberEventName } from "./lumberEventNames";
 import {
 	LogLevel,

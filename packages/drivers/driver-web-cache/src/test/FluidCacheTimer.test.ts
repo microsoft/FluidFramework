@@ -8,7 +8,7 @@
 import { openDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb";
 import { FluidCache } from "../FluidCache";
 

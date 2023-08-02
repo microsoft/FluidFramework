@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluidframework/server-services-client";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
 	ISequencedDocumentMessage,

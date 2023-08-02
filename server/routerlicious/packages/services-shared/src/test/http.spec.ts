@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/server-services-client";
 import type { Response, Request } from "express";
 import {
 	containsPathTraversal,

@@ -8,12 +8,8 @@ import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
 import { IEvent } from "@fluidframework/common-definitions";
-import {
-	TypedEventEmitter,
-	assert,
-	performance,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { TypedEventEmitter, performance } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ITelemetryProperties,
 	TelemetryEventCategory,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 
 // @deprecated this value is no longer used
 export const defaultTimeoutDurationMs = 250;

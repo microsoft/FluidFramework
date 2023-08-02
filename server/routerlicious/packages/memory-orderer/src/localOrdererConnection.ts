@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/server-services-client";
 import {
 	IClient,
 	IClientJoin,

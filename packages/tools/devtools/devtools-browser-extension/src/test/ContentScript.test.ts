@@ -7,7 +7,7 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import {
 	CloseContainer,
 	TelemetryEvent,

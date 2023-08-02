@@ -10,7 +10,7 @@ import {
 	createChildMonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";

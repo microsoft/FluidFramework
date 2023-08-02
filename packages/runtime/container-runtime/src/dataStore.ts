@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";

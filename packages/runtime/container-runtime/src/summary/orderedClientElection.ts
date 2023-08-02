@@ -5,7 +5,8 @@
 /* eslint-disable @rushstack/no-new-null */
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
+import { bufferToString, toUtf8 } from "@fluidframework/server-services-client";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,

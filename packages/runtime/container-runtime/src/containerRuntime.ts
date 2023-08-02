@@ -27,14 +27,8 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import {
-	assert,
-	delay,
-	Trace,
-	TypedEventEmitter,
-	unreachableCase,
-} from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { Trace, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, delay, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	raiseConnectedEvent,

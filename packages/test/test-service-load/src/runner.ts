@@ -16,7 +16,7 @@ import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";

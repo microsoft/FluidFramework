@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import * as git from "@fluidframework/gitresources";
 import {
 	FileMode,

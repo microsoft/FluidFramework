@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
 import {
 	buildTreePath,
 	convertSummaryTreeToWholeSummaryTree,
@@ -23,6 +22,8 @@ import {
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "../indexNode";
+import { fromUtf8ToBase64 } from "../base64Encoding";
 
 const summaryBlobs: IWholeFlatSummaryBlob[] = [
 	{

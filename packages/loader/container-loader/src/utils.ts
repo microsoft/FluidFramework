@@ -5,12 +5,8 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import {
-	assert,
-	stringToBuffer,
-	Uint8ArrayToArrayBuffer,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToArrayBuffer } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {

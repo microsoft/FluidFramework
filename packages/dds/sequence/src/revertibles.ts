@@ -4,7 +4,7 @@
  */
 /* eslint-disable no-bitwise */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,

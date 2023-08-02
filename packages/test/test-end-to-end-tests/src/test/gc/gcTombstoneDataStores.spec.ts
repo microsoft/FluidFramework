@@ -25,7 +25,8 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";

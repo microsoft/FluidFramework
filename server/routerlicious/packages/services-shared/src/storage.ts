@@ -31,7 +31,7 @@ import {
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
-import { toUtf8 } from "@fluidframework/common-utils";
+import { toUtf8 } from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,

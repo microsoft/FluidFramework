@@ -5,7 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

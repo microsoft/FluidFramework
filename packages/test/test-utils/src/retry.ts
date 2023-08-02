@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 
 const retry = async <T>(
 	callback: () => Promise<T>,

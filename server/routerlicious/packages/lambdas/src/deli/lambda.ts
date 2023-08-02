@@ -67,7 +67,7 @@ import {
 	SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/server-services-client";
 import { IEvent } from "@fluidframework/common-definitions";
 import {
 	logCommonSessionEndMetrics,

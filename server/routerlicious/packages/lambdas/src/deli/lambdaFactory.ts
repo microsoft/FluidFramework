@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { inspect } from "util";
-import { toUtf8 } from "@fluidframework/common-utils";
+import { toUtf8 } from "@fluidframework/server-services-client";
 import {
 	ICheckpointService,
 	IClientManager,

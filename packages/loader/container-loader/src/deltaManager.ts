@@ -13,7 +13,8 @@ import {
 	IDeltaQueue,
 	IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	normalizeError,
 	logIfFalse,

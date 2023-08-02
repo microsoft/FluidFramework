@@ -29,7 +29,7 @@ import {
 	TelemetryDataTag,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	convertToSummaryTree,
 	calculateStats,

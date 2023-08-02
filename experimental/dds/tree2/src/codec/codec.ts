@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 

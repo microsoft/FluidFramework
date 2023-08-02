@@ -17,7 +17,7 @@ import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframe
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { delay, assert } from "@fluidframework/common-utils";
+import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";

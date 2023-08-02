@@ -3,13 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	gitHashFile,
-	IsoBuffer,
-	Uint8ArrayToString,
-	unreachableCase,
-} from "@fluidframework/common-utils";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
@@ -20,6 +13,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ISummaryUploadManager, IGitManager } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
+import { unreachableCase } from "./unreachable";
+import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "./indexNode";
+import { assert } from "./assert";
 
 /**
  * Recursively writes summary tree as individual summary blobs.

@@ -26,7 +26,7 @@ import {
 	tagCodeArtifacts,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { Timer } from "@fluidframework/common-utils";
+import { Timer } from "@fluidframework/core-utils";
 import {
 	concatGarbageCollectionStates,
 	GarbageCollector,

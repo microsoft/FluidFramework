@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { Timer } from "@fluidframework/common-utils";
+import { Timer } from "@fluidframework/core-utils";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import {
 	ISummarizeHeuristicData,

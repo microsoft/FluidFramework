@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, assert } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	ISnapshotTree,

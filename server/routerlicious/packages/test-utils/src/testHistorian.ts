@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
+import { gitHashFile, IsoBuffer } from "@fluidframework/server-services-client";
 import {
 	IAuthor,
 	IBlob,

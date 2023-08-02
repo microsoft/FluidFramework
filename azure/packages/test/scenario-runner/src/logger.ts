@@ -6,8 +6,8 @@ import crypto from "crypto";
 import fs from "fs";
 
 import { IEvent, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 

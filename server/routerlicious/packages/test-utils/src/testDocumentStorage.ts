@@ -34,7 +34,7 @@ import {
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/server-services-client";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
 export class TestDocumentStorage implements IDocumentStorage {

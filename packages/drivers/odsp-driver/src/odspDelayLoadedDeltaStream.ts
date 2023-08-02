@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidErrorBase,
 	MonitoringContext,

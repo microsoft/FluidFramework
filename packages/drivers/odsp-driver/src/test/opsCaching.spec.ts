@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";

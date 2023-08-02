@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { fromUtf8ToBase64 } from "./base64Encoding";
 
 function endsWith(value: string, endings: string[]): boolean {
 	for (const ending of endings) {

@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	stringToBuffer,
-	Uint8ArrayToString,
-	unreachableCase,
-} from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -24,6 +18,9 @@ import {
 	IWholeSummaryTreeValueEntry,
 	IWholeSummaryBlob,
 } from "./storageContracts";
+import { assert } from "./assert";
+import { Uint8ArrayToString, stringToBuffer } from "./indexNode";
+import { unreachableCase } from "./unreachable";
 
 /**
  * Convert a list of nodes to a tree path.

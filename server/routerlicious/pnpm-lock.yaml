@@ -749,6 +749,7 @@ importers:
       '@fluid-tools/build-cli': ^0.22.0
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.22.0
+      '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
@@ -756,6 +757,7 @@ importers:
       '@fluidframework/protocol-definitions': ^2.1.0
       '@fluidframework/server-services-client-previous': npm:@fluidframework/server-services-client@0.1040.1000
       '@microsoft/api-extractor': ^7.34.4
+      '@types/base64-js': ^1.3.0
       '@types/debug': ^4.1.5
       '@types/jsrsasign': ^8.0.8
       '@types/jwt-decode': ^2.2.1
@@ -763,11 +765,13 @@ importers:
       '@types/node': ^16.18.16
       axios: ^0.26.0
       axios-mock-adapter: ^1.19.0
+      base64-js: ^1.5.1
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       crc-32: 1.2.0
       debug: ^4.1.1
       eslint: ~8.27.0
+      events: ^3.1.0
       json-stringify-safe: ^5.0.1
       jsrsasign: ^10.5.25
       jwt-decode: ^3.0.0
@@ -776,21 +780,26 @@ importers:
       prettier: ~2.6.2
       querystring: ^0.2.0
       rimraf: ^4.4.0
+      sha.js: ^2.4.11
       sillyname: ^0.1.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
+      '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
       '@fluidframework/protocol-definitions': 2.1.0
       axios: 0.26.1_debug@4.3.4
+      base64-js: 1.5.1
       crc-32: 1.2.0
       debug: 4.3.4
+      events: 3.3.0
       json-stringify-safe: 5.0.1
       jsrsasign: 10.8.6
       jwt-decode: 3.1.2
       querystring: 0.2.1
+      sha.js: 2.4.11
       sillyname: 0.1.0
       uuid: 8.3.2
     devDependencies:
@@ -800,6 +809,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-client-previous': /@fluidframework/server-services-client/0.1040.1000
       '@microsoft/api-extractor': 7.36.0_@types+node@16.18.36
+      '@types/base64-js': 1.3.0
       '@types/debug': 4.1.8
       '@types/jsrsasign': 8.0.13
       '@types/jwt-decode': 2.2.1
@@ -1125,6 +1135,7 @@ importers:
       '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-telemetry-previous': npm:@fluidframework/server-services-telemetry@0.1040.1000
       '@types/mocha': ^10.0.1
       '@types/node': ^16.18.16
@@ -1144,6 +1155,7 @@ importers:
       uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/server-services-client': link:../services-client
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
@@ -5641,6 +5653,10 @@ packages:
 
   /@types/async/3.2.20:
     resolution: {integrity: sha512-6jSBQQugzyX1aWto0CbvOnmxrU9tMoXfA9gc4IrLEtvr3dTwSg5GLGoWiZnGLI6UG/kqpB3JOQKQrqnhUWGKQA==}
+    dev: true
+
+  /@types/base64-js/1.3.0:
+    resolution: {integrity: sha512-ZmI0sZGAUNXUfMWboWwi4LcfpoVUYldyN6Oe0oJ5cCsHDU/LlRq8nQKPXhYLOx36QYSW9bNIb1vvRrD6K7Llgw==}
     dev: true
 
   /@types/bluebird/3.5.38:

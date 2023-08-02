@@ -19,7 +19,6 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	IAudience,
 	IDeltaManager,
@@ -27,7 +26,8 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
-import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,

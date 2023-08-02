@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/server-services-client";
 import {
 	CommonProperties,
 	getLumberBaseProperties,

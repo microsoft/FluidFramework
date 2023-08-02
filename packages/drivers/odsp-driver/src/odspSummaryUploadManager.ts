@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";

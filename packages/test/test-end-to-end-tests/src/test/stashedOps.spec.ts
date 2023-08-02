@@ -29,7 +29,8 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";

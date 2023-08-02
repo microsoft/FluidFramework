@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/server-services-client";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
