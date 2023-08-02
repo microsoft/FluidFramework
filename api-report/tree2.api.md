@@ -598,6 +598,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
     readonly editor: TEditor;
+    // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairData: RepairData): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
