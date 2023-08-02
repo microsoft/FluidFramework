@@ -24,6 +24,7 @@ import {
 	ChangesetLocalId,
 	RepairDataHandler,
 	EmptyKey,
+	RepairDataBuilder,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -723,29 +724,32 @@ export class ModularChangeFamily
 			return new Map();
 		}
 
-		return this.intoDeltaImpl(change.fieldChanges, repairDataHandler);
+		const repairDataMarks = new Map<FieldKey, Delta.MarkList>();
+		const repairDataBuilder = {
+			handler: repairDataHandler,
+			marks: repairDataMarks,
+		};
+		const delta = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder);
+
+		repairDataBuilder.marks.forEach((marks, field) => delta.set(field, marks));
+
+		return delta;
 	}
 
 	/**
 	 * @param change - The change to convert into a delta.
-	 * @param repairStore - The store to query for repair data.
-	 * @param path - The path of the node being altered by the change as defined by the input context.
-	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
 	private intoDeltaImpl(
 		change: FieldChangeMap,
-		repairDataHandler: RepairDataHandler,
-	): Delta.Root {
+		repairDataBuilder: RepairDataBuilder,
+	): Map<FieldKey, Delta.MarkList> {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
 				(childChange): Delta.Modify =>
-					this.deltaFromNodeChange(childChange, repairDataHandler),
-				{
-					handler: repairDataHandler,
-					marks: delta,
-				},
+					this.deltaFromNodeChange(childChange, repairDataBuilder),
+				repairDataBuilder,
 			);
 			delta.set(field, deltaField);
 		}
@@ -754,14 +758,14 @@ export class ModularChangeFamily
 
 	private deltaFromNodeChange(
 		change: NodeChangeset,
-		repairDataHandler: RepairDataHandler,
+		repairDataBuilder: RepairDataBuilder,
 	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairDataHandler);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder);
 		}
 
 		return modify;

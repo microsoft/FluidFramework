@@ -102,7 +102,6 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 	repairDataFields: Map<ChangeAtomId, FieldKey>;
-	repairDataMarks: Map<FieldKey, Delta.MarkList>;
 } {
 	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = buildForest(schema);
@@ -130,7 +129,6 @@ function initializeEditableForest(data?: JsonableTree): {
 		changes,
 		deltas,
 		repairDataFields,
-		repairDataMarks: repairDataBuilder.marks,
 	};
 }
 
