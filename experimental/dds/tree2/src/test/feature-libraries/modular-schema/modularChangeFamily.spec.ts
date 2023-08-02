@@ -504,7 +504,7 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe("invert", () => {
+	describe.only("invert", () => {
 		const valueInverse1: ValueChangeset = { old: 1, new: 0 };
 		const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
@@ -519,6 +519,22 @@ describe("ModularChangeFamily", () => {
 				],
 			]),
 		};
+
+		function inverseChanges(
+			taggedChanges: TaggedChange<ModularChangeset>[],
+			repeat: number,
+			cache: boolean,
+		): Set<ModularChangeset> {
+			const inverses: Set<ModularChangeset> = new Set();
+
+			for (let i = 0; i < repeat; i++) {
+				for (const taggedChange of taggedChanges) {
+					inverses.add(family.invert(taggedChange, true, undefined, cache));
+				}
+			}
+
+			return inverses;
+		}
 
 		it("specific", () => {
 			const expectedInverse: ModularChangeset = {
@@ -550,6 +566,24 @@ describe("ModularChangeFamily", () => {
 				family.invert(makeAnonChange(rootChange1aGeneric), false),
 				expectedInverse,
 			);
+		});
+
+		it("cached", () => {
+			const taggedChanges = [rootChange1a, rootChange1b, rootChange2, rootChange3].map(
+				(change) => makeAnonChange(change),
+			);
+			const inverses = inverseChanges(taggedChanges, 3, true);
+
+			assert(inverses.size === taggedChanges.length);
+		});
+
+		it("not cached", () => {
+			const taggedChanges = [rootChange1a, rootChange1b, rootChange2, rootChange3].map(
+				(change) => makeAnonChange(change),
+			);
+			const inverses = inverseChanges(taggedChanges, 3, false);
+
+			assert(inverses.size === 3 * taggedChanges.length);
 		});
 	});
 
