@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { getFileLink } from "../getFileLink";
-import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
+import {
+	mockFetchSingle,
+	mockFetchMultiple,
+	okResponse,
+	notFound,
+	createResponse,
+} from "./mockFetch";
 
 describe("getFileLink", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -72,6 +78,55 @@ describe("getFileLink", () => {
 				);
 			}, notFound),
 			"File link should reject when not found",
+		);
+	});
+
+	it("should successfully retry", async () => {
+		const result = await mockFetchMultiple(
+			async () =>
+				getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId7" }, logger),
+			[
+				async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+				async () => okResponse({}, fileItemResponse),
+				async () => okResponse({}, { d: { directUrl: "sharelink" } }),
+			],
+		);
+		assert.strictEqual(
+			result,
+			"sharelink",
+			"File link should match url returned from sharing information",
+		);
+		// Should be present in cache now and subsequent calls should fetch from cache.
+		const sharelink2 = await getFileLink(
+			storageTokenFetcher,
+			{ siteUrl, driveId, itemId: "itemId7" },
+			logger,
+		);
+		assert.strictEqual(
+			sharelink2,
+			"sharelink",
+			"File link should match url returned from sharing information from cache",
+		);
+	});
+
+	it("should successfully give up after 5 tries", async () => {
+		await assert.rejects(
+			mockFetchMultiple(
+				async () =>
+					getFileLink(
+						storageTokenFetcher,
+						{ siteUrl, driveId, itemId: "itemId7" },
+						logger,
+					),
+				[
+					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+				],
+			),
+			"did not retries 5 times",
 		);
 	});
 });
