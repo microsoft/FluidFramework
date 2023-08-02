@@ -608,6 +608,9 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -1673,6 +1676,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -2329,17 +2333,6 @@ export class ContainerRuntime
 		return result;
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-		const internalId = uuid();
-		return channelToDataStore(
-			await this._createDataStore(pkg, internalId),
-			internalId,
-			this,
-			this.dataStores,
-			this.mc.logger,
-		);
-	}
-
 	public createDetachedRootDataStore(
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
@@ -2354,25 +2347,37 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, false);
 	}
 
+	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+		const id = uuid();
+		return channelToDataStore(
+			await this.dataStores
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				.realize(),
+			id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
+	}
+
+	/**
+	 * @deprecated 0.16 Issue #1537, #3631
+	 * @internal
+	 */
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
 		props?: any,
 		id = uuid(),
 	): Promise<IDataStore> {
-		const fluidDataStore = await this.dataStores
-			._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-			.realize();
-		return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-	}
-
-	private async _createDataStore(
-		pkg: string | string[],
-		id = uuid(),
-		props?: any,
-	): Promise<IFluidDataStoreChannel> {
-		return this.dataStores
-			._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-			.realize();
+		return channelToDataStore(
+			await this.dataStores
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
+				.realize(),
+			id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
 	}
 
 	private canSendOps() {
