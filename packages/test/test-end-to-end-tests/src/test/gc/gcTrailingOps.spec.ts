@@ -142,6 +142,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			assert(dataStoreTimestamp2 !== undefined, `Should have unreferenced datastore`);
 			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
 		});
+
 		itExpects(
 			`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
 				tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
@@ -181,10 +182,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer: mainSummarizer } = await createSummarizer(
 					provider,
 					mainContainer,
-					{
-						runtimeOptions: { gcOptions },
-						loaderProps: { configProvider },
-					},
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				);
 
 				// Make the datastore and blob live and unreferenced

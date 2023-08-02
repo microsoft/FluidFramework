@@ -94,10 +94,6 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
 		runtimeOf(dataObject).getRootDataStore(id, false /* wait */);
 
-	// Used in couple of tests because of the bug fixed by https://github.com/microsoft/FluidFramework/pull/15857
-	const getRootDataStoreCompat = async (dataObject: ITestFluidObject, id: string, wait = true) =>
-		runtimeOf(dataObject).getRootDataStore(id, wait);
-
 	describe("Legacy APIs", () => {
 		beforeEach(async () => setupContainers(testContainerConfig));
 		afterEach(async () => reset());
@@ -330,7 +326,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
 
 			await provider.ensureSynchronized();
-			assert.ok(await getRootDataStoreCompat(dataObject3, alias));
+			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
 		});
 
 		it(
@@ -394,7 +390,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				const aliasResult3 = await ds3.trySetAlias(alias);
 
 				assert.equal(aliasResult3, "Conflict");
-				assert.ok(await getRootDataStoreCompat(dataObject3, alias));
+				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
 			},
 		);
 
