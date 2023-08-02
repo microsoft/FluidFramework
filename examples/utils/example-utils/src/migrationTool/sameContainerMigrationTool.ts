@@ -291,6 +291,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// * The summaryAcks aren't inspectable after they've been processed
 		// * The quorum eventing makes it challenging to understand state when proposals are racing.
 
+		// NOTE: awaiting container here could result in missed events since ops may be processed while waiting for the container to load
+		// TODO: consider adding asserts to verify container state after loading as outlined in Task 5058
+		const container = await this._containerP;
+
 		this._pendingP = new Promise<void>((resolve) => {
 			if (
 				this.pactMap.get(newVersionKey) !== undefined ||
@@ -360,7 +364,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._anyQuorumProposalSeenP = new Promise<void>((resolve) => {
-			const container = await this._containerP;
 			const watchForCodeDetailsProposed = () => {
 				container.off("codeDetailsProposed", watchForCodeDetailsProposed);
 				this._anyQuorumProposalSeen = true;
@@ -372,7 +375,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._quorumApprovalCompleteP = new Promise<void>((resolve) => {
-			const container = await this._containerP;
 			const watchForApproveProposal = () => {
 				container.off("approveProposal", watchForApproveProposal);
 				this._quorumApprovalComplete = true;
