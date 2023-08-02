@@ -49,7 +49,7 @@ export function fieldSchema(
  */
 export interface TreeSchemaBuilder {
 	readonly structFields?: { [key: string]: FieldStoredSchema };
-	readonly mapFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 	readonly leafValue?: ValueSchema;
 }
 

@@ -533,9 +533,6 @@ export interface EditDescription {
 }
 
 // @alpha
-export const emptyField: FieldStoredSchema;
-
-// @alpha
 export const EmptyKey: FieldKey;
 
 // @alpha
@@ -935,6 +932,9 @@ declare namespace InternalTypedSchemaTypes {
         NormalizeStructFields,
         NormalizeField,
         Fields,
+        StructSchemaSpecification,
+        MapSchemaSpecification,
+        LeafSchemaSpecification,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1123,7 +1123,7 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 // @alpha (undocumented)
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
     // (undocumented)
-    readonly mapFields: IFieldSchema;
+    readonly mapFields?: IFieldSchema;
     // (undocumented)
     readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
 }
@@ -1157,20 +1157,20 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 export const jsonArray: TreeSchema<"Json.Array", {
 structFields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
-value: ValueSchema.Number;
+leafValue: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
-value: ValueSchema.String;
+leafValue: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
 structFields: {};
 }>, TreeSchema<"Json.Boolean", {
-value: ValueSchema.Boolean;
+leafValue: ValueSchema.Boolean;
 }>]>;
 };
 }>;
 
 // @alpha (undocumented)
 export const jsonBoolean: TreeSchema<"Json.Boolean", {
-value: ValueSchema.Boolean;
+leafValue: ValueSchema.Boolean;
 }>;
 
 // @alpha
@@ -1193,7 +1193,7 @@ structFields: {};
 
 // @alpha (undocumented)
 export const jsonNumber: TreeSchema<"Json.Number", {
-value: ValueSchema.Number;
+leafValue: ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
@@ -1201,23 +1201,23 @@ export const jsonObject: TreeSchema<"Json.Object", {
 mapFields: FieldSchema<Optional, [any, () => TreeSchema<"Json.Array", {
 structFields: {
 "": FieldSchema<Sequence, [any, any, TreeSchema<"Json.Number", {
-value: ValueSchema.Number;
+leafValue: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
-value: ValueSchema.String;
+leafValue: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
 structFields: {};
 }>, TreeSchema<"Json.Boolean", {
-value: ValueSchema.Boolean;
+leafValue: ValueSchema.Boolean;
 }>]>;
 };
 }>, TreeSchema<"Json.Number", {
-value: ValueSchema.Number;
+leafValue: ValueSchema.Number;
 }>, TreeSchema<"Json.String", {
-value: ValueSchema.String;
+leafValue: ValueSchema.String;
 }>, TreeSchema<"Json.Null", {
 structFields: {};
 }>, TreeSchema<"Json.Boolean", {
-value: ValueSchema.Boolean;
+leafValue: ValueSchema.Boolean;
 }>]>;
 }>;
 
@@ -1226,7 +1226,7 @@ export const jsonSchema: SchemaLibrary;
 
 // @alpha (undocumented)
 export const jsonString: TreeSchema<"Json.String", {
-value: ValueSchema.String;
+leafValue: ValueSchema.String;
 }>;
 
 // @alpha
@@ -1239,6 +1239,12 @@ type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @alpha
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
+
+// @alpha
+interface LeafSchemaSpecification {
+    // (undocumented)
+    readonly leafValue: ValueSchema;
+}
 
 // @alpha
 export enum LocalCommitSource {
@@ -1255,6 +1261,12 @@ export const localNodeKeySymbol: unique symbol;
 
 // @alpha
 interface MakeNominal {
+}
+
+// @alpha
+interface MapSchemaSpecification {
+    // (undocumented)
+    readonly mapFields: FieldSchema;
 }
 
 // @alpha
@@ -1401,7 +1413,7 @@ export interface NodeExistsConstraint {
 // @alpha
 export const nodeKeyField: {
     __n_id__: FieldSchema<NodeKeyFieldKind, [TreeSchema<TreeSchemaIdentifier, {
-    value: ValueSchema.String;
+    leafValue: ValueSchema.String;
     }>]>;
 };
 
@@ -1644,7 +1656,7 @@ export class SchemaBuilder {
     intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<FieldSchema<Kind, Types>>;
     intoLibrary(): SchemaLibrary;
     leaf<Name extends string, T extends ValueSchema>(name: Name, t: T): TreeSchema<Name, {
-        value: T;
+        leafValue: T;
     }>;
     map<Name extends string, T extends FieldSchema>(name: Name, fieldSchema: T): TreeSchema<Name, {
         mapFields: T;
@@ -1827,6 +1839,12 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
     update(newSchema: SchemaData): void;
 }
 
+// @alpha
+interface StructSchemaSpecification {
+    // (undocumented)
+    readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
+}
+
 // @alpha (undocumented)
 export interface TaggedChange<TChangeset> {
     // (undocumented)
@@ -1885,7 +1903,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
-    readonly mapFields: FieldSchema;
+    readonly mapFields?: FieldSchema;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)
@@ -1893,7 +1911,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly structFieldsObject: NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
     // (undocumented)
-    readonly value: WithDefault<Assume<T, TreeSchemaSpecification>["value"], ValueSchema.Nothing>;
+    readonly value: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], ValueSchema.Nothing>;
 }
 
 // @alpha
@@ -1901,7 +1919,7 @@ export interface TreeSchemaBuilder {
     // (undocumented)
     readonly leafValue?: ValueSchema;
     // (undocumented)
-    readonly mapFields: FieldStoredSchema;
+    readonly mapFields?: FieldStoredSchema;
     // (undocumented)
     readonly structFields?: {
         [key: string]: FieldStoredSchema;
@@ -1912,18 +1930,13 @@ export interface TreeSchemaBuilder {
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
 // @alpha
-interface TreeSchemaSpecification {
-    // (undocumented)
-    readonly mapFields?: FieldSchema;
-    // (undocumented)
-    readonly structFields?: RestrictiveReadonlyRecord<string, FieldSchema>;
-    // (undocumented)
-    readonly value?: ValueSchema;
-}
+type TreeSchemaSpecification = [
+FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
+][_InlineTrick];
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
-    readonly mapFields: FieldStoredSchema;
+    readonly mapFields?: FieldStoredSchema;
     readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
     readonly value: ValueSchema;
 }

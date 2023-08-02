@@ -26,9 +26,10 @@ import {
 	InMemoryStoredSchemaRepository,
 	TreeSchemaIdentifier,
 	treeSchema,
+	storedEmptyFieldSchema,
 } from "../../../core";
 import { brand } from "../../../util";
-import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
 
 describe("Schema Comparison", () => {
 	/**
@@ -63,35 +64,30 @@ describe("Schema Comparison", () => {
 
 	const neverTree2: TreeStoredSchema = {
 		structFields: new Map([[brand("x"), neverField]]),
-		mapFields: emptyField,
 		value: ValueSchema.Serializable,
 	};
 
 	const emptyTree: NamedTreeSchema = {
 		name: brand("empty"),
 		structFields: emptyMap,
-		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
 	const emptyLocalFieldTree: NamedTreeSchema = {
 		name: brand("emptyLocalFieldTree"),
-		structFields: new Map([[brand("x"), emptyField]]),
-		mapFields: emptyField,
+		structFields: new Map([[brand("x"), storedEmptyFieldSchema]]),
 		value: ValueSchema.Nothing,
 	};
 
 	const optionalLocalFieldTree: NamedTreeSchema = {
 		name: brand("optionalLocalFieldTree"),
 		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
-		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
 	const valueLocalFieldTree: NamedTreeSchema = {
 		name: brand("valueLocalFieldTree"),
 		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.value, [emptyTree.name])]]),
-		mapFields: emptyField,
 		value: ValueSchema.Nothing,
 	};
 
@@ -117,7 +113,7 @@ describe("Schema Comparison", () => {
 		updateTreeSchema(repo, brand("never"), neverTree);
 		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, emptyField), false);
+		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), true);
 		updateTreeSchema(repo, brand("empty"), emptyTree);
@@ -150,7 +146,6 @@ describe("Schema Comparison", () => {
 		assert.equal(
 			isNeverTree(defaultSchemaPolicy, repo, {
 				structFields: emptyMap,
-				mapFields: emptyField,
 				value: ValueSchema.Nothing,
 			}),
 			false,
@@ -239,19 +234,22 @@ describe("Schema Comparison", () => {
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [
 			neverField,
-			emptyField,
+			storedEmptyFieldSchema,
 			optionalEmptyTreeField,
 			optionalAnyField,
 			anyField,
 		]);
 		testOrder(compare, [neverField, valueEmptyTreeField, valueAnyField, anyField]);
-		assert.equal(getOrdering(valueEmptyTreeField, emptyField, compare), Ordering.Incomparable);
+		assert.equal(
+			getOrdering(valueEmptyTreeField, storedEmptyFieldSchema, compare),
+			Ordering.Incomparable,
+		);
 		testPartialOrder(
 			compare,
 			[
 				neverField,
 				neverField2,
-				emptyField,
+				storedEmptyFieldSchema,
 				anyField,
 				valueEmptyTreeField,
 				valueAnyField,

@@ -126,7 +126,6 @@ export {
 export {
 	buildForest,
 	ChangesetLocalId,
-	emptyField,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,

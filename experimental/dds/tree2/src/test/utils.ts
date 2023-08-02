@@ -43,7 +43,6 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	emptyField,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
@@ -850,6 +849,6 @@ export function defaultRevisionMetadataFromChanges(
 export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<string>): NamedTreeSchema {
 	return {
 		name: brand(data.name),
-		...treeSchema({ mapFields: emptyField, ...data }),
+		...treeSchema({ ...data }),
 	};
 }
