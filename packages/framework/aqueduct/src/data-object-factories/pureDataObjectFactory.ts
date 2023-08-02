@@ -74,9 +74,10 @@ async function createDataObject<
 		runtimeClass,
 	);
 
-	// Create a new runtime for our data store
+	// Create a new runtime for our data store, as if via new FluidDataStoreRuntime,
+	// but using the runtimeClass that's been augmented with mixins
 	// The runtime is what Fluid uses to create DDS' and route to your data store
-	const runtime: FluidDataStoreRuntime = new runtimeClass(
+	const runtime: FluidDataStoreRuntime = new runtimeClass( // calls new FluidDataStoreRuntime(...)
 		context,
 		sharedObjectRegistry,
 		existing,

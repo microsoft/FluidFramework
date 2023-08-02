@@ -83,6 +83,7 @@ describe("Routerlicious", () => {
 					);
 					Sinon.useFakeTimers();
 					const testFetchTenantKeyMetricIntervalMs = 60000;
+					const testRiddlerStorageRequestMetricIntervalMs = 60000;
 
 					app = riddlerApp.create(
 						testCollectionName,
@@ -93,6 +94,7 @@ describe("Routerlicious", () => {
 						testIntHistorianUrl,
 						testSecretManager,
 						testFetchTenantKeyMetricIntervalMs,
+						testRiddlerStorageRequestMetricIntervalMs,
 					);
 					supertest = request(app);
 				});
