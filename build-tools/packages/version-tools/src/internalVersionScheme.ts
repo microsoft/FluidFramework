@@ -196,9 +196,11 @@ export function validateVersionScheme(
 		}
 	}
 
+	console.log({ parsedVersion });
+
 	if (parsedVersion.major < MINIMUM_PUBLIC_MAJOR) {
 		throw new Error(
-			`The public major version must be >= ${MINIMUM_PUBLIC_MAJOR}; found ${parsedVersion.major}`,
+			`The public major version must be >= ${MINIMUM_PUBLIC_MAJOR}; found ${parsedVersion.major} Rishhi`,
 		);
 	}
 
