@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { createFluidObjectResponse } from "@fluidframework/request-handler";
 
 export type SupportedExportInterfaces = Partial<
 	IProvideRuntimeFactory &
@@ -67,7 +68,10 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 					const innerRequestHandler = async (
 						request: IRequest,
 						runtime: IContainerRuntimeBase,
-					) => runtime.IFluidHandleContext.resolveHandle(request);
+					) =>
+						createFluidObjectResponse(
+							await runtime.IFluidHandleContext.resolveHandle(request.url),
+						);
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,

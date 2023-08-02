@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
 	IFluidHandle,
 	IFluidHandleContext,
@@ -13,11 +12,7 @@ import {
 	FluidObject,
 	IFluidRouter,
 } from "@fluidframework/core-interfaces";
-import {
-	create404Response,
-	exceptionToResponse,
-	responseToException,
-} from "@fluidframework/runtime-utils";
+import { create404Response, exceptionToResponse } from "@fluidframework/runtime-utils";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
@@ -57,20 +52,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 
 	public async get(): Promise<any> {
 		if (this.objectP === undefined) {
-			// Add `viaHandle` header to distinguish from requests from non-handle paths.
-			const request: IRequest = {
-				url: this.absolutePath,
-				headers: { [RuntimeHeaders.viaHandle]: true },
-			};
-			this.objectP = this.routeContext
-				.resolveHandle(request)
-				.then<FluidObject>((response) => {
-					if (response.mimeType === "fluid/object") {
-						const fluidObject: FluidObject = response.value;
-						return fluidObject;
-					}
-					throw responseToException(response, request);
-				});
+			this.objectP = this.routeContext.resolveHandle(this.absolutePath);
 		}
 		return this.objectP;
 	}

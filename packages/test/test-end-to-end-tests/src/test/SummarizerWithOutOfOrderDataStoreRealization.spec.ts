@@ -127,7 +127,11 @@ const dataStoreFactory2 = new DataObjectFactory(
 	createDataStoreRuntime(),
 );
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
+	runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+		status: 200,
+		mimeType: "fluid/object",
+		value,
+	}));
 
 const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],

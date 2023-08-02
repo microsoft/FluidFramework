@@ -57,12 +57,12 @@ import {
 	generateHandleContextPath,
 	RequestParser,
 	SummaryTreeBuilder,
-	create404Response,
-	createResponseError,
-	exceptionToResponse,
 	GCDataBuilder,
 	requestFluidObject,
 	unpackChildNodesUsedRoutes,
+	responseToException,
+	create404Response,
+	exceptionToResponse,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -379,41 +379,44 @@ export class FluidDataStoreRuntime
 		this.removeAllListeners();
 	}
 
-	public async resolveHandle(request: IRequest): Promise<IResponse> {
-		return this.request(request);
+	public async resolveHandle(path: string): Promise<FluidObject> {
+		const request: IRequest = { url: path };
+		const parser = RequestParser.create(request);
+		const id = parser.pathParts[0];
+
+		if (id === "_channels" || id === "_custom") {
+			return this.resolveHandle(parser.createSubRequest(1).url);
+		}
+
+		// Check for a data type reference first
+		if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const value = await this.contextsDeferred.get(id)!.promise;
+				const channel: FluidObject = await value.getChannel();
+
+				if (channel !== undefined) {
+					return channel;
+				}
+			} catch (error) {
+				this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+
+				throw error;
+			}
+		}
+		// Otherwise defer to an attached request handler
+		throw responseToException(create404Response(request), request);
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
-			const parser = RequestParser.create(request);
-			const id = parser.pathParts[0];
-
-			if (id === "_channels" || id === "_custom") {
-				return this.request(parser.createSubRequest(1));
-			}
-
-			// Check for a data type reference first
-			if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
-				try {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const value = await this.contextsDeferred.get(id)!.promise;
-					const channel = await value.getChannel();
-
-					return { mimeType: "fluid/object", status: 200, value: channel };
-				} catch (error) {
-					this.mc.logger.sendErrorEvent(
-						{ eventName: "GetChannelFailedInRequest" },
-						error,
-					);
-
-					return createResponseError(500, `Failed to get Channel: ${error}`, request);
-				}
-			}
-
-			// Otherwise defer to an attached request handler
-			return create404Response(request);
-		} catch (error) {
-			return exceptionToResponse(error);
+			return {
+				status: 200,
+				mimeType: "fuild/object",
+				value: await this.resolveHandle(request.url),
+			};
+		} catch (e) {
+			return exceptionToResponse(e);
 		}
 	}
 

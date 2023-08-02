@@ -331,6 +331,8 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 * the component's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	resolveHandle(path: string): Promise<FluidObject>;
 }
 
 export type CreateChildSummarizerNodeFn = (

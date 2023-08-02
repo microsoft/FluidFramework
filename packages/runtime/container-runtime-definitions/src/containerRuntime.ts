@@ -5,7 +5,7 @@
 
 import { IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import { IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -90,5 +90,5 @@ export interface IContainerRuntime
 	 * Resolves handle URI
 	 * @param request - request to resolve
 	 */
-	resolveHandle(request: IRequest): Promise<IResponse>;
+	resolveHandle(path: string): Promise<FluidObject>;
 }

@@ -317,7 +317,11 @@ export async function setUpLocalServerTestSharedTree(
 	}
 	const registry: ChannelFactoryRegistry = [[treeId, factory]];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: 'fluid/object',
+			value,
+		}));
 
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(

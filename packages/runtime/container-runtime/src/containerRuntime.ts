@@ -110,6 +110,7 @@ import {
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
+	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -1721,24 +1722,24 @@ export class ContainerRuntime
 	 * Resolves URI representing handle
 	 * @param request - Request made to the handler.
 	 */
-	public async resolveHandle(request: IRequest): Promise<IResponse> {
+	public async resolveHandle(
+		path: string,
+		options?: { [AllowTombstoneRequestHeaderKey]?: boolean },
+	): Promise<FluidObject> {
+		const request: IRequest = { url: path, headers: options };
 		try {
 			const requestParser = RequestParser.create(request);
 			const id = requestParser.pathParts[0];
 
 			if (id === "_channels") {
-				return this.resolveHandle(requestParser.createSubRequest(1));
+				return this.resolveHandle(requestParser.createSubRequest(1).url, options);
 			}
 
 			if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-				return blob
-					? {
-							status: 200,
-							mimeType: "fluid/object",
-							value: blob,
-					  }
-					: create404Response(request);
+				if (blob) {
+					return blob;
+				}
 			} else if (requestParser.pathParts.length > 0) {
 				const dataStore = await this.getDataStoreFromRequest(id, request);
 				const subRequest = requestParser.createSubRequest(1);
@@ -1748,13 +1749,12 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.IFluidRouter.request(subRequest);
+				return dataStore.resolveHandle(subRequest.url);
 			}
-
-			return create404Response(request);
 		} catch (error) {
-			return exceptionToResponse(error);
+			throw responseToException(exceptionToResponse(error), request);
 		}
+		throw responseToException(create404Response(request), request);
 	}
 
 	/**
@@ -1769,7 +1769,10 @@ export class ContainerRuntime
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
 
-	private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+	private async getDataStoreFromRequest(
+		id: string,
+		request: IRequest,
+	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
 			headerData.wait = request.headers[RuntimeHeaders.wait];

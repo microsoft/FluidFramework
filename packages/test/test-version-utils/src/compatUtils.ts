@@ -109,7 +109,11 @@ export async function getVersionedTestObjectProviderFromApis(
 		apis.driver,
 	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {

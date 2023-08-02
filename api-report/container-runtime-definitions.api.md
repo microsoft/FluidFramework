@@ -19,8 +19,6 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
@@ -42,7 +40,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
-    resolveHandle(request: IRequest): Promise<IResponse>;
+    resolveHandle(path: string): Promise<FluidObject>;
     // (undocumented)
     readonly scope: FluidObject;
     // (undocumented)

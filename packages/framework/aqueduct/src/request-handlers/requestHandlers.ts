@@ -6,8 +6,16 @@
 import { FluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
-import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
+import {
+	RuntimeRequestHandler,
+	buildRuntimeRequestHandler,
+	createFluidObjectResponse,
+} from "@fluidframework/request-handler";
+import {
+	RequestParser,
+	create404Response,
+	exceptionToResponse,
+} from "@fluidframework/runtime-utils";
 
 /**
  * A mountable view is only required if the view needs to be mounted across a bundle boundary.  Mounting across
@@ -61,13 +69,19 @@ export const mountableViewRequestHandler = (
  * @param defaultRootId - optional default root data store ID to pass request in case request is empty.
  */
 export const defaultRouteRequestHandler = (defaultRootId: string) => {
-	return async (request: IRequest, runtime: IContainerRuntime) => {
+	return async (
+		request: IRequest,
+		runtime: IContainerRuntime,
+	): Promise<IResponse | undefined> => {
 		const parser = RequestParser.create(request);
 		if (parser.pathParts.length === 0) {
-			return runtime.IFluidHandleContext.resolveHandle({
-				url: `/${defaultRootId}${parser.query}`,
-				headers: request.headers,
-			});
+			try {
+				return createFluidObjectResponse(
+					runtime.IFluidHandleContext.resolveHandle(`/${defaultRootId}${parser.query}`),
+				);
+			} catch (e) {
+				return exceptionToResponse(e);
+			}
 		}
 		return undefined; // continue search
 	};

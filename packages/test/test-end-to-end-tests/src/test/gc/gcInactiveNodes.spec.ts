@@ -136,7 +136,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				defaultDataStore._root.delete("dataStore1");
 				dataObject._root.set("key", "value2");
 				await provider.ensureSynchronized();
-				await summarizerRuntime.resolveHandle({ url });
+				await summarizerRuntime.resolveHandle(url);
 
 				// Summarize and validate that no unreferenced errors were logged.
 				await summarize(summarizerRuntime);
@@ -149,7 +149,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				dataObject._root.set("key", "value");
 				await provider.ensureSynchronized();
 				// Load the data store and validate that we get loadedEvent.
-				await summarizerRuntime.resolveHandle({ url });
+				await summarizerRuntime.resolveHandle(url);
 				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[

@@ -109,7 +109,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    resolveHandle(request: IRequest): Promise<IResponse>;
+    resolveHandle(path: string): Promise<FluidObject>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)

@@ -471,7 +471,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    resolveHandle(request: IRequest): Promise<IResponse>;
+    resolveHandle(path: string): Promise<FluidObject>;
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
     // (undocumented)

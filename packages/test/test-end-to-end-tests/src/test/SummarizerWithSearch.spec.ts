@@ -251,7 +251,11 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 	const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],

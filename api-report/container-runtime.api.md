@@ -189,7 +189,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
-    resolveHandle(request: IRequest): Promise<IResponse>;
+    resolveHandle(path: string, options?: {
+        [AllowTombstoneRequestHeaderKey]?: boolean;
+    }): Promise<FluidObject>;
     // @deprecated (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, contents: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)

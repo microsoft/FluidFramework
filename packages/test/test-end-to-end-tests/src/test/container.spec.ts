@@ -283,7 +283,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+				status: 200,
+				mimeType: "fluid/object",
+				value,
+			}));
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
 				innerRequestHandler,
@@ -375,7 +379,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
 	it("can control op processing with connect() and disconnect()", async () => {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+				status: 200,
+				mimeType: "fluid/object",
+				value,
+			}));
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {}, [
 				innerRequestHandler,

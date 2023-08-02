@@ -122,17 +122,15 @@ async function validateDataStoreLoad(
 	dataStoreId: string,
 	referenced: boolean,
 ) {
-	const response = await containerRuntime.resolveHandle({
-		url: `/${dataStoreId}`,
-		headers: { wait: false },
-	});
 	// If deleteContent is true, unreferenced data stores are deleted after GC runs. So, we should
 	// get a 404 response. Otherwise, we should get a 200.
-	const expectedStatus = deleteContent && !referenced ? 404 : 200;
-	assert(
-		response.status === expectedStatus,
-		`Data store ${dataStoreId} ${referenced ? "should" : "should not"} have loaded`,
-	);
+	const expectedFailure = deleteContent && !referenced;
+	try {
+		await containerRuntime.resolveHandle(`/${dataStoreId}`);
+		assert(!expectedFailure, `Data store ${dataStoreId}  should not have loaded`);
+	} catch (e) {
+		assert(expectedFailure, `Data store ${dataStoreId} should" have loaded`);
+	}
 }
 
 /**

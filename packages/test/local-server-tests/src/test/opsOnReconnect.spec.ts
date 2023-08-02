@@ -63,7 +63,11 @@ describe("Ops on Reconnect", () => {
 		const defaultFactory = createDataStoreFactory("default", factory);
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+				status: 200,
+				mimeType: "fluid/object",
+				value,
+			}));
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 			defaultFactory,
 			[

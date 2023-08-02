@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "./fluidRouter";
 import { IFluidLoadable } from "./fluidLoadable";
 import { FluidObject } from "./provider";
 
@@ -38,7 +37,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	 */
 	attachGraph(): void;
 
-	resolveHandle(request: IRequest): Promise<IResponse>;
+	resolveHandle(path: string): Promise<FluidObject>;
 }
 
 export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";

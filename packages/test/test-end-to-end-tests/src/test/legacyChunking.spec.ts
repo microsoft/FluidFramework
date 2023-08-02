@@ -39,7 +39,11 @@ describeInstallVersions(
 	afterEach(async () => provider.reset());
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

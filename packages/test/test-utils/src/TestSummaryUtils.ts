@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { createFluidObjectResponse } from "@fluidframework/request-handler";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
@@ -88,7 +89,7 @@ export async function createSummarizerFromFactory(
 	configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		createFluidObjectResponse(await runtime.IFluidHandleContext.resolveHandle(request.url));
 	const runtimeFactory = new containerRuntimeFactoryType(
 		dataStoreFactory,
 		registryEntries ?? [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],

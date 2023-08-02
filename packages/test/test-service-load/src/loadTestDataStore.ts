@@ -752,7 +752,11 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory(
 );
 
 const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
+	runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+		status: 200,
+		mimeType: "fluid/object",
+		value,
+	}));
 
 export const createFluidExport = (options: IContainerRuntimeOptions) =>
 	new ContainerRuntimeFactoryWithDefaultDataStore(

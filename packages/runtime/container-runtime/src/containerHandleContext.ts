@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -36,7 +36,7 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 
-	public async resolveHandle(request: IRequest): Promise<IResponse> {
-		return this.runtime.resolveHandle(request);
+	public async resolveHandle(path: string): Promise<FluidObject> {
+		return this.runtime.resolveHandle(path);
 	}
 }

@@ -223,6 +223,8 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
+    // (undocumented)
+    resolveHandle(path: string): Promise<FluidObject>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;

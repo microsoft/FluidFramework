@@ -733,8 +733,8 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public async resolveHandle(request: IRequest): Promise<IResponse> {
-		return this.request(request);
+	public async resolveHandle(path: string): Promise<FluidObject> {
+		throw Error("not implemented");
 	}
 
 	public async request(request: IRequest): Promise<IResponse> {

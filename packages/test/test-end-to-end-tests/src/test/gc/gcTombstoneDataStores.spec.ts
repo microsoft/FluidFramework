@@ -635,21 +635,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				);
 
 				// This demonstrates how a consumer could then fetch the tombstoned object to facilitate recovery (actual revival is covered in another test below)
-				const tombstoneSuccessResponse = await (
+				const tombstoneDataStore = await (
 					dataObject._context.containerRuntime as ContainerRuntime
-				).resolveHandle({
-					url: unreferencedId,
-					headers: { [AllowTombstoneRequestHeaderKey]: true },
-				});
-				assert.equal(
-					tombstoneSuccessResponse.status,
-					200,
-					"Should be able to retrieve a tombstoned datastore given the allowTombstone header",
-				);
+				).resolveHandle(unreferencedId, { [AllowTombstoneRequestHeaderKey]: true });
 				assert.notEqual(
-					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
-					true,
-					"DID NOT Expect tombstone header to be set on the response",
+					tombstoneDataStore,
+					undefined,
+					"Should be able to retrieve a tombstoned datastore given the allowTombstone header",
 				);
 			},
 		);

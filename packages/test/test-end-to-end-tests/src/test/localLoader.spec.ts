@@ -117,7 +117,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		factory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+				status: 200,
+				mimeType: "fluid/object",
+				value,
+			}));
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 			factory,
 			[[factory.type, Promise.resolve(factory)]],
@@ -145,7 +149,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 		factory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
 		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
+			runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+				status: 200,
+				mimeType: "fluid/object",
+				value,
+			}));
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 			factory,
 			[[factory.type, Promise.resolve(factory)]],

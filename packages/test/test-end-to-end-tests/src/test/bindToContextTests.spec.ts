@@ -93,7 +93,11 @@ describeFullCompat("bindToContext tests", (getTestObjectProvider, apis) => {
 
 	let provider: ITestObjectProvider;
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 
 	beforeEach(() => {
 		provider = getTestObjectProvider();

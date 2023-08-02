@@ -57,7 +57,11 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		},
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 		dataObjectFactory,
 		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],

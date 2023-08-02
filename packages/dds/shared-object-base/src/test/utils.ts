@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response, responseToException } from "@fluidframework/runtime-utils";
 
 export class MockHandleContext implements IFluidHandleContext {
 	public isAttached = false;
@@ -22,8 +22,9 @@ export class MockHandleContext implements IFluidHandleContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async resolveHandle(request: IRequest) {
-		return create404Response(request);
+	public async resolveHandle(path: string): Promise<FluidObject> {
+		const request = { url: path };
+		throw responseToException(create404Response(request), request);
 	}
 }
 

@@ -121,7 +121,11 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	let container: IContainer;
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 		testSharedDataObjectFactory1,

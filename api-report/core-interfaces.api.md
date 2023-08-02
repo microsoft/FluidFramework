@@ -68,7 +68,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     attachGraph(): void;
     readonly isAttached: boolean;
     // (undocumented)
-    resolveHandle(request: IRequest): Promise<IResponse>;
+    resolveHandle(path: string): Promise<FluidObject>;
     readonly routeContext?: IFluidHandleContext;
 }
 

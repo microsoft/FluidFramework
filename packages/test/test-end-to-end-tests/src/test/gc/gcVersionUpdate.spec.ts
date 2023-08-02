@@ -56,7 +56,11 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	};
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request.url).then((value) => ({
+			status: 200,
+			mimeType: "fluid/object",
+			value,
+		}));
 
 	const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
 		dataObjectFactory,
