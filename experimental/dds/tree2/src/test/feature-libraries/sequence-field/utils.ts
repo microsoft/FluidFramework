@@ -11,14 +11,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import {
-	ChangesetLocalId,
-	Delta,
-	TaggedChange,
-	makeAnonChange,
-	tagChange,
-	unsupportedRepairDataHandler,
-} from "../../../core";
+import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertMarkListEqual,
@@ -27,6 +20,7 @@ import {
 	fakeTaggedRepair as fakeRepair,
 } from "../../utils";
 import { brand, fail } from "../../../util";
+import { makeRepairDataBuilder } from "../repairDataTestUtils";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -170,9 +164,12 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
+	const {
+		repairDataBuilder: { handler, marks },
+	} = makeRepairDataBuilder();
 	return SF.sequenceFieldToDelta(change, TestChange.toDelta, {
-		handler: unsupportedRepairDataHandler,
-		marks: new Map(),
+		handler,
+		marks,
 	});
 }
 

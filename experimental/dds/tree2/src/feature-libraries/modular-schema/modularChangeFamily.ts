@@ -718,13 +718,16 @@ export class ModularChangeFamily
 		anchors.applyDelta(this.intoDelta(over, () => EmptyKey));
 	}
 
-	public intoDelta(change: ModularChangeset, repairDataHandler: RepairDataHandler): Delta.Root {
+	public intoDelta(
+		change: ModularChangeset,
+		repairDataHandler: RepairDataHandler,
+		repairDataMarks = new Map<FieldKey, Delta.MarkList>(),
+	): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
-		const repairDataMarks = new Map<FieldKey, Delta.MarkList>();
 		const repairDataBuilder = {
 			handler: repairDataHandler,
 			marks: repairDataMarks,

@@ -30,6 +30,7 @@ import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { jsonNumber } from "../../domains";
+import { makeRepairDataBuilder } from "./repairDataTestUtils";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[FieldKinds.sequence].map((f) => [f.identifier, f]),
@@ -62,12 +63,15 @@ describe("ModularChangeFamily integration", () => {
 			editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
 			const [move, remove, expected] = getChanges();
 			const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
-			const rebasedDelta = normalizeDelta(
-				family.intoDelta(rebased, unsupportedRepairDataHandler),
-			);
-			const expectedDelta = normalizeDelta(
-				family.intoDelta(expected, unsupportedRepairDataHandler),
-			);
+
+			const {
+				repairDataBuilder: { handler: rebasedHandler },
+			} = makeRepairDataBuilder();
+			const rebasedDelta = normalizeDelta(family.intoDelta(rebased, rebasedHandler));
+			const {
+				repairDataBuilder: { handler: expectedHandler },
+			} = makeRepairDataBuilder();
+			const expectedDelta = normalizeDelta(family.intoDelta(expected, expectedHandler));
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
