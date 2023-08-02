@@ -170,7 +170,10 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, unsupportedRepairDataHandler);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta, {
+		handler: unsupportedRepairDataHandler,
+		marks: new Map(),
+	});
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

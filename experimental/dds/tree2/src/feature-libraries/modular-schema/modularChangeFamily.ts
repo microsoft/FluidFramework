@@ -742,7 +742,10 @@ export class ModularChangeFamily
 				fieldChange.change,
 				(childChange): Delta.Modify =>
 					this.deltaFromNodeChange(childChange, repairDataHandler),
-				repairDataHandler,
+				{
+					handler: repairDataHandler,
+					marks: delta,
+				},
 			);
 			delta.set(field, deltaField);
 		}

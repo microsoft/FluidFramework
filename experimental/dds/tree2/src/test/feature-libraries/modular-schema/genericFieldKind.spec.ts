@@ -403,12 +403,8 @@ describe("Generic FieldKind", () => {
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-		const { repairData, repairDataHandler } = makeRepairDataHandler();
-		const actual = genericFieldKind.changeHandler.intoDelta(
-			input,
-			childToDelta,
-			repairDataHandler,
-		);
+		const { repairData } = makeRepairDataHandler();
+		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, repairData);
 		assert.deepEqual(actual, expected);
 		assert.deepEqual(repairData, new Map());
 	});

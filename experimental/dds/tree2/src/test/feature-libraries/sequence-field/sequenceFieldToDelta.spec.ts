@@ -12,7 +12,6 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 	ChangesetLocalId,
-	RepairDataHandler,
 	unsupportedRepairDataHandler,
 } from "../../../core";
 import {
@@ -47,24 +46,23 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
-function toDelta(change: TestChangeset, repairDataHandler?: RepairDataHandler): Delta.MarkList {
+function toDelta(
+	change: TestChangeset,
+	repairData = { handler: unsupportedRepairDataHandler, marks: new Map() },
+): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(
-		change,
-		TestChange.toDelta,
-		repairDataHandler ?? unsupportedRepairDataHandler,
-	);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta, repairData);
 }
 
 function toDeltaShallow(
 	change: TestChangeset,
-	repairDataHandler?: RepairDataHandler,
+	repairData = { handler: unsupportedRepairDataHandler, marks: new Map() },
 ): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
 		change,
 		() => fail("Unexpected call to child ToDelta"),
-		repairDataHandler ?? unsupportedRepairDataHandler,
+		repairData,
 	);
 }
 
@@ -140,8 +138,8 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
-		const { repairData, repairDataHandler } = makeRepairDataHandler();
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairDataHandler);
+		const { repairData } = makeRepairDataHandler();
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairData);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
@@ -360,8 +358,8 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
-		const { repairData, repairDataHandler } = makeRepairDataHandler();
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairDataHandler);
+		const { repairData } = makeRepairDataHandler();
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairData);
 		assertMarkListEqual(actual, expected);
 		assert.deepEqual(repairData, new Map([]));
 	});

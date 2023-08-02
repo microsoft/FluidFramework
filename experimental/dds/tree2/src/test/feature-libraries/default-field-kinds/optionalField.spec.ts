@@ -33,6 +33,7 @@ import {
 } from "../../../feature-libraries/default-field-kinds/optionalField";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import { makeRepairDataHandler } from "../repairDataTestUtils";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "./fieldKindTestUtils";
 
 /**
@@ -348,7 +349,11 @@ describe("optionalField", () => {
 				},
 			];
 
-			assertMarkListEqual(optionalFieldIntoDelta(change1.change, deltaFromChild1), expected);
+			const { repairData } = makeRepairDataHandler();
+			assertMarkListEqual(
+				optionalFieldIntoDelta(change1.change, deltaFromChild1, repairData),
+				expected,
+			);
 		});
 
 		it("can be converted to a delta when restoring content", () => {
@@ -357,7 +362,8 @@ describe("optionalField", () => {
 				{ type: Delta.MarkType.Insert, content: [testTreeCursor("tree1")] },
 			];
 
-			const actual = optionalFieldIntoDelta(revertChange2, deltaFromChild1);
+			const { repairData } = makeRepairDataHandler();
+			const actual = optionalFieldIntoDelta(revertChange2, deltaFromChild1, repairData);
 			assertMarkListEqual(actual, expected);
 		});
 
@@ -380,7 +386,11 @@ describe("optionalField", () => {
 				},
 			];
 
-			assertMarkListEqual(optionalFieldIntoDelta(change4.change, deltaFromChild2), expected);
+			const { repairData } = makeRepairDataHandler();
+			assertMarkListEqual(
+				optionalFieldIntoDelta(change4.change, deltaFromChild2, repairData),
+				expected,
+			);
 		});
 	});
 });

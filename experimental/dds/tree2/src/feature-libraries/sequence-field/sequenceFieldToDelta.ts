@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
-import { Delta, RepairDataHandler } from "../../core";
+import { Delta, RepairData } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
@@ -17,20 +17,14 @@ import {
 	markIsTransient,
 } from "./utils";
 
-export type ToDelta<TNodeChange> = (
-	child: TNodeChange,
-	repairDataHandler: RepairDataHandler,
-	repairDataMarks: Delta.Modify[],
-) => Delta.Modify;
+export type ToDelta<TNodeChange> = (child: TNodeChange, repairData: RepairData) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	repairDataHandler: RepairDataHandler,
+	repairData: RepairData,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
-	// Move in marks produced by child deltas to move repair data to the appropriate detached fields.
-	const repairDataMarks: Delta.Modify[] = [];
 	for (const mark of marks) {
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			out.push(
@@ -38,8 +32,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					getNodeChange(mark),
 					getMarkLength(mark),
 					deltaFromChild,
-					repairDataHandler,
-					repairDataMarks,
+					repairData,
 				),
 			);
 		} else if (
@@ -65,8 +58,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						insertMark,
 						deltaFromChild,
-						repairDataHandler,
-						repairDataMarks,
+						repairData,
 					);
 					out.pushContent(insertMark);
 					break;
@@ -82,7 +74,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					const modify = deltaFromChild(mark.changes, repairDataHandler, repairDataMarks);
+					const modify = deltaFromChild(mark.changes, repairData);
 					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
@@ -91,7 +83,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Delete": {
-					const detachedField = repairDataHandler({
+					const detachedField = repairData.handler({
 						revision: mark.revision,
 						localId: mark.id,
 					});
@@ -104,26 +96,16 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						moveMark,
 						deltaFromChild,
-						repairDataHandler,
-						repairDataMarks,
+						repairData,
 					);
 					out.pushContent(moveMark);
-					const modify: Delta.Modify = {
-						type: Delta.MarkType.Modify,
-						fields: new Map([
-							[
-								detachedField,
-								[
-									{
-										type: Delta.MarkType.MoveIn,
-										count: mark.count,
-										moveId: brandOpaque<Delta.MoveId>(mark.id),
-									},
-								],
-							],
-						]),
-					};
-					out.pushContent(modify);
+					repairData.marks.set(detachedField, [
+						{
+							type: Delta.MarkType.MoveIn,
+							count: mark.count,
+							moveId: brandOpaque<Delta.MoveId>(mark.id),
+						},
+					]);
 
 					// const deleteMark: Mutable<Delta.Delete> = {
 					// 	type: Delta.MarkType.Delete,
@@ -144,8 +126,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						moveMark,
 						deltaFromChild,
-						repairDataHandler,
-						repairDataMarks,
+						repairData,
 					);
 					out.pushContent(moveMark);
 					break;
@@ -162,8 +143,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						insertMark,
 						deltaFromChild,
-						repairDataHandler,
-						repairDataMarks,
+						repairData,
 					);
 					out.pushContent(insertMark);
 					break;
@@ -182,11 +162,10 @@ function populateChildModificationsIfAny<TNodeChange>(
 	changes: TNodeChange | undefined,
 	deltaMark: Mutable<Delta.HasModifications>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	repairDataHandler: RepairDataHandler,
-	repairDataMarks: Delta.Modify[],
+	repairData: RepairData,
 ): void {
 	if (changes !== undefined) {
-		const modify = deltaFromChild(changes, repairDataHandler, repairDataMarks);
+		const modify = deltaFromChild(changes, repairData);
 		populateChildModifications(modify, deltaMark);
 	}
 }
@@ -195,14 +174,13 @@ function deltaFromNodeChange<TNodeChange>(
 	change: TNodeChange | undefined,
 	length: number,
 	deltaFromChild: ToDelta<TNodeChange>,
-	repairDataHandler: RepairDataHandler,
-	repairDataMarks: Delta.Modify[],
+	repairData: RepairData,
 ): Delta.Mark {
 	if (change === undefined) {
 		return length;
 	}
 	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
-	const modify = deltaFromChild(change, repairDataHandler, repairDataMarks);
+	const modify = deltaFromChild(change, repairData);
 	return isEmptyModify(modify) ? 1 : modify;
 }
 

@@ -11,6 +11,7 @@ import {
 	ITreeCursorSynchronous,
 	tagChange,
 	ChangesetLocalId,
+	RepairData,
 } from "../../core";
 import { fail, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -304,6 +305,7 @@ function deltaFromInsertAndChange(
 	insertedContent: ITreeCursorSynchronous | undefined,
 	nodeChange: NodeChangeset | undefined,
 	deltaFromNode: ToDelta,
+	repairData: RepairData,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
 		const insert: Mutable<Delta.Insert> = {
@@ -311,14 +313,14 @@ function deltaFromInsertAndChange(
 			content: [insertedContent],
 		};
 		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange);
+			const nodeDelta = deltaFromNode(nodeChange, repairData);
 			populateChildModifications(nodeDelta, insert);
 		}
 		return [insert];
 	}
 
 	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange)];
+		return [deltaFromNode(nodeChange, repairData)];
 	}
 
 	return [];
@@ -328,6 +330,7 @@ function deltaForDelete(
 	nodeExists: boolean,
 	nodeChange: NodeChangeset | undefined,
 	deltaFromNode: ToDelta,
+	repairData: RepairData,
 ): Delta.Mark[] {
 	if (!nodeExists) {
 		return [];
@@ -335,16 +338,20 @@ function deltaForDelete(
 
 	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
 	if (nodeChange !== undefined) {
-		const modify = deltaFromNode(nodeChange);
+		const modify = deltaFromNode(nodeChange, repairData);
 		deleteDelta.fields = modify.fields;
 	}
 	return [deleteDelta];
 }
 
-export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
+export function optionalFieldIntoDelta(
+	change: OptionalChangeset,
+	deltaFromChild: ToDelta,
+	repairData: RepairData,
+) {
 	if (change.fieldChange === undefined) {
 		if (change.deletedBy === undefined && change.childChange !== undefined) {
-			return [deltaFromChild(change.childChange)];
+			return [deltaFromChild(change.childChange, repairData)];
 		}
 		return [];
 	}
@@ -353,6 +360,7 @@ export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild
 		!change.fieldChange.wasEmpty,
 		change.deletedBy === undefined ? change.childChange : undefined,
 		deltaFromChild,
+		repairData,
 	);
 
 	const update = change.fieldChange?.newContent;
@@ -365,7 +373,12 @@ export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild
 		content = update.revert;
 	}
 
-	const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
+	const insertDelta = deltaFromInsertAndChange(
+		content,
+		update?.changes,
+		deltaFromChild,
+		repairData,
+	);
 
 	return [...deleteDelta, ...insertDelta];
 }
@@ -375,8 +388,8 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,
 
-	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
-		optionalFieldIntoDelta(change, deltaFromChild),
+	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, repairData: RepairData) =>
+		optionalFieldIntoDelta(change, deltaFromChild, repairData),
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChange === undefined && change.fieldChange === undefined,
 };

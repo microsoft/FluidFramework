@@ -598,8 +598,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
     readonly editor: TEditor;
-    // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairDataHandler: RepairDataHandler): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairData: RepairData): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -1625,6 +1624,13 @@ type RecursiveTreeSchemaSpecification = unknown;
 type _RecursiveTrick = never;
 
 // @alpha
+export interface RepairData {
+    // (undocumented)
+    handler: RepairDataHandler;
+    marks: Map<FieldKey, Delta.MarkList>;
+}
+
+// @alpha
 export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
 
 // @alpha
@@ -1930,7 +1936,7 @@ export interface TaggedChange<TChangeset> {
 }
 
 // @alpha
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, repairData: RepairData) => Delta.Modify;
 
 // @alpha
 export function toDownPath(upPath: UpPath): DownPath;

@@ -75,6 +75,7 @@ export {
 	RevisionTag,
 	TaggedChange,
 	RepairDataHandler,
+	RepairData,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
 	SchemaEvents,
