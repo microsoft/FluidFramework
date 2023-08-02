@@ -15,10 +15,10 @@ import { Delta, FieldKey } from "../tree";
 export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
 
 /**
- * TODO rename everything
+ * TODO doc
  * @alpha
  */
-export interface RepairData {
+export interface RepairDataBuilder {
 	handler: RepairDataHandler;
 	/**
 	 * A map of detached fields to the delta that would move in the appropriate repair data.
@@ -32,3 +32,14 @@ export interface RepairData {
  */
 export const unsupportedRepairDataHandler: RepairDataHandler = () =>
 	fail("Unexpected call to repairDataHandler");
+
+// TODO see if this makes sense
+// export class RepairDataBuilder {
+// 	private readonly repairDataMarks = new Map<FieldKey, Delta.MarkList>();
+// 	public constructor (public readonly repairDataHandler: RepairDataHandler) { }
+
+// 	/**  */
+// 	public build(): Delta.MoveOut {
+// 		this.repairDataMarks.
+// 	}
+// }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, makeAnonChange, RepairData, tagChange, TaggedChange } from "../../core";
+import { Delta, makeAnonChange, RepairDataBuilder, tagChange, TaggedChange } from "../../core";
 import { brand, fail } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
@@ -89,7 +89,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	intoDelta: (
 		change: GenericChangeset,
 		deltaFromChild: ToDelta,
-		repairData: RepairData,
+		repairDataBuilder: RepairDataBuilder,
 	): Delta.MarkList => {
 		let nodeIndex = 0;
 		const delta: Delta.Mark[] = [];
@@ -99,7 +99,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				delta.push(offset);
 				nodeIndex = index;
 			}
-			delta.push(deltaFromChild(nodeChange, repairData));
+			delta.push(deltaFromChild(nodeChange, repairDataBuilder));
 			nodeIndex += 1;
 		}
 		return delta;

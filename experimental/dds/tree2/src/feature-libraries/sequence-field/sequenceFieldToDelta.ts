@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
-import { Delta, RepairData } from "../../core";
+import { Delta, RepairDataBuilder } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
@@ -17,12 +17,15 @@ import {
 	markIsTransient,
 } from "./utils";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange, repairData: RepairData) => Delta.Modify;
+export type ToDelta<TNodeChange> = (
+	child: TNodeChange,
+	repairDataBuilder: RepairDataBuilder,
+) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	repairData: RepairData,
+	repairDataBuilder: RepairDataBuilder,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
@@ -32,7 +35,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					getNodeChange(mark),
 					getMarkLength(mark),
 					deltaFromChild,
-					repairData,
+					repairDataBuilder,
 				),
 			);
 		} else if (
@@ -58,7 +61,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						insertMark,
 						deltaFromChild,
-						repairData,
+						repairDataBuilder,
 					);
 					out.pushContent(insertMark);
 					break;
@@ -74,7 +77,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					const modify = deltaFromChild(mark.changes, repairData);
+					const modify = deltaFromChild(mark.changes, repairDataBuilder);
 					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
@@ -83,7 +86,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Delete": {
-					const detachedField = repairData.handler({
+					const detachedField = repairDataBuilder.handler({
 						revision: mark.revision,
 						localId: mark.id,
 					});
@@ -96,10 +99,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						moveMark,
 						deltaFromChild,
-						repairData,
+						repairDataBuilder,
 					);
 					out.pushContent(moveMark);
-					repairData.marks.set(detachedField, [
+					repairDataBuilder.marks.set(detachedField, [
 						{
 							type: Delta.MarkType.MoveIn,
 							count: mark.count,
@@ -127,7 +130,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						moveMark,
 						deltaFromChild,
-						repairData,
+						repairDataBuilder,
 					);
 					out.pushContent(moveMark);
 					break;
@@ -144,7 +147,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						mark.changes,
 						insertMark,
 						deltaFromChild,
-						repairData,
+						repairDataBuilder,
 					);
 					out.pushContent(insertMark);
 					break;
@@ -163,10 +166,10 @@ function populateChildModificationsIfAny<TNodeChange>(
 	changes: TNodeChange | undefined,
 	deltaMark: Mutable<Delta.HasModifications>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	repairData: RepairData,
+	repairDataBuilder: RepairDataBuilder,
 ): void {
 	if (changes !== undefined) {
-		const modify = deltaFromChild(changes, repairData);
+		const modify = deltaFromChild(changes, repairDataBuilder);
 		populateChildModifications(modify, deltaMark);
 	}
 }
@@ -175,13 +178,13 @@ function deltaFromNodeChange<TNodeChange>(
 	change: TNodeChange | undefined,
 	length: number,
 	deltaFromChild: ToDelta<TNodeChange>,
-	repairData: RepairData,
+	repairDataBuilder: RepairDataBuilder,
 ): Delta.Mark {
 	if (change === undefined) {
 		return length;
 	}
 	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
-	const modify = deltaFromChild(change, repairData);
+	const modify = deltaFromChild(change, repairDataBuilder);
 	return isEmptyModify(modify) ? 1 : modify;
 }
 

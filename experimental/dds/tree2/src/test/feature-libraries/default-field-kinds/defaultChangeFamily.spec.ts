@@ -33,7 +33,7 @@ import {
 import { brand } from "../../../util";
 import { assertDeltaEqual } from "../../utils";
 import { noopValidator } from "../../../codec";
-import { makeRepairDataHandler } from "../repairDataTestUtils";
+import { makeRepairDataBuilder } from "../repairDataTestUtils";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const family = defaultChangeFamily;
@@ -112,12 +112,12 @@ function initializeEditableForest(data?: JsonableTree): {
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
-	const { repairDataFields, repairData } = makeRepairDataHandler();
+	const { repairDataFields, repairDataBuilder } = makeRepairDataBuilder();
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
 			changes.push({ revision: currentRevision, change });
-			const delta = defaultChangeFamily.intoDelta(change, repairData.handler);
+			const delta = defaultChangeFamily.intoDelta(change, repairDataBuilder.handler);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();
@@ -130,7 +130,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		changes,
 		deltas,
 		repairDataFields,
-		repairDataMarks: repairData.marks,
+		repairDataMarks: repairDataBuilder.marks,
 	};
 }
 

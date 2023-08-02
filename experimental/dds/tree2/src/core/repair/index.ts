@@ -5,4 +5,8 @@
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repairDataStore";
 export { IRepairDataStoreProvider } from "./repairDataStoreProvider";
-export { RepairDataHandler, RepairData, unsupportedRepairDataHandler } from "./types";
+export {
+	RepairDataHandler,
+	RepairDataBuilder,
+	unsupportedRepairDataHandler,
+} from "./repairDataBuilder";

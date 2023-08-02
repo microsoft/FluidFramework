@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, Delta, FieldKey, RepairData } from "../../core";
+import { ChangeAtomId, Delta, FieldKey, RepairDataBuilder } from "../../core";
 import { brand } from "../../util";
 
-export function makeRepairDataHandler(): {
+export function makeRepairDataBuilder(): {
 	repairDataFields: Map<ChangeAtomId, FieldKey>;
-	repairData: RepairData;
+	repairDataBuilder: RepairDataBuilder;
 } {
 	const repairDataFields = new Map<ChangeAtomId, FieldKey>();
 	const repairDataMarks = new Map<FieldKey, Delta.MarkList>();
@@ -20,10 +20,11 @@ export function makeRepairDataHandler(): {
 		return fieldKey;
 	};
 
-	const repairData = {
-		handler: repairDataHandler,
-		marks: repairDataMarks,
+	return {
+		repairDataFields,
+		repairDataBuilder: {
+			handler: repairDataHandler,
+			marks: repairDataMarks,
+		},
 	};
-
-	return { repairDataFields, repairData };
 }

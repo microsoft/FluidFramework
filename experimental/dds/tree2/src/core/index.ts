@@ -182,7 +182,7 @@ export {
 	ReadonlyRepairDataStore,
 	IRepairDataStoreProvider,
 	RepairDataHandler,
-	RepairData,
+	RepairDataBuilder,
 	unsupportedRepairDataHandler,
 } from "./repair";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag, ChangesetLocalId, RepairData } from "../../core";
+import { Delta, TaggedChange, RevisionTag, ChangesetLocalId, RepairDataBuilder } from "../../core";
 import { fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -22,7 +22,11 @@ export interface FieldChangeHandler<
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairData: RepairData): Delta.MarkList;
+	intoDelta(
+		change: TChangeset,
+		deltaFromChild: ToDelta,
+		repairDataBuilder: RepairDataBuilder,
+	): Delta.MarkList;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -156,7 +160,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset, repairData: RepairData) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, repairDataBuilder: RepairDataBuilder) => Delta.Modify;
 
 /**
  * @alpha

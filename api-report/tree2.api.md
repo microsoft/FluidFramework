@@ -599,7 +599,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairData: RepairData): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairDataBuilder: RepairDataBuilder): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -1625,7 +1625,7 @@ type RecursiveTreeSchemaSpecification = unknown;
 type _RecursiveTrick = never;
 
 // @alpha
-export interface RepairData {
+export interface RepairDataBuilder {
     // (undocumented)
     handler: RepairDataHandler;
     marks: Map<FieldKey, Delta.MarkList>;
@@ -1937,7 +1937,7 @@ export interface TaggedChange<TChangeset> {
 }
 
 // @alpha
-export type ToDelta = (child: NodeChangeset, repairData: RepairData) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, repairDataBuilder: RepairDataBuilder) => Delta.Modify;
 
 // @alpha
 export function toDownPath(upPath: UpPath): DownPath;

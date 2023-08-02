@@ -33,7 +33,7 @@ import {
 } from "../../../feature-libraries/default-field-kinds/optionalField";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
-import { makeRepairDataHandler } from "../repairDataTestUtils";
+import { makeRepairDataBuilder } from "../repairDataTestUtils";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "./fieldKindTestUtils";
 
 /**
@@ -349,9 +349,9 @@ describe("optionalField", () => {
 				},
 			];
 
-			const { repairData } = makeRepairDataHandler();
+			const { repairDataBuilder } = makeRepairDataBuilder();
 			assertMarkListEqual(
-				optionalFieldIntoDelta(change1.change, deltaFromChild1, repairData),
+				optionalFieldIntoDelta(change1.change, deltaFromChild1, repairDataBuilder),
 				expected,
 			);
 		});
@@ -362,8 +362,12 @@ describe("optionalField", () => {
 				{ type: Delta.MarkType.Insert, content: [testTreeCursor("tree1")] },
 			];
 
-			const { repairData } = makeRepairDataHandler();
-			const actual = optionalFieldIntoDelta(revertChange2, deltaFromChild1, repairData);
+			const { repairDataBuilder } = makeRepairDataBuilder();
+			const actual = optionalFieldIntoDelta(
+				revertChange2,
+				deltaFromChild1,
+				repairDataBuilder,
+			);
 			assertMarkListEqual(actual, expected);
 		});
 
@@ -386,9 +390,9 @@ describe("optionalField", () => {
 				},
 			];
 
-			const { repairData } = makeRepairDataHandler();
+			const { repairDataBuilder } = makeRepairDataBuilder();
 			assertMarkListEqual(
-				optionalFieldIntoDelta(change4.change, deltaFromChild2, repairData),
+				optionalFieldIntoDelta(change4.change, deltaFromChild2, repairDataBuilder),
 				expected,
 			);
 		});

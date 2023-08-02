@@ -24,7 +24,7 @@ import {
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze } from "../../utils";
-import { makeRepairDataHandler } from "../repairDataTestUtils";
+import { makeRepairDataBuilder } from "../repairDataTestUtils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { composeAnonChanges } from "./utils";
 
@@ -138,8 +138,8 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
-		const { repairData } = makeRepairDataHandler();
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairData);
+		const { repairDataBuilder } = makeRepairDataBuilder();
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairDataBuilder);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
@@ -148,7 +148,7 @@ describe("SequenceField - toDelta", () => {
 			},
 		];
 		assertMarkListEqual(actual, expected);
-		assert.deepEqual(repairData, new Map([]));
+		assert.deepEqual(repairDataBuilder.marks, new Map([]));
 	});
 
 	it("delete", () => {
@@ -358,10 +358,10 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
-		const { repairData } = makeRepairDataHandler();
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairData);
+		const { repairDataBuilder } = makeRepairDataBuilder();
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairDataBuilder);
 		assertMarkListEqual(actual, expected);
-		assert.deepEqual(repairData, new Map([]));
+		assert.deepEqual(repairDataBuilder.marks, new Map([]));
 	});
 
 	describe("Muted changes", () => {
