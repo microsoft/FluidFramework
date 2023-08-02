@@ -301,6 +301,8 @@ export function rebaseBranch<TChange>(
  * @param sourceHead - the head of the branch that `change` is based on
  * @param targetHead - the branch to rebase `change` onto
  * @returns the rebased change
+ * 
+ * @remarks inverses will be cached.
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,

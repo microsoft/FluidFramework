@@ -286,6 +286,7 @@ export class ModularChangeFamily
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 * @param repairStore - The store to query for repair data.
+	 * @param cache - Whether the inverted change will be cached or not.
 	 */
 	public invert(
 		change: TaggedChange<ModularChangeset>,
