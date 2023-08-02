@@ -5,11 +5,15 @@
 
 import { IContainer } from "../../loader";
 
+/* eslint deprecation/deprecation: "error" */
+
 export async function test(container: IContainer) {
-	// Not deprecated
+	// This is ok
 	await container.request({ url: "/" });
-	// Deprecated
-	await container.request({ url: "/", headers: { shouldBeDeprecated: true }});
-	// Deprecated
+
+	// These are deprecated
+	// eslint-disable-next-line deprecation/deprecation
+	await container.request({ url: "/", headers: { shouldBeDeprecated: true } });
+	// eslint-disable-next-line deprecation/deprecation
 	await container.request({ url: "/should/be/deprecated" });
 }

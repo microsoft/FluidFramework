@@ -5,11 +5,15 @@
 
 import { IDataStore } from "../../dataStoreContext";
 
+/* eslint deprecation/deprecation: "error" */
+
 export async function test(dataStore: IDataStore) {
-	// Not deprecated
+	// This is ok
 	await dataStore.request({ url: "/" });
-	// Deprecated
-	await dataStore.request({ url: "/", headers: { expectDeprecated: true }});
-	// Deprecated
+
+	// These are deprecated
+	// eslint-disable-next-line deprecation/deprecation
+	await dataStore.request({ url: "/", headers: { shouldBeDeprecated: true } });
+	// eslint-disable-next-line deprecation/deprecation
 	await dataStore.request({ url: "/should/be/deprecated" });
 }
