@@ -156,8 +156,16 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
     readonly entryPoint?: IFluidHandle<FluidObject>;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
+    request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
