@@ -130,7 +130,10 @@ function buildTreeSchema(
 				return cache.treeSchema;
 			}
 			if (PropertyFactory.inheritsFrom(typeid, nodePropertyType)) {
-				assert(!fields.has(nodePropertyField), 0x712 /* name collision for nodePropertyField */);
+				assert(
+					!fields.has(nodePropertyField),
+					0x712 /* name collision for nodePropertyField */,
+				);
 				fields.set(nodePropertyField, SchemaBuilder.fieldValue(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
