@@ -385,10 +385,39 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
+	 * Issue a request against the container for its "root" object aka its entryPoint. @see {@link IContainer.getEntryPoint}.
+	 *
+	 * NOTE: Requesting "/" is idiomatic to some known consumers of Fluid Framework;
+	 * the root URL "/" will not route anywhere in Fluid natively.
+	 * This accomodation is provided as a temporary measure to ease the transition from requests to entryPoint,
+	 * where the paradigm requesting "/" is used.  This paradigm requires additional work to support (using requestHandler)
+	 * and should not be adopted if not already used - rather, use entryPoint directly.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 *
+	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
+	 */
+	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
+
+	/**
 	 * Issue a request against the container for a resource.
 	 * @param request - The request to be issued against the container
+	 *
+	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * Instead, access the objects in a Fluid Container by using entryPoint and then navigate from there using
+	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
+	 * could implement a request paradigm itself)
+	 * IContainer.request(\{url: "/"\}) is not yet deprecated and may be used as a proxy for getting the entryPoint
+	 * to ease the transition, where this idiom or requesting "/" is already in use
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
 	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 
 	/**
 	 * Provides the current state of the container's connection to the ordering service.
