@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvent } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { newEditId } from './EditUtilities';
