@@ -106,6 +106,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 							moveId: brandOpaque<Delta.MoveId>(mark.id),
 						},
 					]);
+					break;
 
 					// const deleteMark: Mutable<Delta.Delete> = {
 					// 	type: Delta.MarkType.Delete,
