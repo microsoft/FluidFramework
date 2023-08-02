@@ -33,7 +33,9 @@ async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
 	const rootPackageManifest = getFluidBuildConfig(dir);
 	if (rootPackageManifest.repoPackages.server !== undefined) {
 		if (Array.isArray(rootPackageManifest.repoPackages.server)) {
-			log.warning(`InferRoot: fluid-build settings for the server release proup are an array, which is not expected.`);
+			log.warning(
+				`InferRoot: fluid-build settings for the server release proup are an array, which is not expected.`,
+			);
 			return false;
 		}
 
@@ -46,9 +48,9 @@ async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
 			log.verbose(`InferRoot: ${dir}/${serverPath}/lerna.json not found`);
 			return false;
 		}
-
-		return true;
 	}
+
+	return true;
 }
 
 async function isFluidRootPackage(dir: string, log: Logger = defaultLogger) {
