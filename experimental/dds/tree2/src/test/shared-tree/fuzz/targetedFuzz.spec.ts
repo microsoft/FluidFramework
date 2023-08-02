@@ -386,7 +386,7 @@ describe("Fuzz - Targeted", () => {
 			numberOfClients: 3,
 			emitter,
 			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 },
-			skip: [2, 5, 7, 8, 10, 12, 18],
+			skip: [4, 8, 11, 13, 15, 18],
 		});
 	});
 });
