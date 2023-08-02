@@ -542,7 +542,7 @@ const defaultChunkSizeInBytes = 204800;
  * of the current system, we should close the summarizer and let it recover.
  * This delay's goal is to prevent tight restart loops
  */
-const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
+const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -1543,12 +1543,14 @@ export class ContainerRuntime
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = () => {
 					if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-						this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
 						// unregister default to no log on every op after falling behind
 						// and register summary ack handler to re-register this handler
 						// after successful summary
 						this.summaryCollection.once(MessageType.SummaryAck, () => {
-							this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
+							this.mc.logger.sendTelemetryEvent({
+								eventName: "SummaryStatus:CaughtUp",
+							});
 							// we've caught up, so re-register the default action to monitor for
 							// falling behind, and unregister ourself
 							this.summaryCollection.on("default", defaultAction);
@@ -1616,7 +1618,7 @@ export class ContainerRuntime
 			...getDeviceSpec(),
 		});
 
-		this.logger.sendTelemetryEvent({
+		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
 			...this.dataStores.containerLoadStats,
@@ -1667,7 +1669,7 @@ export class ContainerRuntime
 		}
 		this._disposed = true;
 
-		this.logger.sendTelemetryEvent(
+		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
@@ -2186,9 +2188,7 @@ export class ContainerRuntime
 					}
 			}
 
-			if (runtimeMessage || this.groupedBatchingEnabled) {
-				this.emit("op", message, runtimeMessage);
-			}
+			this.emit("op", message, runtimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -2218,7 +2218,7 @@ export class ContainerRuntime
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._perfSignalData.signalTimestamp;
-		this.logger.sendPerformanceEvent({
+		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
 			signalsLost: this._perfSignalData.signalsLost,
@@ -2246,7 +2246,7 @@ export class ContainerRuntime
 			) {
 				this._perfSignalData.signalsLost++;
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.logger.sendErrorEvent({
+				this.mc.logger.sendErrorEvent({
 					eventName: "SignalLost",
 					type: envelope.contents.type,
 					signalsLost: this._perfSignalData.signalsLost,
@@ -2617,7 +2617,7 @@ export class ContainerRuntime
 
 			return { stats, summary, gcStats };
 		} finally {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
@@ -3197,7 +3197,7 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
 			});
@@ -3483,7 +3483,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorage(
+				fetchResult = await this.fetchSnapshotFromStorageAndClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3590,10 +3590,15 @@ export class ContainerRuntime
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorage(logger, event, readAndParseBlob, null /* latest */);
+		return this.fetchSnapshotFromStorageAndClose(
+			logger,
+			event,
+			readAndParseBlob,
+			null /* latest */,
+		);
 	}
 
-	private async fetchSnapshotFromStorage(
+	private async fetchSnapshotFromStorageAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
@@ -3649,7 +3654,7 @@ export class ContainerRuntime
 		// We choose to close the summarizer after the snapshot cache is updated to avoid
 		// situations which the main client (which is likely to be re-elected as the leader again)
 		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod === "restart") {
+		if (this.summaryStateUpdateMethod !== "refreshFromSnapshot") {
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3662,10 +3667,10 @@ export class ContainerRuntime
 				new GenericError("Restarting summarizer instead of refreshing"),
 			);
 
-			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
+			this.disposeFn();
 		}
 
 		return snapshotResults;

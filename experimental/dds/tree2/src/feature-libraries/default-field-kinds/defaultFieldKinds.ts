@@ -151,7 +151,7 @@ export const nodeKey: BrandedFieldKind<
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
 export const forbidden = brandedFieldKind(
-	"Forbidden",
+	forbiddenFieldKindIdentifier,
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
