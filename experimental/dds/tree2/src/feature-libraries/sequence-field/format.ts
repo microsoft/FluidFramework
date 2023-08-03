@@ -150,10 +150,7 @@ export interface NoopMark extends CellTargetingMark {
 	 */
 	type?: typeof NoopMarkType;
 }
-export const NoopMark = Type.Composite(
-	[CellTargetingMark, Type.Object({ count: CellCount })],
-	noAdditionalProps,
-);
+export const NoopMark = Type.Composite([CellTargetingMark], noAdditionalProps);
 
 export interface HasRevisionTag {
 	/**
@@ -214,7 +211,6 @@ export const MoveIn = Type.Composite(
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
-			count: CellCount,
 			isSrcConflicted: OptionalTrue,
 		}),
 	],
@@ -237,7 +233,6 @@ export const Delete = <Schema extends TSchema>(tNodeChange: Schema) =>
 			CellTargetingMark,
 			Type.Object({
 				type: Type.Literal("Delete"),
-				count: CellCount,
 				id: ChangesetLocalIdSchema,
 			}),
 		],
@@ -260,7 +255,6 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 			CellTargetingMark,
 			Type.Object({
 				type: Type.Literal("MoveOut"),
-				count: CellCount,
 			}),
 		],
 		noAdditionalProps,
@@ -284,7 +278,6 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 			Type.Object({
 				type: Type.Literal("Revive"),
 				content: Type.Array(ProtoNode),
-				count: CellCount,
 			}),
 		],
 		noAdditionalProps,
@@ -306,7 +299,6 @@ export const ReturnTo = Type.Composite(
 		HasMoveId,
 		Type.Object({
 			type: Type.Literal("ReturnTo"),
-			count: CellCount,
 			isSrcConflicted: OptionalTrue,
 		}),
 	],
@@ -335,7 +327,6 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 			CellTargetingMark,
 			Type.Object({
 				type: Type.Literal("ReturnFrom"),
-				count: CellCount,
 				isDstConflicted: OptionalTrue,
 			}),
 		],
