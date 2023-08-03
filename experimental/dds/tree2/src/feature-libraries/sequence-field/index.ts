@@ -32,6 +32,7 @@ export {
 	CellId,
 	CellTargetingMark,
 	HasLineage,
+	IdRange,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,

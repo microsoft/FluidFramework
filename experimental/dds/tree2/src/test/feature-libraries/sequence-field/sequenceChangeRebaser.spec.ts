@@ -41,28 +41,8 @@ const tag8: RevisionTag = mintRevisionTag();
 
 const id0: ChangesetLocalId = brand(0);
 
-/**
- * @returns Lineage for a mark of `length` targeting cells emptied in `revision`.
- * Assumes `revision` detaches a contiguous block of cells of length `max + 1` which start with ID 0 and have contiguous IDs.
- * `id` is the ID of the first cell in the block of the mark with this lineage.
- */
-function generateLineage(
-	revision: RevisionTag,
-	id: ChangesetLocalId,
-	length: number,
-	max: number,
-): SF.LineageEvent[] {
-	const result: SF.LineageEvent[] = [];
-	if (id > 0) {
-		result.push({ revision, id: brand(0), count: id, offset: id });
-	}
-
-	const nextId = brand<ChangesetLocalId>((id as number) + length);
-	if (nextId <= max) {
-		result.push({ revision, id: nextId, count: max - nextId, offset: 0 });
-	}
-
-	return result;
+function generateAdjacentCells(maxId: number): SF.IdRange[] {
+	return [{ id: brand(0), count: maxId + 1 }];
 }
 
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
@@ -89,7 +69,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 			Change.revive(2, 2, {
 				revision: tag1,
 				localId: brand(i),
-				lineage: generateLineage(tag1, brand(i), 2, max),
+				adjacentCells: generateAdjacentCells(max),
 			}),
 	],
 	[
@@ -118,7 +98,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 			Change.return(i, 2, 1, {
 				revision: tag4,
 				localId: brand(i),
-				lineage: generateLineage(tag4, brand(i), 2, max),
+				adjacentCells: generateAdjacentCells(max),
 			}),
 	],
 	[
@@ -127,7 +107,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 			Change.return(1, 2, i, {
 				revision: tag4,
 				localId: brand(i),
-				lineage: generateLineage(tag4, brand(1), 2, max),
+				adjacentCells: generateAdjacentCells(max),
 			}),
 	],
 ];
@@ -194,7 +174,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 						for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-							const tracker = new SF.DetachedNodeTracker();
 							const change1 = tagChange(makeChange1(offset1, maxOffset), tag7);
 							const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
 							if (!SF.areRebasable(change1.change, change2.change)) {
@@ -202,11 +181,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 							}
 							const inv = tagChange(invert(change2), tag6);
 							const r1 = rebaseTagged(change1, change2);
-							tracker.apply(change2);
 							const r2 = rebaseTagged(r1, inv);
-							tracker.apply(inv);
-							const change1Updated = tracker.update(change1);
-							checkDeltaEquality(r2.change, change1Updated.change);
+							checkDeltaEquality(r2.change, change1.change);
 						}
 					}
 				});
@@ -226,6 +202,13 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
+				if (
+					(name1.startsWith("Transient") || name2.startsWith("Transient")) &&
+					(name1.startsWith("Return") || name2.startsWith("Return"))
+				) {
+					// These cases are malformed because the test changes are missing lineage to properly order the marks
+					continue;
+				}				
 				it(title, () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {

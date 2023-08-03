@@ -8,7 +8,7 @@ import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
 import { brand } from "../../../util";
-import { ChangesetLocalId } from "../../../feature-libraries";
+import { ChangeAtomId, ChangesetLocalId } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -83,17 +83,23 @@ describe("SequenceField - Invert", () => {
 		const revive = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
 		const modify = Change.modify(0, childChange1);
 		const input = composeAnonChanges([revive, modify]);
-		const expected = composeAnonChanges([
-			Change.modify(0, inverseChildChange1),
-			Change.delete(0, 2),
-		]);
+		const expected: TestChangeset = [
+			{ type: "Delete", count: 1, id: brand(0), detachIdOverride: { localId: brand(0), revision: tag1 }, changes: inverseChildChange1 },
+			{ type: "Delete", count: 1, id: brand(1), detachIdOverride: { localId: brand(1), revision: tag1 }},
+		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("intentional active revive => delete", () => {
-		const input = Change.intentionalRevive(0, 2, { revision: tag1, localId: brand(0) });
-		const expected = Change.delete(0, 2);
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const input = Change.intentionalRevive(0, 2, cellId);
+		const expected: TestChangeset = [{
+			type: "Delete",
+			id: brand(0),
+			count: 2,
+			detachIdOverride: cellId,
+		}];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -119,14 +125,18 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("return => return", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const input = composeAnonChanges([
 			Change.modify(0, childChange1),
-			Change.return(0, 2, 3, { revision: tag1, localId: brand(0) }),
+			Change.return(0, 2, 3, cellId),
 		]);
-		const expected = composeAnonChanges([
-			Change.modify(3, inverseChildChange1),
-			Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),
-		]);
+
+		const expected: TestChangeset = [
+			{ type: "ReturnTo", id: brand(0), count: 2, cellId },
+			{ count: 3 },
+			{ type: "ReturnFrom", id: brand(0), detachIdOverride: cellId, count: 1, changes: inverseChildChange1 },
+			{ type: "ReturnFrom", id: brand(1), detachIdOverride: { revision: tag1, localId: brand(1) }, count: 1 },
+		]
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});

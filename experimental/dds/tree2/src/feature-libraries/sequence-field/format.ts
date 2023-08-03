@@ -96,12 +96,28 @@ export interface HasLineage {
 
 export const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
 
+export interface IdRange {
+	id: ChangesetLocalId;
+	count: number;
+}
+
+export const IdRange = Type.Object({
+	id: ChangesetLocalIdSchema,
+	count: Type.Number(),
+});
+
 /**
  * @alpha
  */
-export interface CellId extends ChangeAtomId, HasLineage {}
+export interface CellId extends ChangeAtomId, HasLineage {
+	adjacentCells?: IdRange[];
+}
 
-export const CellId = Type.Composite([EncodedChangeAtomId, HasLineage]);
+export const CellId = Type.Composite([
+	EncodedChangeAtomId,
+	HasLineage,
+	Type.Object({ adjacentCells: Type.Optional(IdRange) }),
+]);
 
 export interface HasChanges<TNodeChange = NodeChangeType> {
 	changes?: TNodeChange;

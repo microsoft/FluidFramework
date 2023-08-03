@@ -46,6 +46,7 @@ import {
 	Modify,
 	NoopMarkType,
 	HasLineage,
+	IdRange,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -132,7 +133,7 @@ function rebaseMarkList<TNodeChange>(
 	const lineageRecipients: Mark<TNodeChange>[] = [];
 
 	// List of IDs of detaches encountered in the base changeset which are adjacent to the current position.
-	const lineageEntries: IdRange[] = [];
+	let lineageEntries: IdRange[] = [];
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
 		if (baseMark !== undefined && "revision" in baseMark) {
@@ -157,7 +158,7 @@ function rebaseMarkList<TNodeChange>(
 		} else if (currMark === undefined) {
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x708 /* Only detach marks should empty cells */);
-				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
+				addIdRange(lineageEntries, { id: baseMark.id, count: baseMark.count });
 			} else if (isAttach(baseMark)) {
 				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
 					const movedMark = getMovedMark(
@@ -175,7 +176,7 @@ function rebaseMarkList<TNodeChange>(
 					factory.pushOffset(getOutputLength(baseMark));
 				}
 				lineageRecipients.length = 0;
-				lineageEntries.length = 0;
+				lineageEntries = [];
 			}
 		} else {
 			assert(
@@ -207,26 +208,28 @@ function rebaseMarkList<TNodeChange>(
 			}
 
 			if (areInputCellsEmpty(rebasedMark)) {
-				handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
+				if (markEmptiesCells(baseMark)) {
+					assert(isDetachMark(baseMark), "Only detaches empty cells");
+					if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
+						setMarkAdjacentCells(rebasedMark, lineageEntries);
+					}
+				} else {
+					handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
+				}
 			}
 			factory.push(rebasedMark);
 
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
-				lineageEntries.push({ id: baseMark.id, count: baseMark.count });
+				addIdRange(lineageEntries, { id: baseMark.id, count: baseMark.count });
 			} else {
 				lineageRecipients.length = 0;
-				lineageEntries.length = 0;
+				lineageEntries = [];
 			}
 		}
 	}
 
 	return factory.list;
-}
-
-interface IdRange {
-	id: ChangesetLocalId;
-	count: number;
 }
 
 class RebaseQueue<T> {
@@ -748,6 +751,19 @@ function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: Rev
 	}
 }
 
+
+function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
+	if (lineageEntries.length > 0) {
+		const lastEntry = lineageEntries[lineageEntries.length - 1];
+		if ((lastEntry.id as number) + lastEntry.count === range.id) {
+			lastEntry.count += range.count;
+			return;
+		}
+	}
+
+	lineageEntries.push(range);
+}
+
 function getLineageHolder(mark: Mark<unknown>): HasLineage {
 	if (isNewAttach(mark)) {
 		return mark;
@@ -755,6 +771,13 @@ function getLineageHolder(mark: Mark<unknown>): HasLineage {
 
 	assert(mark.cellId !== undefined, "Attached cells cannot have lineage");
 	return mark.cellId;
+}
+
+function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): void {
+	assert(isExistingCellMark(mark), "");
+	assert(mark.cellId !== undefined, "");
+	assert(mark.cellId.adjacentCells === undefined, "");
+	mark.cellId.adjacentCells = adjacentCells;
 }
 
 /**
@@ -778,6 +801,11 @@ function compareCellPositions(
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
 			return baseId.localId - newId.localId;
+		}
+
+		const adjacentCells = baseId.adjacentCells ?? newId.adjacentCells;
+		if (adjacentCells !== undefined) {
+			return getPositionAmongAdjacentCells(adjacentCells, baseId.localId) - getPositionAmongAdjacentCells(adjacentCells, newId.localId);
 		}
 	}
 
@@ -825,4 +853,17 @@ function compareCellPositions(
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	// TODO: Use specified tiebreak instead of always tiebreaking left.
 	return -Infinity;
+}
+
+function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
+	let priorCells = 0;
+	for (const range of adjacentCells) {
+		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
+			return priorCells + (id - range.id);
+		}
+
+		priorCells += range.count;
+	}
+
+	fail("Could not find id in adjacentCells");
 }
