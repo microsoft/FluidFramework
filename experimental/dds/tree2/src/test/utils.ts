@@ -846,7 +846,7 @@ export function defaultRevisionMetadataFromChanges(
 /**
  * Helper for building {@link NamedTreeSchema} without using {@link SchemaBuilder}.
  */
-export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<string>): NamedTreeSchema {
+export function namedTreeSchema(data: TreeSchemaBuilder & Named<string>): NamedTreeSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),

@@ -1915,18 +1915,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
 }
 
 // @alpha
-export interface TreeSchemaBuilder {
-    // (undocumented)
-    readonly leafValue?: ValueSchema;
-    // (undocumented)
-    readonly mapFields?: FieldStoredSchema;
-    // (undocumented)
-    readonly structFields?: {
-        [key: string]: FieldStoredSchema;
-    };
-}
-
-// @alpha
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
 // @alpha

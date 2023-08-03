@@ -46,7 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
 	FieldStoredSchema,
