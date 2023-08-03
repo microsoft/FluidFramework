@@ -13,7 +13,7 @@ import {
 	IdAllocator,
 	NodeReviver,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut } from "./format";
+import { Changeset, Mark, MarkList, ReturnFrom, NoopMarkType, MoveOut, NoopMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -103,7 +103,16 @@ function invertMark<TNodeChange>(
 ): Mark<TNodeChange>[] {
 	switch (mark.type) {
 		case NoopMarkType: {
-			return [mark];
+			if (mark.cellId === undefined) {
+				return [
+					withNodeChange(
+						{ count: 1 },
+						invertNodeChange(mark.changes, inputIndex, invertChild),
+					),
+				];
+			}
+			// TODO: preserve modifications to the removed nodes.
+			return [];
 		}
 		case "Insert": {
 			assert(mark.cellId !== undefined, "Insert marks must have a cellId");
@@ -220,19 +229,6 @@ function invertMark<TNodeChange>(
 							mark.cellId,
 						),
 				  ];
-		}
-		case "Modify": {
-			if (mark.cellId === undefined) {
-				return [
-					{
-						type: "Modify",
-						count: 1,
-						changes: invertChild(mark.changes, inputIndex),
-					},
-				];
-			}
-			// TODO: preserve modifications to the removed nodes.
-			return [];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
@@ -358,15 +354,14 @@ function invertModifyOrSkip<TNodeChange>(
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
-		const modify: Modify<TNodeChange> = {
-			type: "Modify",
+		const noop: NoopMark<TNodeChange> = {
 			count: 1,
 			changes: inverter(changes, index),
 		};
 		if (detachEvent !== undefined) {
-			modify.cellId = detachEvent;
+			noop.cellId = detachEvent;
 		}
-		return modify;
+		return noop;
 	}
 
 	return { count: detachEvent === undefined ? length : 0 };

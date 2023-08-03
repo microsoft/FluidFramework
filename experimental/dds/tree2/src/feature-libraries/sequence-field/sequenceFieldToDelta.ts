@@ -29,7 +29,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
-			assert(type !== NoopMarkType, 0x6b0 /* Cell changing mark must no be a NoopMark */);
 			switch (type) {
 				case "Insert": {
 					const cursors = mark.content.map(singleTextCursor);
@@ -54,12 +53,14 @@ export function sequenceFieldToDelta<TNodeChange>(
 					out.pushContent(moveMark);
 					break;
 				}
-				case "Modify": {
-					const modify = deltaFromChild(mark.changes);
-					if (modify.fields !== undefined) {
-						out.pushContent(modify);
-					} else {
-						out.pushOffset(1);
+				case NoopMarkType: {
+					if (mark.changes !== undefined) {
+						const modify = deltaFromChild(mark.changes);
+						if (modify.fields !== undefined) {
+							out.pushContent(modify);
+						} else {
+							out.pushOffset(1);
+						}
 					}
 					break;
 				}

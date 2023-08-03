@@ -394,7 +394,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	}
 
 	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
-	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
+	if (revision !== undefined && cloned.revision === undefined) {
 		cloned.revision = revision;
 	}
 

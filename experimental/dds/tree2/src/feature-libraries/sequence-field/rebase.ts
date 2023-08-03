@@ -32,16 +32,7 @@ import {
 	areOverlappingIdRanges,
 	areOutputCellsEmpty,
 } from "./utils";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	NoopMark,
-	MoveId,
-	Modify,
-	NoopMarkType,
-	HasLineage,
-} from "./format";
+import { Changeset, Mark, MarkList, NoopMark, MoveId, NoopMarkType, HasLineage } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 import {
@@ -183,7 +174,7 @@ function rebaseMarkList<TNodeChange>(
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark {
+function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark<T> {
 	const length = mark.count;
 	const cellId = getCellId(mark, revision);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
@@ -318,8 +309,7 @@ function rebaseMark<TNodeChange>(
 			const nodeChange = getNodeChange(rebasedMark);
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
-				const modify: Modify<TNodeChange> = {
-					type: "Modify",
+				const modify: NoopMark<TNodeChange> = {
 					count: 1,
 					changes: nodeChange,
 				};
@@ -427,7 +417,6 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
 		case "Delete":
-		case "Modify":
 		case "MoveOut":
 		case "Revive":
 			return true;
