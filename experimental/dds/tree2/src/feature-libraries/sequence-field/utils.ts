@@ -39,7 +39,6 @@ import {
 	Transient,
 	CellTargetingMark,
 	CellId,
-	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -140,13 +139,6 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 		}
 	}
 	return clone;
-}
-
-function haveEqualReattachFields(
-	lhs: Readonly<HasReattachFields>,
-	rhs: Readonly<HasReattachFields>,
-): boolean {
-	return lhs.inverseOf === rhs.inverseOf;
 }
 
 function areSameLineage(
@@ -425,7 +417,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "ReturnTo": {
 			const lhsReturnTo = lhs as ReturnTo;
 			if (
-				haveEqualReattachFields(lhsReturnTo, rhs) &&
+				lhsReturnTo.inverseOf === rhs.inverseOf &&
 				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsReturnTo.id as number) + lhsReturnTo.count === rhs.id
 			) {
@@ -454,7 +446,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Revive": {
 			const lhsRevive = lhs as Revive;
 			if (
-				haveEqualReattachFields(lhsRevive, rhs) &&
+				lhsRevive.inverseOf === rhs.inverseOf &&
 				areMergeableChangeAtoms(lhsRevive.transientDetach, lhsLength, rhs.transientDetach)
 			) {
 				lhsRevive.content.push(...rhs.content);
