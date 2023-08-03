@@ -420,7 +420,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 }
 
 // @public (undocumented)
-export interface INackSummaryResult {
+export interface INackSummaryResult extends ISubmitSummaryFailureResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
@@ -445,6 +445,16 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
 export function isStableId(str: string): str is StableId;
+
+// @public
+export interface ISubmitSummaryFailureResult {
+    // (undocumented)
+    readonly retryAfterSeconds?: number;
+    // (undocumented)
+    readonly retryCount?: number;
+    // (undocumented)
+    readonly stage: SummaryStage;
+}
 
 // @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
@@ -483,7 +493,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult | undefined>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
+    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult | undefined>>;
 }
 
 // @public (undocumented)
@@ -652,12 +662,6 @@ export enum RuntimeMessage {
 }
 
 // @public
-export interface SubmitSummaryFailureData {
-    // (undocumented)
-    stage: SummaryStage;
-}
-
-// @public
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @public
@@ -694,8 +698,6 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     data: TFailure;
     message: string;
     error: any;
-    retryAfterSeconds?: number;
-    retryCount?: number;
 };
 
 // @public (undocumented)

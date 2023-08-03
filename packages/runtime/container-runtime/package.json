@@ -113,6 +113,14 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_INackSummaryResult": {
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_SubmitSummaryFailureData": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

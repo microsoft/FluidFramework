@@ -62,7 +62,7 @@ export {
 	ISummarizingWarning,
 	IUploadSummaryResult,
 	SummarizeResultPart,
-	SubmitSummaryFailureData,
+	ISubmitSummaryFailureResult,
 	SummaryStage,
 } from "./summarizerTypes";
 export {
