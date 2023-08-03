@@ -18,12 +18,10 @@ import {
 import {
 	Attach,
 	Detach,
-	HasChanges,
 	HasRevisionTag,
 	Insert,
 	LineageEvent,
 	Mark,
-	Modify,
 	MoveIn,
 	NewAttach,
 	MoveOut,
@@ -47,10 +45,6 @@ import { GenerativeMark, TransientMark, EmptyInputCellMark, DetachedCellMark } f
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
-}
-
-export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
-	return mark.type === "Modify";
 }
 
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
@@ -135,8 +129,8 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 }
 
 function haveEqualReattachFields(
-	lhs: Readonly<HasReattachFields>,
-	rhs: Readonly<HasReattachFields>,
+	lhs: Readonly<HasReattachFields<unknown>>,
+	rhs: Readonly<HasReattachFields<unknown>>,
 ): boolean {
 	return lhs.inverseOf === rhs.inverseOf && areEqualCellIds(lhs.cellId, rhs.cellId);
 }
@@ -210,6 +204,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
+		case "Placeholder":
 			return mark.cellId !== undefined;
 		case "Insert":
 			return mark.transientDetach !== undefined;
@@ -218,9 +213,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		case "Delete":
 		case "MoveOut":
 			return true;
-		case "Modify":
-		case "Placeholder":
-			return mark.cellId !== undefined;
 		case "ReturnFrom":
 			return mark.cellId !== undefined || !mark.isDstConflicted;
 		case "ReturnTo":
@@ -243,8 +235,6 @@ export function getMarkLength(mark: Mark<unknown>): number {
 	switch (type) {
 		case "Insert":
 			return mark.content.length;
-		case "Modify":
-			return 1;
 		case NoopMarkType:
 		case "Delete":
 		case "MoveIn":
@@ -259,7 +249,7 @@ export function getMarkLength(mark: Mark<unknown>): number {
 	}
 }
 
-export function isNoopMark(mark: Mark<unknown>): mark is NoopMark {
+export function isNoopMark<T>(mark: Mark<T>): mark is NoopMark<T> {
 	return mark.type === NoopMarkType;
 }
 
@@ -352,18 +342,15 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 
 	const type = rhs.type;
 	if (type === NoopMarkType) {
-		(lhs as NoopMark).count += rhs.count;
+		(lhs as NoopMark<T>).count += rhs.count;
 		return true;
 	}
 
-	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
+	if (rhs.revision !== (lhs as HasRevisionTag).revision) {
 		return false;
 	}
 
-	if (
-		(type !== "MoveIn" && type !== "ReturnTo" && rhs.changes !== undefined) ||
-		(lhs as Modify | HasChanges).changes !== undefined
-	) {
+	if (rhs.changes !== undefined || lhs.changes !== undefined) {
 		return false;
 	}
 
@@ -811,12 +798,10 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			const mark1 = { ...mark, count: length };
 			const mark2 = { ...mark, count: remainder };
 			if (mark.cellId !== undefined) {
-				(mark2 as NoopMark).cellId = splitDetachEvent(mark.cellId, length);
+				(mark2 as NoopMark<T>).cellId = splitDetachEvent(mark.cellId, length);
 			}
 			return [mark1, mark2];
 		}
-		case "Modify":
-			fail("Unable to split Modify mark of length 1");
 		case "Insert": {
 			const mark1: TMark = { ...mark, content: mark.content.slice(0, length), count: length };
 			const mark2: TMark = {
@@ -936,58 +921,24 @@ export function compareLineages(
 }
 
 export function getNodeChange<TNodeChange>(mark: Mark<TNodeChange>): TNodeChange | undefined {
-	const type = mark.type;
-	switch (type) {
-		case NoopMarkType:
-		case "MoveIn":
-		case "ReturnTo":
-			return undefined;
-		case "Delete":
-		case "Insert":
-		case "Modify":
-		case "MoveOut":
-		case "ReturnFrom":
-		case "Revive":
-		case "Placeholder":
-			return mark.changes;
-		default:
-			unreachableCase(type);
-	}
+	return mark.changes;
 }
 
 export function withNodeChange<TNodeChange>(
 	mark: Mark<TNodeChange>,
 	changes: TNodeChange | undefined,
 ): Mark<TNodeChange> {
-	const type = mark.type;
-	switch (type) {
-		case NoopMarkType:
-			return changes !== undefined ? { type: "Modify", count: 1, changes } : mark;
-		case "MoveIn":
-		case "ReturnTo":
-			assert(
-				changes === undefined,
-				0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */,
-			);
-			return mark;
-		case "Delete":
-		case "Insert":
-		case "Modify":
-		case "MoveOut":
-		case "ReturnFrom":
-		case "Revive":
-		case "Placeholder": {
-			const newMark = { ...mark };
-			if (changes !== undefined) {
-				newMark.changes = changes;
-			} else {
-				delete newMark.changes;
-			}
-			return newMark;
-		}
-		default:
-			unreachableCase(type);
+	const newMark = { ...mark };
+	if (changes !== undefined) {
+		assert(
+			mark.type !== "MoveIn" && mark.type !== "ReturnTo",
+			"Move destination marks cannot carry nested changes",
+		);
+		newMark.changes = changes;
+	} else {
+		delete newMark.changes;
 	}
+	return newMark;
 }
 
 export function withRevision<TMark extends Mark<unknown>>(
@@ -1002,12 +953,8 @@ export function withRevision<TMark extends Mark<unknown>>(
 		return mark;
 	}
 
-	if (isModify(mark)) {
-		return mark;
-	}
-
 	const cloned = cloneMark(mark);
-	(cloned as Exclude<Mark<unknown>, NoopMark | Modify<unknown>>).revision = revision;
+	(cloned as Exclude<Mark<unknown>, NoopMark<unknown>>).revision = revision;
 	return cloned;
 }
 
