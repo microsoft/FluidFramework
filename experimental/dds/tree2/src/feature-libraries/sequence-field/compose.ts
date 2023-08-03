@@ -38,7 +38,6 @@ import {
 	getCellId,
 	compareLineages,
 	isNewAttach,
-	getMarkLength,
 	isDetachMark,
 	getNodeChange,
 	markHasCellEffect,
@@ -218,7 +217,7 @@ function composeMarks<TNodeChange>(
 		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
-		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
+		return createModifyMark(newMark.count, nodeChange, getCellId(baseMark, undefined));
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
@@ -337,7 +336,7 @@ function composeMarks<TNodeChange>(
 				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
 			};
 		}
-		const length = getMarkLength(baseMark);
+		const length = baseMark.count;
 		return createModifyMark(length, nodeChange);
 	}
 }
@@ -677,7 +676,7 @@ export class ComposeQueue<T> {
 			baseMark !== undefined && newMark !== undefined,
 			0x697 /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
-		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
+		const length = Math.min(newMark.count, baseMark.count);
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
@@ -710,7 +709,7 @@ function getReplacementMark<T>(
 
 	let mark = effect.value.mark;
 	assert(
-		getMarkLength(mark) === effect.length,
+		mark.count === effect.length,
 		0x6ea /* Expected replacement mark to be same length as number of cells replaced */,
 	);
 
@@ -850,9 +849,9 @@ function compareCellPositions(
 		if (
 			areOverlappingIdRanges(
 				baseCellId.localId,
-				getMarkLength(baseMark),
+				baseMark.count,
 				newCellId.localId,
-				getMarkLength(newMark),
+				newMark.count,
 			)
 		) {
 			return baseCellId.localId - newCellId.localId;
@@ -863,7 +862,7 @@ function compareCellPositions(
 		baseCellId.lineage,
 		newCellId.revision,
 		newCellId.localId,
-		getMarkLength(newMark),
+		newMark.count,
 	);
 	if (offsetInBase !== undefined) {
 		return offsetInBase > 0 ? offsetInBase : -Infinity;
@@ -873,7 +872,7 @@ function compareCellPositions(
 		newCellId.lineage,
 		baseCellId.revision,
 		baseCellId.localId,
-		getMarkLength(baseMark),
+		baseMark.count,
 	);
 	if (offsetInNew !== undefined) {
 		return offsetInNew > 0 ? -offsetInNew : Infinity;
