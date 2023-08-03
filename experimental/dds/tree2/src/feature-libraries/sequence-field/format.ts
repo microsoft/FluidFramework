@@ -124,7 +124,7 @@ export const CellTargetingMark = Type.Object({
 	cellId: Type.Optional(CellId),
 });
 
-export interface HasReattachFields extends CellTargetingMark {
+export interface HasReattachFields {
 	/**
 	 * The revision this mark is inverting a detach from.
 	 * If defined this mark is a revert-only inverse,
@@ -133,12 +133,9 @@ export interface HasReattachFields extends CellTargetingMark {
 	 */
 	inverseOf?: RevisionTag;
 }
-export const HasReattachFields = Type.Composite([
-	Type.Object({
-		inverseOf: Type.Optional(RevisionTagSchema),
-	}),
-	CellTargetingMark,
-]);
+export const HasReattachFields = Type.Object({
+	inverseOf: Type.Optional(RevisionTagSchema),
+});
 
 export interface NoopMark extends CellTargetingMark {
 	/**
@@ -282,7 +279,8 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 	);
 
 export interface Revive<TNodeChange = NodeChangeType>
-	extends HasReattachFields,
+	extends CellTargetingMark,
+		HasReattachFields,
 		HasRevisionTag,
 		CanBeTransient,
 		HasChanges<TNodeChange> {
@@ -293,6 +291,7 @@ export interface Revive<TNodeChange = NodeChangeType>
 export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
+			CellTargetingMark,
 			HasReattachFields,
 			HasRevisionTag,
 			CanBeTransient,
@@ -306,7 +305,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+export interface ReturnTo extends CellTargetingMark, HasReattachFields, HasRevisionTag, HasMoveId {
 	type: "ReturnTo";
 	count: NodeCount;
 
@@ -318,6 +317,7 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 }
 export const ReturnTo = Type.Composite(
 	[
+		CellTargetingMark,
 		HasReattachFields,
 		HasRevisionTag,
 		HasMoveId,

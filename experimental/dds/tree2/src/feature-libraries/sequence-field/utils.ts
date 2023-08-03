@@ -146,7 +146,7 @@ function haveEqualReattachFields(
 	lhs: Readonly<HasReattachFields>,
 	rhs: Readonly<HasReattachFields>,
 ): boolean {
-	return lhs.inverseOf === rhs.inverseOf && areEqualCellIds(lhs.cellId, rhs.cellId);
+	return lhs.inverseOf === rhs.inverseOf;
 }
 
 function areSameLineage(
@@ -356,6 +356,16 @@ function areMergeableChangeAtoms(
 	return lhs.revision === rhs.revision && (lhs.localId as number) + lhsCount === rhs.localId;
 }
 
+function areMergeableCellIds(
+	lhs: CellId | undefined,
+	lhsCount: number,
+	rhs: CellId | undefined,
+): boolean {
+	return (
+		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
+	);
+}
+
 /**
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
@@ -369,50 +379,35 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	}
 	const type = rhs.type;
 	if (
-		type === NoopMarkType &&
-		areEqualCellIds(getCellId(lhs, undefined), getCellId(rhs, undefined))
+		!areMergeableCellIds(
+			getCellId(lhs, undefined),
+			getMarkLength(lhs),
+			getCellId(rhs, undefined),
+		)
 	) {
+		return false;
+	}
+
+	if (type === NoopMarkType) {
 		(lhs as NoopMark).count += rhs.count;
 		return true;
 	}
 
-	if (
-		type !== NoopMarkType &&
-		type !== "Modify" &&
-		rhs.revision !== (lhs as HasRevisionTag).revision
-	) {
+	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
 		return false;
 	}
 
 	if (
-		(type !== NoopMarkType &&
-			type !== "MoveIn" &&
-			type !== "ReturnTo" &&
-			rhs.changes !== undefined) ||
+		(type !== "MoveIn" && type !== "ReturnTo" && rhs.changes !== undefined) ||
 		(lhs as Modify | HasChanges).changes !== undefined
 	) {
 		return false;
-	}
-
-	if (isExistingCellMark(lhs)) {
-		assert(isExistingCellMark(rhs), 0x6a6 /* Should be existing cell mark */);
-		if (lhs.cellId?.revision !== rhs.cellId?.revision) {
-			return false;
-		}
-
-		if (
-			lhs.cellId !== undefined &&
-			(lhs.cellId.localId as number) + getMarkLength(lhs) !== rhs.cellId?.localId
-		) {
-			return false;
-		}
 	}
 
 	switch (type) {
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if (
-				areSameLineage(lhsInsert.lineage, rhs.lineage) &&
 				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id &&
 				areMergeableChangeAtoms(
 					lhsInsert.transientDetach,
@@ -428,7 +423,6 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				areSameLineage(lhsMoveIn.lineage, rhs.lineage) &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsMoveIn.count === rhs.id
 			) {
@@ -447,6 +441,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				lhsReturnTo.count += rhs.count;
 				return true;
 			}
+			break;
 		}
 		case "Delete": {
 			const lhsDetach = lhs as Detach;
@@ -468,7 +463,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Revive": {
 			const lhsRevive = lhs as Revive;
 			if (
-				lhsRevive.inverseOf === rhs.inverseOf &&
+				haveEqualReattachFields(lhsRevive, rhs) &&
 				areMergeableChangeAtoms(
 					lhsRevive.transientDetach,
 					getMarkLength(lhs),
