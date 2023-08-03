@@ -54,7 +54,7 @@ module.exports = {
 			},
 
 			// Overrides for screenshot tests
-			files: ["src/**/test/screenshot-tests/**"],
+			files: ["src/screenshot-tests/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
 				"import/no-default-export": "off",
@@ -62,6 +62,10 @@ module.exports = {
 				// previewjs doesn't handle imports from roll-up modules well.
 				// Screenshot tests import components directly from their source module.
 				"import/no-internal-modules": "off",
+
+				// Fine for tests
+				"import/no-nodejs-modules": "off",
+				"import/no-extraneous-dependencies": "off",
 			},
 		},
 	],
