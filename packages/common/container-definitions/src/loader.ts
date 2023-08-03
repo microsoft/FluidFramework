@@ -385,10 +385,36 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
+	 * IMPORTANT: This overload is provided for back-compat where IContainer.request(\{ url: "/" \}) is already implemented and used.
+	 * The functionality it can provide (if the Container implementation is built for it) is redundant with @see {@link IContainer.getEntryPoint}.
+	 * Once that API is mandatory on IContainer, this overload will be deprecated.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 *
+	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
+	 */
+	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
+
+	/**
 	 * Issue a request against the container for a resource.
 	 * @param request - The request to be issued against the container
+	 *
+	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
+	 * could implement a request paradigm itself)
+	 *
+	 * NOTE: IContainer.request(\{url: "/"\}) is not yet deprecated. If and only if the Container implementation supports it,
+	 * that overload may be used as a proxy for getting the entryPoint until {@link IContainer.getEntryPoint} is mandatory.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
 	 */
 	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 
 	/**
 	 * Provides the current state of the container's connection to the ordering service.

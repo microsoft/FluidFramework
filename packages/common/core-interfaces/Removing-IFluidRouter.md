@@ -99,7 +99,15 @@ const response = container.request(parsedResolvedUrl);
 ## Status
 
 <!-- prettier-ignore-start -->
-| API                                                      | Deprecated in        | Removed in           |
-| -------------------------------------------------------- | -------------------- | -------------------- |
-| `IFluidRouter`                                           | 2.0.0-internal.5.4.0 |                      |
+| API                                                                                  | Deprecated in        | Removed in           |
+| ------------------------------------------------------------------------------------ | -------------------- | -------------------- |
+| `IContainer.request` (except calling with "/")                                       | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.request` (except calling with "/")                                       | 2.0.0-internal.6.0.0 |                      |
+| `IContainer.IFluidRouter`                                                            | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.IFluidRouter`                                                            | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `ILoader` and `Loader`                               | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                    | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime` | 2.0.0-internal.6.0.0 |                      |
+| `request` and `IFluidRouter` on `IFluidDataStoreChannel`                             | 2.0.0-internal.6.0.0 |                      |
+| `getRootDataStore` on `IContainerRuntime` and `ContainerRuntime`                     | 2.0.0-internal.6.0.0 |                      |
 <!-- prettier-ignore-end -->
