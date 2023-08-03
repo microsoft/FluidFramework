@@ -478,7 +478,7 @@ packages:
       serialize-error: 8.1.0
       socket.io: 4.6.0
       socket.io-adapter: 2.5.2
-      socket.io-parser: 4.2.2
+      socket.io-parser: 4.2.4
       uuid: 8.3.2
       winston: 3.8.1
     transitivePeerDependencies:
@@ -716,7 +716,7 @@ packages:
     dev: true
 
   /@socket.io/component-emitter/3.1.0:
-    resolution: {integrity: sha1-lhFvKpEuDAKBc0WzwQdRBpkg1VM=}
+    resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}
     dev: false
 
   /@socket.io/redis-adapter/7.2.0:
@@ -5281,8 +5281,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /socket.io-parser/4.2.2:
-    resolution: {integrity: sha1-HdOEAZ4lt6PTdId/SSqzTyrQ0gY=}
+  /socket.io-parser/4.2.4:
+    resolution: {integrity: sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==}
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
@@ -5300,7 +5300,7 @@ packages:
       debug: 4.3.4
       engine.io: 6.4.0
       socket.io-adapter: 2.5.2
-      socket.io-parser: 4.2.2
+      socket.io-parser: 4.2.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
