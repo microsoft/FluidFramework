@@ -127,7 +127,7 @@ export async function persistLatestFullSummaryInStorage(
 	try {
 		const directoryExists = await exists(fileSystemManager, storageDirectoryPath);
 		persistLatestFullSummaryInStorageMetric.setProperty(
-			BaseGitRestTelemetryProperties.fullSummaryirectoryExists,
+			BaseGitRestTelemetryProperties.fullSummaryDirectoryExists,
 			directoryExists !== false,
 		);
 		if (directoryExists === false) {

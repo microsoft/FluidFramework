@@ -83,6 +83,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 				{
 					...this.lumberjackBaseProperties,
 					[BaseGitRestTelemetryProperties.sha]: sha,
+					[BaseGitRestTelemetryProperties.directoryPath]: this.directory,
 					count,
 				},
 				err,

@@ -239,7 +239,7 @@ export class RedisFs implements IFileSystemPromises {
 		const folderpathString = folderpath.toString();
 
 		await executeRedisFsApi(
-			async () => this.redisFsClient.set(folderpathString, RedisFSConstants.directory),
+			async () => this.redisFsClient.set(folderpathString, ""),
 			RedisFsApis.Mkdir,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -329,11 +329,7 @@ export class RedisFs implements IFileSystemPromises {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		const fsEntityType =
-			data.toString() === RedisFSConstants.directory
-				? RedisFSConstants.directory
-				: RedisFSConstants.file;
-		return getStats(fsEntityType);
+		return getStats();
 	}
 
 	/**

@@ -24,7 +24,7 @@ export enum GitRestLumberEventName {
 export enum BaseGitRestTelemetryProperties {
 	directoryPath = "directoryPath",
 	emptyFullSummary = "emptyFullSummary",
-	fullSummaryirectoryExists = "fullSummaryirectoryExists",
+	fullSummaryDirectoryExists = "fullSummaryDirectoryExists",
 	isEphemeralContainer = "isEphemeralContainer",
 	isInitial = "isInitial",
 	ref = "ref",
