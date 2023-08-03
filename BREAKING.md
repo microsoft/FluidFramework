@@ -22,35 +22,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 2.0.0-internal.6.0.0
-
-## 2.0.0-internal.6.0.0 Upcoming changes
-
-## 2.0.0-internal.6.0.0 Breaking changes
-
--   [FluidDataStoreRuntime.getChannel throws for channels that do not exist](#FluidDataStoreRuntime.getChannel-throws-for-channels-that-do-not-exist)
--   [Upgraded Typescript target to ES2020](#Upgraded-Typescript-target-to-ES2020)
--   [IRootSummaryTreeWithStats removed from container-runtime package](#IRootSummaryTreeWithStats-removed-from-container-runtime-package)
--   [Loader.resolve() throws if LoaderHeader.sequenceNumber and IContainerLoadMode.opsBeforeReturn do not match](<#Loader.resolve()-throws-if-LoaderHeader.sequenceNumber-and-IContainerLoadMode.opsBeforeReturn-do-not-match>)
-
-### FluidDataStoreRuntime.getChannel throws for channels that do not exist
-
-Previously, calling `FluidDataStoreRuntime.getChannel(id)` for a channel that does not exist would wait for the channel to be created (possibly waiting indefinitely if never created). However, there is no safe means to dynamically create a channel in this manner without risking data corruption. The call will instead now throw for non-existent channels.
-
-### Upgraded Typescript target to ES2020
-
-Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.
-If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
-
-### IRootSummaryTreeWithStats removed from container-runtime package
-
-`IRootSummaryTreeWithStats` was the return type of `summarize` method on `ContainerRuntime`. It was an internal interface used only in `ContainerRuntime` class to to access `gcStats` from a call site. `gcStats` is not needed in the call site anymore and so, it is now removed from the container-runtime package.
-
-### Loader.resolve() throws if LoaderHeader.sequenceNumber and IContainerLoadMode.opsBeforeReturn do not match
-
-Calling `Loader.resolve()` will now throw an error if `LoaderHeader.sequenceNumber` is defined but `IContainerLoadMode.opsBeforeReturn` is not set to "sequenceNumber". Vice versa, `Loader.resolve()` will also throw an error if `IContainerLoadMode.opsBeforeReturn` is set to "sequenceNumber" but `LoaderHeader.sequenceNumber` is not defined.
-
-# 2.0.0-internal.5.0.0
+<!-- DO NOT ADD NEW NOTES TO THIS FILE. USE CHANGESETS INSTEAD. -->
 
 ## 2.0.0-internal.5.0.0 Upcoming changes
 

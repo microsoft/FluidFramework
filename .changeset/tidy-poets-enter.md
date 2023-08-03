@@ -2,4 +2,6 @@
 "@fluid-experimental/tree2": minor
 ---
 
-Remove old SchemaBuilder APIs in favor of Schema2 design.
+SchemaBuilder APIs removed
+
+The old SchemaBuilder APIs have been removed in favor of the Schema2 design.
