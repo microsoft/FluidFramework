@@ -22,7 +22,6 @@
  * This pattern enables discovery, and delegation in a standard way which is central
  * to FluidObject pattern
  *
- * @internal
  */
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp
 	? never
