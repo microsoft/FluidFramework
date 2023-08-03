@@ -2,11 +2,11 @@
 
 ## Indexes
 
-[shared-tree-core](../src/shared-tree-core/README.md) defines the type `Index` which fills the same role Indexes do [in databases](https://en.wikipedia.org/wiki/Database_index).
+[shared-tree-core](../../src/shared-tree-core/README.md) defines the type `Index` which fills the same role Indexes do [in databases](https://en.wikipedia.org/wiki/Database_index).
 Because of this, shared-tree can be though of as a tree database which is interacted with through a collection of indexes.
 To avoid needing an abstraction to storing the actual underlying document content, all persisted document data is actually owned by the indexes.
 In database terms this means that we use [covering indexes](https://en.wikipedia.org/wiki/Database_index#Covering_index) to answer all queries.
-Concretely this is done by [shared-tree](../src/shared-tree/README.md) providing a `ForestIndex` which is is a covering index (stores the actual data from each tree node), optimized for retrieving (and editing) parts of subtrees by path.
+Concretely this is done by [shared-tree](../../src/shared-tree/README.md) providing a `ForestIndex` which is is a covering index (stores the actual data from each tree node), optimized for retrieving (and editing) parts of subtrees by path.
 Schema data is similarly handled by `SchemaIndex`.
 In the future we will have more index implementations, which can provide functionality like accelerating look of of nodes (in `ForestIndex`) by identifiers, text search etc.
 

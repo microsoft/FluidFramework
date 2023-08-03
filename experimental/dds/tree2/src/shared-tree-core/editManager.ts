@@ -445,7 +445,7 @@ export class EditManager<
 	): void {
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
-			"Expected change sequence number to exceed the last known minimum sequence number",
+			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
 		);
 		if (newCommit.sessionId === this.localSessionId) {
 			const [firstLocalCommit] = getPathFromBase(

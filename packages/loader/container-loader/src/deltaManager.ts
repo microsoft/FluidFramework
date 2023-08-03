@@ -7,13 +7,11 @@ import { v4 as uuid } from "uuid";
 import { IEventProvider } from "@fluidframework/common-definitions";
 import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
-	IDeltaHandlerStrategy,
+	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	ICriticalContainerError,
 	IThrottlingWarning,
-	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -44,7 +42,11 @@ import {
 	DataProcessingError,
 	UsageError,
 } from "@fluidframework/container-utils";
-import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
+import {
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
 
@@ -71,6 +73,21 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
  */
 interface IBatchMetadata {
 	batch?: boolean;
+}
+
+/**
+ * Interface used to define a strategy for handling incoming delta messages
+ */
+export interface IDeltaHandlerStrategy {
+	/**
+	 * Processes the message.
+	 */
+	process: (message: ISequencedDocumentMessage) => void;
+
+	/**
+	 * Processes the signal.
+	 */
+	processSignal: (message: ISignalMessage) => void;
 }
 
 /**
@@ -495,7 +512,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		minSequenceNumber: number,
 		sequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "cached" | "all" | "none" = "none",
+		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
 	) {
 		this.initSequenceNumber = sequenceNumber;
 		this.lastProcessedSequenceNumber = sequenceNumber;

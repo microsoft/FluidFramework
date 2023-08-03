@@ -552,8 +552,7 @@ describe("EditManager", () => {
 						trunkEditCount * rebasedEditCount +
 							rebasedEditCount * (rebasedEditCount - 1),
 					);
-					// TODO: Task4664 Prevent quadratic number of inversions by caching inverses
-					// assert.equal(nbInverted, nbRebased - 1);
+
 					assert.equal(
 						rebaser.invertedCount,
 						((rebasedEditCount - 1) * rebasedEditCount) / 2,

@@ -280,26 +280,14 @@ use_old_InterfaceDeclaration_IBatchMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICodeAllowList():
-    TypeOnly<old.ICodeAllowList>;
-declare function use_current_InterfaceDeclaration_ICodeAllowList(
-    use: TypeOnly<current.ICodeAllowList>);
-use_current_InterfaceDeclaration_ICodeAllowList(
-    get_old_InterfaceDeclaration_ICodeAllowList());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeAllowList": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICodeAllowList": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICodeAllowList():
-    TypeOnly<current.ICodeAllowList>;
-declare function use_old_InterfaceDeclaration_ICodeAllowList(
-    use: TypeOnly<old.ICodeAllowList>);
-use_old_InterfaceDeclaration_ICodeAllowList(
-    get_current_InterfaceDeclaration_ICodeAllowList());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -352,26 +340,14 @@ use_old_InterfaceDeclaration_IConnectionDetails(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConnectionDetailsInternal": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IConnectionDetailsInternal": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IConnectionDetailsInternal():
-    TypeOnly<old.IConnectionDetailsInternal>;
-declare function use_current_InterfaceDeclaration_IConnectionDetailsInternal(
-    use: TypeOnly<current.IConnectionDetailsInternal>);
-use_current_InterfaceDeclaration_IConnectionDetailsInternal(
-    get_old_InterfaceDeclaration_IConnectionDetailsInternal());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConnectionDetailsInternal": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IConnectionDetailsInternal": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IConnectionDetailsInternal():
-    TypeOnly<current.IConnectionDetailsInternal>;
-declare function use_old_InterfaceDeclaration_IConnectionDetailsInternal(
-    use: TypeOnly<old.IConnectionDetailsInternal>);
-use_old_InterfaceDeclaration_IConnectionDetailsInternal(
-    get_current_InterfaceDeclaration_IConnectionDetailsInternal());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -395,6 +371,7 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>);
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -419,6 +396,7 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>);
 use_old_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -467,6 +445,7 @@ declare function get_current_InterfaceDeclaration_IContainerLoadMode():
 declare function use_old_InterfaceDeclaration_IContainerLoadMode(
     use: TypeOnly<old.IContainerLoadMode>);
 use_old_InterfaceDeclaration_IContainerLoadMode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerLoadMode());
 
 /*
@@ -496,26 +475,14 @@ use_old_TypeAliasDeclaration_ICriticalContainerError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDeltaHandlerStrategy": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDeltaHandlerStrategy": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDeltaHandlerStrategy():
-    TypeOnly<old.IDeltaHandlerStrategy>;
-declare function use_current_InterfaceDeclaration_IDeltaHandlerStrategy(
-    use: TypeOnly<current.IDeltaHandlerStrategy>);
-use_current_InterfaceDeclaration_IDeltaHandlerStrategy(
-    get_old_InterfaceDeclaration_IDeltaHandlerStrategy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDeltaHandlerStrategy": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDeltaHandlerStrategy": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDeltaHandlerStrategy():
-    TypeOnly<current.IDeltaHandlerStrategy>;
-declare function use_old_InterfaceDeclaration_IDeltaHandlerStrategy(
-    use: TypeOnly<old.IDeltaHandlerStrategy>);
-use_old_InterfaceDeclaration_IDeltaHandlerStrategy(
-    get_current_InterfaceDeclaration_IDeltaHandlerStrategy());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -539,6 +506,7 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: TypeOnly<old.IDeltaManager<any,any>>);
 use_old_InterfaceDeclaration_IDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*
@@ -1019,6 +987,7 @@ declare function get_current_InterfaceDeclaration_ILoaderHeader():
 declare function use_old_InterfaceDeclaration_ILoaderHeader(
     use: TypeOnly<old.ILoaderHeader>);
 use_old_InterfaceDeclaration_ILoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderHeader());
 
 /*

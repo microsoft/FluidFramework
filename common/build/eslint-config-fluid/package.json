@@ -43,7 +43,7 @@
 		"eslint-plugin-unused-imports": "~2.0.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"concurrently": "^6.2.0",
 		"eslint": "~8.6.0",
 		"node-jq": "^2.3.3",
