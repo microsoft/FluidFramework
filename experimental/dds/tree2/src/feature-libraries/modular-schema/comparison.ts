@@ -33,8 +33,8 @@ export function allowsTreeSuperset(
 	if (isNeverTree(policy, originalData, superset)) {
 		return false;
 	}
-	assert(original !== undefined, "only never trees have undefined schema");
-	assert(superset !== undefined, "only never trees have undefined schema");
+	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
+	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
 	if (!allowsValueSuperset(original.value, superset.value)) {
 		return false;
 	}

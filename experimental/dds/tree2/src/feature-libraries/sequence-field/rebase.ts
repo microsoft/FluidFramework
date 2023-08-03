@@ -220,7 +220,10 @@ class RebaseQueue<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 
-		assert(!(baseMark === undefined && newMark === undefined), "Cannot pop from empty queue");
+		assert(
+			!(baseMark === undefined && newMark === undefined),
+			0x722 /* Cannot pop from empty queue */,
+		);
 
 		if (baseMark === undefined) {
 			const dequeuedNewMark = this.newMarks.dequeue();
@@ -744,7 +747,7 @@ function getLineageHolder(mark: Mark<unknown>): HasLineage {
 		return mark;
 	}
 
-	assert(mark.cellId !== undefined, "Attached cells cannot have lineage");
+	assert(mark.cellId !== undefined, 0x723 /* Attached cells cannot have lineage */);
 	return mark.cellId;
 }
 

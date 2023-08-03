@@ -80,7 +80,7 @@ export const sequenceFieldEditor = {
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		assert(detachEvent.revision !== undefined, "Detach event must have a revision");
+		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: Reattach<never> = {
 			type: "Revive",
 			content: reviver(detachEvent.revision, detachEvent.localId, count),
