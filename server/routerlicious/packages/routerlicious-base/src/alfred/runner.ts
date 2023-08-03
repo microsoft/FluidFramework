@@ -26,7 +26,7 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IAlfredTenant, promiseTimeout } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
@@ -150,13 +150,16 @@ export class AlfredRunner implements IRunner {
 
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
+			Lumberjack.info("AlfredRunner.stop already called, returning early.");
 			return;
 		}
+
 		this.stopped = true;
+		Lumberjack.info("AlfredRunner.stop starting.");
 
 		try {
 			// Close the underlying server and then resolve the runner once closed
-			await this.server.close();
+			await promiseTimeout(30000, this.server.close());
 			if (caller === "uncaughtException") {
 				this.runningDeferred?.reject({
 					uncaughtException: serializeError(uncaughtException),
