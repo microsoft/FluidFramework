@@ -390,7 +390,7 @@ describe("Fuzz - Targeted", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
 			emitter,
-			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 },
+			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 }, // interval set to prevent synchronization
 			skip: [4, 8, 11, 13, 15, 18],
 		});
 	});
