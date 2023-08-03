@@ -751,7 +751,6 @@ function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: Rev
 	}
 }
 
-
 function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
 	if (lineageEntries.length > 0) {
 		const lastEntry = lineageEntries[lineageEntries.length - 1];
@@ -805,7 +804,10 @@ function compareCellPositions(
 
 		const adjacentCells = baseId.adjacentCells ?? newId.adjacentCells;
 		if (adjacentCells !== undefined) {
-			return getPositionAmongAdjacentCells(adjacentCells, baseId.localId) - getPositionAmongAdjacentCells(adjacentCells, newId.localId);
+			return (
+				getPositionAmongAdjacentCells(adjacentCells, baseId.localId) -
+				getPositionAmongAdjacentCells(adjacentCells, newId.localId)
+			);
 		}
 	}
 

@@ -84,8 +84,19 @@ describe("SequenceField - Invert", () => {
 		const modify = Change.modify(0, childChange1);
 		const input = composeAnonChanges([revive, modify]);
 		const expected: TestChangeset = [
-			{ type: "Delete", count: 1, id: brand(0), detachIdOverride: { localId: brand(0), revision: tag1 }, changes: inverseChildChange1 },
-			{ type: "Delete", count: 1, id: brand(1), detachIdOverride: { localId: brand(1), revision: tag1 }},
+			{
+				type: "Delete",
+				count: 1,
+				id: brand(0),
+				detachIdOverride: { localId: brand(0), revision: tag1 },
+				changes: inverseChildChange1,
+			},
+			{
+				type: "Delete",
+				count: 1,
+				id: brand(1),
+				detachIdOverride: { localId: brand(1), revision: tag1 },
+			},
 		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -94,12 +105,14 @@ describe("SequenceField - Invert", () => {
 	it("intentional active revive => delete", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const input = Change.intentionalRevive(0, 2, cellId);
-		const expected: TestChangeset = [{
-			type: "Delete",
-			id: brand(0),
-			count: 2,
-			detachIdOverride: cellId,
-		}];
+		const expected: TestChangeset = [
+			{
+				type: "Delete",
+				id: brand(0),
+				count: 2,
+				detachIdOverride: cellId,
+			},
+		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -134,9 +147,20 @@ describe("SequenceField - Invert", () => {
 		const expected: TestChangeset = [
 			{ type: "ReturnTo", id: brand(0), count: 2, cellId },
 			{ count: 3 },
-			{ type: "ReturnFrom", id: brand(0), detachIdOverride: cellId, count: 1, changes: inverseChildChange1 },
-			{ type: "ReturnFrom", id: brand(1), detachIdOverride: { revision: tag1, localId: brand(1) }, count: 1 },
-		]
+			{
+				type: "ReturnFrom",
+				id: brand(0),
+				detachIdOverride: cellId,
+				count: 1,
+				changes: inverseChildChange1,
+			},
+			{
+				type: "ReturnFrom",
+				id: brand(1),
+				detachIdOverride: { revision: tag1, localId: brand(1) },
+				count: 1,
+			},
+		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});

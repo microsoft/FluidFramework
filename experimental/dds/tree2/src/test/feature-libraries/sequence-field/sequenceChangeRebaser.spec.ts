@@ -208,7 +208,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				) {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
 					continue;
-				}				
+				}
 				it(title, () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
