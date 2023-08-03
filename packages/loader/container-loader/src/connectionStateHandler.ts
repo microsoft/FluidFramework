@@ -32,7 +32,7 @@ export interface IConnectionStateHandlerInputs {
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: IConnectionStateChangeReason,
+		reason?: IConnectionStateChangeReason<IAnyDriverError>,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -59,7 +59,7 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: IConnectionStateChangeReason): void;
+	receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>): void;
 	establishingConnection(reason: IConnectionStateChangeReason): void;
 	/**
 	 * Switches state to disconnected when we are still establishing connection during container.load(),
@@ -148,7 +148,7 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: IConnectionStateChangeReason) {
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
 		return this.pimpl.receivedDisconnectEvent(reason);
 	}
 
@@ -174,7 +174,7 @@ class ConnectionStateHandlerPassThrough
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: IConnectionStateChangeReason,
+		reason?: IConnectionStateChangeReason<IAnyDriverError>,
 	) {
 		return this.inputs.connectionStateChanged(value, oldState, reason);
 	}
@@ -220,7 +220,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: IConnectionStateChangeReason,
+		reason?: IConnectionStateChangeReason<IAnyDriverError>,
 	) {
 		switch (value) {
 			case ConnectionState.Connected:
@@ -489,7 +489,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: IConnectionStateChangeReason) {
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
 		this.connection = undefined;
 		this.setConnectionState(ConnectionState.Disconnected, reason);
 	}
@@ -581,7 +581,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
-		reason?: IConnectionStateChangeReason,
+		reason?: IConnectionStateChangeReason<IAnyDriverError>,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early

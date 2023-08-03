@@ -156,7 +156,7 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever connection to relay service is lost.
 	 */
-	readonly disconnectHandler: (reason: IConnectionStateChangeReason) => void;
+	readonly disconnectHandler: (reason: IConnectionStateChangeReason<IAnyDriverError>) => void;
 
 	/**
 	 * Called whenever new connection to rely service is established
