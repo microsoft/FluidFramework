@@ -378,13 +378,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return false;
 	}
 	const type = rhs.type;
-	if (
-		!areMergeableCellIds(
-			getCellId(lhs, undefined),
-			getMarkLength(lhs),
-			getCellId(rhs, undefined),
-		)
-	) {
+	const lhsLength = getMarkLength(lhs);
+	if (!areMergeableCellIds(getCellId(lhs, undefined), lhsLength, getCellId(rhs, undefined))) {
 		return false;
 	}
 
@@ -409,11 +404,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			const lhsInsert = lhs as Insert;
 			if (
 				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id &&
-				areMergeableChangeAtoms(
-					lhsInsert.transientDetach,
-					getMarkLength(lhs),
-					rhs.transientDetach,
-				)
+				areMergeableChangeAtoms(lhsInsert.transientDetach, lhsLength, rhs.transientDetach)
 			) {
 				lhsInsert.content.push(...rhs.content);
 				return true;
@@ -464,11 +455,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			const lhsRevive = lhs as Revive;
 			if (
 				haveEqualReattachFields(lhsRevive, rhs) &&
-				areMergeableChangeAtoms(
-					lhsRevive.transientDetach,
-					getMarkLength(lhs),
-					rhs.transientDetach,
-				)
+				areMergeableChangeAtoms(lhsRevive.transientDetach, lhsLength, rhs.transientDetach)
 			) {
 				lhsRevive.content.push(...rhs.content);
 				lhsRevive.count += rhs.count;
