@@ -28,7 +28,7 @@ export class Interval implements ISerializableInterval {
 	public auxProps: PropertySet[] | undefined;
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public propertyManager: PropertiesManager;
 	constructor(public start: number, public end: number, props?: PropertySet) {
@@ -144,7 +144,7 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public union(b: Interval) {
 		return new Interval(
@@ -160,7 +160,7 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public addProperties(
 		newProps: PropertySet,
@@ -182,7 +182,7 @@ export class Interval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
+	 * @internal
 	 */
 	public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
 		const startPos = start ?? this.start;

@@ -109,7 +109,7 @@ describe("Local Odsp driver", () => {
 				() =>
 					new LocalOdspDocumentService(
 						fakeOdspResolvedUrl,
-						new MockLogger(),
+						new MockLogger().toTelemetryLogger(),
 						localSnapshot,
 					),
 			);
@@ -119,7 +119,7 @@ describe("Local Odsp driver", () => {
 			const resolvedUrl = fakeOdspResolvedUrl;
 			const service = new LocalOdspDocumentService(
 				resolvedUrl,
-				new MockLogger(),
+				new MockLogger().toTelemetryLogger(),
 				localSnapshot,
 			);
 			assert.strictEqual(service.resolvedUrl, resolvedUrl);
@@ -128,7 +128,7 @@ describe("Local Odsp driver", () => {
 		it("Delta storage service returns no messages", async () => {
 			const service = new LocalOdspDocumentService(
 				fakeOdspResolvedUrl,
-				new MockLogger(),
+				new MockLogger().toTelemetryLogger(),
 				localSnapshot,
 			);
 
@@ -149,7 +149,7 @@ describe("Local Odsp driver", () => {
 			);
 			const service = new LocalOdspDocumentService(
 				fakeOdspResolvedUrl,
-				new MockLogger(),
+				new MockLogger().toTelemetryLogger(),
 				snapshotWithTrailingOps,
 			);
 
@@ -167,7 +167,7 @@ describe("Local Odsp driver", () => {
 			const mockLogger = new MockLogger();
 			const service = new LocalOdspDocumentService(
 				fakeOdspResolvedUrl,
-				mockLogger,
+				mockLogger.toTelemetryLogger(),
 				localSnapshot,
 			);
 
@@ -186,7 +186,7 @@ describe("Local Odsp driver", () => {
 		it("Dispose does not throw", () => {
 			const service = new LocalOdspDocumentService(
 				fakeOdspResolvedUrl,
-				new MockLogger(),
+				new MockLogger().toTelemetryLogger(),
 				localSnapshot,
 			);
 			assert.doesNotThrow(() => service.dispose());
@@ -199,7 +199,11 @@ describe("Local Odsp driver", () => {
 	describe("Local Odsp document storage service", () => {
 		it("Can use a real snapshot", () => {
 			assert.doesNotThrow(
-				() => new LocalOdspDocumentStorageService(new MockLogger(), localSnapshot),
+				() =>
+					new LocalOdspDocumentStorageService(
+						new MockLogger().toTelemetryLogger(),
+						localSnapshot,
+					),
 			);
 		});
 
@@ -208,7 +212,7 @@ describe("Local Odsp driver", () => {
 
 			await assertThrowsUsageError(async () =>
 				new LocalOdspDocumentStorageService(
-					mockLogger,
+					mockLogger.toTelemetryLogger(),
 					"sample data",
 				).uploadSummaryWithContext(
 					{
@@ -227,7 +231,10 @@ describe("Local Odsp driver", () => {
 
 		it("createBlob throws error", async () => {
 			const mockLogger = new MockLogger();
-			const storageService = new LocalOdspDocumentStorageService(mockLogger, "sample data");
+			const storageService = new LocalOdspDocumentStorageService(
+				mockLogger.toTelemetryLogger(),
+				"sample data",
+			);
 
 			await assertThrowsUsageError(async () => storageService.createBlob(new ArrayBuffer(0)));
 			mockLogger.assertMatch([{ eventName: "UnsupportedUsage" }], "Expected log not present");
@@ -238,7 +245,7 @@ describe("Local Odsp driver", () => {
 
 			it("blobid should always be null", async () => {
 				const storageService = new LocalOdspDocumentStorageService(
-					new MockLogger(),
+					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
 				await assert.rejects(async () => storageService.getVersions("", 1));
@@ -247,7 +254,7 @@ describe("Local Odsp driver", () => {
 
 			it("count should always be 1", async () => {
 				const storageService = new LocalOdspDocumentStorageService(
-					new MockLogger(),
+					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
 				await assert.rejects(async () => storageService.getVersions(null, -1));
@@ -257,7 +264,7 @@ describe("Local Odsp driver", () => {
 
 			it("Retrieves snapshot version from JSON snapshot", async () => {
 				const storageService = new LocalOdspDocumentStorageService(
-					new MockLogger(),
+					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
 				assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
@@ -265,7 +272,7 @@ describe("Local Odsp driver", () => {
 
 			it("Calling multiple times", async () => {
 				const storageService = new LocalOdspDocumentStorageService(
-					new MockLogger(),
+					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
 				for (let i = 0; i < 3; i++) {

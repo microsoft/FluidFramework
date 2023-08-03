@@ -1,5 +1,14 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.5.4.0
+
+### Minor Changes
+
+-   ContainerRuntime.reSubmitFn is deprecated: ([#16276](https://github.com/microsoft/FluidFramework/issues/16276)) [46707372e8](https://github.com/microsoft/FluidFramework/commits/46707372e82a492f6e42b683d37d49c25e6be15b)
+
+    ContainerRuntime.reSubmitFn is deprecatedsince this functionality needs not be exposed, and we are refactoring the
+    signatures of related code internally.
+
 ## 2.0.0-internal.5.3.0
 
 Dependency updates only.

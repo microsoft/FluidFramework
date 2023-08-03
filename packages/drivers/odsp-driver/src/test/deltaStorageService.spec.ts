@@ -43,7 +43,7 @@ describe("DeltaStorageService", () => {
 			testDeltaStorageUrl,
 			async (_refresh) => "?access_token=123",
 			createUtEpochTracker(fileEntry, logger),
-			logger,
+			logger.toTelemetryLogger(),
 		);
 		const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
 		const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
@@ -94,7 +94,7 @@ describe("DeltaStorageService", () => {
 				testDeltaStorageUrl,
 				async (_refresh) => "",
 				createUtEpochTracker(fileEntry, logger),
-				logger,
+				logger.toTelemetryLogger(),
 			);
 		});
 		afterEach(() => {
@@ -167,7 +167,7 @@ describe("DeltaStorageService", () => {
 				testDeltaStorageUrl,
 				async (_refresh) => "",
 				createUtEpochTracker(fileEntry, logger),
-				logger,
+				logger.toTelemetryLogger(),
 			);
 		});
 		afterEach(() => {
@@ -237,7 +237,7 @@ describe("DeltaStorageService", () => {
 			};
 			const odspDeltaStorageServiceWithCache = new OdspDeltaStorageWithCache(
 				[],
-				logger,
+				logger.toTelemetryLogger(),
 				1000,
 				1,
 				async (from, to, props, reason) => deltasFetchResult,
