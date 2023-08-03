@@ -1528,12 +1528,14 @@ export class ContainerRuntime
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = () => {
 					if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-						this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
 						// unregister default to no log on every op after falling behind
 						// and register summary ack handler to re-register this handler
 						// after successful summary
 						this.summaryCollection.once(MessageType.SummaryAck, () => {
-							this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
+							this.mc.logger.sendTelemetryEvent({
+								eventName: "SummaryStatus:CaughtUp",
+							});
 							// we've caught up, so re-register the default action to monitor for
 							// falling behind, and unregister ourself
 							this.summaryCollection.on("default", defaultAction);
@@ -1601,7 +1603,7 @@ export class ContainerRuntime
 			...getDeviceSpec(),
 		});
 
-		this.logger.sendTelemetryEvent({
+		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
 			...this.dataStores.containerLoadStats,
@@ -1652,7 +1654,7 @@ export class ContainerRuntime
 		}
 		this._disposed = true;
 
-		this.logger.sendTelemetryEvent(
+		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
@@ -2202,7 +2204,7 @@ export class ContainerRuntime
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._perfSignalData.signalTimestamp;
-		this.logger.sendPerformanceEvent({
+		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
 			signalsLost: this._perfSignalData.signalsLost,
@@ -2230,7 +2232,7 @@ export class ContainerRuntime
 			) {
 				this._perfSignalData.signalsLost++;
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.logger.sendErrorEvent({
+				this.mc.logger.sendErrorEvent({
 					eventName: "SignalLost",
 					type: envelope.contents.type,
 					signalsLost: this._perfSignalData.signalsLost,
@@ -2601,7 +2603,7 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
@@ -3181,7 +3183,7 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
 			});
