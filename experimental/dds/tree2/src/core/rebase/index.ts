@@ -34,3 +34,6 @@ export {
 	Violation,
 } from "./verifyChangeRebaser";
 export { findAncestor, findCommonAncestor, rebaseBranch, rebaseChange } from "./utils";
+// TODO: This is moved here temporarily to avoid a circular dependency. The RepairDataStore will be removed completely soon.
+export { RepairDataStore, ReadonlyRepairDataStore } from "./repairDataStore";
+export { IRepairDataStoreProvider } from "./repairDataStoreProvider";

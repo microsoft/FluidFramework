@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { RepairDataStore, ReadonlyRepairDataStore } from "./repairDataStore";
-export { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 export {
 	RepairDataHandler,
 	RepairDataBuilder,

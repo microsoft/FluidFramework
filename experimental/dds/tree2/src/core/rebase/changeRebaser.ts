@@ -4,8 +4,8 @@
  */
 
 import { Invariant } from "../../util";
-import { ReadonlyRepairDataStore } from "../repair";
 import { AnchorSet } from "../tree";
+import { ReadonlyRepairDataStore } from "./repairDataStore";
 import type { RevisionTag } from "./types";
 
 /**

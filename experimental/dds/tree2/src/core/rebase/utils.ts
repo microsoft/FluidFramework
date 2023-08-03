@@ -4,10 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
 import { fail } from "../../util";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
+import { ReadonlyRepairDataStore } from "./repairDataStore";
+import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.

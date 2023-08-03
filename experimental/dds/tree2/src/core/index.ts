@@ -165,6 +165,9 @@ export {
 	mintRevisionTag,
 	rebaseBranch,
 	rebaseChange,
+	RepairDataStore,
+	ReadonlyRepairDataStore,
+	IRepairDataStoreProvider,
 } from "./rebase";
 
 export {
@@ -177,13 +180,6 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export {
-	RepairDataStore,
-	ReadonlyRepairDataStore,
-	IRepairDataStoreProvider,
-	RepairDataHandler,
-	RepairDataBuilder,
-	unsupportedRepairDataHandler,
-} from "./repair";
+export { RepairDataHandler, RepairDataBuilder, unsupportedRepairDataHandler } from "./repair";
 
 export { UndoRedoManager, LocalCommitSource } from "./undo";
