@@ -242,6 +242,7 @@ export class FluidDataStoreRuntime
 		private readonly dataStoreContext: IFluidDataStoreContext,
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
+		// this should be required, but it break more things than i want to fix in the prototype
 		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
 		super();
@@ -327,14 +328,14 @@ export class FluidDataStoreRuntime
 			});
 		}
 
-		if (initializeEntryPoint) {
-			const promise = new LazyPromise(async () => initializeEntryPoint(this));
-			this.entryPoint = new FluidObjectHandle<FluidObject>(
-				promise,
-				"",
-				this.objectsRoutingContext,
-			);
-		}
+		const promise = new LazyPromise<FluidObject | undefined>(async () =>
+			initializeEntryPoint?.(this),
+		);
+		this.entryPoint = new FluidObjectHandle<FluidObject>(
+			promise,
+			"",
+			this.objectsRoutingContext,
+		);
 
 		this.attachListener();
 		this._attachState = dataStoreContext.attachState;
@@ -381,6 +382,10 @@ export class FluidDataStoreRuntime
 	public async resolveHandle(path: string): Promise<FluidObject> {
 		const request: IRequest = { url: path };
 		const parser = RequestParser.create(request);
+		if (parser.pathParts.length === 0) {
+			assert(this.entryPoint !== undefined, "TODO: Fix typing so this is never undefined");
+			return this.entryPoint?.get();
+		}
 		const id = parser.pathParts[0];
 
 		if (id === "_channels" || id === "_custom") {
@@ -388,18 +393,12 @@ export class FluidDataStoreRuntime
 		}
 
 		// Check for a data type reference first
-		if (this.contextsDeferred.has(id) && parser.isLeaf(1)) {
+		const context = this.contexts.get(id);
+		if (context !== undefined && parser.isLeaf(1)) {
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const value = await this.contextsDeferred.get(id)!.promise;
-				const channel: FluidObject = await value.getChannel();
-
-				if (channel !== undefined) {
-					return channel;
-				}
+				return await context.getChannel();
 			} catch (error) {
 				this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
-
 				throw error;
 			}
 		}

@@ -235,6 +235,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: any, local: boolean): void;
     // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
+    // (undocumented)
+    resolveHandle(path: string): Promise<FluidObject>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;
