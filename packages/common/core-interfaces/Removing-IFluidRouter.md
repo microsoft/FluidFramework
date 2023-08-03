@@ -69,6 +69,8 @@ Via a parameter `initializeEntryPoint` that's found on `ContainerRuntime.loadRun
 | ------------------------------------------------------------------------------------ | -------------------- | -------------------- |
 | `IContainer.request` (except calling with "/")                                       | 2.0.0-internal.6.0.0 |                      |
 | `IDataStore.request` (except calling with "/")                                       | 2.0.0-internal.6.0.0 |                      |
+| `IContainer.IFluidRouter`                                                            | 2.0.0-internal.6.0.0 |                      |
+| `IDataStore.IFluidRouter`                                                            | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `ILoader` and `Loader`                               | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `IRuntime` and `ContainerRuntime`                    | 2.0.0-internal.6.0.0 |                      |
 | `request` and `IFluidRouter` on `IFluidDataStoreRuntime` and `FluidDataStoreRuntime` | 2.0.0-internal.6.0.0 |                      |
