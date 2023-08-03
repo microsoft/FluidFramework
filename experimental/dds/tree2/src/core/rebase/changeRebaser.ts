@@ -57,6 +57,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
 	 * @param repairStore - The store to query for repair data.
 	 * If undefined, dummy data will be created instead.
+	 * @param cache - Whether the inverted change will be cached or not.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
@@ -67,6 +68,7 @@ export interface ChangeRebaser<TChangeset> {
 		isRollback: boolean,
 		// TODO: make the repair store mandatory when all usages of this method have repair data support.
 		repairStore?: ReadonlyRepairDataStore,
+		cache?: boolean,
 	): TChangeset;
 
 	/**

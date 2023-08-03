@@ -448,26 +448,14 @@ use_old_ClassDeclaration_Interval(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IntervalConflictResolver": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IntervalConflictResolver": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IntervalConflictResolver():
-    TypeOnly<old.IntervalConflictResolver<any>>;
-declare function use_current_TypeAliasDeclaration_IntervalConflictResolver(
-    use: TypeOnly<current.IntervalConflictResolver<any>>);
-use_current_TypeAliasDeclaration_IntervalConflictResolver(
-    get_old_TypeAliasDeclaration_IntervalConflictResolver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IntervalConflictResolver": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IntervalConflictResolver": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IntervalConflictResolver():
-    TypeOnly<current.IntervalConflictResolver<any>>;
-declare function use_old_TypeAliasDeclaration_IntervalConflictResolver(
-    use: TypeOnly<old.IntervalConflictResolver<any>>);
-use_old_TypeAliasDeclaration_IntervalConflictResolver(
-    get_current_TypeAliasDeclaration_IntervalConflictResolver());
 
 /*
 * Validate forward compat by using old type in place of current type

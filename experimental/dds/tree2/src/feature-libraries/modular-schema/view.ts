@@ -17,7 +17,6 @@ import {
 	NamedTreeSchema,
 	TreeTypeSet,
 } from "../../core";
-import { neverTree } from "../default-field-kinds";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
 
@@ -99,13 +98,7 @@ export class ViewSchema {
 		// and its impossible for an adapter to be correctly implemented if its output type is never
 		// (unless its input is also never).
 		for (const adapter of this.adapters?.tree ?? []) {
-			if (
-				isNeverTree(
-					this.policy,
-					this.schema,
-					this.schema.treeSchema.get(adapter.output) ?? neverTree,
-				)
-			) {
+			if (isNeverTree(this.policy, this.schema, this.schema.treeSchema.get(adapter.output))) {
 				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}

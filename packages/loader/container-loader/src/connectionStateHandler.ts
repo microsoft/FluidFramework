@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import {
@@ -13,8 +13,9 @@ import {
 	PerformanceEvent,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
+import { ConnectionState } from "./connectionState";
+import { IConnectionDetailsInternal } from "./contracts";
 import { IProtocolHandler } from "./protocol";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or

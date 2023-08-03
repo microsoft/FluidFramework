@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-document",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.1.0",
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,7 +68,7 @@
 	"devDependencies": {
 		"@fluid-internal/test-version-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.21.0",
-		"@fluidframework/build-common": "^1.2.0",
+		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
@@ -81,6 +81,8 @@
 		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
+		"eslint-import-resolver-typescript": "^3.5.5",
+		"eslint-plugin-import": "~2.25.4",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",

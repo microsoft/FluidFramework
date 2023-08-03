@@ -22,11 +22,19 @@
  */
 
 export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
-export { ContainerKey, FluidObjectId, HasContainerKey, HasFluidObjectId } from "./CommonInterfaces";
+export {
+	ContainerKey,
+	EditType,
+	FluidObjectId,
+	HasContainerKey,
+	HasFluidObjectId,
+} from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerStateMetadata } from "./ContainerMetadata";
 export {
+	Edit,
+	EditSharedObject,
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -35,6 +43,7 @@ export {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
+	SharedObjectEdit,
 	TreeNodeBase,
 	ValueNodeBase,
 	VisualChildNode,
@@ -68,6 +77,7 @@ export {
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,

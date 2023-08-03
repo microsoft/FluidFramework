@@ -301,6 +301,8 @@ export function rebaseBranch<TChange>(
  * @param sourceHead - the head of the branch that `change` is based on
  * @param targetHead - the branch to rebase `change` onto
  * @returns the rebased change
+ *
+ * @remarks inverses will be cached.
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
@@ -319,7 +321,7 @@ export function rebaseChange<TChange>(
 		(newChange, branchCommit) =>
 			changeRebaser.rebase(
 				newChange,
-				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData),
+				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData, true),
 			),
 		change,
 	);
@@ -339,9 +341,10 @@ function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
 	repairData?: ReadonlyRepairDataStore,
+	cache?: boolean,
 ): TaggedChange<TChange> {
 	return tagRollbackInverse(
-		changeRebaser.invert(commit, true, repairData),
+		changeRebaser.invert(commit, true, repairData, cache),
 		mintRevisionTag(),
 		commit.revision,
 	);

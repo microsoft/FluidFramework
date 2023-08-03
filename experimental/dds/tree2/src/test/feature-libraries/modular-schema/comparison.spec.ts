@@ -28,13 +28,7 @@ import {
 	treeSchema,
 } from "../../../core";
 import { brand } from "../../../util";
-import {
-	defaultSchemaPolicy,
-	emptyField,
-	FieldKinds,
-	neverField,
-	neverTree,
-} from "../../../feature-libraries";
+import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
 
 describe("Schema Comparison", () => {
 	/**
@@ -51,6 +45,20 @@ describe("Schema Comparison", () => {
 		structFields: emptyMap,
 		mapFields: anyField,
 		value: ValueSchema.Serializable,
+	};
+
+	/**
+	 * FieldStoredSchema which is impossible for any data to be in schema with.
+	 */
+	const neverField = fieldSchema(FieldKinds.value, []);
+
+	/**
+	 * TreeStoredSchema which is impossible for any data to be in schema with.
+	 */
+	const neverTree: TreeStoredSchema = {
+		structFields: emptyMap,
+		mapFields: neverField,
+		value: ValueSchema.Nothing,
 	};
 
 	const neverTree2: TreeStoredSchema = {

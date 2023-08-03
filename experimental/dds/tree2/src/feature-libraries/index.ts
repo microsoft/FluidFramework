@@ -163,8 +163,6 @@ export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from 
 export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
-export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
-
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
 export {
@@ -196,8 +194,6 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	emptyField,
-	neverField,
-	neverTree,
 } from "./default-field-kinds";
 
 export {

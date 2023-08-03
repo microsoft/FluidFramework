@@ -20,8 +20,7 @@ import { describeNoCompat } from "@fluid-internal/test-version-utils";
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
-// TODO: enable this test in "next" (after server versions get bumped)
-describe.skip("Pong", () => {
+describe("Pong", () => {
 	describeNoCompat("Pong", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();

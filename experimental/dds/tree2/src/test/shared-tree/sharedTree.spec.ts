@@ -9,12 +9,12 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	FieldKinds,
 	singleTextCursor,
 	makeSchemaCodec,
 	jsonableTreeFromCursor,
-	namedTreeSchema,
 	on,
 	SchemaBuilder,
 	Any,
@@ -26,6 +26,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	namedTreeSchema,
 } from "../utils";
 import {
 	ISharedTree,
@@ -1261,13 +1262,13 @@ describe("SharedTree", () => {
 			insert(provider.trees[0], 0, "a");
 			await provider.ensureSynchronized();
 
-			const pausedContainer = provider.containers[0];
+			const pausedContainer: IContainerExperimental = provider.containers[0];
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			insert(pausedTree, 1, "b");
 			insert(pausedTree, 2, "c");
-			const pendingOps = pausedContainer.closeAndGetPendingLocalState();
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedTree = provider.trees[1];
@@ -1806,8 +1807,7 @@ describe("SharedTree", () => {
 				child.transaction.start();
 				pushTestValueDirect(child, "C");
 				child.transaction.commit();
-				// TODO:#4925: It should not be necessary to keep the child undisposed here.
-				parent.merge(child, false);
+				parent.merge(child);
 				assert.deepEqual(getTestValues(parent), ["A", "B", "C"]);
 			};
 			const provider = await TestTreeProvider.create(
@@ -1922,9 +1922,8 @@ describe("SharedTree", () => {
 });
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
+	name: "TestValue",
 	structFields: {
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
@@ -2001,7 +2000,7 @@ function setTestValue(branch: ISharedTreeView, value: TreeValue): void {
 }
 
 const testValueSchema = namedTreeSchema({
-	name: brand("TestValue"),
+	name: "TestValue",
 	leafValue: ValueSchema.Serializable,
 });
 
