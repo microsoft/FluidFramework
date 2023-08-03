@@ -43,13 +43,7 @@ import {
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
-import {
-	GenerativeMark,
-	TransientMark,
-	ExistingCellMark,
-	EmptyInputCellMark,
-	DetachedCellMark,
-} from "./helperTypes";
+import { GenerativeMark, TransientMark, EmptyInputCellMark, DetachedCellMark } from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
@@ -208,31 +202,7 @@ export function markIsTransient<T>(mark: Mark<T>): mark is TransientMark<T> {
 	return isGenerativeMark(mark) && mark.transientDetach !== undefined;
 }
 
-export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T> {
-	const type = mark.type;
-	switch (type) {
-		case NoopMarkType:
-		case "Delete":
-		case "Modify":
-		case "MoveOut":
-		case "ReturnFrom":
-		case "ReturnTo":
-		case "Revive":
-		case "Placeholder":
-			return true;
-		case "Insert":
-		case "MoveIn":
-			return false;
-		default:
-			unreachableCase(type);
-	}
-}
-
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
-	if (isNewAttach(mark)) {
-		return true;
-	}
-
 	return mark.cellId !== undefined;
 }
 

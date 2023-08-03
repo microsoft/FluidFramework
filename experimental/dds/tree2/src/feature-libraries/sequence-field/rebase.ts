@@ -24,7 +24,6 @@ import {
 	getMarkLength,
 	markEmptiesCells,
 	markFillsCells,
-	isExistingCellMark,
 	getCellId,
 	getOffsetInCellRange,
 	compareLineages,
@@ -55,7 +54,7 @@ import {
 	PairedMarkUpdate,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
-import { ExistingCellMark, EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark } from "./helperTypes";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -358,11 +357,6 @@ function rebaseMark<TNodeChange>(
 		assert(isDetachMark(baseMark), 0x70b /* Only detach marks should empty cells */);
 		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseMark.id);
 	} else if (markFillsCells(baseMark)) {
-		assert(
-			isExistingCellMark(rebasedMark),
-			0x69e /* Only an ExistingCellMark can target an empty cell */,
-		);
-
 		if (isMoveMark(baseMark)) {
 			const movedMark = getMovedMark(
 				moveEffects,
@@ -538,7 +532,7 @@ function rebaseNodeChange<TNodeChange>(
 }
 
 function makeDetachedMark<T>(
-	mark: NoopMark | ExistingCellMark<T>,
+	mark: Mark<T>,
 	detachIntention: RevisionTag,
 	detachId: ChangesetLocalId,
 ): Mark<T> {
@@ -546,7 +540,7 @@ function makeDetachedMark<T>(
 	return { ...mark, cellId: { revision: detachIntention, localId: detachId } };
 }
 
-function withoutCellId<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
+function withoutCellId<T, TMark extends Mark<T>>(mark: TMark): TMark {
 	const newMark = { ...mark };
 	delete newMark.cellId;
 	return newMark;

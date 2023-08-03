@@ -38,7 +38,6 @@ import {
 	getCellId,
 	compareLineages,
 	isNewAttach,
-	isExistingCellMark,
 	getMarkLength,
 	isDetachMark,
 	getNodeChange,
@@ -582,7 +581,7 @@ export class ComposeQueue<T> {
 				baseCellId = { revision: baseIntention, localId: baseMark.id };
 			} else {
 				assert(
-					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
+					areInputCellsEmpty(baseMark),
 					0x696 /* Mark with empty output must either be a detach or also have input empty */,
 				);
 				baseCellId = baseMark.cellId;

@@ -6,37 +6,15 @@
 import {
 	CellId,
 	CellTargetingMark,
-	Delete,
 	Detach,
 	Insert,
 	Mark,
-	Modify,
-	MoveOut,
-	MovePlaceholder,
 	NewAttach,
-	NoopMark,
-	ReturnFrom,
-	ReturnTo,
 	Revive,
 	Transient,
 } from "./format";
 
-/**
- * A mark which extends `CellTargetingMark`.
- */
-export type ExistingCellMark<TNodeChange> =
-	| NoopMark
-	| MovePlaceholder<TNodeChange>
-	| Delete<TNodeChange>
-	| MoveOut<TNodeChange>
-	| ReturnFrom<TNodeChange>
-	| Modify<TNodeChange>
-	| Revive<TNodeChange>
-	| ReturnTo;
-
-export type EmptyInputCellMark<TNodeChange> =
-	| NewAttach<TNodeChange>
-	| (DetachedCellMark & ExistingCellMark<TNodeChange>);
+export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
 
 /**
  * A mark that spans one or more cells.
