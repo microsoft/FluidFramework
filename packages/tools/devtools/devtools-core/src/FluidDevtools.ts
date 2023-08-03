@@ -381,6 +381,7 @@ export class FluidDevtools implements IFluidDevtools {
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
 			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+			// Completed but disabled until we finish the story for unsampled telemetry that powers this feature
 			[DevtoolsFeature.OpLatencyTelemetry]: false,
 		};
 	}

@@ -555,16 +555,16 @@ function Menu(props: MenuProps): React.ReactElement {
 				/>
 			</MenuSection>,
 		);
+	}
 
-		if (supportedFeatures[DevtoolsFeature.OpLatencyTelemetry] === true) {
-			menuSections.push(
-				<MenuSection
-					header="Op Latency"
-					key="op-latency-menu-section"
-					onHeaderClick={onOpLatencyClicked}
-				/>,
-			);
-		}
+	if (supportedFeatures[DevtoolsFeature.OpLatencyTelemetry] === true) {
+		menuSections.push(
+			<MenuSection
+				header="Op Latency"
+				key="op-latency-menu-section"
+				onHeaderClick={onOpLatencyClicked}
+			/>,
+		);
 	}
 
 	menuSections.push(

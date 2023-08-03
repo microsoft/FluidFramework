@@ -26,6 +26,7 @@ export function OpLatencyView(): React.ReactElement {
 					marginLeft: 25,
 					bottom: -5,
 				}}
+				yAxisUnitDisplayName="ms"
 				// NOTE: Because Op Latency Telemetry is not yet available, this is a placeholder
 				dataSets={[]}
 			/>
@@ -33,8 +34,8 @@ export function OpLatencyView(): React.ReactElement {
 				<div style={{ display: "flex", flexDirection: "column" }}>
 					<Subtitle1>About</Subtitle1>
 					<Body1>
-						{`This Graph shows Fluid Op Latency metrics.
-					As your make changes to your collaborative application, you'll see this graph update in real time with latency data.`}
+						{`This Graph shows Fluid Op (Operation) Latency metrics.
+					As you make changes in your Fluid-based application, you'll see this graph update in real time with latency data for any ops your client produces.`}
 						&nbsp;
 						<a
 							target="_blank"
@@ -47,47 +48,49 @@ export function OpLatencyView(): React.ReactElement {
 				</div>
 
 				<div style={{ marginTop: "15px" }}>
-					<Body1Strong>{`Op's in Fluid go through four phases:`}</Body1Strong>
+					<Body1Strong>{`Ops in Fluid go through four steps:`}</Body1Strong>
 					<ol>
 						<li>
-							<Body1>Op is added to DeltaManager (DM) buffer.</Body1>
+							<Body1>Op is submitted by the application.</Body1>
 						</li>
 						<li>
 							<Body1>
-								Op is sent to service (op leaves outbound queue). Note: We do not
-								know for sure when op is sent, we only track when it is added to
-								outbound queue.
+								Op is sent to service. Note: we do not know for sure when the op is
+								actually sent on the network, we only track when it is added to a
+								local outbound queue.
 							</Body1>
 						</li>
 						<li>
-							<Body1>Op received from service back (pushed to inbound queue).</Body1>
+							<Body1>(Sequenced) Op is received from service.</Body1>
 						</li>
 						<li>
-							<Body1>Op is processed.</Body1>
+							<Body1>
+								(Sequenced) Op is processed and passed to the application.
+							</Body1>
 						</li>
 					</ol>
 				</div>
 				<Body1Strong>
-					With the following four phases in mind, these are the definitions for the
-					metrics:
+					With the above four phases in mind, these are the definitions for the metrics in
+					the graph above:
 				</Body1Strong>
 				<ol>
 					<li>
 						<div style={{ display: "flex", flexDirection: "row" }}>
 							<Body1Strong>{`Duration Outbound:`}&nbsp;</Body1Strong>
-							<Body1>{`Measure time between (1) and (2). The time the outbound op is sitting in queue due to active batch`}</Body1>
-						</div>
-					</li>
-					<li>
-						<div style={{ display: "flex", flexDirection: "row" }}>
-							<Body1Strong>{`Duration Inbound:`}&nbsp;</Body1Strong>
-							<Body1>{`Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3)`}</Body1>
+							<Body1>{`Time in milliseconds between (1) and (2); The time between an op being submitted by the application and it being put in the outbound queue to be sent to the ordering service.`}</Body1>
 						</div>
 					</li>
 					<li>
 						<div style={{ display: "flex", flexDirection: "row" }}>
 							<Body1Strong>{`Duration Network:`}&nbsp;</Body1Strong>
-							<Body1>{`Measure time between (2) and (3) - Track how long it took for op to be acked by service`}</Body1>
+							<Body1>{`Time between (2) and (3); how long in milliseconds it took for the op to be sequenced by the service, sent back, and received by the Fluid client.`}</Body1>
+						</div>
+					</li>
+					<li>
+						<div style={{ display: "flex", flexDirection: "row" }}>
+							<Body1Strong>{`Duration Inbound:`}&nbsp;</Body1Strong>
+							<Body1>{`Time between (3) and (4); how long in milliseconds it took to do framework-related processing on a received op before letting the application react to it`}</Body1>
 						</div>
 					</li>
 				</ol>
