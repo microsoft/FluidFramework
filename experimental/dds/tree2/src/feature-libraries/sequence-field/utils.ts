@@ -316,13 +316,8 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	if (rhs.type !== lhs.type) {
 		return false;
 	}
-
-	if (!areMergeableCellIds(lhs.cellId, lhs.count, rhs.cellId)) {
-		return false;
-	}
-
 	const type = rhs.type;
-	if (!areMergeableCellIds(getCellId(lhs, undefined), lhs.count, getCellId(rhs, undefined))) {
+	if (!areMergeableCellIds(lhs.cellId, lhs.count, rhs.cellId)) {
 		return false;
 	}
 
