@@ -352,6 +352,7 @@ describe("Fuzz - Targeted", () => {
 	});
 });
 
+// test comment
 function getFirstAnchor(tree: ISharedTree): Anchor {
 	// building the anchor for anchor stability test
 	const cursor = tree.forest.allocateCursor();
