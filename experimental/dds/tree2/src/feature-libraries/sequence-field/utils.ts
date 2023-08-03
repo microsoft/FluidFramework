@@ -169,7 +169,7 @@ function areSameLineage(
  * @returns The number of nodes within the output context of the mark.
  */
 export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = false): number {
-	return areOutputCellsEmpty(mark) ? 0 : getMarkLength(mark);
+	return areOutputCellsEmpty(mark) ? 0 : mark.count;
 }
 
 /**
@@ -177,7 +177,7 @@ export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = fa
  * @returns The number of nodes within the input context of the mark.
  */
 export function getInputLength(mark: Mark<unknown>): number {
-	return areInputCellsEmpty(mark) ? 0 : getMarkLength(mark);
+	return areInputCellsEmpty(mark) ? 0 : mark.count;
 }
 
 export function markEmptiesCells(mark: Mark<unknown>): boolean {
@@ -225,25 +225,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 				(mark.cellId !== undefined && isReattachConflicted(mark)) ||
 				mark.transientDetach !== undefined
 			);
-		default:
-			unreachableCase(type);
-	}
-}
-
-export function getMarkLength(mark: Mark<unknown>): number {
-	const type = mark.type;
-	switch (type) {
-		case "Insert":
-			return mark.content.length;
-		case NoopMarkType:
-		case "Delete":
-		case "MoveIn":
-		case "MoveOut":
-		case "ReturnFrom":
-		case "ReturnTo":
-		case "Revive":
-		case "Placeholder":
-			return mark.count;
 		default:
 			unreachableCase(type);
 	}
@@ -358,11 +339,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if (
-				areMergeableChangeAtoms(
-					lhsInsert.transientDetach,
-					getMarkLength(lhs),
-					rhs.transientDetach,
-				)
+				areMergeableChangeAtoms(lhsInsert.transientDetach, lhs.count, rhs.transientDetach)
 			) {
 				lhsInsert.content.push(...rhs.content);
 				lhsInsert.count += rhs.count;
@@ -413,11 +390,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 			const lhsRevive = lhs as Revive;
 			if (
 				lhsRevive.inverseOf === rhs.inverseOf &&
-				areMergeableChangeAtoms(
-					lhsRevive.transientDetach,
-					getMarkLength(lhs),
-					rhs.transientDetach,
-				)
+				areMergeableChangeAtoms(lhsRevive.transientDetach, lhs.count, rhs.transientDetach)
 			) {
 				lhsRevive.content.push(...rhs.content);
 				lhsRevive.count += rhs.count;
@@ -559,7 +532,7 @@ export class DetachedNodeTracker {
 			const cloned = cloneMark(mark);
 			if (areInputCellsEmpty(cloned) && !isNewAttach(cloned)) {
 				let remainder = cloned;
-				while (getMarkLength(remainder) > 1) {
+				while (remainder.count > 1) {
 					const [head, tail] = splitMark(remainder, 1);
 					this.updateMark(head);
 					factory.push(head);
@@ -787,7 +760,7 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
  * such that the first returned mark has input length `length`.
  */
 export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number): [TMark, TMark] {
-	const markLength = getMarkLength(mark);
+	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
 		fail("Unable to split mark due to lengths");

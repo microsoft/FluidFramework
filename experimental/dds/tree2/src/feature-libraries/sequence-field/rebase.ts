@@ -21,7 +21,6 @@ import {
 	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
-	getMarkLength,
 	markEmptiesCells,
 	markFillsCells,
 	getCellId,
@@ -185,7 +184,7 @@ function rebaseMarkList<TNodeChange>(
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
 function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark {
-	const length = getMarkLength(mark);
+	const length = mark.count;
 	const cellId = getCellId(mark, revision);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
@@ -279,7 +278,7 @@ class RebaseQueue<T> {
 			baseMark !== undefined && newMark !== undefined,
 			0x69c /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
-		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
+		const length = Math.min(newMark.count, baseMark.count);
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
@@ -759,10 +758,10 @@ function compareCellPositions(
 	newMark: EmptyInputCellMark<unknown>,
 ): number {
 	const baseId = getCellId(baseMark, baseIntention);
-	const baseLength = getMarkLength(baseMark);
+	const baseLength = baseMark.count;
 	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getCellId(newMark, undefined);
-	const newLength = getMarkLength(newMark);
+	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
 			return baseId.localId - newId.localId;
