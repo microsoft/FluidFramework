@@ -112,7 +112,7 @@ export const HasChanges = <TNodeChange extends TSchema>(tNodeChange: TNodeChange
 /**
  * Mark which targets a range of existing cells instead of creating new cells.
  */
-export interface CellTargetingMark {
+export interface HasMarkFields {
 	/**
 	 * Describes the detach which last emptied the target cells,
 	 * or the attach which allocated the cells if the cells have never been filled.
@@ -122,12 +122,12 @@ export interface CellTargetingMark {
 
 	count: CellCount;
 }
-export const CellTargetingMark = Type.Object({
+export const HasMarkFields = Type.Object({
 	cellId: Type.Optional(CellId),
 	count: CellCount,
 });
 
-export interface HasReattachFields extends CellTargetingMark {
+export interface HasReattachFields extends HasMarkFields {
 	/**
 	 * The revision this mark is inverting a detach from.
 	 * If defined this mark is a revert-only inverse,
@@ -140,17 +140,17 @@ export const HasReattachFields = Type.Composite([
 	Type.Object({
 		inverseOf: Type.Optional(RevisionTagSchema),
 	}),
-	CellTargetingMark,
+	HasMarkFields,
 ]);
 
-export interface NoopMark extends CellTargetingMark {
+export interface NoopMark extends HasMarkFields {
 	/**
 	 * Declared for consistency with other marks.
 	 * Left undefined for terseness.
 	 */
 	type?: typeof NoopMarkType;
 }
-export const NoopMark = Type.Composite([CellTargetingMark], noAdditionalProps);
+export const NoopMark = Type.Composite([HasMarkFields], noAdditionalProps);
 
 export interface HasRevisionTag {
 	/**
@@ -173,7 +173,7 @@ export type CanBeTransient = Partial<Transient>;
 export const CanBeTransient = Type.Partial(Transient);
 
 export interface Insert<TNodeChange = NodeChangeType>
-	extends CellTargetingMark,
+	extends HasMarkFields,
 		HasRevisionTag,
 		CanBeTransient,
 		HasChanges<TNodeChange> {
@@ -183,7 +183,7 @@ export interface Insert<TNodeChange = NodeChangeType>
 export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
-			CellTargetingMark,
+			HasMarkFields,
 			HasRevisionTag,
 			CanBeTransient,
 			HasChanges(tNodeChange),
@@ -195,7 +195,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-export interface MoveIn extends HasMoveId, CellTargetingMark, HasRevisionTag {
+export interface MoveIn extends HasMoveId, HasMarkFields, HasRevisionTag {
 	type: "MoveIn";
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
@@ -207,7 +207,7 @@ export interface MoveIn extends HasMoveId, CellTargetingMark, HasRevisionTag {
 export const MoveIn = Type.Composite(
 	[
 		HasMoveId,
-		CellTargetingMark,
+		HasMarkFields,
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
@@ -220,7 +220,7 @@ export const MoveIn = Type.Composite(
 export interface Delete<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasChanges<TNodeChange>,
-		CellTargetingMark {
+		HasMarkFields {
 	type: "Delete";
 	id: ChangesetLocalId;
 }
@@ -230,7 +230,7 @@ export const Delete = <Schema extends TSchema>(tNodeChange: Schema) =>
 		[
 			HasRevisionTag,
 			HasChanges(tNodeChange),
-			CellTargetingMark,
+			HasMarkFields,
 			Type.Object({
 				type: Type.Literal("Delete"),
 				id: ChangesetLocalIdSchema,
@@ -243,7 +243,7 @@ export interface MoveOut<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CellTargetingMark {
+		HasMarkFields {
 	type: "MoveOut";
 }
 export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
@@ -252,7 +252,7 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 			HasRevisionTag,
 			HasMoveId,
 			HasChanges(tNodeChange),
-			CellTargetingMark,
+			HasMarkFields,
 			Type.Object({
 				type: Type.Literal("MoveOut"),
 			}),
@@ -309,7 +309,7 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CellTargetingMark {
+		HasMarkFields {
 	type: "ReturnFrom";
 
 	/**
@@ -324,7 +324,7 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 			HasRevisionTag,
 			HasMoveId,
 			HasChanges(tNodeChange),
-			CellTargetingMark,
+			HasMarkFields,
 			Type.Object({
 				type: Type.Literal("ReturnFrom"),
 				isDstConflicted: OptionalTrue,
@@ -361,21 +361,21 @@ export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
  * This mark should only exist as part of intermediate output of compose and should be removed during the amendCompose pass.
  */
 export interface MovePlaceholder<TNodeChange>
-	extends CellTargetingMark,
+	extends HasMarkFields,
 		HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange> {
 	type: "Placeholder";
 }
 
-export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
+export interface Modify<TNodeChange = NodeChangeType> extends HasMarkFields {
 	type: "Modify";
 	changes: TNodeChange;
 }
 export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
-			CellTargetingMark,
+			HasMarkFields,
 			Type.Object({
 				type: Type.Literal("Modify"),
 				changes: tNodeChange,

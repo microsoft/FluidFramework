@@ -5,7 +5,7 @@
 
 import {
 	CellId,
-	CellTargetingMark,
+	HasMarkFields,
 	Detach,
 	Insert,
 	Mark,
@@ -22,7 +22,7 @@ export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMa
  */
 export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
 
-export interface DetachedCellMark extends CellTargetingMark {
+export interface DetachedCellMark extends HasMarkFields {
 	cellId: CellId;
 }
 

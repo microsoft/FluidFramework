@@ -37,7 +37,7 @@ import {
 	Delete,
 	NoopMarkType,
 	Transient,
-	CellTargetingMark,
+	HasMarkFields,
 	CellId,
 	HasReattachFields,
 } from "./format";
@@ -591,7 +591,7 @@ export class DetachedNodeTracker {
 		};
 	}
 
-	private updateMark(mark: CellTargetingMark & DetachedCellMark): void {
+	private updateMark(mark: HasMarkFields & DetachedCellMark): void {
 		const detachEvent = mark.cellId;
 		const original = { revision: detachEvent.revision, localId: detachEvent.localId };
 		const updated = this.getUpdatedDetach(original);

@@ -384,7 +384,7 @@ function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Mod
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.CellTargetingMark>(cellId: SF.CellId, mark: TMark): TMark {
+function overrideCellId<TMark extends SF.HasMarkFields>(cellId: SF.CellId, mark: TMark): TMark {
 	mark.cellId = cellId;
 	return mark;
 }

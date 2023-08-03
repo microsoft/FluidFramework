@@ -30,7 +30,7 @@ export {
 	LineageEvent,
 	HasReattachFields,
 	CellId,
-	CellTargetingMark,
+	HasMarkFields,
 	HasLineage,
 } from "./format";
 export {
