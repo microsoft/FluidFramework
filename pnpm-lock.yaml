@@ -342,6 +342,7 @@ importers:
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -372,6 +373,7 @@ importers:
       '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/map': link:../../../../packages/dds/map
       '@fluidframework/matrix': link:../../../../packages/dds/matrix
+      '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils

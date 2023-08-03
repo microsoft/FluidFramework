@@ -14,7 +14,7 @@ Related:
 
 This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
 To that end, we mostly reuse the existing code paths for changesets by always sending
-[concrete undos](./README.md#abstract-vs-concrete-undo-messages) over the wire.
+[concrete undos](./undo.md#abstract-vs-concrete-undo-messages) over the wire.
 The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
@@ -127,7 +127,7 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 ## Repair Data
 
-[Repair data](../repair-data/README.md) may be needed in the following cases:
+[Repair data](./repair-data.md) may be needed in the following cases:
 
 -   Creating an undo (or redo) edit
 -   Applying a (peer or local) undo (or redo) edit on a `SharedTreeView`
@@ -376,13 +376,13 @@ If this switch from not including the refresher with the undo to including it ca
 meaning, if we did not include the refresher on undos created beyond the point where the undone edit falls out of the collaboration window,
 then we would run the risk of peers receiving an undo for which they have already discarded the repair data:
 
-![An undo edit is received by a peer that no longer has the repair data for it](./UndoAfterCollab.png)
+![An undo edit is received by a peer that no longer has the repair data for it](../.attachments/UndoAfterCollab.png)
 
 In the scenario pictured above, the undo edit must carry with it a refresher for the relevant repair data.
 
 Note that the undo could also end up being sequenced before the point at which peers will garbage-collect the repair data:
 
-![An undo edit is received by a peer that still has the repair data for it](./UndoAfterCollabAndFast.png)
+![An undo edit is received by a peer that still has the repair data for it](../.attachments/UndoAfterCollabAndFast.png)
 
 When that's the case, both the peer and the undo edit have some repair data.
 The repair data on both should be the same, so the peer can just ignore the refresher,
@@ -392,7 +392,7 @@ If this switch from not including the refresher along with the undo to including
 meaning, if we included the refresher on undos created before the point where the undone edit falls out of the collaboration window,
 then we would run the risk of peers receiving an undo with incorrect repair data:
 
-![An undo is sent with out of date repair data](./UndoDuringCollab.png)
+![An undo is sent with out of date repair data](../.attachments/UndoDuringCollab.png)
 
 In the scenario pictured above, the client sending the undo must not include a refresher.
 If it did, and the green edit affected the portion of the document removed by the deletion,

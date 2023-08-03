@@ -20,7 +20,7 @@ It is currently undecided if these low level APIs will be part of the package's 
 
 ### Low Level Data Abstraction
 
-Status: currently implemented as [ITreeCursor](../src/core/tree/cursor.ts).
+Status: currently implemented as [ITreeCursor](../../src/core/tree/cursor.ts).
 
 For performance reasons, it is desirable to support multiple tree representations with a single API to access them.
 This allows future changes to add new, more optimized tree formats without breaking APIs.
@@ -32,7 +32,7 @@ Note that while all data structures which can be traversed using a cursor are th
 ### Rebaseable Change Representations
 
 Status: currently implemented `TChange` types, which are specific to each `ChangeFamily` implementations.
-The `DefaultChangeset` (which is the one used by [SharedTree](../src/shared-tree/README.md)) is `ModularChangeset` from [modular-schema](../src/feature-libraries/modular-schema/README.md)
+The `DefaultChangeset` (which is the one used by [SharedTree](../../src/shared-tree/README.md)) is `ModularChangeset` from [modular-schema](../../src/feature-libraries/modular-schema/README.md)
 
 This is the lowest level change representation, and must support being rebased over other changes.
 It also must have a stable serialized format and stable behavior (what it does when applied to trees, and how it rebases)
@@ -49,7 +49,7 @@ Status: currently implemented by `ModularEditBuilder`.
 
 The low level editing API creates the rebaseable changes described above.
 Like the rebaseable changes, the low level editing API is an aspect of the `ChangeFamily` implementation.
-This means that the main implementation is the one thats part of [modular-schema](../src/feature-libraries/modular-schema/README.md) which is `ModularEditBuilder`.
+This means that the main implementation is the one thats part of [modular-schema](../../src/feature-libraries/modular-schema/README.md) which is `ModularEditBuilder`.
 
 ### Delta
 
@@ -60,7 +60,7 @@ Cannot be rebased.
 Does not need a stable persisted format.
 Independent of `ChangeFamily` (meaning only a single version is needed, regardless of what editing APIs are added).
 
-Used to update [forest](../src/core/forest/README.md) and `AnchorSet`.
+Used to update [forest](../../src/core/forest/README.md) and `AnchorSet`.
 Can also be used to update anything else that stores a copy of some of the tree data that needs to be kept up to date.
 
 ## High Level APIs
@@ -71,7 +71,7 @@ Ideally these APIs will be able to be updated incrementally with non-breaking ch
 but in the event that major breaking changes are needed a new high level API can be created to address the new needs,
 and can be maintained in parallel with the older APIs until they are deprecated and removed.
 
-Note that currently all of these APIs are available on [EditableTree](../src/feature-libraries/editable-tree/README.md) allowing the ideal one to be selected by the user from a single object.
+Note that currently all of these APIs are available on [EditableTree](../../src/feature-libraries/editable-tree/README.md) allowing the ideal one to be selected by the user from a single object.
 
 ### JavaScript Object like API
 
