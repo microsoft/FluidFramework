@@ -287,9 +287,10 @@ describe("SequenceField - toDelta", () => {
 		const changeset: TestChangeset = [
 			{ type: "Delete", id: brand(0), count: 1, changes: childChange1 },
 		];
-		const mark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const mark: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
 			count: 1,
+			moveId: brand(0),
 			fields: new Map([
 				[
 					brand("foo"),
@@ -308,10 +309,17 @@ describe("SequenceField - toDelta", () => {
 				],
 			]),
 		};
+		const repairDataKey: FieldKey = brand("repair-data-0");
+		const repairData: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: brand(0),
+		};
 		const expected: Delta.MarkList = [mark];
 		const { repairDataBuilder } = makeRepairDataBuilder();
 		const actual = toDelta(changeset, repairDataBuilder);
 		assertMarkListEqual(actual, expected);
+		assert.deepStrictEqual(repairDataBuilder.marks, new Map([[repairDataKey, [repairData]]]));
 	});
 
 	it("modify and move-out => move-out", () => {
