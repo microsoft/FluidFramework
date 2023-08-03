@@ -1,5 +1,13 @@
 # @fluidframework/container-definitions
 
+## 2.0.0-internal.5.4.0
+
+### Minor Changes
+
+-   `ILoaderOptions.cache` has been deprecated ([#16383](https://github.com/microsoft/FluidFramework/issues/16383)) [ef9b00f1bf](https://github.com/microsoft/FluidFramework/commits/ef9b00f1bf538861ecc616c7c9e1d73707ab89fb)
+
+    `ILoaderOptions.cache` has been deprecated and will be removed in a future release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
+
 ## 2.0.0-internal.5.3.0
 
 ### Minor Changes

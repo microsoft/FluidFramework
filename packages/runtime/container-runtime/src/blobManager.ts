@@ -285,7 +285,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
-			assert(pendingEntry !== undefined, "Must have pending blob entry for upcoming op");
+			assert(
+				pendingEntry !== undefined,
+				0x725 /* Must have pending blob entry for upcoming op */,
+			);
 			pendingEntry.opsent = true;
 			if (pendingEntry?.uploadTime && pendingEntry?.minTTLInSeconds) {
 				const secondsSinceUpload = (Date.now() - pendingEntry.uploadTime) / 1000;

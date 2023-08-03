@@ -2,7 +2,7 @@
 
 This document generally covers where we can store schemas, and how they can be used, and not the specifics of what the schemas actually do.
 Another way to put that is this is about what the Fluid tree needs from a schema system, and what options that leaves for how such a schema system could work.
-There is a [separate document](./Stored%20and%20View%20Schema.md) covering the specific approach currently being taken for Tree.
+There is a [separate document](./stored-and-view-schema.md) covering the specific approach currently being taken for Tree.
 
 # Definitions
 
