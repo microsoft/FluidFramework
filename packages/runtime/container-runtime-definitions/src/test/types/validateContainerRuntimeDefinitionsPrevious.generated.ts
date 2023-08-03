@@ -35,6 +35,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntime():
 declare function use_old_InterfaceDeclaration_IContainerRuntime(
     use: TypeOnly<old.IContainerRuntime>);
 use_old_InterfaceDeclaration_IContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntime());
 
 /*

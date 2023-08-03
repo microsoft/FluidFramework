@@ -39,7 +39,6 @@ import {
 	Transient,
 	HasMarkFields,
 	CellId,
-	HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -132,13 +131,6 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 		}
 	}
 	return clone;
-}
-
-function haveEqualReattachFields(
-	lhs: Readonly<HasReattachFields>,
-	rhs: Readonly<HasReattachFields>,
-): boolean {
-	return lhs.inverseOf === rhs.inverseOf && areEqualCellIds(lhs.cellId, rhs.cellId);
 }
 
 function areSameLineage(
@@ -330,6 +322,10 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	}
 
 	const type = rhs.type;
+	if (!areMergeableCellIds(getCellId(lhs, undefined), lhs.count, getCellId(rhs, undefined))) {
+		return false;
+	}
+
 	if (type === NoopMarkType) {
 		(lhs as NoopMark).count += rhs.count;
 		return true;
@@ -372,13 +368,14 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "ReturnTo": {
 			const lhsReturnTo = lhs as ReturnTo;
 			if (
-				haveEqualReattachFields(lhsReturnTo, rhs) &&
+				lhsReturnTo.inverseOf === rhs.inverseOf &&
 				lhsReturnTo.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsReturnTo.id as number) + lhsReturnTo.count === rhs.id
 			) {
 				lhsReturnTo.count += rhs.count;
 				return true;
 			}
+			break;
 		}
 		case "Delete": {
 			const lhsDetach = lhs as Detach;
