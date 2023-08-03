@@ -2074,7 +2074,7 @@ export class Container
 	private logConnectionStateChangeTelemetry(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: IConnectionStateChangeReason<IAnyDriverError>,
+		reason?: IConnectionStateChangeReason,
 	) {
 		// Log actual event
 		const time = performance.now();

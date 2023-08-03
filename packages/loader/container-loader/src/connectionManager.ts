@@ -691,7 +691,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param error - Error causing the disconnect if any.
 	 * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
 	 */
-	private disconnectFromDeltaStream(reason: IConnectionStateChangeReason<IAnyDriverError>): boolean {
+	private disconnectFromDeltaStream(reason: IConnectionStateChangeReason): boolean {
 		this.pendingReconnect = false;
 
 		if (this.connection === undefined) {

@@ -12,6 +12,7 @@ import {
 	PerformanceEvent,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { ConnectionState } from "./connectionState";
 import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts";
@@ -32,7 +33,7 @@ export interface IConnectionStateHandlerInputs {
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: IConnectionStateChangeReason<IAnyDriverError>,
+		reason?: IConnectionStateChangeReason,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -59,7 +60,7 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>): void;
+	receivedDisconnectEvent(reason: IConnectionStateChangeReason): void;
 	establishingConnection(reason: IConnectionStateChangeReason): void;
 	/**
 	 * Switches state to disconnected when we are still establishing connection during container.load(),
@@ -174,7 +175,7 @@ class ConnectionStateHandlerPassThrough
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: IConnectionStateChangeReason<IAnyDriverError>,
+		reason?: IConnectionStateChangeReason,
 	) {
 		return this.inputs.connectionStateChanged(value, oldState, reason);
 	}
@@ -581,7 +582,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
-		reason?: IConnectionStateChangeReason<IAnyDriverError>,
+		reason?: IConnectionStateChangeReason,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early

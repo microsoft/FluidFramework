@@ -404,7 +404,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: IConnectionStateChangeReason<IAnyDriverError>) =>
+			disconnectHandler: (reason: IConnectionStateChangeReason) =>
 				this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
@@ -778,7 +778,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: IConnectionStateChangeReason<IAnyDriverError>) {
+	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
 		this.emit("disconnect", reason);
 	}
