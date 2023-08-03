@@ -50,6 +50,9 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
+		[LoaderHeader.loadMode]: {
+			opsBeforeReturn: "sequenceNumber",
+		},
 		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};

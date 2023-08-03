@@ -45,10 +45,14 @@ export type DevtoolsFeatureFlags = {
  */
 export enum ContainerDevtoolsFeature {
 	/**
-	 * Indicates that the Container Devtools is capable of generating visual summaries of application data associated with
-	 * the Container.
+	 * Indicates that the Container Devtools supports editing the data associated with the Container.
 	 */
 	ContainerData = "container-data",
+
+	/**
+	 * Indicates that editing of values is available in the Devtools View.
+	 */
+	ContainerDataEditing = "container-data-editing",
 }
 
 /**

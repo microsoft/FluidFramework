@@ -7,5 +7,5 @@ This implementation makes many choices for the sake of keeping this version mini
 that should be reealavualted as the design matures.
 
 This folder is focused on "Stored Schema", which can be persisted in documents.
-See [Stored and View Schema](<./Stored and View Schema.md>)
+See [Stored and View Schema](../../../docs/main/stored-and-view-schema.md)
 for more information about the current focus on this Schema library, and its overall design.

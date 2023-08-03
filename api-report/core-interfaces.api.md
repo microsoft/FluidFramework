@@ -4,8 +4,6 @@
 
 ```ts
 
-// Warning: (ae-incompatible-release-tags) The symbol "FluidObject" is marked as @public, but its signature references "FluidObjectProviderKeys" which is marked as @internal
-//
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
@@ -14,7 +12,7 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
-// @internal
+// @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @public

@@ -23,27 +23,26 @@ import {
 	FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
-	IAudience,
-	IConnectionDetailsInternal,
-	IContainer,
-	IContainerEvents,
-	IDeltaManager,
-	ICriticalContainerError,
-	ContainerWarning,
 	AttachState,
-	IThrottlingWarning,
-	ReadOnlyInfo,
-	IContainerLoadMode,
-	IFluidCodeDetails,
-	isFluidCodeDetails,
+	ContainerWarning,
+	IAudience,
 	IBatchMessage,
 	ICodeDetailsLoader,
+	IContainer,
+	IContainerEvents,
+	IContainerLoadMode,
+	ICriticalContainerError,
+	IDeltaManager,
+	IFluidCodeDetails,
 	IHostLoader,
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
 	IRuntime,
+	isFluidCodeDetails,
+	IThrottlingWarning,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
@@ -58,7 +57,6 @@ import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	combineAppAndProtocolSummary,
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 	MessageType2,
@@ -99,7 +97,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
+import {
+	ReconnectMode,
+	IConnectionManagerFactoryArgs,
+	getPackageName,
+	IConnectionDetailsInternal,
+} from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
@@ -110,7 +113,11 @@ import {
 	ISerializableBlobContents,
 } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
-import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import {
+	combineAppAndProtocolSummary,
+	getProtocolSnapshotTree,
+	getSnapshotTreeFromSerializedContainer,
+} from "./utils";
 import { initQuorumValuesFromCodeDetails } from "./quorum";
 import { NoopHeuristic } from "./noopHeuristic";
 import { ConnectionManager } from "./connectionManager";
@@ -151,6 +158,11 @@ export interface IContainerLoadProps {
 	 * The pending state serialized from a pervious container instance
 	 */
 	readonly pendingLocalState?: IPendingContainerState;
+
+	/**
+	 * Load the container to at least this sequence number.
+	 */
+	readonly loadToSequenceNumber?: number;
 }
 
 /**
@@ -369,7 +381,8 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
+		const { version, pendingLocalState, loadMode, resolvedUrl, loadToSequenceNumber } =
+			loadProps;
 
 		const container = new Container(createProps, loadProps);
 
@@ -398,7 +411,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, resolvedUrl, pendingLocalState)
+						.load(version, mode, resolvedUrl, pendingLocalState, loadToSequenceNumber)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -903,8 +916,8 @@ export class Container
 			document !== null &&
 			typeof document.addEventListener === "function" &&
 			document.addEventListener !== null;
-		// keep track of last time page was visible for telemetry
-		if (isDomAvailable) {
+		// keep track of last time page was visible for telemetry (on interactive clients only)
+		if (isDomAvailable && interactive) {
 			this.lastVisible = document.hidden ? performance.now() : undefined;
 			this.visibilityEventHandler = () => {
 				if (document.hidden) {
@@ -1054,16 +1067,21 @@ export class Container
 		}
 	}
 
-	public closeAndGetPendingLocalState(): string {
+	public async closeAndGetPendingLocalState(): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		const pendingState = this.getPendingLocalState();
+		this.disconnect(); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
+		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
 		this.close();
 		return pendingState;
 	}
 
-	public getPendingLocalState(): string {
+	public async getPendingLocalState(): Promise<string> {
+		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
+	}
+
+	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
@@ -1082,8 +1100,9 @@ export class Container
 		);
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 		const pendingState: IPendingContainerState = {
-			pendingRuntimeState: this.runtime.getPendingLocalState(),
+			pendingRuntimeState,
 			baseSnapshot: this.baseSnapshot,
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
@@ -1468,7 +1487,8 @@ export class Container
 		specifiedVersion: string | undefined,
 		loadMode: IContainerLoadMode,
 		resolvedUrl: IResolvedUrl,
-		pendingLocalState?: IPendingContainerState,
+		pendingLocalState: IPendingContainerState | undefined,
+		loadToSequenceNumber: number | undefined,
 	) {
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
@@ -1542,6 +1562,57 @@ export class Container
 
 		let opsBeforeReturnP: Promise<void> | undefined;
 
+		if (loadMode.pauseAfterLoad === true) {
+			// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
+			if (loadMode.opsBeforeReturn === "sequenceNumber") {
+				assert(
+					loadToSequenceNumber !== undefined,
+					0x727 /* sequenceNumber should be defined */,
+				);
+				// Note: It is possible that we think the latest snapshot is newer than the specified sequence number
+				// due to saved ops that may be replayed after the snapshot.
+				// https://dev.azure.com/fluidframework/internal/_workitems/edit/5055
+				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
+					throw new Error(
+						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					);
+				}
+			}
+
+			// Force readonly mode - this will ensure we don't receive an error for the lack of join op
+			this.forceReadonly(true);
+
+			// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
+			const opHandler = () => {
+				if (loadToSequenceNumber === undefined) {
+					// If there is no specified sequence number, pause after the inbound queue is empty.
+					if (this.deltaManager.inbound.length !== 0) {
+						return;
+					}
+				} else {
+					// If there is a specified sequence number, keep processing until we reach it.
+					if (this.deltaManager.lastSequenceNumber < loadToSequenceNumber) {
+						return;
+					}
+				}
+
+				// Pause op processing once we have processed the desired number of ops.
+				void this.deltaManager.inbound.pause();
+				void this.deltaManager.outbound.pause();
+				this.off("op", opHandler);
+			};
+			if (
+				(loadToSequenceNumber === undefined && this.deltaManager.inbound.length === 0) ||
+				this.deltaManager.lastSequenceNumber === loadToSequenceNumber
+			) {
+				// If we have already reached the desired sequence number, call opHandler() to pause immediately.
+				opHandler();
+			} else {
+				// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
+				this.on("op", opHandler);
+			}
+		}
+
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
 		switch (loadMode.opsBeforeReturn) {
@@ -1552,6 +1623,9 @@ export class Container
 					dmAttributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
 				);
+				break;
+			case "sequenceNumber":
+				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "sequenceNumber");
 				break;
 			case "cached":
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "cached");
@@ -1634,6 +1708,22 @@ export class Container
 				default:
 					unreachableCase(loadMode.deltaConnection);
 			}
+		}
+
+		// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
+		if (
+			loadToSequenceNumber !== undefined &&
+			this.deltaManager.lastSequenceNumber < loadToSequenceNumber
+		) {
+			await new Promise<void>((resolve, reject) => {
+				const opHandler = (message: ISequencedDocumentMessage) => {
+					if (message.sequenceNumber >= loadToSequenceNumber) {
+						resolve();
+						this.off("op", opHandler);
+					}
+				};
+				this.on("op", opHandler);
+			});
 		}
 
 		// Safety net: static version of Container.load() should have learned about it through "closed" handler.
@@ -1965,7 +2055,7 @@ export class Container
 
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
-		prefetchType?: "cached" | "all" | "none",
+		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
 	) {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
@@ -2036,6 +2126,7 @@ export class Container
 						: undefined,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
+				isDirty: this.isDirty,
 				...this._deltaManager.connectionProps,
 			},
 			error,
@@ -2322,9 +2413,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
-			() => this.resolvedUrl?.id,
 			() => this.clientId,
-			() => this._deltaManager.serviceConfiguration,
 			() => this.attachState,
 			() => this.connected,
 			getSpecifiedCodeDetails,
@@ -2333,9 +2422,6 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 		);
-		this._lifecycleEvents.once("disposed", () => {
-			context.dispose();
-		});
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
@@ -2387,7 +2473,7 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState?(): string;
+	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Closes the container and returns serialized local state intended to be
@@ -2395,5 +2481,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState(): string;
+	closeAndGetPendingLocalState?(): Promise<string>;
 }

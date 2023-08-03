@@ -125,6 +125,9 @@ export class FluidDataStoreRuntime
 	 */
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -181,7 +184,6 @@ export class FluidDataStoreRuntime
 	}
 
 	private readonly contexts = new Map<string, IChannelContext>();
-	private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 
 	private readonly deferredAttached = new Deferred<void>();
@@ -320,11 +322,8 @@ export class FluidDataStoreRuntime
 						}),
 					);
 				}
-				const deferred = new Deferred<IChannelContext>();
-				deferred.resolve(channelContext);
 
 				this.contexts.set(path, channelContext);
-				this.contextsDeferred.set(path, deferred);
 			});
 		}
 
@@ -408,6 +407,9 @@ export class FluidDataStoreRuntime
 		throw responseToException(create404Response(request), request);
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			return {
@@ -423,18 +425,12 @@ export class FluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
 
-		// TODO we don't assume any channels (even root) in the runtime. If you request a channel that doesn't exist
-		// we will never resolve the promise. May want a flag to getChannel that doesn't wait for the promise if
-		// it doesn't exist
-		if (!this.contextsDeferred.has(id)) {
-			this.contextsDeferred.set(id, new Deferred<IChannelContext>());
+		const context = this.contexts.get(id);
+		if (context === undefined) {
+			throw new LoggingError("Channel does not exist");
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const context = await this.contextsDeferred.get(id)!.promise;
-		const channel = await context.getChannel();
-
-		return channel;
+		return context.getChannel();
 	}
 
 	public createChannel(id: string = uuid(), type: string): IChannel {
@@ -460,15 +456,6 @@ export class FluidDataStoreRuntime
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 		this.contexts.set(id, context);
-
-		if (this.contextsDeferred.has(id)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.contextsDeferred.get(id)!.resolve(context);
-		} else {
-			const deferred = new Deferred<IChannelContext>();
-			deferred.resolve(context);
-			this.contextsDeferred.set(id, deferred);
-		}
 
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
@@ -639,14 +626,6 @@ export class FluidDataStoreRuntime
 						);
 
 						this.contexts.set(id, remoteChannelContext);
-						if (this.contextsDeferred.has(id)) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							this.contextsDeferred.get(id)!.resolve(remoteChannelContext);
-						} else {
-							const deferred = new Deferred<IChannelContext>();
-							deferred.resolve(remoteChannelContext);
-							this.contextsDeferred.set(id, deferred);
-						}
 					}
 					break;
 				}
