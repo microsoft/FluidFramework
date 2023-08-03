@@ -18,9 +18,9 @@ importers:
     specifiers:
       '@changesets/cli': ^2.26.1
       '@fluid-internal/changelog-generator-wrapper': file:tools/changelog-generator-wrapper
-      '@fluid-tools/build-cli': ^0.21.0
+      '@fluid-tools/build-cli': ^0.22.0
       '@fluidframework/build-common': ^1.2.0
-      '@fluidframework/build-tools': ^0.21.0
+      '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/test-tools': ^0.2.158186
       '@microsoft/api-documenter': ^7.21.6
@@ -44,9 +44,9 @@ importers:
     devDependencies:
       '@changesets/cli': 2.26.1
       '@fluid-internal/changelog-generator-wrapper': file:tools/changelog-generator-wrapper
-      '@fluid-tools/build-cli': 0.21.0
+      '@fluid-tools/build-cli': 0.22.0
       '@fluidframework/build-common': 1.2.0
-      '@fluidframework/build-tools': 0.21.0
+      '@fluidframework/build-tools': 0.22.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-tools': 0.2.158186
       '@microsoft/api-documenter': 7.22.5
@@ -15301,61 +15301,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluid-tools/build-cli/0.21.0:
-    resolution: {integrity: sha512-uHJ+9VV8zK2sYE3G2MLEhNDKIYfj3xeUaXXyz7nsn86DAi+Bs0JwQL/rm206YEtzOvUBiNPiXyg3GwD9UCvgUw==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.21.0
-      '@fluidframework/build-tools': 0.21.0
-      '@fluidframework/bundle-size-tools': 0.21.0
-      '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.3.2
-      '@oclif/plugin-commands': 2.2.18
-      '@oclif/plugin-help': 5.2.12
-      '@oclif/plugin-not-found': 2.3.28
-      '@oclif/plugin-plugins': 3.1.6
-      '@oclif/test': 2.3.28
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
-      async: 3.2.4
-      chalk: 2.4.2
-      danger: 10.9.0_@octokit+core@4.2.4
-      date-fns: 2.30.0
-      execa: 5.1.1
-      fs-extra: 9.1.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.0.0
-      inquirer: 8.2.5
-      jssm: 5.89.2
-      jssm-viz-cli: 5.89.2
-      minimatch: 7.4.6
-      npm-check-updates: 16.10.15
-      oclif: 3.9.1
-      prettier: 2.6.2
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      semver: 7.5.4
-      semver-utils: 1.1.4
-      simple-git: 3.19.1
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.1
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - encoding
-      - esbuild
-      - mem-fs
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
   /@fluid-tools/build-cli/0.22.0:
     resolution: {integrity: sha512-WK7EXIHl4/VVsrdGAUZL5DCK5BSin2PqzA/W5ehDD2JKW4jX+Ys1jxT+8/6g/ptwNws83B3orDU2oUb8VWfu2g==}
     engines: {node: '>=14.17.0'}
@@ -15564,24 +15509,6 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools/0.21.0:
-    resolution: {integrity: sha512-oUV/+PretFcSSlINzsS5DFnBMygDcnznJb1FfyflvWpZuuO9OtrGxJZOzAqR0tDqIA669NbqGwNqigVyGccSOQ==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@oclif/core': 2.4.0
-      '@oclif/plugin-autocomplete': 2.3.2
-      '@oclif/plugin-commands': 2.2.18
-      '@oclif/plugin-help': 5.2.12
-      '@oclif/plugin-not-found': 2.3.28
-      '@oclif/plugin-plugins': 3.1.6
-      chalk: 2.4.2
-      semver: 7.5.4
-      table: 6.8.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /@fluid-tools/version-tools/0.22.0:
     resolution: {integrity: sha512-XA8OC0OQ06EUiYoP12XmuP2u/7xVx6R2dQq0TRUK3XUhv9q1AY6vcvPZzdG8U4wS9tHiCO/ThDf8dTICJf2NOw==}
     engines: {node: '>=14.17.0'}
@@ -15744,52 +15671,6 @@ packages:
   /@fluidframework/build-common/1.2.0:
     resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
     hasBin: true
-    dev: true
-
-  /@fluidframework/build-tools/0.21.0:
-    resolution: {integrity: sha512-NZsCGlkVNmgZnY6+UnzddLcUUnZdBgoRRkuxEsKaFYd0wijaMNY0NKF4fIQyYICDKor2UJml0JygVIfIHOApgA==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.21.0
-      '@fluidframework/bundle-size-tools': 0.21.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5
-      async: 3.2.4
-      chalk: 2.4.2
-      commander: 6.2.1
-      cosmiconfig: 8.2.0
-      danger: 10.9.0_@octokit+core@4.2.4
-      date-fns: 2.30.0
-      debug: 4.3.4
-      detect-indent: 6.1.0
-      execa: 5.1.1
-      find-up: 5.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      lodash.merge: 4.6.2
-      minimatch: 7.4.6
-      replace-in-file: 6.3.5
-      rimraf: 4.4.1
-      semver: 7.5.4
-      shelljs: 0.8.5
-      sort-package-json: 1.57.0
-      ts-morph: 17.0.1
-      type-fest: 2.19.0
-      yaml: 2.3.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
     dev: true
 
   /@fluidframework/build-tools/0.22.0:
@@ -15972,22 +15853,6 @@ packages:
       - encoding
       - esbuild
       - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/bundle-size-tools/0.21.0:
-    resolution: {integrity: sha512-Vj4Ks/FupeaF4p730qHpLDgw0Bf3UViQE2OBu6h/DP/JKb4nI5N85WkVmCp53vOqUg+w3ZMZJTMq94b0Jn7img==}
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 4.5.5
-      webpack: 5.88.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
       - uglify-js
       - webpack-cli
     dev: true
