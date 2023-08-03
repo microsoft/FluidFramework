@@ -49,6 +49,7 @@ alfred:
   socketIo:
     perMessageDeflate: true
   getDeltasRequestMaxOpsRange: 2000
+  serverCloseTimeoutMs: 30000
 
 storage:
   enableWholeSummaryUpload: false

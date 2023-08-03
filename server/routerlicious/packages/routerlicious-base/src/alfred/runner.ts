@@ -158,8 +158,9 @@ export class AlfredRunner implements IRunner {
 		Lumberjack.info("AlfredRunner.stop starting.");
 
 		try {
+			const serverCloseTimeoutMs = this.config.get("alfred:serverCloseTimeoutMs") ?? 30000;
 			// Close the underlying server and then resolve the runner once closed
-			await promiseTimeout(30000, this.server.close());
+			await promiseTimeout(serverCloseTimeoutMs, this.server.close());
 			if (caller === "uncaughtException") {
 				this.runningDeferred?.reject({
 					uncaughtException: serializeError(uncaughtException),

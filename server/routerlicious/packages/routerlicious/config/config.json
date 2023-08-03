@@ -115,7 +115,8 @@
 		"jwtTokenCache": {
 			"enable": true
 		},
-		"getDeltasRequestMaxOpsRange": 2000
+		"getDeltasRequestMaxOpsRange": 2000,
+		"serverCloseTimeoutMs": 30000
 	},
 	"client": {
 		"type": "browser",

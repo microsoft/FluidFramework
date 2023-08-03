@@ -118,7 +118,8 @@ data:
             "socketIo" : {
                 "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
             },
-            "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }}
+            "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }},
+            "serverCloseTimeoutMs": {{ .Values.alfred.serverCloseTimeoutMs }}
         },
         "client": {
             "type": "browser",
