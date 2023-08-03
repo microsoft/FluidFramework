@@ -68,7 +68,7 @@ it is necessary to revive node B.
 
 This is the more obvious use case:
 undoing destructive operation requires the corresponding repair data.
-See the [undo design document](../undo/README.md) for more details.
+See the [undo design document](./undo.md) for more details.
 
 ## Repair Data Stores
 
@@ -102,7 +102,7 @@ The `EditManager`, whose responsibilities include producing deltas in response t
 needs to use a repair data store to keep track of the data destroyed by sequenced edits.
 This data is then pulled from the store to produce a delta when an undo edit is applied.
 
-The repair data for an individual edit in the trunk is discarded when the corresponding edit falls outside of the [undo window](../undo/README.md).
+The repair data for an individual edit in the trunk is discarded when the corresponding edit falls outside of the [undo window](./undo.md).
 
 ## Characterizing Repair Data by Input Path
 
