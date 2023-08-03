@@ -34,6 +34,7 @@ const resolvedUrl: IRequest = urlResolver.resolve(request);
 
 // Parse the `resolvedUrl.url` property as necessary before passing to `container.request(...)`
 // For an example, see the `Loader.resolveCore(...)` method
+const parsedResolvedUrl = // implement parse logic here
 const response = container.request(parsedResolvedUrl);
 ```
 
