@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { brand, fail } from "../../util";
+import { asMutable, brand, fail } from "../../util";
 import {
 	ChangeAtomId,
 	CrossFieldManager,
@@ -353,7 +353,7 @@ function createModifyMark<TNodeChange>(
 	}
 
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
-	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
+	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange, count: 1 };
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}
@@ -385,6 +385,14 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	}
 
 	const cloned = cloneMark(mark);
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
+		asMutable(cloned.cellId).revision = revision;
+	}
+
 	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
 		cloned.revision = revision;

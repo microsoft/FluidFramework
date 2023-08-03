@@ -116,12 +116,14 @@ export function getCellId(
 	mark: Mark<unknown>,
 	revision: RevisionTag | undefined,
 ): CellId | undefined {
-	if (isNewAttach(mark)) {
-		const rev = mark.revision ?? revision;
-		return { revision: rev, localId: mark.id, lineage: mark.lineage };
+	const cellId = mark.cellId;
+	if (cellId === undefined) {
+		return undefined;
 	}
-
-	return mark.cellId;
+	if (cellId.revision === undefined && revision !== undefined) {
+		return { ...cellId, revision };
+	}
+	return cellId;
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -129,11 +131,7 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	if (clone.type === "Insert" || clone.type === "Revive") {
 		clone.content = [...clone.content];
 	}
-	if (isNewAttach(clone)) {
-		if (clone.lineage !== undefined) {
-			clone.lineage = [...clone.lineage];
-		}
-	} else if (clone.cellId !== undefined) {
+	if (clone.cellId !== undefined) {
 		clone.cellId = { ...clone.cellId };
 		if (clone.cellId.lineage !== undefined) {
 			clone.cellId.lineage = [...clone.cellId.lineage];
@@ -356,6 +354,16 @@ function areMergeableChangeAtoms(
 	return lhs.revision === rhs.revision && (lhs.localId as number) + lhsCount === rhs.localId;
 }
 
+function areMergeableCellIds(
+	lhs: CellId | undefined,
+	lhsCount: number,
+	rhs: CellId | undefined,
+): boolean {
+	return (
+		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
+	);
+}
+
 /**
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
@@ -367,53 +375,32 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	if (rhs.type !== lhs.type) {
 		return false;
 	}
+
+	if (!areMergeableCellIds(lhs.cellId, lhs.count, rhs.cellId)) {
+		return false;
+	}
+
 	const type = rhs.type;
-	if (
-		type === NoopMarkType &&
-		areEqualCellIds(getCellId(lhs, undefined), getCellId(rhs, undefined))
-	) {
+	if (type === NoopMarkType) {
 		(lhs as NoopMark).count += rhs.count;
 		return true;
 	}
 
-	if (
-		type !== NoopMarkType &&
-		type !== "Modify" &&
-		rhs.revision !== (lhs as HasRevisionTag).revision
-	) {
+	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
 		return false;
 	}
 
 	if (
-		(type !== NoopMarkType &&
-			type !== "MoveIn" &&
-			type !== "ReturnTo" &&
-			rhs.changes !== undefined) ||
+		(type !== "MoveIn" && type !== "ReturnTo" && rhs.changes !== undefined) ||
 		(lhs as Modify | HasChanges).changes !== undefined
 	) {
 		return false;
-	}
-
-	if (isExistingCellMark(lhs)) {
-		assert(isExistingCellMark(rhs), 0x6a6 /* Should be existing cell mark */);
-		if (lhs.cellId?.revision !== rhs.cellId?.revision) {
-			return false;
-		}
-
-		if (
-			lhs.cellId !== undefined &&
-			(lhs.cellId.localId as number) + getMarkLength(lhs) !== rhs.cellId?.localId
-		) {
-			return false;
-		}
 	}
 
 	switch (type) {
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
 			if (
-				areSameLineage(lhsInsert.lineage, rhs.lineage) &&
-				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id &&
 				areMergeableChangeAtoms(
 					lhsInsert.transientDetach,
 					getMarkLength(lhs),
@@ -421,6 +408,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				)
 			) {
 				lhsInsert.content.push(...rhs.content);
+				lhsInsert.count += rhs.count;
 				return true;
 			}
 			break;
@@ -428,7 +416,6 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				areSameLineage(lhsMoveIn.lineage, rhs.lineage) &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsMoveIn.count === rhs.id
 			) {
@@ -861,12 +848,15 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		case "Modify":
 			fail("Unable to split Modify mark of length 1");
 		case "Insert": {
-			const mark1: TMark = { ...mark, content: mark.content.slice(0, length) };
+			const mark1: TMark = { ...mark, content: mark.content.slice(0, length), count: length };
 			const mark2: TMark = {
 				...mark,
 				content: mark.content.slice(length),
-				id: (mark.id as number) + length,
+				count: remainder,
 			};
+			if (mark2.cellId !== undefined) {
+				mark2.cellId = splitDetachEvent(mark2.cellId, length);
+			}
 			if (mark.transientDetach !== undefined) {
 				(mark2 as Transient).transientDetach = {
 					revision: mark.transientDetach.revision,
@@ -879,12 +869,8 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		case "ReturnTo": {
 			const mark1: TMark = { ...mark, count: length };
 			const mark2: TMark = { ...mark, id: (mark.id as number) + length, count: remainder };
-			if (mark.type === "ReturnTo") {
-				if (mark.cellId !== undefined) {
-					(mark2 as ReturnTo).cellId = splitDetachEvent(mark.cellId, length);
-				}
-
-				return [mark1, mark2];
+			if (mark.cellId !== undefined) {
+				(mark2 as ReturnTo).cellId = splitDetachEvent(mark.cellId, length);
 			}
 			return [mark1, mark2];
 		}
@@ -1006,7 +992,7 @@ export function withNodeChange<TNodeChange>(
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
-			return changes !== undefined ? { type: "Modify", changes } : mark;
+			return changes !== undefined ? { type: "Modify", count: 1, changes } : mark;
 		case "MoveIn":
 		case "ReturnTo":
 			assert(

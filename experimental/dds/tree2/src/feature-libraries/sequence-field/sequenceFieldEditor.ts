@@ -57,7 +57,7 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", count: 1, changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],
@@ -65,8 +65,9 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		const mark: Insert<never> = {
 			type: "Insert",
+			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
-			id,
+			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);
 	},
@@ -109,6 +110,7 @@ export const sequenceFieldEditor = {
 			type: "MoveIn",
 			id,
 			count,
+			cellId: { localId: id },
 		};
 
 		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];

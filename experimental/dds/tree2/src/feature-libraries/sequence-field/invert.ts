@@ -106,6 +106,7 @@ function invertMark<TNodeChange>(
 			return [mark];
 		}
 		case "Insert": {
+			assert(mark.cellId !== undefined, "Insert marks must have a cellId");
 			if (mark.transientDetach !== undefined) {
 				assert(revision !== undefined, 0x720 /* Unable to revert to undefined revision */);
 				return [
@@ -120,8 +121,8 @@ function invertMark<TNodeChange>(
 							count: mark.content.length,
 							inverseOf: mark.revision ?? revision,
 							transientDetach: {
-								revision: mark.revision ?? revision,
-								localId: mark.id,
+								revision: mark.cellId.revision ?? revision,
+								localId: mark.cellId.localId,
 							},
 						},
 						invertNodeChange(mark.changes, inputIndex, invertChild),
@@ -129,7 +130,7 @@ function invertMark<TNodeChange>(
 				];
 			} else {
 				const inverse = withNodeChange(
-					{ type: "Delete", count: mark.content.length, id: mark.id },
+					{ type: "Delete", count: mark.content.length, id: mark.cellId.localId },
 					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
 				return [inverse];
@@ -225,6 +226,7 @@ function invertMark<TNodeChange>(
 				return [
 					{
 						type: "Modify",
+						count: 1,
 						changes: invertChild(mark.changes, inputIndex),
 					},
 				];
@@ -356,7 +358,11 @@ function invertModifyOrSkip<TNodeChange>(
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
-		const modify: Modify<TNodeChange> = { type: "Modify", changes: inverter(changes, index) };
+		const modify: Modify<TNodeChange> = {
+			type: "Modify",
+			count: 1,
+			changes: inverter(changes, index),
+		};
 		if (detachEvent !== undefined) {
 			modify.cellId = detachEvent;
 		}

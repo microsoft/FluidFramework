@@ -320,7 +320,11 @@ function rebaseMark<TNodeChange>(
 			const nodeChange = getNodeChange(rebasedMark);
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
-				const modify: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
+				const modify: Modify<TNodeChange> = {
+					type: "Modify",
+					count: 1,
+					changes: nodeChange,
+				};
 				sendMarkToDest(modify, moveEffects, baseRevision, moveId, baseMark.count);
 			}
 		}
@@ -743,10 +747,6 @@ function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: Rev
 }
 
 function getLineageHolder(mark: Mark<unknown>): HasLineage {
-	if (isNewAttach(mark)) {
-		return mark;
-	}
-
 	assert(mark.cellId !== undefined, 0x723 /* Attached cells cannot have lineage */);
 	return mark.cellId;
 }

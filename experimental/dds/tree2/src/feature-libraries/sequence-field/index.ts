@@ -19,7 +19,7 @@ export {
 	MoveIn,
 	MoveOut,
 	NodeChangeType,
-	NodeCount,
+	CellCount as NodeCount,
 	MoveId,
 	ProtoNode,
 	Reattach,
