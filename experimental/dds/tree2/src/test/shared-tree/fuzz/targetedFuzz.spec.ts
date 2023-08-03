@@ -24,7 +24,12 @@ import {
 	JsonableTree,
 } from "../../../core";
 import { brand } from "../../../util";
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateTree,
+	validateTreeConsistency,
+} from "../../utils";
 import { ISharedTree, SharedTreeView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import {
@@ -369,7 +374,7 @@ describe("Fuzz - Targeted", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: () => {},
+			validateConsistency: validateTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
