@@ -60,8 +60,10 @@ export type ValidateSummaryResult =
 				tag: TelemetryDataTag.CodeArtifact;
 				value: string | undefined;
 			};
-			/** If the error can be retried, time to wait before retrying */
-			retryAfterSeconds?: number;
+			/** If the error may not happen on retry, time to wait before retrying */
+			retryAfterSeconds: number | undefined;
+			/** If the error may not happen on retry, how many times summarization should be retried. */
+			retryCount?: number | undefined;
 	  };
 
 export interface ISummarizerNodeRootContract {

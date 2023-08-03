@@ -217,8 +217,10 @@ export type SubmitSummaryResult =
 /** The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage. */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 /** The data in summarizer result when submit summary stage fails. */
-export interface SubmitSummaryFailureData {
-	stage: SummaryStage;
+export interface ISubmitSummaryFailureResult {
+	readonly stage: SummaryStage;
+	readonly retryAfterSeconds?: number;
+	readonly retryCount?: number;
 }
 
 export interface IBroadcastSummaryResult {
@@ -231,7 +233,7 @@ export interface IAckSummaryResult {
 	readonly ackNackDuration: number;
 }
 
-export interface INackSummaryResult {
+export interface INackSummaryResult extends ISubmitSummaryFailureResult {
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }
@@ -243,22 +245,21 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  }
 	| {
 			success: false;
-			data: TFailure | undefined;
+			data: TFailure;
 			message: string;
 			error: any;
-			retryAfterSeconds?: number;
 	  };
 
 export interface ISummarizeResults {
 	/** Resolves when we generate, upload, and submit the summary. */
 	readonly summarySubmitted: Promise<
-		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
+		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult | undefined>
 	>;
 	/** Resolves when we observe our summarize op broadcast. */
 	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
 	/** Resolves when we receive a summaryAck or summaryNack. */
 	readonly receivedSummaryAckOrNack: Promise<
-		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
+		SummarizeResultPart<IAckSummaryResult, INackSummaryResult | undefined>
 	>;
 }
 

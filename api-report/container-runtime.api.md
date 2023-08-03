@@ -481,7 +481,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 
 // @public (undocumented)
 export interface ISummarizeResults {
-    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
+    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult | undefined>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
@@ -691,10 +691,11 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     data: TSuccess;
 } | {
     success: false;
-    data: TFailure | undefined;
+    data: TFailure;
     message: string;
     error: any;
     retryAfterSeconds?: number;
+    retryCount?: number;
 };
 
 // @public (undocumented)

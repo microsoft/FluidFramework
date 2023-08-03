@@ -278,6 +278,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				},
 				// These errors are usually transient and should go away when summarize / GC is retried.
 				retryAfterSeconds: 1,
+				// Retrying summarization once should be enough for the error to go away,
+				retryCount: 1,
 			};
 		}
 		return super.validateSummaryCore(parentSkipRecursion);
