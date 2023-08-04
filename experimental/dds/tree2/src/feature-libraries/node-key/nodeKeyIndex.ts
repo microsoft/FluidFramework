@@ -34,7 +34,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 		if (treeSchema === undefined) {
 			return false;
 		}
-		return treeSchema.value === ValueSchema.String;
+		return treeSchema.leafValue === ValueSchema.String;
 	}
 
 	/**

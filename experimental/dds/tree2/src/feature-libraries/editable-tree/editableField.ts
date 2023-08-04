@@ -610,7 +610,7 @@ function unwrappedTree(
 			return nodeValue;
 		}
 		assert(
-			nodeType.value === ValueSchema.Serializable,
+			nodeType.leafValue === ValueSchema.Serializable,
 			0x3c7 /* `undefined` values not allowed for primitive fields */,
 		);
 	}

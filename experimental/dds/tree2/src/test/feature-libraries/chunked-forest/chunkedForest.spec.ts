@@ -4,7 +4,6 @@
  */
 
 // This lint is broken in intellisense, causing needless errors.
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { strict as assert } from "assert";
 

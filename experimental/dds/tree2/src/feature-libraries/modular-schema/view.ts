@@ -145,7 +145,7 @@ export class ViewSchema {
 		// so copying the data over manually is better.
 		return {
 			mapFields: original.mapFields,
-			value: original.value,
+			leafValue: original.leafValue,
 			structFields,
 		};
 	}

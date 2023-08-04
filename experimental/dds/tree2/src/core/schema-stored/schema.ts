@@ -71,16 +71,14 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
  * @alpha
  */
 export enum ValueSchema {
-	Nothing,
 	Number,
 	String,
 	Boolean,
 	/**
 	 * Any Fluid serializable data.
 	 *
-	 * This includes Nothing / undefined.
+	 * This does not include Nothing / undefined.
 	 *
-	 * If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset` would need adjusting.
 	 */
 	Serializable,
 }
@@ -203,7 +201,7 @@ export interface TreeStoredSchema {
 	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
 	 * This is simply one approach that can work for modeling them in the internal schema representation.
 	 */
-	readonly value: ValueSchema;
+	readonly leafValue?: ValueSchema;
 }
 
 /**
