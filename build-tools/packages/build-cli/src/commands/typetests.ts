@@ -174,6 +174,9 @@ function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConf
 				options.version === VersionOptions.Previous
 					? previousVersion(pkgJson.version)
 					: options.version;
+			if (pkgJson.devDependencies === undefined) {
+				pkgJson.devDependencies = {};
+			}
 			pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
 		}
 	}

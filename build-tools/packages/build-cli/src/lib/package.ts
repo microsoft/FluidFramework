@@ -664,9 +664,12 @@ export async function setPackageDependencies(
 		if (dep !== undefined) {
 			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
 			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
-				const dependencies = dev
+				let dependencies = dev
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
+				if (dependencies === undefined) {
+					dependencies = {};
+				}
 
 				newRangeString = dep.range.toString();
 				dependencies[name] = newRangeString;
