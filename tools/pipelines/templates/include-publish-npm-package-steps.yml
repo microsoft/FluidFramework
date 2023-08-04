@@ -150,7 +150,7 @@ steps:
             echo "packageVersion"
             echo $packageVersion
             rm publish_log
-            if [ "${{ parameters.official }}" = false ]; then
+            if [ "${{ parameters.official }}" = false && "$(release)" == "release" ]; then //FIX THIS LINE/ SEE IF ITS CORRECT
               az rest --method patch --uri https://pkgs.dev.azure.com/fluidframework/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/$packageName/versions/$packageVersion?api-version=7.1-preview.1 --body '{
                 "views": {
                   "op": "add",
