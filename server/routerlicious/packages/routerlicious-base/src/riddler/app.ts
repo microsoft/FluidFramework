@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager, ISecretManager, ICache } from "@fluidframework/server-services-core";
+import { ISecretManager, ICache, ICollection } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
@@ -14,16 +14,17 @@ import {
 } from "@fluidframework/server-services-utils";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
+import { ITenantDocument } from "./tenantManager";
 
 export function create(
-	collectionName: string,
-	mongoManager: MongoManager,
+	tenantsCollection: ICollection<ITenantDocument>,
 	loggerFormat: string,
 	baseOrdererUrl: string,
 	defaultHistorianUrl: string,
 	defaultInternalHistorianUrl: string,
 	secretManager: ISecretManager,
 	fetchTenantKeyMetricInterval: number,
+	riddlerStorageRequestMetricInterval: number,
 	cache?: ICache,
 ) {
 	// Express app configuration
@@ -51,13 +52,13 @@ export function create(
 	app.use(
 		"/api",
 		api.create(
-			collectionName,
-			mongoManager,
+			tenantsCollection,
 			baseOrdererUrl,
 			defaultHistorianUrl,
 			defaultInternalHistorianUrl,
 			secretManager,
 			fetchTenantKeyMetricInterval,
+			riddlerStorageRequestMetricInterval,
 			cache,
 		),
 	);

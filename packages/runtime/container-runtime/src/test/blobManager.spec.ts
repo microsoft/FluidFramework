@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
-import { Deferred, gitHashFile, IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+	bufferToString,
+	Deferred,
+	gitHashFile,
+	IsoBuffer,
+	TypedEventEmitter,
+} from "@fluidframework/common-utils";
 import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -48,7 +54,8 @@ class DedupeStorage extends BaseMockBlobStorage {
 	public minTTL: number = MIN_TTL;
 
 	public async createBlob(blob: ArrayBufferLike) {
-		const id = await gitHashFile(blob as any);
+		const s = bufferToString(blob, "base64");
+		const id = await gitHashFile(IsoBuffer.from(s, "base64"));
 		this.blobs.set(id, blob);
 		return { id, minTTLInSeconds: this.minTTL };
 	}
@@ -62,7 +69,7 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 	}
 }
 
-class MockRuntime
+export class MockRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements IBlobManagerRuntime
 {
@@ -71,9 +78,11 @@ class MockRuntime
 		public mc: MonitoringContext,
 		snapshot: IBlobManagerLoadInfo = {},
 		attached = false,
+		stashed: any[] = [[], {}],
 	) {
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
+		this.ops = stashed[0];
 		this.blobManager = new BlobManager(
 			undefined as any, // routeContext
 			snapshot,
@@ -82,7 +91,7 @@ class MockRuntime
 			() => undefined,
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
-			undefined,
+			stashed[1],
 			() => (this.closed = true),
 		);
 	}
@@ -141,6 +150,11 @@ class MockRuntime
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
 		return this.blobManager.getBlob(blobId);
+	}
+
+	public async getPendingLocalState(waitBlobsToAttach: boolean) {
+		const pendingBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+		return [[...this.ops], pendingBlobs];
 	}
 
 	public blobManager: BlobManager;
@@ -249,7 +263,7 @@ class MockRuntime
 	}
 }
 
-const validateSummary = (runtime: MockRuntime) => {
+export const validateSummary = (runtime: MockRuntime) => {
 	const summary = runtime.blobManager.summarize();
 	const ids: any[] = [];
 	let redirectTable;
@@ -623,6 +637,24 @@ describe("BlobManager", () => {
 		const summaryData = await runtime.attach();
 		assert.strictEqual(summaryData?.ids.length, 3);
 		assert.strictEqual(summaryData?.redirectTable.size, 3);
+	});
+
+	it("all blobs attached", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+		await createBlob(IsoBuffer.from("blob1", "utf8"));
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
+		await runtime.processBlobs();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
+		await runtime.processAll();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+		await createBlob(IsoBuffer.from("blob1", "utf8"));
+		await createBlob(IsoBuffer.from("blob2", "utf8"));
+		await createBlob(IsoBuffer.from("blob3", "utf8"));
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
+		await runtime.processAll();
+		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
 	});
 
 	describe("Abort Signal", () => {

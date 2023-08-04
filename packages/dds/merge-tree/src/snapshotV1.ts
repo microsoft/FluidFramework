@@ -261,7 +261,9 @@ export class SnapshotV1 {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
-				const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
+				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
+					json: segment.toJSONObject(),
+				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				if (segment.seq! > minSeq) {
@@ -292,7 +294,7 @@ export class SnapshotV1 {
 				// Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
 				assert(
 					(raw.seq !== undefined && raw.client !== undefined) ||
-						(raw.removedSeq !== undefined && raw.removedClient !== undefined),
+						(raw.removedSeq !== undefined && raw.removedClientIds !== undefined),
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 

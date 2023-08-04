@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
@@ -17,25 +18,21 @@ import {
 } from "../modular-schema";
 import {
 	getInputLength,
-	getOutputLength,
-	isAttach,
 	isDetachMark,
 	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
-	getMarkLength,
 	markEmptiesCells,
 	markFillsCells,
-	isExistingCellMark,
 	getCellId,
 	getOffsetInCellRange,
 	compareLineages,
 	getNodeChange,
 	withNodeChange,
 	getMarkMoveId,
-	isNoopMark,
 	areOverlappingIdRanges,
 	cloneCellId,
+	areOutputCellsEmpty,
 } from "./utils";
 import {
 	Changeset,
@@ -59,7 +56,7 @@ import {
 	PairedMarkUpdate,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
-import { ExistingCellMark, EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark } from "./helperTypes";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -136,100 +133,70 @@ function rebaseMarkList<TNodeChange>(
 	let lineageEntries: IdRange[] = [];
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
-		if (baseMark !== undefined && "revision" in baseMark) {
+		if ("revision" in baseMark) {
 			// TODO support rebasing over composite changeset
 			assert(
 				baseMark.revision === baseRevision,
 				0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
 			);
 		}
-		if (baseMark === undefined) {
-			assert(
-				currMark !== undefined,
-				0x4f4 /* Non-empty queue should return at least one mark */,
-			);
-			if (areInputCellsEmpty(currMark)) {
-				const rebasedMark = cloneMark(currMark);
+		assert(
+			getInputLength(baseMark) === getInputLength(currMark),
+			0x4f6 /* The two marks should be the same size */,
+		);
+
+		const rebasedMark = rebaseMark(
+			currMark,
+			baseMark,
+			baseRevision,
+			baseIntention,
+			rebaseChild,
+			moveEffects,
+			nodeExistenceState,
+		);
+
+		// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
+		// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
+		// `rebasedMark` should already have a detach event for `baseMark`.
+		if (markEmptiesCells(baseMark)) {
+			assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
+			addLineageToRecipients(lineageRecipients, baseIntention, baseMark.id, baseMark.count);
+		}
+
+		if (areInputCellsEmpty(rebasedMark)) {
+			if (markEmptiesCells(baseMark)) {
+				assert(isDetachMark(baseMark), "Only detaches empty cells");
+				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
+					setMarkAdjacentCells(rebasedMark, lineageEntries);
+				}
+			} else {
 				handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
-				factory.push(rebasedMark);
-			} else {
-				factory.push(cloneMark(currMark));
 			}
-		} else if (currMark === undefined) {
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x708 /* Only detach marks should empty cells */);
-				addIdRange(lineageEntries, { id: baseMark.id, count: baseMark.count });
-			} else if (isAttach(baseMark)) {
-				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
-					const movedMark = getMovedMark(
-						moveEffects,
-						baseMark.revision ?? baseRevision,
-						baseMark.id,
-						baseMark.count,
-					);
-					if (movedMark !== undefined) {
-						factory.push(movedMark);
-					} else {
-						factory.pushOffset(getOutputLength(baseMark));
-					}
-				} else if (baseMark.transientDetach === undefined) {
-					factory.pushOffset(getOutputLength(baseMark));
-				}
-				lineageRecipients.length = 0;
-				lineageEntries = [];
-			}
-		} else {
-			assert(
-				getInputLength(baseMark) === getInputLength(currMark),
-				0x4f6 /* The two marks should be the same size */,
-			);
+		}
+		factory.push(rebasedMark);
 
-			const rebasedMark = rebaseMark(
-				currMark,
-				baseMark,
-				baseRevision,
-				baseIntention,
-				rebaseChild,
-				moveEffects,
-				nodeExistenceState,
-			);
-
-			// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
-			// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
-			// `rebasedMark` should already have a detach event for `baseMark`.
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
-				addLineageToRecipients(
-					lineageRecipients,
-					baseIntention,
-					baseMark.id,
-					baseMark.count,
-				);
-			}
-
-			if (areInputCellsEmpty(rebasedMark)) {
-				if (markEmptiesCells(baseMark)) {
-					assert(isDetachMark(baseMark), "Only detaches empty cells");
-					if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
-						setMarkAdjacentCells(rebasedMark, lineageEntries);
-					}
-				} else {
-					handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
-				}
-			}
-			factory.push(rebasedMark);
-
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
-				addIdRange(lineageEntries, { id: baseMark.id, count: baseMark.count });
-			} else {
-				lineageRecipients.length = 0;
-				lineageEntries = [];
-			}
+		if (markEmptiesCells(baseMark)) {
+			assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
+			addIdRange(lineageEntries, { id: baseMark.id, count: baseMark.count });
+		} else if (!areOutputCellsEmpty(baseMark)) {
+			lineageRecipients.length = 0;
+			lineageEntries = [];
 		}
 	}
 
 	return factory.list;
+}
+
+/**
+ * Generates a NoOp mark that targets the same cells as the input mark.
+ * @param mark - The mark the NoOp should target.
+ * @param revision - The revision, if available.
+ * @returns A NoOp mark that targets the same cells as the input mark.
+ */
+function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark {
+	const length = mark.count;
+	const cellId = getCellId(mark, revision);
+	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
 
 class RebaseQueue<T> {
@@ -256,27 +223,37 @@ class RebaseQueue<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 
-		if (baseMark === undefined && newMark === undefined) {
-			return {};
-		} else if (baseMark === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const length = getInputLength(newMark!);
+		assert(
+			!(baseMark === undefined && newMark === undefined),
+			0x722 /* Cannot pop from empty queue */,
+		);
+
+		if (baseMark === undefined) {
+			const dequeuedNewMark = this.newMarks.dequeue();
 			return {
-				baseMark: length > 0 ? { count: length } : undefined,
-				newMark: this.newMarks.tryDequeue(),
+				baseMark: generateNoOpWithCellId(dequeuedNewMark),
+				newMark: dequeuedNewMark,
 			};
 		} else if (newMark === undefined) {
-			const length = getInputLength(baseMark);
+			const dequeuedBaseMark = this.baseMarks.dequeue();
 			return {
-				baseMark: this.baseMarks.tryDequeue(),
-				newMark: length > 0 ? { count: length } : undefined,
+				baseMark: dequeuedBaseMark,
+				newMark: generateNoOpWithCellId(dequeuedBaseMark, this.baseIntention),
 			};
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark);
 			if (cmp < 0) {
-				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
+				const dequeuedBaseMark = this.baseMarks.dequeueUpTo(-cmp);
+				return {
+					baseMark: dequeuedBaseMark,
+					newMark: generateNoOpWithCellId(dequeuedBaseMark, this.baseIntention),
+				};
 			} else if (cmp > 0) {
-				return { newMark: this.newMarks.dequeueUpTo(cmp) };
+				const dequeuedNewMark = this.newMarks.dequeueUpTo(cmp);
+				return {
+					newMark: dequeuedNewMark,
+					baseMark: generateNoOpWithCellId(dequeuedNewMark),
+				};
 			} else {
 				return this.dequeueBoth();
 			}
@@ -290,11 +267,13 @@ class RebaseQueue<T> {
 	}
 
 	private dequeueBase(): RebaseMarks<T> {
-		return { baseMark: this.baseMarks.dequeue() };
+		const baseMark = this.baseMarks.dequeue();
+		return { baseMark, newMark: generateNoOpWithCellId(baseMark, this.baseIntention) };
 	}
 
 	private dequeueNew(): RebaseMarks<T> {
-		return { newMark: this.newMarks.dequeue() };
+		const newMark = this.newMarks.dequeue();
+		return { newMark, baseMark: generateNoOpWithCellId(newMark) };
 	}
 
 	private dequeueBoth(): RebaseMarks<T> {
@@ -304,7 +283,7 @@ class RebaseQueue<T> {
 			baseMark !== undefined && newMark !== undefined,
 			0x69c /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
-		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
+		const length = Math.min(newMark.count, baseMark.count);
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
@@ -317,8 +296,8 @@ class RebaseQueue<T> {
  * If `baseMark` and `newMark` are both defined, then they are `SizedMark`s covering the same range of nodes.
  */
 interface RebaseMarks<T> {
-	baseMark?: Mark<T>;
-	newMark?: Mark<T>;
+	baseMark: Mark<T>;
+	newMark: Mark<T>;
 }
 
 function rebaseMark<TNodeChange>(
@@ -343,7 +322,11 @@ function rebaseMark<TNodeChange>(
 			const nodeChange = getNodeChange(rebasedMark);
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
-				const modify: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
+				const modify: Modify<TNodeChange> = {
+					type: "Modify",
+					count: 1,
+					changes: nodeChange,
+				};
 				sendMarkToDest(modify, moveEffects, baseRevision, moveId, baseMark.count);
 			}
 		}
@@ -383,10 +366,19 @@ function rebaseMark<TNodeChange>(
 
 		rebasedMark = makeDetachedMark(rebasedMark, detachEvent);
 	} else if (markFillsCells(baseMark)) {
-		assert(
-			isExistingCellMark(rebasedMark),
-			0x69e /* Only an ExistingCellMark can target an empty cell */,
-		);
+		if (isMoveMark(baseMark)) {
+			const movedMark = getMovedMark(
+				moveEffects,
+				baseMark.revision ?? baseRevision,
+				baseMark.id,
+				baseMark.count,
+			);
+
+			if (movedMark !== undefined) {
+				return movedMark;
+			}
+		}
+
 		if (isMoveMark(rebasedMark)) {
 			if (
 				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
@@ -548,16 +540,12 @@ function rebaseNodeChange<TNodeChange>(
 	return withNodeChange(currMark, nodeRebaser(currChange, baseChange));
 }
 
-function makeDetachedMark<T>(mark: NoopMark | ExistingCellMark<T>, cellId: ChangeAtomId): Mark<T> {
-	if (isNoopMark(mark)) {
-		return { count: 0 };
-	}
-
+function makeDetachedMark<T>(mark: Mark<T>, cellId: ChangeAtomId): Mark<T> {
 	assert(mark.cellId === undefined, 0x69f /* Expected mark to be attached */);
 	return { ...mark, cellId };
 }
 
-function withoutCellId<T, TMark extends ExistingCellMark<T>>(mark: TMark): TMark {
+function withoutCellId<T, TMark extends Mark<T>>(mark: TMark): TMark {
 	const newMark = { ...mark };
 	delete newMark.cellId;
 	return newMark;
@@ -764,18 +752,13 @@ function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
 }
 
 function getLineageHolder(mark: Mark<unknown>): HasLineage {
-	if (isNewAttach(mark)) {
-		return mark;
-	}
-
-	assert(mark.cellId !== undefined, "Attached cells cannot have lineage");
+	assert(mark.cellId !== undefined, 0x723 /* Attached cells cannot have lineage */);
 	return mark.cellId;
 }
 
 function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): void {
-	assert(isExistingCellMark(mark), "");
-	assert(mark.cellId !== undefined, "");
-	assert(mark.cellId.adjacentCells === undefined, "");
+	assert(mark.cellId !== undefined, "Can only set adjacent cells on a mark with cell ID");
+	assert(mark.cellId.adjacentCells === undefined, "Should not overwrite adjacentCells");
 	mark.cellId.adjacentCells = adjacentCells;
 }
 
@@ -793,10 +776,10 @@ function compareCellPositions(
 	newMark: EmptyInputCellMark<unknown>,
 ): number {
 	const baseId = getCellId(baseMark, baseIntention);
-	const baseLength = getMarkLength(baseMark);
+	const baseLength = baseMark.count;
 	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getCellId(newMark, undefined);
-	const newLength = getMarkLength(newMark);
+	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
 			return baseId.localId - newId.localId;

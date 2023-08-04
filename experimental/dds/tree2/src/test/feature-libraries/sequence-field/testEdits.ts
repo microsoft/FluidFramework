@@ -211,13 +211,11 @@ function createInsertMark<TChange = never>(
 	const mark: SF.Insert<TChange> = {
 		type: "Insert",
 		content,
-		id: cellIdObject.localId,
+		count: content.length,
+		cellId: cellIdObject,
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	if (cellIdObject.lineage !== undefined) {
-		mark.lineage = cellIdObject.lineage;
 	}
 	return { ...mark, ...overrides };
 }
@@ -310,13 +308,11 @@ function createMoveInMark(
 	const mark: SF.MoveIn = {
 		type: "MoveIn",
 		id: cellIdObject.localId,
+		cellId: cellIdObject,
 		count,
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	if (cellIdObject.lineage !== undefined) {
-		mark.lineage = cellIdObject.lineage;
 	}
 	return { ...mark, ...overrides };
 }
@@ -379,6 +375,7 @@ function createReturnToMark(
 function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Modify<TChange> {
 	const mark: SF.Modify<TChange> = {
 		type: "Modify",
+		count: 1,
 		changes,
 	};
 	if (cellId !== undefined) {
@@ -387,7 +384,7 @@ function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Mod
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.CellTargetingMark>(cellId: SF.CellId, mark: TMark): TMark {
+function overrideCellId<TMark extends SF.HasMarkFields>(cellId: SF.CellId, mark: TMark): TMark {
 	mark.cellId = cellId;
 	return mark;
 }
