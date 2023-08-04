@@ -51,11 +51,12 @@ Next, run `npm run test:jest` from a terminal within this directory.
 
 In addition to our unit tests, we also utilize image-based visual regression tests to ensure our theming / styling are
 as expected.
+These run using [mocha](https://mochajs.org/).
 This is particularly important for ensuring we meet our visual accessibility requirements.
 
 The test modules for these tests are written using [Storybook "stories"](https://storybook.js.org/docs/react/writing-stories/introduction)
-and live under `src/test/screenshot-tests`.
-The corresponding screenshot assets live under `src/test/screenshot-tests/__screenshots__`.
+and live under `src/screenshot-tests`.
+The corresponding screenshot assets live under `src/test/__screenshots__`.
 
 Note: these tests don't do any direct validation.
 Instead, if underlying component logic has changed, then any corresponding screenshot artifacts will be updated.
