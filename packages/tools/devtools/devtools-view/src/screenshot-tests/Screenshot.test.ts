@@ -23,7 +23,7 @@ import { simpleGit, pathspec } from "simple-git";
 type Theme = "dark" | "light" | "high-contrast";
 
 /**
- * TODO
+ * Viewport configuration for running a screenshot test.
  */
 interface Viewport {
 	width: number;
