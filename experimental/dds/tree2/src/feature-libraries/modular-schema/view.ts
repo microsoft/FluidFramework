@@ -157,7 +157,7 @@ export class ViewSchema {
  */
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
 	readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
-	readonly mapFields: IFieldSchema;
+	readonly mapFields?: IFieldSchema;
 }
 
 /**

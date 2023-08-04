@@ -11,7 +11,7 @@
  * but rather just show what data a schema needs to capture.
  */
 
-import { emptyField, FieldKinds } from "../../../feature-libraries";
+import { FieldKinds } from "../../../feature-libraries";
 import {
 	TreeStoredSchema,
 	ValueSchema,
@@ -24,7 +24,6 @@ import { brand } from "../../../util";
 export const codePoint: NamedTreeSchema = {
 	name: brand("Primitive.CodePoint"),
 	structFields: emptyMap,
-	mapFields: emptyField,
 	value: ValueSchema.Number,
 };
 
@@ -32,7 +31,6 @@ export const codePoint: NamedTreeSchema = {
  * String made of unicode code points, allowing for sequence editing of a string.
  */
 export const string: TreeStoredSchema = {
-	mapFields: emptyField,
 	structFields: new Map([
 		[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])],
 	]),

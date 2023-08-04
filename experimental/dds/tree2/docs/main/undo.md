@@ -17,7 +17,7 @@ but two key points have emerged in that space:
    and fits within the confines of their existing user interface.
 
 See
-[the brain-dump on inverse changes](../wip/inverse-changes/README.md#undo-semantics)
+[the brain-dump on inverse changes](../wip/inverse-changes.md#undo-semantics)
 for some prior thinking on undo semantics.
 
 ## Abstract vs. Concrete Undo Messages
@@ -35,7 +35,7 @@ and which part should happen on peers upon receiving the undo (i.e, post broadca
 
 This choice is subject to many tradeoffs:
 
--   Access to historical data (original change, [repair data](../repair-data/README.md), [interim changes](#interim-change))
+-   Access to historical data (original change, [repair data](./repair-data.md), [interim changes](#interim-change))
     -   Pre-broadcast computation puts the burden of providing historical data on the issuing client.
     -   Post-broadcast computation puts the burden of providing historical data on all peers
         (which means that this data must be included in summaries).

@@ -1,6 +1,6 @@
 # Schema 2
 
-Proposal for changes to the [schema system](../src/core/schema-stored/Stored%20and%20View%20Schema.md).
+Proposal for changes to the [schema system](./stored-and-view-schema.md).
 
 ## Motivation
 

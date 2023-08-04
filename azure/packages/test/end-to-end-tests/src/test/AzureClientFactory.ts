@@ -52,5 +52,9 @@ export function createAzureClient(
 				endpoint: "http://localhost:7071",
 				type: "local",
 		  };
-	return new AzureClient({ connection: connectionProps, logger, configProvider });
+	return new AzureClient({
+		connection: connectionProps,
+		logger: logger ?? getTestLogger?.(),
+		configProvider,
+	});
 }

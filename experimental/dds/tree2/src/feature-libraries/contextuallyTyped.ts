@@ -108,7 +108,7 @@ export function getPrimaryField(
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
 export function getFieldSchema(field: FieldKey, schema: TreeStoredSchema): FieldStoredSchema {
-	return schema.structFields.get(field) ?? schema.mapFields;
+	return schema.structFields.get(field) ?? schema.mapFields ?? FieldSchema.empty;
 }
 
 export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {

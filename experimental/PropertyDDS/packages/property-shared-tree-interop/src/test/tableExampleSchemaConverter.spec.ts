@@ -117,7 +117,7 @@ describe("LlsSchemaConverter", () => {
 					});
 				}
 			});
-			if (treeSchema.mapFields.types) {
+			if (treeSchema.mapFields?.types) {
 				treeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
