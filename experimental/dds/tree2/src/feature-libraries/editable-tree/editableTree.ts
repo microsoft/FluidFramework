@@ -184,11 +184,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
 		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
-		assert(this.cursor.fieldIndex === index, "mismatched indexes");
+		assert(this.cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), "mismatched keys");
+		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
 		let fieldSchema: FieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.

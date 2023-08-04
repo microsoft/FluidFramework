@@ -193,7 +193,6 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-	emptyField,
 } from "./default-field-kinds";
 
 export {
