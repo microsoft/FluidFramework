@@ -79,7 +79,6 @@ export enum ValueSchema {
 	 *
 	 * This does not include Nothing / undefined.
 	 *
-	 * If it is desired to not include Nothing here and `allowsValueSuperset` would need adjusting.
 	 */
 	Serializable,
 }
