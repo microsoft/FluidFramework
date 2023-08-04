@@ -8,25 +8,27 @@ const { BundleComparisonPlugin } = require("@mixer/webpack-bundle-compare/dist/p
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const DuplicatePackageCheckerPlugin = require("@cerner/duplicate-package-checker-webpack-plugin");
 const { BannedModulesPlugin } = require("@fluidframework/bundle-size-tools");
-const { fromInternalScheme, toInternalScheme } = require("@fluid-tools/version-tools");
+const {
+	isInternalVersionScheme,
+	fromInternalScheme,
+	toInternalScheme,
+} = require("@fluid-tools/version-tools");
 
 // We need to replace the version string in the bundled code (in the packageVersion.ts files); otherwise the bundle we build in CI for PRs will have the
 // updated version string, which will not match the one in the main bundle. This will cause the bundle comparison to be
 // incorrect.
 const pkg = require("./package.json");
 
-const isTestCIBuild = process.env.TEST_BRANCH === "true";
-
 // An array of webpack module rules. We build the list of rules dynamically, depending on whether we are running in a CI
 // test branch or not.
 const webpackModuleRules = [];
 
+// Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
+const verString = process.env.SETVERSION_VERSION ?? pkg.version;
+
 // Unless we are running in a test branch in CI, then we want to replace the version string in the bundled code. test
 // branch builds are exlcuded because they use a version scheme that fromInternalScheme does not parse.
-if (!isTestCIBuild) {
-	// Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
-	const verString = process.env.SETVERSION_VERSION ?? pkg.version;
-
+if (isInternalVersionScheme(verString)) {
 	const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
 	const versionToReplace = new RegExp(verString, "g");
 	const internalVersionNoPrerelease = [major, minor, patch].join(".");
@@ -44,6 +46,10 @@ if (!isTestCIBuild) {
 			strict: false,
 		},
 	});
+} else {
+	console.warn(
+		`The version string ${verString} is not a Fluid internal version string. The version string in the bundled code will not be replaced.`,
+	);
 }
 
 // Always use these module rules
