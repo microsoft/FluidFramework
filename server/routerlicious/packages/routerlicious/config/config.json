@@ -166,7 +166,8 @@
 		"signalUsageCountingEnabled": false
 	},
 	"shared": {
-		"transientTenants": []
+		"transientTenants": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
