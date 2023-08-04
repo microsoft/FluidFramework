@@ -2287,8 +2287,15 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				break;
 			default: {
+				((_: never) => {})(maybeContainerMessageType); // Type safety on missing known cases
+
 				const compatBehavior = compatDetails.behavior;
-				const error = DataProcessingError.create(
+				if (compatBehavior === "Ignore") {
+					return;
+				}
+				((_: "FailToProcess") => {})(compatBehavior); // Type safety on missing known cases
+
+				throw DataProcessingError.create(
 					// Former assert 0x3ce
 					"Runtime message of unknown type",
 					"OpProcessing",
@@ -2304,16 +2311,6 @@ export class ContainerRuntime
 						}),
 					},
 				);
-				switch (compatBehavior) {
-					case "FailToProcess":
-						((_: never) => {})(maybeContainerMessageType); // Type safety on missing known cases
-						throw error;
-					case "Ignore":
-						return;
-					default: // Type safety on missing known cases
-						((_: never) => {})(compatBehavior);
-						throw error;
-				}
 			}
 		}
 	}
