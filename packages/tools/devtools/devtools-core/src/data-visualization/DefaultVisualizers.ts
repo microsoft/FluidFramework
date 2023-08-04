@@ -43,26 +43,34 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 
 	const renderedData = await visualizeChildData(data);
 
-	const editProps=  { editTypes: [EditType.Boolean, EditType.Number, EditType.String ] }; // TODO: any
+	const editProps = {
+		editTypes: [
+			EditType.Null,
+			EditType.Boolean,
+			EditType.Number,
+			EditType.String,
+			EditType.Undefined,
+		],
+	};
 
 	if (renderedData.nodeKind === VisualNodeKind.TreeNode) {
 		return {
 			...renderedData,
 			fluidObjectId: sharedCell.id,
-			children: {renderedData},
+			children: { renderedData },
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 	}
 
 	return {
+		value: "bleh",
 		...renderedData,
 		fluidObjectId: sharedCell.id,
 		typeMetadata: "SharedCell",
 		nodeKind: VisualNodeKind.FluidValueNode,
 		editProps,
 	};
-	
 };
 
 /**
@@ -91,8 +99,9 @@ export const visualizeSharedDirectory: VisualizeSharedObject = async (
 	const sharedDirectory = sharedObject as SharedDirectory;
 	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
 	return {
-		...sharedDirectory
 		fluidObjectId: sharedDirectory.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
 		typeMetadata: "SharedDirectory",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
@@ -155,7 +164,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 		metadata: {
 			size: sharedMap.size,
 		},
-		fluidObjectType: "SharedMap",
+		typeMetadata: "SharedMap",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
@@ -188,7 +197,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 			rows: rowCount,
 			columns: columnCount,
 		},
-		fluidObjectType: "SharedMatrix",
+		typeMetadata: "SharedMatrix",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
@@ -205,7 +214,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 	return {
 		fluidObjectId: sharedString.id,
 		value: text,
-		fluidObjectType: "SharedString",
+		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
 		editProps: { editTypes: [EditType.String] },
 	};
@@ -242,7 +251,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	return {
 		fluidObjectId: sharedTree.id,
 		children,
-		fluidObjectType: "SharedTree",
+		typeMetadata: "SharedTree",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
@@ -255,7 +264,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 ): Promise<FluidUnknownObjectNode> => {
 	return {
 		fluidObjectId: sharedObject.id,
-		fluidObjectType: sharedObject.attributes.type,
+		typeMetadata: sharedObject.attributes.type,
 		nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 	};
 };

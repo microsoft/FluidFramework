@@ -12,7 +12,19 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedCell } from "@fluidframework/cell";
 import { Edit, EditSharedObject } from "./DataEditing";
+
+/**
+ * Default {@link EditSharedObject} for {@link SharedCell}.
+ */
+export const editSharedCell: EditSharedObject = async (
+	sharedObject: ISharedObject,
+	edit: Edit,
+): Promise<void> => {
+	const sharedCell = sharedObject as SharedCell;
+	sharedCell.set(edit.data);
+};
 
 /**
  * Default {@link EditSharedObject} for {@link SharedCounter}.
@@ -21,7 +33,6 @@ export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	console.log("testing editSharedCounter");
 	if (typeof edit.data !== "number") return;
 	const sharedCounter = sharedObject as SharedCounter;
 	sharedCounter.increment(Math.floor(edit.data) - sharedCounter.value);
@@ -47,6 +58,7 @@ export const editSharedString: EditSharedObject = async (
  * List of default editors included in the library.
  */
 export const defaultEditors: Record<string, EditSharedObject> = {
+	[SharedCell.getFactory().type]: editSharedCell,
 	[SharedCounter.getFactory().type]: editSharedCounter,
 	[SharedString.getFactory().type]: editSharedString,
 

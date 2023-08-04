@@ -56,4 +56,6 @@ export enum EditType {
 	Number = "number",
 	String = "string",
 	Boolean = "boolean",
+	Null = "null",
+	Undefined = "undefined",
 }

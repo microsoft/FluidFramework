@@ -235,7 +235,7 @@ export namespace DisconnectContainer {
 
 // @internal
 export interface Edit {
-    data: Serializable<unknown>;
+    data: Serializable<unknown> | Primitive;
     type?: EditType | string;
 }
 
@@ -247,9 +247,13 @@ export enum EditType {
     // (undocumented)
     Boolean = "boolean",
     // (undocumented)
+    Null = "null",
+    // (undocumented)
     Number = "number",
     // (undocumented)
-    String = "string"
+    String = "string",
+    // (undocumented)
+    Undefined = "undefined"
 }
 
 // @public

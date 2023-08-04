@@ -75,7 +75,7 @@ export interface VisualNodeBase {
 	 */
 	editProps?: {
 		// TODO: what are the semantics of this?
-		// TODO: what does undefined mean here? 
+		// TODO: what does undefined mean here?
 		editTypes?: EditType[];
 
 		// TODO: other allowed operations?

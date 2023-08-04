@@ -6,6 +6,7 @@
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { EditType, HasFluidObjectId } from "../CommonInterfaces";
+import { Primitive } from "./VisualTree";
 
 /**
  * Applies an edit to {@link @fluidframework/shared-object-base#ISharedObject}.
@@ -31,7 +32,7 @@ export interface Edit {
 	/**
 	 * Data contains the new data that will be edited into the DDS
 	 */
-	data: Serializable<unknown>;
+	data: Serializable<unknown> | Primitive;
 }
 
 /**
