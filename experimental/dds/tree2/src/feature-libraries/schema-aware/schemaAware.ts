@@ -143,9 +143,6 @@ export type UnbrandedName<TName> = [
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
  * In Editable mode, unwraps the fields.
- *
- * TODO:
- * Extend this to support global fields.
  * @alpha
  */
 export type TypedFields<
