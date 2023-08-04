@@ -72,7 +72,7 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
 	return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
-export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
+export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	switch (schema) {
 		case ValueSchema.String:
 			return typeof nodeValue === "string";
@@ -80,12 +80,12 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
 			return typeof nodeValue === "number";
 		case ValueSchema.Boolean:
 			return typeof nodeValue === "boolean";
-		case ValueSchema.Nothing:
-			return typeof nodeValue === "undefined";
+		case undefined:
+			return nodeValue === undefined;
 		case ValueSchema.Serializable:
-			return true;
+			return nodeValue !== undefined;
 		default:
-			fail("invalid value schema");
+			fail("invalid ValueSchema");
 	}
 }
 
@@ -325,7 +325,7 @@ function shallowCompatibilityTest(
 	const schema =
 		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 	if (isPrimitiveValue(data)) {
-		return isPrimitive(schema) && allowsValue(schema.value, data);
+		return isPrimitive(schema) && allowsValue(schema.leafValue, data);
 	}
 	if (isArrayLike(data)) {
 		const primary = getPrimaryField(schema);
@@ -466,7 +466,7 @@ export function applyTypesFromContext(
 			0x5c3 /* Schema must be primitive when providing a primitive value */,
 		);
 		assert(
-			allowsValue(schema.value, data),
+			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,
 		);
 		return { value: data, type, fields: new Map() };
@@ -502,7 +502,7 @@ export function applyTypesFromContext(
 
 		const value = data[valueSymbol];
 		assert(
-			allowsValue(schema.value, value),
+			allowsValue(schema.leafValue, value),
 			0x4d7 /* provided value not permitted by the schema */,
 		);
 		return { value, type, fields };

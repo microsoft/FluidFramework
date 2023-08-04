@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
+import { FieldKey, TreeStoredSchema } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
@@ -26,7 +26,7 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (
-		schema.value !== ValueSchema.Nothing &&
+		schema.leafValue !== undefined &&
 		schema.structFields.size === 0 &&
 		schema.mapFields === undefined
 	);

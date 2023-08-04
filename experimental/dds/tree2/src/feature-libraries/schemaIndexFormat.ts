@@ -47,7 +47,7 @@ const TreeSchemaFormat = Type.Object(
 		structFields: Type.Array(NamedFieldSchemaFormat),
 		mapFields: Type.Optional(FieldSchemaFormat),
 		// TODO: don't use external type here.
-		value: Type.Enum(ValueSchema),
+		leafValue: Type.Optional(Type.Enum(ValueSchema)),
 	},
 	noAdditionalProps,
 );
@@ -111,7 +111,7 @@ function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeS
 		structFields: [...schema.structFields]
 			.map(([k, v]) => encodeNamedField(k, v))
 			.sort(compareNamed),
-		value: schema.value,
+		leafValue: schema.leafValue,
 	};
 	return out;
 }
@@ -162,7 +162,7 @@ function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
 				decodeField(field),
 			]),
 		),
-		value: schema.value,
+		leafValue: schema.leafValue,
 	};
 	return out;
 }

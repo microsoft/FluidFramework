@@ -18,7 +18,7 @@
                     "tree": {
                         "SchemaString": {
                             "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"TestInner\",\"mapFields\":{\"kind\":\"Sequence\"},\"structFields\":[],\"value\":0},{\"name\":\"TestLeaf\",\"structFields\":[],\"value\":2}],\"rootFieldSchema\":{\"kind\":\"Sequence\"}}"
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"TestInner\",\"mapFields\":{\"kind\":\"Sequence\"},\"structFields\":[]},{\"name\":\"TestLeaf\",\"structFields\":[],\"leafValue\":1}],\"rootFieldSchema\":{\"kind\":\"Sequence\"}}"
                         }
                     }
                 },
