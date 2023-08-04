@@ -72,6 +72,11 @@ function forcedColorsFromTheme(theme: ThemeOption): "active" | "none" {
 	}
 }
 
+/**
+ * Generate screenshot test name from parameters.
+ *
+ * Format: `<story-component-name> (<theme>, <viewport-width>x<viewport-height>)`
+ */
 function getScreenshotTestName(
 	storyComponentName: string,
 	theme: ThemeOption,
@@ -80,6 +85,11 @@ function getScreenshotTestName(
 	return `${storyComponentName} (${theme}, ${viewport.width}x${viewport.height})`;
 }
 
+/**
+ * Generate the file path for the screenshot generated for the specified test.
+ *
+ * Format: `<output-dir>/<story-module-name>/<test-name>.png`
+ */
 function getScreenshotTestPath(
 	testName: string,
 	storyModuleName: string,
@@ -99,13 +109,17 @@ async function checkScreenshotDiff(screenshotFilePath: string): Promise<boolean>
 	return !screenshotStatus.isClean();
 }
 
-const componentMap: Map<string, RPCs.Component[]> = new Map<string, RPCs.Component[]>();
-
 /**
  * Dynamically generates a test suite covering all stories.
+ *
  * Generated structure is hierarchical, and results in 1 test per screenshot scenario (story + theme + viewport), such
  * that we can succeed or fail on a per screenshot basis.
+ *
  * Since the story modules are discovered and read asynchronously, creation of the test suite is also asynchronous.
+ *
+ * Note: this currently creates a test for each theme + viewport combination specified at the top of this file.
+ * We may want to make this more configurable on a story-by-story basis in the future (for specific regression tests,
+ * etc.).
  */
 async function generateTestSuite(): Promise<void> {
 	// Initialize chromium browser instance for test suite
@@ -123,6 +137,11 @@ async function generateTestSuite(): Promise<void> {
 		followSymbolicLinks: false,
 	});
 
+	// `describe` blocks cannot be async, so before we start building out the test suites, we will asynchronously
+	// create a mapping of story modules to all of the story components they contain.
+	// From this map, we will build up our test suite (synchronously).
+	const componentMap: Map<string, RPCs.Component[]> = new Map<string, RPCs.Component[]>();
+
 	for (const storyModuleFilePath of storyModules) {
 		const { components } = await workspace.detectComponents({
 			filePaths: [storyModuleFilePath],
@@ -131,6 +150,7 @@ async function generateTestSuite(): Promise<void> {
 		componentMap.set(storyModuleFilePath, components);
 	}
 
+	// Generated suite has the following hierarchy: `root -> story module -> story (component) -> test (theme + viewport)`
 	describe("devtools-view Screenshot Tests", () => {
 		after(async () => {
 			await browser.close();
@@ -141,6 +161,7 @@ async function generateTestSuite(): Promise<void> {
 		for (const [storyFilePath, components] of componentMap) {
 			const storyFileName = Path.basename(storyFilePath);
 
+			// Story module sub-suite
 			// eslint-disable-next-line jest/valid-title
 			describe(storyFileName, () => {
 				// Create sub-suite for each component
@@ -148,13 +169,14 @@ async function generateTestSuite(): Promise<void> {
 					const { componentId } = component;
 					const { name: storyName } = decodeComponentId(componentId);
 
+					// Story (component) sub-suite
 					// eslint-disable-next-line jest/valid-title
 					describe(storyName, () => {
 						// We expect this to succeed. If not, let the test blow up.
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)![1];
 
-						// Generate a separate screenshot for each of our supported themes
+						// Generate an individual test for each theme / viewport combination.
 						for (const theme of allThemes) {
 							for (const viewport of defaultViewports) {
 								const testName = getScreenshotTestName(storyName, theme, viewport);
