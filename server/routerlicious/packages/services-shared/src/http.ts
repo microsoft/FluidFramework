@@ -54,6 +54,11 @@ export function getBooleanParam(param: any): boolean {
 export const defaultErrorMessage = "Internal Server Error";
 
 /**
+ * Header to denote that the container is ephemeral.
+ */
+export const IsEphemeralContainer = "Is-Ephemeral-Container";
+
+/**
  * Helper function to handle a promise that should be returned to the user.
  * @param resultP - Promise whose resolved value or rejected error will send with appropriate status codes.
  * @param response - Express Response used for writing response body, headers, and status.

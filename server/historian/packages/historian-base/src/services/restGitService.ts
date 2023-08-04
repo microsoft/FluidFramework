@@ -24,7 +24,7 @@ import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getRequestErrorTranslator } from "../utils";
+import { Constants, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -85,7 +85,7 @@ export class RestGitService {
 
 		// We set the flag only for ephemeral containers
 		if (this.isEphemeralContainer) {
-			defaultHeaders["Is-Ephemeral-Container"] = this.isEphemeralContainer;
+			defaultHeaders[Constants.IsEphemeralContainer] = this.isEphemeralContainer;
 		}
 		this.lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: this.tenantId,

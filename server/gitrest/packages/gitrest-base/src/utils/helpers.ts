@@ -52,9 +52,9 @@ export function getFilesystemManagerFactory(
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	isEphemeralContainer: boolean,
 ) {
-	return !isEphemeralContainer || !fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		? fileSystemManagerFactories.defaultFileSystemManagerFactory
-		: fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+	return isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory
+		? fileSystemManagerFactories.ephemeralFileSystemManagerFactory
+		: fileSystemManagerFactories.defaultFileSystemManagerFactory;
 }
 
 /**

@@ -30,6 +30,7 @@ export {
 	getBooleanParam,
 	handleResponse,
 	HttpServer,
+	IsEphemeralContainer,
 	IHttpServerConfig,
 	ISocketIoRedisConnection,
 	ISocketIoRedisOptions,

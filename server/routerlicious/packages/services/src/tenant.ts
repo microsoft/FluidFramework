@@ -19,6 +19,7 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import { AxiosRequestHeaders } from "axios";
+import { IsEphemeralContainer } from ".";
 
 export class Tenant implements core.ITenant {
 	public get id(): string {
@@ -108,7 +109,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			// IsEphemeralContainer header is set only for ephemeral containers
 			// It is not set if it is not ephemeral and when the driver did not send any info
 			if (isEphemeralContainer) {
-				headers["Is-Ephemeral-Container"] = isEphemeralContainer;
+				headers[IsEphemeralContainer] = isEphemeralContainer;
 			}
 			return headers;
 		};

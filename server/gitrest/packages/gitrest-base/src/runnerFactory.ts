@@ -63,11 +63,11 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		const ephemeralFileSystemName: string =
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
 
-		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactory(
+		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			defaultFileSystemName,
 			config,
 		);
-		const ephemeralFileSystemManagerFactory = this.getFileSystemManagerFactory(
+		const ephemeralFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			ephemeralFileSystemName,
 			config,
 		);
@@ -78,7 +78,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		};
 	}
 
-	private getFileSystemManagerFactory(fileSystemName: string, config: Provider) {
+	private getFileSystemManagerFactoryByName(fileSystemName: string, config: Provider) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
 			return new NodeFsManagerFactory();
 		} else if (fileSystemName === "redisFs") {

@@ -8,6 +8,7 @@ export {
 	defaultErrorMessage,
 	getBooleanParam,
 	handleResponse,
+	IsEphemeralContainer,
 	validateRequestParams,
 } from "./http";
 export {
