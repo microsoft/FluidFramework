@@ -328,6 +328,16 @@ export namespace GetRootDataVisualizations {
 }
 
 // @internal
+export namespace GetTabId {
+    const MessageType = "GET_TAB_ID";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage {
+        type: typeof MessageType;
+    }
+    export type MessageData = string;
+}
+
+// @internal
 export namespace GetTelemetryHistory {
     const MessageType = "GET_TELEMETRY_HISTORY";
     export function createMessage(): Message;

@@ -19,5 +19,6 @@ export * from "./Menu";
 export * from "./TelemetryView";
 export * from "./SettingsView";
 export * from "./Waiting";
+export { useMessageRelay } from "../MessageRelayContext";
 
 /* eslint-enable no-restricted-syntax */

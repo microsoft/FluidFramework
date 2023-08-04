@@ -14,6 +14,7 @@ import { IMessageRelay } from "@fluid-experimental/devtools-core";
  * Any message listening / posting should go through here, rather than directly through the
  * `window` (`globalThis`) or through the `chrome.runtime` APIs to ensure general compatibility, regardless of
  * how the Chrome Extension is configured / what context the components are run in.
+ *
  */
 export const MessageRelayContext = React.createContext<IMessageRelay | undefined>(undefined);
 

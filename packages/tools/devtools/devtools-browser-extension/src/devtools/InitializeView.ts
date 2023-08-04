@@ -17,7 +17,11 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
  * @param target - The element into which the devtools view will be rendered.
  */
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
+	console.log("Background Script connecting...");
+
 	const connection = await BackgroundConnection.Initialize();
+
+	console.log("Background Script connected!");
 
 	ReactDOM.render(
 		React.createElement(DevtoolsPanel, { messageRelay: connection }),

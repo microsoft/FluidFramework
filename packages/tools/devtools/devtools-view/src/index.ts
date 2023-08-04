@@ -18,6 +18,7 @@
 
 export { DevtoolsPanel, DevtoolsPanelProps } from "./DevtoolsPanel";
 export { WindowMessageRelay } from "./WindowMessageRelay";
+export { useMessageRelay } from "./MessageRelayContext";
 
 // Convenience re-exports
 export { IMessageRelay } from "@fluid-experimental/devtools-core";

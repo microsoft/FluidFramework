@@ -8,8 +8,9 @@
 /// <reference types="jest" />
 
 import { globals } from "../jest.config";
-// import { launch as puppeteerArgs } from "../jest-puppeteer.config.js";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
+import { IMessageRelay, GetTabId } from "@fluid-experimental/devtools-core";
+import { useMessageRelay } from "@fluid-experimental/devtools-view";
 import puppeteer from "puppeteer";
 
 describe("End to end tests", () => {
@@ -56,11 +57,8 @@ describe("End to end tests", () => {
 
 	// TODO
 	it("Determine if telemetry pane is rendered on the extension", async () => {
-		// const browser = await puppeteer.launch({
-		// 	headless: false,
-		// 	launch.args: ["--disable-extensions-except=./dist/bundle", "--load-extension=./dist/bundle"],
-		// });
-
+		// Set up config for the jest-puppeteer test.
+		// TODO: Clean up for repetitive config setting.
 		const browser = await puppeteer.launch({
 			headless: false,
 			args: [
@@ -74,33 +72,30 @@ describe("End to end tests", () => {
 			],
 		});
 
+		// Launch application page.
 		const appPage = await browser.newPage();
 		await appPage.goto(globals.PATH, { waitUntil: "load" });
 
+		// Target extension and launch in Chromium.
 		const targets = await browser.targets();
-		console.log("targets:", targets);
 		const extensionTarget = targets.find((target) => target.type() === "service_worker");
 		const partialExtensionUrl = extensionTarget?.url() || "";
 		const [, , extensionId] = partialExtensionUrl.split("/");
 
 		const extPage = await browser.newPage();
-		const extensionUrl = `chrome-extension://${extensionId}/devtools.html`; // different -> devtools.html
+
+		// POST message asking for active tab and wait for response with tab ID.
+		const messageRelay: IMessageRelay = useMessageRelay();
+		messageRelay.postMessage(GetTabId.createMessage(GetTabId.MessageType));
+		const tabId = globalThis.TEST_TAB_ID_OVERRIDE;
+
+		console.log(tabId);
+
+		// TODO: Figure out how to use tabID whnen opening the extension.
+		const extensionUrl = `chrome-extension://${extensionId}/devtools/devtools.html`;
 		await extPage.goto(extensionUrl, { waitUntil: "load" });
 		await extPage.bringToFront();
 
-		// const targets = await browser.targets();
-		// console.log("targets:", targets);
-		// const extensionTarget = targets.find((target) => target.type() === "service_worker");
-		// console.log("extensionTarget:", extensionTarget);
-		// const partialExtensionUrl = extensionTarget?.url() || "";
-		// console.log("partialExtensionUrl:", partialExtensionUrl);
-		// const [, , extensionId] = partialExtensionUrl.split("/");
-		// console.log("extensionId:", extensionId);
-
-		// const extensionId = `figfgckchmklgfakpkagobfabojlmbfh`;
-
-		// const extPage = await browser.newPage();
-		// const extensionUrl = `chrome-extension://${extensionId}/`;
-		// await extPage.goto(extensionUrl, { waitUntil: "load" });
+		// TODO: Write unit tests.
 	});
 });

@@ -170,7 +170,7 @@ export class BackgroundConnection
 			source: this.messageSource,
 			type: devToolsInitMessageType,
 			data: {
-				tabId: browser.devtools.inspectedWindow.tabId,
+				tabId: getTabId(),
 			},
 		};
 		postMessageToPort(
@@ -185,4 +185,16 @@ export class BackgroundConnection
 			this.onBackgroundServiceDisconnect,
 		);
 	};
+}
+
+/**
+ * This functions returns the corresponding tabId based on the testing purposes.
+ */
+function getTabId(): number {
+	// Unless the test suite has requested for the active tabId to BackgroundScript, condition below will ALWAYS be true.
+	if (globalThis.TEST_TAB_ID_OVERRIDE === undefined) {
+		globalThis.TEST_TAB_ID_OVERRIDE = browser.devtools.inspectedWindow.tabId;
+	}
+
+	return globalThis.TEST_TAB_ID_OVERRIDE as unknown as number;
 }
