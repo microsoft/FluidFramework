@@ -75,7 +75,6 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 	];
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		console.log(`in processPakage`);
 		const version =
 			this.flags.exact ??
 			(this.flags.remove
