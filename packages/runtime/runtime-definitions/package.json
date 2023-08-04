@@ -54,6 +54,107 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAliasDeclaration_CompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_FinalCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IIdCompressorCore": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IdCreationRange.HasOverrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRange.Ids": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRange.Override": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRange.Overrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LocalCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_OpSpaceCompressedId": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedCluster": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedClusterOverrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_SerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_SerializedIdCompressorWithNoSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedLocalOverrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedLocalState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedSessionData": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedSessionIdNormalizer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SessionSpaceCompressedId": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SessionUnique": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_StableId": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_UnackedLocalId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_UuidString": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

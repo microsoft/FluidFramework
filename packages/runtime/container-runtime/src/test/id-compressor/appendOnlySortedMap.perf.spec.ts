@@ -4,9 +4,8 @@
  */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { IRandom, makeRandom } from "../copied-utils/stochastic";
-import { AppendOnlySortedMap } from "../../appendOnlySortedMap";
-import { compareFiniteNumbers } from "../../utilities";
+import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { AppendOnlySortedMap, compareFiniteNumbers } from "../../id-compressor";
 
 function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	const type = BenchmarkType.Measurement;
