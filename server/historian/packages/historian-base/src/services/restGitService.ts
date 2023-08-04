@@ -94,24 +94,15 @@ export class RestGitService {
 
 		const baseUrl = this.storageUrl || storage.url;
 
-		winston.info(
-			`Created RestGitService: ${JSON.stringify({
-				"BaseUrl": baseUrl,
-				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-				"Storage-Name": this.storageName,
-				"Is-Ephemeral-Container": this.isEphemeralContainer,
-			})}`,
-		);
+		const restGitServiceCreationLog = `Created RestGitService: ${JSON.stringify({
+			"BaseUrl": baseUrl,
+			"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+			"Storage-Name": this.storageName,
+			"Is-Ephemeral-Container": this.isEphemeralContainer,
+		})}`;
 
-		Lumberjack.info(
-			`Created RestGitService: ${JSON.stringify({
-				"BaseUrl": baseUrl,
-				"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-				"Storage-Name": this.storageName,
-				"Is-Ephemeral-Container": this.isEphemeralContainer,
-			})}`,
-			this.lumberProperties,
-		);
+		winston.info(restGitServiceCreationLog);
+		Lumberjack.info(restGitServiceCreationLog, this.lumberProperties);
 
 		this.restWrapper = new BasicRestWrapper(
 			baseUrl,
