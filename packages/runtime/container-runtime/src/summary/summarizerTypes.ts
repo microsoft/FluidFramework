@@ -245,7 +245,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  }
 	| {
 			success: false;
-			data: TFailure;
+			data: TFailure | undefined;
 			message: string;
 			error: any;
 	  };
@@ -253,13 +253,13 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 export interface ISummarizeResults {
 	/** Resolves when we generate, upload, and submit the summary. */
 	readonly summarySubmitted: Promise<
-		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult | undefined>
+		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult>
 	>;
 	/** Resolves when we observe our summarize op broadcast. */
 	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
 	/** Resolves when we receive a summaryAck or summaryNack. */
 	readonly receivedSummaryAckOrNack: Promise<
-		SummarizeResultPart<IAckSummaryResult, INackSummaryResult | undefined>
+		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
 	>;
 }
 

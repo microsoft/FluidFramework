@@ -133,13 +133,13 @@ export const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
 
 export class SummarizeResultBuilder {
 	public readonly summarySubmitted = new Deferred<
-		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult | undefined>
+		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult>
 	>();
 	public readonly summaryOpBroadcasted = new Deferred<
 		SummarizeResultPart<IBroadcastSummaryResult>
 	>();
 	public readonly receivedSummaryAckOrNack = new Deferred<
-		SummarizeResultPart<IAckSummaryResult, INackSummaryResult | undefined>
+		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
 	>();
 
 	public fail(
