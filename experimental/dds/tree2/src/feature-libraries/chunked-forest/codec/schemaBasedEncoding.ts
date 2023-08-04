@@ -13,7 +13,6 @@ import {
 } from "../../../core";
 import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
 import { fail } from "../../../util";
-import { FieldKinds } from "../../default-field-kinds";
 import { getFieldKind } from "../../contextuallyTyped";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
@@ -86,7 +85,7 @@ export function treeShaper(
 	// to reduce encoded size.
 
 	const structFields: KeyedFieldEncoder[] = [];
-	for (const [key, field] of schema.structFields) {
+	for (const [key, field] of schema.structFields ?? []) {
 		structFields.push({ key, shape: fieldHandler.shapeFromField(field) });
 	}
 
@@ -94,9 +93,7 @@ export function treeShaper(
 		schemaName,
 		valueShapeFromSchema(schema.value),
 		structFields,
-		schema.mapFields.kind.identifier === FieldKinds.forbidden.identifier
-			? undefined
-			: fieldHandler.shapeFromField(schema.mapFields),
+		schema.mapFields === undefined ? undefined : fieldHandler.shapeFromField(schema.mapFields),
 	);
 	return shape;
 }
