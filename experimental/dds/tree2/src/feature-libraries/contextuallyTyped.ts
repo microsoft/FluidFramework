@@ -386,12 +386,12 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
-	schemaData: SchemaData,
+	context: TreeDataContext,
 	schema: T,
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData },
+		context,
 		allowedTypesToTypeSet(schema),
 		data as unknown as ContextuallyTypedNodeData,
 	);
@@ -417,15 +417,11 @@ export function cursorsFromContextualData(
  * @alpha
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
-	schemaData: SchemaData,
+	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T, ApiMode.Simple>,
-): ITreeCursorSynchronous {
-	return cursorFromContextualData(
-		{ schema: schemaData },
-		schema.types,
-		data as ContextuallyTypedNodeData,
-	);
+	data: TypedField<T, ApiMode.Flexible>,
+): ITreeCursorSynchronous[] {
+	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }
 
 /**

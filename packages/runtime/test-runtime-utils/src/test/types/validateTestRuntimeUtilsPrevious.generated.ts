@@ -40,6 +40,30 @@ use_old_InterfaceDeclaration_IInsecureUser(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMockContainerRuntimeOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMockContainerRuntimeOptions():
+    TypeOnly<old.IMockContainerRuntimeOptions>;
+declare function use_current_InterfaceDeclaration_IMockContainerRuntimeOptions(
+    use: TypeOnly<current.IMockContainerRuntimeOptions>);
+use_current_InterfaceDeclaration_IMockContainerRuntimeOptions(
+    get_old_InterfaceDeclaration_IMockContainerRuntimeOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMockContainerRuntimeOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMockContainerRuntimeOptions():
+    TypeOnly<current.IMockContainerRuntimeOptions>;
+declare function use_old_InterfaceDeclaration_IMockContainerRuntimeOptions(
+    use: TypeOnly<old.IMockContainerRuntimeOptions>);
+use_old_InterfaceDeclaration_IMockContainerRuntimeOptions(
+    get_current_InterfaceDeclaration_IMockContainerRuntimeOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IMockContainerRuntimePendingMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage():
@@ -95,7 +119,6 @@ declare function get_old_ClassDeclaration_MockContainerRuntime():
 declare function use_current_ClassDeclaration_MockContainerRuntime(
     use: TypeOnly<current.MockContainerRuntime>);
 use_current_ClassDeclaration_MockContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntime());
 
 /*
@@ -168,7 +191,6 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeForReconnection():
 declare function use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
     use: TypeOnly<current.MockContainerRuntimeForReconnection>);
 use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeForReconnection());
 
 /*
@@ -301,7 +323,6 @@ declare function get_current_ClassDeclaration_MockFluidDataStoreContext():
 declare function use_old_ClassDeclaration_MockFluidDataStoreContext(
     use: TypeOnly<old.MockFluidDataStoreContext>);
 use_old_ClassDeclaration_MockFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockFluidDataStoreContext());
 
 /*
@@ -314,7 +335,6 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_current_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<current.MockFluidDataStoreRuntime>);
 use_current_ClassDeclaration_MockFluidDataStoreRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
