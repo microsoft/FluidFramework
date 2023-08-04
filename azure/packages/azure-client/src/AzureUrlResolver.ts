@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	DriverHeader,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the
@@ -20,7 +15,7 @@ import {
 export class AzureUrlResolver implements IUrlResolver {
 	public constructor() {}
 
-	public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
+	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
 		// determine whether the request is for creating of a new container.
 		// such request has the `createNew` header set to true and doesn't have a container ID.

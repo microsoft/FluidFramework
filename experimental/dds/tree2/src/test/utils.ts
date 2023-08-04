@@ -43,12 +43,10 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
-	namedTreeSchema,
 	NodeReviver,
 	RevisionInfo,
 	RevisionMetadataSource,
@@ -64,7 +62,6 @@ import {
 	mapCursorField,
 	JsonableTree,
 	SchemaData,
-	fieldSchema,
 	rootFieldKey,
 	Value,
 	compareUpPaths,
@@ -79,6 +76,11 @@ import {
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
 	TaggedChange,
+	TreeSchemaBuilder,
+	Named,
+	NamedTreeSchema,
+	treeSchema,
+	FieldUpPath,
 } from "../core";
 import { JsonCompatible, Mutable, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -632,26 +634,13 @@ export function expectJsonTree(
 	}
 }
 
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	structFields: {
-		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-	},
-	mapFields: fieldSchema(FieldKinds.sequence),
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	rootFieldSchema,
-};
-
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state?: JsonableTree,
-	schema: SchemaData = testSchema,
+	state: JsonableTree | undefined,
+	schema: SchemaData,
 ): void {
 	tree.storedSchema.update(schema);
 
@@ -670,6 +659,11 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
 	}
+}
+
+export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPath): void {
+	expectEqualPaths(path.parent, expectedPath.parent);
+	assert.equal(path.field, expectedPath.field);
 }
 
 export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
@@ -847,4 +841,14 @@ export function defaultRevisionMetadataFromChanges(
 		}
 	}
 	return revisionMetadataSourceFromInfo(revInfos);
+}
+
+/**
+ * Helper for building {@link NamedTreeSchema} without using {@link SchemaBuilder}.
+ */
+export function namedTreeSchema(data: TreeSchemaBuilder & Named<string>): NamedTreeSchema {
+	return {
+		name: brand(data.name),
+		...treeSchema({ ...data }),
+	};
 }

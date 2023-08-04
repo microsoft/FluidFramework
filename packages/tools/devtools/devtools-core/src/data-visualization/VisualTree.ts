@@ -73,13 +73,7 @@ export interface VisualNodeBase {
 	 * (optional) If editProps is present it indicates the node is editable.
 	 * Inside of the porperty is an array of possible EditTypes to inform devtools-view to only show the corresponding edit options for the types allowed
 	 */
-	editProps?: {
-		// TODO: what are the semantics of this?
-		// TODO: what does undefined mean here?
-		editTypes?: EditType[];
-
-		// TODO: other allowed operations?
-	};
+	editProps?: { editTypes?: EditType[] };
 }
 
 /**

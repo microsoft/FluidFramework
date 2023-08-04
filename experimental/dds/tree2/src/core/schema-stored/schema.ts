@@ -180,19 +180,16 @@ export interface TreeStoredSchema {
 
 	/**
 	 * Constraint for fields not mentioned in `structFields`.
+	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this FieldStoredSchema.
 	 *
-	 * To forbid this map like usage, use {@link emptyField} here.
-	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
-	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
-	 * and can be useful in special cases (like a default stored schema when none is specified).
 	 */
-	readonly mapFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree

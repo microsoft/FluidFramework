@@ -20,10 +20,13 @@ import { TreeHeader } from "./TreeHeader";
  * {@link ValueView} input props.
  */
 export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode> &
+	HasContainerKey &
 	HasContainerKey;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
+ *
+ * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
  *
  * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
  */

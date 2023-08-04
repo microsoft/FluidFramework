@@ -14,8 +14,13 @@ import {
 } from "../contextuallyTyped";
 import { Multiplicity } from "../modular-schema";
 import { InternalTypedSchemaTypes, FieldSchema, TreeSchema, AllowedTypes } from "../typed-schema";
-import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
-import { contextSymbol, typeSymbol } from "../editable-tree";
+import {
+	UntypedField,
+	UntypedTree,
+	UntypedTreeCore,
+	contextSymbol,
+	typeSymbol,
+} from "../untypedTree";
 import { AllowOptional, Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
 import { TypedValue } from "./schemaAwareUtil";
@@ -143,9 +148,6 @@ export type UnbrandedName<TName> = [
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
  * In Editable mode, unwraps the fields.
- *
- * TODO:
- * Extend this to support global fields.
  * @alpha
  */
 export type TypedFields<

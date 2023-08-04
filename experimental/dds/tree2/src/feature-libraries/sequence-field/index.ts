@@ -19,7 +19,7 @@ export {
 	MoveIn,
 	MoveOut,
 	NodeChangeType,
-	NodeCount,
+	CellCount as NodeCount,
 	MoveId,
 	ProtoNode,
 	Reattach,
@@ -30,7 +30,7 @@ export {
 	LineageEvent,
 	HasReattachFields,
 	CellId,
-	CellTargetingMark,
+	HasMarkFields,
 	HasLineage,
 } from "./format";
 export {

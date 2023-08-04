@@ -11,6 +11,7 @@ import {
 	FieldStoredSchema,
 	TreeTypeSet,
 	SchemaData,
+	storedEmptyFieldSchema,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
 
@@ -33,12 +34,19 @@ export function allowsTreeSuperset(
 	if (isNeverTree(policy, originalData, superset)) {
 		return false;
 	}
-	assert(original !== undefined, "only never trees have undefined schema");
-	assert(superset !== undefined, "only never trees have undefined schema");
+	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
+	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
 	if (!allowsValueSuperset(original.value, superset.value)) {
 		return false;
 	}
-	if (!allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields)) {
+	if (
+		!allowsFieldSuperset(
+			policy,
+			originalData,
+			normalizeField(original.mapFields),
+			normalizeField(superset.mapFields),
+		)
+	) {
 		return false;
 	}
 
@@ -51,13 +59,13 @@ export function allowsTreeSuperset(
 					policy,
 					originalData,
 					original.structFields.get(originalField) ?? fail("missing expected field"),
-					superset.mapFields,
+					normalizeField(superset.mapFields),
 				),
 			bExtra: (supersetField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.mapFields,
+					normalizeField(original.mapFields),
 					superset.structFields.get(supersetField) ?? fail("missing expected field"),
 				),
 			same: (sameField) =>
@@ -235,8 +243,10 @@ export function isNeverTreeRecursive(
 	try {
 		parentTypeStack.add(tree);
 		if (
-			(policy.fieldKinds.get(tree.mapFields.kind.identifier) ?? fail("missing field kind"))
-				.multiplicity === Multiplicity.Value
+			(
+				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
+				fail("missing field kind")
+			).multiplicity === Multiplicity.Value
 		) {
 			return true;
 		}
@@ -254,4 +264,8 @@ export function isNeverTreeRecursive(
 	} finally {
 		parentTypeStack.delete(tree);
 	}
+}
+
+export function normalizeField(schema: FieldStoredSchema | undefined): FieldStoredSchema {
+	return schema ?? storedEmptyFieldSchema;
 }
