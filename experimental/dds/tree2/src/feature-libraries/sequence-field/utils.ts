@@ -331,6 +331,10 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return false;
 	}
 
+	if (rhs.changes !== undefined || lhs.changes !== undefined) {
+		return false;
+	}
+
 	const type = rhs.type;
 	if (type === NoopMarkType) {
 		(lhs as NoopMark<T>).count += rhs.count;
@@ -338,10 +342,6 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	}
 
 	if (rhs.revision !== (lhs as HasRevisionTag).revision) {
-		return false;
-	}
-
-	if (rhs.changes !== undefined || lhs.changes !== undefined) {
 		return false;
 	}
 

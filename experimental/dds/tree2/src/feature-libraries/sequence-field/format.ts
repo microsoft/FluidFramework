@@ -205,7 +205,7 @@ export interface MoveIn extends HasMoveId, HasMarkFields<never>, HasRevisionTag 
 export const MoveIn = Type.Composite(
 	[
 		HasMoveId,
-		HasMarkFields(Type.Never()),
+		HasMarkFields(Type.Undefined()),
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
@@ -286,7 +286,7 @@ export interface ReturnTo extends HasReattachFields<never>, HasRevisionTag, HasM
 }
 export const ReturnTo = Type.Composite(
 	[
-		HasReattachFields(Type.Never()),
+		HasMarkFields(Type.Undefined()),
 		HasRevisionTag,
 		HasMoveId,
 		Type.Object({

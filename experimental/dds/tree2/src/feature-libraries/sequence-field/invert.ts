@@ -106,7 +106,7 @@ function invertMark<TNodeChange>(
 			if (mark.cellId === undefined) {
 				return [
 					withNodeChange(
-						{ count: 1 },
+						{ count: mark.count },
 						invertNodeChange(mark.changes, inputIndex, invertChild),
 					),
 				];

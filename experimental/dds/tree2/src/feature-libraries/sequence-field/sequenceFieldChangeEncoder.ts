@@ -8,7 +8,7 @@ import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
-import { Changeset, Mark, NoopMarkType } from "./format";
+import { Changeset, Mark, NoopMarkType, Revive } from "./format";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
@@ -45,7 +45,7 @@ function makeV0Codec<TNodeChange>(
 					default:
 						unreachableCase(type);
 				}
-				jsonMarks.push(mark as unknown as JsonCompatible);
+				jsonMarks.push(encodedMark as unknown as JsonCompatible);
 			}
 			return jsonMarks;
 		},
@@ -69,7 +69,8 @@ function makeV0Codec<TNodeChange>(
 					case "ReturnFrom":
 						break;
 					case "Revive": {
-						mark.content = mark.content.map(singleTextCursor);
+						(decodedMark as Revive<unknown>).content =
+							mark.content.map(singleTextCursor);
 						break;
 					}
 					case "Placeholder":
@@ -77,7 +78,7 @@ function makeV0Codec<TNodeChange>(
 					default:
 						unreachableCase(type);
 				}
-				marks.push(mark as Mark<TNodeChange>);
+				marks.push(decodedMark);
 			}
 			return marks;
 		},
