@@ -103,22 +103,45 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	);
 }
 
-export function getCellId(
+export function getInputCellId(
 	mark: Mark<unknown>,
 	revision: RevisionTag | undefined,
 ): CellId | undefined {
-	if (isDetachMark(mark) && mark.type !== "MoveOut" && mark.detachIdOverride !== undefined) {
-		return mark.detachIdOverride;
-	}
-
 	const cellId = mark.cellId;
 	if (cellId === undefined) {
 		return undefined;
 	}
-	if (cellId.revision === undefined && revision !== undefined) {
-		return { ...cellId, revision };
+	return inlineCellIdRevision(cellId, revision);
+}
+
+export function getOutputCellId(
+	mark: Mark<unknown>,
+	revision: RevisionTag | undefined,
+): CellId | undefined {
+	if (markEmptiesCells(mark)) {
+		assert(isDetachMark(mark), "Only detaches can empty cells");
+		return getDetachCellId(mark, revision);
+	} else if (markFillsCells(mark)) {
+		return undefined;
 	}
-	return cellId;
+
+	return getInputCellId(mark, revision);
+}
+
+export function getDetachCellId(mark: Detach<unknown>, revision: RevisionTag | undefined): CellId {
+	return getOverrideCellId(mark) ?? { revision, localId: mark.id };
+}
+
+function getOverrideCellId(mark: Detach<unknown>): CellId | undefined {
+	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
+		? mark.detachIdOverride
+		: undefined;
+}
+
+function inlineCellIdRevision(cellId: CellId, revision: RevisionTag | undefined): CellId {
+	return cellId.revision === undefined && revision !== undefined
+		? { ...cellId, revision }
+		: cellId;
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -302,16 +325,6 @@ function areMergeableChangeAtoms(
 	return lhs.revision === rhs.revision && (lhs.localId as number) + lhsCount === rhs.localId;
 }
 
-function areMergeableCellIds(
-	lhs: CellId | undefined,
-	lhsCount: number,
-	rhs: CellId | undefined,
-): boolean {
-	return (
-		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
-	);
-}
-
 /**
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
@@ -324,7 +337,7 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return false;
 	}
 	const type = rhs.type;
-	if (!areMergeableCellIds(lhs.cellId, lhs.count, rhs.cellId)) {
+	if (!areMergeableChangeAtoms(lhs.cellId, lhs.count, rhs.cellId)) {
 		return false;
 	}
 

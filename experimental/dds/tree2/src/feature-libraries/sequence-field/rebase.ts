@@ -24,7 +24,6 @@ import {
 	areInputCellsEmpty,
 	markEmptiesCells,
 	markFillsCells,
-	getCellId,
 	getOffsetInCellRange,
 	compareLineages,
 	getNodeChange,
@@ -33,6 +32,8 @@ import {
 	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
+	getDetachCellId,
+	getInputCellId,
 } from "./utils";
 import {
 	Changeset,
@@ -195,7 +196,7 @@ function rebaseMarkList<TNodeChange>(
  */
 function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark {
 	const length = mark.count;
-	const cellId = getCellId(mark, revision);
+	const cellId = getInputCellId(mark, revision);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
 
@@ -359,12 +360,9 @@ function rebaseMark<TNodeChange>(
 		}
 		assert(isDetachMark(baseMark), 0x70b /* Only detach marks should empty cells */);
 		const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
-		const detachEvent =
-			baseMark.type !== "MoveOut" && baseMark.detachIdOverride !== undefined
-				? cloneCellId(baseMark.detachIdOverride)
-				: { revision: baseMarkIntention, localId: baseMark.id };
 
-		rebasedMark = makeDetachedMark(rebasedMark, detachEvent);
+		const baseCellId = getDetachCellId(baseMark, baseMarkIntention);
+		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
 		if (isMoveMark(baseMark)) {
 			const movedMark = getMovedMark(
@@ -775,10 +773,10 @@ function compareCellPositions(
 	baseMark: EmptyInputCellMark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
 ): number {
-	const baseId = getCellId(baseMark, baseIntention);
+	const baseId = getInputCellId(baseMark, baseIntention);
 	const baseLength = baseMark.count;
 	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
-	const newId = getCellId(newMark, undefined);
+	const newId = getInputCellId(newMark, undefined);
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
