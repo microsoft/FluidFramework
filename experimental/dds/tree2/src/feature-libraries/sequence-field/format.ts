@@ -356,6 +356,7 @@ export interface MovePlaceholder<TNodeChange>
 		HasMoveId {
 	type: "Placeholder";
 }
+
 export type Mark<TNodeChange = NodeChangeType> =
 	| NoopMark<TNodeChange>
 	| MovePlaceholder<TNodeChange>

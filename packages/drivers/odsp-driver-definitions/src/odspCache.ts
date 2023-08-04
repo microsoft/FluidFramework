@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
  * Describes what kind of content is stored in cache entry.
@@ -28,7 +28,7 @@ export interface IFileEntry {
 	 * a file if user requests so.
 	 * This is IOdspResolvedUrl in case of ODSP driver.
 	 */
-	resolvedUrl: IFluidResolvedUrl;
+	resolvedUrl: IResolvedUrl;
 }
 
 /**

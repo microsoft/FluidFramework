@@ -25,6 +25,7 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -32,7 +33,6 @@ import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-defin
 import { PromiseCache } from '@fluidframework/core-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
-import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
 // @public
@@ -125,7 +125,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // Warning: (ae-forgotten-export) The symbol "ICacheAndTracker" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     // (undocumented)
     get IRelaySessionAwareDriverFactory(): this;

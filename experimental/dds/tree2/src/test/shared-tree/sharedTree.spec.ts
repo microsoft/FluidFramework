@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	FieldKinds,
 	singleTextCursor,
@@ -1261,13 +1262,13 @@ describe("SharedTree", () => {
 			insert(provider.trees[0], 0, "a");
 			await provider.ensureSynchronized();
 
-			const pausedContainer = provider.containers[0];
+			const pausedContainer: IContainerExperimental = provider.containers[0];
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			insert(pausedTree, 1, "b");
 			insert(pausedTree, 2, "c");
-			const pendingOps = pausedContainer.closeAndGetPendingLocalState();
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedTree = provider.trees[1];
