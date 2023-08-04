@@ -6,7 +6,13 @@
 import { assert } from "@fluidframework/common-utils";
 import { IFieldSchema, ITreeSchema } from "../modular-schema";
 import { FieldKey, Named, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
-import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
+import {
+	MakeNominal,
+	Assume,
+	RestrictiveReadonlyRecord,
+	_InlineTrick,
+	FlattenKeys,
+} from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
@@ -57,9 +63,9 @@ export class TreeSchema<
 		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
-	public readonly mapFields: FieldSchema;
+	public readonly mapFields?: FieldSchema;
 	public readonly value: WithDefault<
-		Assume<T, TreeSchemaSpecification>["value"],
+		Assume<T, TreeSchemaSpecification>["leafValue"],
 		ValueSchema.Nothing
 	>;
 
@@ -74,9 +80,9 @@ export class TreeSchema<
 			Assume<T, TreeSchemaSpecification>["structFields"]
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
-		this.mapFields = normalizeField(this.info.mapFields);
-		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
-			Assume<T, TreeSchemaSpecification>["value"],
+		this.mapFields = this.info.mapFields;
+		this.value = (this.info.leafValue ?? ValueSchema.Nothing) as WithDefault<
+			Assume<T, TreeSchemaSpecification>["leafValue"],
 			ValueSchema.Nothing
 		>;
 	}
@@ -149,14 +155,39 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 }
 
 /**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
+ * @alpha
+ */
+export interface StructSchemaSpecification {
+	readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
+}
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
+ * @alpha
+ */
+export interface MapSchemaSpecification {
+	readonly mapFields: FieldSchema;
+}
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
+ * @alpha
+ */
+export interface LeafSchemaSpecification {
+	readonly leafValue: ValueSchema;
+}
+
+/**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
  * @alpha
  */
-export interface TreeSchemaSpecification {
-	readonly structFields?: RestrictiveReadonlyRecord<string, FieldSchema>;
-	readonly mapFields?: FieldSchema;
-	readonly value?: ValueSchema;
-}
+export type TreeSchemaSpecification = [
+	FlattenKeys<
+		(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
+			Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>
+	>,
+][_InlineTrick];
 
 /**
  * All policy for a specific field,

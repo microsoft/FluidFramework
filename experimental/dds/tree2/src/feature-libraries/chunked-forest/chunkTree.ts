@@ -18,7 +18,6 @@ import {
 	StoredSchemaRepository,
 	CursorLocationType,
 	SchemaData,
-	forbiddenFieldKindIdentifier,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
 import { fail } from "../../util";
@@ -222,7 +221,7 @@ export function tryShapeFromSchema(
 		return cached;
 	}
 	const treeSchema = schema.treeSchema.get(type) ?? fail("missing schema");
-	if (treeSchema.mapFields.kind.identifier !== forbiddenFieldKindIdentifier) {
+	if (treeSchema.mapFields !== undefined) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];

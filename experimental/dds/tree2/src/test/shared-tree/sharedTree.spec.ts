@@ -18,7 +18,6 @@ import {
 	on,
 	SchemaBuilder,
 	Any,
-	emptyField,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -50,6 +49,7 @@ import {
 	ValueSchema,
 	AllowedUpdateType,
 	LocalCommitSource,
+	storedEmptyFieldSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
@@ -1536,11 +1536,11 @@ describe("SharedTree", () => {
 		itView("properly fork the tree schema", (parent) => {
 			const schemaA: SchemaData = {
 				treeSchema: new Map([]),
-				rootFieldSchema: emptyField,
+				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: SchemaData = {
 				treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-				rootFieldSchema: emptyField,
+				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
 				return t.storedSchema.treeSchema.size === 0 ? "schemaA" : "schemaB";

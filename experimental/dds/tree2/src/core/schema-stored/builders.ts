@@ -45,11 +45,10 @@ export function fieldSchema(
 
 /**
  * See {@link TreeStoredSchema} for details.
- * @alpha
  */
 export interface TreeSchemaBuilder {
 	readonly structFields?: { [key: string]: FieldStoredSchema };
-	readonly mapFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 	readonly leafValue?: ValueSchema;
 }
 
