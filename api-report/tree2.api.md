@@ -246,20 +246,20 @@ export interface ChildLocation {
 }
 
 // @alpha
-type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
-    [ApiMode.Flexible]: EmptyObject extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
+type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema | undefined, TName> = {
+    [ApiMode.Flexible]: EmptyObject extends TTypedFields ? TypedValueOrUndefined<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
     [ApiMode.Editable]: {
         [typeNameSymbol]: TName & TreeSchemaIdentifier;
     } & ValuePropertyFromSchema<TValueSchema> & TTypedFields & UntypedTreeCore;
     [ApiMode.EditableUnwrapped]: [EmptyObject, TValueSchema] extends [
     TTypedFields,
     PrimitiveValueSchema
-    ] ? TypedValue<TValueSchema> : CollectOptions<ApiMode.Editable, TTypedFields, TValueSchema, TName>;
+    ] ? TypedValueOrUndefined<TValueSchema> : CollectOptions<ApiMode.Editable, TTypedFields, TValueSchema, TName>;
     [ApiMode.Wrapped]: {
         [typeNameSymbol]: TName;
-        [valueSymbol]: TypedValue<TValueSchema>;
+        [valueSymbol]: TypedValueOrUndefined<TValueSchema>;
     } & TTypedFields;
-    [ApiMode.Simple]: EmptyObject extends TTypedFields ? TypedValue<TValueSchema> : FlexibleObject<TValueSchema, TName> & TTypedFields;
+    [ApiMode.Simple]: EmptyObject extends TTypedFields ? TypedValueOrUndefined<TValueSchema> : FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
 
 // @alpha
@@ -717,10 +717,10 @@ type FlattenKeys<T> = [{
 }][_InlineTrick];
 
 // @alpha
-type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
+type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
 FlattenKeys<{
     [typeNameSymbol]?: UnbrandedName<TName>;
-} & AllowOptional<ValuePropertyFromSchema<TValueSchema>>>
+} & ValuePropertyFromSchema<TValueSchema>>
 ][_InlineTrick];
 
 // @alpha
@@ -988,6 +988,7 @@ declare namespace InternalTypes_2 {
         EmptyObject,
         ValuesOf,
         TypedValue,
+        TypedValueOrUndefined,
         PrimitiveValueSchema,
         UntypedSequenceField,
         UntypedOptionalField,
@@ -1903,6 +1904,8 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
+    readonly leafValue: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], undefined>;
+    // (undocumented)
     readonly mapFields?: FieldSchema;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
@@ -1910,8 +1913,6 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     readonly structFields: ObjectToMap<NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>, FieldKey, FieldSchema>;
     // (undocumented)
     readonly structFieldsObject: NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
-    // (undocumented)
-    readonly value: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], ValueSchema.Nothing>;
 }
 
 // @alpha
@@ -1924,9 +1925,9 @@ FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpec
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
+    readonly leafValue?: ValueSchema;
     readonly mapFields?: FieldStoredSchema;
     readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
-    readonly value: ValueSchema;
 }
 
 // @alpha (undocumented)
@@ -1967,7 +1968,7 @@ TFields extends {
 ][_InlineTrick];
 
 // @alpha
-type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
+type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
 // @alpha
 export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
@@ -1977,12 +1978,14 @@ export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaColl
 
 // @alpha
 type TypedValue<TValue extends ValueSchema> = {
-    [ValueSchema.Nothing]: undefined;
     [ValueSchema.Number]: number;
     [ValueSchema.String]: string;
     [ValueSchema.Boolean]: boolean;
-    [ValueSchema.Serializable]: Value;
+    [ValueSchema.Serializable]: TreeValue;
 }[TValue];
+
+// @alpha
+type TypedValueOrUndefined<TValue extends ValueSchema | undefined> = TValue extends ValueSchema ? TypedValue<TValue> : undefined;
 
 // @alpha
 export const typeNameSymbol: unique symbol;
@@ -2122,23 +2125,19 @@ export interface ValueFieldKind extends BrandedFieldKind<"Value", Multiplicity.V
 export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
 // @alpha (undocumented)
-type ValuePropertyFromSchema<TSchema extends ValueSchema> = TSchema extends ValueSchema.Nothing ? EmptyObject : undefined extends TypedValue<TSchema> ? {
-    [valueSymbol]?: TypedValue<TSchema>;
-} : {
+type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> = TSchema extends ValueSchema ? {
     [valueSymbol]: TypedValue<TSchema>;
-};
+} : EmptyObject;
 
 // @alpha
 export enum ValueSchema {
     // (undocumented)
-    Boolean = 3,
+    Boolean = 2,
     // (undocumented)
-    Nothing = 0,
+    Number = 0,
+    Serializable = 3,
     // (undocumented)
-    Number = 1,
-    Serializable = 4,
-    // (undocumented)
-    String = 2
+    String = 1
 }
 
 // @alpha (undocumented)

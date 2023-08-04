@@ -10,7 +10,6 @@ import {
 	ITreeCursorSynchronous,
 	mapCursorFields,
 	TreeSchemaIdentifier,
-	ValueSchema,
 	SimpleObservingDependent,
 	recordDependency,
 	Value,
@@ -233,7 +232,7 @@ export function tryShapeFromSchema(
 		fieldsArray.push(fieldShape);
 	}
 
-	const shape = new TreeShape(type, treeSchema.value !== ValueSchema.Nothing, fieldsArray);
+	const shape = new TreeShape(type, treeSchema.leafValue !== undefined, fieldsArray);
 	shapes.set(type, shape);
 	return shape;
 }

@@ -39,13 +39,22 @@ describe("Schema Comparison", () => {
 	const anyField = fieldSchema(FieldKinds.sequence);
 
 	/**
-	 * TreeStoredSchema that permits anything.
-	 * Note that children under the fields (and global fields) still have to be in schema.
+	 * TreeStoredSchema that permits anything without a value.
+	 * Note that children under the fields still have to be in schema.
 	 */
-	const anyTree: TreeStoredSchema = {
+	const anyTreeWithoutValue: TreeStoredSchema = {
 		structFields: emptyMap,
 		mapFields: anyField,
-		value: ValueSchema.Serializable,
+	};
+
+	const anyLeaf: TreeStoredSchema = {
+		structFields: emptyMap,
+		leafValue: ValueSchema.Serializable,
+	};
+
+	const numberLeaf: TreeStoredSchema = {
+		structFields: emptyMap,
+		leafValue: ValueSchema.Number,
 	};
 
 	/**
@@ -59,36 +68,30 @@ describe("Schema Comparison", () => {
 	const neverTree: TreeStoredSchema = {
 		structFields: emptyMap,
 		mapFields: neverField,
-		value: ValueSchema.Nothing,
 	};
 
 	const neverTree2: TreeStoredSchema = {
 		structFields: new Map([[brand("x"), neverField]]),
-		value: ValueSchema.Serializable,
 	};
 
 	const emptyTree: NamedTreeSchema = {
 		name: brand("empty"),
 		structFields: emptyMap,
-		value: ValueSchema.Nothing,
 	};
 
 	const emptyLocalFieldTree: NamedTreeSchema = {
 		name: brand("emptyLocalFieldTree"),
 		structFields: new Map([[brand("x"), storedEmptyFieldSchema]]),
-		value: ValueSchema.Nothing,
 	};
 
 	const optionalLocalFieldTree: NamedTreeSchema = {
 		name: brand("optionalLocalFieldTree"),
 		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
-		value: ValueSchema.Nothing,
 	};
 
 	const valueLocalFieldTree: NamedTreeSchema = {
 		name: brand("valueLocalFieldTree"),
 		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.value, [emptyTree.name])]]),
-		value: ValueSchema.Nothing,
 	};
 
 	const valueAnyField = fieldSchema(FieldKinds.value);
@@ -138,7 +141,6 @@ describe("Schema Comparison", () => {
 			isNeverTree(defaultSchemaPolicy, repo, {
 				structFields: emptyMap,
 				mapFields: neverField,
-				value: ValueSchema.Nothing,
 			}),
 		);
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
@@ -146,11 +148,11 @@ describe("Schema Comparison", () => {
 		assert.equal(
 			isNeverTree(defaultSchemaPolicy, repo, {
 				structFields: emptyMap,
-				value: ValueSchema.Nothing,
 			}),
 			false,
 		);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTree), false);
+		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTreeWithoutValue), false);
+		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyLeaf), false);
 
 		assert(
 			allowsTreeSuperset(
@@ -192,12 +194,26 @@ describe("Schema Comparison", () => {
 		testOrder(allowsValueSuperset, [ValueSchema.Boolean, ValueSchema.Serializable]);
 		testOrder(allowsValueSuperset, [ValueSchema.Number, ValueSchema.Serializable]);
 		testOrder(allowsValueSuperset, [ValueSchema.String, ValueSchema.Serializable]);
-		testOrder(allowsValueSuperset, [ValueSchema.Nothing, ValueSchema.Serializable]);
-		testPartialOrder<ValueSchema>(allowsValueSuperset, [
+		assert.equal(
+			getOrdering(ValueSchema.Serializable, undefined, allowsValueSuperset),
+			Ordering.Incomparable,
+		);
+		assert.equal(
+			getOrdering(ValueSchema.Boolean, undefined, allowsValueSuperset),
+			Ordering.Incomparable,
+		);
+		assert.equal(
+			getOrdering(ValueSchema.Number, undefined, allowsValueSuperset),
+			Ordering.Incomparable,
+		);
+		assert.equal(
+			getOrdering(ValueSchema.String, undefined, allowsValueSuperset),
+			Ordering.Incomparable,
+		);
+		testPartialOrder<ValueSchema | undefined>(allowsValueSuperset, [
 			ValueSchema.Boolean,
 			ValueSchema.Number,
 			ValueSchema.String,
-			ValueSchema.Nothing,
 			ValueSchema.Serializable,
 		]);
 	});
@@ -260,21 +276,21 @@ describe("Schema Comparison", () => {
 		);
 	});
 
-	it("allowsTreeSuperset", () => {
+	it("allowsTreeSuperset-no leaf values", () => {
 		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
 			a: TreeStoredSchema | undefined,
 			b: TreeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);
+		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTreeWithoutValue]);
 		testPartialOrder(
 			compare,
 			[
 				neverTree,
 				neverTree2,
 				undefined,
-				anyTree,
+				anyTreeWithoutValue,
 				emptyTree,
 				emptyLocalFieldTree,
 				optionalLocalFieldTree,
@@ -284,6 +300,21 @@ describe("Schema Comparison", () => {
 				[neverTree, neverTree2, undefined],
 				[emptyTree, emptyLocalFieldTree],
 			],
+		);
+	});
+
+	it("allowsTreeSuperset-leaf values", () => {
+		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		const compare = (
+			a: TreeStoredSchema | undefined,
+			b: TreeStoredSchema | undefined,
+		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
+		testOrder(compare, [neverTree, numberLeaf, anyLeaf]);
+		testPartialOrder(
+			compare,
+			[neverTree, neverTree2, undefined, anyLeaf, numberLeaf],
+			[[neverTree, neverTree2, undefined]],
 		);
 	});
 });
