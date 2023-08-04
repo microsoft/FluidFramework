@@ -108,6 +108,12 @@ async function checkScreenshotDiff(screenshotFilePath: string): Promise<boolean>
 
 const componentMap: Map<string, RPCs.Component[]> = new Map<string, RPCs.Component[]>();
 
+/**
+ * Dynamically generates a test suite covering all stories.
+ * Generated structure is hierarchical, and results in 1 test per screenshot scenario (story + theme + viewport), such
+ * that we can succeed or fail on a per screenshot basis.
+ * Since the story modules are discovered and read asynchronously, creation of the test suite is also asynchronous.
+ */
 async function generateTestSuite(): Promise<void> {
 	// Initialize chromium browser instance for test suite
 	const browser = await chromium.launch();
@@ -196,11 +202,11 @@ async function generateTestSuite(): Promise<void> {
 										screenshotFilePath,
 									);
 
-									// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-									expect(
-										screenshotDiff,
-										"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
-									).to.be.false;
+									if (screenshotDiff) {
+										expect.fail(
+											"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
+										);
+									}
 								});
 							}
 						}
@@ -211,9 +217,12 @@ async function generateTestSuite(): Promise<void> {
 	});
 }
 
+/**
+ * Asynchronously generate test suite, then run it.
+ */
 generateTestSuite().then(
 	() => {
-		// Execute asynchronously generated test suite
+		// Execute generated test suite
 		run();
 	},
 	(error: Error) => {
