@@ -118,6 +118,58 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_VisualValueNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_VisualTreeNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_VisualNodeBase": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_VisualNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_VisualChildNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_TreeNodeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_UnknownObjectNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_RootHandleNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_Edit": {
+				"backCompat": false
+			},
+			"EnumDeclaration_EditType": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidHandleNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ValueNodeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidUnknownObjectNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectValueNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectTreeNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectNodeBase": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_FluidObjectNode": {
+				"backCompat": false
+			}
+		}
 	}
 }

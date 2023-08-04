@@ -395,7 +395,6 @@ declare function get_current_EnumDeclaration_ContainerDevtoolsFeature():
 declare function use_old_EnumDeclaration_ContainerDevtoolsFeature(
     use: TypeOnly<old.ContainerDevtoolsFeature>);
 use_old_EnumDeclaration_ContainerDevtoolsFeature(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ContainerDevtoolsFeature());
 
 /*
@@ -1452,6 +1451,7 @@ declare function get_current_InterfaceDeclaration_Edit():
 declare function use_old_InterfaceDeclaration_Edit(
     use: TypeOnly<old.Edit>);
 use_old_InterfaceDeclaration_Edit(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_Edit());
 
 /*
@@ -1500,6 +1500,7 @@ declare function get_current_EnumDeclaration_EditType():
 declare function use_old_EnumDeclaration_EditType(
     use: TypeOnly<old.EditType>);
 use_old_EnumDeclaration_EditType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_EditType());
 
 /*
@@ -1548,6 +1549,7 @@ declare function get_current_InterfaceDeclaration_FluidHandleNode():
 declare function use_old_InterfaceDeclaration_FluidHandleNode(
     use: TypeOnly<old.FluidHandleNode>);
 use_old_InterfaceDeclaration_FluidHandleNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidHandleNode());
 
 /*
@@ -1596,6 +1598,7 @@ declare function get_current_TypeAliasDeclaration_FluidObjectNode():
 declare function use_old_TypeAliasDeclaration_FluidObjectNode(
     use: TypeOnly<old.FluidObjectNode>);
 use_old_TypeAliasDeclaration_FluidObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_FluidObjectNode());
 
 /*
@@ -1620,6 +1623,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectNodeBase():
 declare function use_old_InterfaceDeclaration_FluidObjectNodeBase(
     use: TypeOnly<old.FluidObjectNodeBase>);
 use_old_InterfaceDeclaration_FluidObjectNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectNodeBase());
 
 /*
@@ -1644,6 +1648,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectTreeNode():
 declare function use_old_InterfaceDeclaration_FluidObjectTreeNode(
     use: TypeOnly<old.FluidObjectTreeNode>);
 use_old_InterfaceDeclaration_FluidObjectTreeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectTreeNode());
 
 /*
@@ -1668,6 +1673,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectValueNode():
 declare function use_old_InterfaceDeclaration_FluidObjectValueNode(
     use: TypeOnly<old.FluidObjectValueNode>);
 use_old_InterfaceDeclaration_FluidObjectValueNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectValueNode());
 
 /*
@@ -1692,6 +1698,7 @@ declare function get_current_InterfaceDeclaration_FluidUnknownObjectNode():
 declare function use_old_InterfaceDeclaration_FluidUnknownObjectNode(
     use: TypeOnly<old.FluidUnknownObjectNode>);
 use_old_InterfaceDeclaration_FluidUnknownObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidUnknownObjectNode());
 
 /*
@@ -2820,6 +2827,7 @@ declare function get_current_TypeAliasDeclaration_RootHandleNode():
 declare function use_old_TypeAliasDeclaration_RootHandleNode(
     use: TypeOnly<old.RootHandleNode>);
 use_old_TypeAliasDeclaration_RootHandleNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RootHandleNode());
 
 /*
@@ -3084,6 +3092,7 @@ declare function get_current_InterfaceDeclaration_TreeNodeBase():
 declare function use_old_InterfaceDeclaration_TreeNodeBase(
     use: TypeOnly<old.TreeNodeBase>);
 use_old_InterfaceDeclaration_TreeNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_TreeNodeBase());
 
 /*
@@ -3108,6 +3117,7 @@ declare function get_current_InterfaceDeclaration_UnknownObjectNode():
 declare function use_old_InterfaceDeclaration_UnknownObjectNode(
     use: TypeOnly<old.UnknownObjectNode>);
 use_old_InterfaceDeclaration_UnknownObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_UnknownObjectNode());
 
 /*
@@ -3132,6 +3142,7 @@ declare function get_current_InterfaceDeclaration_ValueNodeBase():
 declare function use_old_InterfaceDeclaration_ValueNodeBase(
     use: TypeOnly<old.ValueNodeBase>);
 use_old_InterfaceDeclaration_ValueNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ValueNodeBase());
 
 /*
@@ -3156,6 +3167,7 @@ declare function get_current_TypeAliasDeclaration_VisualChildNode():
 declare function use_old_TypeAliasDeclaration_VisualChildNode(
     use: TypeOnly<old.VisualChildNode>);
 use_old_TypeAliasDeclaration_VisualChildNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_VisualChildNode());
 
 /*
@@ -3180,6 +3192,7 @@ declare function get_current_TypeAliasDeclaration_VisualNode():
 declare function use_old_TypeAliasDeclaration_VisualNode(
     use: TypeOnly<old.VisualNode>);
 use_old_TypeAliasDeclaration_VisualNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_VisualNode());
 
 /*
@@ -3204,6 +3217,7 @@ declare function get_current_InterfaceDeclaration_VisualNodeBase():
 declare function use_old_InterfaceDeclaration_VisualNodeBase(
     use: TypeOnly<old.VisualNodeBase>);
 use_old_InterfaceDeclaration_VisualNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_VisualNodeBase());
 
 /*
@@ -3252,6 +3266,7 @@ declare function get_current_InterfaceDeclaration_VisualTreeNode():
 declare function use_old_InterfaceDeclaration_VisualTreeNode(
     use: TypeOnly<old.VisualTreeNode>);
 use_old_InterfaceDeclaration_VisualTreeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_VisualTreeNode());
 
 /*
@@ -3276,6 +3291,7 @@ declare function get_current_InterfaceDeclaration_VisualValueNode():
 declare function use_old_InterfaceDeclaration_VisualValueNode(
     use: TypeOnly<old.VisualValueNode>);
 use_old_InterfaceDeclaration_VisualValueNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_VisualValueNode());
 
 /*
