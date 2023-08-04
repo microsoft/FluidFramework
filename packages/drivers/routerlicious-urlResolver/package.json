@@ -50,7 +50,7 @@
 		"@fluidframework/build-tools": "^0.21.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.5.2.0",
+		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.6.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^16.18.38",

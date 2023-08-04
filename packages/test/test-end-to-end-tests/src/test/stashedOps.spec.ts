@@ -859,8 +859,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5094
-	it.skip("resends DDS attach op", async function () {
+	it("resends DDS attach op", async function () {
 		const newMapId = "newMap";
 		const pendingOps = await getPendingOps(provider, false, async (_, dataStore) => {
 			const channel = dataStore.runtime.createChannel(
@@ -878,6 +877,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 
 		// get new DDS from first container
+		await provider.ensureSynchronized();
 		const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map2 = await requestFluidObject<SharedMap>(dataStore1.runtime, newMapId);
 		await provider.ensureSynchronized();

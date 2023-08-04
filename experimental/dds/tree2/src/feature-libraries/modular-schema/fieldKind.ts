@@ -141,7 +141,8 @@ export enum Multiplicity {
 	 * - for the schema system to use as a default for fields which aren't declared
 	 * (ex: when updating a field that did not exist into one that does)
 	 *
-	 * See {@link emptyField} for a constant, reusable field using Forbidden.
+	 * @privateRemarks
+	 * See storedEmptyFieldSchema for a constant, reusable field using Forbidden.
 	 */
 	Forbidden,
 }

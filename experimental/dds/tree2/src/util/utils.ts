@@ -32,6 +32,16 @@ export type RecursiveReadonly<T> = {
  */
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
+/**
+ * Casts a readonly object to a mutable one.
+ * Better than casting to `Mutable<Foo>` because it doesn't risk casting a non-`Foo` to a `Mutable<Foo>`.
+ * @param readonly - The object with readonly fields.
+ * @returns The same object but with a type that makes all fields mutable.
+ */
+export function asMutable<T>(readonly: T): Mutable<T> {
+	return readonly as Mutable<T>;
+}
+
 export function clone<T>(original: T): T {
 	return structuredClone(original);
 }
