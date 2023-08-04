@@ -14,8 +14,13 @@ import {
 } from "../contextuallyTyped";
 import { Multiplicity } from "../modular-schema";
 import { InternalTypedSchemaTypes, FieldSchema, TreeSchema, AllowedTypes } from "../typed-schema";
-import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
-import { contextSymbol, typeSymbol } from "../editable-tree";
+import {
+	UntypedField,
+	UntypedTree,
+	UntypedTreeCore,
+	contextSymbol,
+	typeSymbol,
+} from "../untypedTree";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
 import { TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";

@@ -10,7 +10,8 @@ import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
-import { EditableTree, getField } from "./editableTreeTypes";
+import { getField } from "../untypedTree";
+import { EditableTree } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
