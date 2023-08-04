@@ -32,5 +32,3 @@ export type GenerativeMark<TNodeChange> = Insert<TNodeChange> | Revive<TNodeChan
 export type TransientMark<TNodeChange> = GenerativeMark<TNodeChange> & Transient;
 
 export type EmptyOutputCellMark<TNodeChange> = TransientMark<TNodeChange> | Detach<TNodeChange>;
-
-export type Modify<TNodeChange> = NoopMark<TNodeChange> & { changes: TNodeChange };

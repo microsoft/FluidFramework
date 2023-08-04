@@ -39,7 +39,6 @@ import {
 	compareLineages,
 	isNewAttach,
 	isDetachMark,
-	getNodeChange,
 	markHasCellEffect,
 	withNodeChange,
 	getMarkMoveId,
@@ -159,12 +158,7 @@ function composeMarks<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
-	const nodeChange = composeChildChanges(
-		getNodeChange(baseMark),
-		getNodeChange(newMark),
-		newRev,
-		composeChild,
-	);
+	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
 
 	if (markIsTransient(newMark)) {
 		return withNodeChange(baseMark, nodeChange);

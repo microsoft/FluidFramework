@@ -9,7 +9,7 @@ import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
-import { areInputCellsEmpty, areOutputCellsEmpty, getNodeChange, markIsTransient } from "./utils";
+import { areInputCellsEmpty, areOutputCellsEmpty, markIsTransient } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
@@ -20,7 +20,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
-			out.push(deltaFromNodeChange(getNodeChange(mark), mark.count, deltaFromChild));
+			out.push(deltaFromNodeChange(mark.changes, mark.count, deltaFromChild));
 		} else if (
 			areInputCellsEmpty(mark) &&
 			areOutputCellsEmpty(mark) &&

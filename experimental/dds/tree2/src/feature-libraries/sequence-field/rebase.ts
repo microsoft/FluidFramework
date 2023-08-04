@@ -26,7 +26,6 @@ import {
 	getCellId,
 	getOffsetInCellRange,
 	compareLineages,
-	getNodeChange,
 	withNodeChange,
 	getMarkMoveId,
 	areOverlappingIdRanges,
@@ -306,7 +305,7 @@ function rebaseMark<TNodeChange>(
 				return { count: 0 };
 			}
 
-			const nodeChange = getNodeChange(rebasedMark);
+			const nodeChange = rebasedMark.changes;
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
 				const nestedChange: NoopMark<TNodeChange> = {
@@ -501,8 +500,8 @@ function rebaseNodeChange<TNodeChange>(
 	baseMark: Mark<TNodeChange>,
 	nodeRebaser: NodeChangeRebaser<TNodeChange>,
 ): Mark<TNodeChange> {
-	const baseChange = getNodeChange(baseMark);
-	const currChange = getNodeChange<TNodeChange>(currMark);
+	const baseChange = baseMark.changes;
+	const currChange = currMark.changes;
 
 	if (markEmptiesCells(baseMark) && !isMoveMark(baseMark)) {
 		return withNodeChange(
@@ -581,7 +580,7 @@ function amendRebaseI<TNodeChange>(
 				newMark !== undefined,
 				0x70c /* Non-empty RebaseQueue should not provide two empty marks */,
 			);
-			factory.push(withNodeChange(newMark, rebaseChild(getNodeChange(newMark), undefined)));
+			factory.push(withNodeChange(newMark, rebaseChild(newMark.changes, undefined)));
 		}
 
 		if (
