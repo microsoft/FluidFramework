@@ -75,6 +75,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 	];
 
 	protected async processPackage(pkg: Package): Promise<void> {
+		console.log(`in processPakage`);
 		const version =
 			this.flags.exact ??
 			(this.flags.remove
@@ -163,9 +164,12 @@ function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConf
 
 		if (!enabled || options.version === VersionOptions.Clear) {
 			// There isn't a type safe alternative to delete here,
-			// and delete should be safe since the key can't collide with anything builtin since it has to end in `-previous` which makes it not a valid identifier.
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete pkgJson.devDependencies[oldDepName];
+			// and delete should be safe since the key can't collide with anything builtin since it has to end in `-previous`
+			// which makes it not a valid identifier.
+			if (pkgJson.devDependencies?.[oldDepName] !== undefined) {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete pkgJson.devDependencies[oldDepName];
+			}
 		} else if (options.version !== VersionOptions.ClearIfDisabled) {
 			const newVersion: string =
 				options.version === VersionOptions.Previous
