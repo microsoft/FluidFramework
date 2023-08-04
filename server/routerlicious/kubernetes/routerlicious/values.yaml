@@ -114,6 +114,7 @@ usage:
 
 shared:
   transientTenants: []
+  runnerServerCloseTimeoutMs: 30000
 
 mongodb:
   operationsDbEndpoint: mongodb_url

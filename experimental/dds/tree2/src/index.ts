@@ -46,7 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
 	FieldStoredSchema,
@@ -126,7 +125,6 @@ export {
 export {
 	buildForest,
 	ChangesetLocalId,
-	emptyField,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,
@@ -186,7 +184,6 @@ export {
 	prefixPath,
 	prefixFieldPath,
 	singleTextCursor,
-	namedTreeSchema,
 	singleStackTreeCursor,
 	CursorAdapter,
 	CursorWithNode,

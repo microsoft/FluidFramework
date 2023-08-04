@@ -26,19 +26,21 @@ import { FieldKind } from "../modular-schema";
 import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
+import {
+	EditableTreeEvents,
+	getField,
+	on,
+	parentField,
+	typeSymbol,
+	contextSymbol,
+} from "../untypedTree";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	EditableTreeEvents,
 	UnwrappedEditableField,
-	getField,
-	on,
-	parentField,
 	proxyTargetSymbol,
-	typeSymbol,
-	contextSymbol,
 	NewFieldContent,
 	localNodeKeySymbol,
 } from "./editableTreeTypes";
@@ -184,11 +186,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
 		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
-		assert(this.cursor.fieldIndex === index, "mismatched indexes");
+		assert(this.cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), "mismatched keys");
+		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
 		let fieldSchema: FieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.
@@ -331,11 +333,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case parentField:
 			case on:
 			case contextSymbol:
-			case localNodeKeySymbol:
 				return true;
+			case localNodeKeySymbol:
+				return target.context.nodeKeyFieldKey !== undefined;
 			case valueSymbol:
-				// Could do `target.value !== ValueSchema.Nothing`
-				// instead if values which could be modified should report as existing.
 				return target.value !== undefined;
 			default:
 				return false;

@@ -24,7 +24,6 @@ import {
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MockLogger,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -35,7 +34,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessageOld, PendingStateManager } from "../pendingStateManager";
+import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -53,15 +52,12 @@ describe("Runtime", () => {
 
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
-		logger: ITelemetryLoggerExt = new MockLogger(),
+		logger = new MockLogger(),
 	): Partial<IContainerContext> => ({
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
 		quorum: new MockQuorumClients(),
-		taggedLogger: mixinMonitoringContext(
-			logger,
-			configProvider(settings),
-		) as unknown as MockLogger,
+		taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
@@ -1190,7 +1186,8 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					(state?.pendingStates[0] as IPendingMessageOld).content.contents,
+					JSON.parse((state?.pendingStates[0] as IPendingMessageNew).content).contents
+						.contents,
 					{
 						prop1: 1,
 					},
@@ -1265,7 +1262,7 @@ describe("Runtime", () => {
 
 				mockLogger.assertMatchAny([
 					{
-						eventName: "ContainerLoadStats",
+						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({
@@ -1292,7 +1289,7 @@ describe("Runtime", () => {
 
 				mockLogger.assertMatchAny([
 					{
-						eventName: "ContainerLoadStats",
+						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({

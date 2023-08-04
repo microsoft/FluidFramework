@@ -64,6 +64,54 @@ use_old_InterfaceDeclaration_IEndpointInRangeIndex(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEndpointIndex": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IEndpointIndex():
+    TypeOnly<old.IEndpointIndex<any>>;
+declare function use_current_InterfaceDeclaration_IEndpointIndex(
+    use: TypeOnly<current.IEndpointIndex<any>>);
+use_current_InterfaceDeclaration_IEndpointIndex(
+    get_old_InterfaceDeclaration_IEndpointIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IEndpointIndex": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IEndpointIndex():
+    TypeOnly<current.IEndpointIndex<any>>;
+declare function use_old_InterfaceDeclaration_IEndpointIndex(
+    use: TypeOnly<old.IEndpointIndex<any>>);
+use_old_InterfaceDeclaration_IEndpointIndex(
+    get_current_InterfaceDeclaration_IEndpointIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IIdIntervalIndex": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IIdIntervalIndex():
+    TypeOnly<old.IIdIntervalIndex<any>>;
+declare function use_current_InterfaceDeclaration_IIdIntervalIndex(
+    use: TypeOnly<current.IIdIntervalIndex<any>>);
+use_current_InterfaceDeclaration_IIdIntervalIndex(
+    get_old_InterfaceDeclaration_IIdIntervalIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IIdIntervalIndex": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IIdIntervalIndex():
+    TypeOnly<current.IIdIntervalIndex<any>>;
+declare function use_old_InterfaceDeclaration_IIdIntervalIndex(
+    use: TypeOnly<old.IIdIntervalIndex<any>>);
+use_old_InterfaceDeclaration_IIdIntervalIndex(
+    get_current_InterfaceDeclaration_IIdIntervalIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInterval": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInterval():
@@ -444,30 +492,6 @@ declare function use_old_ClassDeclaration_Interval(
     use: TypeOnly<old.Interval>);
 use_old_ClassDeclaration_Interval(
     get_current_ClassDeclaration_Interval());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IntervalConflictResolver": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_IntervalConflictResolver():
-    TypeOnly<old.IntervalConflictResolver<any>>;
-declare function use_current_TypeAliasDeclaration_IntervalConflictResolver(
-    use: TypeOnly<current.IntervalConflictResolver<any>>);
-use_current_TypeAliasDeclaration_IntervalConflictResolver(
-    get_old_TypeAliasDeclaration_IntervalConflictResolver());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IntervalConflictResolver": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_IntervalConflictResolver():
-    TypeOnly<current.IntervalConflictResolver<any>>;
-declare function use_old_TypeAliasDeclaration_IntervalConflictResolver(
-    use: TypeOnly<old.IntervalConflictResolver<any>>);
-use_old_TypeAliasDeclaration_IntervalConflictResolver(
-    get_current_TypeAliasDeclaration_IntervalConflictResolver());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1164,6 +1188,54 @@ declare function use_old_FunctionDeclaration_createEndpointInRangeIndex(
     use: TypeOnly<typeof old.createEndpointInRangeIndex>);
 use_old_FunctionDeclaration_createEndpointInRangeIndex(
     get_current_FunctionDeclaration_createEndpointInRangeIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createEndpointIndex": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createEndpointIndex():
+    TypeOnly<typeof old.createEndpointIndex>;
+declare function use_current_FunctionDeclaration_createEndpointIndex(
+    use: TypeOnly<typeof current.createEndpointIndex>);
+use_current_FunctionDeclaration_createEndpointIndex(
+    get_old_FunctionDeclaration_createEndpointIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createEndpointIndex": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createEndpointIndex():
+    TypeOnly<typeof current.createEndpointIndex>;
+declare function use_old_FunctionDeclaration_createEndpointIndex(
+    use: TypeOnly<typeof old.createEndpointIndex>);
+use_old_FunctionDeclaration_createEndpointIndex(
+    get_current_FunctionDeclaration_createEndpointIndex());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createIdIntervalIndex": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createIdIntervalIndex():
+    TypeOnly<typeof old.createIdIntervalIndex>;
+declare function use_current_FunctionDeclaration_createIdIntervalIndex(
+    use: TypeOnly<typeof current.createIdIntervalIndex>);
+use_current_FunctionDeclaration_createIdIntervalIndex(
+    get_old_FunctionDeclaration_createIdIntervalIndex());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createIdIntervalIndex": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createIdIntervalIndex():
+    TypeOnly<typeof current.createIdIntervalIndex>;
+declare function use_old_FunctionDeclaration_createIdIntervalIndex(
+    use: TypeOnly<typeof old.createIdIntervalIndex>);
+use_old_FunctionDeclaration_createIdIntervalIndex(
+    get_current_FunctionDeclaration_createIdIntervalIndex());
 
 /*
 * Validate forward compat by using old type in place of current type

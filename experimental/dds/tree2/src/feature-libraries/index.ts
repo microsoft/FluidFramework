@@ -9,18 +9,12 @@ export {
 	EditableTreeContext,
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
-	typeSymbol,
 	isEditableField,
 	isPrimitive,
 	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
 	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
@@ -163,8 +157,6 @@ export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from 
 export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
-export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
-
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
 export {
@@ -195,7 +187,6 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-	emptyField,
 } from "./default-field-kinds";
 
 export {
@@ -206,6 +197,12 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
+	typeSymbol,
+	getField,
+	parentField,
+	EditableTreeEvents,
+	on,
+	contextSymbol,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.
