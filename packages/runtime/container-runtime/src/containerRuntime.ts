@@ -235,12 +235,17 @@ export interface IContainerRuntimeMessageCompatDetails {
 	behavior: CompatModeBehavior;
 }
 
+/** If a message doesn't specify compat behavior, it is not suitable for old clients to process */
+const defaultCompatDetails: IContainerRuntimeMessageCompatDetails = { behavior: "FailToProcess" };
+
 export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 	contents: any;
+	/** @see {@link defaultCompatDetails} */
 	compatDetails?: IContainerRuntimeMessageCompatDetails;
 }
 
+//* Needed?
 /**
  * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents
  * promoted up to the outer object
@@ -926,6 +931,7 @@ export class ContainerRuntime
 			localOpMetadata: unknown,
 			opMetadata: Record<string, unknown> | undefined,
 		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
+		// Note: compatDetails is not included in this deprecated API
 	}
 
 	private readonly submitFn: (
@@ -2029,14 +2035,15 @@ export class ContainerRuntime
 	 */
 	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const { type, contents, compatDetails } = JSON.parse(serializedContent);
+		const { type, contents, compatDetails }: ContainerRuntimeMessage =
+			JSON.parse(serializedContent);
 		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
 		return { type, contents, compatDetails };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
 		// Need to parse from string for back-compat
-		const { type, contents, compatDetails } = this.parseOpContent(op);
+		const { type, contents, compatDetails = defaultCompatDetails } = this.parseOpContent(op);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.dataStores.applyStashedOp(contents as IEnvelope);
@@ -2056,16 +2063,20 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			default: {
-				//* Have a canonical way/place to define the default behavior?
-				const compatBehavior = compatDetails?.behavior ?? "FailToProcess";
-				//* Does compatBehavior apply to stashed ops the same as remote ops?  It's kind of the reverse - it'll be old ops not new ones
+				// This should be extremely rare for stashed ops.
+				// It would require a newer runtime stashing ops and then an older one applying them,
+				// e.g. if an app rolled back its container version
+				const compatBehavior = compatDetails.behavior;
 				switch (compatBehavior) {
 					case "FailToProcess":
-						unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+						unreachableCase(type, `Unknown ContainerMessageType [${type}]`);
 					case "Ignore":
 						return;
 					default:
-						unreachableCase(compatBehavior);
+						unreachableCase(
+							compatBehavior,
+							`Unknown CompatModeBehavior [${compatBehavior}]`,
+						);
 				}
 			}
 		}
@@ -2193,6 +2204,7 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
+	//* Revisit this
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
@@ -3515,7 +3527,7 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			default:
-				// Don't check message.compatDetails because this is for resubmitting a local opp - this is truly unexpected
+				// Don't check message.compatDetails because this is for resubmitting a local op so the type will be known
 				unreachableCase(
 					message.type,
 					`Unknown ContainerMessageType [type: ${message.type}]`,
@@ -3525,7 +3537,7 @@ export class ContainerRuntime
 
 	private rollback(content: string | undefined, localOpMetadata: unknown) {
 		// Need to parse from string for back-compat
-		const { type, contents, compatDetails } = this.parseOpContent(content);
+		const { type, contents } = this.parseOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -3533,10 +3545,8 @@ export class ContainerRuntime
 				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
 				break;
 			default:
-				//* Is this right, or just let it throw?
-				if (compatDetails?.behavior !== "Ignore") {
-					throw new Error(`Can't rollback ${type}`);
-				}
+				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
+				throw new Error(`Can't rollback ${type}`);
 		}
 	}
 

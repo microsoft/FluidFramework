@@ -105,6 +105,7 @@ const unpack = (message: ISequencedDocumentMessage) => {
 	const innerContents = message.contents as ContainerRuntimeMessage;
 	message.type = innerContents.type;
 	message.contents = innerContents.contents;
+	//* TODO: Also bump compatDetails up.  Maybe bring back the type guard aspect here from the other PR's branch
 };
 
 /**
