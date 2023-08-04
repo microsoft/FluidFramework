@@ -15,12 +15,7 @@ import { globby } from "globby";
 import { chromium } from "playwright";
 import { simpleGit, pathspec } from "simple-git";
 
-/**
- * Supported theme modes in which the tests can be run.
- *
- * TODO: share existing enum, now that this is in TS
- */
-type Theme = "dark" | "light" | "high-contrast";
+import { ThemeOption } from "../ThemeHelper";
 
 /**
  * Viewport configuration for running a screenshot test.
@@ -37,10 +32,8 @@ interface Viewport {
 /**
  * The supported themes in which each test "story" will be rendered.
  * A separate screenshot will be generated for each of these.
- *
- * @remarks Note: these strings are not intended to match our "ThemeOptions" enum used in React code.
  */
-const allThemes: Theme[] = ["dark", "light", "high-contrast"];
+const allThemes: ThemeOption[] = [ThemeOption.Dark, ThemeOption.Light, ThemeOption.HighContrast];
 
 /**
  * The default viewport configuration under which test stories will be rendered.
@@ -54,12 +47,12 @@ const defaultViewports: Viewport[] = [{ width: 400, height: 600 }];
  * Gets the desired "color-scheme" setting (which is used for specifying dark vs light mode)
  * for the browser page, based on the provided theme selection.
  */
-function colorSchemeFromTheme(theme): "dark" | "light" | "no-preference" {
+function colorSchemeFromTheme(theme: ThemeOption): "dark" | "light" | "no-preference" {
 	switch (theme) {
-		case "dark":
-		case "high-contrast": // Ensure we run high-contrast in dark mode
+		case ThemeOption.Dark:
+		case ThemeOption.HighContrast: // Ensure we run high-contrast in dark mode
 			return "dark";
-		case "light":
+		case ThemeOption.Light:
 			return "light";
 		default:
 			return "no-preference";
@@ -70,9 +63,9 @@ function colorSchemeFromTheme(theme): "dark" | "light" | "no-preference" {
  * Gets the desired "forced-colors" setting (which is used for specifying high-contrast mode)
  * for the browser page, based on the provided theme selection.
  */
-function forcedColorsFromTheme(theme): "active" | "none" {
+function forcedColorsFromTheme(theme: ThemeOption): "active" | "none" {
 	switch (theme) {
-		case "high-contrast":
+		case ThemeOption.HighContrast:
 			return "active";
 		default:
 			return "none";
@@ -81,7 +74,7 @@ function forcedColorsFromTheme(theme): "active" | "none" {
 
 function getScreenshotTestName(
 	storyComponentName: string,
-	theme: Theme,
+	theme: ThemeOption,
 	viewport: Viewport,
 ): string {
 	return `${storyComponentName} (${theme}, ${viewport.width}x${viewport.height})`;
