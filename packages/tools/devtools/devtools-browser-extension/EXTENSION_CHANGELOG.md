@@ -1,5 +1,9 @@
 # Fluid Framework Developer Tools
 
+# 0.0.4
+
+-   Adds opt-in usage telemetry generation.
+
 # 0.0.3
 
 -   Fixed a number of styling and accessibility issues.
