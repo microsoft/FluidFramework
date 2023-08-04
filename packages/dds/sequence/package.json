@@ -93,7 +93,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/gitresources": "^1.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.5.2.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.6.0.0",
 		"@fluidframework/server-services-client": "^1.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
