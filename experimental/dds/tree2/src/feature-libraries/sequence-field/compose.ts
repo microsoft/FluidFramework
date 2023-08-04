@@ -179,7 +179,7 @@ function composeMarks<TNodeChange>(
 			delete nonTransient.transientDetach;
 			return nonTransient;
 		}
-		// Modify and Placeholder marks must be muted because the node they target has been deleted.
+		// Noop and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
 		if (
 			newMark.type === NoopMarkType ||
@@ -328,7 +328,7 @@ function composeMarks<TNodeChange>(
 				baseMark.count,
 			);
 
-			// We return a placeholder instead of a modify because there may be more node changes on `newMark`'s source mark
+			// We return a placeholder instead of a noop because there may be more node changes on `newMark`'s source mark
 			// which need to be included here.
 			// We will remove the placeholder during `amendCompose`.
 			return {
@@ -349,7 +349,7 @@ function createNoopMark<TNodeChange>(
 	nodeChange: TNodeChange | undefined,
 	cellId?: ChangeAtomId,
 ): Mark<TNodeChange> {
-	const mark: NoopMark<TNodeChange> = { changes: nodeChange, count: length };
+	const mark: NoopMark<TNodeChange> = { count: length };
 	if (nodeChange !== undefined) {
 		assert(length === 1, 0x692 /* A mark with a node change must have length one */);
 		mark.changes = nodeChange;

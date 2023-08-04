@@ -309,11 +309,11 @@ function rebaseMark<TNodeChange>(
 			const nodeChange = getNodeChange(rebasedMark);
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
-				const modify: NoopMark<TNodeChange> = {
+				const nestedChange: NoopMark<TNodeChange> = {
 					count: 1,
 					changes: nodeChange,
 				};
-				sendMarkToDest(modify, moveEffects, baseRevision, moveId, baseMark.count);
+				sendMarkToDest(nestedChange, moveEffects, baseRevision, moveId, baseMark.count);
 			}
 		}
 

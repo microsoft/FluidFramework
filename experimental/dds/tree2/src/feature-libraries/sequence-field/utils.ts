@@ -40,20 +40,10 @@ import {
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
-import {
-	GenerativeMark,
-	TransientMark,
-	EmptyInputCellMark,
-	DetachedCellMark,
-	Modify,
-} from "./helperTypes";
+import { GenerativeMark, TransientMark, EmptyInputCellMark, DetachedCellMark } from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
-}
-
-export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
-	return mark.type === NoopMarkType && mark.changes !== undefined;
 }
 
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {

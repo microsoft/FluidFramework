@@ -106,7 +106,7 @@ export const CellId = Type.Composite([EncodedChangeAtomId, HasLineage]);
 /**
  * Mark which targets a range of existing cells instead of creating new cells.
  */
-export interface HasMarkFields<TNodeChange = NodeChangeType> {
+export interface HasMarkFields<TNodeChange = never> {
 	/**
 	 * Describes the detach which last emptied the target cells,
 	 * or the attach which allocated the cells if the cells have never been filled.
@@ -125,7 +125,7 @@ export const HasMarkFields = <TNodeChange extends TSchema>(tNodeChange: TNodeCha
 		count: CellCount,
 	});
 
-export interface HasReattachFields<TNodeChange> extends HasMarkFields<TNodeChange> {
+export interface HasReattachFields<TNodeChange = never> extends HasMarkFields<TNodeChange> {
 	/**
 	 * The revision this mark is inverting a detach from.
 	 * If defined this mark is a revert-only inverse,
@@ -193,7 +193,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-export interface MoveIn extends HasMoveId, HasMarkFields<never>, HasRevisionTag {
+export interface MoveIn extends HasMoveId, HasMarkFields, HasRevisionTag {
 	type: "MoveIn";
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
@@ -275,7 +275,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-export interface ReturnTo extends HasReattachFields<never>, HasRevisionTag, HasMoveId {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 	type: "ReturnTo";
 
 	/**
