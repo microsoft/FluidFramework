@@ -1,3 +1,4 @@
+import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
 	IdCreationRange,
@@ -10,7 +11,10 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "./types";
+	currentWrittenVersion,
+	defaultClusterCapacity,
+} from "@fluidframework/runtime-definitions";
+import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
 import {
 	createSessionId,
 	localIdFromGenCount,
@@ -26,7 +30,6 @@ import {
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
 } from "./utilities";
-import { assert, fail } from "./copied-utils";
 import {
 	getAlignedLocal,
 	getAllocatedFinal,
@@ -37,10 +40,7 @@ import {
 	Sessions,
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
-import { currentWrittenVersion, defaultClusterCapacity } from "./types/persisted-types";
 import { FinalSpace } from "./finalSpace";
-import { FinalCompressedId, isFinalId, LocalCompressedId } from "./test/id-compressor/testCommon";
-import { NumericUuid } from "./types/identifiers";
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}

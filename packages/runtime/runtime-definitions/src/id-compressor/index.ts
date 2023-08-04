@@ -4,6 +4,7 @@ export {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 	currentWrittenVersion,
+	defaultClusterCapacity,
 } from "./persisted-types";
 
 export { IIdCompressorCore, IIdCompressor } from "./idCompressor";
