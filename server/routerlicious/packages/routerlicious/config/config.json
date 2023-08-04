@@ -115,8 +115,7 @@
 		"jwtTokenCache": {
 			"enable": true
 		},
-		"getDeltasRequestMaxOpsRange": 2000,
-		"serverCloseTimeoutMs": 30000
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",
@@ -165,7 +164,8 @@
 		"signalUsageCountingEnabled": false
 	},
 	"shared": {
-		"transientTenants": []
+		"transientTenants": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
