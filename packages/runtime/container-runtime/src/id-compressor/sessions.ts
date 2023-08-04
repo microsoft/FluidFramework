@@ -1,6 +1,6 @@
 import BTree from "sorted-btree";
-import { FinalCompressedId, LocalCompressedId } from "./test/id-compressor/testCommon";
-import { SessionId } from "./types";
+import { SessionId, StableId } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
 	binarySearch,
 	compareBigints,
@@ -11,8 +11,7 @@ import {
 	subtractNumericUuids,
 	offsetNumericUuid,
 } from "./utilities";
-import { NumericUuid, StableId } from "./types/identifiers";
-import { assert } from "./copied-utils";
+import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers";
 
 /**
  * The local/UUID space within an individual session.
@@ -204,17 +203,21 @@ export class Session {
 		const lastValidLocal: (cluster: IdCluster) => LocalCompressedId = includeAllocated
 			? lastAllocatedLocal
 			: lastFinalizedLocal;
-		const cluster = binarySearch(localId, this.clusterChain, (local, cluster): number => {
-			const lastLocal = lastValidLocal(cluster);
-			if (local < lastLocal) {
-				return 1;
-			} else if (local > cluster.baseLocalId) {
-				return -1;
-			} else {
-				return 0;
-			}
-		});
-		return cluster;
+		const matchedCluster = binarySearch(
+			localId,
+			this.clusterChain,
+			(local, cluster): number => {
+				const lastLocal = lastValidLocal(cluster);
+				if (local < lastLocal) {
+					return 1;
+				} else if (local > cluster.baseLocalId) {
+					return -1;
+				} else {
+					return 0;
+				}
+			},
+		);
+		return matchedCluster;
 	}
 
 	public getClusterByAllocatedFinal(final: FinalCompressedId): IdCluster | undefined {

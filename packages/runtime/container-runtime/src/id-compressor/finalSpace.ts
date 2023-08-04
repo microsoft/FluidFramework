@@ -1,6 +1,6 @@
-import { assert } from "./copied-utils";
+import { assert } from "@fluidframework/common-utils";
 import { IdCluster, Session, clustersEqual } from "./sessions";
-import { FinalCompressedId } from "./test/id-compressor/testCommon";
+import { FinalCompressedId } from "./identifiers";
 
 export class FinalSpace {
 	private readonly clusterList: IdCluster[] = [];

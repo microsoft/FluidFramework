@@ -1,5 +1,5 @@
 import { AppendOnlySortedMap } from "./appendOnlySortedMap";
-import { LocalCompressedId } from "./test/id-compressor/testCommon";
+import { LocalCompressedId } from "./identifiers";
 import { compareFiniteNumbersReversed } from "./utilities";
 
 export class SessionSpaceNormalizer {
