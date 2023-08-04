@@ -139,113 +139,6 @@ function getScreenshotTestPath(
 	return Path.join(outputDirectoryPath, storyModuleName, `${testName}.png`);
 }
 
-// async function componentScreenshotTest(
-// 	storyModuleName: string,
-// 	storyComponentName: string,
-// 	componentId: string,
-// 	theme: Theme,
-// 	viewport: Viewport,
-// 	browser: Browser,
-// 	workingDirectory: string,
-// 	outputDirectoryPath: string,
-// ): Promise<void> {
-// 	const workspace = await createChromelessWorkspace({
-// 		frameworkPlugins: [reactPlugin],
-// 		rootDirPath: workingDirectory,
-// 	});
-
-// 	const testName = getScreenshotTestName(storyComponentName, theme, viewport);
-// 	const screenshotFilePath = getScreenshotTestPath(
-// 		testName,
-// 		storyModuleName,
-// 		outputDirectoryPath,
-// 	);
-
-// 	const page = await browser.newPage({
-// 		// Dark mode vs light mode setting
-// 		// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
-// 		colorScheme: colorSchemeFromTheme(theme),
-
-// 		// High contrast setting
-// 		// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
-// 		forcedColors: forcedColorsFromTheme(theme),
-// 	});
-// 	const preview = await workspace.preview.start(page);
-
-// 	try {
-// 		await preview.show(componentId);
-// 		await preview.iframe.takeScreenshot(screenshotFilePath);
-// 	} catch (error) {
-// 		console.error(
-// 			chalk.red(`Failed to generate ${testName} screenshot due to an error:`),
-// 			error,
-// 		);
-// 		throw error;
-// 	}
-// 	console.debug(chalk.green(`${testName} screenshot generated successfully!`));
-// 	console.group();
-// 	console.debug(`Saved to "${screenshotFilePath}".`);
-// 	console.groupEnd();
-// }
-
-/**
- * TODO
- */
-// async function componentScreenshotTests(
-// 	component: RPCs.Component,
-// 	options: Required<ScreenshotTestOptions>,
-// 	browser: Browser,
-// ): Promise<void> {
-// 	const { workingDirectory, themes, viewports, tempDirectory } = options;
-// 	const { componentId } = component;
-// 	try {
-// 		const { filePath: storyFilePath, name: storyName } = decodeComponentId(componentId);
-
-// 		const storyFileName = Path.basename(storyFilePath);
-
-// 		// We expect this to succeed. If not, let the test blow up.
-// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-// 		const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)![1];
-
-// 		// Generate a separate screenshot for each of our supported themes
-// 		for (const theme of themes) {
-// 			for (const viewport of viewports) {
-// 				await componentScreenshotTest(
-// 					storyModuleName,
-// 					storyName,
-// 					componentId,
-// 					theme,
-// 					viewport,
-// 					browser,
-// 					workingDirectory,
-// 					tempDirectory,
-// 				);
-// 			}
-// 		}
-// 	} finally {
-// 		await browser.close();
-// 	}
-// }
-
-// async function storyScreenshotTests(
-// 	storyFilePath: string,
-// 	options: Required<ScreenshotTestOptions>,
-// 	browser: Browser,
-// ): Promise<void> {
-// 	const { workingDirectory } = options;
-
-// 	// Queries all specified story files for their individual components ("stories").
-// 	const components = await getStoryComponentsFromFilePath(storyFilePath, workingDirectory);
-
-// 	console.debug(
-// 		`Found ${components.length} component stories in "${storyFilePath}". Generating screenshot test suite for each...`,
-// 	);
-
-// 	for (const component of components) {
-// 		await componentScreenshotTests(component, options, browser);
-// 	}
-// }
-
 const workingDirectory = process.cwd();
 const storiesPathPatterns = ["src/screenshot-tests/stories/*.tsx"];
 const screenshotsDirectory = "__screenshots__";
@@ -253,44 +146,9 @@ const screenshotsDirectory = "__screenshots__";
 const git = simpleGit(workingDirectory);
 
 async function checkScreenshotDiff(screenshotFilePath: string): Promise<boolean> {
-	const diffStatus = await git.status([pathspec(screenshotFilePath)]);
-	console.log(diffStatus);
-	return !diffStatus.isClean();
+	const screenshotStatus = await git.status([pathspec(screenshotFilePath)]);
+	return !screenshotStatus.isClean();
 }
-
-// async function getStoryModules(options: Required<ScreenshotTestOptions>): Promise<string[]> {
-// 	const { workingDirectory, storiesPathPatterns } = options;
-
-// 	return globby(storiesPathPatterns, {
-// 		gitignore: false,
-// 		ignore: ["**/node_modules/**"],
-// 		cwd: workingDirectory,
-// 		followSymbolicLinks: false,
-// 	});
-// }
-
-/**
- * TODO
- */
-// async function screenshotTests(options: ScreenshotTestOptions, browser: Browser): Promise<boolean> {
-// 	const optionsWithDefaults: Required<ScreenshotTestOptions> = {
-// 		...screenshotTestOptionDefaults,
-// 		...options,
-// 	};
-// 	const { workingDirectory, storiesPathPatterns } = optionsWithDefaults;
-
-// 	const storyModules = getStoryModules(optionsWithDefaults);
-
-// 	console.debug(
-// 		`Found ${storyFilePaths.length} test story modules. Generating screenshot test suite for each...`,
-// 	);
-
-// 	for (const storyFilePath of storyFilePaths) {
-// 		await storyScreenshotTests(storyFilePath, optionsWithDefaults, browser);
-// 	}
-
-// 	return diffScreenshots(optionsWithDefaults);
-// }
 
 const componentMap: Map<string, RPCs.Component[]> = new Map<string, RPCs.Component[]>();
 
