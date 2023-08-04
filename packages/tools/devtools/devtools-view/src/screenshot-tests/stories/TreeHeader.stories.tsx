@@ -4,7 +4,7 @@
  */
 
 import { TreeHeader } from "../../components/data-visualization/TreeHeader";
-import { testContextDecorator } from "./ScreenshotTestUtilities";
+import { testContextDecorator } from "../ScreenshotTestUtilities";
 
 export default {
 	title: "TreeHeader",

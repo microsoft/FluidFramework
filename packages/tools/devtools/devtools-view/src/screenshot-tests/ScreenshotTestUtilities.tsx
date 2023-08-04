@@ -8,10 +8,10 @@ import React from "react";
 
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
-import { MockMessageRelay } from "../MockMessageRelay";
-import { MessageRelayContext } from "../../MessageRelayContext";
-import { LoggerContext } from "../../TelemetryUtils";
-import { getFluentUIThemeToUse } from "../../ThemeHelper";
+import { MockMessageRelay } from "../test/MockMessageRelay";
+import { MessageRelayContext } from "../MessageRelayContext";
+import { LoggerContext } from "../TelemetryUtils";
+import { getFluentUIThemeToUse } from "../ThemeHelper";
 
 /**
  * {@link TestContexts} input props.

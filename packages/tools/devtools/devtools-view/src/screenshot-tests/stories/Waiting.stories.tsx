@@ -4,7 +4,7 @@
  */
 
 import { Waiting } from "../../components/Waiting";
-import { testContextDecorator } from "./ScreenshotTestUtilities";
+import { testContextDecorator } from "../ScreenshotTestUtilities";
 
 export default {
 	title: "Waiting",

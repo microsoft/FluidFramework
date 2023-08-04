@@ -4,7 +4,7 @@
  */
 
 import { AudienceHistoryTable } from "../../components/AudienceHistoryTable";
-import { testContextDecorator } from "./ScreenshotTestUtilities";
+import { testContextDecorator } from "../ScreenshotTestUtilities";
 
 export default {
 	title: "AudienceHistoryTable",
