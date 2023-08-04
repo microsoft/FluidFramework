@@ -83,7 +83,6 @@ declare function get_current_ClassDeclaration_EventAndErrorTrackingLogger():
 declare function use_old_ClassDeclaration_EventAndErrorTrackingLogger(
     use: TypeOnly<old.EventAndErrorTrackingLogger>);
 use_old_ClassDeclaration_EventAndErrorTrackingLogger(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_EventAndErrorTrackingLogger());
 
 /*
@@ -312,7 +311,6 @@ declare function get_old_ClassDeclaration_TestFluidObject():
 declare function use_current_ClassDeclaration_TestFluidObject(
     use: TypeOnly<current.TestFluidObject>);
 use_current_ClassDeclaration_TestFluidObject(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestFluidObject());
 
 /*
@@ -373,7 +371,6 @@ declare function get_current_ClassDeclaration_TestObjectProvider():
 declare function use_old_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<old.TestObjectProvider>);
 use_old_ClassDeclaration_TestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestObjectProvider());
 
 /*
@@ -543,18 +540,6 @@ declare function use_old_FunctionDeclaration_createSummarizerFromFactory(
     use: TypeOnly<typeof old.createSummarizerFromFactory>);
 use_old_FunctionDeclaration_createSummarizerFromFactory(
     get_current_FunctionDeclaration_createSummarizerFromFactory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_createSummarizerWithTestConfig": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_createSummarizerWithTestConfig": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

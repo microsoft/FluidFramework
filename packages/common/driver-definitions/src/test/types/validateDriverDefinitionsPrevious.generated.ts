@@ -544,18 +544,6 @@ use_old_InterfaceDeclaration_IDriverHeader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFluidResolvedUrl": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFluidResolvedUrl": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGenericNetworkError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGenericNetworkError():
@@ -604,26 +592,26 @@ use_old_InterfaceDeclaration_ILocationRedirectionError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IResolvedUrl": {"forwardCompat": false}
+* "InterfaceDeclaration_IResolvedUrl": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IResolvedUrl():
+declare function get_old_InterfaceDeclaration_IResolvedUrl():
     TypeOnly<old.IResolvedUrl>;
-declare function use_current_RemovedTypeAliasDeclaration_IResolvedUrl(
+declare function use_current_InterfaceDeclaration_IResolvedUrl(
     use: TypeOnly<current.IResolvedUrl>);
-use_current_RemovedTypeAliasDeclaration_IResolvedUrl(
-    get_old_TypeAliasDeclaration_IResolvedUrl());
+use_current_InterfaceDeclaration_IResolvedUrl(
+    get_old_InterfaceDeclaration_IResolvedUrl());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IResolvedUrl": {"backCompat": false}
+* "InterfaceDeclaration_IResolvedUrl": {"backCompat": false}
 */
-declare function get_current_RemovedTypeAliasDeclaration_IResolvedUrl():
+declare function get_current_InterfaceDeclaration_IResolvedUrl():
     TypeOnly<current.IResolvedUrl>;
-declare function use_old_TypeAliasDeclaration_IResolvedUrl(
+declare function use_old_InterfaceDeclaration_IResolvedUrl(
     use: TypeOnly<old.IResolvedUrl>);
-use_old_TypeAliasDeclaration_IResolvedUrl(
-    get_current_RemovedTypeAliasDeclaration_IResolvedUrl());
+use_old_InterfaceDeclaration_IResolvedUrl(
+    get_current_InterfaceDeclaration_IResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type
