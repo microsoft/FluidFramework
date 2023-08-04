@@ -114,23 +114,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_TestFluidObject": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_EventAndErrorTrackingLogger": {
-				"backCompat": false
-			},
-			"ClassDeclaration_TestObjectProvider": {
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_createSummarizerWithTestConfig": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"VariableDeclaration_TestContainerRuntimeFactory": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
