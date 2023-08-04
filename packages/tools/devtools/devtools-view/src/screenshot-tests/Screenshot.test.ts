@@ -79,50 +79,6 @@ function forcedColorsFromTheme(theme): "active" | "none" {
 	}
 }
 
-/**
- * TODO
- */
-// interface ScreenshotTestOptions {
-// 	/**
-// 	 * Globby-style match pattern for story modules.
-// 	 * Relative to {@link ScreenshotTestOptions.workingDirectory}.
-// 	 */
-// 	storiesPathPatterns: string[];
-
-// 	/**
-// 	 * Path where snapshots should be saved.
-// 	 * Relative to Relative to {@link ScreenshotTestOptions.workingDirectory}.
-// 	 */
-// 	screenshotsDirectory: string;
-
-// 	/**
-// 	 * Temp directory under which new snapshots will be saved for comparison against existing ones.
-// 	 * Relative to {@link ScreenshotTestOptions.workingDirectory}.
-// 	 */
-// 	tempDirectory: string;
-
-// 	/**
-// 	 * Working directory from which to run the tests.
-// 	 *
-// 	 * @defaultValue `process.cwd()`
-// 	 */
-// 	workingDirectory?: string;
-
-// 	/**
-// 	 * The list of viewport dimensions in which to run the tests.
-// 	 *
-// 	 * @defaultValue {@link defaultViewports}
-// 	 */
-// 	viewports?: Viewport[];
-
-// 	/**
-// 	 * The list of themes in which to run the tests.
-// 	 *
-// 	 * @defaultValue {@link allThemes}
-// 	 */
-// 	themes?: Theme[];
-// }
-
 function getScreenshotTestName(
 	storyComponentName: string,
 	theme: Theme,
@@ -241,7 +197,10 @@ async function generateTestSuite(): Promise<void> {
 									);
 
 									// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-									expect(screenshotDiff).to.be.false;
+									expect(
+										screenshotDiff,
+										"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
+									).to.be.false;
 								});
 							}
 						}
