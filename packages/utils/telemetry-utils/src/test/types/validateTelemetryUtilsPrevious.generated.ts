@@ -16,30 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_BaseTelemetryNullLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ChildLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_ChildLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConfigTypes": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ConfigTypes():
@@ -60,18 +36,6 @@ declare function use_old_TypeAliasDeclaration_ConfigTypes(
     use: TypeOnly<old.ConfigTypes>);
 use_old_TypeAliasDeclaration_ConfigTypes(
     get_current_TypeAliasDeclaration_ConfigTypes());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DebugLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DebugLogger": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -467,7 +431,6 @@ declare function get_old_ClassDeclaration_MockLogger():
 declare function use_current_ClassDeclaration_MockLogger(
     use: TypeOnly<current.MockLogger>);
 use_current_ClassDeclaration_MockLogger(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockLogger());
 
 /*
@@ -480,7 +443,6 @@ declare function get_current_ClassDeclaration_MockLogger():
 declare function use_old_ClassDeclaration_MockLogger(
     use: TypeOnly<old.MockLogger>);
 use_old_ClassDeclaration_MockLogger(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockLogger());
 
 /*
@@ -506,18 +468,6 @@ declare function use_old_InterfaceDeclaration_MonitoringContext(
     use: TypeOnly<old.MonitoringContext>);
 use_old_InterfaceDeclaration_MonitoringContext(
     get_current_InterfaceDeclaration_MonitoringContext());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MultiSinkLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MultiSinkLogger": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -690,42 +640,6 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryNullLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryUTLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryUTLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ThresholdCounter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ThresholdCounter():
@@ -774,6 +688,78 @@ use_old_VariableDeclaration_connectedEventName(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createChildLogger": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createChildLogger():
+    TypeOnly<typeof old.createChildLogger>;
+declare function use_current_FunctionDeclaration_createChildLogger(
+    use: TypeOnly<typeof current.createChildLogger>);
+use_current_FunctionDeclaration_createChildLogger(
+    get_old_FunctionDeclaration_createChildLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createChildLogger": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createChildLogger():
+    TypeOnly<typeof current.createChildLogger>;
+declare function use_old_FunctionDeclaration_createChildLogger(
+    use: TypeOnly<typeof old.createChildLogger>);
+use_old_FunctionDeclaration_createChildLogger(
+    get_current_FunctionDeclaration_createChildLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createChildMonitoringContext": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createChildMonitoringContext():
+    TypeOnly<typeof old.createChildMonitoringContext>;
+declare function use_current_FunctionDeclaration_createChildMonitoringContext(
+    use: TypeOnly<typeof current.createChildMonitoringContext>);
+use_current_FunctionDeclaration_createChildMonitoringContext(
+    get_old_FunctionDeclaration_createChildMonitoringContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createChildMonitoringContext": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createChildMonitoringContext():
+    TypeOnly<typeof current.createChildMonitoringContext>;
+declare function use_old_FunctionDeclaration_createChildMonitoringContext(
+    use: TypeOnly<typeof old.createChildMonitoringContext>);
+use_old_FunctionDeclaration_createChildMonitoringContext(
+    get_current_FunctionDeclaration_createChildMonitoringContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createMultiSinkLogger": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createMultiSinkLogger():
+    TypeOnly<typeof old.createMultiSinkLogger>;
+declare function use_current_FunctionDeclaration_createMultiSinkLogger(
+    use: TypeOnly<typeof current.createMultiSinkLogger>);
+use_current_FunctionDeclaration_createMultiSinkLogger(
+    get_old_FunctionDeclaration_createMultiSinkLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createMultiSinkLogger": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createMultiSinkLogger():
+    TypeOnly<typeof current.createMultiSinkLogger>;
+declare function use_old_FunctionDeclaration_createMultiSinkLogger(
+    use: TypeOnly<typeof old.createMultiSinkLogger>);
+use_old_FunctionDeclaration_createMultiSinkLogger(
+    get_current_FunctionDeclaration_createMultiSinkLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_disconnectedEventName": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_disconnectedEventName():
@@ -798,6 +784,30 @@ use_old_VariableDeclaration_disconnectedEventName(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_eventNamespaceSeparator": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_eventNamespaceSeparator():
+    TypeOnly<typeof old.eventNamespaceSeparator>;
+declare function use_current_VariableDeclaration_eventNamespaceSeparator(
+    use: TypeOnly<typeof current.eventNamespaceSeparator>);
+use_current_VariableDeclaration_eventNamespaceSeparator(
+    get_old_VariableDeclaration_eventNamespaceSeparator());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_eventNamespaceSeparator": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_eventNamespaceSeparator():
+    TypeOnly<typeof current.eventNamespaceSeparator>;
+declare function use_old_VariableDeclaration_eventNamespaceSeparator(
+    use: TypeOnly<typeof old.eventNamespaceSeparator>);
+use_old_VariableDeclaration_eventNamespaceSeparator(
+    get_current_VariableDeclaration_eventNamespaceSeparator());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
@@ -818,6 +828,30 @@ declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     use: TypeOnly<typeof old.extractLogSafeErrorProperties>);
 use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     get_current_FunctionDeclaration_extractLogSafeErrorProperties());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_formatTick": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_formatTick():
+    TypeOnly<typeof old.formatTick>;
+declare function use_current_FunctionDeclaration_formatTick(
+    use: TypeOnly<typeof current.formatTick>);
+use_current_FunctionDeclaration_formatTick(
+    get_old_FunctionDeclaration_formatTick());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_formatTick": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_formatTick():
+    TypeOnly<typeof current.formatTick>;
+declare function use_old_FunctionDeclaration_formatTick(
+    use: TypeOnly<typeof old.formatTick>);
+use_old_FunctionDeclaration_formatTick(
+    get_current_FunctionDeclaration_formatTick());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1134,6 +1168,30 @@ use_old_FunctionDeclaration_normalizeError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_numberFromString": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_numberFromString():
+    TypeOnly<typeof old.numberFromString>;
+declare function use_current_FunctionDeclaration_numberFromString(
+    use: TypeOnly<typeof current.numberFromString>);
+use_current_FunctionDeclaration_numberFromString(
+    get_old_FunctionDeclaration_numberFromString());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_numberFromString": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_numberFromString():
+    TypeOnly<typeof current.numberFromString>;
+declare function use_old_FunctionDeclaration_numberFromString(
+    use: TypeOnly<typeof old.numberFromString>);
+use_old_FunctionDeclaration_numberFromString(
+    get_current_FunctionDeclaration_numberFromString());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_raiseConnectedEvent": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_raiseConnectedEvent():
@@ -1202,6 +1260,54 @@ declare function use_old_VariableDeclaration_sessionStorageConfigProvider(
     use: TypeOnly<typeof old.sessionStorageConfigProvider>);
 use_old_VariableDeclaration_sessionStorageConfigProvider(
     get_current_VariableDeclaration_sessionStorageConfigProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_tagCodeArtifacts": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_tagCodeArtifacts():
+    TypeOnly<typeof old.tagCodeArtifacts>;
+declare function use_current_VariableDeclaration_tagCodeArtifacts(
+    use: TypeOnly<typeof current.tagCodeArtifacts>);
+use_current_VariableDeclaration_tagCodeArtifacts(
+    get_old_VariableDeclaration_tagCodeArtifacts());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_tagCodeArtifacts": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_tagCodeArtifacts():
+    TypeOnly<typeof current.tagCodeArtifacts>;
+declare function use_old_VariableDeclaration_tagCodeArtifacts(
+    use: TypeOnly<typeof old.tagCodeArtifacts>);
+use_old_VariableDeclaration_tagCodeArtifacts(
+    get_current_VariableDeclaration_tagCodeArtifacts());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_tagData": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_tagData():
+    TypeOnly<typeof old.tagData>;
+declare function use_current_VariableDeclaration_tagData(
+    use: TypeOnly<typeof current.tagData>);
+use_current_VariableDeclaration_tagData(
+    get_old_VariableDeclaration_tagData());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_tagData": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_tagData():
+    TypeOnly<typeof current.tagData>;
+declare function use_old_VariableDeclaration_tagData(
+    use: TypeOnly<typeof old.tagData>);
+use_old_VariableDeclaration_tagData(
+    get_current_VariableDeclaration_tagData());
 
 /*
 * Validate forward compat by using old type in place of current type
