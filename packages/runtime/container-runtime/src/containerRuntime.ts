@@ -245,13 +245,13 @@ export interface ContainerRuntimeMessage {
 	compatDetails?: IContainerRuntimeMessageCompatDetails;
 }
 
-//* Needed?
 /**
  * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents
  * promoted up to the outer object
  */
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
+//* Remove if unused
 /** Throws if the given message doesn't match certain expectations of a ContainerRuntimeMessage */
 export function requireContainerRuntimeMessage(
 	message: any,
@@ -2204,7 +2204,6 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
-	//* Revisit this
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
@@ -2216,11 +2215,6 @@ export class ContainerRuntime
 		local: boolean,
 		runtimeMessage: boolean,
 	) {
-		//* Just fail below
-		if (runtimeMessage) {
-			requireContainerRuntimeMessage(message);
-		}
-
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -2240,62 +2234,8 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			const type = message.type as ContainerMessageType;
-			switch (type) {
-				case ContainerMessageType.Attach:
-					this.dataStores.processAttachMessage(message, local);
-					break;
-				case ContainerMessageType.Alias:
-					this.processAliasMessage(message, localOpMetadata, local);
-					break;
-				case ContainerMessageType.FluidDataStoreOp:
-					this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
-					break;
-				case ContainerMessageType.BlobAttach:
-					this.blobManager.processBlobAttachOp(message, local);
-					break;
-				case ContainerMessageType.IdAllocation:
-					assert(
-						this.idCompressor !== undefined,
-						0x67c /* IdCompressor should be defined if enabled */,
-					);
-					this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
-					break;
-				case ContainerMessageType.ChunkedOp:
-				case ContainerMessageType.Rejoin:
-					break;
-				default: {
-					if (runtimeMessage) {
-						const error = DataProcessingError.create(
-							// Former assert 0x3ce
-							"Runtime message of unknown type",
-							"OpProcessing",
-							message,
-							{
-								local,
-								type: message.type,
-								contentType: typeof message.contents,
-								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
-								compression: message.compression,
-							},
-						);
-						this.closeFn(error);
-						throw error;
-					}
-					const containerRuntimeMessage = message as SequencedContainerRuntimeMessage;
-					//* Have a canonical way/place to define the default behavior?
-					const compatBehavior =
-						containerRuntimeMessage.compatDetails?.behavior ?? "FailToProcess";
-					switch (compatBehavior) {
-						case "FailToProcess":
-							//*
-							throw DataProcessingError.create("", "");
-						case "Ignore":
-							return;
-						default:
-							unreachableCase(compatBehavior);
-					}
-				}
+			if (runtimeMessage) {
+				this.validateAndProcessRuntimeMessage(message, localOpMetadata, local);
 			}
 
 			this.emit("op", message, runtimeMessage);
@@ -2314,12 +2254,68 @@ export class ContainerRuntime
 		}
 	}
 
-	private processAliasMessage(
+	private validateAndProcessRuntimeMessage(
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 		local: boolean,
-	) {
-		this.dataStores.processAliasMessage(message, localOpMetadata, local);
+	): asserts message is SequencedContainerRuntimeMessage {
+		// Optimistically extract ContainerRuntimeMessage-specific props from the message
+		const { type: maybeContainerMessageType, compatDetails = defaultCompatDetails } =
+			message as ContainerRuntimeMessage;
+
+		switch (maybeContainerMessageType) {
+			case ContainerMessageType.Attach:
+				this.dataStores.processAttachMessage(message, local);
+				break;
+			case ContainerMessageType.Alias:
+				this.dataStores.processAliasMessage(message, localOpMetadata, local);
+				break;
+			case ContainerMessageType.FluidDataStoreOp:
+				this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
+				break;
+			case ContainerMessageType.BlobAttach:
+				this.blobManager.processBlobAttachOp(message, local);
+				break;
+			case ContainerMessageType.IdAllocation:
+				assert(
+					this.idCompressor !== undefined,
+					0x67c /* IdCompressor should be defined if enabled */,
+				);
+				this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
+				break;
+			case ContainerMessageType.ChunkedOp:
+			case ContainerMessageType.Rejoin:
+				break;
+			default: {
+				const compatBehavior = compatDetails.behavior;
+				const error = DataProcessingError.create(
+					// Former assert 0x3ce
+					"Runtime message of unknown type",
+					"OpProcessing",
+					message,
+					{
+						local,
+						type: message.type,
+						messageDetails: JSON.stringify({
+							contentType: typeof message.contents,
+							compatBehavior,
+							batch: (message.metadata as IBatchMetadata | undefined)?.batch,
+							compression: message.compression,
+						}),
+					},
+				);
+				switch (compatBehavior) {
+					case "FailToProcess":
+						((_: never) => {})(maybeContainerMessageType); // Type safety on missing known cases
+						throw error;
+					case "Ignore":
+						return;
+					default: // Type safety on missing known cases
+						((_: never) => {})(compatBehavior);
+						throw error;
+				}
+			}
+		}
 	}
 
 	/**
