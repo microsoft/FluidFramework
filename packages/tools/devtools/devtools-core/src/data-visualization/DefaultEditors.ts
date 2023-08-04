@@ -33,9 +33,16 @@ export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	if (typeof edit.data !== "number") return;
+	if (typeof edit.data !== "number") {
+		console.error("Devtools recieved a non-number edit for SharedCounter");
+		return;
+	}
+
+	if (Number.isInteger(edit.data)) {
+		console.error("Devtools recieved a non-integer edit for SharedCounter");
+	}
 	const sharedCounter = sharedObject as SharedCounter;
-	sharedCounter.increment(Math.floor(edit.data) - sharedCounter.value);
+	sharedCounter.increment(edit.data - sharedCounter.value);
 };
 
 /**
@@ -45,7 +52,10 @@ export const editSharedString: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	if (typeof edit.data !== "string") return;
+	if (typeof edit.data !== "string") {
+		console.error("Devtools recieved a non-string edit for SharedString");
+		return;
+	}
 	const sharedString = sharedObject as SharedString;
 	if (edit.data === "") {
 		sharedString.removeText(0, sharedString.getLength());
