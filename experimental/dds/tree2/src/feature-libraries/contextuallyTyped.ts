@@ -108,7 +108,7 @@ export function getPrimaryField(
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
 export function getFieldSchema(field: FieldKey, schema: TreeStoredSchema): FieldStoredSchema {
-	return schema.structFields.get(field) ?? schema.mapFields;
+	return schema.structFields.get(field) ?? schema.mapFields ?? FieldSchema.empty;
 }
 
 export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
@@ -386,12 +386,12 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
-	schemaData: SchemaData,
+	context: TreeDataContext,
 	schema: T,
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData },
+		context,
 		allowedTypesToTypeSet(schema),
 		data as unknown as ContextuallyTypedNodeData,
 	);
@@ -417,15 +417,11 @@ export function cursorsFromContextualData(
  * @alpha
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
-	schemaData: SchemaData,
+	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T, ApiMode.Simple>,
-): ITreeCursorSynchronous {
-	return cursorFromContextualData(
-		{ schema: schemaData },
-		schema.types,
-		data as ContextuallyTypedNodeData,
-	);
+	data: TypedField<T, ApiMode.Flexible>,
+): ITreeCursorSynchronous[] {
+	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }
 
 /**
