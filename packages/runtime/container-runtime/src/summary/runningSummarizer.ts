@@ -581,11 +581,10 @@ export class RunningSummarizer implements IDisposable {
 					return this.trySummarizeWithDynamicRetries(reason, cancellationToken);
 				}
 
-				const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
+				const attempts: ISummarizeOptions[] = [
 					{ refreshLatestAck: false, fullTree: false },
 					{ refreshLatestAck: true, fullTree: false },
 				];
-				let overrideDelaySeconds: number | undefined;
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
 				for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length; ) {
@@ -600,9 +599,7 @@ export class RunningSummarizer implements IDisposable {
 
 					summaryAttemptsPerPhase++;
 
-					const { delaySeconds: regularDelaySeconds = 0, ...options } =
-						attempts[summaryAttemptPhase];
-
+					const options = attempts[summaryAttemptPhase];
 					const summarizeProps: ISummarizeTelemetryProperties = {
 						reason,
 						summaryAttempts,
@@ -618,33 +615,33 @@ export class RunningSummarizer implements IDisposable {
 						options,
 						cancellationToken,
 					);
-					const result = await resultSummarize.receivedSummaryAckOrNack;
-
-					if (result.success) {
+					const ackNackResult = await resultSummarize.receivedSummaryAckOrNack;
+					if (ackNackResult.success) {
 						return;
 					}
-					const submitResult = await resultSummarize.summarySubmitted;
-					assert(
-						!submitResult.success,
-						"Summary submission should have failed for failed summary",
-					);
 
-					// Check for retryDelay that can come from summaryNack or upload summary flow.
+					// Check for retryDelay that can come from summaryNack, upload summary or submit summary flows.
 					// Retry the same step only once per retryAfter response.
-					overrideDelaySeconds =
-						result.data?.retryAfterSeconds ?? submitResult.data?.retryAfterSeconds;
-					if (overrideDelaySeconds === undefined || summaryAttemptsPerPhase > 1) {
+					let delaySeconds: number | undefined;
+					if (ackNackResult.data !== undefined) {
+						delaySeconds = ackNackResult.data.retryAfterSeconds;
+					} else {
+						const submitResult = await resultSummarize.summarySubmitted;
+						if (!submitResult.success) {
+							delaySeconds = submitResult.data?.retryAfterSeconds;
+						}
+					}
+
+					if (delaySeconds === undefined || summaryAttemptsPerPhase > 1) {
 						summaryAttemptPhase++;
 						summaryAttemptsPerPhase = 0;
 					}
 
-					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
-
-					if (delaySeconds > 0) {
+					if (delaySeconds !== undefined) {
 						this.mc.logger.sendPerformanceEvent({
 							eventName: "SummarizeAttemptDelay",
 							duration: delaySeconds,
-							summaryNackDelay: overrideDelaySeconds !== undefined,
+							summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
 							...summarizeProps,
 						});
 						await delay(delaySeconds * 1000);
@@ -699,6 +696,7 @@ export class RunningSummarizer implements IDisposable {
 						stage: SummaryStage;
 						delaySeconds: number;
 						stageChanged: boolean;
+						retryCount: number | undefined;
 				  };
 			// Returns whether summarization should be retried based on the failure data.
 			const shouldRetry = (
@@ -725,6 +723,7 @@ export class RunningSummarizer implements IDisposable {
 						stage: failureData.stage,
 						delaySeconds: failureData.retryAfterSeconds,
 						stageChanged,
+						retryCount: failureData.retryCount,
 					};
 				}
 
@@ -757,14 +756,19 @@ export class RunningSummarizer implements IDisposable {
 					return;
 				}
 
-				const submitResult = await summarizeResult.summarySubmitted;
-				assert(
-					!submitResult.success,
-					"Summary submission should have failed for failed summarization",
-				);
-				const submitFailureResult = ackNackResult.data ?? submitResult.data;
-				const shouldRetryResult = shouldRetry(submitFailureResult);
-
+				let failureResult: ISubmitSummaryFailureResult | undefined;
+				// If ack / nack failure data is present, summarization succeeded all the way until then. So, use the
+				// data to determine if summarization should be retried.
+				// Else, if submit summary failed, use its failure data to determine if summarization should be retried.
+				if (ackNackResult.data !== undefined) {
+					failureResult = ackNackResult.data;
+				} else {
+					const submitResult = await summarizeResult.summarySubmitted;
+					if (!submitResult.success) {
+						failureResult = submitResult.data;
+					}
+				}
+				const shouldRetryResult = shouldRetry(failureResult);
 				if (shouldRetryResult.retry) {
 					this.mc.logger.sendPerformanceEvent({
 						eventName: "SummarizeAttemptDelay",
@@ -778,8 +782,10 @@ export class RunningSummarizer implements IDisposable {
 					// If the stage at which summarization failed has changed, reset the counters for the stage.
 					if (shouldRetryResult.stageChanged) {
 						currentAttemptsForStage = 0;
-						maxAttemptsForStage =
-							submitFailureResult?.retryCount ?? defaultMaxAttemptsForStage;
+						// max attempts is number of retries + one for the first attempt
+						maxAttemptsForStage = shouldRetryResult.retryCount
+							? shouldRetryResult.retryCount + 1
+							: defaultMaxAttemptsForStage;
 					}
 				} else {
 					done = true;

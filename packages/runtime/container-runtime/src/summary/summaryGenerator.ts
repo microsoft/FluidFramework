@@ -296,10 +296,11 @@ export class SummaryGenerator {
 						"nackFailureResult must exist for summaryNack",
 					);
 					retryAfterSeconds = nackFailureResult.retryAfterSeconds;
+					break;
 				default:
 					assert(
 						submitFailureResult === undefined && nackFailureResult === undefined,
-						"nackFailureResult must exist for summaryNack",
+						"failure results should not exist",
 					);
 			}
 

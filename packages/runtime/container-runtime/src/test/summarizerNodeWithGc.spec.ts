@@ -294,6 +294,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 					value: "",
 				},
 				retryAfterSeconds: 1,
+				retryCount: 1,
 			};
 			const result = rootNode.validateSummary();
 			assert.deepStrictEqual(
@@ -338,6 +339,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 					value: midNodeId,
 				},
 				retryAfterSeconds: 1,
+				retryCount: 1,
 			};
 			const result = rootNode.validateSummary();
 			assert.deepStrictEqual(
@@ -381,6 +383,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 					value: leafNodeId,
 				},
 				retryAfterSeconds: 1,
+				retryCount: 1,
 			};
 			const result = rootNode.validateSummary();
 			assert.deepStrictEqual(
