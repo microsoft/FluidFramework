@@ -41,11 +41,7 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
  * Converts the request param to a boolean
  */
 export function getBooleanParam(param: any): boolean {
-	return typeof param === "undefined"
-		? false
-		: typeof param === "boolean"
-		? param
-		: param === "true";
+	return param === undefined ? false : typeof param === "boolean" ? param : param === "true";
 }
 
 /**

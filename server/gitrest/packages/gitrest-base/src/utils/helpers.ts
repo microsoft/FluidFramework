@@ -77,12 +77,9 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 	);
 
 	const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
+
 	const isEphemeralContainer: boolean =
-		typeof isEphemeralFromRequest === "undefined"
-			? false
-			: typeof isEphemeralFromRequest === "boolean"
-			? isEphemeralFromRequest
-			: isEphemeralFromRequest === "true";
+		isEphemeralFromRequest === undefined ? false : isEphemeralFromRequest === "true";
 
 	return {
 		repoOwner: request.params.owner,

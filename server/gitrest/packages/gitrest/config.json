@@ -17,7 +17,7 @@
 	},
 	"git": {
 		"lib": {
-			"name": "isomorphic-git"
+			"name": "nodegit"
 		},
 		"filesystem": {
 			"name": "nodeFs"
@@ -26,7 +26,7 @@
 			"name": "redisFs"
 		},
 		"persistLatestFullSummary": false,
-		"repoPerDocEnabled": true,
+		"repoPerDocEnabled": false,
 		"enableRepositoryManagerMetrics": false,
 		"apiMetricsSamplingPeriod": 100,
 		"enableLowIoWrite": false,

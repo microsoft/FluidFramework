@@ -194,13 +194,10 @@ export function create(
 					: request.query.initial === "true";
 
 			const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
+
 			// We treat these cases where we did not get the header as non-ephemeral containers
 			const isEphemeral: boolean =
-				typeof isEphemeralFromRequest === "undefined"
-					? false
-					: typeof isEphemeralFromRequest === "boolean"
-					? isEphemeralFromRequest
-					: isEphemeralFromRequest === "true";
+				isEphemeralFromRequest === undefined ? false : isEphemeralFromRequest === "true";
 
 			// Only the initial post summary has a valid IsEphemeralContainer flag which we store in cache
 			// For the other cases, we set the flag to undefined so that it can fetched from cache/storage
