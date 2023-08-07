@@ -333,15 +333,22 @@ export const SamplingStrategy = {
 } as const;
 
 /**
- * This type should be used as the "Enum" for SamplingStrategy.
+ * This type should be used as the "Enum" for {@link SamplingStrategy}.
  */
 export type ESamplingStrategy = typeof SamplingStrategy[keyof typeof SamplingStrategy];
+
+/**
+ * Interface for the configuration for a concrete type of sampling strategy.
+ */
+export interface SamplingConfig {
+	strategy: ESamplingStrategy;
+}
 
 /**
  * Configuration for systematically sampling telemetry.
  * See {@link SamplingStrategy.SYSTEMATIC} for more information.
  */
-export interface SystematicSamplingConfig {
+export interface SystematicSamplingConfig extends SamplingConfig {
 	strategy: typeof SamplingStrategy.SYSTEMATIC;
 	/**
 	 * Determines whether to send every nth event. E.g. 500 would send 1 out of every 500 events.
@@ -353,7 +360,7 @@ export interface SystematicSamplingConfig {
  * Configuration for randomly sampling telemetry.
  * See {@link SamplingStrategy.RANDOM} for more information.
  */
-export interface RandomChanceSamplingConfig {
+export interface RandomChanceSamplingConfig extends SamplingConfig {
 	strategy: typeof SamplingStrategy.RANDOM;
 	/**
 	 * Should be a number between 0 and 1.
@@ -361,8 +368,6 @@ export interface RandomChanceSamplingConfig {
 	 */
 	percentChance: number;
 }
-
-export type SamplingConfig = SystematicSamplingConfig | RandomChanceSamplingConfig;
 
 /**
  * The state for systematic sampling of an event.
@@ -374,7 +379,7 @@ interface SystematicSamplingState {
 }
 
 /**
- *
+ * Union type for all different types of Sampling States
  * @remarks This type leaves us room to continue to add to if/when we add new sampling strategies.
  */
 type SamplingState = SystematicSamplingState;
@@ -466,7 +471,7 @@ export class ChildLogger extends TelemetryLogger {
 	}
 
 	/**
-	 * Send an event with the logger. If the given event is mapped to a {@link SamplingConfig}
+	 * Send an event with the logger. If the given event name is mapped to a {@link SamplingConfig}
 	 * then the associated sampling will be applied.
 	 *
 	 * @param event - the event to send
@@ -480,10 +485,13 @@ export class ChildLogger extends TelemetryLogger {
 		const samplingConfig = this.eventSamplingConfigs?.get(event.eventName);
 		switch (samplingConfig?.strategy) {
 			case SamplingStrategy.SYSTEMATIC:
-				this.sendWithSystematicSampling(event, samplingConfig);
+				this.sendWithSystematicSampling(event, samplingConfig as SystematicSamplingConfig);
 				break;
 			case SamplingStrategy.RANDOM:
-				this.sendWithRandomChanceSampling(event, samplingConfig);
+				this.sendWithRandomChanceSampling(
+					event,
+					samplingConfig as RandomChanceSamplingConfig,
+				);
 				break;
 			default:
 				this.baseLogger.send(this.prepareEvent(event));

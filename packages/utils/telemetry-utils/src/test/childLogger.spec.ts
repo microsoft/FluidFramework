@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ChildLogger, SamplingConfig, SamplingStrategy, createChildLogger } from "../logger";
+import {
+	ChildLogger,
+	RandomChanceSamplingConfig,
+	SamplingStrategy,
+	SystematicSamplingConfig,
+	createChildLogger,
+} from "../logger";
 import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
 
 describe("ChildLogger", () => {
@@ -201,7 +207,10 @@ describe("ChildLogger", () => {
 		});
 
 		it("Applies sampling when feature flag to force unsampled telemetry is not set", () => {
-			const eventSamplingConfigs = new Map<string, SamplingConfig>([
+			const eventSamplingConfigs = new Map<
+				string,
+				SystematicSamplingConfig | RandomChanceSamplingConfig
+			>([
 				[
 					"oneEveryTwo",
 					{
@@ -257,7 +266,7 @@ describe("ChildLogger", () => {
 		});
 
 		it("Ignores sampling when feature flag to force unsampled telemetry is set", () => {
-			const eventSamplingConfigs = new Map<string, SamplingConfig>([
+			const eventSamplingConfigs = new Map<string, SystematicSamplingConfig>([
 				[
 					"oneEveryTwo",
 					{
@@ -296,7 +305,7 @@ describe("ChildLogger", () => {
 		});
 
 		it("Random Chance telemetry works as expected", () => {
-			const eventSamplingConfigs = new Map<string, SamplingConfig>([
+			const eventSamplingConfigs = new Map<string, RandomChanceSamplingConfig>([
 				[
 					"randomChanceWith0%",
 					{
