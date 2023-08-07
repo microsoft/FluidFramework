@@ -130,21 +130,15 @@ describe("SequenceField - Invert", () => {
 		]);
 
 		const expected: TestChangeset = [
-			{ type: "ReturnTo", id: brand(0), count: 2, cellId },
+			Mark.returnTo(2, brand(0), cellId),
 			{ count: 3 },
-			{
-				type: "ReturnFrom",
-				id: brand(0),
+			Mark.returnFrom(1, brand(0), {
 				detachIdOverride: cellId,
-				count: 1,
 				changes: inverseChildChange1,
-			},
-			{
-				type: "ReturnFrom",
-				id: brand(1),
+			}),
+			Mark.returnFrom(1, brand(1), {
 				detachIdOverride: { revision: tag1, localId: brand(1) },
-				count: 1,
-			},
+			}),
 		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
