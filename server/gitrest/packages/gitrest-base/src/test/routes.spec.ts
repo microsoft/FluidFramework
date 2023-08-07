@@ -806,10 +806,9 @@ testModes.forEach((mode) => {
 					}
 
 					const queue = async.queue((task, callback) => {
-						runRound().then(
-							() => callback(),
-							(error) => callback(error),
-						);
+						runRound()
+							.then(() => callback())
+							.catch((error) => callback(error));
 					}, 5);
 
 					const resultP = new Promise<void>((resolve, reject) => {

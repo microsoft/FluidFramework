@@ -143,8 +143,8 @@ export function create(
 				useCache,
 			);
 
-			blobP.then(
-				(blob) => {
+			blobP
+				.then((blob) => {
 					if (useCache) {
 						response.setHeader("Cache-Control", "public, max-age=31536000");
 					}
@@ -158,11 +158,10 @@ export function create(
 					response
 						.status(200)
 						.write(Buffer.from(blob.content, "base64"), () => response.end());
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(error?.code ?? 400).json(error?.message ?? error);
-				},
-			);
+				});
 		},
 	);
 
