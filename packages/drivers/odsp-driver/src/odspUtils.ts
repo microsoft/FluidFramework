@@ -209,6 +209,8 @@ export async function fetchArray(
 			"Error while parsing fetch response",
 			fetchIncorrectResponse,
 			content, // response
+			undefined, // response text
+			propsToLog,
 		);
 	}
 
@@ -246,6 +248,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 			fetchIncorrectResponse,
 			content, // response
 			text,
+			propsToLog,
 		);
 	}
 

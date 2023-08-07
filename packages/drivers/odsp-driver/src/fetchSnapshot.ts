@@ -317,6 +317,8 @@ async function fetchLatestSnapshotCore(
 									"Error while parsing fetch response",
 									fetchIncorrectResponse,
 									odspResponse.content, // response
+									undefined, // response text
+									propsToLog,
 								),
 							),
 						);
@@ -345,6 +347,8 @@ async function fetchLatestSnapshotCore(
 									"Error while parsing fetch response",
 									fetchIncorrectResponse,
 									odspResponse.content, // response
+									undefined, // response text
+									propsToLog,
 								),
 							),
 						);
