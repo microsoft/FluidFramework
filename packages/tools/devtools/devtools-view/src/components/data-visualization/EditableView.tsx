@@ -34,7 +34,7 @@ export interface EditableViewProps {
  */
 interface EditableComponentProps {
 	node: FluidObjectValueNode;
-	setEditing: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 	// eslint-disable-next-line @rushstack/no-new-null
 	submitChange: (data: Serializable<unknown> | null | undefined) => void;
 }
@@ -55,7 +55,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	/**
 	 * State to store the current type, or the type of the intended edit
 	 */
-	const [type, setType] = React.useState<string>(typeof node.value);
+	const [editType, setEditType] = React.useState<string>(typeof node.value);
 
 	const messageRelay = useMessageRelay();
 
@@ -81,7 +81,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	);
 
 	/**
-	 * Determines the Editing UI based on the {@link "type"}
+	 * Determines the Editing UI based on the {@link EditType}
 	 */
 	const selectEditUI = React.useCallback(
 		(typeParamater: string): React.ReactElement => {
@@ -91,7 +91,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 					component = (
 						<EditableInputComponent
 							node={node}
-							setEditing={setIsEditing}
+							setIsEditing={setIsEditing}
 							submitChange={submitChange}
 							inputType={"string"}
 						/>
@@ -101,7 +101,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 					component = (
 						<EditableInputComponent
 							node={node}
-							setEditing={setIsEditing}
+							setIsEditing={setIsEditing}
 							submitChange={submitChange}
 							inputType={"number"}
 						/>
@@ -112,7 +112,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 						<EditableBooleanComponent
 							node={node}
 							submitChange={submitChange}
-							setEditing={setIsEditing}
+							setIsEditing={setIsEditing}
 						/>
 					);
 					break;
@@ -134,7 +134,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	 * State to store the corresponding UI component
 	 */
 	const [editingComponent, setEditingComponent] = React.useState<React.ReactElement>(
-		selectEditUI(type),
+		selectEditUI(editType),
 	);
 
 	/**
@@ -164,19 +164,19 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	 */
 	React.useEffect(() => {
 		if (isEditing === false) {
-			setType(typeof node.value);
+			setEditType(typeof node.value);
 			setEditingComponent(selectEditUI(typeof node.value));
 		}
 	}, [node.value, isEditing, selectEditUI]);
 
 	/**
-	 * Updates {@link "type"} and {@link editingComponent} based on the option selected from the dropdown
+	 * Updates {@link editType} and {@link editingComponent} based on the option selected from the dropdown
 	 * If the option selected is null or undefined it will automaticlly send the message to change its value
 	 * and will only display the dropdown with either "null" or "undefined"
 	 * @param data - The option selected from the dropdown
 	 */
 	const onOptionSelect: DropdownProps["onOptionSelect"] = (event, data) => {
-		setType(data.optionText ?? "undefined");
+		setEditType(data.optionText ?? "undefined");
 		setEditingComponent(selectEditUI(data.optionText ?? "undefined"));
 		if (data.optionText === "undefined") {
 			submitChange(undefined);
@@ -211,8 +211,8 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 				size="small"
 				style={{ minWidth: "10px" }}
 				onOptionSelect={onOptionSelect}
-				value={type}
-				selectedOptions={[type]}
+				value={editType}
+				selectedOptions={[editType]}
 			>
 				{options.map((option) => (
 					<Option key={option}>{option}</Option>
@@ -268,7 +268,7 @@ interface EditableInputComponent extends EditableComponentProps {
  * Component which allows for number editing
  */
 function EditableInputComponent(props: EditableInputComponent): React.ReactElement {
-	const { node, setEditing, submitChange, inputType } = props;
+	const { node, setIsEditing, submitChange, inputType } = props;
 
 	// Clearning out data if it was not already a number
 	const [localData, setLocalData] = React.useState<string>(
@@ -302,11 +302,11 @@ function EditableInputComponent(props: EditableInputComponent): React.ReactEleme
 	}
 
 	/**
-	 * Sets {@link editing} to false when the compoenent is focused
+	 * Sets {@link isEditing} to false when the compoenent is focused
 	 */
 	const onFocus = React.useCallback(() => {
-		setEditing(true);
-	}, [setEditing]);
+		setIsEditing(true);
+	}, [setIsEditing]);
 
 	return (
 		<Input
