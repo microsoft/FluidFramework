@@ -724,6 +724,8 @@ describe("IdCompressor", () => {
 		it("can serialize an empty compressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			expectSerializes(compressor);
+			compressor.generateCompressedId();
+			expectSerializes(compressor);
 		});
 
 		it("correctly deserializes and resumes a session", () => {

@@ -494,7 +494,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		for (let i = indexOffset; i < sessions.sessions.length; i++) {
 			const session = sessions.sessions[i];
 			assert(
-				!session.isEmpty() || (withSession && session === this.localSession),
+				!session.isEmpty() || session === this.localSession,
 				"Empty sessions must not be serialized.",
 			);
 			index = writeNumericUuid(serialized, index, session.sessionUuid);

@@ -262,14 +262,14 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 				getIdCompressor(sharedMapContainer2).normalizeToOpSpace(
 					-(i + 1) as SessionSpaceCompressedId,
 				),
-				i + 512,
+				i + 1024,
 			);
 
 			assert.strictEqual(
 				getIdCompressor(sharedMapContainer3).normalizeToOpSpace(
 					-(i + 1) as SessionSpaceCompressedId,
 				),
-				i + 1024,
+				i + 2048,
 			);
 		}
 
@@ -453,11 +453,11 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		);
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(secondIdContainer2),
-			512,
+			513,
 		);
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(thirdIdContainer2),
-			513,
+			514,
 		);
 
 		decompressedIds.forEach((id, index) => {
@@ -544,13 +544,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id2),
-			512,
+			513,
 			"Second container should get second cluster and allocate Id 512",
 		);
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id3),
-			513,
+			514,
 			"Second Id from second container should get second cluster and allocate Id 513",
 		);
 	});

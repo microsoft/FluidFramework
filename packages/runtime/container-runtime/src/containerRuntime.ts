@@ -716,7 +716,10 @@ export class ContainerRuntime
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
-		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
+		const tryFetchBlob = async <T>(
+			blobName: string,
+			read: (storage: Pick<IDocumentStorageService, "readBlob">, id: string) => Promise<T>,
+		): Promise<T | undefined> => {
 			const blobId = context.baseSnapshot?.blobs[blobName];
 			if (context.baseSnapshot && blobId) {
 				// IContainerContext storage api return type still has undefined in 0.39 package version.
@@ -725,17 +728,26 @@ export class ContainerRuntime
 					context.storage !== undefined,
 					0x1f5 /* "Attached state should have storage" */,
 				);
-				return readAndParse<T>(context.storage, blobId);
+				return read(context.storage, blobId);
 			}
 		};
 
 		const [chunks, metadata, electedSummarizerData, aliases, serializedIdCompressor] =
 			await Promise.all([
-				tryFetchBlob<[string, string[]][]>(chunksBlobName),
-				tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
-				tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
-				tryFetchBlob<[string, string][]>(aliasBlobName),
-				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
+				tryFetchBlob<[string, string[]][]>(chunksBlobName, readAndParse),
+				tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName, readAndParse),
+				tryFetchBlob<ISerializedElection>(electedSummarizerBlobName, readAndParse),
+				tryFetchBlob<[string, string][]>(aliasBlobName, readAndParse),
+				tryFetchBlob<SerializedIdCompressorWithNoSession>(
+					idCompressorBlobName,
+					async (storage, id) => {
+						const blob = await storage.readBlob(id);
+						const serializedCompressor: SerializedIdCompressorWithNoSession = {
+							bytes: new Uint8Array(blob),
+						} as unknown as SerializedIdCompressorWithNoSession;
+						return serializedCompressor;
+					},
+				),
 			]);
 
 		// read snapshot blobs needed for BlobManager to load
@@ -1819,8 +1831,8 @@ export class ContainerRuntime
 				this.idCompressor !== undefined,
 				0x67a /* IdCompressor should be defined if enabled */,
 			);
-			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
-			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
+			const idCompressorState = this.idCompressor.serialize(false);
+			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState.bytes);
 		}
 
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {
