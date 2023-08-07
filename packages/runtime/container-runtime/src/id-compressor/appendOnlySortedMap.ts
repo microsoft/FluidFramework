@@ -4,7 +4,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "./copied-utils";
+import { assert } from "@fluidframework/common-utils";
+import { fail } from "./utilities";
 
 /**
  * A map in which entries are always added in key-sorted order.

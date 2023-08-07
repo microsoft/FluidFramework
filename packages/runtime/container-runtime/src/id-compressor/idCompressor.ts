@@ -29,6 +29,7 @@ import {
 	writeNumericUuid,
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
+	fail,
 } from "./utilities";
 import {
 	getAlignedLocal,

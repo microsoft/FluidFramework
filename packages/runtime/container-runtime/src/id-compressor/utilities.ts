@@ -257,3 +257,12 @@ export function readBoolean(index: Index): boolean {
 	index.index += 1;
 	return value;
 }
+
+/**
+ * Fails an assertion. Throws an Error that the assertion failed.
+ * Use when violations are logic errors in the program.
+ * @param message - Message to be printed if assertion fails.
+ */
+export function fail(message: string): never {
+	throw new Error(message);
+}
