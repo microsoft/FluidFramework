@@ -106,6 +106,8 @@ export interface ITenantManager {
 		tenantId: string,
 		documentId: string,
 		storageName?: string,
+		includeDisabledTenant?: boolean,
+		isEphemeralContainer?: boolean,
 	): Promise<IGitManager>;
 
 	/**
