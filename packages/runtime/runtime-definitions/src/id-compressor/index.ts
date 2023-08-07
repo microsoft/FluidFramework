@@ -3,6 +3,7 @@ export {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
+	IdCreationRangeWithStashedState,
 	currentWrittenVersion,
 	defaultClusterCapacity,
 } from "./persisted-types";

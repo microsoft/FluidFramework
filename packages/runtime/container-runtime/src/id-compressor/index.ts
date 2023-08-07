@@ -8,5 +8,5 @@
  */
 
 export { IdCompressor } from "./idCompressor";
-export { compareFiniteNumbers } from "./utilities";
+export { compareFiniteNumbers, createSessionId } from "./utilities";
 export { AppendOnlySortedMap } from "./appendOnlySortedMap";

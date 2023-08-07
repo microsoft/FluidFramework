@@ -172,7 +172,8 @@ export function stableIdFromNumericUuid(numericUuid: NumericUuid): StableId {
 }
 
 export function offsetNumericUuid(numericUuid: NumericUuid, offset: number): NumericUuid {
-	return ((numericUuid as bigint) + BigInt(offset)) as NumericUuid;
+	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+	return (numericUuid + BigInt(offset)) as NumericUuid;
 }
 
 export function subtractNumericUuids(a: NumericUuid, b: NumericUuid): NumericUuid {

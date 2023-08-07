@@ -785,7 +785,7 @@ export class ContainerRuntime
 			idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), logger);
+					: IdCompressor.create(logger);
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -3173,7 +3173,7 @@ export class ContainerRuntime
 				);
 				idRange = this.idCompressor.takeNextCreationRange();
 				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+				idRange = idRange?.ids !== undefined ? idRange : undefined;
 			}
 
 			if (idRange !== undefined) {
