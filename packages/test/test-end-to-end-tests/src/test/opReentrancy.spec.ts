@@ -239,32 +239,47 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 			const concurrentValue = 10;
 			const finalConcurrentValue = 100;
-			const directory = "key";
-			sharedDirectory1.set(directory, { concurrentValue });
+			const topLevel = "root";
+			const innerLevel = "inner";
+			const key = "key";
+			sharedDirectory1
+				.createSubDirectory(topLevel)
+				.createSubDirectory(innerLevel)
+				.set(key, concurrentValue);
+			sharedDirectory2
+				.createSubDirectory(topLevel)
+				.createSubDirectory(innerLevel)
+				.set(key, concurrentValue);
 
 			await provider.ensureSynchronized();
 			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
 
-			const concurrentValue1 = Number(sharedDirectory1.get(directory).concurrentValue) + 10;
-			const concurrentValue2 = Number(sharedDirectory1.get(directory).concurrentValue) + 20;
+			const concurrentValue1 = concurrentValue + 10;
+			const concurrentValue2 = concurrentValue + 20;
 
-			sharedDirectory1.set(directory, { concurrentValue: concurrentValue1 });
-			sharedDirectory2.set(directory, { concurrentValue: concurrentValue2 });
+			sharedDirectory2
+				.getSubDirectory(topLevel)
+				?.getSubDirectory(innerLevel)
+				?.set(key, concurrentValue2);
+			sharedDirectory1
+				.getSubDirectory(topLevel)
+				?.getSubDirectory(innerLevel)
+				?.set(key, concurrentValue1);
+			sharedDirectory1
+				.getSubDirectory(topLevel)
+				?.getSubDirectory(innerLevel)
+				?.set(key, "foobar");
+			sharedDirectory1
+				.getSubDirectory(topLevel)
+				?.getSubDirectory(innerLevel)
+				?.set(key, finalConcurrentValue);
 
 			await provider.ensureSynchronized();
 			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
-
-			sharedDirectory1.set(directory, {
-				...sharedDirectory1.get(directory),
-				concurrentValue: finalConcurrentValue,
-			});
-			sharedDirectory2.set(directory, {
-				...sharedDirectory2.get(directory),
-				newValue: "foobar",
-			});
-
-			await provider.ensureSynchronized();
-			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
+			assert.strictEqual(
+				sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
+				finalConcurrentValue,
+			);
 		});
 	});
 
