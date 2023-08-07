@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SharedMap } from "@fluidframework/map";
+import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
@@ -28,9 +28,11 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
 	const sharedStringId = "sharedStringKey";
+	const sharedDirectoryId = "sharedDirectoryKey";
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[sharedStringId, SharedString.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
 	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
@@ -45,6 +47,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	let sharedMap2: SharedMap;
 	let sharedString1: SharedString;
 	let sharedString2: SharedString;
+	let sharedDirectory1: SharedDirectory;
+	let sharedDirectory2: SharedDirectory;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -78,6 +82,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
+
+		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
+		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 		await provider.ensureSynchronized();
 	};
@@ -187,6 +194,74 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				assert.ok(!container2.closed, "Remote container is closed");
 			},
 		);
+
+		it.only(`Eventual consistency for shared directories with op reentry - ${
+			enableGroupedBatching ? "Grouped" : "Regular"
+		} batches`, async () => {
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					enableGroupedBatching,
+				},
+			});
+
+			const concurrentValue = 10;
+			const finalConcurrentValue = 100;
+			const directory = "key";
+			sharedDirectory1.set(directory, { concurrentValue });
+
+			await provider.ensureSynchronized();
+			const concurrentValue1 = Number(sharedDirectory1.get(directory).concurrentValue) + 10;
+			const concurrentValue2 = Number(sharedDirectory1.get(directory).concurrentValue) + 20;
+
+			sharedDirectory1.set(directory, { concurrentValue: concurrentValue1 });
+			sharedDirectory2.set(directory, { concurrentValue: concurrentValue2 });
+
+			await provider.ensureSynchronized();
+			sharedDirectory1.set(directory, {
+				...sharedDirectory1.get(directory),
+				concurrentValue: finalConcurrentValue,
+			});
+			sharedDirectory2.set(directory, {
+				...sharedDirectory2.get(directory),
+				newValue: "foobar",
+			});
+			await provider.ensureSynchronized();
+
+			const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
+				if (a === undefined || b === undefined) {
+					assert.strictEqual(a, b, "Both directories should be undefined");
+					return;
+				}
+
+				const leftKeys = Array.from(a.keys());
+				const rightKeys = Array.from(b.keys());
+				assert.strictEqual(
+					leftKeys.length,
+					rightKeys.length,
+					"Number of keys should be the same",
+				);
+				leftKeys.forEach((key) => {
+					const left = JSON.stringify(a.get(key));
+					const right = JSON.stringify(b.get(key));
+					assert.strictEqual(left, right, "Key values should be the same");
+				});
+
+				const leftSubdirectories = Array.from(a.subdirectories());
+				const rightSubdirectories = Array.from(b.subdirectories());
+				assert.strictEqual(
+					leftSubdirectories.length,
+					rightSubdirectories.length,
+					"Number of subdirectories should be the same",
+				);
+
+				leftSubdirectories.forEach(([name]) =>
+					areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name)),
+				);
+			};
+
+			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
+		});
 	});
 
 	describe("Reentry safeguards", () => {
