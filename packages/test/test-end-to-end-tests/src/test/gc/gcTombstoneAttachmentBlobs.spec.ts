@@ -62,13 +62,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			dataStore._root.set("transition to write", "true");
 			await waitForContainerConnection(container);
 
-			const { summarizer } = await createSummarizer(
-				provider,
-				container,
-				undefined /* summaryVersion */,
-				gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 
 			return { dataStore, summarizer };
 		}
@@ -137,9 +134,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const { container: summarizingContainer } = await createSummarizer(
 					provider,
 					container2,
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 					summary2.summaryVersion,
-					gcOptions,
-					mockConfigProvider(settings),
 				);
 				const summarizingResponse = await summarizingContainer.request({
 					url: blobHandle.absolutePath,
@@ -464,13 +463,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerConnection(mainContainer);
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -552,13 +548,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Summarize so that the above attachment blob is marked unreferenced.
 				await provider.ensureSynchronized();
@@ -643,13 +636,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerConnection(mainContainer);
 
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
-				);
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 				// Add the blob's local handles to reference them.
 				mainDataStore._root.set("local1", localHandle1);
@@ -748,13 +738,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		 * GC data to validate references against and ensure that gcUnknownOutboundReferences error is not logged.
 		 */
 		async function createSummarizerWithInitialSummary(container: IContainer) {
-			const { summarizer } = await createSummarizer(
-				provider,
-				container,
-				undefined /* summaryVersion */,
-				gcOptions,
-				mockConfigProvider(settings),
-			);
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			});
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 			return summarizer;

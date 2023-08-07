@@ -17,8 +17,9 @@ import * as MergeTree from "@fluidframework/merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";
 import random from "random-js";
-import * as SharedString from "../intervalCollection";
+import { createIntervalIndex } from "../intervalCollection";
 import { IntervalTree } from "../intervalTree";
+import { SequenceInterval, IntervalType, Interval } from "../intervals";
 
 const clock = () => Trace.start();
 
@@ -77,7 +78,7 @@ export function propertyCopy() {
 function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 	const mt = random.engines.mt19937();
 	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-	const bookmarks = <SharedString.SequenceInterval[]>[];
+	const bookmarks = <SequenceInterval[]>[];
 	const len = client.mergeTree.getLength(
 		MergeTree.UniversalSequenceNumber,
 		MergeTree.NonCollabClient,
@@ -115,14 +116,7 @@ function makeBookmarks(client: MergeTree.TestClient, bookmarkCount: number) {
 			);
 			lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
 			lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
-			bookmarks.push(
-				new SharedString.SequenceInterval(
-					client,
-					lref1,
-					lref2,
-					SharedString.IntervalType.Simple,
-				),
-			);
+			bookmarks.push(new SequenceInterval(client, lref1, lref2, IntervalType.Simple));
 		} else {
 			i--;
 		}
@@ -224,8 +218,8 @@ export function TestPack(verbose = true) {
 		const extractSnap = false;
 		const includeMarkers = false;
 		const measureBookmarks = true;
-		let bookmarks: SharedString.SequenceInterval[];
-		const bookmarkRangeTree = new IntervalTree<SharedString.SequenceInterval>();
+		let bookmarks: SequenceInterval[];
+		const bookmarkRangeTree = new IntervalTree<SequenceInterval>();
 		const testOrdinals = true;
 		let ordErrors = 0;
 		let ordSuccess = 0;
@@ -582,9 +576,9 @@ export function TestPack(verbose = true) {
 							} else if (segoff1.segment.ordinal > segoff2.segment.ordinal) {
 								ordErrors++;
 								console.log(
-									`reverse ordinals ${MergeTree.ordinalToArray(
+									`reverse ordinals ${ordinalToArray(
 										segoff1.segment.ordinal,
-									)} > ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`,
+									)} > ${ordinalToArray(segoff2.segment.ordinal)}`,
 								);
 								console.log(
 									`segments ${segoff1.segment.toString()} ${segoff2.segment.toString()}`,
@@ -609,8 +603,8 @@ export function TestPack(verbose = true) {
 					);
 					const checkPos = <number[]>[];
 					const checkRange = <number[][]>[];
-					const checkPosRanges = <SharedString.SequenceInterval[]>[];
-					const checkRangeRanges = <SharedString.SequenceInterval[]>[];
+					const checkPosRanges = <SequenceInterval[]>[];
+					const checkRangeRanges = <SequenceInterval[]>[];
 					for (let i = 0; i < posChecksPerRound; i++) {
 						checkPos[i] = random.integer(0, len - 2)(mt2);
 						const segoff1 = testServer.getContainingSegment(checkPos[i]);
@@ -628,11 +622,11 @@ export function TestPack(verbose = true) {
 								MergeTree.ReferenceType.Simple,
 								undefined,
 							);
-							checkPosRanges[i] = new SharedString.SequenceInterval(
+							checkPosRanges[i] = new SequenceInterval(
 								testServer,
 								lrefPos1,
 								lrefPos2,
-								SharedString.IntervalType.Simple,
+								IntervalType.Simple,
 							);
 						} else {
 							i--;
@@ -661,11 +655,11 @@ export function TestPack(verbose = true) {
 								MergeTree.ReferenceType.Simple,
 								undefined,
 							);
-							checkRangeRanges[i] = new SharedString.SequenceInterval(
+							checkRangeRanges[i] = new SequenceInterval(
 								testServer,
 								lrefPos1,
 								lrefPos2,
-								SharedString.IntervalType.Simple,
+								IntervalType.Simple,
 							);
 						} else {
 							i--;
@@ -1710,10 +1704,10 @@ export function intervalTest() {
 	const imin = 0;
 	const imax = 10000000;
 	const intCount = 50000;
-	const arr = [] as SharedString.Interval[];
+	const arr = [] as Interval[];
 	const distribution = random.integer(imin, imax);
 	const randInt = () => distribution(mt);
-	const intervalIndex = SharedString.createIntervalIndex();
+	const intervalIndex = createIntervalIndex();
 
 	for (let i = 0; i < intCount; i++) {
 		let a = randInt();
@@ -1726,7 +1720,7 @@ export function intervalTest() {
 			a = b;
 			b = temp;
 		}
-		arr.push(intervalIndex.addInterval(a, b, SharedString.IntervalType.Simple, { id: i }));
+		arr.push(intervalIndex.addInterval(a, b, IntervalType.Simple, { id: i }));
 	}
 	let dup = 0;
 	for (let i = 0; i < intCount; i++) {
@@ -1822,4 +1816,14 @@ if (clientServerTest) {
 	} else {
 		testPack.clientServer(undefined, 100000);
 	}
+}
+
+function ordinalToArray(ord: string) {
+	const a: number[] = [];
+	if (ord) {
+		for (let i = 0, len = ord.length; i < len; i++) {
+			a.push(ord.charCodeAt(i));
+		}
+	}
+	return a;
 }

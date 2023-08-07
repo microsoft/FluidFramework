@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ITreeCursor, RevisionTag } from "../../core";
+import { ITreeCursor } from "../../core";
 import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
+	CellId,
 	Changeset,
 	Insert,
-	LineageEvent,
 	Mark,
 	MoveId,
 	NodeChangeType,
@@ -26,8 +27,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	revive(
 		index: number,
 		count: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
+		detachEvent: CellId,
 		reviver: NodeReviver,
 		isIntention?: true,
 	): Changeset<never>;
@@ -49,8 +49,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
+		detachEvent: CellId,
 	): Changeset<never>;
 }
 
@@ -58,7 +57,7 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", count: 1, changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],
@@ -66,30 +65,31 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		const mark: Insert<never> = {
 			type: "Insert",
+			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
-			id,
+			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);
 	},
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
+
 	revive: (
 		index: number,
 		count: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
+		detachEvent: CellId,
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		const detachEvent = { revision: detachedBy, localId: detachId };
+		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: Reattach<never> = {
 			type: "Revive",
-			content: reviver(detachedBy, detachId, count),
+			content: reviver(detachEvent.revision, detachEvent.localId, count),
 			count,
-			detachEvent,
+			cellId: detachEvent,
 		};
 		if (!isIntention) {
-			mark.inverseOf = detachedBy;
+			mark.inverseOf = detachEvent.revision;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
@@ -110,6 +110,7 @@ export const sequenceFieldEditor = {
 			type: "MoveIn",
 			id,
 			count,
+			cellId: { localId: id },
 		};
 
 		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];
@@ -119,15 +120,12 @@ export const sequenceFieldEditor = {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachedBy: RevisionTag,
-		detachId: ChangesetLocalId,
-		lineage?: LineageEvent[],
+		detachEvent: CellId,
 	): Changeset<never> {
 		if (count === 0) {
 			return [];
 		}
 
-		const detachEvent = { revision: detachedBy, localId: detachId };
 		const id = brand<MoveId>(0);
 		const returnFrom: ReturnFrom<never> = {
 			type: "ReturnFrom",
@@ -139,12 +137,8 @@ export const sequenceFieldEditor = {
 			type: "ReturnTo",
 			id,
 			count,
-			detachEvent,
+			cellId: detachEvent,
 		};
-
-		if (lineage !== undefined) {
-			returnTo.lineage = lineage;
-		}
 
 		const factory = new MarkListFactory<never>();
 		if (sourceIndex < destIndex) {

@@ -48,6 +48,7 @@ alfred:
   enforceServerGeneratedDocumentId: false
   socketIo:
     perMessageDeflate: true
+  getDeltasRequestMaxOpsRange: 2000
 
 storage:
   enableWholeSummaryUpload: false
@@ -80,6 +81,7 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  maxLogtailLength: 2000
   verifyLastOpPersistence: false
   disableTransientTenantFiltering: true
   checkpointHeuristics:
@@ -112,6 +114,7 @@ usage:
 
 shared:
   transientTenants: []
+  runnerServerCloseTimeoutMs: 30000
 
 mongodb:
   operationsDbEndpoint: mongodb_url

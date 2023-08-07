@@ -4,31 +4,47 @@
  */
 import React from "react";
 
-import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
+import {
+	ContainerDevtoolsFeature,
+	FluidObjectValueNode,
+	HasContainerKey,
+} from "@fluid-experimental/devtools-core";
+import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
+import { EditableValueView } from "./EditableValueView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeHeader } from "./TreeHeader";
 import { TreeItem } from "./TreeItem";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link ValueView} input props.
  */
-export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode>;
+export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode> &
+	HasContainerKey;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
+ *
+ * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
-	const { label, node } = props;
-
-	const metadata = JSON.stringify(node.metadata);
+	const { label, node, containerKey } = props;
+	const { containerFeatureFlags } = useContainerFeaturesContext();
+	const editingEnabled =
+		containerFeatureFlags[ContainerDevtoolsFeature.ContainerDataEditing] === true &&
+		node.editProps !== undefined;
 	const header = (
-		<TreeHeader
-			label={label}
-			nodeTypeMetadata={node.typeMetadata}
-			inlineValue={String(node.value)}
-			metadata={metadata}
-		/>
+		<>
+			{editingEnabled === true ? (
+				<EditableValueView label={label} containerKey={containerKey} node={node} />
+			) : (
+				<TreeHeader
+					label={label}
+					nodeTypeMetadata={node.typeMetadata}
+					inlineValue={String(node.value)}
+				/>
+			)}
+		</>
 	);
 
 	return <TreeItem header={header} />;

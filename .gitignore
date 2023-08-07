@@ -29,3 +29,6 @@ tsdoc-metadata.json
 
 # PNPM store (when opening local file system in dev container)
 .pnpm-store/
+
+# TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
+UPCOMING.md

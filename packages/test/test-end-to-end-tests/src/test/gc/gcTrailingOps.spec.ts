@@ -95,13 +95,10 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			);
 
 			// Create a summarizer
-			const { summarizer: mainSummarizer } = await createSummarizer(
-				provider,
-				mainContainer,
-				undefined,
-				gcOptions,
-				configProvider,
-			);
+			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider },
+			});
 
 			// Reference datastore and blob
 			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
@@ -130,9 +127,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 			const { summarizer } = await createSummarizer(
 				provider,
 				mainContainer,
+				{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				summary1.summaryVersion,
-				gcOptions,
-				configProvider,
 			);
 
 			// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are unreferenced
@@ -186,9 +182,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer: mainSummarizer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined,
-					gcOptions,
-					configProvider,
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 				);
 
 				// Make the datastore and blob live and unreferenced
@@ -225,9 +219,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
+					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
 					summary1.summaryVersion,
-					gcOptions,
-					configProvider,
 				);
 
 				// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are referenced

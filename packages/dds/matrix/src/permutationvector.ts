@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
@@ -136,11 +136,10 @@ export class PermutationVector extends Client {
 	) {
 		super(
 			PermutationSegment.fromJSONObject,
-			ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`),
+			createChildLogger({ logger, namespace: `Matrix.${path}.MergeTreeClient` }),
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
-				mergeTreeUseNewLengthCalculations: true,
 			},
 		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 
