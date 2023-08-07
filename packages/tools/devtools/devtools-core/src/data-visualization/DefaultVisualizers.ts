@@ -44,13 +44,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 	const renderedData = await visualizeChildData(data);
 
 	const editProps = {
-		editTypes: [
-			EditType.Boolean,
-			EditType.Number,
-			EditType.String,
-			EditType.Undefined,
-			EditType.Null,
-		],
+		editTypes: undefined,
 	};
 
 	if (renderedData.nodeKind === VisualNodeKind.TreeNode) {

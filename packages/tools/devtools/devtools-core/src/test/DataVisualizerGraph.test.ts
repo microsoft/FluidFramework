@@ -200,13 +200,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidValueNode,
 			editProps: {
-				editTypes: [
-					EditType.Boolean,
-					EditType.Number,
-					EditType.String,
-					EditType.Undefined,
-					EditType.Null,
-				],
+				editTypes: undefined,
 			},
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);

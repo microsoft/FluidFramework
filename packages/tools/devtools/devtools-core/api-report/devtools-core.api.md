@@ -235,7 +235,7 @@ export namespace DisconnectContainer {
 
 // @internal
 export interface Edit {
-    data: Serializable<unknown> | Primitive;
+    data: Serializable<unknown> | null | undefined;
     type?: EditType | string;
 }
 

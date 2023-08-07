@@ -38,10 +38,6 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
 
-	// Editing:
-	// When we start editing any child (not across handle boundaries) take a snapshot of the current state (don't accept updates from the app)
-	//   - Visual highlight entire tree to indicate we're editing
-
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound message related to Data View.
