@@ -99,8 +99,6 @@ function getScreenshotTestPath(
 }
 
 const workingDirectory = process.cwd();
-const storiesPathPatterns = ["src/screenshot-tests/stories/*.tsx"];
-const screenshotsDirectory = "__screenshots__";
 
 const git = simpleGit(workingDirectory);
 
@@ -122,6 +120,9 @@ async function checkScreenshotDiff(screenshotFilePath: string): Promise<boolean>
  * etc.).
  */
 async function generateTestSuite(): Promise<void> {
+	const storiesPathPatterns = ["src/screenshot-tests/stories/*.tsx"];
+	const screenshotsDirectory = "__screenshots__";
+
 	// Initialize chromium browser instance for test suite
 	const browser = await chromium.launch();
 
