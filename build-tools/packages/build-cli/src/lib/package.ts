@@ -7,8 +7,10 @@ import {
 	Logger,
 	MonoRepo,
 	Package,
+	PackageJson,
 	VersionBag,
 	VersionDetails,
+	getCombinedDependencies,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import {
@@ -656,6 +658,7 @@ export async function setPackageDependencies(
 	// eslint-disable-next-line default-param-last
 	updateWithinSameReleaseGroup = false,
 	changedVersions?: VersionBag,
+	log?: Logger,
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
@@ -664,11 +667,12 @@ export async function setPackageDependencies(
 		if (dep !== undefined) {
 			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
 			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
-				let dependencies = dev
+				const dependencies = dev
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
 				if (dependencies === undefined) {
-					dependencies = {};
+					log?.warning(`Package has no dependencies or devDependencies: ${pkg.name}`);
+					continue;
 				}
 
 				newRangeString = dep.range.toString();

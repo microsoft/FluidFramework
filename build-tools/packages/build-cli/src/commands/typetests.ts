@@ -101,7 +101,10 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 	}
 }
 
-enum VersionOptions {
+/**
+ * @internal
+ */
+export enum VersionOptions {
 	Clear,
 	Previous,
 	ClearIfDisabled,
@@ -109,8 +112,10 @@ enum VersionOptions {
 
 /**
  * Actions that can be taken when configuring type tests.
+ * 
+ * @internal
  */
-interface TypeTestConfigActions {
+export interface TypeTestConfigActions {
 	/**
 	 * If set, update version to test against to this.
 	 * If empty string, remove previous version.
@@ -153,8 +158,13 @@ export function previousVersion(version: string): string {
 
 /**
  * Updates configuration for type tests in package.json
+ *
+ * @internal
  */
-function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConfigActions): void {
+export function updateTypeTestConfiguration(
+	pkgJson: PackageJson,
+	options: TypeTestConfigActions,
+): void {
 	if (options.version !== undefined) {
 		const oldDepName = `${pkgJson.name}-previous`;
 

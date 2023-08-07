@@ -2,11 +2,152 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "chai";
+import { assert, expect } from "chai";
 
-import { previousVersion } from "../../src/commands/typetests";
+import {
+	TypeTestConfigActions,
+	VersionOptions,
+	previousVersion,
+	updateTypeTestConfiguration,
+} from "../../src/commands/typetests";
+import { PackageJson } from "@fluidframework/build-tools";
+
+/**
+ * A minimal test package.json. It defines only the required fields according to the type definition.
+ */
+const packageMinimal: PackageJson = {
+	name: "packageMinimal",
+	version: "2.0.0-internal.5.4.3",
+	scripts: {},
+};
+
+/**
+ * A test package.json with an enabled typeValidation node.
+ */
+const packageWithTypeValidation: PackageJson = {
+	name: "packageWithTypeValidation",
+	version: "2.0.0-internal.5.4.3",
+	scripts: {},
+	typeValidation: {
+		broken: {
+			"broken-package": {
+				backCompat: false,
+				forwardCompat: false,
+			},
+		},
+		disabled: false,
+	},
+};
+
+/**
+ * A test package.json with an disabled typeValidation node.
+ */
+const packageWithTypeValidationDisabled: PackageJson = {
+	name: "packageWithTypeValidationDisabled",
+	version: "2.0.0-internal.5.4.3",
+	scripts: {},
+	typeValidation: {
+		broken: {
+			"broken-package": {
+				backCompat: false,
+				forwardCompat: false,
+			},
+		},
+		disabled: true,
+	},
+};
+
+const options: TypeTestConfigActions = {
+	version: VersionOptions.Previous,
+	resetBroken: true,
+};
+
+const optionsMatrix: Map<string, TypeTestConfigActions> = new Map([
+	[
+		"previousAndResetTrue",
+		{
+			version: VersionOptions.Previous,
+			resetBroken: true,
+		},
+	],
+	[
+		"previousAndResetFalse",
+		{
+			version: VersionOptions.Previous,
+			resetBroken: false,
+		},
+	],
+	[
+		"clearAndResetTrue",
+		{
+			version: VersionOptions.Clear,
+			resetBroken: true,
+		},
+	],
+	[
+		"clearAndResetFalse",
+		{
+			version: VersionOptions.Clear,
+			resetBroken: false,
+		},
+	],
+	[
+		"clearIfDisabledAndResetTrue",
+		{
+			version: VersionOptions.ClearIfDisabled,
+			resetBroken: true,
+		},
+	],
+	[
+		"clearIfDisabledAndResetFalse",
+		{
+			version: VersionOptions.ClearIfDisabled,
+			resetBroken: false,
+		},
+	],
+]);
 
 describe("typetests tests", () => {
+	const testPackages = [
+		packageMinimal,
+		packageWithTypeValidation,
+		packageWithTypeValidationDisabled,
+	];
+
+	describe("updateTypeTestConfiguration", () => {
+		// for (const [name, options] of optionsMatrix.entries()) {
+		// }
+			it(`${name}: packageMinimal`, () => {
+				const pkg = packageMinimal;
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.undefined;
+				expect(pkg.typeValidation?.disabled).to.be.undefined;
+			});
+
+			it(`${name}: packageWithTypeValidation`, () => {
+				const pkg = packageWithTypeValidation;
+				updateTypeTestConfiguration(pkg, {
+					version: VersionOptions.Previous,
+					resetBroken: true,
+				});
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+			});
+
+			it(`${name}: packageWithTypeValidationDisabled`, () => {
+				const pkg = packageWithTypeValidation;
+				updateTypeTestConfiguration(pkg, {
+					version: VersionOptions.Previous,
+					resetBroken: true,
+				});
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+			});
+	});
+
 	describe("previousVersion", () => {
 		const cases: [string, string][] = [
 			["1.3.3", "1.3.2"],
@@ -30,4 +171,6 @@ describe("typetests tests", () => {
 			});
 		}
 	});
+
+	describe("previousVersion", () => {});
 });
