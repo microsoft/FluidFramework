@@ -98,12 +98,12 @@ export const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(Lineag
 
 export interface IdRange {
 	id: ChangesetLocalId;
-	count: number;
+	count: CellCount;
 }
 
 export const IdRange = Type.Object({
 	id: ChangesetLocalIdSchema,
-	count: Type.Number(),
+	count: CellCount,
 });
 
 /**
