@@ -195,7 +195,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			},
 		);
 
-		it.only(`Eventual consistency for shared directories with op reentry - ${
+		it(`Eventual consistency for shared directories with op reentry - ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async () => {
 			await setupContainers({
