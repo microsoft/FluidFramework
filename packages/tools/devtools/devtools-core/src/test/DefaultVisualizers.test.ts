@@ -56,23 +56,56 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 }
 
 describe("DefaultVisualizers unit tests", () => {
-	it("SharedCell", async () => {
+	it("SharedCell (Value Node)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+
+		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
+
+		const expected: FluidObjectValueNode = {
+			fluidObjectId: sharedCell.id,
+			value: undefined,
+			typeMetadata: "SharedCell",
+			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: {
+				editTypes: [
+					EditType.Boolean,
+					EditType.Number,
+					EditType.String,
+					EditType.Undefined,
+					EditType.Null,
+				],
+			},
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedCell (Tree Node)", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+
+		sharedCell.set({ test: undefined });
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: sharedCell.id,
 			children: {
-				data: {
-					value: undefined,
-					typeMetadata: "undefined",
-					nodeKind: VisualNodeKind.ValueNode,
+				renderedData: {
+					children: {
+						test: {
+							nodeKind: VisualNodeKind.ValueNode,
+							typeMetadata: "undefined",
+							value: undefined,
+						},
+					},
+					typeMetadata: "object",
+					nodeKind: VisualNodeKind.TreeNode,
 				},
 			},
-			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
+			typeMetadata: "SharedCell",
 		};
 
 		expect(result).to.deep.equal(expected);

@@ -45,11 +45,11 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 
 	const editProps = {
 		editTypes: [
-			EditType.Null,
 			EditType.Boolean,
 			EditType.Number,
 			EditType.String,
 			EditType.Undefined,
+			EditType.Null,
 		],
 	};
 
