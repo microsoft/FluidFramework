@@ -102,7 +102,7 @@ describe("schema converter", () => {
 							}
 						}
 					}
-					assert.equal(propertySchema.value, ValueSchema.Nothing);
+					assert.equal(propertySchema.leafValue, undefined);
 					assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
 					assert(
 						fullSchemaData.treeSchema.get(brand(`array<${typeName}>`)) !== undefined,
@@ -283,7 +283,7 @@ describe("schema converter", () => {
 			assert.deepEqual([...(arrayField.types ?? fail("expected types"))], [arrayTypeName]);
 			const arraySchema = fullSchemaData.treeSchema.get(arrayTypeName);
 			assert(arraySchema !== undefined);
-			assert.equal(arraySchema.value, ValueSchema.Nothing);
+			assert.equal(arraySchema.leafValue, undefined);
 			assert.equal(arraySchema.structFields.size, 1);
 			const primary = getPrimaryField(arraySchema);
 			assert(primary !== undefined);
@@ -316,7 +316,7 @@ describe("schema converter", () => {
 				["Test:Child-1.0.0"],
 			);
 			assert.deepEqual([...mapSchema.structFields], []);
-			assert.equal(mapSchema.value, ValueSchema.Nothing);
+			assert.equal(mapSchema.leafValue, undefined);
 		});
 
 		it(`"set" context is not supported`, () => {
@@ -398,7 +398,7 @@ describe("schema converter", () => {
 			);
 			const enumSchema = fullSchemaData.treeSchema.get(brand(`enum<${enumTypeName}>`));
 			assert(enumSchema && isPrimitive(enumSchema));
-			assert.equal(enumSchema.value, ValueSchema.Number);
+			assert.equal(enumSchema.leafValue, ValueSchema.Number);
 
 			const arrayOfEnums = fullSchemaData.treeSchema.get(
 				brand(`array<enum<${enumTypeName}>>`),

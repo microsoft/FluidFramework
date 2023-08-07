@@ -64,9 +64,10 @@ export class TreeSchema<
 	>;
 
 	public readonly mapFields?: FieldSchema;
-	public readonly value: WithDefault<
+	// WithDefault is needed to convert unknown to undefined here (missing properties show up as unknown in types).
+	public readonly leafValue: WithDefault<
 		Assume<T, TreeSchemaSpecification>["leafValue"],
-		ValueSchema.Nothing
+		undefined
 	>;
 
 	public readonly name: Name & TreeSchemaIdentifier;
@@ -81,9 +82,9 @@ export class TreeSchema<
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
 		this.mapFields = this.info.mapFields;
-		this.value = (this.info.leafValue ?? ValueSchema.Nothing) as WithDefault<
+		this.leafValue = this.info.leafValue as WithDefault<
 			Assume<T, TreeSchemaSpecification>["leafValue"],
-			ValueSchema.Nothing
+			undefined
 		>;
 	}
 }

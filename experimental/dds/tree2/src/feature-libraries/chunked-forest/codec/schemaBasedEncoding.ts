@@ -91,7 +91,7 @@ export function treeShaper(
 
 	const shape = new NodeShape(
 		schemaName,
-		valueShapeFromSchema(schema.value),
+		valueShapeFromSchema(schema.leafValue),
 		structFields,
 		schema.mapFields === undefined ? undefined : fieldHandler.shapeFromField(schema.mapFields),
 	);
@@ -110,16 +110,15 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	}
 }
 
-function valueShapeFromSchema(schema: ValueSchema): undefined | EncodedValueShape {
+function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {
 	switch (schema) {
-		case ValueSchema.Nothing:
+		case undefined:
 			return false;
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-			return true;
 		case ValueSchema.Serializable:
-			return undefined;
+			return true;
 		default:
 			unreachableCase(schema);
 	}
