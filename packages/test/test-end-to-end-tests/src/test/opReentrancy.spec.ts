@@ -261,6 +261,14 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			};
 
 			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
+			assert.strictEqual(
+				sharedDirectory1.get(directory),
+				{
+					concurrentValue: finalConcurrentValue,
+					newValue: "foobar",
+				},
+				"Unexpected final value",
+			);
 		});
 	});
 
