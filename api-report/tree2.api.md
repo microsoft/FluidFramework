@@ -599,7 +599,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairDataBuilder: RepairDataBuilder): Delta.MarkList;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, repairDataBuilder: RepairDataBuilder, idAllocator: IdAllocator): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;

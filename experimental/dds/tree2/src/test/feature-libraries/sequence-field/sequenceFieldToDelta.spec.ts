@@ -19,6 +19,7 @@ import {
 	FieldKinds,
 	NodeChangeset,
 	SequenceField as SF,
+	idAllocatorFromMaxId,
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { brand, brandOpaque, makeArray } from "../../../util";
@@ -51,7 +52,12 @@ function toDelta(
 	repairDataBuilder = { handler: unsupportedRepairDataHandler, marks: new Map() },
 ): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, repairDataBuilder);
+	return SF.sequenceFieldToDelta(
+		change,
+		TestChange.toDelta,
+		repairDataBuilder,
+		idAllocatorFromMaxId(),
+	);
 }
 
 function toDeltaShallow(
@@ -63,6 +69,7 @@ function toDeltaShallow(
 		change,
 		() => fail("Unexpected call to child ToDelta"),
 		repairDataBuilder,
+		idAllocatorFromMaxId(),
 	);
 }
 
@@ -139,7 +146,12 @@ describe("SequenceField - toDelta", () => {
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
 		const { repairDataBuilder } = makeRepairDataBuilder();
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairDataBuilder);
+		const actual = SF.sequenceFieldToDelta(
+			changeset,
+			deltaFromChild,
+			repairDataBuilder,
+			idAllocatorFromMaxId(brand(3)),
+		);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
@@ -387,7 +399,12 @@ describe("SequenceField - toDelta", () => {
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
 		const { repairDataBuilder } = makeRepairDataBuilder();
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, repairDataBuilder);
+		const actual = SF.sequenceFieldToDelta(
+			changeset,
+			deltaFromChild,
+			repairDataBuilder,
+			idAllocatorFromMaxId(brand(3)),
+		);
 		assertMarkListEqual(actual, expected);
 		assert.deepEqual(repairDataBuilder.marks, new Map([]));
 	});

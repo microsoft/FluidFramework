@@ -732,7 +732,8 @@ export class ModularChangeFamily
 			handler: repairDataHandler,
 			marks: repairDataMarks,
 		};
-		const delta = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder);
+		const idAllocator = idAllocatorFromMaxId(change.maxId);
+		const delta = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder, idAllocator);
 
 		repairDataBuilder.marks.forEach((marks, field) => delta.set(field, marks));
 
@@ -745,14 +746,16 @@ export class ModularChangeFamily
 	private intoDeltaImpl(
 		change: FieldChangeMap,
 		repairDataBuilder: RepairDataBuilder,
+		idAllocator: IdAllocator,
 	): Map<FieldKey, Delta.MarkList> {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
 				(childChange): Delta.Modify =>
-					this.deltaFromNodeChange(childChange, repairDataBuilder),
+					this.deltaFromNodeChange(childChange, repairDataBuilder, idAllocator),
 				repairDataBuilder,
+				idAllocator,
 			);
 			delta.set(field, deltaField);
 		}
@@ -762,13 +765,14 @@ export class ModularChangeFamily
 	private deltaFromNodeChange(
 		change: NodeChangeset,
 		repairDataBuilder: RepairDataBuilder,
+		idAllocator: IdAllocator,
 	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder, idAllocator);
 		}
 
 		return modify;

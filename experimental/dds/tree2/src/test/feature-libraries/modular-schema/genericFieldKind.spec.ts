@@ -11,6 +11,7 @@ import {
 	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
+	idAllocatorFromMaxId,
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand } from "../../../util";
@@ -408,6 +409,7 @@ describe("Generic FieldKind", () => {
 			input,
 			childToDelta,
 			repairDataBuilder,
+			idAllocatorFromMaxId(brand(3)),
 		);
 		assert.deepEqual(actual, expected);
 		assert.deepEqual(repairDataBuilder.marks, new Map());

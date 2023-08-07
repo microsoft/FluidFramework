@@ -8,6 +8,7 @@ import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta, RepairDataBuilder } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
+import { IdAllocator } from "../modular-schema";
 import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
@@ -26,6 +27,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
 	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
@@ -90,9 +92,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 						revision: mark.revision,
 						localId: mark.id,
 					});
+					const moveId = brandOpaque<Delta.MoveId>(idAllocator());
 					const moveMark: Mutable<Delta.MoveOut> = {
 						type: Delta.MarkType.MoveOut,
-						moveId: brandOpaque<Delta.MoveId>(mark.id),
+						moveId,
 						count: mark.count,
 					};
 					populateChildModificationsIfAny(
@@ -106,18 +109,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 						{
 							type: Delta.MarkType.MoveIn,
 							count: mark.count,
-							moveId: brandOpaque<Delta.MoveId>(mark.id),
+							moveId,
 						},
 					]);
 					break;
-
-					// const deleteMark: Mutable<Delta.Delete> = {
-					// 	type: Delta.MarkType.Delete,
-					// 	count: mark.count,
-					// };
-					// populateChildModificationsIfAny(mark.changes, deleteMark, deltaFromChild);
-					// out.pushContent(deleteMark);
-					// break;
 				}
 				case "MoveOut":
 				case "ReturnFrom": {

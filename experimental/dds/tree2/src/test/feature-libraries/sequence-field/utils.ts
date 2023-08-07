@@ -167,10 +167,15 @@ export function toDelta(change: TestChangeset): Delta.MarkList {
 	const {
 		repairDataBuilder: { handler, marks },
 	} = makeRepairDataBuilder();
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, {
-		handler,
-		marks,
-	});
+	return SF.sequenceFieldToDelta(
+		change,
+		TestChange.toDelta,
+		{
+			handler,
+			marks,
+		},
+		idAllocatorFromMaxId(brand(0)),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

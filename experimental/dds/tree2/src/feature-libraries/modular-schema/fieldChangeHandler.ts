@@ -26,6 +26,7 @@ export interface FieldChangeHandler<
 		change: TChangeset,
 		deltaFromChild: ToDelta,
 		repairDataBuilder: RepairDataBuilder,
+		idAllocator: IdAllocator,
 	): Delta.MarkList;
 
 	/**
