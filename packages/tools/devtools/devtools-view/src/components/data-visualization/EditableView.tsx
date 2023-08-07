@@ -14,12 +14,7 @@ import {
 	Option,
 	tokens,
 } from "@fluentui/react-components";
-import {
-	DataEdit,
-	EditType,
-	FluidObjectValueNode,
-	Primitive,
-} from "@fluid-experimental/devtools-core";
+import { DataEdit, EditType, FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
@@ -40,7 +35,8 @@ export interface EditableViewProps {
 interface EditableComponentProps {
 	node: FluidObjectValueNode;
 	setEditing: React.Dispatch<React.SetStateAction<boolean>>;
-	submitChange: (data: Serializable<unknown> | Primitive) => void;
+	// eslint-disable-next-line @rushstack/no-new-null
+	submitChange: (data: Serializable<unknown> | null | undefined) => void;
 }
 
 /**
@@ -68,7 +64,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	 * @param data - The data to edit the DDS with
 	 */
 	const submitChange = React.useCallback(
-		(data: Serializable<unknown> | Primitive): void => {
+		(data: Serializable<unknown> | null | undefined): void => {
 			setIsEditing(false);
 			const edit = {
 				fluidObjectId: node.fluidObjectId,
