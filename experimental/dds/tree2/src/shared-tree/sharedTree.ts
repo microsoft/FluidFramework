@@ -34,13 +34,13 @@ import {
 	DefaultChangeset,
 	buildForest,
 	ForestRepairDataStoreProvider,
-	GlobalFieldSchema,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	NewFieldContent,
 	ModularChangeset,
 	nodeKeyFieldKey,
+	FieldSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -152,7 +152,7 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
+	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);

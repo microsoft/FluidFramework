@@ -16,6 +16,23 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 }
 
 /**
+ * Details of the accepted pact.
+ */
+export interface IAcceptedPact<T> {
+	/**
+	 * The accepted value of the given type or undefined (typically in case of delete).
+	 */
+	value: T | undefined;
+
+	/**
+	 * The sequence number when the value was accepted.
+	 *
+	 * For values set in detached state, it will be 0.
+	 */
+	acceptedSequenceNumber: number;
+}
+
+/**
  * An IPactMap is a key-value storage, in which setting a value is done via a proposal system.  All collaborators
  * who were connected at the time of the proposal must accept the change before it is considered accepted (or, if
  * those clients disconnect they are considered to have implicitly accepted).  As a result, the value goes through
@@ -30,6 +47,12 @@ export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	 * @param key - The key to retrieve from
 	 */
 	get(key: string): T | undefined;
+
+	/**
+	 * Gets the accepted value and details for the given key.
+	 * @param key - The key to retrieve from
+	 */
+	getWithDetails(key: string): IAcceptedPact<T> | undefined;
 
 	/**
 	 * Returns whether there is a pending value for the given key.  Can be used to distinguish a pending delete vs.

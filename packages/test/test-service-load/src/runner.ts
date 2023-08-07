@@ -490,7 +490,8 @@ async function scheduleOffline(
 				}
 				if (
 					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent
+					random.real() < stashPercent &&
+					container.closeAndGetPendingLocalState
 				) {
 					printStatus(runConfig, "closing offline container!");
 					return container.closeAndGetPendingLocalState();

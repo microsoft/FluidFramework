@@ -14,17 +14,22 @@ import {
 } from "../contextuallyTyped";
 import { Multiplicity } from "../modular-schema";
 import { InternalTypedSchemaTypes, FieldSchema, TreeSchema, AllowedTypes } from "../typed-schema";
-import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
-import { contextSymbol, typeSymbol } from "../editable-tree";
-import { AllowOptional, Assume, FlattenKeys, _InlineTrick } from "../../util";
+import {
+	UntypedField,
+	UntypedTree,
+	UntypedTreeCore,
+	contextSymbol,
+	typeSymbol,
+} from "../untypedTree";
+import { Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
-import { TypedValue } from "./schemaAwareUtil";
+import { TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
  * @alpha
  */
-// Using {} instead of EmptyObject for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
+// Using {} instead of interface {} or Record<string, never> for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
 // Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
 // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/consistent-type-definitions
 export type EmptyObject = {};
@@ -32,16 +37,8 @@ export type EmptyObject = {};
 /**
  * @alpha
  */
-export type ValuePropertyFromSchema<TSchema extends ValueSchema> =
-	TSchema extends ValueSchema.Nothing
-		? EmptyObject
-		: undefined extends TypedValue<TSchema>
-		? {
-				[valueSymbol]?: TypedValue<TSchema>;
-		  }
-		: {
-				[valueSymbol]: TypedValue<TSchema>;
-		  };
+export type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> =
+	TSchema extends ValueSchema ? { [valueSymbol]: TypedValue<TSchema> } : EmptyObject;
 
 /**
  * Different schema aware APIs that can be generated.
@@ -92,11 +89,11 @@ export const enum ApiMode {
 export type CollectOptions<
 	Mode extends ApiMode,
 	TTypedFields,
-	TValueSchema extends ValueSchema,
+	TValueSchema extends ValueSchema | undefined,
 	TName,
 > = {
 	[ApiMode.Flexible]: EmptyObject extends TTypedFields
-		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
+		? TypedValueOrUndefined<TValueSchema> | FlexibleObject<TValueSchema, TName>
 		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 	[ApiMode.Editable]: {
 		[typeNameSymbol]: TName & TreeSchemaIdentifier;
@@ -107,15 +104,15 @@ export type CollectOptions<
 		TTypedFields,
 		PrimitiveValueSchema,
 	]
-		? TypedValue<TValueSchema>
+		? TypedValueOrUndefined<TValueSchema>
 		: // TODO: primary field unwrapping
 		  CollectOptions<ApiMode.Editable, TTypedFields, TValueSchema, TName>;
 	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
-		[valueSymbol]: TypedValue<TValueSchema>;
+		[valueSymbol]: TypedValueOrUndefined<TValueSchema>;
 	} & TTypedFields;
 	[ApiMode.Simple]: EmptyObject extends TTypedFields
-		? TypedValue<TValueSchema>
+		? TypedValueOrUndefined<TValueSchema>
 		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
 
@@ -123,11 +120,9 @@ export type CollectOptions<
  * The name and value part of the `Flexible` API.
  * @alpha
  */
-export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
+export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
 	FlattenKeys<
-		{ [typeNameSymbol]?: UnbrandedName<TName> } & AllowOptional<
-			ValuePropertyFromSchema<TValueSchema>
-		>
+		{ [typeNameSymbol]?: UnbrandedName<TName> } & ValuePropertyFromSchema<TValueSchema>
 	>,
 ][_InlineTrick];
 
@@ -143,9 +138,6 @@ export type UnbrandedName<TName> = [
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
  * In Editable mode, unwraps the fields.
- *
- * TODO:
- * Extend this to support global fields.
  * @alpha
  */
 export type TypedFields<
@@ -276,9 +268,9 @@ export type TypedNode<
 		Mode,
 		TypedFields<
 			Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode,
-			TSchema["localFieldsObject"]
+			TSchema["structFieldsObject"]
 		>,
-		TSchema["value"],
+		TSchema["leafValue"],
 		TSchema["name"]
 	>
 >;

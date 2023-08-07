@@ -42,7 +42,6 @@ import { ILocalValue } from '@fluidframework/map';
 import { IMapMessageLocalMetadata } from '@fluidframework/sequence';
 import { IMember } from '@fluidframework/fluid-static';
 import { Interval } from '@fluidframework/sequence';
-import { IntervalConflictResolver } from '@fluidframework/sequence';
 import { IntervalLocator } from '@fluidframework/sequence';
 import { intervalLocatorFromEndpoint } from '@fluidframework/sequence';
 import { IntervalType } from '@fluidframework/sequence';
@@ -70,8 +69,6 @@ import { LoadableObjectRecord } from '@fluidframework/fluid-static';
 import { LocalValueMaker } from '@fluidframework/map';
 import { MapFactory } from '@fluidframework/map';
 import { MemberChangedListener } from '@fluidframework/fluid-static';
-import { RootDataObject } from '@fluidframework/fluid-static';
-import { RootDataObjectProps } from '@fluidframework/fluid-static';
 import { SequenceDeltaEvent } from '@fluidframework/sequence';
 import { SequenceEvent } from '@fluidframework/sequence';
 import { SequenceInterval } from '@fluidframework/sequence';
@@ -166,8 +163,6 @@ export { IMember }
 
 export { Interval }
 
-export { IntervalConflictResolver }
-
 export { IntervalLocator }
 
 export { intervalLocatorFromEndpoint }
@@ -221,10 +216,6 @@ export { LocalValueMaker }
 export { MapFactory }
 
 export { MemberChangedListener }
-
-export { RootDataObject }
-
-export { RootDataObjectProps }
 
 export { SequenceDeltaEvent }
 

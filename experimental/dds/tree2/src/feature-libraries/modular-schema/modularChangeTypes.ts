@@ -23,7 +23,7 @@ export interface ChangeAtomId {
 	 * Uniquely identifies the changeset within which the change was made.
 	 * Only undefined when referring to an anonymous changesets.
 	 */
-	readonly revision: RevisionTag | undefined;
+	readonly revision?: RevisionTag;
 	/**
 	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
 	 */

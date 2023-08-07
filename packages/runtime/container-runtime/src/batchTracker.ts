@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 export class BatchTracker {
 	private readonly logger: ITelemetryLoggerExt;
@@ -16,7 +17,7 @@ export class BatchTracker {
 
 	constructor(
 		private readonly batchEventEmitter: EventEmitter,
-		logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		batchLengthThreshold: number,
 		batchCountSamplingRate: number,
 		dateTimeProvider: () => number = () => performance.now(),

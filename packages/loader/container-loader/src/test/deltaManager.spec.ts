@@ -11,7 +11,7 @@ import {
 } from "@fluid-internal/test-loader-utils";
 import {
 	ITelemetryLoggerExt,
-	createDebugLogger,
+	createChildLogger,
 	MockLogger,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -92,7 +92,7 @@ describe("Loader", () => {
 
 				await new Promise((resolve) => {
 					deltaManager.on("connect", resolve);
-					deltaManager.connect({ reason: "test" });
+					deltaManager.connect({ reason: { text: "test" } });
 				});
 			}
 
@@ -159,7 +159,7 @@ describe("Loader", () => {
 
 			beforeEach(async () => {
 				seq = 1;
-				logger = createDebugLogger({ namespace: "fluid:testDeltaManager" });
+				logger = createChildLogger({ namespace: "fluid:testDeltaManager" });
 				emitter = new EventEmitter();
 
 				clientSeqNumber = 0;
@@ -493,7 +493,7 @@ describe("Loader", () => {
 
 			it("Closed abort reason should be passed fetch abort signal", async () => {
 				const mockLogger = new MockLogger();
-				await startDeltaManager(undefined, mockLogger, () => ({
+				await startDeltaManager(undefined, mockLogger.toTelemetryLogger(), () => ({
 					fetchMessages: (
 						_from: number,
 						_to: number | undefined,
