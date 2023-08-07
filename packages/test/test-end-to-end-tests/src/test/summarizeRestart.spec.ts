@@ -49,6 +49,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				message: "Stopping fetch from storage",
 			},
 			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 			{
@@ -82,6 +86,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
 			},
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
@@ -120,6 +128,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
 			},
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
@@ -171,6 +183,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
 			},
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",

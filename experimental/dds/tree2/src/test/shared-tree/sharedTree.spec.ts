@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	FieldKinds,
 	singleTextCursor,
@@ -17,7 +18,6 @@ import {
 	on,
 	SchemaBuilder,
 	Any,
-	emptyField,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -49,6 +49,7 @@ import {
 	ValueSchema,
 	AllowedUpdateType,
 	LocalCommitSource,
+	storedEmptyFieldSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
@@ -1261,13 +1262,13 @@ describe("SharedTree", () => {
 			insert(provider.trees[0], 0, "a");
 			await provider.ensureSynchronized();
 
-			const pausedContainer = provider.containers[0];
+			const pausedContainer: IContainerExperimental = provider.containers[0];
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			insert(pausedTree, 1, "b");
 			insert(pausedTree, 2, "c");
-			const pendingOps = pausedContainer.closeAndGetPendingLocalState();
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedTree = provider.trees[1];
@@ -1535,11 +1536,11 @@ describe("SharedTree", () => {
 		itView("properly fork the tree schema", (parent) => {
 			const schemaA: SchemaData = {
 				treeSchema: new Map([]),
-				rootFieldSchema: emptyField,
+				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: SchemaData = {
 				treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-				rootFieldSchema: emptyField,
+				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
 				return t.storedSchema.treeSchema.size === 0 ? "schemaA" : "schemaB";

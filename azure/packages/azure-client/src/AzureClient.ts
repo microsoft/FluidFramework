@@ -15,7 +15,7 @@ import {
 	DOProviderContainerRuntimeFactory,
 	FluidContainer,
 	IFluidContainer,
-	RootDataObject,
+	IRootDataObject,
 } from "@fluidframework/fluid-static";
 import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -163,7 +163,7 @@ export class AzureClient {
 		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
 		url.searchParams.append("containerId", encodeURIComponent(id));
 		const container = await loader.resolve({ url: url.href });
-		const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -248,7 +248,7 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
-		const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
 		/**
 		 * See {@link FluidContainer.attach}
