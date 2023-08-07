@@ -44,7 +44,7 @@ import {
 	RootDataVisualizations,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
-import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
+import { ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
@@ -534,11 +534,11 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 */
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
-			[ContainerDevtoolsFeature.ContainerData]: this.containerData !== undefined,
+			containerDataVisualization: this.containerData !== undefined,
 			/**
 			 * Todo: When ready to enable feature set it to this.containerData !== undefined
 			 */
-			[ContainerDevtoolsFeature.ContainerDataEditing]: false,
+			containerDataEditing: false,
 		};
 	}
 
