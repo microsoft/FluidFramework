@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
+import {
+	IIdCompressor,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/runtime-definitions";
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -566,7 +570,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		compressedIds.push(getIdCompressor(sharedCellContainer1).generateCompressedId());
 		compressedIds.push(getIdCompressor(dataStore2.map).generateCompressedId());
 
-		const decompressedIds: string[] = [];
+		const decompressedIds: StableId[] = [];
 		compressedIds.forEach((id) => {
 			const decompressedId = getIdCompressor(sharedMapContainer1).decompress(id);
 

@@ -1099,14 +1099,28 @@ use_old_InterfaceDeclaration_IdCreationRange(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {"forwardCompat": false}
+* "TypeAliasDeclaration_IdCreationRangeWithStashedState": {"forwardCompat": false}
 */
+declare function get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState():
+    TypeOnly<old.IdCreationRangeWithStashedState>;
+declare function use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
+    use: TypeOnly<current.IdCreationRangeWithStashedState>);
+use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {"backCompat": false}
+* "TypeAliasDeclaration_IdCreationRangeWithStashedState": {"backCompat": false}
 */
+declare function get_current_TypeAliasDeclaration_IdCreationRangeWithStashedState():
+    TypeOnly<current.IdCreationRangeWithStashedState>;
+declare function use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
+    use: TypeOnly<old.IdCreationRangeWithStashedState>);
+use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
 * Validate forward compat by using old type in place of current type

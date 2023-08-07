@@ -155,6 +155,10 @@
 			"RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

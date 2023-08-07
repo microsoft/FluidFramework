@@ -69,4 +69,5 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 } from "./summary";
+export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
