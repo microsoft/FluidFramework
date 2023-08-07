@@ -140,8 +140,8 @@ export class SharedTree
 		return this.view.root;
 	}
 
-	public set root(data: NewFieldContent) {
-		this.view.root = data;
+	public setContent(data: NewFieldContent): void {
+		this.view.setContent(data);
 	}
 
 	public get context(): EditableTreeContext {
