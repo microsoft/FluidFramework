@@ -15,7 +15,12 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
-import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
+import {
+	CachedConfigProvider,
+	loggerIsMonitoringContext,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
+} from "./config";
 import {
 	isILoggingError,
 	extractLogSafeErrorProperties,
@@ -311,11 +316,73 @@ export function createChildLogger(props?: {
 }
 
 /**
+ * Contains sampling strategies for telemetry.
+ *
+ * @remarks This is an object instead of an enum for better comaptibility
+ * https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums
+ */
+export const SamplingStrategy = {
+	/**
+	 * Samples a subset of data from a larger set by selecting every nth event
+	 */
+	SYSTEMATIC: "Systematic",
+	/**
+	 * Samples a subset of data from a larger set using a controled psuedo-random chance.
+	 */
+	RANDOM: "Random",
+} as const;
+
+/**
+ * This type should be used as the "Enum" for SamplingStrategy.
+ */
+export type ESamplingStrategy = typeof SamplingStrategy[keyof typeof SamplingStrategy];
+
+/**
+ * Configuration for systematically sampling telemetry.
+ * See {@link SamplingStrategy.SYSTEMATIC} for more information.
+ */
+export interface SystematicSamplingConfig {
+	strategy: typeof SamplingStrategy.SYSTEMATIC;
+	/**
+	 * Determines whether to send every nth event. E.g. 500 would send 1 out of every 500 events.
+	 */
+	samplingRate: number;
+}
+
+/**
+ * Configuration for randomly sampling telemetry.
+ * See {@link SamplingStrategy.RANDOM} for more information.
+ */
+export interface RandomChanceSamplingConfig {
+	strategy: typeof SamplingStrategy.RANDOM;
+	/**
+	 * Should be a number between 0 and 1.
+	 * The random number generated must be greater than this number for telemetry to be emitted
+	 */
+	percentChance: number;
+}
+
+export type SamplingConfig = SystematicSamplingConfig | RandomChanceSamplingConfig;
+
+interface SystematicSamplingState {
+	sampledEvents: number;
+}
+
+/**
+ *
+ * @remarks This type leaves us room to continue to add to if/when we add new sampling strategies.
+ */
+type SamplingState = SystematicSamplingState;
+
+/**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
 export class ChildLogger extends TelemetryLogger {
+	private readonly isSamplingDisabled: boolean = false;
+	private readonly eventSamplingStates: { [key: string]: SamplingState | undefined } = {};
+
 	/**
 	 * Create child logger
 	 * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
@@ -327,6 +394,7 @@ export class ChildLogger extends TelemetryLogger {
 		baseLogger?: ITelemetryBaseLogger,
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
+		eventSamplingConfigs?: Map<string, SamplingConfig>,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
 		// the callstack overhead, just generate a new logger that includes everything from the previous
@@ -360,6 +428,7 @@ export class ChildLogger extends TelemetryLogger {
 				baseLogger.baseLogger,
 				combinedNamespace,
 				combinedProperties,
+				eventSamplingConfigs,
 			);
 
 			if (!loggerIsMonitoringContext(child) && loggerIsMonitoringContext(baseLogger)) {
@@ -375,22 +444,75 @@ export class ChildLogger extends TelemetryLogger {
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
+		private readonly eventSamplingConfigs?: Map<string, SamplingConfig>,
 	) {
 		super(namespace, properties);
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
 			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
+
+			// Read config flag only once, so we don't pay the price every time an event is logged.
+			const mc = loggerToMonitoringContext(this);
+			if (mc.config.getBoolean("Fluid.Telemetry.DisableSampling") === true) {
+				this.isSamplingDisabled = true;
+			}
 		}
 	}
 
 	/**
-	 * Send an event with the logger
+	 * Send an event with the logger. If the given event is mapped to a {@link SamplingConfig}
+	 * then the associated sampling will be applied.
 	 *
 	 * @param event - the event to send
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		this.baseLogger.send(this.prepareEvent(event));
+		if (this.isSamplingDisabled) {
+			this.baseLogger.send(this.prepareEvent(event));
+			return;
+		}
+
+		const samplingConfig = this.eventSamplingConfigs?.get(event.eventName);
+		switch (samplingConfig?.strategy) {
+			case SamplingStrategy.SYSTEMATIC:
+				this.sendWithSystematicSampling(event, samplingConfig);
+				break;
+			case SamplingStrategy.RANDOM:
+				this.sendWithRandomChanceSampling(event, samplingConfig);
+				break;
+			default:
+				this.baseLogger.send(this.prepareEvent(event));
+				break;
+		}
+	}
+
+	private sendWithSystematicSampling(
+		event: ITelemetryBaseEvent,
+		samplingConfig: SystematicSamplingConfig,
+	): void {
+		let samplingState = this.eventSamplingStates[event.eventName];
+
+		if (samplingState === undefined) {
+			this.eventSamplingStates[event.eventName] = {
+				sampledEvents: 0,
+			};
+			samplingState = this.eventSamplingStates[event.eventName];
+		}
+		samplingState!.sampledEvents++;
+
+		if (samplingState!.sampledEvents % samplingConfig.samplingRate === 1) {
+			this.baseLogger.send(this.prepareEvent(event));
+			samplingState!.sampledEvents = 1;
+		}
+	}
+
+	private sendWithRandomChanceSampling(
+		event: ITelemetryBaseEvent,
+		samplingConfig: RandomChanceSamplingConfig,
+	): void {
+		if (Math.random() < samplingConfig.percentChance) {
+			this.baseLogger.send(this.prepareEvent(event));
+		}
 	}
 }
 

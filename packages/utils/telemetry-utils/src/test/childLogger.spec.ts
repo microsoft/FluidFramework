@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ChildLogger, createChildLogger } from "../logger";
+import { ChildLogger, SamplingConfig, SamplingStrategy, createChildLogger } from "../logger";
+import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
@@ -175,5 +176,180 @@ describe("ChildLogger", () => {
 
 		childLogger2.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event should be sent");
+	});
+
+	describe("Sampling", () => {
+		let events: ITelemetryBaseEvent[] = [];
+		function getBaseLoggerWithConfig(
+			configDictionary?: Record<string, ConfigTypes>,
+		): ITelemetryBaseLogger {
+			const logger: ITelemetryBaseLogger = {
+				send(event: ITelemetryBaseEvent): void {
+					events.push(event);
+				},
+			};
+			const configProvider = (
+				settings: Record<string, ConfigTypes>,
+			): IConfigProviderBase => ({
+				getRawConfig: (name: string): ConfigTypes => settings[name],
+			});
+			return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
+		}
+
+		beforeEach(() => {
+			events = [];
+		});
+
+		it("Applies sampling when feature flag to force unsampled telemetry is not set", () => {
+			const eventSamplingConfigs = new Map<string, SamplingConfig>([
+				[
+					"oneEveryTwo",
+					{
+						strategy: SamplingStrategy.SYSTEMATIC,
+						samplingRate: 2,
+					},
+				],
+				[
+					"oneEveryFive",
+					{
+						strategy: SamplingStrategy.SYSTEMATIC,
+						samplingRate: 2,
+					},
+				],
+				[
+					"randomChance",
+					{
+						strategy: SamplingStrategy.RANDOM,
+						percentChance: 0.75,
+					},
+				],
+			]);
+
+			const logger = getBaseLoggerWithConfig();
+			const childLogger = ChildLogger.create(
+				logger,
+				undefined,
+				undefined,
+				eventSamplingConfigs,
+			);
+
+			for (let i = 0; i < 15; i++) {
+				childLogger.send({ category: "generic", eventName: "noSampling" });
+				childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
+				childLogger.send({ category: "generic", eventName: "oneEveryFive" });
+			}
+
+			const totalEmittedRandomChanceEvents = 1000;
+			for (let i = 0; i < totalEmittedRandomChanceEvents; i++) {
+				childLogger.send({ category: "generic", eventName: "randomChance" });
+			}
+
+			// These counts also validate that we issue sampled events the first time we see them, not only until the specified
+			// number of samples have been seen.
+			assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
+			assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 8);
+			assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 3);
+			assert.equal(
+				events.filter((event) => event.eventName === "randomChance").length >
+					totalEmittedRandomChanceEvents,
+				true,
+			);
+		});
+
+		it("Ignores sampling when feature flag to force unsampled telemetry is set", () => {
+			const eventSamplingConfigs = new Map<string, SamplingConfig>([
+				[
+					"oneEveryTwo",
+					{
+						strategy: SamplingStrategy.SYSTEMATIC,
+						samplingRate: 2,
+					},
+				],
+				[
+					"oneEveryFive",
+					{
+						strategy: SamplingStrategy.SYSTEMATIC,
+						samplingRate: 2,
+					},
+				],
+			]);
+			const injectedSettings = {
+				"Fluid.Telemetry.DisableSampling": true,
+			};
+			const logger = getBaseLoggerWithConfig(injectedSettings);
+			const childLogger = ChildLogger.create(
+				logger,
+				undefined,
+				undefined,
+				eventSamplingConfigs,
+			);
+
+			for (let i = 0; i < 15; i++) {
+				childLogger.send({ category: "generic", eventName: "noSampling" });
+				childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
+				childLogger.send({ category: "generic", eventName: "oneEveryFive" });
+			}
+
+			assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
+			assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 15);
+			assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 15);
+		});
+
+		it("Random Chance telemetry works as expected", () => {
+			const eventSamplingConfigs = new Map<string, SamplingConfig>([
+				[
+					"randomChanceWith0%",
+					{
+						strategy: SamplingStrategy.RANDOM,
+						percentChance: 0,
+					},
+				],
+				[
+					"randomChanceWith75%",
+					{
+						strategy: SamplingStrategy.RANDOM,
+						percentChance: 0.75,
+					},
+				],
+
+				[
+					"randomChanceWith100%",
+					{
+						strategy: SamplingStrategy.RANDOM,
+						percentChance: 1,
+					},
+				],
+			]);
+
+			const logger = getBaseLoggerWithConfig();
+			const childLogger = ChildLogger.create(
+				logger,
+				undefined,
+				undefined,
+				eventSamplingConfigs,
+			);
+
+			const totalEmittedEvents = 50;
+			for (let i = 0; i < totalEmittedEvents; i++) {
+				childLogger.send({ category: "generic", eventName: "randomChanceWith0%" });
+				childLogger.send({ category: "generic", eventName: "randomChanceWith75%" });
+				childLogger.send({ category: "generic", eventName: "randomChanceWith100%" });
+			}
+
+			// These counts also validate that we issue sampled events the first time we see them, not only until the specified
+			// number of samples have been seen.
+			assert.equal(
+				events.filter((event) => event.eventName === "randomChanceWith0%").length,
+				0,
+			);
+			assert.equal(
+				events.filter((event) => event.eventName === "randomChanceWith75%").length > 0,
+				true,
+			);
+			assert.equal(
+				events.filter((event) => event.eventName === "randomChanceWith100%").length,
+				totalEmittedEvents,
+			);
+		});
 	});
 });
