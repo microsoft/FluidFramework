@@ -43,6 +43,7 @@ import {
 	proxyTargetSymbol,
 	NewFieldContent,
 	localNodeKeySymbol,
+	setField,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -172,6 +173,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
+	public setField(fieldKey: FieldKey, content: NewFieldContent): void {
+		this.getField(fieldKey).setContent(content);
+	}
+
 	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
@@ -281,6 +286,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target[Symbol.iterator].bind(target);
 			case getField:
 				return target.getField.bind(target);
+			case setField:
+				return target.setField.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:
@@ -305,7 +312,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		);
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).content = value;
+			target.setField(fieldKey, value);
 			return true;
 		}
 		return false;
@@ -401,6 +408,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					configurable: true,
 					enumerable: false,
 					value: target.getField.bind(target),
+					writable: false,
+				};
+			case setField:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.setField.bind(target),
 					writable: false,
 				};
 			case parentField:

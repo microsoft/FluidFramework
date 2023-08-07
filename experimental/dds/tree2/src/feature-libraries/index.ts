@@ -51,6 +51,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	setField,
 } from "./editable-tree";
 
 export {
