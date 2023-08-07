@@ -21,7 +21,8 @@ import {
 	ArrowJoinRegular,
 	ArrowExitRegular,
 } from "@fluentui/react-icons";
-import { ThemeContext, ThemeOption } from "../ThemeHelper";
+
+import { ThemeOption, useThemeContext } from "../ThemeHelper";
 import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
@@ -57,10 +58,12 @@ export interface AudienceHistoryTableProps {
 
 /**
  * Renders audience history data of user status event, clientId & timestamp.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
-	const { themeInfo } = React.useContext(ThemeContext);
+	const { themeInfo } = useThemeContext();
 
 	const style = audienceStyles();
 

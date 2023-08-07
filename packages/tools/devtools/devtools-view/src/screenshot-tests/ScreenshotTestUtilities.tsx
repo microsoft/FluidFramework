@@ -6,7 +6,7 @@
 import { FluentProvider } from "@fluentui/react-components";
 import React from "react";
 
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 import { MockMessageRelay } from "../test/MockMessageRelay";
 import { MessageRelayContext } from "../MessageRelayContext";
@@ -36,7 +36,7 @@ function TestContexts(props: TestContextsProps): React.ReactElement {
 	// TODO: extract relay and logger into constants
 	return (
 		<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
-			<LoggerContext.Provider value={new TelemetryNullLogger()}>
+			<LoggerContext.Provider value={createChildLogger()}>
 				<FluentProvider theme={themeInfo.theme}>{children}</FluentProvider>
 			</LoggerContext.Provider>
 		</MessageRelayContext.Provider>

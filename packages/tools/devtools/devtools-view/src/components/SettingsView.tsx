@@ -15,7 +15,7 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 
-import { ThemeContext, ThemeOption } from "../ThemeHelper";
+import { ThemeOption, useThemeContext } from "../ThemeHelper";
 import { useTelemetryOptIn } from "../TelemetryUtils";
 
 const useStyles = makeStyles({
@@ -57,9 +57,11 @@ const useStyles = makeStyles({
 });
 /**
  * Settings page for the devtools.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function SettingsView(): React.ReactElement {
-	const { themeInfo, setTheme } = React.useContext(ThemeContext);
+	const { themeInfo, setTheme } = useThemeContext();
 
 	const styles = useStyles();
 	const [optedIn, setOptedIn] = useTelemetryOptIn();
