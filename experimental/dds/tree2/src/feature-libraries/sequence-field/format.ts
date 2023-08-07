@@ -117,7 +117,7 @@ export const CellId = Type.Composite([
 	EncodedChangeAtomId,
 	HasLineage,
 	Type.Object({ adjacentCells: Type.Optional(IdRange) }),
-]);
+], noAdditionalProps);
 
 export interface HasChanges<TNodeChange = NodeChangeType> {
 	changes?: TNodeChange;
