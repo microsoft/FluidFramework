@@ -56,7 +56,7 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 }
 
 describe("DefaultVisualizers unit tests", () => {
-	it("SharedCell (Value Node)", async () => {
+	it("SharedCell (Primitive data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
 
@@ -75,7 +75,7 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	it("SharedCell (Tree Node)", async () => {
+	it("SharedCell (JSON data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
 
