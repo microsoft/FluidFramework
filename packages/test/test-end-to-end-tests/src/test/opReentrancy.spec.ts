@@ -195,6 +195,38 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			},
 		);
 
+		const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
+			if (a === undefined || b === undefined) {
+				assert.strictEqual(a, b, "Both directories should be undefined");
+				return;
+			}
+
+			const leftKeys = Array.from(a.keys());
+			const rightKeys = Array.from(b.keys());
+			assert.strictEqual(
+				leftKeys.length,
+				rightKeys.length,
+				"Number of keys should be the same",
+			);
+			leftKeys.forEach((key) => {
+				const left = JSON.stringify(a.get(key));
+				const right = JSON.stringify(b.get(key));
+				assert.strictEqual(left, right, "Key values should be the same");
+			});
+
+			const leftSubdirectories = Array.from(a.subdirectories());
+			const rightSubdirectories = Array.from(b.subdirectories());
+			assert.strictEqual(
+				leftSubdirectories.length,
+				rightSubdirectories.length,
+				"Number of subdirectories should be the same",
+			);
+
+			leftSubdirectories.forEach(([name]) =>
+				areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name)),
+			);
+		};
+
 		it(`Eventual consistency for shared directories with op reentry - ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async () => {
@@ -211,6 +243,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			sharedDirectory1.set(directory, { concurrentValue });
 
 			await provider.ensureSynchronized();
+			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
+
 			const concurrentValue1 = Number(sharedDirectory1.get(directory).concurrentValue) + 10;
 			const concurrentValue2 = Number(sharedDirectory1.get(directory).concurrentValue) + 20;
 
@@ -218,6 +252,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			sharedDirectory2.set(directory, { concurrentValue: concurrentValue2 });
 
 			await provider.ensureSynchronized();
+			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
+
 			sharedDirectory1.set(directory, {
 				...sharedDirectory1.get(directory),
 				concurrentValue: finalConcurrentValue,
@@ -226,49 +262,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				...sharedDirectory2.get(directory),
 				newValue: "foobar",
 			});
+
 			await provider.ensureSynchronized();
-
-			const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
-				if (a === undefined || b === undefined) {
-					assert.strictEqual(a, b, "Both directories should be undefined");
-					return;
-				}
-
-				const leftKeys = Array.from(a.keys());
-				const rightKeys = Array.from(b.keys());
-				assert.strictEqual(
-					leftKeys.length,
-					rightKeys.length,
-					"Number of keys should be the same",
-				);
-				leftKeys.forEach((key) => {
-					const left = JSON.stringify(a.get(key));
-					const right = JSON.stringify(b.get(key));
-					assert.strictEqual(left, right, "Key values should be the same");
-				});
-
-				const leftSubdirectories = Array.from(a.subdirectories());
-				const rightSubdirectories = Array.from(b.subdirectories());
-				assert.strictEqual(
-					leftSubdirectories.length,
-					rightSubdirectories.length,
-					"Number of subdirectories should be the same",
-				);
-
-				leftSubdirectories.forEach(([name]) =>
-					areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name)),
-				);
-			};
-
 			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
-			assert.strictEqual(
-				sharedDirectory1.get(directory),
-				{
-					concurrentValue: finalConcurrentValue,
-					newValue: "foobar",
-				},
-				"Unexpected final value",
-			);
 		});
 	});
 
