@@ -270,9 +270,18 @@ export class RedisFs implements IFileSystemPromises {
 			},
 		);
 
+		const rmPs: Promise<boolean>[] = [];
+
 		keysToRemove.forEach((key) => {
-			void this.redisFsClient.delete(key);
+			rmPs.push(
+				this.redisFsClient.delete(key).catch((error) => {
+					Lumberjack.error(`Error deleting file from Redis`, undefined, error);
+					throw error;
+				}),
+			);
 		});
+
+		await Promise.all(rmPs);
 	}
 
 	/**

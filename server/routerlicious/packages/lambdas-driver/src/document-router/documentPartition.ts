@@ -100,7 +100,12 @@ export class DocumentPartition {
 			return;
 		}
 
-		void this.q.push(message);
+		this.q.push(message).catch((error) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			};
+			Lumberjack.error("Error pushing raw message to queue", lumberjackProperties, error);
+		});
 		this.updateActivityTime();
 	}
 
