@@ -97,14 +97,7 @@ describe("SequenceField - Invert", () => {
 	it("intentional active revive => delete", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const input = Change.intentionalRevive(0, 2, cellId);
-		const expected: TestChangeset = [
-			{
-				type: "Delete",
-				id: brand(0),
-				count: 2,
-				detachIdOverride: cellId,
-			},
-		];
+		const expected: TestChangeset = [Mark.delete(2, brand(0), { detachIdOverride: cellId })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
