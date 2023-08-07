@@ -15,6 +15,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -70,7 +71,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 
 // @internal
 export enum ContainerDevtoolsFeature {
-    ContainerData = "container-data"
+    ContainerData = "container-data",
+    ContainerDataEditing = "container-data-editing"
 }
 
 // @internal
@@ -94,7 +96,6 @@ export namespace ContainerDevtoolsFeatures {
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 // @public
@@ -155,6 +156,18 @@ export interface ContainerStateMetadata extends HasContainerKey {
     // (undocumented)
     connectionState: ConnectionState;
     userId?: string;
+}
+
+// @internal
+export namespace DataEdit {
+    const MessageType = "DATA_EDIT";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerKey {
+        edit: SharedObjectEdit;
+    }
 }
 
 // @internal
@@ -220,41 +233,59 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerKey;
 }
 
+// @internal
+export interface Edit {
+    data: Serializable<unknown>;
+    type?: EditType | string;
+}
+
+// @internal
+export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
+
+// @internal
+export enum EditType {
+    // (undocumented)
+    Boolean = "boolean",
+    // (undocumented)
+    Number = "number",
+    // (undocumented)
+    String = "string"
+}
+
 // @public
 export interface FluidDevtoolsProps {
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
 }
 
-// @public
+// @internal
 export interface FluidHandleNode extends VisualNodeBase {
     fluidObjectId: string;
     nodeKind: VisualNodeKind.FluidHandleNode;
 }
 
-// @public
+// @internal
 export type FluidObjectId = string;
 
-// @public
+// @internal
 export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
 
-// @public
+// @internal
 export interface FluidObjectNodeBase extends VisualNodeBase {
     fluidObjectId: FluidObjectId;
 }
 
-// @public
+// @internal
 export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidTreeNode;
 }
 
-// @public
+// @internal
 export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidValueNode;
 }
 
-// @public
+// @internal
 export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidUnknownObjectNode;
 }
@@ -412,7 +443,7 @@ export interface MessageLoggingOptions {
     context?: string;
 }
 
-// @public
+// @internal
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
 // @internal
@@ -427,8 +458,12 @@ export namespace RootDataVisualizations {
     }
 }
 
-// @public
+// @internal
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
+
+// @internal
+export interface SharedObjectEdit extends Edit, HasFluidObjectId {
+}
 
 // @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
@@ -459,41 +494,38 @@ export namespace TelemetryHistory {
     }
 }
 
-// @public
+// @internal
 export interface TreeNodeBase extends VisualNodeBase {
     children: Record<string, VisualChildNode>;
 }
 
-// @public
+// @internal
 export interface UnknownObjectNode extends VisualNodeBase {
     nodeKind: VisualNodeKind.UnknownObjectNode;
 }
 
-// @public
+// @internal
 export interface ValueNodeBase extends VisualNodeBase {
     value: Primitive;
 }
 
-// @public
+// @internal
 export type VisualChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
 
-// @public
-export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
-
-// @public
-export type VisualizeSharedObject = (sharedObject: ISharedObject, visualizeChildData: VisualizeChildData) => Promise<FluidObjectNode>;
-
-// @public
+// @internal
 export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
 
-// @public
+// @internal
 export interface VisualNodeBase {
+    editProps?: {
+        editTypes?: EditType[];
+    };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
     typeMetadata?: string;
 }
 
-// @public
+// @internal
 export enum VisualNodeKind {
     // (undocumented)
     FluidHandleNode = "FluidHandleNode",
@@ -511,12 +543,12 @@ export enum VisualNodeKind {
     ValueNode = "ValueNode"
 }
 
-// @public
+// @internal
 export interface VisualTreeNode extends TreeNodeBase {
     nodeKind: VisualNodeKind.TreeNode;
 }
 
-// @public
+// @internal
 export interface VisualValueNode extends ValueNodeBase {
     nodeKind: VisualNodeKind.ValueNode;
 }

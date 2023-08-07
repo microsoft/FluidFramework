@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { FieldKey } from "../schema-stored";
 import {
 	AnchorSet,
-	FieldKey,
 	DetachedField,
 	Delta,
 	Anchor,
 	ITreeCursorSynchronous,
-	rootFieldKeySymbol,
+	rootFieldKey,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -39,7 +39,7 @@ export interface IEditableForest extends IForestSubscription {
 export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
 	// TODO: maybe assert forest is empty?
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	forest.applyDelta(new Map([[rootFieldKeySymbol, [insert]]]));
+	forest.applyDelta(new Map([[rootFieldKey, [insert]]]));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
@@ -63,7 +63,7 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
 }
 
 /**
- * Wrapper around DetachedField that can be detected at runtime.
+ * Location of a field within a tree that is not a detached/root field.
  * @alpha
  */
 export interface FieldLocation {

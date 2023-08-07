@@ -9,11 +9,10 @@ import {
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	ITreeCursor,
-	UpPath,
-	PathVisitor,
 	NamedTreeSchema,
 	isCursor,
 } from "../../core";
+import { requireAssignableTo } from "../../util";
 import {
 	PrimitiveValue,
 	MarkedArrayLike,
@@ -23,6 +22,16 @@ import {
 	ContextuallyTypedFieldData,
 } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
+import {
+	EditableTreeEvents,
+	UntypedField,
+	UntypedTree,
+	contextSymbol,
+	getField,
+	on,
+	parentField,
+	typeSymbol,
+} from "../untypedTree";
 import { EditableTreeContext } from "./editableTreeContext";
 
 /**
@@ -33,76 +42,10 @@ import { EditableTreeContext } from "./editableTreeContext";
 export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
- * A symbol to get the type of {@link EditableTree} in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const typeSymbol: unique symbol = Symbol("editable-tree:type");
-
-/**
- * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const getField: unique symbol = Symbol("editable-tree:getField()");
-
-/**
- * A symbol to get information about where an {@link EditableTree} is parented in contexts where string keys are already in use for fields.
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const parentField: unique symbol = Symbol("editable-tree:parentField()");
-
-/**
- * A symbol to get a common context of a "forest" of EditableTrees
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const contextSymbol: unique symbol = Symbol("editable-tree:context");
-
-/**
  * A symbol to get the {@link LocalNodeKey} that identifies this {@link EditableTree} node.
  * @alpha
  */
 export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNodeKey");
-
-/**
- * A symbol for subscribing to events.
- * @alpha
- */
-export const on: unique symbol = Symbol("editable-tree:on");
-
-/**
- * A collection of events that can be raised by an {@link EditableTree}.
- * These events are triggered while the internal data structures are being updated.
- * Thus these events must not trigger reading of the anchorSet or forest.
- *
- * TODO:
- * - Design how events should be ordered.
- * - Include sub-deltas in events.
- * - Add more events.
- * - Have some events (or a way to defer events) until the tree can be read.
- *
- * @alpha
- */
-export interface EditableTreeEvents {
-	/**
-	 * Raised when a specific EditableTree node is changing.
-	 * This includes its fields.
-	 * @param upPath - the path corresponding to the location of the node being changed, upward.
-	 * @param value - the new value stored in the node.
-	 */
-	changing(upPath: UpPath): void;
-
-	/**
-	 * Raised when something in the tree is changing, including this node and its descendants.
-	 * The event can optionally return a {@link PathVisitor} to traverse the subtree
-	 * This event is called on every parent (transitively) when a change is occurring.
-	 * Includes changes to this node itself.
-	 * @param upPath - the path corresponding to the location of the node being changed, upward.
-	 * @returns a visitor to traverse the subtree or `void`.
-	 */
-	subtreeChanging(upPath: UpPath): PathVisitor | void;
-}
 
 /**
  * A tree which can be traversed and edited.
@@ -390,4 +333,9 @@ export interface EditableField
 	 * prevent providing strongly typed getters and setters with the types required.
 	 */
 	setContent(newContent: NewFieldContent): void;
+}
+
+{
+	type _check1 = requireAssignableTo<EditableTree, UntypedTree>;
+	type _check2 = requireAssignableTo<EditableField, UntypedField>;
 }

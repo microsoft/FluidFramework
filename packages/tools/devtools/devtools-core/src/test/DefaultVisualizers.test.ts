@@ -25,7 +25,7 @@ import {
 	valueSymbol,
 } from "@fluid-experimental/tree2";
 
-import { FluidObjectId } from "../CommonInterfaces";
+import { EditType, FluidObjectId } from "../CommonInterfaces";
 import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
@@ -94,6 +94,7 @@ describe("DefaultVisualizers unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -371,6 +372,7 @@ describe("DefaultVisualizers unit tests", () => {
 			value: "Hello World!",
 			typeMetadata: "SharedString",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.String] },
 		};
 
 		expect(result).to.deep.equal(expected);

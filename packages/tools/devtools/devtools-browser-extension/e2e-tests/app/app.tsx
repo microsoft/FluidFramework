@@ -6,94 +6,83 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	ContainerKey,
-	DevtoolsLogger,
-	IDevtools,
-	initializeDevtools,
-} from "@fluid-experimental/devtools";
-import { IFluidContainer, ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-import { SharedString } from "@fluidframework/sequence";
+import { ContainerKey, DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
+import { FluidContainer, IFluidContainer, RootDataObject } from "@fluidframework/fluid-static";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-// Define the schema of our Container.
-// This includes the DataObjects we support and any initial DataObjects we want created
-// when the container is first created.
-const containerSchema: ContainerSchema = {
-	initialObjects: {
-		rootMap: SharedMap,
-	},
-	dynamicObjectTypes: [SharedMap, SharedString],
-};
+import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
+
 // Initialize the Devtools logger
 const logger = new DevtoolsLogger();
-
-// Initialize the Tinylicious client
-const client = new TinyliciousClient({ logger });
 
 // Initialize Devtools
 const devtools = initializeDevtools({ logger });
 
-// Initialize the CollaborativeText
-const text = await getCollaborativeText(client);
-
-// Register the container with Devtools
-getContainerInfo(client).then((containerInfo) => {
-	const container = containerInfo.container;
-	registerContainerWithDevtools(devtools, container, "e2e-test-container");
-	const rootMap = container.initialObjects.rootMap as SharedMap;
-	rootMap.set("shared-text", text.handle);
+// Render the text area in the DOM
+createContainerAndRenderInElement().then((fluidContainer) => {
+	// Register the container with Devtools
+	registerContainerWithDevtools(fluidContainer, "e2e-test-container");
 });
 
-ReactDOM.render(
-	<React.StrictMode>
-		<div className="text-area">
-			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(text)} />
-		</div>
-	</React.StrictMode>,
-	document.querySelector("#content"),
-	() => {
-		console.log("App rendered!");
-	},
-);
+/**
+ * This is a helper function for loading the page. It's required because getting the Fluid Container
+ * requires making async calls.
+ */
+async function createContainerAndRenderInElement(): Promise<IFluidContainer> {
+	const sessionStorageModelLoader = new SessionStorageModelLoader<ICollaborativeTextAppModel>(
+		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
+	);
 
-async function getCollaborativeText(client: TinyliciousClient): Promise<SharedString> {
-	const containerInfo = await getContainerInfo(client);
-	const container = containerInfo.container;
-	let containerId: string;
+	let id: string;
+	let model: ICollaborativeTextAppModel;
 
-	// Get or create the document depending if we are running through the create new flow
-	if (!location.hash) {
-		containerId = await container.attach();
-		// The new container has its own unique ID that can be used to access it in another session
-		location.hash = containerId;
+	if (location.hash.length === 0) {
+		// Normally our code loader is expected to match up with the version passed here.
+		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+		// the version doesn't actually matter.
+		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+		model = createResponse.model;
+		id = await createResponse.attach();
 	} else {
-		containerId = location.hash.substring(1);
+		id = location.hash.substring(1);
+		model = await sessionStorageModelLoader.loadExisting(id);
 	}
-	document.title = containerId;
 
-	return await container.create(SharedString);
-}
+	// update the browser URL and the window title with the actual container ID
+	location.hash = id;
+	document.title = id;
 
-async function getContainerInfo(client: TinyliciousClient) {
-	let containerInfo;
-	if (!location.hash) {
-		// The client will create a new container using the schema
-		containerInfo = await client.createContainer(containerSchema);
-	} else {
-		const containerId = location.hash.substring(1);
-		// Use the unique container ID to fetch the container created earlier
-		containerInfo = await client.getContainer(containerId, containerSchema);
-	}
-	return containerInfo;
+	// Render it
+	ReactDOM.render(
+		<React.StrictMode>
+			<div className="text-area" id="text-area-id">
+				<CollaborativeTextArea
+					sharedStringHelper={new SharedStringHelper(model.collaborativeText.text)}
+				/>
+			</div>
+		</React.StrictMode>,
+		document.querySelector("#content"),
+		() => {
+			console.log("App rendered!");
+		},
+	);
+
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
+
+	const container = model.container;
+	const rootDataObject = (await model.runtime.getRootDataStore(
+		"collaborative-text",
+	)) as RootDataObject;
+	const fluidContainer = new FluidContainer(container, rootDataObject);
+	return fluidContainer;
 }
 
 /**
- * Registers container described by the input `containerInfo` with the provided devtools instance.
+ * Registers the provided {@link IFluidContainer} with the devtools.
  */
 function registerContainerWithDevtools(
-	devtools: IDevtools,
 	container: IFluidContainer,
 	containerKey: ContainerKey,
 ): void {

@@ -21,7 +21,8 @@ import {
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, IntervalIndex } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { IntervalIndex } from "../intervalIndex";
 import {
 	IntervalStickiness,
 	IntervalType,

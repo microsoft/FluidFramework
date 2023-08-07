@@ -2,16 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	JsonableTree,
-	fieldSchema,
-	SchemaData,
-	rootFieldKey,
-	rootFieldKeySymbol,
-} from "../../../core";
-import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
+import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
+import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree } from "../../../shared-tree";
+import { namedTreeSchema } from "../../utils";
 
 export const initialTreeState: JsonableTree = {
 	type: brand("Node"),
@@ -31,17 +26,17 @@ export const initialTreeState: JsonableTree = {
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	name: "TestValue",
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 
 export const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+	rootFieldSchema,
 };
 
 export const onCreate = (tree: ISharedTree) => {
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor(initialTreeState));
 };

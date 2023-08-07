@@ -74,7 +74,8 @@ data:
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
         },
         "apiCounters": {
-            "fetchTenantKeyMetricMs": 60000
+            "fetchTenantKeyMetricMs": 60000,
+            "riddlerStorageRequestMetricMs": 60000
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
@@ -168,7 +169,8 @@ data:
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
         },
         "shared": {
-            "transientTenants": {{ toJson .Values.shared.transientTenants }}
+            "transientTenants": {{ toJson .Values.shared.transientTenants }},
+            "runnerServerCloseTimeoutMs": {{ .Values.shared.runnerServerCloseTimeoutMs }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",
