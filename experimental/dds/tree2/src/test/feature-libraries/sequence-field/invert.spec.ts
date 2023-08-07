@@ -84,19 +84,11 @@ describe("SequenceField - Invert", () => {
 		const modify = Change.modify(0, childChange1);
 		const input = composeAnonChanges([revive, modify]);
 		const expected: TestChangeset = [
-			{
-				type: "Delete",
-				count: 1,
-				id: brand(0),
-				detachIdOverride: { localId: brand(0), revision: tag1 },
+			Mark.delete(1, brand(0), {
 				changes: inverseChildChange1,
-			},
-			{
-				type: "Delete",
-				count: 1,
-				id: brand(1),
-				detachIdOverride: { localId: brand(1), revision: tag1 },
-			},
+				detachIdOverride: { localId: brand(0), revision: tag1 },
+			}),
+			Mark.delete(1, brand(1), { detachIdOverride: { localId: brand(1), revision: tag1 } }),
 		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
