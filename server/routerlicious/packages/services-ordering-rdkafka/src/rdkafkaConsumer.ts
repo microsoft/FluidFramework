@@ -383,7 +383,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			const result = await deferredCommit.promise;
 			const latency = Date.now() - startTime;
 
-			if (this.consumerOptions.commitSuccessDelay > 0) {
+			if (
+				this.consumerOptions.commitSuccessDelay !== undefined &&
+				this.consumerOptions.commitSuccessDelay > 0
+			) {
 				await new Promise((resolve) =>
 					setTimeout(resolve, this.consumerOptions.commitSuccessDelay),
 				);
