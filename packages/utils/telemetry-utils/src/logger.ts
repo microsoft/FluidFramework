@@ -327,7 +327,7 @@ export const SamplingStrategy = {
 	 */
 	SYSTEMATIC: "Systematic",
 	/**
-	 * Samples a subset of data from a larger set using a controled psuedo-random chance.
+	 * Samples a subset of data from a larger set using a controlled psuedo-random chance.
 	 */
 	RANDOM: "Random",
 } as const;
@@ -364,8 +364,13 @@ export interface RandomChanceSamplingConfig {
 
 export type SamplingConfig = SystematicSamplingConfig | RandomChanceSamplingConfig;
 
+/**
+ * The state for systematic sampling of an event.
+ * This is necessary to ensure we are keeping a count of total events
+ * so we can sample every nth event correctly.
+ */
 interface SystematicSamplingState {
-	sampledEvents: number;
+	unsampledEventCount: number;
 }
 
 /**
@@ -494,15 +499,15 @@ export class ChildLogger extends TelemetryLogger {
 
 		if (samplingState === undefined) {
 			this.eventSamplingStates[event.eventName] = {
-				sampledEvents: 0,
+				unsampledEventCount: 0,
 			};
 			samplingState = this.eventSamplingStates[event.eventName];
 		}
-		samplingState!.sampledEvents++;
+		samplingState!.unsampledEventCount++;
 
-		if (samplingState!.sampledEvents % samplingConfig.samplingRate === 1) {
+		if (samplingState!.unsampledEventCount % samplingConfig.samplingRate === 1) {
 			this.baseLogger.send(this.prepareEvent(event));
-			samplingState!.sampledEvents = 1;
+			samplingState!.unsampledEventCount = 1;
 		}
 	}
 
