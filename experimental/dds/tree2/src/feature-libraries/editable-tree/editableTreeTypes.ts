@@ -3,35 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Value,
-	FieldKey,
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
-	ITreeCursor,
-	NamedTreeSchema,
-	isCursor,
-} from "../../core";
-import { requireAssignableTo } from "../../util";
+import { Value, TreeSchemaIdentifier, ITreeCursor, isCursor, FieldKey } from "../../core";
 import {
 	PrimitiveValue,
-	MarkedArrayLike,
-	ContextuallyTypedNodeDataObject,
 	typeNameSymbol,
 	valueSymbol,
 	ContextuallyTypedFieldData,
 } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
-import {
-	EditableTreeEvents,
-	UntypedField,
-	UntypedTree,
-	contextSymbol,
-	getField,
-	on,
-	parentField,
-	typeSymbol,
-} from "../untypedTree";
+import { UntypedField, UntypedTreeCore, parentField } from "../untypedTree";
 import { EditableTreeContext } from "./editableTreeContext";
 
 /**
@@ -46,6 +26,12 @@ export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarge
  * @alpha
  */
 export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNodeKey");
+
+/**
+ * A symbol to get the function, which replaces the content of a field of {@link EditableTree}.
+ * @alpha
+ */
+export const setField: unique symbol = Symbol("editable-tree:setField()");
 
 /**
  * A tree which can be traversed and edited.
@@ -71,7 +57,9 @@ export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNode
  * when the fields are getting changed while iterating.
  * @alpha
  */
-export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
+export interface EditableTree
+	extends Iterable<EditableField>,
+		Omit<UntypedTreeCore<EditableTreeContext, EditableField>, typeof Symbol.iterator> {
 	/**
 	 * The name of the node type.
 	 */
@@ -81,13 +69,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * {@link LocalNodeKey} that identifies this node.
 	 */
 	readonly [localNodeKeySymbol]?: LocalNodeKey;
-
-	/**
-	 * The type of the node.
-	 * If this node is well-formed, it must follow this schema.
-	 */
-	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
-	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * Value stored on this node.
@@ -103,16 +84,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * but the presence of this symbol can be used to separate EditableTrees from other types.
 	 */
 	readonly [proxyTargetSymbol]: object;
-
-	/**
-	 * A common context of a "forest" of EditableTrees.
-	 */
-	readonly [contextSymbol]: EditableTreeContext;
-
-	/**
-	 * Gets the field of this node by its key without unwrapping.
-	 */
-	[getField](fieldKey: FieldKey): EditableField;
 
 	/**
 	 * Fields of this node, indexed by their field keys.
@@ -132,20 +103,20 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * Use with the `delete` operator to delete `optional` or `sequence` fields of this node.
 	 */
 	// TODO: update docs for concurrently deleting the field.
-	[key: FieldKey]: UnwrappedEditableField;
+	[key: string]: UnwrappedEditableField;
+
+	/**
+	 * Set the field of a field.
+	 * Shorthand for `this[getField](fieldKey).setContent(content)`.
+	 *
+	 * Equivalent to `this.field = content` but has the desired types (assignment types for direct fields assignment are limited by typescript).
+	 */
+	[setField](fieldKey: FieldKey, content: NewFieldContent): void;
 
 	/**
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
-
-	/**
-	 * {@inheritDoc ISubscribable#on}
-	 */
-	[on]<K extends keyof EditableTreeEvents>(
-		eventName: K,
-		listener: EditableTreeEvents[K],
-	): () => void;
 }
 
 /**
@@ -222,50 +193,13 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * @alpha
  */
 export interface EditableField
-	// Here, the `UnwrappedEditableTree | ContextuallyTypedNodeData` is is used
-	// due to a lacking support for variant accessors for index signatures in TypeScript,
-	// see https://github.com/microsoft/TypeScript/issues/43826.
-	// Otherwise it would be better to have a setter accepting the `ContextuallyTypedNodeData`
-	// and a getter returning the `UnwrappedEditableTree` for the numeric indexed access
-	// similar to, e.g., the getter and setter of the `EditableTreeContext.root`.
-	// Thus, in most cases this must be understood as:
-	// - "returns `UnwrappedEditableTree` when accessing the nodes by their indices" and
-	// - "can also accept `ContextuallyTypedNodeData` when setting the nodes by their indices".
-	// TODO: replace the numeric indexed access with getters and setters if possible.
-	extends MarkedArrayLike<UnwrappedEditableTree> {
-	/**
-	 * The `FieldStoredSchema` of this field.
-	 */
-	readonly fieldSchema: FieldStoredSchema;
-
-	/**
-	 * The `FieldKey` of this field.
-	 */
-	readonly fieldKey: FieldKey;
-
-	/**
-	 * The node which has this field on it under `fieldKey`.
-	 * `undefined` iff this field is a detached field.
-	 */
-	readonly parent?: EditableTree;
-
-	/**
-	 * A common context of a "forest" of EditableTrees.
-	 */
-	readonly context: EditableTreeContext;
-
+	extends UntypedField<EditableTreeContext, EditableTree, EditableTree, UnwrappedEditableTree> {
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this sequence field.
 	 * The details of this object are implementation details,
 	 * but the presence of this symbol can be used to separate EditableTrees from other types.
 	 */
 	readonly [proxyTargetSymbol]: object;
-
-	/**
-	 * Gets a node of this field by its index without unwrapping.
-	 * Note that the node must exists at the given index.
-	 */
-	getNode(index: number): EditableTree;
 
 	/**
 	 * Inserts new nodes into this field.
@@ -322,20 +256,13 @@ export interface EditableField
 	 * Does not unwrap the content.
 	 */
 	get content(): EditableTree | undefined | EditableField;
-	set content(newContent: NewFieldContent);
 
 	/**
 	 * Sets the content of this field.
 	 *
 	 * @remarks
-	 * Same as assigning to `content`.
-	 * This exists in addition to the setter for `content` since in many contexts limitations in TypeScripts typing
+	 * This exists instead of a setter for `content` due to limitations in TypeScripts typing that
 	 * prevent providing strongly typed getters and setters with the types required.
 	 */
 	setContent(newContent: NewFieldContent): void;
-}
-
-{
-	type _check1 = requireAssignableTo<EditableTree, UntypedTree>;
-	type _check2 = requireAssignableTo<EditableField, UntypedField>;
 }
