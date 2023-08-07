@@ -39,13 +39,21 @@ export function useLogger(): ITelemetryLoggerExt | undefined {
  * in the brower's devtools panel, selecting "Inspect", and switching to the Console tab.
  */
 export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
-	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
+	public extensionVersion: string;
+	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {
+		 
+		this.extensionVersion = chrome.runtime.getManifest().version;
+	}
 
 	public send(event: ITelemetryBaseEvent): void {
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
-		// verobsity level is set to "Verbose".
+		// verbosity level is set to "Verbose".
 		console.debug(`USAGE_TELEMETRY: ${JSON.stringify(event)}`);
-		this.baseLogger?.send(event);
+		const eventWithVersion = {
+			...event,
+			extensionVersion: this.extensionVersion,
+		};
+		this.baseLogger?.send(eventWithVersion);
 	}
 }
 

@@ -5,7 +5,7 @@
 		"outDir": "dist",
 		"composite": true,
 		"jsx": "react",
-		"types": ["jest"],
+		"types": ["jest", "chrome"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
