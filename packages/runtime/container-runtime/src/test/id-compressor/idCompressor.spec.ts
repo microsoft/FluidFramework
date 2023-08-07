@@ -6,16 +6,14 @@
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { fail } from "../../../src/copied-utils";
-import { take } from "../copied-utils/stochastic";
 import {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../../../src/types";
-import { createSessionId } from "../../../src/utilities";
-import { IdCompressor } from "../../idCompressor";
+} from "@fluidframework/runtime-definitions";
+import { take } from "@fluid-internal/stochastic-test-utils";
+import { IdCompressor, createSessionId, fail } from "../../id-compressor";
 import {
 	performFuzzActions,
 	sessionIds,

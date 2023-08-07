@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionSpaceNormalizer } from "../../sessionSpaceNormalizer";
+import { SessionSpaceNormalizer } from "../../id-compressor";
 import { makeLocalId } from "./testCommon";
 
 describe("SessionSpaceNormalizer", () => {

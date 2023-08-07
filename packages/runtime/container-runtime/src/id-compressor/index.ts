@@ -8,5 +8,18 @@
  */
 
 export { IdCompressor } from "./idCompressor";
-export { compareFiniteNumbers, createSessionId } from "./utilities";
+export {
+	compareFiniteNumbers,
+	createSessionId,
+	fail,
+	assertIsSessionId,
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+	subtractNumericUuids,
+	addNumericUuids,
+	readNumericUuid,
+	writeNumericUuid,
+} from "./utilities";
 export { AppendOnlySortedMap } from "./appendOnlySortedMap";
+export { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";

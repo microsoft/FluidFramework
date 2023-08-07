@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { assert } from "@fluidframework/common-utils";
 import {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -13,12 +14,10 @@ import {
 	SessionSpaceCompressedId,
 	SessionId,
 	StableId,
-} from "../../../src/types";
-import { take } from "../copied-utils/stochastic";
-import { IdCompressor } from "../../idCompressor";
-import { createSessionId } from "../../../src/utilities";
-import { assert, fail } from "../../../src/copied-utils";
-import { defaultClusterCapacity } from "../../types/persisted-types";
+	defaultClusterCapacity,
+} from "@fluidframework/runtime-definitions";
+import { take } from "@fluid-internal/stochastic-test-utils";
+import { IdCompressor, createSessionId, fail } from "../../id-compressor";
 import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId } from "./testCommon";
 import {
 	Client,
@@ -179,11 +178,11 @@ describe("IdCompressor Perf", () => {
 			} ID from a remote session to session space`,
 			before: () => {
 				const network = setupCompressors(defaultClusterCapacity, true, true);
-				const remoteSessionId = getIdMadeBy(remoteClient, false, network);
+				const remoteSession = getIdMadeBy(remoteClient, false, network);
 				opSpaceId = (
 					isLocal
-						? remoteSessionId
-						: network.getCompressor(remoteClient).normalizeToOpSpace(remoteSessionId)
+						? remoteSession
+						: network.getCompressor(remoteClient).normalizeToOpSpace(remoteSession)
 				) as OpSpaceCompressedId;
 			},
 			benchmarkFn: () => {

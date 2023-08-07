@@ -15,8 +15,7 @@ import {
 	SaveInfo,
 	take,
 	BaseFuzzTestState,
-} from "../copied-utils/stochastic";
-import { IdCompressor } from "../../idCompressor";
+} from "@fluid-internal/stochastic-test-utils";
 import {
 	IdCreationRange,
 	OpSpaceCompressedId,
@@ -25,9 +24,8 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../../../src/types";
-import { assertIsSessionId, createSessionId } from "../../../src/utilities";
-import { fail } from "../../../src/copied-utils";
+} from "@fluidframework/runtime-definitions";
+import { IdCompressor, createSessionId, fail, assertIsSessionId } from "../../id-compressor";
 import {
 	FinalCompressedId,
 	getOrCreate,
