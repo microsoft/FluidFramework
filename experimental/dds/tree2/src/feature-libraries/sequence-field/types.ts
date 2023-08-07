@@ -38,22 +38,7 @@ export interface LineageEvent {
 	readonly offset: number;
 }
 
-export interface PlaceAnchor<T> {
-	/**
-	 * Omit if `Tiebreak.Right` for terseness.
-	 */
-	readonly tiebreak?: Tiebreak;
-
-	/**
-	 * Record of relevant information about changes this anchor has been rebased over.
-	 * Events are stored in the order in which they were rebased over.
-	 */
-	readonly lineage?: LineageEvent[];
-
-	readonly payload: T;
-}
-
-export interface NodesAnchor<T> {
+export interface CellsAnchor<T> {
 	readonly count: NodeCount;
 	/**
 	 * Describes the detach which last emptied target cells.
@@ -70,7 +55,7 @@ export interface NodesAnchor<T> {
 	readonly payload: T;
 }
 
-export interface ShallowCellChange {
+export interface TaggedCellOp {
 	/**
 	 * The first ID in a block associated with the nodes being inserted.
 	 * The node `content[i]` is associated with `id + i`.
@@ -84,52 +69,50 @@ export interface ShallowCellChange {
 	readonly revision?: RevisionTag;
 }
 
-/**
- * Represents the intent to allocated a new range of cells.
- */
-export interface Alloc<TNodeChange, TTree> extends ShallowCellChange {
-	readonly count: NodeCount;
+export interface ShallowCellOp extends TaggedCellOp {
 	/**
-	 * Additional changes to be applied to the cells.
-	 */
-	readonly changes: CellChanges<TNodeChange, TTree>;
-}
-
-/**
- * Represents the intent to populate the contents of a range of cells.
- * Is considered muted if the cells are already full.
- */
-export interface Fill<TTree> extends ShallowCellChange {
-	readonly type: "Fill";
-	readonly content: ChangeAtomId | readonly TTree[];
-	/**
-	 * When true, the corresponding `Clear` is muted, therefore muting this change also.
-	 */
-	readonly isSrcMuted?: true;
-}
-
-/**
- * Represents the intent to clear the contents from a range of cells.
- * Is considered muted if the cells are already empty.
- */
-export interface Clear extends ShallowCellChange {
-	readonly type: "Clear";
-	/**
-	 * Whether the clear is part of a move. If so, a matching `Fill` will be present in the destination cell.
-	 */
-	readonly isMove?: true;
-	/**
-	 * Whether the effect of clearing the cells is tied to the cells (true) or to the nodes (undefined).
+	 * Whether the effect of a cell change is tied to the cells (true) or to the nodes (undefined).
 	 * If undefined, then rebasing over a move of the nodes will transfer the clear effect to the destination cells.
-	 * True can be is used to support "replace" merge semantics.
 	 */
 	readonly targetCell?: true;
 }
 
 /**
+ * Represents the intent to populate the contents of a range of cells.
+ * Will overwrite any existing contents.
+ */
+export interface Fill<TTree> extends ShallowCellOp {
+	readonly type: "Fill";
+	/**
+	 * When undefined, the cells are filled with content from a move.
+	 */
+	readonly src?: ChangeAtomId | readonly TTree[];
+}
+
+/**
+ * Represents the intent to clear the contents from a range of cells.
+ * No-op if the cells are already empty.
+ */
+export interface Clear extends ShallowCellOp {
+	readonly type: "Clear";
+	/**
+	 * When undefined, the nodes in the cells are removed.
+	 */
+	readonly dst?: ChangesetLocalId;
+}
+
+// export interface Replace<TTree> {
+// 	readonly targetCell?: true;
+// 	readonly src: "Nothing" | "Move" | readonly TTree[];
+// 	readonly dst: "Removed" | ChangesetLocalId;
+// 	readonly id: ChangesetLocalId;
+// 	readonly revision?: RevisionTag;
+// }
+
+/**
  * Represents the intent to modify the contents of a single node in a cell.
- * Is considered muted if the cell is empty.
- * Only valid under an `Alloc` or `NodesMark` of size 1.
+ * Is considered muted if the target node is in the removed state at the time the modification would apply.
+ * Only valid under a `CellsMark` of size 1.
  */
 export interface Modify<TNodeChange> {
 	readonly type: "Modify";
@@ -141,6 +124,12 @@ export interface Modify<TNodeChange> {
 	 * This is needed because multiple nodes may successively exist in a given cell.
 	 */
 	readonly detachEvent?: ChangeAtomId;
+
+	/**
+	 * Included for uniformity with `Fill` and `Clear`.
+	 * `true` may be supported in the future to represent structural changes.
+	 */
+	readonly targetCell?: never;
 }
 
 export type CellChange<TNodeChange, TTree> = Fill<TTree> | Modify<TNodeChange> | Clear;
@@ -152,28 +141,10 @@ export type CellChange<TNodeChange, TTree> = Fill<TTree> | Modify<TNodeChange> |
  */
 export type CellChanges<TNodeChange, TTree> = readonly CellChange<TNodeChange, TTree>[];
 
-export interface PlaceMark<TNodeChange, TTree> extends PlaceAnchor<Alloc<TNodeChange, TTree>> {
-	readonly type: "Place";
-	/**
-	 * The revision this mark is part of.
-	 * Only set for marks in fields which are a composition of multiple revisions.
-	 */
-	readonly revision?: RevisionTag;
-}
-
 export interface CellsMark<TNodeChange, TTree>
-	extends NodesAnchor<CellChanges<TNodeChange, TTree>> {
-	readonly type: "Cells";
-	/**
-	 * The revision this mark is part of.
-	 * Only set for marks in fields which are a composition of multiple revisions.
-	 */
-	readonly revision?: RevisionTag;
-}
+	extends CellsAnchor<CellChanges<TNodeChange, TTree> | undefined> {}
 
-export type Mark<TNodeChange, TTree> =
-	| PlaceMark<TNodeChange, TTree>
-	| CellsMark<TNodeChange, TTree>;
+export type Mark<TNodeChange, TTree> = CellsMark<TNodeChange, TTree>;
 
 export type MarkList<TNodeChange, TTree> = readonly Mark<TNodeChange, TTree>[];
 

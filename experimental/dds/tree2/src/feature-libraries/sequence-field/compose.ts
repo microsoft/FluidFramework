@@ -196,8 +196,8 @@ export function composeNewCellChanges<TNodeChange, TTree>(
 		const clone: Mutable<CellChange<TNodeChange, TTree>> = { ...cellChange };
 		if (clone.type === "Modify") {
 			clone.changes = composeChild([tagChange(clone.changes, revision)]);
-		} else if (clone.type === "Fill" && Array.isArray(clone.content)) {
-			clone.content = [...clone.content];
+		} else if (clone.type === "Fill" && Array.isArray(clone.src)) {
+			clone.src = [...clone.src];
 		}
 		clones.push(clone);
 	}

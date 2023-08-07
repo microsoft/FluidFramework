@@ -31,7 +31,7 @@ import {
 	Changeset,
 	DetachEvent,
 	CellsMark,
-	NodesAnchor,
+	CellsAnchor,
 	CellChanges,
 	CellChange,
 	Fill,
@@ -48,7 +48,7 @@ export function isDelete(cellChange: CellChange<unknown, unknown>): cellChange i
 }
 
 export interface MoveIn<TTree> extends Fill<TTree> {
-	readonly content: ChangeAtomId;
+	readonly src: ChangeAtomId;
 }
 
 export interface ActiveMoveIn<TTree> extends MoveIn<TTree> {
@@ -58,7 +58,7 @@ export interface ActiveMoveIn<TTree> extends MoveIn<TTree> {
 export function isMoveIn<TNodeChange, TTree>(
 	cellChange: CellChange<TNodeChange, TTree>,
 ): cellChange is MoveIn<TTree> {
-	return cellChange.type === "Fill" && !Array.isArray(cellChange.content);
+	return cellChange.type === "Fill" && !Array.isArray(cellChange.src);
 }
 
 export function isActiveMoveIn<TNodeChange, TTree>(
