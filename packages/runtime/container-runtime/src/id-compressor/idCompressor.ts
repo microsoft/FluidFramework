@@ -1,5 +1,4 @@
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
 	IdCreationRange,
 	IIdCompressor,
@@ -14,6 +13,8 @@ import {
 	currentWrittenVersion,
 	defaultClusterCapacity,
 } from "@fluidframework/runtime-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
 import {
 	createSessionId,
@@ -73,7 +74,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	private constructor(
 		localSessionIdOrDeserialized: SessionId | { localSessionId: SessionId; sessions: Sessions },
-		private readonly logger?: ITelemetryLogger,
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
@@ -89,14 +90,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		this.newClusterCapacity = defaultClusterCapacity;
 	}
 
-	public static create(logger?: ITelemetryLogger): IdCompressor;
-	public static create(sessionId: SessionId, logger?: ITelemetryLogger): IdCompressor;
+	public static create(logger?: ITelemetryBaseLogger): IdCompressor;
+	public static create(sessionId: SessionId, logger?: ITelemetryBaseLogger): IdCompressor;
 	public static create(
-		sessionIdOrLogger?: SessionId | ITelemetryLogger,
-		loggerOrUndefined?: ITelemetryLogger,
+		sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
+		loggerOrUndefined?: ITelemetryBaseLogger,
 	): IdCompressor {
 		let localSessionId: SessionId;
-		let logger: ITelemetryLogger | undefined;
+		let logger: ITelemetryBaseLogger | undefined;
 		if (sessionIdOrLogger === undefined) {
 			localSessionId = createSessionId();
 		} else {
@@ -108,7 +109,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				logger = loggerOrUndefined;
 			}
 		}
-		const compressor = new IdCompressor(localSessionId, logger);
+		const compressor = new IdCompressor(
+			localSessionId,
+			logger === undefined ? undefined : createChildLogger({ logger }),
+		);
 		return compressor;
 	}
 

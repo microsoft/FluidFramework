@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
 	Generator,
 	createWeightedGenerator,
@@ -25,6 +24,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/runtime-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IdCompressor, createSessionId, fail, assertIsSessionId } from "../../id-compressor";
 import {
 	FinalCompressedId,
@@ -78,7 +78,7 @@ export class CompressorFactory {
 	public static createCompressor(
 		client: Client,
 		clusterCapacity = 5,
-		logger?: ITelemetryLogger,
+		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		return CompressorFactory.createCompressorWithSession(
 			sessionIds.get(client),
@@ -93,7 +93,7 @@ export class CompressorFactory {
 	public static createCompressorWithSession(
 		sessionId: SessionId,
 		clusterCapacity = 5,
-		logger?: ITelemetryLogger,
+		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		const compressor = IdCompressor.create(sessionId, logger);
 		compressor.clusterCapacity = clusterCapacity;

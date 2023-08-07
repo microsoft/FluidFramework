@@ -20,6 +20,9 @@ export {
 	addNumericUuids,
 	readNumericUuid,
 	writeNumericUuid,
+	assertIsStableId,
+	generateStableId,
+	isStableId,
 } from "./utilities";
 export { AppendOnlySortedMap } from "./appendOnlySortedMap";
 export { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";

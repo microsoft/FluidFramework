@@ -17,7 +17,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 		const exception = "Inserted key must be > all others in the map.";
 		assert.throws(
 			() => map.append(-1, 1),
-			(e) => validateAssertionError(e, exception),
+			(e: Error) => validateAssertionError(e, exception),
 		);
 		map.append(1, 2);
 	});
