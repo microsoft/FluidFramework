@@ -20,7 +20,11 @@ This scenario loads a set of previously created docs multiple times and measures
 
 ### Map Traffic
 
-[TBD]
+This scenario loads a previously created document and generates traffic on that document by setting key-values in a `SharedMap` from multiple clients.
+
+### Nested Map
+
+This scenario creates/loads a document and attempts to add many nested `SharedMap`s. Various configs control whether the nested maps are created before or after `container.attach()`, how many maps to create, and how long to wait between creating each map.
 
 ---
 
