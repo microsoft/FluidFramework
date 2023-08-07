@@ -196,12 +196,12 @@ export class ChunkShape {
 }
 
 /**
- * Shape of a field (like `FieldShape`) but with information about how it would be offset withing a chunk because of its parents.
+ * Shape of a field (like `FieldShape`) but with information about how it would be offset within a chunk because of its parents.
  */
 class OffsetShape {
 	/**
 	 * @param shape - the shape of each child in this field
-	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field withing a chunk, or top level chunk)
+	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field within a chunk, or top level chunk)
 	 * @param offset - number of nodes before this in the parent's subtree
 	 * @param key - field key
 	 * @param indexOfParentField - index of node with this shape
@@ -297,7 +297,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	/**
-	 * Change the current node withing the chunk.
+	 * Change the current node within the chunk.
 	 * See `nodeInfo` for getting data about the current node.
 	 *
 	 * @param positionIndex - index of the position of the newly selected node in `positions`.

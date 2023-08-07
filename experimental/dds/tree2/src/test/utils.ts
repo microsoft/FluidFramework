@@ -43,12 +43,10 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
-	namedTreeSchema,
 	NodeReviver,
 	RevisionInfo,
 	RevisionMetadataSource,
@@ -64,10 +62,7 @@ import {
 	mapCursorField,
 	JsonableTree,
 	SchemaData,
-	fieldSchema,
-	GlobalFieldKey,
 	rootFieldKey,
-	rootFieldKeySymbol,
 	Value,
 	compareUpPaths,
 	UpPath,
@@ -81,6 +76,11 @@ import {
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
 	TaggedChange,
+	TreeSchemaBuilder,
+	Named,
+	NamedTreeSchema,
+	treeSchema,
+	FieldUpPath,
 } from "../core";
 import { JsonCompatible, Mutable, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -578,7 +578,7 @@ export function makeTreeFromCursor(
 	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
 	const field = tree.editor.sequenceField({
 		parent: undefined,
-		field: rootFieldKeySymbol,
+		field: rootFieldKey,
 	});
 	if (!Array.isArray(cursor) || cursor.length > 0) {
 		field.insert(0, cursor);
@@ -613,13 +613,13 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  * @param value - The value of the inserted node.
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
 }
 
@@ -634,39 +634,20 @@ export function expectJsonTree(
 	}
 }
 
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	localFields: {
-		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-	},
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
-};
-
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state?: JsonableTree,
-	schema: SchemaData = testSchema,
+	state: JsonableTree | undefined,
+	schema: SchemaData,
 ): void {
 	tree.storedSchema.update(schema);
 
 	if (state) {
 		// Apply an edit to the tree which inserts a node with a value
 		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 		field.insert(0, writeCursor);
 	}
 }
@@ -678,6 +659,11 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
 	}
+}
+
+export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPath): void {
+	expectEqualPaths(path.parent, expectedPath.parent);
+	assert.equal(path.field, expectedPath.field);
 }
 
 export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
@@ -855,4 +841,14 @@ export function defaultRevisionMetadataFromChanges(
 		}
 	}
 	return revisionMetadataSourceFromInfo(revInfos);
+}
+
+/**
+ * Helper for building {@link NamedTreeSchema} without using {@link SchemaBuilder}.
+ */
+export function namedTreeSchema(data: TreeSchemaBuilder & Named<string>): NamedTreeSchema {
+	return {
+		name: brand(data.name),
+		...treeSchema({ ...data }),
+	};
 }

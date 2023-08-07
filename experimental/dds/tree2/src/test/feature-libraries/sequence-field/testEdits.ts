@@ -192,31 +192,43 @@ function createModifyDetachedChangeset<TNodeChange>(
 	return changeset;
 }
 
-export function createInsertMark<TChange = never>(
+/**
+ * @param countOrContent - The content to insert.
+ * If a number is passed, that many dummy nodes will be generated.
+ * @param cellId - The first cell to insert the content into (potentially includes lineage information).
+ * Also defines the ChangeAtomId to associate with the mark.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createInsertMark<TChange = never>(
 	countOrContent: number | JsonableTree[],
-	id: ChangesetLocalId | SF.CellId,
+	cellId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.Insert<TChange>>,
 ): SF.Insert<TChange> {
 	const content = Array.isArray(countOrContent)
 		? countOrContent
 		: generateJsonables(countOrContent);
-	const cellId: SF.CellId = typeof id === "object" ? id : { localId: id };
+	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
 	const mark: SF.Insert<TChange> = {
 		type: "Insert",
 		content,
-		id: cellId.localId,
+		count: content.length,
+		cellId: cellIdObject,
 	};
-	if (cellId.revision !== undefined) {
-		mark.revision = cellId.revision;
+	if (cellIdObject.revision !== undefined) {
+		mark.revision = cellIdObject.revision;
 	}
-	const withOverrides: SF.Insert<TChange> = {
-		...mark,
-		...overrides,
-	};
-	return withOverrides;
+	return { ...mark, ...overrides };
 }
 
-export function createReviveMark<TChange = never>(
+/**
+ * @param countOrContent - The content to revive.
+ * If a number is passed, that many dummy nodes will be generated.
+ * @param cellId - The first cell to revive content into.
+ * If undefined, the revive targets populated cells and is therefore muted.
+ * @param overrides - Any additional properties to add to the mark.
+ * Use this to give the mark a `RevisionTag`
+ */
+function createReviveMark<TChange = never>(
 	countOrContent: number | ITreeCursorSynchronous[],
 	cellId?: SF.CellId,
 	overrides?: Partial<SF.Revive<TChange>>,
@@ -232,19 +244,21 @@ export function createReviveMark<TChange = never>(
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}
-	const withOverrides: SF.Revive<TChange> = {
-		...mark,
-		...overrides,
-	};
-	return withOverrides;
+	return { ...mark, ...overrides };
 }
 
-export function createDeleteMark<TChange = never>(
+/**
+ * @param count - The number of nodes to delete.
+ * @param markId - The id to associate with the mark.
+ * Defines how later edits refer the emptied cells.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createDeleteMark<TChange = never>(
 	count: number,
-	id: ChangesetLocalId | ChangeAtomId,
+	markId: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.Delete<TChange>>,
 ): SF.Delete<TChange> {
-	const cellId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
+	const cellId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
 	const mark: SF.Delete<TChange> = {
 		type: "Delete",
 		count,
@@ -253,95 +267,130 @@ export function createDeleteMark<TChange = never>(
 	if (cellId.revision !== undefined) {
 		mark.revision = cellId.revision;
 	}
-	const withOverrides: SF.Delete<TChange> = {
-		...mark,
-		...overrides,
-	};
-	return withOverrides;
+	return { ...mark, ...overrides };
 }
 
-export function createMoveOutMark<TChange = never>(
+/**
+ * @param count - The number of nodes to move out.
+ * @param markId - The id to associate with the mark.
+ * Defines how later edits refer the emptied cells.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createMoveOutMark<TChange = never>(
 	count: number,
-	id: ChangesetLocalId,
+	markId: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.MoveOut<TChange>>,
 ): SF.MoveOut<TChange> {
+	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
 	const mark: SF.MoveOut<TChange> = {
 		type: "MoveOut",
 		count,
-		id,
-		...overrides,
+		id: atomId.localId,
 	};
-	return mark;
+	if (atomId.revision !== undefined) {
+		mark.revision = atomId.revision;
+	}
+	return { ...mark, ...overrides };
 }
 
-export function createMoveInMark(
+/**
+ * @param count - The number of nodes moved in.
+ * @param cellId - The first cell to move the content into (potentially includes lineage information).
+ * Also defines the ChangeAtomId to associate with the mark.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createMoveInMark(
 	count: number,
-	id: ChangesetLocalId | ChangeAtomId,
+	cellId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.MoveIn>,
 ): SF.MoveIn {
-	const cellId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
+	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
 	const mark: SF.MoveIn = {
 		type: "MoveIn",
-		id: cellId.localId,
+		id: cellIdObject.localId,
+		cellId: cellIdObject,
 		count,
 	};
-	if (cellId.revision !== undefined) {
-		mark.revision = cellId.revision;
+	if (cellIdObject.revision !== undefined) {
+		mark.revision = cellIdObject.revision;
 	}
-	const withOverrides: SF.MoveIn = {
-		...mark,
-		...overrides,
-	};
-	return withOverrides;
+	return { ...mark, ...overrides };
 }
 
-export function createReturnFromMark<TChange = never>(
+/**
+ * @param count - The number of nodes to be detached.
+ * @param markId - The id to associate with the mark.
+ * Defines how later edits refer the emptied cells.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createReturnFromMark<TChange = never>(
 	count: number,
-	id: ChangesetLocalId,
+	markId: ChangesetLocalId | ChangeAtomId,
 	overrides?: Partial<SF.ReturnFrom<TChange>>,
 ): SF.ReturnFrom<TChange> {
+	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
 	const mark: SF.ReturnFrom<TChange> = {
 		type: "ReturnFrom",
 		count,
-		id,
-		...overrides,
+		id: atomId.localId,
 	};
+	if (atomId.revision !== undefined) {
+		mark.revision = atomId.revision;
+	}
+	return { ...mark, ...overrides };
+}
+
+/**
+ * @param count - The number of nodes to attach.
+ * @param markId - The id to associate with the mark.
+ * @param cellId - The cell to return the nodes to.
+ * If undefined, the mark targets populated cells and is therefore muted.
+ * @param overrides - Any additional properties to add to the mark.
+ */
+function createReturnToMark(
+	count: number,
+	markId: ChangesetLocalId | ChangeAtomId,
+	cellId?: SF.CellId,
+	overrides?: Partial<SF.ReturnTo>,
+): SF.ReturnTo {
+	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
+	const mark: SF.ReturnTo = {
+		type: "ReturnTo",
+		id: atomId.localId,
+		count,
+	};
+	if (cellId !== undefined) {
+		mark.cellId = cellId;
+	}
+	if (atomId.revision !== undefined) {
+		mark.revision = atomId.revision;
+	}
+	return { ...mark, ...overrides };
+}
+
+/**
+ * @param changes - The changes to apply to the node.
+ * @param cellId - Describes the cell that the target node used to reside in. Used when the target node is removed.
+ */
+function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Modify<TChange> {
+	const mark: SF.Modify<TChange> = {
+		type: "Modify",
+		count: 1,
+		changes,
+	};
+	if (cellId !== undefined) {
+		mark.cellId = cellId;
+	}
 	return mark;
 }
 
-export function createReturnToMark(
-	count: number,
-	id: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.ReturnTo>,
-): SF.ReturnTo {
-	const cellId: ChangeAtomId = typeof id === "object" ? id : { localId: id };
-	const mark: SF.ReturnTo = {
-		type: "ReturnTo",
-		id: cellId.localId,
-		count,
-	};
-	if (cellId.revision !== undefined) {
-		mark.revision = cellId.revision;
-	}
-	const withOverrides: SF.ReturnTo = {
-		...mark,
-		...overrides,
-	};
-	return withOverrides;
-}
-
-export function createModifyMark<TChange>(changes: TChange, id?: SF.CellId): SF.Modify<TChange> {
-	const mark: SF.Modify<TChange> = {
-		type: "Modify",
-		changes,
-	};
-	if (id !== undefined) {
-		mark.cellId = id;
-	}
+function overrideCellId<TMark extends SF.HasMarkFields>(cellId: SF.CellId, mark: TMark): TMark {
+	mark.cellId = cellId;
 	return mark;
 }
 
 export const MarkMaker = {
+	onEmptyCell: overrideCellId,
 	insert: createInsertMark,
 	revive: createReviveMark,
 	delete: createDeleteMark,

@@ -9,7 +9,6 @@ import {
 	IRBAugmentation,
 	IRBMatcher,
 	RedBlackTree,
-	ConflictAction,
 	RBNodeActions,
 } from "@fluidframework/merge-tree";
 import { IInterval } from "./intervals";
@@ -24,15 +23,6 @@ const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
 
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
 
-/**
- * @deprecated - This functionality was useful when adding two intervals at the same start/end positions resulted
- * in a conflict. This is no longer the case (as of PR#6407), as interval collections support multiple intervals
- * at the same location and gives each interval a unique id.
- *
- * As such, conflict resolvers are never invoked and unnecessary. They will be removed in an upcoming release.
- */
-export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
-
 export class IntervalTree<T extends IInterval>
 	implements IRBAugmentation<T, AugmentedIntervalNode>, IRBMatcher<T, AugmentedIntervalNode>
 {
@@ -46,17 +36,8 @@ export class IntervalTree<T extends IInterval>
 		this.intervals.removeExisting(x);
 	}
 
-	public put(x: T, conflict?: IntervalConflictResolver<T>) {
-		let rbConflict: ConflictAction<T, AugmentedIntervalNode> | undefined;
-		if (conflict) {
-			rbConflict = (key: T, currentKey: T) => {
-				const ival = conflict(key, currentKey);
-				return {
-					key: ival,
-				};
-			};
-		}
-		this.intervals.put(x, { minmax: x.clone() }, rbConflict);
+	public put(x: T) {
+		this.intervals.put(x, { minmax: x.clone() });
 	}
 
 	public map(fn: (x: T) => void) {

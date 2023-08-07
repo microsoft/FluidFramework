@@ -42,7 +42,6 @@ export { RateLimiter } from "./rateLimiter";
 export { readAndParse } from "./readAndParse";
 export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry";
 export {
-	combineAppAndProtocolSummary,
 	CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,

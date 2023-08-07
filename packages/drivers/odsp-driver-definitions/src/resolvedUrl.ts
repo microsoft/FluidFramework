@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 export interface IOdspUrlParts {
 	siteUrl: string;
@@ -98,7 +98,7 @@ export interface ShareLinkInfoType {
 	 */
 	sharingLinkToRedeem?: string;
 }
-export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
+export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	type: "fluid";
 	odspResolvedUrl: true;
 

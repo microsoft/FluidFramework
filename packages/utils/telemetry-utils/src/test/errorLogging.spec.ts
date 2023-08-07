@@ -1044,7 +1044,7 @@ describe("wrapError", () => {
 describe("wrapErrorAndLog", () => {
 	const mockLogger = new MockLogger();
 	const innerError = new LoggingError("hello");
-	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger);
+	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger.toTelemetryLogger());
 	assert(
 		mockLogger.matchEvents([
 			{
