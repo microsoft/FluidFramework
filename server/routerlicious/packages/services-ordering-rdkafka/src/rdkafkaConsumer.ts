@@ -25,7 +25,7 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	 * Amount of milliseconds to delay after a successful offset commit.
 	 * This allows slowing down how often commits are done.
 	 */
-	commitSuccessDelay: number;
+	commitSuccessDelay?: number;
 
 	automaticConsume: boolean;
 	maxConsumerCommitRetries: number;
