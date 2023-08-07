@@ -946,7 +946,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		// op is submitted on top of first op at some later time (not in the same JS turn, so not batched)
 		await Promise.resolve();
 		string.insertText(string.getLength(), ", for testing purposes");
-		assert.strictEqual(string.getText(), "hello; long amount of text that will produce a high index, for testing purposes");
+		assert.strictEqual(
+			string.getText(),
+			"hello; long amount of text that will produce a high index, for testing purposes",
+		);
 
 		const stashP = new Promise<string>((resolve) => {
 			container.on("op", (op) => {
@@ -972,7 +975,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const defaultDataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
 		const string2 = await defaultDataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
-		assert.strictEqual(string2.getText(), "hello; long amount of text that will produce a high index, for testing purposes");
+		assert.strictEqual(
+			string2.getText(),
+			"hello; long amount of text that will produce a high index, for testing purposes",
+		);
 		await provider.ensureSynchronized();
 		assert.strictEqual(string2.getText(), string1.getText());
 	});
