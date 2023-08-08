@@ -401,6 +401,18 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
+	it("uploads while disconnected", async () => {
+		await runtime.attach();
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.connect();
+		await runtime.processAll();
+		await assert.doesNotReject(handleP);
+
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 1);
+		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
 	it.skip("close container if blob expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
