@@ -6,13 +6,9 @@
 import { assert } from "@fluidframework/common-utils";
 import { FieldKey, SchemaData, ValueSchema } from "../../core";
 import { FieldKinds } from "../default-field-kinds";
-import {
-	EditableTree,
-	EditableTreeContext,
-	localNodeKeySymbol,
-	typeSymbol,
-} from "../editable-tree";
+import { EditableTree, EditableTreeContext, localNodeKeySymbol } from "../editable-tree";
 import { oneFromSet } from "../../util";
+import { typeSymbol } from "../untypedTree";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
@@ -38,7 +34,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 		if (treeSchema === undefined) {
 			return false;
 		}
-		return treeSchema.value === ValueSchema.String;
+		return treeSchema.leafValue === ValueSchema.String;
 	}
 
 	/**

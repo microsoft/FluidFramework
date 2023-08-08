@@ -38,9 +38,21 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 }
 
 /**
+ * Converts the request param to a boolean
+ */
+export function getBooleanParam(param: any): boolean {
+	return param === undefined ? false : typeof param === "boolean" ? param : param === "true";
+}
+
+/**
  * Default error message sent to API consumer when an unknown error is encountered.
  */
 export const defaultErrorMessage = "Internal Server Error";
+
+/**
+ * Header to denote that the container is ephemeral.
+ */
+export const IsEphemeralContainer = "Is-Ephemeral-Container";
 
 /**
  * Helper function to handle a promise that should be returned to the user.

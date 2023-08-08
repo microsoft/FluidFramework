@@ -145,7 +145,7 @@ export class ViewSchema {
 		// so copying the data over manually is better.
 		return {
 			mapFields: original.mapFields,
-			value: original.value,
+			leafValue: original.leafValue,
 			structFields,
 		};
 	}
@@ -157,7 +157,7 @@ export class ViewSchema {
  */
 export interface ITreeSchema extends NamedTreeSchema, Sourced {
 	readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
-	readonly mapFields: IFieldSchema;
+	readonly mapFields?: IFieldSchema;
 }
 
 /**

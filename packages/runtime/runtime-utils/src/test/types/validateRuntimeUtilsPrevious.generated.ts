@@ -616,18 +616,6 @@ use_old_FunctionDeclaration_mergeStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_packagePathToTelemetryProperty": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_packagePathToTelemetryProperty": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_requestFluidObject": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_requestFluidObject():

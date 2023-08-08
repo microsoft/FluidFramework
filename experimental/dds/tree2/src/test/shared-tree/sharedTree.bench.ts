@@ -315,7 +315,7 @@ describe("SharedTree benchmarks", () => {
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedData(
-								tree.storedSchema,
+								{ schema: tree.storedSchema },
 								deepSchema.rootFieldSchema.allowedTypes,
 								makeJsDeepTree(numberOfNodes, setCount),
 							),
@@ -567,7 +567,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 	let nodesCount = 0;
 	const root = tree.root;
 	assert(isEditableTree(root));
-	const field = root.foo as UnwrappedEditableField;
+	const field = root.foo;
 	assert(isEditableField(field));
 	assert(field.length !== 0);
 	for (const currentNode of field) {
@@ -581,7 +581,7 @@ function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: nu
 	let depth = 0;
 	let currentNode: UnwrappedEditableField = tree.root;
 	while (isEditableTree(currentNode)) {
-		currentNode = currentNode.foo as UnwrappedEditableField;
+		currentNode = currentNode.foo;
 		depth++;
 	}
 	assert(typeof currentNode === "number");
