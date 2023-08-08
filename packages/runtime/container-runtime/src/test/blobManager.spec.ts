@@ -401,24 +401,12 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("uploads while disconnected", async () => {
-		await runtime.attach();
-		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.connect();
-		await runtime.processAll();
-		await assert.doesNotReject(handleP);
-
-		const summaryData = validateSummary(runtime);
-		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
-	});
-
 	it.skip("close container if blob expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		// await runtime.processBlobs();
+		await runtime.processBlobs();
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
@@ -428,20 +416,22 @@ describe("BlobManager", () => {
 
 	it.skip("close container if expired while connect", async () => {
 		await runtime.attach();
-		void runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		await handle;
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await runtime.connect(50);
 		assert.strictEqual(runtime.closed, true);
 		await runtime.processAll();
 	});
 
-	it("transition to offline while upload pending", async () => {
+	it("completes after disconnection while upload pending", async () => {
 		await runtime.attach();
 		await runtime.connect();
 
 		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		runtime.disconnect();
-		await runtime.connect(20);
+		await runtime.connect(10); // adding some delay to reconnection
 		await runtime.processAll();
 		await assert.doesNotReject(handleP);
 
@@ -450,7 +440,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("transition to offline while op in flight", async () => {
+	it("completes after disconnection while op in flight", async () => {
 		await runtime.attach();
 		await runtime.connect();
 

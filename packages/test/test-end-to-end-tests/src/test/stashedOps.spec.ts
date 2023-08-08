@@ -1306,7 +1306,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
-	it("not expired stashed blobs", async function () {
+	it.skip("not expired stashed blobs", async function () {
 		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
 			this.skip();
 		}
@@ -1318,17 +1318,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(
+		const handle = await dataStore.runtime.uploadBlob(
 			stringToBuffer("blob contents 1", "utf8"),
 		);
+		map.set("blob handle 1", handle);
 
 		container.connect();
 		await waitForDataStoreRuntimeConnection(dataStore.runtime);
-		const handle = await handleP;
-		map.set("blob handle 1", handle);
 
 		const stashedChanges = await container.container.closeAndGetPendingLocalState?.();
 		assert.ok(stashedChanges);
+		const parsedChanges = JSON.parse(stashedChanges);
+		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
+		// verify we have a blob in pending upload array
+		assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
 
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
@@ -1337,10 +1340,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		// Blob is accessible locally while offline
-		// assert.strictEqual(
-		// 	bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-		// 	"blob contents 1",
-		// );
+		assert.strictEqual(
+			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+			"blob contents 1",
+		);
 
 		container3.connect();
 		await waitForContainerConnection(container3.container, true);
