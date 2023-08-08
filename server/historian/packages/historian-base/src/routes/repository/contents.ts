@@ -17,7 +17,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -29,6 +29,7 @@ export function create(
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getContent(path, ref);
 	}
