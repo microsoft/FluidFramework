@@ -115,8 +115,9 @@ describe("typetests tests", () => {
 	];
 
 	describe("updateTypeTestConfiguration", () => {
-		// for (const [name, options] of optionsMatrix.entries()) {
-		// }
+		describe("previousAndResetTrue", () => {
+			const name = "previousAndResetTrue";
+			const options = optionsMatrix.get(name)!;
 			it(`${name}: packageMinimal`, () => {
 				const pkg = packageMinimal;
 				updateTypeTestConfiguration(pkg, options);
@@ -127,10 +128,7 @@ describe("typetests tests", () => {
 
 			it(`${name}: packageWithTypeValidation`, () => {
 				const pkg = packageWithTypeValidation;
-				updateTypeTestConfiguration(pkg, {
-					version: VersionOptions.Previous,
-					resetBroken: true,
-				});
+				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).not.to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.empty;
 				expect(pkg.typeValidation?.disabled).to.be.false;
@@ -138,14 +136,41 @@ describe("typetests tests", () => {
 
 			it(`${name}: packageWithTypeValidationDisabled`, () => {
 				const pkg = packageWithTypeValidation;
-				updateTypeTestConfiguration(pkg, {
-					version: VersionOptions.Previous,
-					resetBroken: true,
-				});
+				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).not.to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.empty;
 				expect(pkg.typeValidation?.disabled).to.be.false;
 			});
+		});
+
+		describe("previousAndResetFalse", () => {
+			const name = "previousAndResetFalse";
+			const options = optionsMatrix.get(name)!;
+			it(`${name}: packageMinimal`, () => {
+				const pkg = packageMinimal;
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.undefined;
+				expect(pkg.typeValidation?.disabled).to.be.undefined;
+			});
+
+			it(`${name}: packageWithTypeValidation`, () => {
+				const pkg = packageWithTypeValidation;
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+			});
+
+			it(`${name}: packageWithTypeValidationDisabled`, () => {
+				const pkg = packageWithTypeValidation;
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+			});
+		});
+
 	});
 
 	describe("previousVersion", () => {

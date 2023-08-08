@@ -112,7 +112,7 @@ export enum VersionOptions {
 
 /**
  * Actions that can be taken when configuring type tests.
- * 
+ *
  * @internal
  */
 export interface TypeTestConfigActions {
@@ -184,9 +184,7 @@ export function updateTypeTestConfiguration(
 				options.version === VersionOptions.Previous
 					? previousVersion(pkgJson.version)
 					: options.version;
-			if (pkgJson.devDependencies === undefined) {
-				pkgJson.devDependencies = {};
-			}
+			pkgJson.devDependencies ??= {};
 			pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
 		}
 	}
