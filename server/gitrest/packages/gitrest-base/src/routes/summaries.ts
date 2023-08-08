@@ -36,6 +36,7 @@ import {
 	logAndThrowApiError,
 	persistLatestFullSummaryInStorage,
 	retrieveLatestFullSummaryFromStorage,
+    SystemErrors,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -49,6 +50,7 @@ async function getSummary(
 	repoManagerParams: IRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
 	persistLatestFullSummary = false,
+	enforceStrictPersistedFullSummaryReads = false,
 ): Promise<IWholeFlatSummary> {
 	const lumberjackProperties = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -73,6 +75,17 @@ async function getSummary(
 				lumberjackProperties,
 				error,
 			);
+			if (enforceStrictPersistedFullSummaryReads) {
+                if (isNetworkError(error) && error.code === 413) {
+                    throw error;
+                }
+				if (
+					typeof (error as any).code === "string" &&
+					(error as any).code === SystemErrors.EFBIG.code
+				) {
+					throw new NetworkError(413, "Full summary too large.");
+				}
+			}
 		}
 	}
 
@@ -261,6 +274,7 @@ export function create(
 	const enableOptimizedInitialSummary: boolean =
 		store.get("git:enableOptimizedInitialSummary") ?? false;
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
+    const enforceStrictPersistedFullSummaryReads: boolean = store.get("git:enforceStrictPersistedFullSummaryReads") ?? false;
 
 	/**
 	 * Retrieves a summary.
@@ -304,6 +318,7 @@ export function create(
 					repoManagerParams,
 					getExternalWriterParams(request.query?.config as string | undefined),
 					persistLatestFullSummary,
+                    enforceStrictPersistedFullSummaryReads,
 				);
 			})
 			.catch((error) => logAndThrowApiError(error, request, repoManagerParams));

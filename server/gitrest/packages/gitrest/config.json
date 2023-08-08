@@ -1,46 +1,47 @@
 {
-	"logger": {
-		"colorize": true,
-		"morganFormat": "json",
-		"json": false,
-		"level": "info",
-		"timestamp": true
-	},
-	"requestSizeLimit": "1gb",
-	"storageDir": {
-		"baseDir": "/home/node/documents",
-		"useRepoOwner": true
-	},
-	"externalStorage": {
-		"enabled": false,
-		"endpoint": "http://externalStorage:3005"
-	},
-	"git": {
-		"lib": {
-			"name": "nodegit"
-		},
-		"filesystem": {
-			"name": "nodeFs"
-		},
-		"ephemeralfilesystem": {
-			"name": "redisFs"
-		},
-		"persistLatestFullSummary": false,
-		"repoPerDocEnabled": false,
-		"enableRepositoryManagerMetrics": false,
-		"apiMetricsSamplingPeriod": 100,
-		"enableLowIoWrite": false,
-		"enableOptimizedInitialSummary": false,
-		"enableSlimGitInit": false,
-		"enableRedisFsMetrics": true,
-		"redisApiMetricsSamplingPeriod": 0
-	},
-	"redis": {
-		"host": "redis",
-		"port": 6379,
-		"connectTimeout": 10000,
-		"maxRetriesPerRequest": 20,
-		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
-	}
+    "logger": {
+        "colorize": true,
+        "morganFormat": "json",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "requestSizeLimit": "1gb",
+    "storageDir": {
+        "baseDir": "/home/node/documents",
+        "useRepoOwner": true
+    },
+    "externalStorage": {
+        "enabled": false,
+        "endpoint": "http://externalStorage:3005"
+    },
+    "git": {
+        "lib": {
+            "name": "nodegit"
+        },
+        "filesystem": {
+            "name": "nodeFs"
+        },
+        "ephemeralfilesystem": {
+            "name": "redisFs"
+        },
+        "persistLatestFullSummary": false,
+        "repoPerDocEnabled": false,
+        "enableRepositoryManagerMetrics": false,
+        "apiMetricsSamplingPeriod": 100,
+        "enableLowIoWrite": false,
+        "enableOptimizedInitialSummary": false,
+        "enableSlimGitInit": false,
+        "enableRedisFsMetrics": true,
+        "redisApiMetricsSamplingPeriod": 0,
+        "enforceStrictPersistedFullSummaryReads": false
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379,
+        "connectTimeout": 10000,
+        "maxRetriesPerRequest": 20,
+        "enableAutoPipelining": false,
+        "enableOfflineQueue": true
+    }
 }
