@@ -709,13 +709,14 @@ async function findDepUpdates(
 
 		try {
 			// eslint-disable-next-line no-await-in-loop
-			latest = await latestVersion(pkgName, {
-				version: "latest",
-			});
-			// eslint-disable-next-line no-await-in-loop
-			next = await latestVersion(pkgName, {
-				version: "next",
-			});
+			[latest, next] = await Promise.all([
+				latestVersion(pkgName, {
+					version: "latest",
+				}),
+				latestVersion(pkgName, {
+					version: "next",
+				}),
+			]);
 		} catch (error: unknown) {
 			log?.warning(error as Error);
 			continue;
