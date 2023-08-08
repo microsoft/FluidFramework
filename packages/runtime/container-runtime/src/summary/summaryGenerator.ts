@@ -35,6 +35,7 @@ import {
 	ISummarizeTelemetryProperties,
 	SummaryGeneratorTelemetry,
 	ISubmitSummaryFailureResult,
+	IBaseSummaryFailureResult,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -136,7 +137,7 @@ export class SummarizeResultBuilder {
 		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult>
 	>();
 	public readonly summaryOpBroadcasted = new Deferred<
-		SummarizeResultPart<IBroadcastSummaryResult>
+		SummarizeResultPart<IBroadcastSummaryResult, IBaseSummaryFailureResult>
 	>();
 	public readonly receivedSummaryAckOrNack = new Deferred<
 		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
@@ -145,6 +146,7 @@ export class SummarizeResultBuilder {
 	public fail(
 		message: string,
 		error: any,
+		broadcastFailedResult: IBaseSummaryFailureResult = { stage: "unknown" },
 		submitFailureResult?: ISubmitSummaryFailureResult,
 		nackSummaryResult?: INackSummaryResult,
 	) {
@@ -153,10 +155,10 @@ export class SummarizeResultBuilder {
 			0x25e /* "no reason to call fail if all promises have been completed" */,
 		);
 
-		const result: SummarizeResultPart<undefined> = {
+		const result: SummarizeResultPart<undefined, IBaseSummaryFailureResult> = {
 			success: false,
 			message,
-			data: undefined,
+			data: broadcastFailedResult,
 			error,
 		} as const;
 		this.summarySubmitted.resolve({ ...result, data: submitFailureResult });
@@ -319,11 +321,18 @@ export class SummaryGenerator {
 					reason,
 					category,
 					retryAfterSeconds,
+					stage: summaryData?.stage,
 				},
 				error ?? reason,
 			); // disconnect & summaryAckTimeout do not have proper error.
 
-			resultsBuilder.fail(reason, error, submitFailureResult, nackFailureResult);
+			resultsBuilder.fail(
+				reason,
+				error,
+				{ stage: summaryData?.stage ?? "unknown" },
+				submitFailureResult,
+				nackFailureResult,
+			);
 		};
 
 		// Wait to generate and send summary

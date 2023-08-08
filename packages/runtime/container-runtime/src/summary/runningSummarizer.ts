@@ -47,9 +47,9 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 // In case of failures that can be retried, the maximum number of summary attempts before bailing out.
-const defaultMaxAttempts = 4;
+export const defaultMaxAttempts = 5;
 // The maximum number of summary attempts for a particular stage before bailing out.
-const defaultMaxAttemptsForStage = 2;
+export const defaultMaxAttemptsForStage = 2;
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -667,131 +667,127 @@ export class RunningSummarizer implements IDisposable {
 		reason: SummarizeReason,
 		cancellationToken = this.cancellationToken,
 	) {
-		// Currently, we try 2 overall attempts with retries in each attempt. The second attempt will close the
-		// summarizer at the summarization call site but we need to keep this code for the time being. This will be
-		// reduced to a single attempt.
-		const attemptOptions: ISummarizeOptions[] = [
-			{ refreshLatestAck: false, fullTree: false },
-			{ refreshLatestAck: true, fullTree: false },
-		];
-		for (const summarizeOptions of attemptOptions) {
-			let previousStage: SummaryStage | undefined;
+		let previousStage: SummaryStage | undefined;
 
-			// The maximum number of attempts across failure stages. If summarization does not succeed by these number
-			// of attempts, quit and close the summarizer.
-			const maxAttempts = defaultMaxAttempts;
-			let currentAttempts = 0;
+		// The maximum number of attempts across failure stages. If summarization does not succeed by these number
+		// of attempts, quit and close the summarizer.
+		const maxAttempts = defaultMaxAttempts;
+		let currentAttempts = 0;
 
-			// The maximum number of attempts for a given stage. The default value can be overridden via failure
-			// params. Each failure is different and some can be succeeded by attempting more often than others.
-			// If summarization fails at different stages, each stage gets some attempts. However, the total number of
-			// attempts across stages cannot exceed `maxAttempts`.
-			let maxAttemptsForStage = defaultMaxAttemptsForStage;
-			let currentAttemptsForStage = 0;
+		// The maximum number of attempts for a given stage. The default value can be overridden via failure
+		// params. Each failure is different and some can be succeeded by attempting more often than others.
+		// If summarization fails at different stages, each stage gets some attempts. However, the total number of
+		// attempts across stages cannot exceed `maxAttempts`.
+		let maxAttemptsForStage = defaultMaxAttemptsForStage;
+		let currentAttemptsForStage = 0;
 
-			type ShouldRetryResult =
-				| { retry: false; stage: SummaryStage | undefined }
-				| {
-						retry: true;
-						stage: SummaryStage;
-						delaySeconds: number;
-						stageChanged: boolean;
-						retryCount: number | undefined;
-				  };
-			// Returns whether summarization should be retried based on the failure data.
-			const shouldRetry = (
-				failureData: ISubmitSummaryFailureResult | undefined,
-			): ShouldRetryResult => {
-				// For lastSummary, do not try another attempt.
-				// If the failure data does not specify `retryAfterSeconds` or the stage at which summarization failed,
-				// do not try another attempt.
-				// If maxAttempts have been exceeded, do not try another attempt.
-				if (
-					reason === "lastSummary" ||
-					failureData === undefined ||
-					failureData.retryAfterSeconds === undefined ||
-					failureData.stage === undefined ||
-					currentAttempts >= maxAttempts
-				) {
-					return { retry: false, stage: failureData?.stage };
-				}
+		type ShouldRetryResult =
+			| { retry: false; stage: SummaryStage | undefined }
+			| {
+					retry: true;
+					stage: SummaryStage;
+					delaySeconds: number;
+					stageChanged: boolean;
+					retryCount: number | undefined;
+			  };
+		// Returns whether summarization should be retried based on the failure data.
+		const shouldRetry = (
+			failureData: ISubmitSummaryFailureResult | undefined,
+		): ShouldRetryResult => {
+			// For lastSummary, do not try another attempt.
+			// If the failure data does not specify `retryAfterSeconds` or the stage at which summarization failed,
+			// do not try another attempt.
+			// If maxAttempts have been exceeded, do not try another attempt.
+			if (
+				reason === "lastSummary" ||
+				failureData === undefined ||
+				failureData.retryAfterSeconds === undefined ||
+				failureData.stage === undefined ||
+				currentAttempts >= maxAttempts
+			) {
+				return { retry: false, stage: failureData?.stage };
+			}
 
-				const stageChanged = failureData.stage !== previousStage;
-				if (stageChanged || currentAttemptsForStage < maxAttemptsForStage) {
-					return {
-						retry: true,
-						stage: failureData.stage,
-						delaySeconds: failureData.retryAfterSeconds,
-						stageChanged,
-						retryCount: failureData.retryCount,
-					};
-				}
-
-				// Summarization failed at the same stage as before and the max attempts for a stage hasn't reached yet.
-				return { retry: false, stage: failureData.stage };
-			};
-
-			let done = false;
-			do {
-				if (this.cancellationToken.cancelled) {
-					return;
-				}
-
-				currentAttempts++;
-				currentAttemptsForStage++;
-
-				const summarizeProps: ISummarizeTelemetryProperties = {
-					reason,
-					summaryAttempts: currentAttempts,
-					...summarizeOptions,
+			const stageChanged = failureData.stage !== previousStage;
+			if (stageChanged || currentAttemptsForStage < maxAttemptsForStage) {
+				return {
+					retry: true,
+					stage: failureData.stage,
+					delaySeconds: failureData.retryAfterSeconds,
+					stageChanged,
+					retryCount: failureData.retryCount,
 				};
-				const summarizeResult = this.generator.summarize(
-					summarizeProps,
-					summarizeOptions,
-					cancellationToken,
-				);
+			}
 
-				const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
-				if (ackNackResult.success) {
-					return;
-				}
+			// Summarization failed at the same stage as before and the max attempts for a stage hasn't reached yet.
+			return { retry: false, stage: failureData.stage };
+		};
 
-				let failureResult: ISubmitSummaryFailureResult | undefined;
-				// If ack / nack failure data is present, summarization succeeded all the way until then. So, use the
-				// data to determine if summarization should be retried.
-				// Else, if submit summary failed, use its failure data to determine if summarization should be retried.
-				if (ackNackResult.data !== undefined) {
-					failureResult = ackNackResult.data;
-				} else {
-					const submitResult = await summarizeResult.summarySubmitted;
-					if (!submitResult.success) {
-						failureResult = submitResult.data;
-					}
-				}
-				const shouldRetryResult = shouldRetry(failureResult);
-				if (shouldRetryResult.retry) {
-					this.mc.logger.sendPerformanceEvent({
-						eventName: "SummarizeAttemptDelay",
-						duration: shouldRetryResult.delaySeconds,
-						summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
-						stage: shouldRetryResult.stage,
-						...summarizeProps,
-					});
-					await delay(shouldRetryResult.delaySeconds * 1000);
+		let done = false;
+		do {
+			if (this.cancellationToken.cancelled) {
+				return;
+			}
 
-					// If the stage at which summarization failed has changed, reset the counters for the stage.
-					if (shouldRetryResult.stageChanged) {
-						currentAttemptsForStage = 0;
-						// max attempts is number of retries + one for the first attempt
-						maxAttemptsForStage = shouldRetryResult.retryCount
-							? shouldRetryResult.retryCount + 1
-							: defaultMaxAttemptsForStage;
-					}
-				} else {
-					done = true;
+			currentAttempts++;
+			currentAttemptsForStage++;
+
+			const summarizeOptions: ISummarizeOptions = {
+				refreshLatestAck: false,
+				fullTree: false,
+			};
+			const summarizeProps: ISummarizeTelemetryProperties = {
+				reason,
+				summaryAttempts: currentAttempts,
+				...summarizeOptions,
+			};
+			const summarizeResult = this.generator.summarize(
+				summarizeProps,
+				summarizeOptions,
+				cancellationToken,
+			);
+
+			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
+			if (ackNackResult.success) {
+				return;
+			}
+
+			let failureResult: ISubmitSummaryFailureResult | undefined;
+			// If ack / nack failure data is present, summarization succeeded all the way until then. So, use the
+			// data to determine if summarization should be retried.
+			// Else, if submit summary failed, use its failure data to determine if summarization should be retried.
+			if (ackNackResult.data !== undefined) {
+				failureResult = ackNackResult.data;
+			} else {
+				const submitResult = await summarizeResult.summarySubmitted;
+				if (!submitResult.success) {
+					failureResult = submitResult.data;
 				}
-			} while (!done);
-		}
+			}
+			const shouldRetryResult = shouldRetry(failureResult);
+			if (shouldRetryResult.retry) {
+				previousStage = shouldRetryResult.stage;
+				this.mc.logger.sendPerformanceEvent({
+					eventName: "SummarizeAttemptDelay",
+					duration: shouldRetryResult.delaySeconds,
+					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
+					stage: shouldRetryResult.stage,
+					...summarizeProps,
+				});
+				await delay(shouldRetryResult.delaySeconds * 1000);
+
+				// If the stage at which summarization failed has changed, reset the counters for the stage.
+				if (shouldRetryResult.stageChanged) {
+					currentAttemptsForStage = 1;
+					// max attempts is number of retries + one for the first attempt
+					maxAttemptsForStage = shouldRetryResult.retryCount
+						? shouldRetryResult.retryCount + 1
+						: defaultMaxAttemptsForStage;
+				}
+			} else {
+				done = true;
+			}
+		} while (!done);
 
 		this.stopSummarizerCallback("failToSummarize");
 	}

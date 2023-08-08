@@ -446,14 +446,14 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 // @public
 export function isStableId(str: string): str is StableId;
 
-// @public
-export interface ISubmitSummaryFailureResult {
+// Warning: (ae-forgotten-export) The symbol "IBaseSummaryFailureResult" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export interface ISubmitSummaryFailureResult extends IBaseSummaryFailureResult {
     // (undocumented)
     readonly retryAfterSeconds?: number;
     // (undocumented)
     readonly retryCount?: number;
-    // (undocumented)
-    readonly stage: SummaryStage;
 }
 
 // @public
@@ -492,7 +492,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 // @public (undocumented)
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
-    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
+    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult, IBaseSummaryFailureResult>>;
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult>>;
 }
 
@@ -690,7 +690,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 }
 
 // @public (undocumented)
-export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
+export type SummarizeResultPart<TSuccess, TFailure> = {
     success: true;
     data: TSuccess;
 } | {
