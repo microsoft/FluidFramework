@@ -263,9 +263,13 @@ export class EditManager<
 			// `newTrunkBase`. Therefore, no branches should have unique references to any of the commits being evicted here.
 			// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
 			// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
-			const newTrunkBase = latestEvicted as Mutable<GraphCommit<TChangeset>>;
+			const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
+			// Copying the revision of the old trunk base into the new trunk base means we don't need to write out the original
+			// revision to summaries. All clients agree that the trunk base always has the same hardcoded revision.
 			newTrunkBase.revision = this.trunkBase.revision;
+			// Overwriting the change is not strictly necessary, but done here for consistency (so all trunk bases are deeply equal).
 			newTrunkBase.change = this.trunkBase.change;
+			// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
 			delete newTrunkBase.parent;
 			this.trunkBase = newTrunkBase;
 
