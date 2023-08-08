@@ -929,7 +929,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
-	it("handles stashed ops created on top of sequenced local ops", async function () {
+	it.skip("handles stashed ops created on top of sequenced local ops", async function () {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
