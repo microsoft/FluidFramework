@@ -291,6 +291,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// * The summaryAcks aren't inspectable after they've been processed
 		// * The quorum eventing makes it challenging to understand state when proposals are racing.
 
+		// NOTE: awaiting container here could result in missed events since ops may be processed while waiting for the container to load
+		// TODO: consider adding asserts to verify container state after loading as outlined in Task 5058
+		const container = await this._containerP;
+
 		this._pendingP = new Promise<void>((resolve) => {
 			if (
 				this.pactMap.get(newVersionKey) !== undefined ||
@@ -363,8 +367,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Here we want to watch the quorum and resolve on the first sequenced proposal.
 			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
-			const container = await this._containerP;
-			const watchForCodeDetailsProposed = (op: ISequencedDocumentMessage) => {
+			const watchForCodeDetailsProposed = () => {
 				// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
 				// Or maybe set that up in ensureQuorumCodeDetails().
 				container.off("codeDetailsProposed", watchForCodeDetailsProposed);
@@ -379,7 +382,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Here we want to watch the quorum and track all proposals, and resolve on the MSN advancing past the last one's sequence number.
 			// This is even more awkward than the proposal tracking, because there is no event for proposal acceptance on the Container, only on the QuorumProposals.
 			// Again for now, spying on the deltaManager and using insider knowledge.
-			const container = await this._containerP;
 			const watchForApproveProposalComplete = () => {
 				container.off("approveProposalComplete", watchForApproveProposalComplete);
 				this._quorumApprovalComplete = true;

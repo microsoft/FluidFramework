@@ -149,14 +149,17 @@ export interface IContainerEvents extends IEvent {
 	 * - `codeDetails`: The code details being proposed.
 	 *
 	 * - `sequenceNumber`: Proposal sequence number.
-	 * 
+	 *
 	 * - `key`: Proposal key.
 	 *
-	 * @see {@link QuorumProposals.updateMinimumSequenceNumber}
 	 */
 	(
 		event: "approveProposalComplete",
-		listener: (sequenceNumber: number | undefined, key: string, codeDetails: IFluidCodeDetails) => void,
+		listener: (
+			sequenceNumber: number | undefined,
+			key: string,
+			codeDetails: IFluidCodeDetails,
+		) => void,
 	);
 
 	/**
