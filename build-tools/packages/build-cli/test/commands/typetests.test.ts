@@ -349,6 +349,4 @@ describe("typetests tests", () => {
 			});
 		}
 	});
-
-	describe("previousVersion", () => {});
 });
