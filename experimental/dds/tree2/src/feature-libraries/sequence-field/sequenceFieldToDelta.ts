@@ -21,6 +21,7 @@ import {
 export type ToDelta<TNodeChange> = (
 	child: TNodeChange,
 	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
 ) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
@@ -38,6 +39,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					getMarkLength(mark),
 					deltaFromChild,
 					repairDataBuilder,
+					idAllocator,
 				),
 			);
 		} else if (
@@ -64,6 +66,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						insertMark,
 						deltaFromChild,
 						repairDataBuilder,
+						idAllocator,
 					);
 					out.pushContent(insertMark);
 					break;
@@ -79,7 +82,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					const modify = deltaFromChild(mark.changes, repairDataBuilder);
+					const modify = deltaFromChild(mark.changes, repairDataBuilder, idAllocator);
 					if (modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
@@ -103,6 +106,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						moveMark,
 						deltaFromChild,
 						repairDataBuilder,
+						idAllocator,
 					);
 					out.pushContent(moveMark);
 					repairDataBuilder.marks.set(detachedField, [
@@ -126,6 +130,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						moveMark,
 						deltaFromChild,
 						repairDataBuilder,
+						idAllocator,
 					);
 					out.pushContent(moveMark);
 					break;
@@ -143,6 +148,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						insertMark,
 						deltaFromChild,
 						repairDataBuilder,
+						idAllocator,
 					);
 					out.pushContent(insertMark);
 					break;
@@ -162,9 +168,10 @@ function populateChildModificationsIfAny<TNodeChange>(
 	deltaMark: Mutable<Delta.HasModifications>,
 	deltaFromChild: ToDelta<TNodeChange>,
 	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
 ): void {
 	if (changes !== undefined) {
-		const modify = deltaFromChild(changes, repairDataBuilder);
+		const modify = deltaFromChild(changes, repairDataBuilder, idAllocator);
 		populateChildModifications(modify, deltaMark);
 	}
 }
@@ -174,12 +181,13 @@ function deltaFromNodeChange<TNodeChange>(
 	length: number,
 	deltaFromChild: ToDelta<TNodeChange>,
 	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
 ): Delta.Mark {
 	if (change === undefined) {
 		return length;
 	}
 	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
-	const modify = deltaFromChild(change, repairDataBuilder);
+	const modify = deltaFromChild(change, repairDataBuilder, idAllocator);
 	return isEmptyModify(modify) ? 1 : modify;
 }
 

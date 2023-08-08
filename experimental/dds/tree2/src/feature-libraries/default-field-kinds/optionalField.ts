@@ -12,8 +12,9 @@ import {
 	tagChange,
 	ChangesetLocalId,
 	RepairDataBuilder,
+	ChangeAtomId,
 } from "../../core";
-import { fail, Mutable } from "../../util";
+import { brandOpaque, fail, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -306,6 +307,7 @@ function deltaFromInsertAndChange(
 	nodeChange: NodeChangeset | undefined,
 	deltaFromNode: ToDelta,
 	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
 		const insert: Mutable<Delta.Insert> = {
@@ -313,14 +315,14 @@ function deltaFromInsertAndChange(
 			content: [insertedContent],
 		};
 		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange, repairDataBuilder);
+			const nodeDelta = deltaFromNode(nodeChange, repairDataBuilder, idAllocator);
 			populateChildModifications(nodeDelta, insert);
 		}
 		return [insert];
 	}
 
 	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange, repairDataBuilder)];
+		return [deltaFromNode(nodeChange, repairDataBuilder, idAllocator)];
 	}
 
 	return [];
@@ -331,36 +333,47 @@ function deltaForDelete(
 	nodeChange: NodeChangeset | undefined,
 	deltaFromNode: ToDelta,
 	repairDataBuilder: RepairDataBuilder,
+	changeAtomId: ChangeAtomId,
+	idAllocator: IdAllocator,
 ): Delta.Mark[] {
 	if (!nodeExists) {
 		return [];
 	}
 
-	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
+	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
+	const moveDelta: Mutable<Delta.MoveOut> = { type: Delta.MarkType.MoveOut, count: 1, moveId };
 	if (nodeChange !== undefined) {
-		const modify = deltaFromNode(nodeChange, repairDataBuilder);
-		deleteDelta.fields = modify.fields;
+		const modify = deltaFromNode(nodeChange, repairDataBuilder, idAllocator);
+		moveDelta.fields = modify.fields;
 	}
-	return [deleteDelta];
+
+	const moveIn: Delta.MoveIn = { type: Delta.MarkType.MoveIn, count: 1, moveId };
+	repairDataBuilder.marks.set(repairDataBuilder.handler(changeAtomId), [moveIn]);
+
+	return [moveDelta];
 }
 
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
 	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
 ) {
 	if (change.fieldChange === undefined) {
 		if (change.deletedBy === undefined && change.childChange !== undefined) {
-			return [deltaFromChild(change.childChange, repairDataBuilder)];
+			return [deltaFromChild(change.childChange, repairDataBuilder, idAllocator)];
 		}
 		return [];
 	}
 
+	const changeAtomId = { revision: change.fieldChange.revision, localId: change.fieldChange.id };
 	const deleteDelta = deltaForDelete(
 		!change.fieldChange.wasEmpty,
 		change.deletedBy === undefined ? change.childChange : undefined,
 		deltaFromChild,
 		repairDataBuilder,
+		changeAtomId,
+		idAllocator,
 	);
 
 	const update = change.fieldChange?.newContent;
@@ -378,6 +391,7 @@ export function optionalFieldIntoDelta(
 		update?.changes,
 		deltaFromChild,
 		repairDataBuilder,
+		idAllocator,
 	);
 
 	return [...deleteDelta, ...insertDelta];
@@ -392,7 +406,8 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 		change: OptionalChangeset,
 		deltaFromChild: ToDelta,
 		repairDataBuilder: RepairDataBuilder,
-	) => optionalFieldIntoDelta(change, deltaFromChild, repairDataBuilder),
+		idAllocator: IdAllocator,
+	) => optionalFieldIntoDelta(change, deltaFromChild, repairDataBuilder, idAllocator),
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChange === undefined && change.fieldChange === undefined,
 };

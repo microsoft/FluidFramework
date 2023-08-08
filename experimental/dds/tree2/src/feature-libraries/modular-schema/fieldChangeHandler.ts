@@ -161,7 +161,11 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset, repairDataBuilder: RepairDataBuilder) => Delta.Modify;
+export type ToDelta = (
+	child: NodeChangeset,
+	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
+) => Delta.Modify;
 
 /**
  * @alpha
