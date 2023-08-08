@@ -162,7 +162,7 @@ export class EditManager<
 	/**
 	 * Make the given branch known to the `EditManager`. The `EditManager` will ensure that all registered
 	 * branches remain usable even as the minimum sequence number advances.
-]	 */
+	 */
 	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		const trackBranch = (b: SharedTreeBranch<TEditor, TChangeset>): SeqNumber => {
 			const trunkCommit =

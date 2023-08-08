@@ -293,10 +293,10 @@ describe("SharedTreeCore", () => {
 		branch4.dispose(); //                                [x, x, x, 4, 5 (b5)]
 		assert.equal(getTrunkLength(tree), 2);
 		changeTree(tree);
-		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5)]
+		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5), 6]
 		assert.equal(getTrunkLength(tree), 1);
 		changeTree(tree);
-		branch5.dispose(); //                                [x, x, x, x, x, 6]
+		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
 		assert.equal(getTrunkLength(tree), 1);
 	});
 
