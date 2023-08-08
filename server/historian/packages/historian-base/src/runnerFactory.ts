@@ -211,7 +211,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
 			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
 
-		const denyListConfig = config.get("denyList");
+		const denyListConfig = config.get("documentDenyList");
 		const denyList: historianServices.IDenyList = new historianServices.DenyList(
 			denyListConfig,
 		);
