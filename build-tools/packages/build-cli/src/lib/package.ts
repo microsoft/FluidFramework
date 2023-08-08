@@ -681,7 +681,6 @@ async function setPackageDependencies(
 					changed = true;
 					dependencies[name] = newRangeString;
 				}
-				// changedVersions?.add(dep.pkg, newRangeString);
 			}
 		}
 	}
