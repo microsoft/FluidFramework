@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert, expect } from "chai";
+import clonedeep from "lodash.clonedeep";
 
 import {
 	TypeTestConfigActions,
@@ -16,8 +17,8 @@ import { PackageJson } from "@fluidframework/build-tools";
  * A minimal test package.json. It defines only the required fields according to the type definition.
  */
 const packageMinimal: PackageJson = {
-	name: "packageMinimal",
-	version: "2.0.0-internal.5.4.3",
+	name: "test-package",
+	version: "2.0.0-internal.6.0.0",
 	scripts: {},
 };
 
@@ -25,9 +26,12 @@ const packageMinimal: PackageJson = {
  * A test package.json with an enabled typeValidation node.
  */
 const packageWithTypeValidation: PackageJson = {
-	name: "packageWithTypeValidation",
-	version: "2.0.0-internal.5.4.3",
+	name: "test-package",
+	version: "2.0.0-internal.6.0.0",
 	scripts: {},
+	devDependencies: {
+		"test-package-previous": "npm:test-package@2.0.0-internal.4.0.0",
+	},
 	typeValidation: {
 		broken: {
 			"broken-package": {
@@ -43,8 +47,8 @@ const packageWithTypeValidation: PackageJson = {
  * A test package.json with an disabled typeValidation node.
  */
 const packageWithTypeValidationDisabled: PackageJson = {
-	name: "packageWithTypeValidationDisabled",
-	version: "2.0.0-internal.5.4.3",
+	name: "test-package",
+	version: "2.0.0-internal.6.0.0",
 	scripts: {},
 	typeValidation: {
 		broken: {
@@ -55,11 +59,6 @@ const packageWithTypeValidationDisabled: PackageJson = {
 		},
 		disabled: true,
 	},
-};
-
-const options: TypeTestConfigActions = {
-	version: VersionOptions.Previous,
-	resetBroken: true,
 };
 
 const optionsMatrix: Map<string, TypeTestConfigActions> = new Map([
@@ -108,69 +107,223 @@ const optionsMatrix: Map<string, TypeTestConfigActions> = new Map([
 ]);
 
 describe("typetests tests", () => {
-	const testPackages = [
-		packageMinimal,
-		packageWithTypeValidation,
-		packageWithTypeValidationDisabled,
-	];
-
 	describe("updateTypeTestConfiguration", () => {
+		const testPackages = [
+			packageMinimal,
+			packageWithTypeValidation,
+			packageWithTypeValidationDisabled,
+		];
+
 		describe("previousAndResetTrue", () => {
 			const name = "previousAndResetTrue";
 			const options = optionsMatrix.get(name)!;
-			it(`${name}: packageMinimal`, () => {
-				const pkg = packageMinimal;
+			it(`packageMinimal`, () => {
+				const pkg = clonedeep(packageMinimal);
 				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.undefined;
 				expect(pkg.typeValidation?.disabled).to.be.undefined;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
+					"npm:test-package@2.0.0-internal.5.0.0",
+				);
 			});
 
-			it(`${name}: packageWithTypeValidation`, () => {
-				const pkg = packageWithTypeValidation;
+			it(`packageWithTypeValidation`, () => {
+				const pkg = clonedeep(packageWithTypeValidation);
 				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).not.to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.empty;
 				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
+					"npm:test-package@2.0.0-internal.5.0.0",
+				);
 			});
 
-			it(`${name}: packageWithTypeValidationDisabled`, () => {
-				const pkg = packageWithTypeValidation;
+			it(`packageWithTypeValidationDisabled`, () => {
+				const pkg = clonedeep(packageWithTypeValidationDisabled);
 				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).not.to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.empty;
-				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.typeValidation?.disabled).to.be.true;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
 			});
 		});
 
 		describe("previousAndResetFalse", () => {
 			const name = "previousAndResetFalse";
 			const options = optionsMatrix.get(name)!;
-			it(`${name}: packageMinimal`, () => {
-				const pkg = packageMinimal;
+			it(`packageMinimal`, () => {
+				const pkg = clonedeep(packageMinimal);
+				updateTypeTestConfiguration(pkg, options);
+
+				expect(pkg.typeValidation).to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.undefined;
+				expect(pkg.typeValidation?.disabled).to.be.undefined;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
+					"npm:test-package@2.0.0-internal.5.0.0",
+				);
+			});
+
+			it(`packageWithTypeValidation`, () => {
+				const pkg = clonedeep(packageWithTypeValidation);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).not.to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
+					"npm:test-package@2.0.0-internal.5.0.0",
+				);
+			});
+
+			it(`packageWithTypeValidationDisabled`, () => {
+				const pkg = clonedeep(packageWithTypeValidationDisabled);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.exist;
+				expect(pkg.typeValidation?.broken["broken-package"]).to.exist;
+				expect(pkg.typeValidation?.disabled).to.be.true;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+		});
+
+		describe("clearAndResetTrue", () => {
+			const name = "clearAndResetTrue";
+			const options = optionsMatrix.get(name)!;
+			it(`packageMinimal`, () => {
+				const pkg = clonedeep(packageMinimal);
 				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.undefined;
 				expect(pkg.typeValidation?.disabled).to.be.undefined;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
 			});
 
-			it(`${name}: packageWithTypeValidation`, () => {
-				const pkg = packageWithTypeValidation;
+			it(`packageWithTypeValidation`, () => {
+				const pkg = clonedeep(packageWithTypeValidation);
 				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).not.to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.empty;
 				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
 			});
 
-			it(`${name}: packageWithTypeValidationDisabled`, () => {
-				const pkg = packageWithTypeValidation;
+			it(`packageWithTypeValidationDisabled`, () => {
+				const pkg = clonedeep(packageWithTypeValidationDisabled);
 				updateTypeTestConfiguration(pkg, options);
 				expect(pkg.typeValidation).not.to.be.undefined;
 				expect(pkg.typeValidation?.broken).to.be.empty;
-				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.typeValidation?.disabled).to.be.true;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
 			});
 		});
 
+		describe("clearAndResetFalse", () => {
+			const name = "clearAndResetFalse";
+			const options = optionsMatrix.get(name)!;
+			it(`packageMinimal`, () => {
+				const pkg = clonedeep(packageMinimal);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.undefined;
+				expect(pkg.typeValidation?.disabled).to.be.undefined;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+
+			it(`packageWithTypeValidation`, () => {
+				const pkg = clonedeep(packageWithTypeValidation);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.exist;
+				expect(pkg.typeValidation?.broken["broken-package"]).to.exist;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.devDependencies).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+
+			it(`packageWithTypeValidationDisabled`, () => {
+				const pkg = clonedeep(packageWithTypeValidationDisabled);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.exist;
+				expect(pkg.typeValidation?.broken["broken-package"]).to.exist;
+				expect(pkg.typeValidation?.disabled).to.be.true;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+		});
+
+		describe("clearIfDisabledAndResetTrue", () => {
+			const name = "clearIfDisabledAndResetTrue";
+			const options = optionsMatrix.get(name)!;
+			it(`packageMinimal`, () => {
+				const pkg = clonedeep(packageMinimal);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.undefined;
+				expect(pkg.typeValidation?.disabled).to.be.undefined;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+
+			it(`packageWithTypeValidation`, () => {
+				const pkg = clonedeep(packageWithTypeValidation);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.devDependencies).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
+					"npm:test-package@2.0.0-internal.4.0.0",
+				);
+			});
+
+			it(`packageWithTypeValidationDisabled`, () => {
+				const pkg = clonedeep(packageWithTypeValidationDisabled);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.empty;
+				expect(pkg.typeValidation?.disabled).to.be.true;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+		});
+
+		describe("clearIfDisabledAndResetFalse", () => {
+			const name = "clearIfDisabledAndResetFalse";
+			const options = optionsMatrix.get(name)!;
+			it(`packageMinimal`, () => {
+				const pkg = clonedeep(packageMinimal);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.be.undefined;
+				expect(pkg.typeValidation?.disabled).to.be.undefined;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+
+			it(`packageWithTypeValidation`, () => {
+				const pkg = clonedeep(packageWithTypeValidation);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.exist;
+				expect(pkg.typeValidation?.broken["broken-package"]).to.exist;
+				expect(pkg.typeValidation?.disabled).to.be.false;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
+					"npm:test-package@2.0.0-internal.4.0.0",
+				);
+			});
+
+			it(`packageWithTypeValidationDisabled`, () => {
+				const pkg = clonedeep(packageWithTypeValidationDisabled);
+				updateTypeTestConfiguration(pkg, options);
+				expect(pkg.typeValidation).not.to.be.undefined;
+				expect(pkg.typeValidation?.broken).to.exist;
+				expect(pkg.typeValidation?.broken["broken-package"]).to.exist;
+				expect(pkg.typeValidation?.disabled).to.be.true;
+				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+			});
+		});
 	});
 
 	describe("previousVersion", () => {
