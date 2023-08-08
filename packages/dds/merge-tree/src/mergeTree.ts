@@ -125,7 +125,7 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
 interface IReferenceSearchInfo {
 	mergeTree: MergeTree;
 	tileLabel: string;
-	posPrecedesTile?: boolean;
+	tilePrecedesPos?: boolean;
 	tile?: ReferencePosition;
 }
 
@@ -223,9 +223,9 @@ function tileShift(
 		}
 	} else {
 		const block = <IHierBlock>node;
-		const marker = searchInfo.posPrecedesTile
-			? <Marker>block.leftmostTiles[searchInfo.tileLabel]
-			: <Marker>block.rightmostTiles[searchInfo.tileLabel];
+		const marker = searchInfo.tilePrecedesPos
+			? <Marker>block.rightmostTiles[searchInfo.tileLabel]
+			: <Marker>block.leftmostTiles[searchInfo.tileLabel];
 		if (marker !== undefined) {
 			searchInfo.tile = marker;
 		}
@@ -1252,20 +1252,21 @@ export class MergeTree {
 	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
+	 * This function will be deprecated in favor of walkToFindTile.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param tileLabel - Label of the tile to search for
-	 * @param posPrecedesTile - Whether the desired tile comes before (false) or after (true) `startPos`
+	 * @param tilePrecedesPos - Whether the desired tile comes before (false) or after (true) `startPos`
 	 */
-	public findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile = true) {
+	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
 		const searchInfo: IReferenceSearchInfo = {
 			mergeTree: this,
-			posPrecedesTile,
+			tilePrecedesPos,
 			tileLabel,
 		};
 
-		if (posPrecedesTile) {
+		if (tilePrecedesPos) {
 			this.search(
 				startPos,
 				UniversalSequenceNumber,
@@ -1283,10 +1284,83 @@ export class MergeTree {
 			);
 		}
 
-		if (
-			searchInfo.tile &&
-			!((startPos === this.length && !posPrecedesTile) || (startPos === 0 && posPrecedesTile))
-		) {
+		if (searchInfo.tile) {
+			let pos: number;
+			if (searchInfo.tile.isLeaf()) {
+				const marker = <Marker>searchInfo.tile;
+				pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
+			} else {
+				const localRef = searchInfo.tile;
+				pos = this.referencePositionToLocalPosition(
+					localRef,
+					UniversalSequenceNumber,
+					clientId,
+				);
+			}
+			return { tile: searchInfo.tile, pos };
+		}
+
+		return undefined;
+	}
+
+	/**
+	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `posPrecedesTile`.
+	 * Uses depthFirstNodeWalk in addition to the block-accelerated functionality introduced for findTile. The search
+	 * position will be included in the nodes to walk, so searching on all positions, including the endpoints, can be considered
+	 * inclusive. Any out of bound search positions will return undefined, so in order to search the whole string, a forward
+	 * search can begin at 0, or a bacward search can begin at length-1.This function will replace findTile, which will be deprecated.
+	 *
+	 * @param startPos - Position at which to start the search
+	 * @param clientId - clientId dictating the perspective to search from
+	 * @param tileLabel - Label of the tile to search for
+	 * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
+	 */
+	public walkToFindTile(
+		startPos: number,
+		clientId: number,
+		tileLabel: string,
+		tilePrecedesPos = true,
+	) {
+		const searchInfo: IReferenceSearchInfo = {
+			mergeTree: this,
+			tilePrecedesPos,
+			tileLabel,
+		};
+
+		const tileShiftHelper = (node: IMergeNode) => {
+			tileShift(node, 0, UniversalSequenceNumber, clientId, startPos, -1, searchInfo);
+		};
+
+		const recordTileStartHelper = (seg: ISegment): boolean | undefined => {
+			const result: boolean = recordTileStart(
+				seg,
+				0,
+				UniversalSequenceNumber,
+				clientId,
+				startPos,
+				-1,
+				searchInfo,
+			);
+			if (!Marker.is(seg)) {
+				return true;
+			}
+			return result;
+		};
+		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
+		if (segment === undefined) {
+			return undefined;
+		}
+
+		depthFirstNodeWalk(
+			this.root,
+			this.root.children[segment.index],
+			tileShiftHelper,
+			recordTileStartHelper,
+			undefined,
+			!tilePrecedesPos,
+		);
+
+		if (searchInfo.tile) {
 			let pos: number;
 			if (searchInfo.tile.isLeaf()) {
 				const marker = <Marker>searchInfo.tile;

@@ -1172,4 +1172,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientId = this.getClientId();
 		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
 	}
+
+	walkToFindTile(startPos: number, tileLabel: string, preceding = true) {
+		const clientId = this.getClientId();
+		return this._mergeTree.walkToFindTile(startPos, clientId, tileLabel, preceding);
+	}
 }

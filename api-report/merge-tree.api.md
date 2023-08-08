@@ -208,6 +208,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+    // (undocumented)
+    walkToFindTile(startPos: number, tileLabel: string, preceding?: boolean): {
+        tile: ReferencePosition;
+        pos: number;
+    } | undefined;
 }
 
 // @public (undocumented)
