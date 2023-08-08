@@ -118,6 +118,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_DevtoolsFeature": {
+				"backCompat": false
+			}
+		}
 	}
 }

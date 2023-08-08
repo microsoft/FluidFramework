@@ -162,7 +162,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
 	const { themeInfo } = useThemeContext();
 
-	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme as Theme);
+	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
 	const handleLegendClick = (e): void => {
 		setActiveIndex(activeIndex === e.dataKey ? undefined : (e.dataKey as string));
