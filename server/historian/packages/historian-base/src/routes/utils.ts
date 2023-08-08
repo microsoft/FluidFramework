@@ -78,6 +78,8 @@ export class createGitServiceArgs {
 	initialUpload?: boolean = false;
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
+	isEphemeralContainer?: boolean = false;
+	ignoreEphemeralFlag?: boolean = true;
 }
 
 export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
@@ -92,6 +94,8 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		initialUpload,
 		storageName,
 		allowDisabledTenant,
+		isEphemeralContainer,
+		ignoreEphemeralFlag,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
 	const decoded = decode(token) as ITokenClaims;
@@ -104,6 +108,16 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
+
+	let isEphemeral = isEphemeralContainer;
+	if (!ignoreEphemeralFlag) {
+		if (isEphemeralContainer !== undefined) {
+			await cache.set(`isEphemeral:${documentId}`, isEphemeralContainer);
+		} else {
+			isEphemeral = await cache.get(`isEphemeral:${documentId}`);
+			// Todo: If isEphemeral is still undefined fetch the value from database
+		}
+	}
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
@@ -117,6 +131,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		asyncLocalStorage,
 		calculatedStorageName,
 		storageUrl,
+		isEphemeral,
 	);
 	return service;
 }

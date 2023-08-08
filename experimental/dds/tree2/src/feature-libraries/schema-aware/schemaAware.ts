@@ -293,11 +293,10 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
 // TODO: tests
 export function downCast<TSchema extends TreeSchema>(
 	schema: TSchema,
-	tree: UntypedTreeCore,
+	tree: UntypedTreeCore<any, any>,
 ): tree is TypedNode<TSchema> {
-	if (typeof tree !== "object") {
-		return false;
-	}
+	assert(typeof tree === "object", "downCast only valid on wrapped nodes");
+
 	const contextSchema = tree[contextSymbol].schema;
 	const lookedUp = contextSchema.treeSchema.get(schema.name);
 	// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
