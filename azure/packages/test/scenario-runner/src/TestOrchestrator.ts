@@ -70,11 +70,6 @@ export interface IStageStatus {
 	details: unknown;
 }
 
-interface IConnectionConfig {
-	type: string;
-	endpoint: string;
-}
-
 export class TestOrchestrator {
 	private readonly runId = uuid();
 	private runStatus: RunStatus = "notStarted";
@@ -97,14 +92,11 @@ export class TestOrchestrator {
 
 	public async run(): Promise<boolean> {
 		this.runStatus = "running";
-		const connConfig: IConnectionConfig = this.doc.env.connectionConfig as IConnectionConfig;
 		const logger = await getLogger(
 			{
 				runId: this.runId,
 				scenarioName: this.doc?.title,
 				namespace: "scenario:runner",
-				endpoint: connConfig.endpoint ?? process.env.azure__fluid__relay__service__endpoint,
-				region: connConfig.endpoint ?? process.env.azure__fluid__relay__service__region,
 			},
 			["scenario:runner"],
 			eventMap,

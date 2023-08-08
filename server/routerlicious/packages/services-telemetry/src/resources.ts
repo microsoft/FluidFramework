@@ -90,6 +90,7 @@ export enum CommonProperties {
 	serviceName = "serviceName",
 	telemetryGroupName = "telemetryGroupName",
 	totalBatchSize = "totalBatchSize",
+	isEphemeralContainer = "isEphemeralContainer",
 	restartReason = "restartReason",
 }
 
