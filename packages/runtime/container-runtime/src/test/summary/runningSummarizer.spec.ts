@@ -313,7 +313,10 @@ describe("Runtime", () => {
 				).logger;
 				mockDeltaManager = new MockDeltaManager();
 				mockRuntime = new MockRuntime(mockDeltaManager);
-				summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
+				summaryCollection = new SummaryCollection(
+					mockDeltaManager,
+					mockLogger.toTelemetryLogger(),
+				);
 			});
 
 			describe("Summary Schedule", () => {

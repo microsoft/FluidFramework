@@ -102,7 +102,7 @@ describe("Runtime", () => {
 					data,
 					summaryConfig,
 					trySummarize,
-					mockLogger,
+					mockLogger.toTelemetryLogger(),
 				);
 
 				if (run) {

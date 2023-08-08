@@ -199,7 +199,7 @@ export interface IMapMessageLocalMetadata {
 // @public
 export class Interval implements ISerializableInterval {
     constructor(start: number, end: number, props?: PropertySet);
-    // @deprecated (undocumented)
+    // @internal (undocumented)
     addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
     addPropertySet(props: PropertySet): void;
     // @internal (undocumented)
@@ -216,23 +216,20 @@ export class Interval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     getProperties(): PropertySet;
-    // @deprecated
+    // @internal
     modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval | undefined;
     // (undocumented)
     overlaps(b: Interval): boolean;
     properties: PropertySet;
-    // @deprecated (undocumented)
+    // @internal (undocumented)
     propertyManager: PropertiesManager;
     // @internal (undocumented)
     serialize(): ISerializedInterval;
     // (undocumented)
     start: number;
-    // @deprecated
+    // @internal
     union(b: Interval): Interval;
 }
-
-// @public @deprecated (undocumented)
-export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
@@ -417,7 +414,7 @@ export class SequenceInterval implements ISerializableInterval {
     end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness);
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // @deprecated (undocumented)
+    // @internal (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
     // (undocumented)
     clone(): SequenceInterval;
@@ -428,14 +425,14 @@ export class SequenceInterval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
-    // @deprecated
+    // @internal
     modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number, stickiness?: IntervalStickiness): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
     properties: PropertySet;
-    // @deprecated (undocumented)
+    // @internal (undocumented)
     propertyManager: PropertiesManager;
     // @internal
     removePositionChangeListeners(): void;
@@ -444,7 +441,7 @@ export class SequenceInterval implements ISerializableInterval {
     start: LocalReferencePosition;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
-    // @deprecated
+    // @internal
     union(b: SequenceInterval): SequenceInterval;
 }
 

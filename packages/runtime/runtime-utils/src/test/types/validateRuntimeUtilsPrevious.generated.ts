@@ -616,30 +616,6 @@ use_old_FunctionDeclaration_mergeStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_packagePathToTelemetryProperty": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_packagePathToTelemetryProperty():
-    TypeOnly<typeof old.packagePathToTelemetryProperty>;
-declare function use_current_FunctionDeclaration_packagePathToTelemetryProperty(
-    use: TypeOnly<typeof current.packagePathToTelemetryProperty>);
-use_current_FunctionDeclaration_packagePathToTelemetryProperty(
-    get_old_FunctionDeclaration_packagePathToTelemetryProperty());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_packagePathToTelemetryProperty": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_packagePathToTelemetryProperty():
-    TypeOnly<typeof current.packagePathToTelemetryProperty>;
-declare function use_old_FunctionDeclaration_packagePathToTelemetryProperty(
-    use: TypeOnly<typeof old.packagePathToTelemetryProperty>);
-use_old_FunctionDeclaration_packagePathToTelemetryProperty(
-    get_current_FunctionDeclaration_packagePathToTelemetryProperty());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_requestFluidObject": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_requestFluidObject():
