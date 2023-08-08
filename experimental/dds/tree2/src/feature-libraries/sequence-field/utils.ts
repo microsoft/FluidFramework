@@ -80,10 +80,16 @@ export function isConflictedReattach<TNodeChange>(
 
 // TODO: Name is misleading
 export function isReattachConflicted(mark: Reattach<unknown>): boolean {
-	return (
-		mark.cellId === undefined ||
-		(mark.inverseOf !== undefined && mark.inverseOf !== mark.cellId.revision)
-	);
+	return mark.cellId === undefined || isRevertOnlyReattachPreempted(mark);
+}
+
+/**
+ * @returns true iff `mark` is an inverse that cannot be applied because of concurrent populating
+ * (and possibly emptying) the target cell, where those concurrent changes are unrelated (meaning they are not just
+ * and undo/redo pair of the change this this mark is the inverse of).
+ */
+function isRevertOnlyReattachPreempted(mark: Reattach<unknown>): boolean {
+	return mark.inverseOf !== undefined && mark.inverseOf !== mark.cellId?.revision;
 }
 
 export function isReturnMuted(mark: ReturnTo): boolean {
@@ -186,6 +192,42 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 
 export function markIsTransient<T>(mark: Mark<T>): mark is TransientMark<T> {
 	return isGenerativeMark(mark) && mark.transientDetach !== undefined;
+}
+
+/**
+ * @returns The nested changes from `mark` if they to the content the mark refers to.
+ */
+export function getEffectiveNodeChanges<TNodeChange>(
+	mark: Mark<TNodeChange>,
+): TNodeChange | undefined {
+	const changes = mark.changes;
+	if (changes === undefined) {
+		return undefined;
+	}
+	const type = mark.type;
+	assert(
+		type !== "MoveIn" && type !== "ReturnTo",
+		"MoveIn/ReturnTo marks should not have changes",
+	);
+	switch (type) {
+		case "Insert":
+			return changes;
+		case "Revive":
+			// So long as the input cell is populated, the nested changes are still effective
+			// (even if the revive is preempted) because the nested changes can only target the node in the populated
+			// cell.
+			return areInputCellsEmpty(mark) && isRevertOnlyReattachPreempted(mark)
+				? undefined
+				: changes;
+		case NoopMarkType:
+		case "Placeholder":
+		case "Delete":
+		case "MoveOut":
+		case "ReturnFrom":
+			return areInputCellsEmpty(mark) ? undefined : changes;
+		default:
+			unreachableCase(type);
+	}
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
