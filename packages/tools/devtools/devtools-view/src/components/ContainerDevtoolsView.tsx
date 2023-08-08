@@ -156,7 +156,8 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
 		supportedFeatures.containerDataVisualization === true ||
-			supportedFeatures["container-data"] === true // Backwards compatibility check
+			// Backwards compatibility check, needed until we require at least devtools-core/devtools v2.0.0-internal.6.1.0
+			supportedFeatures["container-data"] === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);
