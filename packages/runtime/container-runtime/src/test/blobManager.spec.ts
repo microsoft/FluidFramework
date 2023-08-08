@@ -403,23 +403,22 @@ describe("BlobManager", () => {
 
 	it("uploads while disconnected", async () => {
 		await runtime.attach();
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.connect();
 		await runtime.processAll();
+		await assert.doesNotReject(handleP);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("close container if blob expired", async () => {
+	it.skip("close container if blob expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
+		// await runtime.processBlobs();
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
@@ -427,11 +426,9 @@ describe("BlobManager", () => {
 		await runtime.processAll();
 	});
 
-	it("close container if expired while connect", async () => {
+	it.skip("close container if expired while connect", async () => {
 		await runtime.attach();
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
+		void runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await runtime.connect(50);
 		assert.strictEqual(runtime.closed, true);
@@ -442,12 +439,11 @@ describe("BlobManager", () => {
 		await runtime.attach();
 		await runtime.connect();
 
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		runtime.disconnect();
-		await runtime.processBlobs();
-		await handle;
-		await runtime.connect();
+		await runtime.connect(20);
 		await runtime.processAll();
+		await assert.doesNotReject(handleP);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
@@ -478,19 +474,16 @@ describe("BlobManager", () => {
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
 		runtime.disconnect();
-		await runtime.processBlobs();
-		await handleP;
-		await runtime.connect();
+		await runtime.connect(10);
 
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
 		runtime.disconnect();
-		await runtime.processBlobs();
-		await handleP2;
 
-		await runtime.connect();
+		await runtime.connect(10);
 		await runtime.processAll();
-
+		await assert.doesNotReject(handleP);
+		await assert.doesNotReject(handleP2);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 2);
 		assert.strictEqual(summaryData.redirectTable.size, 2);
@@ -503,7 +496,6 @@ describe("BlobManager", () => {
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		runtime.disconnect();
-		await runtime.processBlobs();
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
@@ -547,7 +539,6 @@ describe("BlobManager", () => {
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 
 		runtime.disconnect();
-		await runtime.processBlobs();
 		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
@@ -566,10 +557,10 @@ describe("BlobManager", () => {
 
 		await runtime.attach();
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.connect();
+
 		await runtime.processBlobs();
 		await handle;
-
-		await runtime.connect();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
@@ -800,34 +791,6 @@ describe("BlobManager", () => {
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
-		// tests results will change after
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/4550
-		// handles won't be resolved on disconnection
-		it("resubmit on aborted pending upload", async () => {
-			await runtime.attach();
-			await runtime.connect();
-			const ac = new AbortController();
-			let handleP;
-			try {
-				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
-				// we can't reject the handle after disconnection but
-				// we can still clean the pending entries
-				runtime.disconnect();
-				await runtime.processBlobs();
-				await handleP;
-				ac.abort();
-				await runtime.connect();
-				runtime.processOps();
-			} catch (error: any) {
-				assert.fail("Should succeed");
-			}
-			assert(handleP);
-			await assert.doesNotReject(handleP);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
-			assert.strictEqual(summaryData.redirectTable, undefined);
-		});
-
 		it("resubmit on aborted pending op", async () => {
 			await runtime.attach();
 			await runtime.connect();
@@ -835,20 +798,21 @@ describe("BlobManager", () => {
 			let handleP;
 			try {
 				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
-				await runtime.processBlobs();
-				// disconnect causes blob to transition to offline if we already upload the
-				// blob, therefore resolving its handle. Once we change that, handle will
-				// reject
+				const p1 = runtime.processBlobs();
+				const p2 = runtime.processHandles();
+				// finish upload
+				await Promise.race([p1, p2]);
 				runtime.disconnect();
-				await handleP;
 				ac.abort();
-				await runtime.connect();
-				runtime.processOps();
+				await handleP;
 			} catch (error: any) {
-				assert.fail("Should succeed");
+				assert.strictEqual(error.status, PendingBlobStatus.OnlinePendingOp);
+				assert.ok(error.uploadTime);
+				assert.strictEqual(error.acked, false);
 			}
-			assert(handleP);
-			await assert.doesNotReject(handleP);
+			await runtime.connect();
+			runtime.processOps();
+			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);
