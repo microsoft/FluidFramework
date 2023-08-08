@@ -34,6 +34,7 @@ import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -1196,6 +1197,25 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
 			"blob contents",
 		);
+	});
+
+	it("close while uploading blob", async function () {
+		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
+		// const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		// force write mode
+		dataStore.root.set("forceWrite", true);
+		await provider.ensureSynchronized();
+
+		void container1.closeAndGetPendingLocalState?.();
+		try {
+			await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		} catch (error: any) {
+			assert.strictEqual(
+				(error as UsageError)?.errorType,
+				"usageError",
+				"Uploading blobs is not allowed while getting pending state",
+			);
+		}
 	});
 
 	it("close while uploading multiple blob", async function () {

@@ -40,7 +40,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
@@ -208,6 +208,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private blockUploading: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -514,6 +515,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		if (signal?.aborted) {
 			throw this.createAbortError();
+		}
+
+		if (this.blockUploading) {
+			this.mc.logger.sendErrorEvent({ eventName: "UploadBlobWhileGettingStateNotAllowed" });
+			throw new UsageError("Uploading blobs is not allowed while getting pending state");
 		}
 
 		// Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
@@ -1038,6 +1044,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
+		this.blockUploading = true;
 		if (waitBlobsToAttach) {
 			await this.shutdownPendingBlobs();
 		}
@@ -1052,6 +1059,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				uploadTime: entry.uploadTime,
 			};
 		}
+		this.blockUploading = false;
 		return blobs;
 	}
 }
