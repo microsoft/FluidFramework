@@ -27,7 +27,6 @@ export async function runnerHttpServerStop(
 		} else {
 			runningDeferredPromise?.resolve();
 		}
-		// runningDeferredPromise = undefined;
 		if (!runnerMetric.isCompleted()) {
 			runnerMetric.success(`${runnerMetric.eventName} stopped`);
 		}
@@ -45,7 +44,6 @@ export async function runnerHttpServerStop(
 				runnerStopException: serializeError(error),
 			});
 		}
-		// runningDeferredPromise = undefined;
 		throw error;
 	}
 }
