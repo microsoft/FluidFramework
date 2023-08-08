@@ -343,8 +343,13 @@ function inverseFromCommit<TChange>(
 	repairData?: ReadonlyRepairDataStore,
 	cache?: boolean,
 ): TaggedChange<TChange> {
+	const inverse = commit.inverse ?? changeRebaser.invert(commit, true, repairData);
+	if (cache === true && commit.inverse === undefined) {
+		commit.inverse = inverse;
+	}
+
 	return tagRollbackInverse(
-		changeRebaser.invert(commit, true, repairData, cache),
+		inverse,
 		mintRevisionTag(),
 		commit.revision,
 	);
