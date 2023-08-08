@@ -35,9 +35,16 @@ import path from "path";
 import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
 
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
+import { zip } from "./collections";
 import { indentString } from "./text";
+import {
+	AllPackagesSelectionCriteria,
+	PackageSelectionCriteria,
+	PackageWithKind,
+	selectAndFilterPackages,
+} from "../filter";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 
 /**
  * An object that maps package names to version strings or range strings.
@@ -487,10 +494,12 @@ export interface DependencyWithRange {
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param version - The version to set.
  * @param interdependencyRange - The type of dependency to use on packages within the release group.
+ * @param writeChanges - If true, save changes to packages to disk.
  * @param log - A logger to use.
  *
  * @internal
  */
+// eslint-disable-next-line max-params
 export async function setVersion(
 	context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
@@ -502,13 +511,12 @@ export async function setVersion(
 	const translatedVersion = version;
 	const scheme = detectVersionScheme(translatedVersion);
 
-	let name: string;
+	const name = releaseGroupOrPackage.name;
 	const cmds: [string, string[], execa.Options | undefined][] = [];
 	let options: execa.Options | undefined;
 
 	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
 	if (releaseGroupOrPackage instanceof MonoRepo) {
-		name = releaseGroupOrPackage.kind;
 		options = {
 			cwd: releaseGroupOrPackage.repoPath,
 			stdio: "inherit",
@@ -529,7 +537,6 @@ export async function setVersion(
 			["pnpm", ["-r", "run", "build:genver"], options],
 		);
 	} else {
-		name = releaseGroupOrPackage.name;
 		options = {
 			cwd: releaseGroupOrPackage.directory,
 			stdio: "inherit",
@@ -628,6 +635,7 @@ export async function setVersion(
 			pkg,
 			dependencyVersionMap,
 			/* updateWithinSameReleaseGroup */ true,
+			/* writeChanges */ true,
 		);
 	}
 }
@@ -640,6 +648,7 @@ export async function setVersion(
  * @param updateWithinSameReleaseGroup - If true, will update dependency ranges of dependencies within the same release
  * group. Typically this should be `false`, but in some cases you may need to set a precise dependency range string
  * within the same release group.
+ * @param writeChanges - If true, save changes to packages to disk.
  * @returns True if the packages dependencies were changed; false otherwise.
  *
  * @remarks
@@ -650,12 +659,11 @@ export async function setVersion(
  *
  * @internal
  */
-export async function setPackageDependencies(
+async function setPackageDependencies(
 	pkg: Package,
 	dependencyVersionMap: Map<string, DependencyWithRange>,
-	// eslint-disable-next-line default-param-last
 	updateWithinSameReleaseGroup = false,
-	changedVersions?: VersionBag,
+	writeChanges = true,
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
@@ -669,14 +677,16 @@ export async function setPackageDependencies(
 					: pkg.packageJson.dependencies;
 
 				newRangeString = dep.range.toString();
-				dependencies[name] = newRangeString;
-				changed = true;
-				changedVersions?.add(dep.pkg, newRangeString);
+				if (dependencies[name] !== newRangeString) {
+					changed = true;
+					dependencies[name] = newRangeString;
+				}
+				// changedVersions?.add(dep.pkg, newRangeString);
 			}
 		}
 	}
 
-	if (changed) {
+	if (changed && writeChanges) {
 		await pkg.savePackageJson();
 	}
 
@@ -695,15 +705,22 @@ async function findDepUpdates(
 
 	// Get the new version for each package based on the update type
 	for (const pkgName of dependencies) {
-		// eslint-disable-next-line no-await-in-loop
-		const [latest, next] = await Promise.all([
-			latestVersion(pkgName, {
+		let latest: string;
+		let next: string;
+
+		try {
+			// eslint-disable-next-line no-await-in-loop
+			latest = await latestVersion(pkgName, {
 				version: "latest",
-			}),
-			latestVersion(pkgName, {
+			});
+			// eslint-disable-next-line no-await-in-loop
+			next = await latestVersion(pkgName, {
 				version: "next",
-			}),
-		]);
+			});
+		} catch (error: unknown) {
+			log?.warning(error as Error);
+			continue;
+		}
 
 		// If we're allowing pre-release, use the next tagged version. Warn if it is lower than the latest.
 		if (prerelease) {
@@ -721,53 +738,6 @@ async function findDepUpdates(
 	return dependencyVersionMap;
 }
 
-async function getPackagesToUpdate(
-	context: Context,
-	releaseGroup: ReleaseGroup | ReleasePackage | undefined,
-	releaseGroupFilter: ReleaseGroup | undefined,
-	log?: Logger,
-) {
-	const releaseGroupsToCheck =
-		releaseGroup === undefined // run on the whole repo
-			? [...context.repo.releaseGroups.keys()]
-			: isReleaseGroup(releaseGroup) // run on just this release group
-			? [releaseGroup]
-			: undefined;
-
-	const independentPackagesToCheck =
-		releaseGroup === undefined // run on the whole repo
-			? [...context.independentPackages] // include all independent packages
-			: isReleaseGroup(releaseGroup)
-			? [] // run on a release group so no independent packages should be included
-			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			  [context.fullPackageMap.get(releaseGroup)!]; // the releaseGroup argument must be a package
-
-	const packagesToUpdate: Package[] = [];
-
-	if (releaseGroupsToCheck !== undefined) {
-		for (const group of releaseGroupsToCheck) {
-			if (group === releaseGroupFilter) {
-				log?.verbose(
-					`Skipped release group ${releaseGroupFilter} because we're updating deps on that release group.`,
-				);
-				continue;
-			}
-
-			const releaseGroupRoot = context.repo.releaseGroups.get(group);
-			if (releaseGroupRoot === undefined) {
-				throw new Error(`Cannot find release group: ${group}`);
-			}
-			packagesToUpdate.push(...context.packagesInReleaseGroup(group));
-		}
-	}
-
-	if (independentPackagesToCheck !== undefined) {
-		packagesToUpdate.push(...independentPackagesToCheck);
-	}
-
-	return packagesToUpdate;
-}
-
 /**
  * Checks the npm registry for updates for a release group's dependencies.
  *
@@ -777,7 +747,6 @@ async function getPackagesToUpdate(
  * @param releaseGroupFilter - If provided, this release group won't be checked for dependencies. Set this when you are
  * updating the dependencies on a release group across the repo. For example, if you have just released the 1.2.3 client
  * release group, you want to bump everything in the repo to 1.2.3 except the client release group itself.
- * @param depUpdateType - The constraint to use when deciding if updates are available.
  * @param prerelease - If true, include prerelease versions as eligible to update.
  * @param writeChanges - If true, changes will be written to the package.json files.
  * @param log - A {@link Logger}.
@@ -793,9 +762,11 @@ export async function npmCheckUpdatesHomegrown(
 	releaseGroupFilter: ReleaseGroup | undefined,
 	// eslint-disable-next-line default-param-last
 	prerelease = false,
+	// eslint-disable-next-line default-param-last
+	writeChanges = true,
 	log?: Logger,
 ): Promise<{
-	updatedPackages: Package[];
+	updatedPackages: PackageWithKind[];
 	updatedDependencies: PackageVersionMap;
 }> {
 	log?.info(`Calculating dependency updates...`);
@@ -807,21 +778,26 @@ export async function npmCheckUpdatesHomegrown(
 	log?.verbose(`Dependencies to update:\n${JSON.stringify(dependencyVersionMap, undefined, 2)}`);
 
 	log?.info(`Determining packages to update...`);
-	const packagesToUpdate = await getPackagesToUpdate(
-		context,
-		releaseGroup,
-		releaseGroupFilter,
-		log,
-	);
-	log?.verbose(
-		`Packages to update:\n${JSON.stringify(
-			packagesToUpdate.map((p) => p.name),
-			undefined,
-			2,
-		)}`,
-	);
+	const selectionCriteria: PackageSelectionCriteria =
+		releaseGroup === undefined
+			? // if releaseGroup is undefined it means we should update all packages and release groups
+			  AllPackagesSelectionCriteria
+			: {
+					independentPackages: false,
+					releaseGroups: [releaseGroup],
+					releaseGroupRoots: [releaseGroup],
+			  };
 
-	log?.verbose(
+	// Remove the filtered release group from the list if needed
+	if (releaseGroupFilter !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete selectionCriteria.releaseGroups[releaseGroupFilter];
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete selectionCriteria.releaseGroupRoots[releaseGroupFilter];
+	}
+
+	const { filtered: packagesToUpdate } = selectAndFilterPackages(context, selectionCriteria);
+	log?.info(
 		`Found ${Object.keys(dependencyVersionMap).length} dependencies to update across ${
 			packagesToUpdate.length
 		} packages.`,
@@ -861,12 +837,19 @@ export async function npmCheckUpdatesHomegrown(
 
 	const promises: Promise<boolean>[] = [];
 	for (const pkg of packagesToUpdate) {
-		promises.push(setPackageDependencies(pkg, dependencyUpdateMap, false));
+		promises.push(setPackageDependencies(pkg, dependencyUpdateMap, false, writeChanges));
 	}
-	await Promise.all(promises);
+	const results = await Promise.all(promises);
+	const combined = zip(packagesToUpdate, results);
+
+	const updatedPackages: PackageWithKind[] = combined
+		.filter(([, changed]) => changed === true)
+		.map(([pkg]) => pkg);
+
+	log?.info(`Updated ${updatedPackages.length} of ${packagesToUpdate.length} packages.`);
 
 	return {
 		updatedDependencies: dependencyVersionMap,
-		updatedPackages: packagesToUpdate,
+		updatedPackages,
 	};
 }

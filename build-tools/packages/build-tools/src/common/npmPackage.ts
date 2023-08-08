@@ -164,6 +164,13 @@ export class Package {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
 	}
 
+	/**
+	 * Returns true if the package is a release group root package based on its directory path.
+	 */
+	public get isReleaseGroupRoot(): boolean {
+		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
+	}
+
 	public get matched() {
 		return this._matched;
 	}
