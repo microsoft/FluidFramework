@@ -753,7 +753,7 @@ describe("Runtime", () => {
 				});
 			});
 
-			describe.only("Dynamic Retries", () => {
+			describe("Dynamic summarization attempts", () => {
 				beforeEach(async () => {
 					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
 					shouldDeferGenerateSummary = false;
@@ -768,7 +768,7 @@ describe("Runtime", () => {
 				];
 
 				/**
-				 * validate that a summary attempt is done as expected, correct events are received and summarization
+				 * Validate that a summary attempt is done as expected, correct events are received and summarization
 				 * stops (or doesn't) as per the given params.
 				 */
 				const validateSummaryAttempt = async (
@@ -825,7 +825,7 @@ describe("Runtime", () => {
 				};
 
 				for (const stage of summaryStages) {
-					it(`should not retry on failure without retry specified at ${stage} stage`, async () => {
+					it(`should attempt only once on failure without retry specified at ${stage} stage`, async () => {
 						// Callback that fails the summary for all stages expect submit. For submit, the summarization
 						// will fail because of summary ack not received withing timeout.
 						const submitSummaryCallback = async (): Promise<SubmitSummaryResult> => {
@@ -885,9 +885,7 @@ describe("Runtime", () => {
 						assert.strictEqual(stopCall, 1, "Summarizer should have stopped");
 					});
 
-					it(`should retry ${
-						defaultMaxAttemptsForStage - 1
-					} times on failure with retryAfterSecond at ${stage} stage`, async () => {
+					it(`should attempt ${defaultMaxAttemptsForStage} times on failure with retryAfterSeconds at ${stage} stage`, async () => {
 						const retryAfterSeconds = 5;
 						// Callback that fails the summary for all stages expect submit. For submit, the summarization
 						// will fail because of summary nack.
@@ -943,7 +941,7 @@ describe("Runtime", () => {
 						);
 					});
 
-					it(`should retry on failures at ${stage} stage as per retryCount`, async () => {
+					it(`should attempt as per retryCount on failures at ${stage} stage`, async () => {
 						const retryAfterSeconds = 5;
 						const retryCount = 4;
 						// Callback that fails the summary for all stages expect submit. For submit, the summarization
@@ -1004,9 +1002,7 @@ describe("Runtime", () => {
 						);
 					});
 
-					it(`should retry on failures max ${
-						defaultMaxAttempts - 1
-					} times  at ${stage} stage`, async () => {
+					it(`should attempt on failures max ${defaultMaxAttempts} times at ${stage} stage`, async () => {
 						const retryAfterSeconds = 5;
 						// Set retryCount twice of defaultMaxAttempts. There should be only defaultMaxAttempts attempts.
 						const retryCount = defaultMaxAttempts * 2;
