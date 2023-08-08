@@ -84,8 +84,11 @@ function readOpsSection(node: NodeTypes) {
 	for (let i = 0; i < records.deltas.length; ++i) {
 		ops.push(JSON.parse(records.deltas.getString(i)));
 	}
+	// Due to a bug at service side, in an edge case service was serializing deltas even
+	// when there are no ops. So just make the code resilient to that bug. Service has also
+	// fixed that bug.
 	assert(
-		records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
