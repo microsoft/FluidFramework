@@ -14,8 +14,8 @@ import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	cachedValue,
@@ -34,7 +34,6 @@ import {
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
 import { makeSchemaCodec } from "./schemaIndexFormat";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 
 /**
  * The storage key for the blob in the summary containing schema data
