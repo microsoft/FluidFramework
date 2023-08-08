@@ -76,8 +76,6 @@ export const shortCodeMap = {
 	"0x049": "Trying to reload from segments while collaborating!",
 	"0x04e": "Trying to set minSeq above currentSeq of collab window!",
 	"0x04f": "minSeq of collab window > target minSeq!",
-	"0x050": "Next segment changes are undefined!",
-	"0x051": "Too many children on merge block!",
 	"0x054": "Sequence number less than minSeq!",
 	"0x055": "Sequence number is not sorted!",
 	"0x056": "Unexpected total for accumulation of all seglen adjustments!",
@@ -1359,5 +1357,7 @@ export const shortCodeMap = {
 	"0x722": "Cannot pop from empty queue",
 	"0x723": "Attached cells cannot have lineage",
 	"0x724": "Detach event must have a revision",
-	"0x725": "Must have pending blob entry for upcoming op"
+	"0x725": "Must have pending blob entry for upcoming op",
+	"0x726": "pendingLocalState should be defined",
+	"0x727": "sequenceNumber should be defined"
 };
