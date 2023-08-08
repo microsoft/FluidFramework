@@ -1222,8 +1222,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const parsedChanges = JSON.parse(stashedChanges);
 		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
 		const pendingOps = parsedChanges.pendingRuntimeState.pending;
-		assert.strictEqual(pendingBlobs, 0);
-		assert.strictEqual(pendingOps, 0);
+		assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+		assert.strictEqual(Object.keys(pendingOps).length, 0);
 	});
 
 	it("close while uploading multiple blob", async function () {
