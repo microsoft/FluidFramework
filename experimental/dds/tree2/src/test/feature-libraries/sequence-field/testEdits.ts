@@ -383,7 +383,7 @@ function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Noo
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.HasMarkFields<T>, T>(
+function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(
 	cellId: SF.CellId,
 	mark: TMark,
 ): TMark {

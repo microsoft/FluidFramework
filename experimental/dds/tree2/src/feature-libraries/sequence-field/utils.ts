@@ -84,9 +84,9 @@ export function isReattachConflicted(mark: Reattach<unknown>): boolean {
 }
 
 /**
- * @returns true iff `mark` is an inverse that cannot be applied because of concurrent populating
- * (and possibly emptying) the target cell, where those concurrent changes are unrelated (meaning they are not just
- * and undo/redo pair of the change this this mark is the inverse of).
+ * @returns true iff `mark` is a revert-only inverse that cannot be applied because the target cell was concurrently
+ * populated (and possibly emptied) by unrelated changes. Here, "unrelated" specifically means they are not an
+ * undo/redo pair of the change this this mark is the inverse of.
  */
 function isRevertOnlyReattachPreempted(mark: Reattach<unknown>): boolean {
 	return mark.inverseOf !== undefined && mark.inverseOf !== mark.cellId?.revision;
@@ -195,7 +195,7 @@ export function markIsTransient<T>(mark: Mark<T>): mark is TransientMark<T> {
 }
 
 /**
- * @returns The nested changes from `mark` if they to the content the mark refers to.
+ * @returns The nested changes from `mark` if they apply to the content the mark refers to.
  */
 export function getEffectiveNodeChanges<TNodeChange>(
 	mark: Mark<TNodeChange>,
@@ -936,7 +936,7 @@ export function withNodeChange<TNodeChange>(
 	if (changes !== undefined) {
 		assert(
 			mark.type !== "MoveIn" && mark.type !== "ReturnTo",
-			"Move destination marks cannot carry nested changes",
+			0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */,
 		);
 		newMark.changes = changes;
 	} else {

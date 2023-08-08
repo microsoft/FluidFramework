@@ -286,7 +286,7 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 }
 export const ReturnTo = Type.Composite(
 	[
-		HasMarkFields(Type.Undefined()),
+		HasReattachFields(Type.Undefined()),
 		HasRevisionTag,
 		HasMoveId,
 		Type.Object({

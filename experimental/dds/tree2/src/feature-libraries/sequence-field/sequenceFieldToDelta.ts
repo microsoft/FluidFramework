@@ -45,7 +45,7 @@ function cellDeltaFromMark<TNodeChange>(
 		(!markIsTransient(mark) || ignoreTransient)
 	) {
 		// The cell starting and ending empty means the cell content has not changed,
-		// unless that transient content was inserted/attached.
+		// unless transient content was inserted/attached.
 		return 0;
 	} else {
 		const type = mark.type;
