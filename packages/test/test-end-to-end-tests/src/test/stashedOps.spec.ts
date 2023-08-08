@@ -885,7 +885,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
-	it.skip("handles stashed ops for local DDS", async function () {
+	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
@@ -929,7 +929,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
-	it.skip("handles stashed ops created on top of sequenced local ops", async function () {
+	it("handles stashed ops created on top of sequenced local ops", async function () {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;

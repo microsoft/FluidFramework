@@ -509,6 +509,7 @@ interface IPendingRuntimeState {
 	 * Pending blobs from BlobManager
 	 */
 	pendingAttachmentBlobs?: IPendingBlobs;
+	clientIds?: string[];
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1288,6 +1289,7 @@ export class ContainerRuntime
 		}
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+		this.stashClientIds = new Set<string>(pendingRuntimeState?.clientIds);
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -2083,6 +2085,8 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
+	private readonly stashClientIds: Set<string>;
+
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
@@ -2093,8 +2097,12 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
+		const pretendLocal = this.stashClientIds.has(messageArg.clientId);
+		if (local) {
+			this.stashClientIds.add(messageArg.clientId);
+		}
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local, runtimeMessage);
+			this.processCore(message, local || pretendLocal, runtimeMessage);
 		}
 	}
 
@@ -3124,6 +3132,11 @@ export class ContainerRuntime
 			return;
 		}
 
+		if (!dirty) {
+			this.stashClientIds.clear();
+			this.pendingStateManager.savedOps = [];
+		}
+
 		this.dirtyContainer = dirty;
 		if (this.emitDirtyDocumentEvent) {
 			this.emit(dirty ? "dirty" : "saved");
@@ -3710,10 +3723,14 @@ export class ContainerRuntime
 		// to close current batch.
 		this.flush();
 
-		return {
-			pending: this.pendingStateManager.getLocalState(),
+		const pendingOps = this.pendingStateManager.getLocalState();
+		const pendingState: IPendingRuntimeState = {
+			pending: pendingOps,
 			pendingAttachmentBlobs,
+			// we don't need to save these if we don't have pending ops
+			clientIds: pendingOps ? Array.from(this.stashClientIds) : undefined,
 		};
+		return pendingState;
 	}
 
 	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {

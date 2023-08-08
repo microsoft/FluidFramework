@@ -114,7 +114,7 @@ export class PendingStateManager implements IDisposable {
 		);
 		if (!this.pendingMessages.isEmpty()) {
 			return {
-				pendingStates: this.pendingMessages.toArray().map((message) => {
+				pendingStates: [ ...this.savedOps, ...this.pendingMessages.toArray()].map((message) => {
 					let content = message.content;
 					const parsedContent = JSON.parse(content);
 					// IdAllocations need their localOpMetadata stashed in the contents
@@ -225,6 +225,8 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	public savedOps: IPendingMessageNew[] = [];
+
 	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
@@ -240,6 +242,7 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
+		this.savedOps.push(pendingMessage);
 		this.pendingMessages.shift();
 
 		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
