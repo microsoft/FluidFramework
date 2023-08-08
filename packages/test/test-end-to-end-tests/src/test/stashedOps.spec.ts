@@ -1199,14 +1199,14 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
-	it("close while uploading blob", async function () {
+	it("uploading blob while closing", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		// const map = await dataStore.getSharedObject<SharedMap>(mapId);
 		// force write mode
 		dataStore.root.set("forceWrite", true);
 		await provider.ensureSynchronized();
 
-		void container1.closeAndGetPendingLocalState?.();
+		const stashedChangesP = container1.closeAndGetPendingLocalState?.();
 		try {
 			await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		} catch (error: any) {
@@ -1216,6 +1216,14 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				"Uploading blobs is not allowed while getting pending state",
 			);
 		}
+
+		const stashedChanges = await stashedChangesP;
+		assert.ok(stashedChanges);
+		const parsedChanges = JSON.parse(stashedChanges);
+		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
+		const pendingOps = parsedChanges.pendingRuntimeState.pending;
+		assert.strictEqual(pendingBlobs, 0);
+		assert.strictEqual(pendingOps, 0);
 	});
 
 	it("close while uploading multiple blob", async function () {
