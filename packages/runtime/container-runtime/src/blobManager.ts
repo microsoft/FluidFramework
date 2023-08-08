@@ -245,7 +245,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			this.runtime.gcTombstoneEnforcementAllowed &&
 			this.runtime.clientDetails.type !== summarizerClientType;
 
-
 		this.redirectTable = this.load(snapshot);
 
 		// Begin uploading stashed blobs from previous container instance

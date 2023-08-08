@@ -1269,9 +1269,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(
-			stringToBuffer("blob contents 1", "utf8"),
-		);
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
 		const handle = await handleP;
 		map.set("blob handle 1", handle);
