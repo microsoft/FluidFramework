@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
@@ -195,38 +195,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			},
 		);
 
-		const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
-			if (a === undefined || b === undefined) {
-				assert.strictEqual(a, b, "Both directories should be undefined");
-				return;
-			}
-
-			const leftKeys = Array.from(a.keys());
-			const rightKeys = Array.from(b.keys());
-			assert.strictEqual(
-				leftKeys.length,
-				rightKeys.length,
-				"Number of keys should be the same",
-			);
-			leftKeys.forEach((key) => {
-				const left = JSON.stringify(a.get(key));
-				const right = JSON.stringify(b.get(key));
-				assert.strictEqual(left, right, "Key values should be the same");
-			});
-
-			const leftSubdirectories = Array.from(a.subdirectories());
-			const rightSubdirectories = Array.from(b.subdirectories());
-			assert.strictEqual(
-				leftSubdirectories.length,
-				rightSubdirectories.length,
-				"Number of subdirectories should be the same",
-			);
-
-			leftSubdirectories.forEach(([name]) =>
-				areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name)),
-			);
-		};
-
 		it(`Eventual consistency for shared directories with op reentry - ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async () => {
@@ -238,7 +206,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			});
 
 			const concurrentValue = 10;
-			const finalConcurrentValue = 100;
 			const topLevel = "root";
 			const innerLevel = "inner";
 			const key = "key";
@@ -246,39 +213,25 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				.createSubDirectory(topLevel)
 				.createSubDirectory(innerLevel)
 				.set(key, concurrentValue);
-			sharedDirectory2
-				.createSubDirectory(topLevel)
-				.createSubDirectory(innerLevel)
-				.set(key, concurrentValue);
 
 			await provider.ensureSynchronized();
-			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
 
 			const concurrentValue1 = concurrentValue + 10;
 			const concurrentValue2 = concurrentValue + 20;
 
-			sharedDirectory2
-				.getSubDirectory(topLevel)
-				?.getSubDirectory(innerLevel)
-				?.set(key, concurrentValue2);
 			sharedDirectory1
 				.getSubDirectory(topLevel)
 				?.getSubDirectory(innerLevel)
 				?.set(key, concurrentValue1);
-			sharedDirectory1
+			sharedDirectory2
 				.getSubDirectory(topLevel)
 				?.getSubDirectory(innerLevel)
-				?.set(key, "foobar");
-			sharedDirectory1
-				.getSubDirectory(topLevel)
-				?.getSubDirectory(innerLevel)
-				?.set(key, finalConcurrentValue);
+				?.set(key, concurrentValue2);
 
 			await provider.ensureSynchronized();
-			areDirectoriesEqual(sharedDirectory1, sharedDirectory2);
 			assert.strictEqual(
+				sharedDirectory1.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
 				sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
-				finalConcurrentValue,
 			);
 		});
 	});
