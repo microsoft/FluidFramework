@@ -12,7 +12,6 @@ import {
 	NewAttach,
 	Revive,
 	Transient,
-	NoopMark,
 } from "./format";
 
 export type EmptyInputCellMark<TNodeChange> = Mark<TNodeChange> & DetachedCellMark;
