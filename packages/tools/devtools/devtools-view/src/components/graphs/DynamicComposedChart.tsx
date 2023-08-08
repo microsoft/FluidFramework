@@ -23,7 +23,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { useThemeContext } from "../../ThemeHelper";
+import { ThemeOption, useThemeContext } from "../../ThemeHelper";
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -114,7 +114,7 @@ export interface DynamicComposedChartProps {
  * https://react.fluentui.dev/?path=/docs/theme-colors--page
  */
 const createGraphColorPalette = (
-	themeMode: string,
+	themeMode: ThemeOption,
 	theme: Theme,
 ): {
 	axisTick: string;
@@ -123,8 +123,8 @@ const createGraphColorPalette = (
 	graphColors: string[];
 } => {
 	switch (themeMode) {
-		case "Light":
-		case "Dark":
+		case ThemeOption.Light:
+		case ThemeOption.Dark:
 		default:
 			return {
 				axisTick: theme.colorNeutralForeground2,
@@ -137,7 +137,7 @@ const createGraphColorPalette = (
 					theme.colorPaletteLavenderForeground2,
 				],
 			};
-		case "High Contrast":
+		case ThemeOption.HighContrast:
 			return {
 				axisTick: theme.colorNeutralForeground2,
 				toolTipBackround: theme.colorNeutralBackground1,
@@ -162,7 +162,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
 	const { themeInfo } = useThemeContext();
 
-	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
+	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme as Theme);
 
 	const handleLegendClick = (e): void => {
 		setActiveIndex(activeIndex === e.dataKey ? undefined : (e.dataKey as string));
