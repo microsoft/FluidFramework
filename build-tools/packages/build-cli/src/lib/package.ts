@@ -669,7 +669,6 @@ export async function setPackageDependencies(
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
 				if (dependencies === undefined) {
-					log?.warning(`Package has no dependencies or devDependencies: ${pkg.name}`);
 					continue;
 				}
 

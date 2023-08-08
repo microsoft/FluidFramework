@@ -166,30 +166,53 @@ export function updateTypeTestConfiguration(
 	options: TypeTestConfigActions,
 ): void {
 	if (options.version !== undefined) {
-		const oldDepName = `${pkgJson.name}-previous`;
-
-		// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
-		const enabled = pkgJson.typeValidation?.disabled !== true;
-
-		if (!enabled || options.version === VersionOptions.Clear) {
-			// There isn't a type safe alternative to delete here,
-			// and delete should be safe since the key can't collide with anything builtin since it has to end in `-previous`
-			// which makes it not a valid identifier.
-			if (pkgJson.devDependencies?.[oldDepName] !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete pkgJson.devDependencies[oldDepName];
-			}
-		} else if (options.version !== VersionOptions.ClearIfDisabled) {
-			const newVersion: string =
-				options.version === VersionOptions.Previous
-					? previousVersion(pkgJson.version)
-					: options.version;
-			pkgJson.devDependencies ??= {};
-			pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
-		}
+		applyTypeTestVersionOptions(pkgJson, options.version);
 	}
 
-	if (options.resetBroken === true && pkgJson.typeValidation !== undefined) {
+	if (options.resetBroken !== undefined) {
+		resetBrokenTests(pkgJson, options.resetBroken);
+	}
+}
+
+/**
+ * Applies changes to the `devDependencies` nodes in package.json.
+ *
+ * @internal
+ */
+export function applyTypeTestVersionOptions(
+	pkgJson: PackageJson,
+	versionOptions: string | VersionOptions,
+): void {
+	const oldDepName = `${pkgJson.name}-previous`;
+
+	// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
+	const enabled = pkgJson.typeValidation?.disabled !== true;
+
+	if (!enabled || versionOptions === VersionOptions.Clear) {
+		// There isn't a type safe alternative to delete here,
+		// and delete should be safe since the key can't collide with anything builtin since it has to end in `-previous`
+		// which makes it not a valid identifier.
+		if (pkgJson.devDependencies?.[oldDepName] !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete pkgJson.devDependencies[oldDepName];
+		}
+	} else if (versionOptions !== VersionOptions.ClearIfDisabled) {
+		const newVersion: string =
+			versionOptions === VersionOptions.Previous
+				? previousVersion(pkgJson.version)
+				: versionOptions;
+		pkgJson.devDependencies ??= {};
+		pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
+	}
+}
+
+/**
+ * Removes any `typeValidation.brokeen` entries from package.json.
+ *
+ * @internal
+ */
+export function resetBrokenTests(pkgJson: PackageJson, resetBroken: boolean): void {
+	if (resetBroken === true && pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}
 }

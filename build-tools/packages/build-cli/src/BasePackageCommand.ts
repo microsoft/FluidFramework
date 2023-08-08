@@ -135,7 +135,7 @@ export abstract class PackageCommand<
 				try {
 					await this.processPackage(pkg, pkg.kind);
 					succeeded += 1;
-				} catch (error) {
+				} catch (error: unknown) {
 					this.errorLog(`Error updating ${pkg.name}: ${error}`);
 					this.log((error as Error).stack);
 				} finally {
