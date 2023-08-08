@@ -553,10 +553,7 @@ describe("EditManager", () => {
 							rebasedEditCount * (rebasedEditCount - 1),
 					);
 
-					assert.equal(
-						rebaser.invertedCount,
-						((rebasedEditCount - 1) * rebasedEditCount) / 2,
-					);
+					assert.equal(rebaser.invertedCount, rebasedEditCount - 1);
 					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
 					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});

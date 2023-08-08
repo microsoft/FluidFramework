@@ -348,11 +348,7 @@ function inverseFromCommit<TChange>(
 		commit.inverse = inverse;
 	}
 
-	return tagRollbackInverse(
-		inverse,
-		mintRevisionTag(),
-		commit.revision,
-	);
+	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
 }
 
 /**
