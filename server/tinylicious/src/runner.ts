@@ -16,7 +16,7 @@ import {
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { configureWebSocketServices, ICollaborationSessionEvents, IBroadcastSignalEventPayload } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices, ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
 
