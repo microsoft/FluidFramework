@@ -652,21 +652,27 @@ export function configureWebSocketServices(
 				collborationSessionEventEmitter.on("broadcastSignal", (broadcastSignal: ICollaborationSessionEvent) => {
 					const tenantId = broadcastSignal.tenantId;
 					const documentId = broadcastSignal.documentId;
-					const roomFromBroadcastSignal: IRoom = { tenantId, documentId };
+					const roomToBroadcastSignal: IRoom = { tenantId, documentId };
 
-					const runtimeMessage = createRuntimeMessage(null, broadcastSignal.signalContent)
-					socket.emitToRoom(
-						getRoomId(roomFromBroadcastSignal),
-						"signal",
-						runtimeMessage,
-					).catch((error) => {
-						const errorMsg = `Failed to broadcast signal from external API.`;
-						Lumberjack.error(
-							errorMsg,
-							getLumberBaseProperties(roomFromBroadcastSignal.documentId, roomFromBroadcastSignal.tenantId),
-							error,
-						);
-					});
+					// No-op if the room (collab session) that signal came in from is different
+					// than the current room. We reuse websockets so there could be multiple rooms
+					// that we are sending the signal to, and we don't want to do that.
+					if (roomToBroadcastSignal === room) {
+						const runtimeMessage = createRuntimeMessage(null, broadcastSignal.signalContent);
+
+						socket.emitToRoom(
+							getRoomId(roomToBroadcastSignal),
+							"signal",
+							runtimeMessage,
+						).catch((error) => {
+							const errorMsg = `Failed to broadcast signal from external API.`;
+							Lumberjack.error(
+								errorMsg,
+								getLumberBaseProperties(roomToBroadcastSignal.documentId, roomToBroadcastSignal.tenantId),
+								error,
+							);
+						});
+					}
 				});
 			}
 
