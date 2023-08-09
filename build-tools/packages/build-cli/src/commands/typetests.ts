@@ -175,7 +175,8 @@ export function updateTypeTestConfiguration(
 }
 
 /**
- * Applies changes to the `devDependencies` nodes in package.json.
+ * Adds or removes the devDependency on a previous version of a package thatis used for type testing. This function only
+ * affects the `devDependencies` nodes in package.json.
  *
  * @internal
  */
@@ -207,7 +208,7 @@ export function applyTypeTestVersionOptions(
 }
 
 /**
- * Removes any `typeValidation.brokeen` entries from package.json.
+ * Removes any `typeValidation.broken` entries from package.json.
  *
  * @internal
  */
