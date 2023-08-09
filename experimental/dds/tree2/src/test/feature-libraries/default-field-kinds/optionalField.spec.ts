@@ -9,6 +9,7 @@ import {
 	IdAllocator,
 	NodeChangeset,
 	NodeReviver,
+	idAllocatorFromMaxId,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -18,8 +19,10 @@ import {
 	mintRevisionTag,
 	tagChange,
 	tagRollbackInverse,
+	FieldKey,
+	RepairDataBuilder,
 } from "../../../core";
-import { brand } from "../../../util";
+import { brand, brandOpaque } from "../../../util";
 import {
 	assertMarkListEqual,
 	defaultRevisionMetadataFromChanges,
@@ -54,15 +57,25 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should modify CrossFieldManager"),
 };
 
-const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
+const deltaFromChild1 = (
+	child: NodeChangeset,
+	{ marks, handler }: RepairDataBuilder,
+	idAllocator: IdAllocator,
+): Delta.Modify => {
 	assert.deepEqual(child, nodeChange1);
+
+	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
+	marks.set(handler({ revision: change1Revision, localId: brand(0) }), [
+		{ type: Delta.MarkType.MoveIn, count: 1, moveId },
+	]);
+
 	return {
 		type: Delta.MarkType.Modify,
 		fields: new Map([
 			[
 				fooKey,
 				[
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.MoveOut, count: 1, moveId },
 					{
 						type: Delta.MarkType.Insert,
 						content: [testTreeCursor("nodeChange1")],
@@ -73,15 +86,25 @@ const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
 	};
 };
 
-const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
+const deltaFromChild2 = (
+	child: NodeChangeset,
+	{ marks, handler }: RepairDataBuilder,
+	idAllocator: IdAllocator,
+): Delta.Modify => {
 	assert.deepEqual(child, nodeChange2);
+
+	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
+	marks.set(handler({ revision: change1Revision, localId: brand(0) }), [
+		{ type: Delta.MarkType.MoveIn, count: 1, moveId },
+	]);
+
 	return {
 		type: Delta.MarkType.Modify,
 		fields: new Map([
 			[
 				fooKey,
 				[
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.MoveOut, count: 1, moveId },
 					{
 						type: Delta.MarkType.Insert,
 						content: [testTreeCursor("nodeChange2")],
@@ -92,6 +115,7 @@ const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
 	};
 };
 
+const change1Revision = mintRevisionTag();
 const change1: TaggedChange<OptionalChangeset> = tagChange(
 	{
 		fieldChange: {
@@ -100,12 +124,13 @@ const change1: TaggedChange<OptionalChangeset> = tagChange(
 			wasEmpty: true,
 		},
 	},
-	mintRevisionTag(),
+	change1Revision,
 );
 
+const change2Revision = mintRevisionTag();
 const change2: TaggedChange<OptionalChangeset> = tagChange(
 	optionalFieldEditor.set(testTreeCursor("tree2"), false, brand(2)),
-	mintRevisionTag(),
+	change2Revision,
 );
 
 const revertChange2: OptionalChangeset = {
@@ -338,7 +363,7 @@ describe("optionalField", () => {
 						[
 							fooKey,
 							[
-								{ type: Delta.MarkType.Delete, count: 1 },
+								{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
 								{
 									type: Delta.MarkType.Insert,
 									content: [testTreeCursor("nodeChange1")],
@@ -349,26 +374,106 @@ describe("optionalField", () => {
 				},
 			];
 
+			const expectedRepairData = new Map<FieldKey, Delta.MarkList>([
+				[
+					brand("repair-data-0"),
+					[
+						{
+							type: Delta.MarkType.MoveIn,
+							count: 1,
+							moveId: brand(0),
+						},
+					],
+				],
+			]);
+
 			const { repairDataBuilder } = makeRepairDataBuilder();
 			assertMarkListEqual(
-				optionalFieldIntoDelta(change1.change, deltaFromChild1, repairDataBuilder),
+				optionalFieldIntoDelta(
+					change1.change,
+					deltaFromChild1,
+					repairDataBuilder,
+					idAllocatorFromMaxId(),
+				),
 				expected,
 			);
+			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
+		});
+
+		it("can be converted to a delta when replacing content", () => {
+			const change: TaggedChange<OptionalChangeset> = tagChange(
+				{
+					fieldChange: {
+						id: brand(1),
+						newContent: { set: testTree("tree1") },
+						wasEmpty: false,
+					},
+				},
+				change1Revision,
+			);
+
+			const expected: Delta.MarkList = [
+				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
+				{
+					type: Delta.MarkType.Insert,
+					content: [testTreeCursor("tree1")],
+				},
+			];
+
+			const expectedRepairData = new Map<FieldKey, Delta.MarkList>([
+				[
+					brand("repair-data-0"),
+					[
+						{
+							type: Delta.MarkType.MoveIn,
+							count: 1,
+							moveId: brand(0),
+						},
+					],
+				],
+			]);
+
+			const { repairDataBuilder } = makeRepairDataBuilder();
+			assertMarkListEqual(
+				optionalFieldIntoDelta(
+					change.change,
+					() => assert.fail("Should not need to convert child changes"),
+					repairDataBuilder,
+					idAllocatorFromMaxId(),
+				),
+				expected,
+			);
+			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
 		});
 
 		it("can be converted to a delta when restoring content", () => {
 			const expected: Delta.MarkList = [
-				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
 				{ type: Delta.MarkType.Insert, content: [testTreeCursor("tree1")] },
 			];
+
+			const expectedRepairData = new Map<FieldKey, Delta.MarkList>([
+				[
+					brand("repair-data-0"),
+					[
+						{
+							type: Delta.MarkType.MoveIn,
+							count: 1,
+							moveId: brand(0),
+						},
+					],
+				],
+			]);
 
 			const { repairDataBuilder } = makeRepairDataBuilder();
 			const actual = optionalFieldIntoDelta(
 				revertChange2,
 				deltaFromChild1,
 				repairDataBuilder,
+				idAllocatorFromMaxId(),
 			);
 			assertMarkListEqual(actual, expected);
+			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
 		});
 
 		it("can be converted to a delta with only child changes", () => {
@@ -379,7 +484,7 @@ describe("optionalField", () => {
 						[
 							fooKey,
 							[
-								{ type: Delta.MarkType.Delete, count: 1 },
+								{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
 								{
 									type: Delta.MarkType.Insert,
 									content: [testTreeCursor("nodeChange2")],
@@ -390,11 +495,30 @@ describe("optionalField", () => {
 				},
 			];
 
+			const expectedRepairData = new Map<FieldKey, Delta.MarkList>([
+				[
+					brand("repair-data-0"),
+					[
+						{
+							type: Delta.MarkType.MoveIn,
+							count: 1,
+							moveId: brand(0),
+						},
+					],
+				],
+			]);
+
 			const { repairDataBuilder } = makeRepairDataBuilder();
 			assertMarkListEqual(
-				optionalFieldIntoDelta(change4.change, deltaFromChild2, repairDataBuilder),
+				optionalFieldIntoDelta(
+					change4.change,
+					deltaFromChild2,
+					repairDataBuilder,
+					idAllocatorFromMaxId(),
+				),
 				expected,
 			);
+			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
 		});
 	});
 });
