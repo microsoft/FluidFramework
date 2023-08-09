@@ -656,7 +656,6 @@ export async function setPackageDependencies(
 	// eslint-disable-next-line default-param-last
 	updateWithinSameReleaseGroup = false,
 	changedVersions?: VersionBag,
-	log?: Logger,
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
