@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+	AcceptanceCondition,
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
 } from "@fluid-internal/stochastic-test-utils";
@@ -214,4 +215,61 @@ export function makeReducer(
 	});
 
 	return withLogging(reducer);
+}
+
+export function createBaseGeneratorOperations(optionsParam?: OperationGenerationConfig) {
+	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
+
+	// All subsequent helper functions are generators; note that they don't actually apply any operations.
+	function startPosition({ random, channel }: ClientOpState): number {
+		return random.integer(0, Math.max(0, channel.getLength() - 1));
+	}
+
+	function exclusiveRange(state: ClientOpState): RangeSpec {
+		const start = startPosition(state);
+		const end = state.random.integer(start + 1, state.channel.getLength());
+		return { start, end };
+	}
+
+	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
+		const start = state.random.integer(0, state.channel.getLength() - 2);
+		const end = state.random.integer(start + 1, state.channel.getLength() - 1);
+		return { start, end };
+	}
+
+	async function addText(state: ClientOpState): Promise<AddText> {
+		const { random, channel } = state;
+		return {
+			type: "addText",
+			index: random.integer(0, channel.getLength()),
+			content: random.string(random.integer(0, options.maxInsertLength)),
+		};
+	}
+
+	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
+		return { type: "removeRange", ...exclusiveRange(state) };
+	}
+
+	async function removeRangeLeaveChar(state: ClientOpState): Promise<RemoveRange> {
+		return { type: "removeRange", ...exclusiveRangeLeaveChar(state) };
+	}
+
+	const lengthSatisfies =
+		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
+		({ channel }) =>
+			criteria(channel.getLength());
+	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
+	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
+
+	return {
+		startPosition,
+		exclusiveRange,
+		exclusiveRangeLeaveChar,
+		addText,
+		removeRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	};
 }

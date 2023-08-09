@@ -26,8 +26,6 @@ import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
 	RangeSpec,
-	AddText,
-	RemoveRange,
 	AddInterval,
 	DeleteInterval,
 	ChangeInterval,
@@ -36,6 +34,7 @@ import {
 	makeReducer,
 	OperationGenerationConfig,
 	defaultOperationGenerationConfig,
+	createBaseGeneratorOperations,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
@@ -44,6 +43,16 @@ export function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 	alwaysLeaveChar: boolean = false,
 ): Generator<Operation, ClientOpState> {
+	const {
+		startPosition,
+		addText,
+		removeRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	} = createBaseGeneratorOperations(optionsParam);
+
 	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
 
 	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
@@ -52,23 +61,6 @@ export function makeOperationGenerator(
 		}
 
 		return false;
-	}
-
-	// All subsequent helper functions are generators; note that they don't actually apply any operations.
-	function startPosition({ random, channel }: ClientOpState): number {
-		return random.integer(0, Math.max(0, channel.getLength() - 1));
-	}
-
-	function exclusiveRange(state: ClientOpState): RangeSpec {
-		const start = startPosition(state);
-		const end = state.random.integer(start + 1, state.channel.getLength());
-		return { start, end };
-	}
-
-	function exclusiveRangeLeaveChar(state: ClientOpState): RangeSpec {
-		const start = state.random.integer(0, state.channel.getLength() - 2);
-		const end = state.random.integer(start + 1, state.channel.getLength() - 1);
-		return { start, end };
 	}
 
 	function inclusiveRange(state: ClientOpState): RangeSpec {
@@ -109,23 +101,6 @@ export function makeOperationGenerator(
 			id,
 			collectionName,
 		};
-	}
-
-	async function addText(state: ClientOpState): Promise<AddText> {
-		const { random, channel } = state;
-		return {
-			type: "addText",
-			index: random.integer(0, channel.getLength()),
-			content: random.string(random.integer(0, options.maxInsertLength)),
-		};
-	}
-
-	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
-		return { type: "removeRange", ...exclusiveRange(state) };
-	}
-
-	async function removeRangeLeaveChar(state: ClientOpState): Promise<RemoveRange> {
-		return { type: "removeRange", ...exclusiveRangeLeaveChar(state) };
 	}
 
 	async function addInterval(state: ClientOpState): Promise<AddInterval> {
@@ -170,13 +145,6 @@ export function makeOperationGenerator(
 			const collection = channel.getIntervalCollection(label);
 			return isNonEmpty(collection);
 		});
-
-	const lengthSatisfies =
-		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
-		({ channel }) =>
-			criteria(channel.getLength());
-	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
-	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
 
 	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ channel }) => {
 		let intervalCount = 0;
@@ -273,25 +241,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 		workloadName: "interval collection without reconnects",
 	};
 
-	const noReconnectNoIntervalsModel = {
-		...baseModel,
-		workloadName: "interval collection without reconnects or intervals",
-		generatorFactory: () =>
-			take(
-				100,
-				makeOperationGenerator({
-					...defaultOperationGenerationConfig,
-					weights: {
-						...defaultOperationGenerationConfig.weights,
-						addInterval: 0,
-						deleteInterval: 0,
-						changeInterval: 0,
-						changeProperties: 0,
-					},
-				}),
-			),
-	};
-
 	const options = {
 		...defaultFuzzOptions,
 		reconnectProbability: 0.0,
@@ -306,12 +255,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 		...options,
 		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
 		skip: [80, 9, 12, 44],
-		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
-	});
-
-	createDDSFuzzSuite(noReconnectNoIntervalsModel, {
-		...options,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
