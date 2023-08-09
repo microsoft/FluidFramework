@@ -100,6 +100,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.MoveOut,
 						moveId,
 						count: mark.count,
+						isDelete: true,
 					};
 					populateChildModificationsIfAny(
 						mark.changes,

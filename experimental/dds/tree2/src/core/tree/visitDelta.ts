@@ -100,7 +100,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 export interface DeltaVisitor {
 	onDelete(index: number, count: number): void;
 	onInsert(index: number, content: Delta.ProtoNodes): void;
-	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+	onMoveOut(index: number, count: number, id: Delta.MoveId, isDelete?: true): void;
 	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
 	// TODO: better align this with ITreeCursor:
 	// maybe rename its up and down to enter / exit? Maybe Also)?
@@ -179,7 +179,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					if (markHasMoveOrDelete) {
 						config.modsToMovedTrees.set(mark.moveId, mark);
 					}
-					visitor.onMoveOut(index, mark.count, mark.moveId);
+					visitor.onMoveOut(index, mark.count, mark.moveId, mark.isDelete);
 					setInRangeMap(
 						config.movedOutRanges,
 						extractFromOpaque(mark.moveId),

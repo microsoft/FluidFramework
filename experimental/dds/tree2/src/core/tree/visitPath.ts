@@ -14,7 +14,7 @@ import { UpPath } from "./pathTree";
 export interface PathVisitor {
 	/**
 	 * A sequence of nodes of length `count` is being deleted starting with `path`.
-	 * Called when these nodes are no longer parented under their previous parent, and do not have a new parent.
+	 * Called when these nodes are no longer parented under their previous parent, and do not have a new non-detached parent.
 	 * It is possible they may be un-deleted in the future (for example by a conflicted merge or undo).
 	 *
 	 * Not called for children of deleted nodes.

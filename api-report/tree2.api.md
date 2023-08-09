@@ -1385,6 +1385,7 @@ interface MoveIn {
 // @alpha
 interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
+    readonly isDelete?: true;
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveOut;

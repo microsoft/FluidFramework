@@ -490,17 +490,17 @@ describe("editable-tree: data binder", () => {
 					"type": "delete",
 				},
 				// TODO
-				// {
-				// 	"0": {
-				// 		field: "address",
-				// 		index: 0,
-				// 	},
-				// 	"1": {
-				// 		field: "sequencePhones",
-				// 		index: 0,
-				// 	},
-				// 	"type": "delete",
-				// },
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
 				{
 					"0": {
 						field: "address",
@@ -643,17 +643,17 @@ describe("editable-tree: data binder", () => {
 					"type": "delete",
 				},
 				// TODO
-				// {
-				// 	"0": {
-				// 		field: "address",
-				// 		index: 0,
-				// 	},
-				// 	"1": {
-				// 		field: "sequencePhones",
-				// 		index: 0,
-				// 	},
-				// 	"type": "delete",
-				// },
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
 				{
 					"0": {
 						field: "address",
@@ -820,17 +820,17 @@ describe("editable-tree: data binder", () => {
 						"type": "delete",
 					},
 					// TODO
-					// {
-					// 	"0": {
-					// 		field: "address",
-					// 		index: 0,
-					// 	},
-					// 	"1": {
-					// 		field: "sequencePhones",
-					// 		index: 0,
-					// 	},
-					// 	"type": "delete",
-					// },
+					{
+						"0": {
+							field: "address",
+							index: 0,
+						},
+						"1": {
+							field: "sequencePhones",
+							index: 0,
+						},
+						"type": "delete",
+					},
 					{
 						"0": {
 							field: "address",
@@ -1014,17 +1014,17 @@ describe("editable-tree: data binder", () => {
 					"type": "delete",
 				},
 				// TODO
-				// {
-				// 	"0": {
-				// 		field: "address",
-				// 		index: 0,
-				// 	},
-				// 	"1": {
-				// 		field: "sequencePhones",
-				// 		index: 0,
-				// 	},
-				// 	"type": "delete",
-				// },
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
 				{
 					"0": {
 						field: "address",

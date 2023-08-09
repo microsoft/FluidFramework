@@ -341,7 +341,12 @@ function deltaForDelete(
 	}
 
 	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
-	const moveDelta: Mutable<Delta.MoveOut> = { type: Delta.MarkType.MoveOut, count: 1, moveId };
+	const moveDelta: Mutable<Delta.MoveOut> = {
+		type: Delta.MarkType.MoveOut,
+		count: 1,
+		moveId,
+		isDelete: true,
+	};
 	if (nodeChange !== undefined) {
 		const modify = deltaFromNode(nodeChange, repairDataBuilder, idAllocator);
 		moveDelta.fields = modify.fields;

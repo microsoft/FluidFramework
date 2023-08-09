@@ -413,7 +413,7 @@ describe("optionalField", () => {
 			);
 
 			const expected: Delta.MarkList = [
-				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
+				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0), isDelete: true },
 				{
 					type: Delta.MarkType.Insert,
 					content: [testTreeCursor("tree1")],
@@ -448,7 +448,7 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta when restoring content", () => {
 			const expected: Delta.MarkList = [
-				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
+				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0), isDelete: true },
 				{ type: Delta.MarkType.Insert, content: [testTreeCursor("tree1")] },
 			];
 

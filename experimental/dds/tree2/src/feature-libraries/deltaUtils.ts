@@ -78,12 +78,20 @@ export function mapMark<TIn, TOut>(
 			};
 		}
 		case Delta.MarkType.MoveOut: {
-			return {
-				type: Delta.MarkType.MoveOut,
-				count: mark.count,
-				moveId: mark.moveId,
-				...mapModifications(mark, func),
-			};
+			return mark.isDelete
+				? {
+						type: Delta.MarkType.MoveOut,
+						count: mark.count,
+						moveId: mark.moveId,
+						isDelete: true,
+						...mapModifications(mark, func),
+				  }
+				: {
+						type: Delta.MarkType.MoveOut,
+						count: mark.count,
+						moveId: mark.moveId,
+						...mapModifications(mark, func),
+				  };
 		}
 		case Delta.MarkType.Delete: {
 			return {
