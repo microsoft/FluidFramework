@@ -373,11 +373,10 @@ export class QuorumProposals
 			let proposalKeySeen = false;
 			for (const [, p] of this.proposals) {
 				if (p.key === committedProposal.key) {
-					if(!proposalKeySeen){
+					if (!proposalKeySeen) {
 						// set proposalSettled to true if the proposal key match is unique thus far
 						proposalSettled = true;
-					}
-					else {
+					} else {
 						// set proposalSettled to false if matching proposal key is not unique
 						proposalSettled = false;
 						break;
