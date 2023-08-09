@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { describeFuzz, takeAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
@@ -30,56 +30,61 @@ const baseOptions = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe("Fuzz - Top-Level", () => {
-	const runsPerBatch = 20;
-	const opsPerRun = 20;
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
-	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-	/**
-	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
-	 * operations (such as summarization and stashed ops).
-	 */
-	describe("Everything", () => {
-		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
-			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
-		> = {
-			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(onCreate),
-			generatorFactory,
-			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
-		};
-		const options = {
-			...baseOptions,
-			defaultTestCount: runsPerBatch,
-		};
-		createDDSFuzzSuite(model, options);
-	});
+export function runSharedTreeTopLevelFuzzTests(title: string): void {
+	describeFuzz(title, ({ testCount }) => {
+		describe("Fuzz - Top-Level", () => {
+			const runsPerBatch = 20;
+			const opsPerRun = 20;
+			const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
+			const generatorFactory = () =>
+				takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
+			/**
+			 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
+			 * operations (such as summarization and stashed ops).
+			 */
+			describe("Everything", () => {
+				const model: DDSFuzzModel<
+					SharedTreeTestFactory,
+					Operation,
+					DDSFuzzTestState<SharedTreeTestFactory>
+				> = {
+					workloadName: "SharedTree",
+					factory: new SharedTreeTestFactory(onCreate),
+					generatorFactory,
+					reducer: fuzzReducer,
+					validateConsistency: validateTreeConsistency,
+				};
+				const options = {
+					...baseOptions,
+					defaultTestCount: runsPerBatch,
+				};
+				createDDSFuzzSuite(model, options);
+			});
 
-	describe("Batch rebasing", () => {
-		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
-			Operation,
-			DDSFuzzTestState<SharedTreeTestFactory>
-		> = {
-			workloadName: "SharedTree rebasing",
-			factory: new SharedTreeTestFactory(onCreate),
-			generatorFactory,
-			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
-		};
-		const options = {
-			...baseOptions,
-			reconnectProbability: 0.0,
-			defaultTestCount: runsPerBatch,
-			rebaseProbability: 0.2,
-			containerRuntimeOptions: {
-				flushMode: FlushMode.TurnBased,
-				enableGroupedBatching: true,
-			},
-		};
-		createDDSFuzzSuite(model, options);
+			describe("Batch rebasing", () => {
+				const model: DDSFuzzModel<
+					SharedTreeTestFactory,
+					Operation,
+					DDSFuzzTestState<SharedTreeTestFactory>
+				> = {
+					workloadName: "SharedTree rebasing",
+					factory: new SharedTreeTestFactory(onCreate),
+					generatorFactory,
+					reducer: fuzzReducer,
+					validateConsistency: validateTreeConsistency,
+				};
+				const options = {
+					...baseOptions,
+					reconnectProbability: 0.0,
+					defaultTestCount: runsPerBatch,
+					rebaseProbability: 0.2,
+					containerRuntimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableGroupedBatching: true,
+					},
+				};
+				createDDSFuzzSuite(model, options);
+			});
+		});
 	});
-});
+}
