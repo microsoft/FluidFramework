@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
 	IDocumentStorage,
 	IOrdererManager,
@@ -14,13 +13,12 @@ import {
 	DefaultMetricClient,
 	IRunner,
 } from "@fluidframework/server-services-core";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices, ICollaborationSessionEvents, IBroadcastSignalEventPayload } from "@fluidframework/server-lambdas";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
-import * as app from "./app";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
@@ -53,8 +51,8 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
-		const eventEmitter = new EventEmitter();
-		const alfred = app.create(this.config, this.storage, this.mongoManager, eventEmitter);
+		const collaborationSessionEventsEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+		const alfred = app.create(this.config, this.storage, this.mongoManager, collaborationSessionEventsEmitter);
 		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);
@@ -83,7 +81,7 @@ export class TinyliciousRunner implements IRunner {
 			undefined,
 			undefined,
 			undefined,
-			eventEmitter,
+			collaborationSessionEventsEmitter,
 		);
 
 		// Listen on provided port, on all network interfaces.

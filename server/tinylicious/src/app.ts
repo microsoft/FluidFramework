@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { ICollaborationSessionEvents, IBroadcastSignalEventPayload } from "@fluidframework/server-lambdas";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
@@ -31,7 +32,7 @@ export function create(
 	config: Provider,
 	storage: IDocumentStorage,
 	mongoManager: MongoManager,
-	eventEmitter: EventEmitter,
+	collaborationSessionEventsEmitter: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -88,9 +89,11 @@ export function create(
 	app.use(
 		Router().post("/broadcast-signal", (req, res) => {
 			try {
-				const taskListData = req.body?.data;
-				const containerUrl = req.body?.containerUrl;
-				eventEmitter.emit("broadcast-signal", taskListData, containerUrl);
+				const tenantId = req.body?.tenantId;
+				const doucmentId = req.body?.doucmentId;
+				const signalContent = req.body?.singalContent;
+				const payload : IBroadcastSignalEventPayload = { tenantId, doucmentId, signalContent };
+				collaborationSessionEventsEmitter.emit("broadcast-signal", payload);
 				res.status(200).send("Triggering debug signal from tinylicious");
 			} catch (error) {
 				res.status(500).send(error);
