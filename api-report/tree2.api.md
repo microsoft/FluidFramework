@@ -1937,7 +1937,7 @@ export interface TaggedChange<TChangeset> {
 }
 
 // @alpha
-export type ToDelta = (child: NodeChangeset, repairDataBuilder: RepairDataBuilder, idAllocator: IdAllocator) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset, repairDataBuilder: RepairDataBuilder) => Delta.Modify;
 
 // @alpha
 export function toDownPath(upPath: UpPath): DownPath;

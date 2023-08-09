@@ -90,7 +90,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		change: GenericChangeset,
 		deltaFromChild: ToDelta,
 		repairDataBuilder: RepairDataBuilder,
-		idAllocator: IdAllocator,
 	): Delta.MarkList => {
 		let nodeIndex = 0;
 		const delta: Delta.Mark[] = [];
@@ -100,7 +99,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				delta.push(offset);
 				nodeIndex = index;
 			}
-			delta.push(deltaFromChild(nodeChange, repairDataBuilder, idAllocator));
+			delta.push(deltaFromChild(nodeChange, repairDataBuilder));
 			nodeIndex += 1;
 		}
 		return delta;
