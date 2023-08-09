@@ -84,6 +84,7 @@ data:
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
+            "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
             "throttling": {
                 "restCallsPerTenant": {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
