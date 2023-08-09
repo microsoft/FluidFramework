@@ -26,8 +26,8 @@ const webpackModuleRules = [];
 // Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
 const verString = process.env.SETVERSION_VERSION ?? pkg.version;
 
-// Unless we are running in a test branch in CI, then we want to replace the version string in the bundled code. test
-// branch builds are exlcuded because they use a version scheme that fromInternalScheme does not parse.
+// If the version is a Fluid internal version, then we want to replace the version string in the bundled code. Otherwise
+// we leave the versions as-is.
 if (isInternalVersionScheme(verString, true, true)) {
 	const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
 	const versionToReplace = new RegExp(verString, "g");
