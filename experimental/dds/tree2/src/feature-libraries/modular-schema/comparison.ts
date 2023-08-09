@@ -36,7 +36,7 @@ export function allowsTreeSuperset(
 	}
 	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
 	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
-	if (!allowsValueSuperset(original.value, superset.value)) {
+	if (!allowsValueSuperset(original.leafValue, superset.leafValue)) {
 		return false;
 	}
 	if (
@@ -88,8 +88,17 @@ export function allowsTreeSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
-export function allowsValueSuperset(original: ValueSchema, superset: ValueSchema): boolean {
-	return original === superset || superset === ValueSchema.Serializable;
+export function allowsValueSuperset(
+	original: ValueSchema | undefined,
+	superset: ValueSchema | undefined,
+): boolean {
+	if (original === superset) {
+		return true;
+	}
+	if (original === undefined) {
+		return false;
+	}
+	return superset === ValueSchema.Serializable;
 }
 
 /**

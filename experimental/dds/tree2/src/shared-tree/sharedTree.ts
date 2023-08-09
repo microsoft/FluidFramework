@@ -88,7 +88,7 @@ export class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(runtime, forest);
+		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
@@ -140,8 +140,8 @@ export class SharedTree
 		return this.view.root;
 	}
 
-	public set root(data: NewFieldContent) {
-		this.view.root = data;
+	public setContent(data: NewFieldContent): void {
+		this.view.setContent(data);
 	}
 
 	public get context(): EditableTreeContext {

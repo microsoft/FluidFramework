@@ -18,7 +18,7 @@
                     "tree": {
                         "SchemaString": {
                             "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]},\"structFields\":[],\"value\":0}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]}}"
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]},\"structFields\":[]}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]}}"
                         }
                     }
                 },
@@ -27,7 +27,7 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "\"[{\\\"type\\\":\\\"SeqMap\\\",\\\"fields\\\":{\\\"foo\\\":[{\\\"type\\\":\\\"SeqMap\\\"}]}}]\""
+                            "content": "[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]"
                         }
                     }
                 }

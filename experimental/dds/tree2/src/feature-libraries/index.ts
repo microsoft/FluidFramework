@@ -9,18 +9,12 @@ export {
 	EditableTreeContext,
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
-	typeSymbol,
 	isEditableField,
 	isPrimitive,
 	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
 	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
@@ -57,6 +51,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	setField,
 } from "./editable-tree";
 
 export {
@@ -203,6 +198,12 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
+	typeSymbol,
+	getField,
+	parentField,
+	EditableTreeEvents,
+	on,
+	contextSymbol,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.

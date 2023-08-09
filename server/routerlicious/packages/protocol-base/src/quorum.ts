@@ -368,6 +368,23 @@ export class QuorumProposals
 			// clear the values cache
 			this.valuesSnapshotCache = undefined;
 
+			// check if there are multiple proposals with matching keys
+			let proposalSettled = false;
+			let proposalKeySeen = false;
+			for (const [, p] of this.proposals) {
+				if (p.key === committedProposal.key) {
+					if (!proposalKeySeen) {
+						// set proposalSettled to true if the proposal key match is unique thus far
+						proposalSettled = true;
+					} else {
+						// set proposalSettled to false if matching proposal key is not unique
+						proposalSettled = false;
+						break;
+					}
+					proposalKeySeen = true;
+				}
+			}
+
 			this.emit(
 				"approveProposal",
 				committedProposal.sequenceNumber,
@@ -375,6 +392,17 @@ export class QuorumProposals
 				committedProposal.value,
 				committedProposal.approvalSequenceNumber,
 			);
+
+			// emit approveProposalComplete when all pending proposals are processed
+			if (proposalSettled) {
+				this.emit(
+					"approveProposalComplete",
+					committedProposal.sequenceNumber,
+					committedProposal.key,
+					committedProposal.value,
+					committedProposal.approvalSequenceNumber,
+				);
+			}
 
 			this.proposals.delete(proposal.sequenceNumber);
 
