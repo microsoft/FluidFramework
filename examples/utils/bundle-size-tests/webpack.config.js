@@ -28,7 +28,7 @@ const verString = process.env.SETVERSION_VERSION ?? pkg.version;
 
 // Unless we are running in a test branch in CI, then we want to replace the version string in the bundled code. test
 // branch builds are exlcuded because they use a version scheme that fromInternalScheme does not parse.
-if (isInternalVersionScheme(verString)) {
+if (isInternalVersionScheme(verString, true, true)) {
 	const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
 	const versionToReplace = new RegExp(verString, "g");
 	const internalVersionNoPrerelease = [major, minor, patch].join(".");
