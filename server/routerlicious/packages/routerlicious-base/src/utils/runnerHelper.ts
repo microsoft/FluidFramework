@@ -5,7 +5,7 @@
 
 import { serializeError } from "serialize-error";
 import { IWebServer } from "@fluidframework/server-services-core";
-import { Lumber } from "@fluidframework/server-services-telemetry";
+import { Lumber, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import { Deferred } from "@fluidframework/common-utils";
 
@@ -29,10 +29,18 @@ export async function runnerHttpServerStop(
 		}
 		if (!runnerMetric.isCompleted()) {
 			runnerMetric.success(`${runnerMetric.eventName} stopped`);
+		} else {
+			Lumberjack.info(`${runnerMetric.eventName} stopped`);
 		}
 	} catch (error) {
 		if (!runnerMetric.isCompleted()) {
 			runnerMetric.error(`${runnerMetric.eventName} encountered an error during stop`, error);
+		} else {
+			Lumberjack.error(
+				`${runnerMetric.eventName} encountered an error during stop`,
+				undefined,
+				error,
+			);
 		}
 		if (caller === "sigterm") {
 			runningDeferredPromise?.resolve();
