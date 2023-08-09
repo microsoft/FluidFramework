@@ -17,7 +17,6 @@ export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 
 // @public
 export interface DevtoolsPanelProps {
-    // (undocumented)
     extensionVersion?: string;
     messageRelay: IMessageRelay;
     usageTelemetryLogger?: ITelemetryBaseLogger;
