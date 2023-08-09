@@ -39,6 +39,7 @@ import {
 	createRoomJoinMessage,
 	createNackMessage,
 	createRoomLeaveMessage,
+	createRuntimeMessage,
 	generateClientId,
 	ConnectionCountLogger,
 } from "../utils";
@@ -653,18 +654,11 @@ export function configureWebSocketServices(
 					const documentId = broadcastSignal.documentId;
 					const roomFromBroadcastSignal: IRoom = { tenantId, documentId };
 
-					const signalMessageRuntimeMessage: ISignalMessage = {
-						clientId: null, // system signal
-						content: JSON.stringify({
-							type: broadcastSignal.signalType,
-							// TODO: verify signalConent being passed in
-							contents: JSON.parse(broadcastSignal.signalContent)
-						}),
-					};
+					const runtimeMessage = createRuntimeMessage(null, broadcastSignal.signalContent)
 					socket.emitToRoom(
 						getRoomId(roomFromBroadcastSignal),
 						"signal",
-						signalMessageRuntimeMessage,
+						runtimeMessage,
 					).catch((error) => {
 						const errorMsg = `Failed to broadcast signal from external API.`;
 						Lumberjack.error(

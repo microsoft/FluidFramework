@@ -10,6 +10,7 @@ import {
 	MessageType,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { CollaborationSessionEventType } from "..";
 
 export const createNackMessage = (
 	code: number,
@@ -46,5 +47,14 @@ export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
 	content: JSON.stringify({
 		type: MessageType.ClientLeave,
 		content: clientId,
+	}),
+});
+
+export const createRuntimeMessage = (signalContent: string): ISignalMessage => ({
+	clientId: null,
+	content: JSON.stringify({
+		type: CollaborationSessionEventType.RuntimeMessage,
+		// TODO: verify signalConent being passed in
+		contents: JSON.parse(signalContent)
 	}),
 });

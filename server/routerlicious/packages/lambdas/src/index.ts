@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { configureWebSocketServices } from "./alfred";
+export {
+	configureWebSocketServices,
+	CollaborationSessionEventType,
+	ICollaborationSessionEvent,
+	ICollaborationSessionEvents
+} from "./alfred";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
 export {
@@ -34,6 +39,7 @@ export {
 	createNackMessage,
 	createRoomJoinMessage,
 	createRoomLeaveMessage,
+	createRuntimeMessage,
 	createSessionMetric,
 	generateClientId,
 	isDocumentSessionValid,
