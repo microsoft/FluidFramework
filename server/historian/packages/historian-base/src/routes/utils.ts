@@ -108,6 +108,8 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
+	const maxCacheableSummarySize: number =
+		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
 	let isEphemeral = isEphemeralContainer;
 	if (!ignoreEphemeralFlag) {
@@ -132,6 +134,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		calculatedStorageName,
 		storageUrl,
 		isEphemeral,
+		maxCacheableSummarySize,
 	);
 	return service;
 }
