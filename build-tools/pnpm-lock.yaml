@@ -78,7 +78,6 @@ importers:
       '@types/chai-arrays': ^2.0.0
       '@types/fs-extra': ^8.1.2
       '@types/inquirer': ^8.2.6
-      '@types/lodash.clonedeep': ^4.5.7
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.53
       '@types/prompts': ^2.4.4
@@ -107,7 +106,6 @@ importers:
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
-      lodash.clonedeep: ^4.5.0
       minimatch: ^7.4.6
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.1.0
@@ -181,7 +179,6 @@ importers:
       '@types/chai-arrays': 2.0.0
       '@types/fs-extra': 8.1.2
       '@types/inquirer': 8.2.6
-      '@types/lodash.clonedeep': 4.5.7
       '@types/mocha': 9.1.1
       '@types/node': 14.18.53
       '@types/prompts': 2.4.4
@@ -197,7 +194,6 @@ importers:
       eslint-config-oclif: 4.0.0_eslint@8.6.0
       eslint-config-oclif-typescript: 1.0.3_kufnqfq7tb5rpdawkdb6g5smma
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      lodash.clonedeep: 4.5.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -3329,12 +3325,6 @@ packages:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
       '@types/node': 14.18.53
-
-  /@types/lodash.clonedeep/4.5.7:
-    resolution: {integrity: sha512-ccNqkPptFIXrpVqUECi60/DFxjNKsfoQxSQsgcBJCX/fuX1wgyQieojkcWH/KpE3xzLoWN/2k+ZeGqIN3paSvw==}
-    dependencies:
-      '@types/lodash': 4.14.195
-    dev: true
 
   /@types/lodash.isequal/4.5.6:
     resolution: {integrity: sha512-Ww4UGSe3DmtvLLJm2F16hDwEQSv7U0Rr8SujLUA2wHI2D2dm8kPu6Et+/y303LfjTIwSBKXB/YTUcAKpem/XEg==}
@@ -8481,10 +8471,6 @@ packages:
 
   /lodash.camelcase/4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
-    dev: true
-
-  /lodash.clonedeep/4.5.0:
-    resolution: {integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==}
     dev: true
 
   /lodash.find/4.6.0:
