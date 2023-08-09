@@ -41,7 +41,7 @@ import {
 	makeReducer,
 	RevertibleSharedString,
 	isRevertibleSharedString,
-	OperationGenerationConfig,
+	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
@@ -150,7 +150,7 @@ const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 
 type ClientOpState = FuzzTestState;
 function operationGenerator(
-	optionsParam: OperationGenerationConfig,
+	optionsParam: IntervalOperationGenerationConfig,
 ): Generator<RevertOperation, ClientOpState> {
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,

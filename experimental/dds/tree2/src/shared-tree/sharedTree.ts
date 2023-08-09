@@ -88,7 +88,7 @@ export class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(runtime, forest);
+		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
