@@ -199,8 +199,21 @@ export async function fetchArray(
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
 	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	let arrayBuffer: ArrayBuffer;
+	try {
+		arrayBuffer = await content.arrayBuffer();
+	} catch (e) {
+		// Parsing can fail and message could contain full request URI, including
+		// tokens, etc. So do not log error object itself.
+		throwOdspNetworkError(
+			"Error while parsing fetch response",
+			fetchIncorrectResponse,
+			content, // response
+			undefined, // response text
+			propsToLog,
+		);
+	}
 
-	const arrayBuffer = await content.arrayBuffer();
 	propsToLog.bodySize = arrayBuffer.byteLength;
 	return {
 		headers,
@@ -235,6 +248,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 			fetchIncorrectResponse,
 			content, // response
 			text,
+			propsToLog,
 		);
 	}
 
