@@ -915,7 +915,7 @@ describe("Runtime", () => {
 						containerRuntime.process(
 							{
 								type: "op",
-								clientId: "clientId",
+								clientId: "a unique, remote clientId",
 								sequenceNumber: 0,
 								contents: {
 									address: "address",
