@@ -10,7 +10,6 @@ import {
 	MessageType,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { CollaborationSessionEventType } from "..";
 
 export const createNackMessage = (
 	code: number,
@@ -50,10 +49,17 @@ export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
 	}),
 });
 
+export const IBroadcastSignalEventPayloadType = {
+	/**
+	 * Indicates that the data associated with an edit is or must be a `boolean`.
+	 */
+	RuntimeMessage: "RuntimeMessage",
+} as const;
+
 export const createRuntimeMessage = (signalContent: string): ISignalMessage => ({
 	clientId: null,
 	content: JSON.stringify({
-		type: CollaborationSessionEventType.RuntimeMessage,
+		type: IBroadcastSignalEventPayloadType.RuntimeMessage,
 		// TODO: verify signalConent being passed in
 		contents: JSON.parse(signalContent),
 	}),

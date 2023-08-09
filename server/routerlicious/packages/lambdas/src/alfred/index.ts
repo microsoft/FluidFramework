@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent } from "@fluidframework/common-definitions";
+
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ConnectionMode,
@@ -36,13 +36,14 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
+	ConnectionCountLogger,
 	createRoomJoinMessage,
 	createNackMessage,
 	createRoomLeaveMessage,
 	createRuntimeMessage,
 	generateClientId,
-	ConnectionCountLogger,
 } from "../utils";
+import { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 
 const summarizerClientType = "summarizer";
 
@@ -208,34 +209,6 @@ function checkThrottleAndUsage(
 			);
 		}
 	}
-}
-
-/**
- * Body of Collaboration Session Events
- */
-export interface ICollaborationSessionEvent {
-	tenantId: string;
-	documentId: string;
-	signalType: CollaborationSessionEventType;
-	signalContent: string;
-}
-
-export enum CollaborationSessionEventType {
-	/**
-	 * Message sent during a collaboration session.
-	 */
-	RuntimeMessage,
-}
-
-export interface ICollaborationSessionEvents extends IEvent {
-	/**
-	 * Emitted when the broadcastSignal endpoint is called by an external
-	 * server to communicate with all Fluid clients in a session via signal
-	 */
-	(
-		event: "broadcastSignal",
-		listener: (broadcastSignal: ICollaborationSessionEvent) => void,
-	): void;
 }
 
 export function configureWebSocketServices(
@@ -654,7 +627,7 @@ export function configureWebSocketServices(
 			if (collborationSessionEventEmitter !== undefined) {
 				collborationSessionEventEmitter.on(
 					"broadcastSignal",
-					(broadcastSignal: ICollaborationSessionEvent) => {
+					(broadcastSignal: IBroadcastSignalEventPayload) => {
 						const tenantId = broadcastSignal.tenantId;
 						const documentId = broadcastSignal.documentId;
 						const roomToBroadcastSignal: IRoom = { tenantId, documentId };
@@ -662,9 +635,11 @@ export function configureWebSocketServices(
 						// No-op if the room (collab session) that signal came in from is different
 						// than the current room. We reuse websockets so there could be multiple rooms
 						// that we are sending the signal to, and we don't want to do that.
-						if (roomToBroadcastSignal === room) {
+						if (
+							roomToBroadcastSignal.documentId === room.documentId &&
+							roomToBroadcastSignal.tenantId === room.tenantId
+						) {
 							const runtimeMessage = createRuntimeMessage(
-								null,
 								broadcastSignal.signalContent,
 							);
 
