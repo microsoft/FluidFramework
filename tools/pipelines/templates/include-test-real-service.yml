@@ -206,6 +206,7 @@ jobs:
 
             echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@fluid-tools:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
             echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
