@@ -538,7 +538,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			/**
 			 * Todo: When ready to enable feature set it to this.containerData !== undefined
 			 */
-			[ContainerDevtoolsFeature.ContainerDataEditing]: false,
+			[ContainerDevtoolsFeature.ContainerDataEditing]: true,
 		};
 	}
 

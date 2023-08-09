@@ -23,6 +23,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 import {
+	FluidObjectNode,
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
@@ -37,7 +38,7 @@ import {
 export const visualizeSharedCell: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode | FluidObjectValueNode> => {
+): Promise<FluidObjectNode> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
 
@@ -47,24 +48,43 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		editTypes: undefined,
 	};
 
-	if (renderedData.nodeKind === VisualNodeKind.TreeNode) {
-		return {
-			...renderedData,
-			fluidObjectId: sharedCell.id,
-			children: { renderedData },
-			typeMetadata: "SharedCell",
-			nodeKind: VisualNodeKind.FluidTreeNode,
-		};
+	// TreeNode and ValueNode are special cases where we want to reduce hierarchy
+	switch (renderedData.nodeKind) {
+		case VisualNodeKind.FluidHandleNode:
+			return {
+				children: {
+					data: renderedData,
+				},
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidTreeNode,
+				editProps,
+			};
+		case VisualNodeKind.ValueNode:
+			return {
+				...renderedData,
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidValueNode,
+				editProps,
+			};
+		case VisualNodeKind.TreeNode:
+			return {
+				...renderedData,
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidTreeNode,
+				editProps,
+			};
+		case VisualNodeKind.UnknownObjectNode:
+			return {
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidUnknownObjectNode,
+			};
+		default:
+			throw new Error("Unrecognized node kind.");
 	}
-
-	return {
-		value: "bleh",
-		...renderedData,
-		fluidObjectId: sharedCell.id,
-		typeMetadata: "SharedCell",
-		nodeKind: VisualNodeKind.FluidValueNode,
-		editProps,
-	};
 };
 
 /**
@@ -76,7 +96,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 	const sharedCounter = sharedObject as SharedCounter;
 	return {
 		fluidObjectId: sharedCounter.id,
-		value: sharedCounter.value,
+	value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
 		editProps: { editTypes: [EditType.Number] },

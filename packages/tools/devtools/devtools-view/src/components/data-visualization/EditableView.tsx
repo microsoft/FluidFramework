@@ -81,63 +81,6 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	);
 
 	/**
-	 * Determines the Editing UI based on the {@link EditType}
-	 */
-	const selectEditUI = React.useCallback(
-		(typeParamater: string): React.ReactElement => {
-			let component: React.ReactElement = <></>;
-			switch (typeParamater) {
-				case "string":
-					component = (
-						<EditableInputComponent
-							node={node}
-							setIsEditing={setIsEditing}
-							submitChange={submitChange}
-							inputType={"string"}
-						/>
-					);
-					break;
-				case "number":
-					component = (
-						<EditableInputComponent
-							node={node}
-							setIsEditing={setIsEditing}
-							submitChange={submitChange}
-							inputType={"number"}
-						/>
-					);
-					break;
-				case "boolean":
-					component = (
-						<EditableBooleanComponent
-							node={node}
-							submitChange={submitChange}
-							setIsEditing={setIsEditing}
-						/>
-					);
-					break;
-				case "undefined":
-					break;
-
-				case "null":
-					break;
-
-				default:
-			}
-
-			return component;
-		},
-		[node, submitChange],
-	);
-
-	/**
-	 * State to store the corresponding UI component
-	 */
-	const [editingComponent, setEditingComponent] = React.useState<React.ReactElement>(
-		selectEditUI(editType),
-	);
-
-	/**
 	 * On blur will set {@link isEditing} to false
 	 * Blurring should occur when the user discards an edit (Componenet specific)
 	 * or focuses something not part of the editing experience of that node
@@ -165,9 +108,8 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	React.useEffect(() => {
 		if (isEditing === false) {
 			setEditType(typeof node.value);
-			setEditingComponent(selectEditUI(typeof node.value));
 		}
-	}, [node.value, isEditing, selectEditUI]);
+	}, [node.value, isEditing]);
 
 	/**
 	 * Updates {@link editType} and {@link editingComponent} based on the option selected from the dropdown
@@ -176,20 +118,64 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	 * @param data - The option selected from the dropdown
 	 */
 	const onOptionSelect: DropdownProps["onOptionSelect"] = (event, data) => {
-		setEditType(data.optionText ?? "undefined");
-		setEditingComponent(selectEditUI(data.optionText ?? "undefined"));
+		setEditType(data.optionText ?? "blhe");
 		if (data.optionText === "undefined") {
 			submitChange(undefined);
 		}
 
-		if (data.optionText === " null") {
+		if (data.optionText === "null") {
 			// We need to support users waiting to use "null" as a value
 			// eslint-disable-next-line unicorn/no-null
 			submitChange(null);
+			console.log("made it to null case");
 		}
 	};
 
 	const options = node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
+
+	let innerView: React.ReactElement;
+	console.log(`testing type:${editType}`);
+	switch (editType) {
+		case "string":
+			innerView = (
+				<EditableInputComponent
+					node={node}
+					setIsEditing={setIsEditing}
+					submitChange={submitChange}
+					inputType={"string"}
+				/>
+			);
+			break;
+		case "number":
+			innerView = (
+				<EditableInputComponent
+					node={node}
+					setIsEditing={setIsEditing}
+					submitChange={submitChange}
+					inputType={"number"}
+				/>
+			);
+			break;
+		case "boolean":
+			innerView = (
+				<EditableBooleanComponent
+					node={node}
+					submitChange={submitChange}
+					setIsEditing={setIsEditing}
+				/>
+			);
+			break;
+		case "undefined":
+			innerView = <span>undefined</span>;
+			break;
+
+		case "null":
+			innerView = <span>null</span>;
+			break;
+
+		default:
+			throw new Error("Unrecognized edit type.");
+	}
 
 	return (
 		<div
@@ -218,7 +204,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 					<Option key={option}>{option}</Option>
 				))}
 			</Dropdown>
-			{editingComponent}
+			{innerView}
 		</div>
 	);
 }
@@ -270,7 +256,7 @@ interface EditableInputComponent extends EditableComponentProps {
 function EditableInputComponent(props: EditableInputComponent): React.ReactElement {
 	const { node, setIsEditing, submitChange, inputType } = props;
 
-	// Clearning out data if it was not already a number
+	// Clearing out data if it was not already a number
 	const [localData, setLocalData] = React.useState<string>(
 		typeof node.value !== inputType ? "" : String(node.value),
 	);
