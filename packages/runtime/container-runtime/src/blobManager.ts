@@ -698,7 +698,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				localEntry.acked = true;
 				localEntry.handleP.resolve(this.getBlobHandle(localId));
 				this.deletePendingBlobMaybe(localId);
-			} 
+			}
 		}
 	}
 
