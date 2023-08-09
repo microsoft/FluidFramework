@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import {
+	ITypeValidationConfig,
+	Package,
+	PackageJson,
+	updatePackageJsonFile,
+} from "@fluidframework/build-tools";
 
 import { PackageCommand } from "../BasePackageCommand";
 
@@ -90,7 +95,14 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				delete json.typeValidation.disabled;
 			}
 			// This uses the "disabled" state, so that is set above before this is run.
-			updateTypeTestConfiguration(json, { resetBroken: this.flags.reset, version });
+			if (version !== undefined) {
+				updateTypeTestDependency(json, version);
+			}
+
+			if (this.flags.reset) {
+				resetBrokenTests(json);
+			}
+
 			if (this.flags.normalize) {
 				json.typeValidation = {
 					disabled: json.typeValidation?.disabled === true ? true : undefined,
@@ -101,32 +113,28 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 	}
 }
 
-/**
- * @internal
- */
 export enum VersionOptions {
 	Clear,
 	Previous,
 	ClearIfDisabled,
 }
 
-/**
- * Actions that can be taken when configuring type tests.
- *
- * @internal
- */
-export interface TypeTestConfigActions {
-	/**
-	 * If set, update version to test against to this.
-	 * If empty string, remove previous version.
-	 */
-	version?: string | VersionOptions;
+// /**
+//  * Actions that can be taken when configuring type tests.
+//  *
+//  */
+// export interface TypeTestConfigActions {
+// 	/**
+// 	 * If set, update version to test against to this.
+// 	 * If empty string, remove previous version.
+// 	 */
+// 	version?: string | VersionOptions;
 
-	/**
-	 * If true delete "broken" entries (therefore enabling the tests for them again).
-	 */
-	resetBroken?: boolean;
-}
+// 	/**
+// 	 * If true delete "broken" entries (therefore enabling the tests for them again).
+// 	 */
+// 	resetBroken?: true;
+// }
 
 /**
  * Gets the version before `version`.
@@ -159,28 +167,26 @@ export function previousVersion(version: string): string {
 /**
  * Updates configuration for type tests in package.json
  *
- * @internal
  */
-export function updateTypeTestConfiguration(
-	pkgJson: PackageJson,
-	options: TypeTestConfigActions,
-): void {
-	if (options.version !== undefined) {
-		applyTypeTestVersionOptions(pkgJson, options.version);
-	}
+// export function updateTypeTestConfiguration(
+// 	pkgJson: PackageJson,
+// 	options: TypeTestConfigActions,
+// ): void {
+// 	if (options.version !== undefined) {
+// 		applyTypeTestVersionOptions(pkgJson, options.version);
+// 	}
 
-	if (options.resetBroken !== undefined) {
-		resetBrokenTests(pkgJson, options.resetBroken);
-	}
-}
+// 	if (options.resetBroken !== undefined) {
+// 		resetBrokenTests(pkgJson, options.resetBroken);
+// 	}
+// }
 
 /**
  * Adds or removes the devDependency on a previous version of a package thatis used for type testing. This function only
  * affects the `devDependencies` nodes in package.json.
  *
- * @internal
  */
-export function applyTypeTestVersionOptions(
+export function updateTypeTestDependency(
 	pkgJson: PackageJson,
 	versionOptions: string | VersionOptions,
 ): void {
@@ -209,11 +215,9 @@ export function applyTypeTestVersionOptions(
 
 /**
  * Removes any `typeValidation.broken` entries from package.json.
- *
- * @internal
  */
-export function resetBrokenTests(pkgJson: PackageJson, resetBroken: boolean): void {
-	if (resetBroken === true && pkgJson.typeValidation !== undefined) {
+export function resetBrokenTests(pkgJson: { typeValidation?: ITypeValidationConfig }): void {
+	if (pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}
 }

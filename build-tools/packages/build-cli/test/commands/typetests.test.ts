@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { assert, expect } from "chai";
-import { PackageJson } from "@fluidframework/build-tools";
+import { ITypeValidationConfig, PackageJson } from "@fluidframework/build-tools";
 
 import {
 	VersionOptions,
-	applyTypeTestVersionOptions,
+	updateTypeTestDependency,
 	previousVersion,
 	resetBrokenTests,
 } from "../../src/commands/typetests";
@@ -18,143 +18,154 @@ import {
 function packageMinimal(): PackageJson {
 	return {
 		name: "test-package",
-		version: "2.0.0-internal.6.0.0",
+		version: "6.0.0",
 		scripts: {},
 	};
 }
 
 /**
- * A test package.json with an enabled typeValidation node.
+ * A test package.json with a typeValidation node.
+ *
+ * @param enabled - Set this to false to return a package with disabled type tests.
  */
-function packageWithTypeValidation(): PackageJson {
+function packageWithTypeValidation(enabled = true): PackageJson {
 	return {
 		...packageMinimal(),
 		devDependencies: {
-			"test-package-previous": "npm:test-package@2.0.0-internal.4.0.0",
-			"another-dependency": "^1.0.0",
+			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
 			broken: {
-				"broken-package": {
+				"broken-api": {
 					backCompat: false,
 					forwardCompat: false,
 				},
 			},
-			disabled: false,
-		},
-	};
-}
-
-/**
- * A test package.json with a disabled typeValidation node.
- */
-function packageWithTypeValidationDisabled(): PackageJson {
-	return {
-		...packageMinimal(),
-		devDependencies: {
-			"test-package-previous": "npm:test-package@2.0.0-internal.4.0.0",
-			"another-dependency": "^1.0.0",
-		},
-		typeValidation: {
-			broken: {
-				"broken-package": {
-					backCompat: false,
-					forwardCompat: false,
-				},
-			},
-			disabled: true,
+			disabled: !enabled,
 		},
 	};
 }
 
 describe("typetests tests", () => {
-	describe("applyTypeTestVersionOptions", () => {
+	describe("updateTypeTestDependency", () => {
+		it("does not remove unrelated dependencies", () => {
+			const pkg: PackageJson = {
+				...packageMinimal(),
+				devDependencies: {
+					"test-package-previous": "4.0.0",
+					"other-dependency": "^1.0.0",
+				},
+			};
+			updateTypeTestDependency(pkg, VersionOptions.Clear);
+			expect(pkg.devDependencies).to.deep.equal({
+				"other-dependency": "^1.0.0",
+			});
+		});
+
 		describe("VersionOptions.Clear", () => {
 			it("removes previous test package dependency", () => {
 				const pkg = packageWithTypeValidation();
-				applyTypeTestVersionOptions(pkg, VersionOptions.Clear);
-				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				updateTypeTestDependency(pkg, VersionOptions.Clear);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 
 			it("removes previous test package dependency when type tests are disabled", () => {
-				const pkg = packageWithTypeValidationDisabled();
-				applyTypeTestVersionOptions(pkg, VersionOptions.Clear);
-				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+				const pkg = packageWithTypeValidation(/* enabled */ false);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				updateTypeTestDependency(pkg, VersionOptions.Clear);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
 
 		describe("VersionOptions.ClearIfDisabled", () => {
-			it("leaves dependency when type tests are not disabled", () => {
+			it("leaves previous test package dependency when type tests are enabled", () => {
 				const pkg = packageWithTypeValidation();
-				applyTypeTestVersionOptions(pkg, VersionOptions.ClearIfDisabled);
-				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
-					"npm:test-package@2.0.0-internal.4.0.0",
-				);
+				const expected = packageWithTypeValidation();
+				expect(pkg.typeValidation?.disabled).is.false;
+				updateTypeTestDependency(pkg, VersionOptions.ClearIfDisabled);
+				expect(pkg).to.deep.equal(expected);
 			});
 
 			it("removes previous test package dependency when type tests are disabled", () => {
-				const pkg = packageWithTypeValidationDisabled();
-				applyTypeTestVersionOptions(pkg, VersionOptions.ClearIfDisabled);
-				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+				const pkg = packageWithTypeValidation(/* enabled */ false);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				updateTypeTestDependency(pkg, VersionOptions.ClearIfDisabled);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
 
 		describe("VersionOptions.Previous", () => {
 			it("sets previous version", () => {
 				const pkg = packageWithTypeValidation();
-				applyTypeTestVersionOptions(pkg, VersionOptions.Previous);
+				updateTypeTestDependency(pkg, VersionOptions.Previous);
 				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
-					"npm:test-package@2.0.0-internal.5.0.0",
+					"npm:test-package@5.0.0",
 				);
 			});
 
 			it("sets previous version even without typeValidation node", () => {
 				const pkg = packageMinimal();
-				applyTypeTestVersionOptions(pkg, VersionOptions.Previous);
+				updateTypeTestDependency(pkg, VersionOptions.Previous);
 				expect(pkg.devDependencies?.["test-package-previous"]).to.equal(
-					"npm:test-package@2.0.0-internal.5.0.0",
+					"npm:test-package@5.0.0",
 				);
 			});
 
 			it("removes previous test package dependency when type tests are disabled", () => {
-				const pkg = packageWithTypeValidationDisabled();
-				applyTypeTestVersionOptions(pkg, VersionOptions.Previous);
-				expect(pkg.devDependencies?.["test-package-previous"]).not.to.exist;
+				const pkg = packageWithTypeValidation(/* enabled */ false);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.exist;
+				updateTypeTestDependency(pkg, VersionOptions.Previous);
+				expect(pkg.devDependencies?.["test-package-previous"]).to.not.exist;
 			});
 		});
 	});
 
 	describe("resetBrokenTests", () => {
-		it(`ignores packages with no typeValidation node`, () => {
-			const pkg = packageMinimal();
-			resetBrokenTests(pkg, true);
-			expect(pkg.typeValidation).to.not.exist;
+		it("empty", () => {
+			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
+				typeValidation: {
+					broken: {},
+				},
+			};
+			resetBrokenTests(pkgJson);
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });
 		});
 
-		it(`resets package with type tests`, () => {
-			const pkg = packageWithTypeValidation();
-			resetBrokenTests(pkg, true);
-			expect(pkg.typeValidation?.broken).to.be.empty;
-		});
-
-		it(`resets even if type validation is disabled`, () => {
-			const pkg = packageWithTypeValidationDisabled();
-			resetBrokenTests(pkg, true);
-			expect(pkg.typeValidation?.broken).to.be.empty;
-		});
-
-		it(`no effect when reset=false`, () => {
-			const pkg = packageWithTypeValidation();
-			resetBrokenTests(pkg, false);
-			assert.deepEqual(pkg.typeValidation, {
-				broken: {
-					"broken-package": {
-						backCompat: false,
-						forwardCompat: false,
+		it("minimal", () => {
+			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
+				typeValidation: {
+					broken: {
+						"broken-api": {
+							backCompat: false,
+							forwardCompat: false,
+						},
 					},
 				},
-				disabled: false,
-			});
+			};
+			resetBrokenTests(pkgJson);
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {} } });
+		});
+
+		it("ignores packages with no typeValidation node", () => {
+			const pkg = packageMinimal();
+			const expected = packageMinimal();
+
+			expect(pkg.typeValidation).to.not.exist;
+			resetBrokenTests(pkg);
+			expect(pkg).to.deep.equal(expected);
+		});
+
+		it("resets package with type tests", () => {
+			const pkg = packageWithTypeValidation();
+			resetBrokenTests(pkg);
+			expect(pkg.typeValidation?.broken).to.deep.equal({});
+		});
+
+		it("resets even if type validation is disabled", () => {
+			const pkg = packageWithTypeValidation(/* enabled */ false);
+			resetBrokenTests(pkg);
+			expect(pkg.typeValidation?.broken).to.deep.equal({});
 		});
 	});
 

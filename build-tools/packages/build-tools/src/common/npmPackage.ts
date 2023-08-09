@@ -33,7 +33,7 @@ const { log, verbose, errorLog: error } = defaultLogger;
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
-type FluidPackageJson = {
+export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
