@@ -433,9 +433,11 @@ aXbYc
 
 Stickiness on either side is implemented by adding exclusivity to an existing interval. That is, if we were to take the interval `[0, 3]` and make it end-sticky, we would make the end endpoint exclusive: `[0, 4)`.
 
+If we again look at the string `abc`, and then create an interval on the range `[1, 1]`, in code, no stickiness would be written as `collection.add(1, 1, Stickiness.NONE)` and both endpoints would be placed on `b`. Start stickiness would be written as `collection.add(1, 1, Stickiness.START)` and the start endpoint would be placed on `a`, while the end endpoint would be placed on `b`. End stickiness would be written as `collection.add(1, 1, Stickiness.END)` and the start endpoint would be placed on `b`, while the end endpoint would be placed on `c`. Full stickiness would be written as `collection.add(1, 1, Stickiness.FULL)` and the start endpoint would be placed on `a`, while the end endpoint would be placed on `c`. The interval `[1, 1]` would become `(0, 1]`, `[1, 2)`, and `(0, 2)` under start, end, and full stickiness respectively.
+
 Such exclusivity requires that it be possible to reference positions before and after the start or end of the string respectively. These positions before and after the string are not possible to reference with regular (insertion, deletion, etc.) ops, but _can_ be referenced by intervals using the values "start" and "end", rather than an integer string position.
 
-The "start" and "end" positions act as though they refer to position 0 and string.length - 1 respectively for most operations.
+In operations that rely on exact positions -- for example in the case of the `OverlappingIntervalsIndex`, the "start" and "end" positions act as though they refer to the positions `0` and `string.length - 1` respectively. Internally intervals are aware of their exclusive endpoints, and can use this to give more semantically correct results in these operations.
 
 ## SharedString
 
