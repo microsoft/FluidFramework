@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import EventEmitter from "events";
+import { IEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ConnectionMode,
 	IClient,
@@ -209,6 +209,31 @@ function checkThrottleAndUsage(
 	}
 }
 
+/**
+ * Body of Collaboration Session Events
+ */
+export interface ICollaborationSessionEvent {
+	tenantId: string;
+	documentId: string;
+	signalType: CollaborationSessionEventType;
+	signalContent: string;
+}
+
+export enum CollaborationSessionEventType {
+	/**
+	 * Message sent during a collaboration session.
+	 */
+	RuntimeMessage,
+}
+
+export interface ICollaborationSessionEvents extends IEvent {
+	/**
+	 * Emitted when the broadcastSignal endpoint is called by an external
+	 * server to communicate with all Fluid clients in a session via signal
+	 */
+	(event: "broadcastSignal", listener: (broadcastSignal: ICollaborationSessionEvent) => void): void;
+}
+
 export function configureWebSocketServices(
 	webSocketServer: core.IWebSocketServer,
 	orderManager: core.IOrdererManager,
@@ -232,7 +257,7 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	eventEmitter?: EventEmitter,
+	collborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -622,30 +647,32 @@ export function configureWebSocketServices(
 			}
 
 			// Send signal to room from broadcast-signal endpoint
-			if (eventEmitter !== undefined) {
-				eventEmitter.on("broadcast-signal", (_, containerUrl) => {
-					const documentId = containerUrl.split("/")[containerUrl.split("/").length - 1];
-					const tenantId = containerUrl.split("/")[containerUrl.split("/").length - 2];
+			if (collborationSessionEventEmitter !== undefined) {
+				collborationSessionEventEmitter.on("broadcastSignal", (broadcastSignal: ICollaborationSessionEvent) => {
+					const tenantId = broadcastSignal.tenantId;
+					const documentId = broadcastSignal.documentId;
 					const roomFromBroadcastSignal: IRoom = { tenantId, documentId };
 
 					const signalMessageRuntimeMessage: ISignalMessage = {
 						clientId: null, // system signal
 						content: JSON.stringify({
-							type: "RuntimeMessage",
-							contents: {
-								content: {
-									type: "ExternalDataChanged",
-									content: "Data has changed upstream. Please import new data.",
-								},
-								type: "RuntimeMessage",
-							},
+							type: broadcastSignal.signalType,
+							// TODO: verify signalConent being passed in
+							contents: JSON.parse(broadcastSignal.signalContent)
 						}),
 					};
 					socket.emitToRoom(
 						getRoomId(roomFromBroadcastSignal),
 						"signal",
 						signalMessageRuntimeMessage,
-					);
+					).catch((error) => {
+						const errorMsg = `Failed to broadcast signal from external API.`;
+						Lumberjack.error(
+							errorMsg,
+							getLumberBaseProperties(roomFromBroadcastSignal.documentId, roomFromBroadcastSignal.tenantId),
+							error,
+						);
+					});
 				});
 			}
 
