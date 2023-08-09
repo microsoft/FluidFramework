@@ -553,7 +553,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 4);
 	});
 
-	it.skip("can load from summary", async () => {
+	it("can load from summary", async () => {
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
 
@@ -561,8 +561,8 @@ describe("BlobManager", () => {
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.connect();
 
-		await runtime.processBlobs();
-		await handle;
+		await runtime.processAll();
+		await assert.doesNotReject(handle);
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
