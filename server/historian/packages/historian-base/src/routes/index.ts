@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, ITenantService } from "../services";
+import { ICache, IDenyList, ITenantService } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -49,6 +49,7 @@ export function create(
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): IRoutes {
 	return {
 		git: {
@@ -60,6 +61,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			commits: commits.create(
 				config,
@@ -69,6 +71,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			refs: refs.create(
 				config,
@@ -78,6 +81,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			tags: tags.create(
 				config,
@@ -87,6 +91,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			trees: trees.create(
 				config,
@@ -96,6 +101,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 		},
 		repository: {
@@ -107,6 +113,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			contents: contents.create(
 				config,
@@ -116,6 +123,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			headers: headers.create(
 				config,
@@ -125,6 +133,7 @@ export function create(
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 		},
 		summaries: summaries.create(
@@ -136,6 +145,7 @@ export function create(
 			cache,
 			asyncLocalStorage,
 			revokedTokenChecker,
+			denyList,
 		),
 	};
 }
