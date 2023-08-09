@@ -237,17 +237,29 @@ export class RedisFs implements IFileSystemPromises {
 		options?: Mode | MakeDirectoryOptions | null,
 	): Promise<undefined | string | void> {
 		const folderpathString = folderpath.toString();
+		const recursive = options && typeof options === "object" && options.recursive;
 
-		await executeRedisFsApi(
-			async () => this.redisFsClient.set(folderpathString, ""),
-			RedisFsApis.Mkdir,
-			RedisFSConstants.RedisFsApi,
-			this.redisFsConfig.enableRedisFsMetrics,
-			this.redisFsConfig.redisApiMetricsSamplingPeriod,
-			{
-				folderpathString,
-			},
-		);
+		if (recursive) {
+			const folderSeparator = "/";
+			const subfolders = folderpathString.split(folderSeparator);
+			let currentPath = subfolders[0];
+
+			for (let i = 1; i < subfolders.length; i++) {
+				currentPath += folderSeparator + subfolders[i];
+				Lumberjack.info(`prrajen: Recursively creating folder: ${currentPath}`);
+			}
+		} else {
+			await executeRedisFsApi(
+				async () => this.redisFsClient.set(folderpathString, ""),
+				RedisFsApis.Mkdir,
+				RedisFSConstants.RedisFsApi,
+				this.redisFsConfig.enableRedisFsMetrics,
+				this.redisFsConfig.redisApiMetricsSamplingPeriod,
+				{
+					folderpathString,
+				},
+			);
+		}
 	}
 
 	/**
@@ -326,6 +338,7 @@ export class RedisFs implements IFileSystemPromises {
 		);
 
 		if (!data) {
+			Lumberjack.info(`prrajen: Came to repo does not exist ${filepath}`);
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 

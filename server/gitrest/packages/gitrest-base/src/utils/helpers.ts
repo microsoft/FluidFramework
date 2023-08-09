@@ -100,6 +100,9 @@ export async function exists(
 		const fileOrDirectoryStats = await fileSystemManager.promises.stat(fileOrDirectoryPath);
 		return fileOrDirectoryStats;
 	} catch (error: any) {
+		Lumberjack.error(
+			`prrajen: Directory does not exist ${fileOrDirectoryPath} ${JSON.stringify(error)}`,
+		);
 		if (error?.code === "ENOENT") {
 			// File/Directory does not exist.
 			return false;
