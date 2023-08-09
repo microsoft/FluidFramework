@@ -169,6 +169,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			count: 10,
 			moveId: brand(0),
+			isDelete: true,
 		};
 		const repairDataKey: FieldKey = brand("repair-data-0");
 		const repairData: Delta.MoveIn = {
@@ -223,6 +224,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			count: 10,
 			moveId: brand(0),
+			isDelete: true,
 		};
 		const repairDataKey: FieldKey = brand("repair-data-0");
 		const repairData: Delta.MoveIn = {
@@ -303,6 +305,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
 			moveId: brand(0),
+			isDelete: true,
 			fields: new Map([
 				[
 					brand("foo"),
