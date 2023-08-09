@@ -499,7 +499,6 @@ export interface DependencyWithRange {
  *
  * @internal
  */
-// eslint-disable-next-line max-params
 export async function setVersion(
 	context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,

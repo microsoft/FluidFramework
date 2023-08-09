@@ -17,6 +17,7 @@ import {
 	packageSelectorFlag,
 	releaseGroupFlag,
 	skipCheckFlag,
+	testModeFlag,
 } from "../../flags";
 import {
 	generateBumpDepsBranchName,
@@ -77,6 +78,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			helpGroup: "EXPERIMENTAL",
 			options: ["ncu", "homegrown"],
 		}),
+		testMode: testModeFlag,
 		...BaseCommand.flags,
 	};
 
@@ -123,6 +125,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
+		}
+
+		if (flags.testMode) {
+			this.log(chalk.yellowBright(`Running in test mode. No changes will be made.`));
 		}
 
 		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
@@ -211,7 +217,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						depsToUpdate,
 						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
 						/* prerelease */ flags.prerelease,
-						/* writeChanges */ true,
+						/* writeChanges */ !flags.testMode,
 						this.logger,
 				  )
 				: await npmCheckUpdates(
@@ -221,7 +227,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
 						flags.updateType,
 						/* prerelease */ flags.prerelease,
-						/* writeChanges */ true,
+						/* writeChanges */ !flags.testMode,
 						this.logger,
 				  );
 
