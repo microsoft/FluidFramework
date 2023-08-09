@@ -20,6 +20,7 @@ data:
         },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
+        "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},
         "redis": {
             "host": "{{ .Values.historian.redis.url }}",
             "port": "{{ .Values.historian.redis.port }}",

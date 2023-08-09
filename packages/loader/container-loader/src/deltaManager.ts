@@ -25,7 +25,6 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorType,
-	IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -46,6 +45,7 @@ import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
+	IConnectionStateChangeReason,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
@@ -53,7 +53,7 @@ import { OnlyValidTermValue } from "./protocol";
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
 	fetchOpsFromStorage?: boolean;
-	reason: string;
+	reason: IConnectionStateChangeReason;
 }
 
 /**
@@ -64,8 +64,11 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
-	(event: "establishingConnection", listener: (reason: string) => void);
-	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
+	(event: "establishingConnection", listener: (reason: IConnectionStateChangeReason) => void);
+	(
+		event: "cancelEstablishingConnection",
+		listener: (reason: IConnectionStateChangeReason) => void,
+	);
 }
 
 /**
@@ -347,6 +350,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
+			deltaManagerState: this._disposed ? "disposed" : this._closed ? "closed" : "open",
 			...this.connectionManager.connectionProps,
 		};
 	}
@@ -400,15 +404,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string, error?: IAnyDriverError) =>
-				this.disconnectHandler(reason, error),
+			disconnectHandler: (reason: IConnectionStateChangeReason) =>
+				this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
-			establishConnectionHandler: (reason: string) => this.establishingConnection(reason),
-			cancelConnectionHandler: (reason: string) => this.cancelEstablishingConnection(reason),
+			establishConnectionHandler: (reason: IConnectionStateChangeReason) =>
+				this.establishingConnection(reason),
+			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>
+				this.cancelEstablishingConnection(reason),
 		};
 
 		this.connectionManager = createConnectionManager(props);
@@ -448,11 +454,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
 	}
 
-	private cancelEstablishingConnection(reason: string) {
+	private cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
 		this.emit("cancelEstablishingConnection", reason);
 	}
 
-	private establishingConnection(reason: string) {
+	private establishingConnection(reason: IConnectionStateChangeReason) {
 		this.emit("establishingConnection", reason);
 	}
 
@@ -586,7 +592,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// on the wire, we might be always behind.
 		// See comment at the end of "connect" handler
 		if (fetchOpsFromStorage) {
-			this.fetchMissingDeltas(args.reason);
+			this.fetchMissingDeltas(args.reason.text);
 		}
 
 		this.connectionManager.connect(args.reason, args.mode);
@@ -772,9 +778,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string, error?: IAnyDriverError) {
+	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason, error);
+		this.emit("disconnect", reason);
 	}
 
 	/**

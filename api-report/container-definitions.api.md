@@ -128,9 +128,16 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     serialize(): string;
@@ -372,7 +379,11 @@ export interface IHostLoader extends ILoader {
 }
 
 // @public
-export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
+export interface ILoader extends Partial<IProvideLoader> {
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
@@ -436,12 +447,15 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint?(): Promise<FluidObject | undefined>;
-    getPendingLocalState(): unknown;
+    getPendingLocalState(props?: {
+        notifyImminentClosure?: boolean;
+    }): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;

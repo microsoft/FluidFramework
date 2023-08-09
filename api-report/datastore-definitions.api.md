@@ -23,6 +23,8 @@ import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
@@ -90,7 +92,7 @@ export interface IDeltaHandler {
 }
 
 // @public
-export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)
@@ -113,12 +115,16 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly idCompressor?: IIdCompressor;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal(type: string, content: any): void;

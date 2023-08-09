@@ -6,42 +6,38 @@ import { strict as assert } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
 import { brand, getOrAddEmptyToMap } from "../../util";
-import { TestTreeProviderLite } from "../utils";
+import { TestTreeProviderLite, namedTreeSchema } from "../utils";
 import {
 	FieldKey,
 	fieldSchema,
 	JsonableTree,
 	moveToDetachedField,
 	rootFieldKey,
-	rootFieldKeySymbol,
 	SchemaData,
 	Value,
 	ValueSchema,
 } from "../../core";
 
 const stringSchema = namedTreeSchema({
-	name: brand("String"),
-	extraLocalFields: emptyField,
-	value: ValueSchema.String,
+	name: "String",
+	leafValue: ValueSchema.String,
 });
 
 export const childSchema = namedTreeSchema({
-	name: brand("Test:Opsize-Bench-Child"),
-	localFields: {
+	name: "Test:Opsize-Bench-Child",
+	structFields: {
 		data: fieldSchema(FieldKinds.value, [stringSchema.name]),
 	},
-	extraLocalFields: emptyField,
 });
 
 export const parentSchema = namedTreeSchema({
-	name: brand("Test:Opsize-Bench-Root"),
-	localFields: {
+	name: "Test:Opsize-Bench-Root",
+	structFields: {
 		children: fieldSchema(FieldKinds.sequence, [childSchema.name]),
 	},
-	extraLocalFields: emptyField,
 });
 
 export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);
@@ -49,9 +45,10 @@ export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);
 export const fullSchemaData: SchemaData = {
 	treeSchema: new Map([
 		[stringSchema.name, stringSchema],
+		[childSchema.name, childSchema],
 		[parentSchema.name, parentSchema],
 	]),
-	globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
+	rootFieldSchema: rootSchema,
 };
 
 const initialTestJsonTree = {
@@ -70,7 +67,7 @@ function initializeTestTree(tree: ISharedTree, state: JsonableTree = initialTest
 	tree.storedSchema.update(fullSchemaData);
 	// inserts a node with the initial AppState as the root of the tree
 	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, writeCursor);
 }
 
@@ -153,7 +150,7 @@ const insertNodesWithIndividualTransactions = (
 		tree.transaction.start();
 		const path = {
 			parent: undefined,
-			parentField: rootFieldKeySymbol,
+			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
 		const writeCursor = singleTextCursor(jsonNode);
@@ -173,7 +170,7 @@ const insertNodesWithSingleTransaction = (
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
@@ -194,7 +191,7 @@ const deleteNodesWithIndividualTransactions = (
 		tree.transaction.start();
 		const path = {
 			parent: undefined,
-			parentField: rootFieldKeySymbol,
+			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
 		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
@@ -212,7 +209,7 @@ const deleteNodesWithSingleTransaction = (
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
@@ -237,7 +234,7 @@ const editNodesWithIndividualTransactions = (
 ) => {
 	const rootPath = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
@@ -267,7 +264,7 @@ const editNodesWithSingleTransaction = (
 ) => {
 	const rootPath = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });

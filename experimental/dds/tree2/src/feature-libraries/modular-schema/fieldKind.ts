@@ -6,7 +6,6 @@
 import {
 	FieldStoredSchema,
 	FieldKindIdentifier,
-	SchemaPolicy,
 	fieldSchema,
 	SchemaData,
 	FieldKindSpecifier,
@@ -86,7 +85,7 @@ export class FieldKind<
  * The app must ensure consistency for all users of the document.
  * @alpha
  */
-export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy {
 	/**
 	 * Policy information about FieldKinds:
 	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
@@ -142,7 +141,8 @@ export enum Multiplicity {
 	 * - for the schema system to use as a default for fields which aren't declared
 	 * (ex: when updating a field that did not exist into one that does)
 	 *
-	 * See {@link emptyField} for a constant, reusable field using Forbidden.
+	 * @privateRemarks
+	 * See storedEmptyFieldSchema for a constant, reusable field using Forbidden.
 	 */
 	Forbidden,
 }

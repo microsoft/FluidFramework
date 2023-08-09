@@ -186,7 +186,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
-    readonly minBlobSize?: number;
 }
 
 // @public
@@ -200,6 +199,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 // @public
 export interface IDriverErrorBase {
     canRetry: boolean;
+    endpointReached?: boolean;
     readonly errorType: DriverErrorType;
     readonly message: string;
     online?: string;

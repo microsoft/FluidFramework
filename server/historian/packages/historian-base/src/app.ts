@@ -24,7 +24,7 @@ import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
-import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
+import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
 	config: nconf.Provider,
@@ -57,7 +57,7 @@ export function create(
 		app.use(
 			jsonMorganLoggerMiddleware("historian", (tokens, req, res) => {
 				const tenantId = getTenantIdFromRequest(req.params);
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: tenantId,
 					[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
@@ -65,6 +65,12 @@ export function create(
 						req.get("Authorization"),
 					),
 				};
+				if (req.get(Constants.IsEphemeralContainer) !== undefined) {
+					additionalProperties.isEphemeralContainer = req.get(
+						Constants.IsEphemeralContainer,
+					);
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {
