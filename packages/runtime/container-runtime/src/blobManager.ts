@@ -125,10 +125,8 @@ export type IBlobManagerRuntime = Pick<
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
 export enum PendingBlobStatus {
-	OnlinePendingUpload,
-	OnlinePendingOp,
-	OfflinePendingUpload,
-	OfflinePendingOp,
+	Uploading,
+	SendingOp,
 }
 
 type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
@@ -259,7 +257,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
 					this.pendingBlobs.set(localId, {
 						blob,
-						status: PendingBlobStatus.OfflinePendingOp,
+						status: PendingBlobStatus.SendingOp,
 						handleP: new Deferred(),
 						storageId,
 						uploadP: undefined,
@@ -273,7 +271,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 			this.pendingBlobs.set(localId, {
 				blob,
-				status: PendingBlobStatus.OfflinePendingUpload,
+				status: PendingBlobStatus.Uploading,
 				handleP: new Deferred(),
 				uploadP: this.uploadBlob(localId, blob),
 				attached,
@@ -317,7 +315,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private get pendingOfflineUploads() {
 		return Array.from(this.pendingBlobs.values()).filter(
-			(e) => e.status === PendingBlobStatus.OfflinePendingUpload,
+			(e) => e.status === PendingBlobStatus.Uploading,
 		);
 	}
 
@@ -367,13 +365,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private async shutdownPendingBlobs(): Promise<void> {
 		for (const [localId, entry] of this.pendingBlobs) {
-			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
-				this.sendBlobAttachOp(localId, entry.storageId);
-				entry.status = PendingBlobStatus.OfflinePendingUpload;
-				entry.handleP.resolve(this.getBlobHandle(localId));
-			} else if (entry.status === PendingBlobStatus.OnlinePendingOp) {
-				entry.status = PendingBlobStatus.OfflinePendingOp;
-				entry.handleP.resolve(this.getBlobHandle(localId));
+			switch (entry.status) {
+				case PendingBlobStatus.Uploading:
+					this.sendBlobAttachOp(localId, entry.storageId);
+				case PendingBlobStatus.SendingOp:
+					entry.handleP.resolve(this.getBlobHandle(localId));
+					break;
+				default:
+				// nothing to do
 			}
 		}
 		return new Promise<void>((resolve) => {
@@ -502,7 +501,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const localId = uuid();
 		const pendingEntry: PendingBlob = {
 			blob,
-			status: PendingBlobStatus.OnlinePendingUpload,
+			status: PendingBlobStatus.Uploading,
 			handleP: new Deferred(),
 			uploadP: this.uploadBlob(localId, blob),
 			attached: false,
@@ -570,49 +569,42 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return;
 		}
 		assert(
-			entry.status === PendingBlobStatus.OnlinePendingUpload ||
-				entry.status === PendingBlobStatus.OfflinePendingUpload,
+			entry.status === PendingBlobStatus.Uploading,
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
 		entry.storageId = response.id;
 		entry.uploadTime = Date.now();
 		entry.minTTLInSeconds = response.minTTLInSeconds;
+		// Send a blob attach op. This serves two purposes:
+		// 1. If its a new blob, i.e., it isn't de-duped, the server will keep the blob alive if it sees this op
+		//    until its storage ID is added to the next summary.
+		// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
+		//    blob from the server via the storage ID.
+		if (!entry.opsent) {
+			this.sendBlobAttachOp(localId, response.id);
+		}
 		if (this.runtime.connected) {
-			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
-				// Send a blob attach op. This serves two purposes:
-				// 1. If its a new blob, i.e., it isn't de-duped, the server will keep the blob alive if it sees this op
-				//    until its storage ID is added to the next summary.
-				// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
-				//    blob from the server via the storage ID.
-				this.sendBlobAttachOp(localId, response.id);
-				if (this.storageIds.has(response.id)) {
-					// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
-					// an existing blob, we don't have to wait for the op to be ack'd since this step has already
-					// happened before and so, the server won't delete it.
-					this.setRedirection(localId, response.id);
-					entry.handleP.resolve(this.getBlobHandle(localId));
-					this.deletePendingBlobMaybe(localId);
-				} else {
-					// If there is already an op for this storage ID, append the local ID to the list. Once any op for
-					// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
-					// blob alive in storage.
-					this.opsInFlight.set(
-						response.id,
-						(this.opsInFlight.get(response.id) ?? []).concat(localId),
-					);
-					entry.status = PendingBlobStatus.OnlinePendingOp;
-				}
-			} else if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
-				// We already submitted a BlobAttach op for this blob when it was shutdown
-				entry.status = PendingBlobStatus.OfflinePendingOp;
+			if (this.storageIds.has(response.id)) {
+				// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
+				// an existing blob, we don't have to wait for the op to be ack'd since this step has already
+				// happened before and so, the server won't delete it.
+				this.setRedirection(localId, response.id);
+				entry.handleP.resolve(this.getBlobHandle(localId));
+				this.deletePendingBlobMaybe(localId);
+			} else {
+				// If there is already an op for this storage ID, append the local ID to the list. Once any op for
+				// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
+				// blob alive in storage.
+				this.opsInFlight.set(
+					response.id,
+					(this.opsInFlight.get(response.id) ?? []).concat(localId),
+				);
+				entry.status = PendingBlobStatus.SendingOp;
 			}
 		} else {
 			// connected to storage but not ordering service?
 			this.mc.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
-			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
-				this.sendBlobAttachOp(localId, entry.storageId);
-			}
-			entry.status = PendingBlobStatus.OfflinePendingOp;
+			entry.status = PendingBlobStatus.SendingOp;
 		}
 		return response;
 	}
@@ -650,8 +642,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
 			assert(
-				pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-					!!pendingEntry?.storageId,
+				pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId,
 				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
 			);
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
@@ -695,14 +686,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						entry !== undefined,
 						0x38f /* local online BlobAttach op with no pending blob entry */,
 					);
-
-					// It's possible we transitioned to offline flow while waiting for this op.
-					if (entry.status === PendingBlobStatus.OnlinePendingOp) {
-						this.setRedirection(pendingLocalId, blobId);
-						entry.acked = true;
-						entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
-						this.deletePendingBlobMaybe(pendingLocalId);
-					}
+					this.setRedirection(pendingLocalId, blobId);
+					entry.acked = true;
+					entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
+					this.deletePendingBlobMaybe(pendingLocalId);
 				});
 				this.opsInFlight.delete(blobId);
 			}
@@ -711,7 +698,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				localEntry.acked = true;
 				localEntry.handleP.resolve(this.getBlobHandle(localId));
 				this.deletePendingBlobMaybe(localId);
-			}
+			} 
 		}
 	}
 
