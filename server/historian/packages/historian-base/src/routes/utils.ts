@@ -11,7 +11,13 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
-import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
+import {
+	ICache,
+	ITenantService,
+	RestGitService,
+	ITenantCustomDataExternal,
+	IDenyList,
+} from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
 /**
@@ -80,6 +86,7 @@ export class createGitServiceArgs {
 	allowDisabledTenant?: boolean = false;
 	isEphemeralContainer?: boolean = false;
 	ignoreEphemeralFlag?: boolean = true;
+	denyList?: IDenyList;
 }
 
 export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
@@ -96,6 +103,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		allowDisabledTenant,
 		isEphemeralContainer,
 		ignoreEphemeralFlag,
+		denyList,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
 	const decoded = decode(token) as ITokenClaims;
@@ -103,6 +111,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	if (containsPathTraversal(documentId)) {
 		// Prevent attempted directory traversal.
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
+	}
+	if (denyList?.isDenied(tenantId, documentId)) {
+		throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
 	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
