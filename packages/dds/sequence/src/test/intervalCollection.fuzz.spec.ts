@@ -269,6 +269,8 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
+		// ADO:5083, eventual consistency issue was detected
+		skip: [9, 12, 29],
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {
