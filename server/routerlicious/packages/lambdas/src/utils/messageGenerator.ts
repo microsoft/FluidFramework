@@ -55,6 +55,6 @@ export const createRuntimeMessage = (signalContent: string): ISignalMessage => (
 	content: JSON.stringify({
 		type: CollaborationSessionEventType.RuntimeMessage,
 		// TODO: verify signalConent being passed in
-		contents: JSON.parse(signalContent)
+		contents: JSON.parse(signalContent),
 	}),
 });

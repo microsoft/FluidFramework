@@ -232,7 +232,10 @@ export interface ICollaborationSessionEvents extends IEvent {
 	 * Emitted when the broadcastSignal endpoint is called by an external
 	 * server to communicate with all Fluid clients in a session via signal
 	 */
-	(event: "broadcastSignal", listener: (broadcastSignal: ICollaborationSessionEvent) => void): void;
+	(
+		event: "broadcastSignal",
+		listener: (broadcastSignal: ICollaborationSessionEvent) => void,
+	): void;
 }
 
 export function configureWebSocketServices(
@@ -649,31 +652,42 @@ export function configureWebSocketServices(
 
 			// Send signal to room from broadcast-signal endpoint
 			if (collborationSessionEventEmitter !== undefined) {
-				collborationSessionEventEmitter.on("broadcastSignal", (broadcastSignal: ICollaborationSessionEvent) => {
-					const tenantId = broadcastSignal.tenantId;
-					const documentId = broadcastSignal.documentId;
-					const roomToBroadcastSignal: IRoom = { tenantId, documentId };
+				collborationSessionEventEmitter.on(
+					"broadcastSignal",
+					(broadcastSignal: ICollaborationSessionEvent) => {
+						const tenantId = broadcastSignal.tenantId;
+						const documentId = broadcastSignal.documentId;
+						const roomToBroadcastSignal: IRoom = { tenantId, documentId };
 
-					// No-op if the room (collab session) that signal came in from is different
-					// than the current room. We reuse websockets so there could be multiple rooms
-					// that we are sending the signal to, and we don't want to do that.
-					if (roomToBroadcastSignal === room) {
-						const runtimeMessage = createRuntimeMessage(null, broadcastSignal.signalContent);
-
-						socket.emitToRoom(
-							getRoomId(roomToBroadcastSignal),
-							"signal",
-							runtimeMessage,
-						).catch((error) => {
-							const errorMsg = `Failed to broadcast signal from external API.`;
-							Lumberjack.error(
-								errorMsg,
-								getLumberBaseProperties(roomToBroadcastSignal.documentId, roomToBroadcastSignal.tenantId),
-								error,
+						// No-op if the room (collab session) that signal came in from is different
+						// than the current room. We reuse websockets so there could be multiple rooms
+						// that we are sending the signal to, and we don't want to do that.
+						if (roomToBroadcastSignal === room) {
+							const runtimeMessage = createRuntimeMessage(
+								null,
+								broadcastSignal.signalContent,
 							);
-						});
-					}
-				});
+
+							socket
+								.emitToRoom(
+									getRoomId(roomToBroadcastSignal),
+									"signal",
+									runtimeMessage,
+								)
+								.catch((error) => {
+									const errorMsg = `Failed to broadcast signal from external API.`;
+									Lumberjack.error(
+										errorMsg,
+										getLumberBaseProperties(
+											roomToBroadcastSignal.documentId,
+											roomToBroadcastSignal.tenantId,
+										),
+										error,
+									);
+								});
+						}
+					},
+				);
 			}
 
 			return {

@@ -7,7 +7,7 @@ export {
 	configureWebSocketServices,
 	CollaborationSessionEventType,
 	ICollaborationSessionEvent,
-	ICollaborationSessionEvents
+	ICollaborationSessionEvents,
 } from "./alfred";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
