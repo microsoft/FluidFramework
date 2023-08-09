@@ -396,7 +396,10 @@ export class MockContainerRuntimeFactory {
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		if (this.lastProcessedMessage?.clientId !== message.clientId) {
+		if (
+			this.runtimeOptions.flushMode === FlushMode.Immediate ||
+			this.lastProcessedMessage?.clientId !== message.clientId
+		) {
 			this.sequenceNumber++;
 		}
 		message.sequenceNumber = this.sequenceNumber;
