@@ -7,6 +7,7 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryGenericEvent,
 } from "@fluidframework/core-interfaces";
+import { createChildMonitoringContext } from "./config";
 
 /**
  * Like assert, but logs only if the condition is false, rather than throwing
@@ -30,3 +31,38 @@ export function logIfFalse(
 	logger.send(newEvent);
 	return false;
 }
+
+/**
+ * sampletext
+ */
+export function createSampledLoggerSend(
+	logger: ITelemetryBaseLogger,
+	shouldSampleEventCallback: () => boolean,
+) {
+	const mc = createChildMonitoringContext({ logger });
+	const isSamplingEnabled = mc.config.getBoolean("Fluid.Telemetry.DisableSampling");
+
+	return (event: ITelemetryBaseEvent) => {
+		if (isSamplingEnabled && shouldSampleEventCallback() === true) {
+			logger.send(event);
+		}
+	};
+}
+
+/**
+ * sampletext
+ */
+export const createSystematicSamplingCallback = (samplingRate: number) => {
+	const state = {
+		eventsSinceLastSample: 0,
+		samplingRate,
+	};
+	return () => {
+		state.eventsSinceLastSample++;
+		const shouldSample = state.eventsSinceLastSample % samplingRate === 0;
+		if (shouldSample) {
+			state.eventsSinceLastSample = 0;
+		}
+		return shouldSample;
+	};
+};
