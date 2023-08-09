@@ -97,41 +97,56 @@ export type RevertOperation = OperationWithRevert | TextOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
-export interface OperationGenerationConfig {
+export interface SharedStringOperationGenerationConfig {
 	/**
 	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
 	 * Note due to concurrency, during test execution the actual length of the string may exceed this.
 	 */
 	maxStringLength?: number;
+	maxInsertLength?: number;
+	weights?: {
+		addText: number;
+		removeRange: number;
+	};
+}
+
+export interface IntervalOperationGenerationConfig extends SharedStringOperationGenerationConfig {
 	/**
 	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
 	 * Note due to concurrency, during test execution the actual number of intervals may exceed this.
 	 */
 	maxIntervals?: number;
-	maxInsertLength?: number;
 	intervalCollectionNamePool?: string[];
 	propertyNamePool?: string[];
 	validateInterval?: number;
-	weights?: RevertibleWeights;
+	weights?: RevertibleWeights & SharedStringOperationGenerationConfig["weights"];
 }
 
-export const defaultOperationGenerationConfig: Required<OperationGenerationConfig> = {
-	maxStringLength: 1000,
-	maxIntervals: 100,
-	maxInsertLength: 10,
-	intervalCollectionNamePool: ["comments"],
-	propertyNamePool: ["prop1", "prop2", "prop3"],
-	validateInterval: 100,
-	weights: {
-		revertWeight: 2,
-		addText: 2,
-		removeRange: 1,
-		addInterval: 2,
-		deleteInterval: 2,
-		changeInterval: 2,
-		changeProperties: 2,
-	},
-};
+export const defaultSharedStringOperationGenerationConfig: Required<SharedStringOperationGenerationConfig> =
+	{
+		maxStringLength: 1000,
+		maxInsertLength: 10,
+		weights: {
+			addText: 2,
+			removeRange: 1,
+		},
+	};
+export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
+	{
+		...defaultSharedStringOperationGenerationConfig,
+		maxIntervals: 100,
+		intervalCollectionNamePool: ["comments"],
+		propertyNamePool: ["prop1", "prop2", "prop3"],
+		validateInterval: 100,
+		weights: {
+			...defaultSharedStringOperationGenerationConfig.weights,
+			revertWeight: 2,
+			addInterval: 2,
+			deleteInterval: 2,
+			changeInterval: 2,
+			changeProperties: 2,
+		},
+	};
 
 export interface LoggingInfo {
 	/** id of the interval to track over time */
@@ -217,8 +232,10 @@ export function makeReducer(
 	return withLogging(reducer);
 }
 
-export function createBaseGeneratorOperations(optionsParam?: OperationGenerationConfig) {
-	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
+export function createSharedStringGeneratorOperations(
+	optionsParam?: SharedStringOperationGenerationConfig,
+) {
+	const options = { ...defaultSharedStringOperationGenerationConfig, ...(optionsParam ?? {}) };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function startPosition({ random, channel }: ClientOpState): number {

@@ -22,15 +22,15 @@ import {
 	Operation,
 	FuzzTestState,
 	makeReducer,
-	defaultOperationGenerationConfig,
-	createBaseGeneratorOperations,
-	OperationGenerationConfig,
+	defaultIntervalOperationGenerationConfig,
+	createSharedStringGeneratorOperations,
+	SharedStringOperationGenerationConfig,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 type ClientOpState = FuzzTestState;
 export function makeSharedStringOperationGenerator(
-	optionsParam?: OperationGenerationConfig,
+	optionsParam?: SharedStringOperationGenerationConfig,
 	alwaysLeaveChar: boolean = false,
 ): Generator<Operation, ClientOpState> {
 	const {
@@ -40,9 +40,9 @@ export function makeSharedStringOperationGenerator(
 		lengthSatisfies,
 		hasNonzeroLength,
 		isShorterThanMaxLength,
-	} = createBaseGeneratorOperations(optionsParam);
+	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const usableWeights = optionsParam?.weights ?? defaultOperationGenerationConfig.weights;
+	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
@@ -62,7 +62,7 @@ const baseModel: Omit<
 	"workloadName"
 > = {
 	generatorFactory: () =>
-		take(100, makeSharedStringOperationGenerator(defaultOperationGenerationConfig)),
+		take(100, makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig)),
 	reducer:
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
@@ -103,7 +103,7 @@ describe("SharedString no reconnect fuzz testing", () => {
 			take(
 				100,
 				makeSharedStringOperationGenerator({
-					...defaultOperationGenerationConfig,
+					...defaultIntervalOperationGenerationConfig,
 				}),
 			),
 	};

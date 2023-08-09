@@ -32,15 +32,15 @@ import {
 	ChangeProperties,
 	FuzzTestState,
 	makeReducer,
-	OperationGenerationConfig,
-	defaultOperationGenerationConfig,
-	createBaseGeneratorOperations,
+	IntervalOperationGenerationConfig,
+	defaultIntervalOperationGenerationConfig,
+	createSharedStringGeneratorOperations,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(
-	optionsParam?: OperationGenerationConfig,
+	optionsParam?: IntervalOperationGenerationConfig,
 	alwaysLeaveChar: boolean = false,
 ): Generator<Operation, ClientOpState> {
 	const {
@@ -51,9 +51,9 @@ export function makeOperationGenerator(
 		lengthSatisfies,
 		hasNonzeroLength,
 		isShorterThanMaxLength,
-	} = createBaseGeneratorOperations(optionsParam);
+	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const options = { ...defaultOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
 
 	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
 		for (const _ of collection) {
@@ -163,7 +163,7 @@ export function makeOperationGenerator(
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
-	const usableWeights = optionsParam?.weights ?? defaultOperationGenerationConfig.weights;
+	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
@@ -186,7 +186,8 @@ const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
 > = {
-	generatorFactory: () => take(100, makeOperationGenerator(defaultOperationGenerationConfig)),
+	generatorFactory: () =>
+		take(100, makeOperationGenerator(defaultIntervalOperationGenerationConfig)),
 	reducer:
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
