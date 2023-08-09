@@ -19,8 +19,8 @@ const {
 // incorrect.
 const pkg = require("./package.json");
 
-// An array of webpack module rules. We build the list of rules dynamically, depending on whether we are running in a CI
-// test branch or not.
+// An array of webpack module rules. We build the list of rules dynamically depending on the version scheme used by the
+// package.
 const webpackModuleRules = [];
 
 // Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
