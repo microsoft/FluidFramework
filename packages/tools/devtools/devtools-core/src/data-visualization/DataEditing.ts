@@ -17,7 +17,7 @@ import { EditType, HasFluidObjectId } from "../CommonInterfaces";
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 /**
- * Interface to contain information necesary for an edit
+ * Interface to contain information necessary for an edit
  * @internal
  */
 export interface Edit {
@@ -35,7 +35,7 @@ export interface Edit {
 }
 
 /**
- * TODO
+ * This combines all the types data might be when using EditingUI
  *
  * @internal
  */

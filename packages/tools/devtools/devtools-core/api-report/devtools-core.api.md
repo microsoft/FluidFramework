@@ -240,6 +240,9 @@ export interface Edit {
 }
 
 // @internal
+export type EditData = Serializable<unknown> | null | undefined;
+
+// @internal
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 // @internal

@@ -96,7 +96,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 	const sharedCounter = sharedObject as SharedCounter;
 	return {
 		fluidObjectId: sharedCounter.id,
-	value: sharedCounter.value,
+		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
 		editProps: { editTypes: [EditType.Number] },
