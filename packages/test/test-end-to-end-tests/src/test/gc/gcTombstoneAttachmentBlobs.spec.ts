@@ -773,15 +773,16 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Disconnect the main container, upload an attachment blob and mark it referenced.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._context.uploadBlob(
+				const blobHandleP = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				mainDataStore._root.set("blob", blobHandle);
 
 				// Connect the container after the blob is uploaded. Send an op to transition it to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const blobHandle = await blobHandleP;
+				mainDataStore._root.set("blob", blobHandle);
 
 				// Remove the blob's handle to unreference it.
 				mainDataStore._root.delete("blob");
@@ -832,16 +833,16 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// with a localId for the blob.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const localHandle1 = await mainDataStore._context.uploadBlob(
+				const localHandle1P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				mainDataStore._root.set("local1", localHandle1);
 
 				// Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerWriteModeConnectionWrite(mainContainer);
-
+				const localHandle1 = await localHandle1P;
+				mainDataStore._root.set("local1", localHandle1);
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both this and
 				// the blob uploaded in disconnected mode should be mapped to the same storageId.
 				const localHandle2 = await mainDataStore._context.uploadBlob(
@@ -923,10 +924,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// these blobs are uploaded to the server, they will be de-duped and redirect to the same storageId.
 				mainContainer.disconnect();
 				const blobContents = "Blob contents";
-				const localHandle1 = await mainDataStore._context.uploadBlob(
+				const localHandle1P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
-				const localHandle2 = await mainDataStore._context.uploadBlob(
+				const localHandle2P = mainDataStore._context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
 
@@ -934,6 +935,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainContainer.connect();
 				mainDataStore._root.set("transition to write", "true");
 				await waitForContainerWriteModeConnectionWrite(mainContainer);
+				const localHandle1 = await localHandle1P;
+				const localHandle2 = await localHandle2P;
 
 				// Add the blob's local handles to reference them.
 				mainDataStore._root.set("local1", localHandle1);

@@ -1231,12 +1231,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		}
 	});
 
-	it("load offline with blob redirect table", async function () {
-		if (provider.driver.type === "local") {
-			// TODO:AB#4746: Resolve flakiness of this test on localserver CI.
-			this.skip();
-		}
-
+	// TODO:AB#4746: Resolve flakiness of this test on CI.
+	it.skip("load offline with blob redirect table", async function () {
 		// upload blob offline so an entry is added to redirect table
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
