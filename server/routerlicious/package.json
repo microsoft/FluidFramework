@@ -72,9 +72,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.21.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
 		"concurrently": "^7.6.0",
