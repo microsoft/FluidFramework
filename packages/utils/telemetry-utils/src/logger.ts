@@ -15,12 +15,7 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
-import {
-	CachedConfigProvider,
-	loggerIsMonitoringContext,
-	loggerToMonitoringContext,
-	mixinMonitoringContext,
-} from "./config";
+import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
 	isILoggingError,
 	extractLogSafeErrorProperties,
@@ -426,8 +421,7 @@ export class ChildLogger extends TelemetryLogger {
 			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
 
 			// Read config flag only once, so we don't pay the price every time an event is logged.
-			const mc = loggerToMonitoringContext(this);
-			if (mc.config.getBoolean("Fluid.Telemetry.DisableSampling") === true) {
+			if (baseLogger.config.getBoolean("Fluid.Telemetry.DisableSampling") === true) {
 				this.isSamplingDisabled = true;
 			}
 		}
