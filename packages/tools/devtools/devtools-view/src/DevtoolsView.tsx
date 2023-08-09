@@ -140,6 +140,11 @@ export interface DevtoolsViewProps {
 	 * Passed in to {@link DevtoolsView} since it receives the {@link DevtoolsFeatures.Message}.
 	 */
 	usageTelemetryLogger?: ITelemetryBaseLogger;
+
+	/**
+	 * Devtools extension version passed from the {@link DevtoolsPanel}.
+	 */
+	extensionVersion: string | undefined;
 }
 
 /**
@@ -154,7 +159,7 @@ export interface DevtoolsViewProps {
  * Requires {@link MessageRelayContext} to have been set.
  */
 export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
-	const { usageTelemetryLogger } = props;
+	const { usageTelemetryLogger, extensionVersion } = props;
 
 	// Set of features supported by the Devtools.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
@@ -194,6 +199,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 					properties: {
 						all: {
 							devtoolsVersion: message.data.devtoolsVersion,
+							extensionVersion,
 						},
 					},
 				});

@@ -11094,6 +11094,7 @@ importers:
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^12.0.0
       '@testing-library/user-event': ^14.4.3
+      '@types/chrome': 0.0.232
       '@types/jest': 22.2.3
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
@@ -11146,6 +11147,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
+      '@types/chrome': 0.0.232
       re-resizable: 6.9.9_sfoxds7t5ydpegc3knd667wn6m
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -22971,7 +22973,7 @@ packages:
       webpack-dev-server:
         optional: true
     dependencies:
-      webpack-cli: 4.10.0_qsn6o3u33rjjm6wv75wpbgo5ga
+      webpack-cli: 4.10.0_webpack@5.83.0
     dev: true
 
   /@wojtekmaj/enzyme-adapter-react-17/0.6.7_7ltvq4e2railvf5uya4ffxpe2a:
@@ -41517,7 +41519,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1
+      webpack: 5.88.1_webpack-cli@4.10.0
     dev: true
 
   /terser/4.8.1:

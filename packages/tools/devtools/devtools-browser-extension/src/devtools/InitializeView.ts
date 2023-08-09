@@ -18,9 +18,9 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
  */
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize();
-
+	const version = chrome.runtime.getManifest().version;
 	ReactDOM.render(
-		React.createElement(DevtoolsPanel, { messageRelay: connection }),
+		React.createElement(DevtoolsPanel, { messageRelay: connection, extensionVersion: version }),
 		target,
 		() => {
 			console.log(

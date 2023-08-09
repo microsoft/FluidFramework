@@ -61,6 +61,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
+		"@types/chrome": "0.0.232",
 		"re-resizable": "^6.9.9",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
