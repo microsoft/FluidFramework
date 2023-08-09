@@ -119,23 +119,6 @@ export enum VersionOptions {
 	ClearIfDisabled,
 }
 
-// /**
-//  * Actions that can be taken when configuring type tests.
-//  *
-//  */
-// export interface TypeTestConfigActions {
-// 	/**
-// 	 * If set, update version to test against to this.
-// 	 * If empty string, remove previous version.
-// 	 */
-// 	version?: string | VersionOptions;
-
-// 	/**
-// 	 * If true delete "broken" entries (therefore enabling the tests for them again).
-// 	 */
-// 	resetBroken?: true;
-// }
-
 /**
  * Gets the version before `version`.
  * This is done by decrementing the least significant non-zero component (as separated by `.`).
@@ -163,23 +146,6 @@ export function previousVersion(version: string): string {
 	}
 	throw new Error(`Unable to lower version "${version}"`);
 }
-
-/**
- * Updates configuration for type tests in package.json
- *
- */
-// export function updateTypeTestConfiguration(
-// 	pkgJson: PackageJson,
-// 	options: TypeTestConfigActions,
-// ): void {
-// 	if (options.version !== undefined) {
-// 		applyTypeTestVersionOptions(pkgJson, options.version);
-// 	}
-
-// 	if (options.resetBroken !== undefined) {
-// 		resetBrokenTests(pkgJson, options.resetBroken);
-// 	}
-// }
 
 /**
  * Adds or removes the devDependency on a previous version of a package thatis used for type testing. This function only
