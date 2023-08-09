@@ -10,6 +10,7 @@ export {
 	IBatchCheckpoint,
 	IChunkedOp,
 	IMessageProcessingResult,
+	MaxMessagesInABatch,
 } from "./definitions";
 export { Outbox, getLongStack } from "./outbox";
 export { OpCompressor } from "./opCompressor";

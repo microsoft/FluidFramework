@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/container-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
+import { BatchMessage, IBatch, IBatchCheckpoint, MaxMessagesInABatch } from "./definitions";
 
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
@@ -94,6 +95,11 @@ export class BatchManager {
 
 		this.batchContentSize = contentSize;
 		this.pendingBatch.push(message);
+
+		if (this.pendingBatch.length > MaxMessagesInABatch) {
+			throw new UsageError("This batch is very large");
+		}
+
 		return true;
 	}
 

@@ -7,6 +7,8 @@ import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "..";
 
+export const MaxMessagesInABatch = 10000000000;
+
 /**
  * Batch message type used internally by the runtime
  */

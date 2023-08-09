@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "..";
-import { IBatch } from "./definitions";
+import { IBatch, MaxMessagesInABatch } from "./definitions";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -77,8 +77,12 @@ export class OpGroupingManager {
 
 		const messages = (op.contents as IGroupedBatchMessageContents).contents;
 		let fakeCsn = 1;
+		const fakeSn = 1 / MaxMessagesInABatch;
+		let multiplier = 0;
+		const baseSn = op.sequenceNumber;
 		return messages.map((subMessage) => ({
 			...op,
+			sequenceNumber: baseSn + fakeSn * multiplier++,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,
 			metadata: subMessage.metadata,
