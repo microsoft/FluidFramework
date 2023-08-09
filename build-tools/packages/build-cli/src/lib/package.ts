@@ -839,9 +839,8 @@ export async function npmCheckUpdatesHomegrown(
 		promises.push(setPackageDependencies(pkg, dependencyUpdateMap, false, writeChanges));
 	}
 	const results = await Promise.all(promises);
-	const combined = zip(packagesToUpdate, results);
-
-	const updatedPackages: PackageWithKind[] = combined
+	const packageStatus = zip(packagesToUpdate, results);
+	const updatedPackages = packageStatus
 		.filter(([, changed]) => changed === true)
 		.map(([pkg]) => pkg);
 
