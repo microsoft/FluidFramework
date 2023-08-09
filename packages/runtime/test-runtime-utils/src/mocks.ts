@@ -384,6 +384,7 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
+	private lastProcessedMessage?: ISequencedDocumentMessage;
 	private processFirstMessage() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
@@ -395,17 +396,14 @@ export class MockContainerRuntimeFactory {
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		this.advanceForFlushMode(FlushMode.Immediate);
+		if (this.lastProcessedMessage?.clientId !== message.clientId) {
+			this.sequenceNumber++;
+		}
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
+		this.lastProcessedMessage = message;
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
-		}
-	}
-
-	private advanceForFlushMode(flushMode: FlushMode) {
-		if (this.runtimeOptions.flushMode === flushMode) {
-			this.sequenceNumber++;
 		}
 	}
 
@@ -416,8 +414,8 @@ export class MockContainerRuntimeFactory {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
+		this.lastProcessedMessage = undefined;
 
-		this.advanceForFlushMode(FlushMode.TurnBased);
 		this.processFirstMessage();
 	}
 
@@ -430,7 +428,7 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
-		this.advanceForFlushMode(FlushMode.TurnBased);
+		this.lastProcessedMessage = undefined;
 
 		for (let i = 0; i < count; i++) {
 			this.processFirstMessage();
@@ -441,8 +439,7 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		this.advanceForFlushMode(FlushMode.TurnBased);
-
+		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
 		}
