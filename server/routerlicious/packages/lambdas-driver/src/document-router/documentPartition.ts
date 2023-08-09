@@ -104,7 +104,11 @@ export class DocumentPartition {
 			const lumberjackProperties = {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
 			};
-			Lumberjack.error("Error pushing raw message to queue", lumberjackProperties, error);
+			Lumberjack.error(
+				"Error pushing raw message to queue in document partition",
+				lumberjackProperties,
+				error,
+			);
 		});
 		this.updateActivityTime();
 	}
