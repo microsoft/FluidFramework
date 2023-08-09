@@ -1168,13 +1168,24 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	/**
+	 * @deprecated - Use searchForTile instead.
+	 */
 	findTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();
 		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
 	}
 
-	walkToFindTile(startPos: number, tileLabel: string, preceding = true) {
+	/**
+	 * Replaces the findTile API for searching a string for the nearest tile in either direction.
+	 * Makes use of the same block-accelerated search functions for log(n) complexity.
+	 *
+	 * @param startPos - Position at which to start the search
+	 * @param tileLabel - Label of the tile to search for
+	 * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
+	 */
+	searchForTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();
-		return this._mergeTree.walkToFindTile(startPos, clientId, tileLabel, preceding);
+		return this._mergeTree.searchForTile(startPos, clientId, tileLabel, preceding);
 	}
 }

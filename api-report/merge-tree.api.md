@@ -123,7 +123,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
         pos: number;
@@ -189,6 +189,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     rollback?(op: any, localOpMetadata: unknown): void;
+    searchForTile(startPos: number, tileLabel: string, preceding?: boolean): {
+        tile: ReferencePosition;
+        pos: number;
+    } | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
@@ -208,11 +212,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
-    // (undocumented)
-    walkToFindTile(startPos: number, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
 }
 
 // @public (undocumented)
