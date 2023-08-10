@@ -126,6 +126,10 @@ export function schematizeView(
 		}
 	}
 
+	// Callback to cleanup afterBatch schema checking.
+	// Set only when such a callback is pending.
+	let afterBatchCheck: undefined | (() => void);
+
 	// TODO: errors thrown by this will usually be in response to remote edits, and thus may not surface to the app.
 	// Two fixes should be done related to this:
 	// 1. Ensure errors in response to edits like this crash app and report telemetry.
@@ -133,19 +137,33 @@ export function schematizeView(
 	// out of schema handlers which update the schematized view of the tree instead of throwing.
 	tree.storedSchema.registerDependent(
 		new SimpleObservingDependent(() => {
-			const compatibility = viewSchema.checkCompatibility(tree.storedSchema);
-			if (compatibility.read !== Compatibility.Compatible) {
-				fail(
-					"Stored schema changed to one that permits data incompatible with the view schema",
-				);
-			}
+			// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
+			// This avoids erroring about invalid schema in the middle of a batch of changes.
+			// TODO:
+			// Ideally this would run at the end of the batch containing the schema change, but currently schema changes don't trigger afterBatch.
+			// Fortunately this works out ok, since the tree can't actually become out of schema until its actually edited, which should trigger after batch.
+			// When batching properly handles schema edits, this documentation and related tests should be updated.
+			// TODO:
+			// This seems like the correct policy, but more clarity on how schematized views are updating during batches is needed.
+			afterBatchCheck ??= tree.events.on("afterBatch", () => {
+				assert(afterBatchCheck !== undefined, "unregistered event ran");
+				afterBatchCheck();
+				afterBatchCheck = undefined;
 
-			if (compatibility.write !== Compatibility.Compatible) {
-				// TODO: support readonly mode in this case.
-				fail(
-					"Stored schema changed to one that does not support all data allowed by view schema",
-				);
-			}
+				const compatibility = viewSchema.checkCompatibility(tree.storedSchema);
+				if (compatibility.read !== Compatibility.Compatible) {
+					fail(
+						"Stored schema changed to one that permits data incompatible with the view schema",
+					);
+				}
+
+				if (compatibility.write !== Compatibility.Compatible) {
+					// TODO: support readonly mode in this case.
+					fail(
+						"Stored schema changed to one that does not support all data allowed by view schema",
+					);
+				}
+			});
 		}),
 	);
 
