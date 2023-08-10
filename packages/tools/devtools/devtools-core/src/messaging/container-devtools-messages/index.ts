@@ -21,4 +21,3 @@ export { GetContainerState } from "./GetContainerState";
 export { GetDataVisualization } from "./GetDataVisualization";
 export { GetRootDataVisualizations } from "./GetRootDataVisualizations";
 export { RootDataVisualizations } from "./RootDataVisualizations";
-export { GetTabId } from "./GetTabId";

@@ -28,7 +28,6 @@ export {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	GetTabId,
 	RootDataVisualizations,
 } from "./container-devtools-messages";
 export {
