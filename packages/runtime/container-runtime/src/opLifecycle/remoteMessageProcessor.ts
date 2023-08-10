@@ -24,6 +24,7 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
+	//* TEST COVERAGE - unpack
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
 	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
@@ -108,6 +109,7 @@ const unpack = (message: ISequencedDocumentMessage) => {
 	//* TODO: Also bump compatDetails up.  Maybe bring back the type guard aspect here from the other PR's branch
 };
 
+//* TEST COVERAGE - unpack
 /**
  * Unpacks runtime messages.
  *

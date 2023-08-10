@@ -215,7 +215,7 @@ export enum ContainerMessageType {
 }
 
 /**
- * How should an older client handle an unrecognized remote op?
+ * How should an older client handle an unrecognized remote op type?
  *
  * @internal
  */
@@ -226,12 +226,12 @@ export type CompatModeBehavior =
 	| "FailToProcess";
 
 /**
- * All the info an older client would need to know how to handle an unrecognized remote op
+ * All the info an older client would need to know how to handle an unrecognized remote op type
  *
  * @internal
  */
 export interface IContainerRuntimeMessageCompatDetails {
-	/** How should an older client handle an unrecognized remote op? */
+	/** How should an older client handle an unrecognized remote op type? */
 	behavior: CompatModeBehavior;
 }
 
@@ -1477,6 +1477,7 @@ export class ContainerRuntime
 
 		this.pendingStateManager = new PendingStateManager(
 			{
+				//* TEST COVERAGE - applyStashedOp, reSubmit
 				applyStashedOp: this.applyStashedOp.bind(this),
 				clientId: () => this.clientId,
 				close: this.closeFn,
@@ -1506,6 +1507,7 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(this.submitFn, this.innerDeltaManager);
 
+		//* TEST COVERAGE - resubmit
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -2048,6 +2050,7 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
+			//* Replace asserts with throw DPE
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
@@ -2173,6 +2176,7 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
+	//* TEST COVERAGE - processCore, RMP->unpack, pendingStateManager.processPendingLocalMessage
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
@@ -2239,7 +2243,11 @@ export class ContainerRuntime
 			throw e;
 		}
 	}
-
+	/**
+	 * Assuming the given message is also a ContainerRuntimeMessage,
+	 * checks its type and dispatches the message to the appropriate handler in the runtime.
+	 * Throws a DataProcessingError if the message doesn't conform to the ContainerRuntimeMessage type.
+	 */
 	private validateAndProcessRuntimeMessage(
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
@@ -2398,6 +2406,7 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
+	//* TEST COVERAGE - rollback
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
