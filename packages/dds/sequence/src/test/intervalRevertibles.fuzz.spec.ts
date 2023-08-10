@@ -47,23 +47,18 @@ import {
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
-// Since the clients are created by the fuzz harness, the factory object must be
-// modified in order to set the mergeTreeUseNewLengthCalculations option on the
-// underlying merge tree. This can be deleted after PR#15868 is in main.
 class RevertibleFactory extends SharedStringFactory {
-	options = { mergeTreeUseNewLengthCalculations: true };
+	options = {};
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		runtime.options.mergeTreeUseNewLengthCalculations = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.mergeTreeUseNewLengthCalculations = true;
 		return super.create(document, id);
 	}
 }
