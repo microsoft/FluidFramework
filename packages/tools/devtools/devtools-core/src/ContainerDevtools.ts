@@ -535,11 +535,13 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
-			containerDataVisualization: this.containerData !== undefined,
-			/**
-			 * Todo: When ready to enable feature set it to this.containerData !== undefined
-			 */
-			containerDataEditing: false,
+			"containerDataVisualization": this.containerData !== undefined,
+
+			// Required for backwards compatibility with the extension through v0.0.3
+			"container-data": this.containerData !== undefined,
+
+			// TODO: When ready to enable feature set it to this.containerData !== undefined
+			"containerDataEditing": false,
 		};
 	}
 
