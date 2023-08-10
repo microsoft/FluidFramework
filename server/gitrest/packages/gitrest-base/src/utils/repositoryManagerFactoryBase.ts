@@ -239,8 +239,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				}
 				if (!this.repositoryCache.has(repoPath)) {
 					const repoExists = await helpers.exists(fileSystemManager, directoryPath);
+					Lumberjack.info(`prrajen Repo exists ${repoPath}: ${repoExists}}`);
 					if (!repoExists || !repoExists.isDirectory()) {
-						Lumberjack.info(`prrajen ${repoExists}}`);
 						await onRepoNotExists(
 							fileSystemManager,
 							repoPath,

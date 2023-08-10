@@ -331,6 +331,8 @@ export class RedisFs implements IFileSystemPromises {
 	public async stat(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
 	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
+		let fsEntityType = RedisFSConstants.file;
+
 		const data = await executeRedisFsApi(
 			async () => this.redisFsClient.get<string | Buffer>(filepathString),
 			RedisFsApis.Stat,
@@ -343,14 +345,18 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		Lumberjack.info(`RedisStat: Data is ${filepath} ${data} ${!data} ${typeof data}`);
-
 		if (data === null) {
 			Lumberjack.info(`RedisStat: File does not exist ${filepath}`);
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
+		} else if (data === "") {
+			fsEntityType = RedisFSConstants.directory;
 		}
 
-		return getStats();
+		Lumberjack.info(
+			`RedisStat: Data is ${filepath} ${data} ${!data} ${typeof data} ${fsEntityType}`,
+		);
+
+		return getStats(fsEntityType);
 	}
 
 	/**
