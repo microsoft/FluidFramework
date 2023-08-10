@@ -133,8 +133,21 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 
 	const options = node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
 
+	function getEditType(): string {
+		if (editProp === undefined) {
+			if (node.value === null) {
+				return "null";
+			}
+			return typeof node.value;
+		} else {
+			if (editProp.value === null) {
+				return "null";
+			}
+			return editProp.type;
+		}
+	}
 	let innerView: React.ReactElement;
-	switch (editProp === undefined ? typeof node.value : editProp.type) {
+	switch (getEditType()) {
 		case "string":
 			innerView = (
 				<EditableInputComponent
@@ -192,8 +205,20 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 				size="small"
 				className={styles.dropdownStyle}
 				onOptionSelect={onOptionSelect}
-				value={editProp === undefined ? typeof node.value : editProp.type}
-				selectedOptions={[editProp === undefined ? typeof node.value : editProp.type]}
+				value={
+					editProp === undefined
+						? node.value === null
+							? "null"
+							: typeof node.value
+						: editProp.type
+				}
+				selectedOptions={[
+					editProp === undefined
+						? node.value === null
+							? "null"
+							: typeof node.value
+						: editProp.type,
+				]}
 			>
 				{options.map((option) => (
 					<Option
