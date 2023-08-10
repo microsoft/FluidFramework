@@ -33,7 +33,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
-		"test:realsvc:local:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit --timeout 10000",
+		"test:realsvc:local:run": "mocha --unhandled-rejections=strict --recursive 'dist/test/**/*.spec.js' --exit --timeout 10000",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:local:run",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",

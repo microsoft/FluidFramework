@@ -166,7 +166,6 @@ describe("snapshot", () => {
 		makeSnapshotSuite({
 			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
 			mergeTreeEnableObliterate: true,
-			mergeTreeUseNewLengthCalculations: true,
 		});
 	});
 
@@ -184,7 +183,6 @@ describe("snapshot", () => {
 		makeSnapshotSuite({
 			attribution: { track: false },
 			mergeTreeEnableObliterate: true,
-			mergeTreeUseNewLengthCalculations: true,
 		});
 	});
 

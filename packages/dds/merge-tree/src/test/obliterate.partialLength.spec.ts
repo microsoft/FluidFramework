@@ -19,7 +19,6 @@ describe("obliterate partial lengths", () => {
 		PartialSequenceLengths.options.verifier = verify;
 		PartialSequenceLengths.options.verifyExpected = verifyExpected;
 		client = new TestClient({
-			mergeTreeUseNewLengthCalculations: true,
 			mergeTreeEnableObliterate: true,
 		});
 		client.startOrUpdateCollaboration("local");
@@ -79,7 +78,6 @@ describe("obliterate partial lengths", () => {
 
 	it("is correct for different heights", () => {
 		client = new TestClient({
-			mergeTreeUseNewLengthCalculations: true,
 			mergeTreeEnableObliterate: true,
 		});
 		client.startOrUpdateCollaboration("local");

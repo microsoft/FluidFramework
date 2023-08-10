@@ -20,7 +20,6 @@ function constructClients(
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		dataStoreRuntime.options.mergeTreeUseNewLengthCalculations = true;
 		dataStoreRuntime.options.mergeTreeEnableObliterate = true;
 		const sharedString = new SharedString(
 			dataStoreRuntime,

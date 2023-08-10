@@ -16,7 +16,6 @@ describe("obliterate", () => {
 
 	beforeEach(() => {
 		client = new TestClient({
-			mergeTreeUseNewLengthCalculations: true,
 			mergeTreeEnableObliterate: true,
 		});
 		client.startOrUpdateCollaboration("local");

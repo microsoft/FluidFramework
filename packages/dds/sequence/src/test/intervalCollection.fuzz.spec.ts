@@ -189,20 +189,18 @@ export function makeOperationGenerator(
 }
 
 class IntervalCollectionFuzzFactory extends SharedStringFactory {
-	options = { mergeTreeUseNewLengthCalculations: true, mergeTreeEnableObliterate: true };
+	options = { mergeTreeEnableObliterate: true };
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		runtime.options.mergeTreeUseNewLengthCalculations = true;
 		runtime.options.mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.mergeTreeUseNewLengthCalculations = true;
 		document.options.mergeTreeEnableObliterate = true;
 		return super.create(document, id);
 	}
