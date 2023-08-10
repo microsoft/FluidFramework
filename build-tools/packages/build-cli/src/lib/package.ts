@@ -41,8 +41,6 @@ import { indentString } from "./text";
 
 /**
  * An object that maps package names to version strings or range strings.
- *
- * @internal
  */
 export interface PackageVersionMap {
 	[packageName: ReleasePackage | ReleaseGroup]: ReleaseVersion;
@@ -62,8 +60,6 @@ export interface PackageVersionMap {
  * @param writeChanges - If true, changes will be written to the package.json files.
  * @param log - A {@link Logger}.
  * @returns An array of packages that had updated dependencies.
- *
- * @internal
  */
 // eslint-disable-next-line max-params
 export async function npmCheckUpdates(
@@ -216,8 +212,6 @@ export async function npmCheckUpdates(
 
 /**
  * An object containing release groups and package dependencies that are a prerelease version.
- *
- * @internal
  */
 export interface PreReleaseDependencies {
 	/**
@@ -240,8 +234,6 @@ export interface PreReleaseDependencies {
  * @param context - The context.
  * @param releaseGroup - The release group.
  * @returns A {@link PreReleaseDependencies} object containing the pre-release dependency names and versions.
- *
- * @internal
  */
 export async function getPreReleaseDependencies(
 	context: Context,
@@ -318,8 +310,6 @@ export async function getPreReleaseDependencies(
  * @remarks
  *
  * This function exclusively uses the tags in the repo to determine whether a release has bee done or not.
- *
- * @internal
  */
 export async function isReleased(
 	context: Context,
@@ -346,8 +336,6 @@ export async function isReleased(
  * @param releaseGroupOrPackage - The release group or independent package to generate a tag name for.
  * @param version - The version to use for the generated tag.
  * @returns The generated tag name.
- *
- * @internal
  */
 export function generateReleaseGitTagName(
 	releaseGroupOrPackage: MonoRepo | Package | string,
@@ -375,8 +363,6 @@ export function generateReleaseGitTagName(
  * @param versions - The array of versions to sort.
  * @param sortKey - The sort key.
  * @returns A sorted array.
- *
- * @internal
  */
 export function sortVersions(
 	versions: VersionDetails[],
@@ -425,8 +411,6 @@ export function filterVersionsOlderThan(
  * @param releaseGroupOrPackage - The release group or package to check.
  * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
  * depends, and the other contains independent packages on which the package depends.
- *
- * @internal
  */
 export function getFluidDependencies(
 	context: Context,
@@ -488,8 +472,6 @@ export interface DependencyWithRange {
  * @param version - The version to set.
  * @param interdependencyRange - The type of dependency to use on packages within the release group.
  * @param log - A logger to use.
- *
- * @internal
  */
 export async function setVersion(
 	context: Context,
@@ -647,8 +629,6 @@ export async function setVersion(
  * will not be changed (`updateWithinSameReleaseGroup === false`). This is typically the behavior you want. However,
  * there are some cases where you need to forcefully change the dependency range of packages across the whole repo. For
  * example, when setting release group package versions in the CI release pipeline.
- *
- * @internal
  */
 export async function setPackageDependencies(
 	pkg: Package,
@@ -667,6 +647,9 @@ export async function setPackageDependencies(
 				const dependencies = dev
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
+				if (dependencies === undefined) {
+					continue;
+				}
 
 				newRangeString = dep.range.toString();
 				dependencies[name] = newRangeString;
@@ -782,8 +765,6 @@ async function getPackagesToUpdate(
  * @param writeChanges - If true, changes will be written to the package.json files.
  * @param log - A {@link Logger}.
  * @returns An array of packages that had updated dependencies.
- *
- * @internal
  */
 // eslint-disable-next-line max-params
 export async function npmCheckUpdatesHomegrown(
