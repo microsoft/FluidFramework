@@ -49,10 +49,12 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly sendCustomDebugSignal: () => void;
 
 	/**
-	 * Returns the resolved URL for the attached container. If container is not
+	 * Returns the documentId and tenantIf for the attached container. If container is not
 	 * attached then returns undefined.
 	 */
-	readonly getContainerResolvedUrl: () => IResolvedUrl | undefined;
+	readonly getContainerConnectionDetails: () =>
+		| [documentId: string, tenantId: string]
+		| undefined;
 }
 
 /**
@@ -192,7 +194,8 @@ export interface IBaseDocumentEvents extends IEvent {
  */
 export interface IBaseDocumentInitialState {
 	externalTaskListId: string;
-	containerUrl: IResolvedUrl;
+	tenantId: string;
+	documentId: string;
 }
 
 /**

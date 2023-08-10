@@ -6,7 +6,6 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface";
 
@@ -51,10 +50,18 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 		this.baseDocument.setLeader(clientID);
 		console.log(`Setting leader to ${clientID}`);
 	}
+
 	/**
-	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
+	 * {@inheritDoc IAppModel.getContainerConnectionDetails}
 	 */
-	public readonly getContainerResolvedUrl = (): IResolvedUrl | undefined => {
-		return this.container?.resolvedUrl;
+	public readonly getContainerConnectionDetails = ():
+		| [documentId: string, tenantId: string]
+		| undefined => {
+		const containerUrl = this.container?.resolvedUrl?.url;
+		if (containerUrl === undefined) return undefined;
+		const containerUrlParts = containerUrl?.split("/");
+		const documentId = containerUrlParts[containerUrlParts.length - 1];
+		const tenantId = containerUrlParts[containerUrlParts.length - 2];
+		return [documentId, tenantId];
 	};
 }

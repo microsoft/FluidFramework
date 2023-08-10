@@ -30,13 +30,19 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		// the version doesn't actually matter.
 		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
-
 		id = await createResponse.attach();
-		model.baseDocument.addTaskList({
-			externalTaskListId: "task-list-test",
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			containerUrl: model.getContainerResolvedUrl()!,
-		});
+
+		const connectionDetails = model.getContainerConnectionDetails();
+		if (connectionDetails !== undefined) {
+			const [documentId, tenantId] = connectionDetails;
+			model.baseDocument.addTaskList({
+				externalTaskListId: "task-list-test",
+				documentId,
+				tenantId,
+			});
+		} else {
+			throw new Error("Container connection details are unavailable");
+		}
 	} else {
 		id = location.hash.slice(1);
 		model = await sessionStorageModelLoader.loadExisting(id);

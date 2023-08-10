@@ -7,7 +7,7 @@
  * Represents a Fluid containers URL.
  * This URL contains the client's Fluid session information necessary for broadcasting signals to.
  */
-type ClientSessionUrl = string;
+type ClientConnectionDetails = string;
 
 /**
  * Represents the external data servers query url or uuid.
@@ -27,23 +27,23 @@ export class ClientManager<TData = unknown> {
 	 * Map of active external resource id to client sessions.
 	 * Values are the set of Fluid Container URLs that will be notified of changes.
 	 */
-	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionUrl>>;
+	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientConnectionDetails>>;
 	/**
 	 * Map of active clients to external resource id.
 	 * Values are the set of external resource id's that the client has active and is registered to listen for.
 	 */
-	private readonly _clientMapping: Map<ClientSessionUrl, Set<ExternalTaskListId>>;
+	private readonly _clientMapping: Map<ClientConnectionDetails, Set<ExternalTaskListId>>;
 
 	public constructor() {
-		this._clientMapping = new Map<ClientSessionUrl, Set<ExternalTaskListId>>();
-		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionUrl>>();
+		this._clientMapping = new Map<ClientConnectionDetails, Set<ExternalTaskListId>>();
+		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientConnectionDetails>>();
 	}
 	/**
 	 * Gets the current list of client session URLs for the specified task list id.
 	 */
-	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
+	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientConnectionDetails> {
 		const clientSessionUrls = this._taskListMapping.get(externalTaskListId);
-		return clientSessionUrls ?? new Set<ClientSessionUrl>();
+		return clientSessionUrls ?? new Set<ClientConnectionDetails>();
 	}
 
 	/**
@@ -58,7 +58,12 @@ export class ClientManager<TData = unknown> {
 	 * Registers a client session url to an external resource id until removeClientTaskListRegistration is called.
 	 * The client can choose when to call it, typically it will be at the end of the session.
 	 */
-	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
+	public registerClient(
+		tenantId: string,
+		documentId: string,
+		externalTaskListId: ExternalTaskListId,
+	): void {
+		const client = `${tenantId}/${documentId}`;
 		if (this._clientMapping.get(client) === undefined) {
 			this._clientMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
 		} else {
@@ -66,7 +71,10 @@ export class ClientManager<TData = unknown> {
 		}
 
 		if (this._taskListMapping.get(externalTaskListId) === undefined) {
-			this._taskListMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
+			this._taskListMapping.set(
+				externalTaskListId,
+				new Set<ClientConnectionDetails>([client]),
+			);
 		} else {
 			this._taskListMapping.get(externalTaskListId)?.add(client);
 		}
@@ -79,9 +87,11 @@ export class ClientManager<TData = unknown> {
 	 * De-registers the provided subscriber URL from future notifications.
 	 */
 	public removeClientTaskListRegistration(
-		client: ClientSessionUrl,
+		tenantId: string,
+		documentId: string,
 		externalTaskListId: ExternalTaskListId,
 	): void {
+		const client = `${tenantId}/${documentId}`;
 		const clientTaskListIds = this._clientMapping.get(client);
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {

@@ -11,6 +11,7 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 import type { IAppModel, ITaskList } from "./model-interface";
 import { DebugView, AppView } from "./view";
 import { BaseDocumentContainerRuntimeFactory } from "./model";
+import { DocumentServiceFactoryCompressionAdapter } from "@fluidframework/driver-utils/dist/adapters/compression";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -42,7 +43,6 @@ async function start(): Promise<void> {
 	let id: string;
 	let model: IAppModel;
 	let showExternalServerView: boolean = true;
-	let containerUrl;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -53,18 +53,20 @@ async function start(): Promise<void> {
 
 		id = await createResponse.attach();
 
-		containerUrl = model.getContainerResolvedUrl();
-		if (containerUrl === undefined) {
-			throw new Error("Container is not attached");
+		const connectionDetails = model.getContainerConnectionDetails();
+		if (connectionDetails !== undefined) {
+			const [documentId, tenantId] = connectionDetails;
+			// Hardcoding a taskListId here. A follow up will be to introduce a form
+			// where the user can enter an external taskListId that they want
+			// to import from the external server.
+			model.baseDocument.addTaskList({
+				externalTaskListId: "task-list-1",
+				documentId,
+				tenantId,
+			});
+		} else {
+			throw new Error("Container connection details are unavailable");
 		}
-		// Hardcoding a taskListId here. A follow up will be to introduce a form
-		// where the user can enter an external taskListId that they want
-		// to import from the external server.
-		model.baseDocument.addTaskList({
-			externalTaskListId: "task-list-1",
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			containerUrl,
-		});
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);

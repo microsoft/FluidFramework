@@ -380,9 +380,9 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		// before creating and registering the task list, and importing the task list data
 		// form the external server. This is pretty anti-fluid, so we need a better way to
 		// do this check.
-		if (props.containerUrl === undefined) {
+		if (props.documentId === undefined && props.tenantId === undefined) {
 			throw new Error(
-				"containerUrl is required to register the task list for external change notifications",
+				"documentId and tenantId are required to register the task list for external change notifications",
 			);
 		}
 		this._draftData = SharedMap.create(this.runtime);
@@ -393,7 +393,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		// TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
 		// at some point in the future.
 		await this.importExternalData();
-		await this.registerWithCustomerService(props.containerUrl);
+		await this.registerWithCustomerService(props.tenantId, props.documentId);
 	}
 
 	/**
@@ -403,13 +403,13 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * @remarks This will allow the Customer Service to pass on the container information
 	 * to the Fluid Service to send the signal that some new information has come through.
 	 */
-	private async registerWithCustomerService(containerUrlData: IResolvedUrl): Promise<void> {
+	private async registerWithCustomerService(tenantId: string, documentId: string): Promise<void> {
 		if (this.externalTaskListId === undefined) {
 			throw new Error("externalTaskListId is undefined");
 		}
 		try {
 			console.log(
-				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
+				`TASK-LIST: Registering client ${tenantId}/${documentId} with customer service...`,
 			);
 			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
 				method: "POST",
@@ -418,7 +418,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					containerUrl: containerUrlData.url,
+					tenantId,
+					documentId,
 					externalTaskListId: this.externalTaskListId,
 				}),
 			});

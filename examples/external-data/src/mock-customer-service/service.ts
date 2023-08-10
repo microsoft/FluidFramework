@@ -16,18 +16,23 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	taskData: ITaskData,
 	fluidServiceUrl: string,
-	containerUrl: string,
+	tenantId: string,
+	documentId: string,
+	taskData: ITaskData,
 	externalTaskListId: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	// TODO: we will need to add details (like ContainerId) to the message body or the url,
-	// so this message body format will evolve
-	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
+	const signalContent = {
+		taskData,
+		externalTaskListId,
+		version: "1.0", // to allow for signal content to change in the future
+	};
+
+	const messageBody = JSON.stringify({ tenantId, documentId, signalContent });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -149,10 +154,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			for (const containerUrl of containerUrls) {
+				const [tenantId, documentId] = containerUrl.split("/");
 				echoExternalDataWebhookToFluid(
-					taskData,
 					fluidServiceUrl,
-					containerUrl,
+					tenantId,
+					documentId,
+					taskData,
 					externalTaskListId,
 				);
 			}
@@ -170,29 +177,34 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * ```json
 	 *	{
-	 *		containerUrl: string,
+	 *		tenantId: string,
+	 *		documentId: string,
 	 *		externalTaskListId: string
 	 *	}
 	 * ```
-	 *
-	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
-	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
-	 * object. The URL also contains all this information so for simplicity I use the url here.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerUrl = request.body?.containerUrl as string;
+		const documentId = request.body?.documentId as string;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const tenantId = request.body?.tenantId as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const externalTaskListId = request.body?.externalTaskListId as string;
-		if (containerUrl === undefined) {
+		if (documentId === undefined) {
 			const errorMessage =
-				'No session data provided by client. Expected under "containerUrl" property.';
+				'Invalid session data provided by client. Expected "documentId" property.';
+			result.status(400).json({ message: errorMessage });
+			return;
+		}
+		if (tenantId === undefined) {
+			const errorMessage =
+				'Invalid session data provided by client. Expected "tenantId" property.';
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
 		if (externalTaskListId === undefined) {
 			const errorMessage =
-				'No external task list id provided by client. Expected under "externalTaskListId" property.';
+				'No external task list id provided by client. Expected "externalTaskListId" property.';
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
@@ -218,11 +230,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				throw error;
 			});
 		}
-
-		clientManager.registerClient(containerUrl, externalTaskListId);
+		clientManager.registerClient(tenantId, documentId, externalTaskListId);
 		console.log(
 			formatLogMessage(
-				`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
+				`Registered client details tenantId=${tenantId} and documentId=${documentId} with external query: ${externalTaskListId}".`,
 			),
 		);
 
