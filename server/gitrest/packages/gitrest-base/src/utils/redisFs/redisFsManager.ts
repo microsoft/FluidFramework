@@ -252,9 +252,13 @@ export class RedisFs implements IFileSystemPromises {
 			await setDirPath(folderpathString, this.redisFsClient, this.redisFsConfig);
 		}
 
-		async function setDirPath(path, redisFsClient, redisFsConfig) {
+		async function setDirPath(
+			path: string,
+			redisFsClient: Redis,
+			redisFsConfig: RedisFsConfig,
+		): Promise<void> {
 			await executeRedisFsApi(
-				async () => redisFsClient.set(path, ""),
+				async (): Promise<void> => redisFsClient.set(path, ""),
 				RedisFsApis.Mkdir,
 				RedisFSConstants.RedisFsApi,
 				redisFsConfig.enableRedisFsMetrics,
