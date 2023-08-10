@@ -534,6 +534,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 */
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
+			// If no container data was provided to the devtools, we cannot support data visualization.
 			containerDataVisualization: this.containerData !== undefined,
 			/**
 			 * Todo: When ready to enable feature set it to this.containerData !== undefined
