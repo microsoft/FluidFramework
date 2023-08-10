@@ -749,6 +749,11 @@ export async function npmCheckUpdatesHomegrown(
 	updatedPackages: PackageWithKind[];
 	updatedDependencies: PackageVersionMap;
 }> {
+	if (releaseGroup === releaseGroupFilter) {
+		throw new Error(
+			`releaseGroup and releaseGroupFilter are the same. They must be different values.`,
+		);
+	}
 	log?.info(`Calculating dependency updates...`);
 
 	/**
@@ -770,10 +775,13 @@ export async function npmCheckUpdatesHomegrown(
 
 	// Remove the filtered release group from the list if needed
 	if (releaseGroupFilter !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete selectionCriteria.releaseGroups[releaseGroupFilter];
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete selectionCriteria.releaseGroupRoots[releaseGroupFilter];
+		const indexOfFilteredGroup = selectionCriteria.releaseGroups.indexOf(releaseGroupFilter);
+		if (indexOfFilteredGroup !== -1) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete selectionCriteria.releaseGroups[indexOfFilteredGroup];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete selectionCriteria.releaseGroupRoots[indexOfFilteredGroup];
+		}
 	}
 
 	const { filtered: packagesToUpdate } = selectAndFilterPackages(context, selectionCriteria);
