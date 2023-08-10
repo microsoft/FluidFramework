@@ -28,7 +28,6 @@ module.exports = {
 			files: ["src/test/**/*"],
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
-				"import/no-internal-modules": "off",
 			},
 		},
 	],
