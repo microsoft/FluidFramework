@@ -241,7 +241,7 @@ const defaultCompatDetails: IContainerRuntimeMessageCompatDetails = { behavior: 
 export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 	contents: any;
-	/** @see {@link defaultCompatDetails} */
+	/** @see defaultCompatDetails */
 	compatDetails?: IContainerRuntimeMessageCompatDetails;
 }
 
