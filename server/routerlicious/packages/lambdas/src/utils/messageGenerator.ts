@@ -60,7 +60,6 @@ export const createRuntimeMessage = (signalContent: string): ISignalMessage => (
 	clientId: null,
 	content: JSON.stringify({
 		type: IBroadcastSignalEventPayloadType.RuntimeMessage,
-		// TODO: verify signalConent being passed in
 		contents: JSON.parse(signalContent),
 	}),
 });
