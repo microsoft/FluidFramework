@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import BTree from "sorted-btree";
 import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/common-utils";

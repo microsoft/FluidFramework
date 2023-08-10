@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, StableId } from "./identifiers";
 import {
 	IdCreationRange,
