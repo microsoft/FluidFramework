@@ -43,7 +43,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@types/jest": "22.2.3",
+		"@types/jest": "29.5.3",
 		"@types/node": "^16.18.38",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",

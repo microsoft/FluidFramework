@@ -82,7 +82,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@types/jest": "22.2.3",
+		"@types/jest": "29.5.3",
 		"@types/lodash": "^4.14.118",
 		"@types/node": "^16.18.38",
 		"@types/underscore": "^1.11.4",
