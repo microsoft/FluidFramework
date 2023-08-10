@@ -637,6 +637,7 @@ export class RunningSummarizer implements IDisposable {
 					duration: retryAfterSeconds,
 					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
 					stage: submitSummaryResult.data?.stage,
+					dynamicRetries: true, // To differentiate this telemetry from regular retry logic
 					...summarizeProps,
 				});
 				await delay(retryAfterSeconds * 1000);

@@ -897,6 +897,7 @@ describe("Runtime", () => {
 							eventName: "Running:SummarizeAttemptDelay",
 							...retryProps1,
 							duration: retryAfterSeconds,
+							dynamicRetries: true,
 						});
 					}
 					mockLogger.assertMatch(
