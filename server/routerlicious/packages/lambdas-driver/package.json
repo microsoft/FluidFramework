@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-lambdas-driver",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Fluid server lambda driver components",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,7 +17,7 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -53,9 +53,9 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/server-services-client": "workspace:*",
-		"@fluidframework/server-services-core": "workspace:*",
-		"@fluidframework/server-services-telemetry": "workspace:*",
+		"@fluidframework/server-services-client": "workspace:~",
+		"@fluidframework/server-services-core": "workspace:~",
+		"@fluidframework/server-services-telemetry": "workspace:~",
 		"assert": "^2.0.0",
 		"async": "^3.2.2",
 		"events": "^3.1.0",
@@ -64,12 +64,12 @@
 		"serialize-error": "^8.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.21.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-lambdas-driver-previous": "npm:@fluidframework/server-lambdas-driver@0.1040.1000",
-		"@fluidframework/server-test-utils": "workspace:*",
+		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/async": "^3.2.9",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",

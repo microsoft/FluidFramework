@@ -15,9 +15,10 @@ import {
 	createMockNodeKeyManager,
 	StableNodeKey,
 	nodeKeyFieldKey,
+	setField,
 } from "../../../feature-libraries";
 import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
-import { compareSets } from "../../../util";
+import { brand, compareSets } from "../../../util";
 import { SummarizeType, TestTreeProvider, initializeTestTree } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
@@ -103,7 +104,7 @@ describe("Node Key Index", () => {
 		const node = typedView.nodeKey.map.get(keyA);
 		assert(node !== undefined);
 		const keyB = typedView.nodeKey.generate();
-		node.child = { ...contextualizeKey(typedView, keyB) };
+		node[setField](brand("child"), { ...contextualizeKey(typedView, keyB) });
 		assertIds(typedView, [keyA, keyB]);
 	});
 
@@ -118,7 +119,7 @@ describe("Node Key Index", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 		});
 
-		typedView.root = undefined;
+		typedView.setContent(undefined);
 		assertIds(typedView, []);
 	});
 
@@ -138,7 +139,7 @@ describe("Node Key Index", () => {
 					schema: nodeSchemaData,
 					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Encountered duplicate node key"),
+			(e: Error) => validateAssertionError(e, "Encountered duplicate node key"),
 		);
 	});
 
@@ -175,7 +176,8 @@ describe("Node Key Index", () => {
 					},
 					nodeSchemaData,
 				),
-			(e) => validateAssertionError(e, "Malformed value encountered in node key field"),
+			(e: Error) =>
+				validateAssertionError(e, "Malformed value encountered in node key field"),
 		);
 	});
 
@@ -191,7 +193,7 @@ describe("Node Key Index", () => {
 					schema: nodeSchemaData,
 					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
-			(e) => validateAssertionError(e, "Node key absent but required by schema"),
+			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
 
@@ -243,7 +245,7 @@ describe("Node Key Index", () => {
 		});
 
 		expectedIds = [];
-		typedView.root = undefined;
+		typedView.setContent(undefined);
 		assert.equal(batches, 2);
 	});
 
@@ -294,7 +296,7 @@ describe("Node Key Index", () => {
 				});
 
 				const fork = typedView.fork();
-				fork.root = undefined;
+				fork.setContent(undefined);
 				assertIds(typedView, [key]);
 				assertIds(fork, []);
 				typedView.merge(fork);
@@ -314,7 +316,7 @@ describe("Node Key Index", () => {
 				});
 
 				const fork = typedView.fork();
-				typedView.root = undefined;
+				typedView.setContent(undefined);
 				assertIds(typedView, []);
 				assertIds(fork, [key]);
 				typedView.merge(fork);

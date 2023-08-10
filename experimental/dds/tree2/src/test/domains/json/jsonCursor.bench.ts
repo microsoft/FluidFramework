@@ -32,6 +32,7 @@ import {
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
+	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 import { jsonRoot } from "../../../domains";
@@ -113,7 +114,9 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(schema);
+						const forest = buildChunkedForest(
+							makeTreeChunker(schema, defaultSchemaPolicy),
+						);
 						initializeForest(forest, [singleTextCursor(encodedTree)]);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);

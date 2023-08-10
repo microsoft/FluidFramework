@@ -59,6 +59,7 @@ export enum AttachState {
 export interface IRuntime extends IDisposable {
 	/**
 	 * Executes a request against the runtime
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
@@ -97,7 +98,7 @@ export interface IRuntime extends IDisposable {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): unknown;
+	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state

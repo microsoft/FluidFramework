@@ -9,8 +9,6 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	SimpleObservingDependent,
-	lookupGlobalFieldSchema,
-	rootFieldKey,
 	SchemaData,
 	ITreeCursor,
 } from "../core";
@@ -20,8 +18,8 @@ import {
 	FieldKinds,
 	allowsRepoSuperset,
 	TypedSchemaCollection,
-	GlobalFieldSchema,
 	SchemaAware,
+	FieldSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISharedTreeView } from "./sharedTreeView";
@@ -45,7 +43,7 @@ export function schematizeView(
 		if (tree.context.root.length === 0 && schemaDataIsEmpty(tree.storedSchema)) {
 			tree.transaction.start();
 
-			const rootSchema = lookupGlobalFieldSchema(config.schema, rootFieldKey);
+			const rootSchema = config.schema.rootFieldSchema;
 			const rootKind = rootSchema.kind.identifier;
 
 			// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
@@ -59,14 +57,12 @@ export function schematizeView(
 			} else {
 				assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
 				// Replace value kind with optional kind in root field schema:
-				const globalFieldSchema = new Map(config.schema.globalFieldSchema);
-				globalFieldSchema.set(rootFieldKey, {
-					kind: FieldKinds.optional,
-					types: rootSchema.types,
-				});
 				incrementalSchemaUpdate = {
 					...config.schema,
-					globalFieldSchema,
+					rootFieldSchema: {
+						kind: FieldKinds.optional,
+						types: rootSchema.types,
+					},
 				};
 			}
 
@@ -82,7 +78,7 @@ export function schematizeView(
 			// Update to intermediate schema
 			tree.storedSchema.update(incrementalSchemaUpdate);
 			// Insert initial tree
-			tree.root = config.initialTree;
+			tree.setContent(config.initialTree);
 
 			// If intermediate schema is not final desired schema, update to the final schema:
 			if (incrementalSchemaUpdate !== config.schema) {
@@ -162,7 +158,7 @@ export function schematizeView(
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
+export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
@@ -176,6 +172,6 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
 		| readonly ITreeCursor[];
 }

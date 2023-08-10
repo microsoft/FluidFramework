@@ -19,11 +19,11 @@ Creating root datastores was vulnerable to name conflicts, as two clients attemp
 The process of aliasing a datastore is split in two parts:
 
 -   Creating a regular datastore using the `IContainerRuntimeBase.createDataStore(pkg: string | string[]): Promise<IDataStore>` function
--   Aliasing the resulting datastore by using the `IDataStore.trySetAlias(alias: string): Promise<AliasResult>` function and specifying a string value to serve as the alias to which the datastore needs to be bound. If successful, `"Success"` will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+-   Aliasing the resulting datastore by using the `IDataStore.trySetAlias(alias: string): Promise<AliasResult>` function and specifying a string value to serve as the alias to which the datastore needs to be bound. If successful, `"Success"` will be returned, and a call to `getAliasedDataStoreEntryPoint` with the alias as parameter will return the same datastore's entry point.
 
 The alias API can fail in the following situations, per the `AliasResult` type (see `@fluidframework/runtime-definitions`) type:
 
--   `"Conflict"` - the alias has already been taken. In this case, the client can call `getRootDataStore` to get the datastore already aliased for that value. The current datastore can be left alone unreferenced so it can eventually be garbage collected.
+-   `"Conflict"` - the alias has already been taken. In this case, the client can call `getAliasedDataStoreEntryPoint` to get the entry point of the datastore already aliased for that value. The current datastore can be left alone unreferenced so it can eventually be garbage collected.
 -   `"AlreadyAliased"` - the datastore has already been aliased to a different id.
 
 The alias API is idempotent. Repeatedly calling the trySetAlias function on the same datastore will return Success when the datastore has already been aliased to the same value.
@@ -38,5 +38,5 @@ const aliasResult = await dataStore.trySetAlias("alias");
 const finalDataStore =
 	aliasResult === "Success"
 		? dataStore
-		: await dataObject.context.containerRuntime.getRootDataStore("alias");
+		: await dataObject.context.containerRuntime.getAliasedDataStoreEntryPoint("alias");
 ```

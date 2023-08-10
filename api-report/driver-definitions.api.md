@@ -186,7 +186,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
-    readonly minBlobSize?: number;
 }
 
 // @public
@@ -200,6 +199,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 // @public
 export interface IDriverErrorBase {
     canRetry: boolean;
+    endpointReached?: boolean;
     readonly errorType: DriverErrorType;
     readonly message: string;
     online?: string;
@@ -211,23 +211,6 @@ export interface IDriverHeader {
     [DriverHeader.summarizingClient]: boolean;
     // (undocumented)
     [DriverHeader.createNew]: any;
-}
-
-// @public @deprecated (undocumented)
-export interface IFluidResolvedUrl {
-    // (undocumented)
-    endpoints: {
-        [name: string]: string;
-    };
-    id: string;
-    // (undocumented)
-    tokens: {
-        [name: string]: string;
-    };
-    // (undocumented)
-    type: "fluid";
-    // (undocumented)
-    url: string;
 }
 
 // @public (undocumented)
@@ -247,7 +230,21 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export type IResolvedUrl = IFluidResolvedUrl;
+export interface IResolvedUrl {
+    // (undocumented)
+    endpoints: {
+        [name: string]: string;
+    };
+    id: string;
+    // (undocumented)
+    tokens: {
+        [name: string]: string;
+    };
+    // (undocumented)
+    type: "fluid";
+    // (undocumented)
+    url: string;
+}
 
 // @public
 export interface IStream<T> {

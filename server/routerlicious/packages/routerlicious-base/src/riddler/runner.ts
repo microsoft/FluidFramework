@@ -5,16 +5,17 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 import {
-	MongoManager,
 	IRunner,
 	ISecretManager,
 	IWebServerFactory,
 	IWebServer,
 	ICache,
+	ICollection,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as winston from "winston";
 import * as app from "./app";
+import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerRunner implements IRunner {
 	private server: IWebServer;
@@ -22,14 +23,15 @@ export class RiddlerRunner implements IRunner {
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
-		private readonly collectionName: string,
+		private readonly tenantsCollection: ICollection<ITenantDocument>,
 		private readonly port: string | number,
-		private readonly mongoManager: MongoManager,
 		private readonly loggerFormat: string,
 		private readonly baseOrdererUrl: string,
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
 		private readonly secretManager: ISecretManager,
+		private readonly fetchTenantKeyMetricInterval: number,
+		private readonly riddlerStorageRequestMetricInterval: number,
 		private readonly cache?: ICache,
 	) {}
 
@@ -39,13 +41,14 @@ export class RiddlerRunner implements IRunner {
 
 		// Create the HTTP server and attach alfred to it
 		const riddler = app.create(
-			this.collectionName,
-			this.mongoManager,
+			this.tenantsCollection,
 			this.loggerFormat,
 			this.baseOrdererUrl,
 			this.defaultHistorianUrl,
 			this.defaultInternalHistorianUrl,
 			this.secretManager,
+			this.fetchTenantKeyMetricInterval,
+			this.riddlerStorageRequestMetricInterval,
 			this.cache,
 		);
 		riddler.set("port", this.port);

@@ -305,7 +305,7 @@ describe('CachingLogViewer', () => {
 					simpleLogInitialView,
 				]);
 			},
-			(e) => validateAssertionError(e, 'revision must be an integer')
+			(e: Error) => validateAssertionError(e, 'revision must be an integer')
 		);
 	});
 
@@ -317,7 +317,7 @@ describe('CachingLogViewer', () => {
 					simpleLogInitialView,
 				]);
 			},
-			(e) => validateAssertionError(e, 'revision must correspond to the result of a SequencedEdit')
+			(e: Error) => validateAssertionError(e, 'revision must correspond to the result of a SequencedEdit')
 		);
 	});
 

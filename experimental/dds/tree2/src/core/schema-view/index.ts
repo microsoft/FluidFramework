@@ -3,12 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export {
-	Adapters,
-	Compatibility,
-	FieldAdapter,
-	TreeAdapter,
-	ViewSchemaData,
-	AdaptedViewSchema,
-	AllowedUpdateType,
-} from "./view";
+export { Adapters, Compatibility, TreeAdapter, AdaptedViewSchema, AllowedUpdateType } from "./view";

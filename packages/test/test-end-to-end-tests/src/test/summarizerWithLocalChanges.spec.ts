@@ -31,8 +31,8 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryBaseEvent,
-	ITelemetryLogger,
 	IFluidHandle,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
 export const rootDataObjectType = "@fluid-example/rootDataObject";
@@ -125,7 +125,7 @@ let settings = {};
 const createContainer = async (
 	provider: ITestObjectProvider,
 	disableSummary: boolean = true,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryBaseLogger,
 ): Promise<IContainer> => {
 	let summaryConfigOverrides: ISummaryConfiguration;
 	if (disableSummary) {
@@ -220,7 +220,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			// Summarization should fail because of a data store created during summarization which does not run GC.
 			await assert.rejects(
 				async () => summarizeNow(summarizer),
-				(error) => {
+				(error: any) => {
 					// The summary should have failed because of "NodeDidNotRunGC" error before it was generated,
 					// i.e., "base" stage.
 					return error.message === "NodeDidNotRunGC" && error.data.stage === "base";
@@ -261,7 +261,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 				async () => {
 					await summarizeNow(summarizer);
 				},
-				(error) => {
+				(error: any) => {
 					// The summary should have failed because of "NodeDidNotRunGC" error after it was uploaded,
 					// i.e., "upload" stage.
 					return error.message === "NodeDidNotRunGC" && error.data.stage === "upload";

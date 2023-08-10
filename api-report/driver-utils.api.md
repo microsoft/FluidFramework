@@ -90,6 +90,9 @@ export class BlobTreeEntry {
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
+// @public
+export function calculateMaxWaitTime(error: unknown): number;
+
 // @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
@@ -298,7 +301,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
     // (undocumented)
     get policies(): {
         caching: LoaderCachingPolicy;
-        minBlobSize?: number | undefined;
         maximumCacheDurationMs?: 432000000 | undefined;
     } | undefined;
     // (undocumented)

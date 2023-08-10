@@ -34,6 +34,7 @@
 		"multinomial",
 		"nonfinite",
 		"pseudorandomly",
+		"Routerlicious",
 		"snapshotlegacy",
 		"testconsumer",
 		"Tinylicious",
@@ -57,7 +58,7 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.defaultFormatter": "vscode.typescript-language-features",
 	},
 
 	// Customizations for VSCode search results.

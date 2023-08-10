@@ -21,8 +21,11 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISession } from "@fluidframework/server-services-client";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ISession,
+	convertSummaryTreeToWholeSummaryTree,
+} from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -32,7 +35,6 @@ import {
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper";
-import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -45,7 +47,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enablePrefetch: true,
 	maxConcurrentStorageRequests: 100,
 	maxConcurrentOrdererRequests: 100,
-	aggregateBlobsSmallerThanBytes: undefined,
 	enableDiscovery: false,
 	enableWholeSummaryUpload: false,
 	enableRestLess: true,
@@ -119,7 +120,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -150,11 +151,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryToCreateNewSummary(appSummary),
+						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
 
@@ -247,8 +249,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`,
 			);
 		}
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver", {
-			all: { driverVersion },
+		const logger2 = createChildLogger({
+			logger,
+			namespace: "RouterliciousDriver",
+			properties: {
+				all: { driverVersion },
+			},
 		});
 
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
@@ -330,7 +336,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			caching: this.driverPolicies.enablePrefetch
 				? LoaderCachingPolicy.Prefetch
 				: LoaderCachingPolicy.NoCaching,
-			minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
 			maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
 		};
 

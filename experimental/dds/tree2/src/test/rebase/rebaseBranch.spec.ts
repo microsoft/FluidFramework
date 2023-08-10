@@ -73,12 +73,12 @@ describe("rebaseBranch", () => {
 
 		assert.throws(
 			() => rebaseBranch(new TestChangeRebaser(), undefined, n3, n2),
-			(e) => validateAssertionError(e, "branches must be related"),
+			(e: Error) => validateAssertionError(e, "branches must be related"),
 		);
 
 		assert.throws(
 			() => rebaseBranch(new TestChangeRebaser(), undefined, n2, n3, n1),
-			(e) => validateAssertionError(e, "target commit is not in target branch"),
+			(e: Error) => validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
 
