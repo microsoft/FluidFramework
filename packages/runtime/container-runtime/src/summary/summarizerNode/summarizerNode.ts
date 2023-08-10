@@ -223,8 +223,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 				},
 				// These errors are usually transient and should go away when summarize is retried.
 				retryAfterSeconds: 1,
-				// Retrying summarization once should be enough for the error to go away,
-				retryCount: 1,
 			};
 		}
 		if (parentSkipRecursion) {

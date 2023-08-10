@@ -283,7 +283,6 @@ describe("Runtime", () => {
 							value: "",
 						},
 						retryAfterSeconds: 1,
-						retryCount: 1,
 					};
 					const result = rootNode.validateSummary();
 					assert.deepStrictEqual(
@@ -322,7 +321,6 @@ describe("Runtime", () => {
 							value: midNodeId,
 						},
 						retryAfterSeconds: 1,
-						retryCount: 1,
 					};
 					const result = rootNode.validateSummary();
 					assert.deepStrictEqual(
@@ -360,7 +358,6 @@ describe("Runtime", () => {
 							value: leafNodeId,
 						},
 						retryAfterSeconds: 1,
-						retryCount: 1,
 					};
 					const result = rootNode.validateSummary();
 					assert.deepStrictEqual(

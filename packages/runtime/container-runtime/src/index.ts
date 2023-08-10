@@ -66,8 +66,9 @@ export {
 	OpActionEventListener,
 	OpActionEventName,
 	ICancellableSummarizerController,
-	ISubmitSummaryFailureResult,
+	SubmitSummaryFailureData,
 	SummaryStage,
+	IRetryFailureResult,
 } from "./summary";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
 export { generateStableId, isStableId, assertIsStableId } from "./id-compressor";

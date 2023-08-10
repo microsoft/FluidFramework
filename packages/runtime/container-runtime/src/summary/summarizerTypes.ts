@@ -216,15 +216,15 @@ export type SubmitSummaryResult =
 
 /** The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage. */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
-/** The data in summarizer result when submit summary stage fails. */
 
-export interface IBaseSummaryFailureResult {
-	readonly stage: SummaryStage;
+/** Type for summarization failures that are retriable. */
+export interface IRetryFailureResult {
+	readonly retryAfterSeconds?: number;
 }
 
-export interface ISubmitSummaryFailureResult extends IBaseSummaryFailureResult {
-	readonly retryAfterSeconds?: number;
-	readonly retryCount?: number;
+/** The data in summarizer result when submit summary stage fails. */
+export interface SubmitSummaryFailureData extends IRetryFailureResult {
+	stage: SummaryStage;
 }
 
 export interface IBroadcastSummaryResult {
@@ -237,12 +237,12 @@ export interface IAckSummaryResult {
 	readonly ackNackDuration: number;
 }
 
-export interface INackSummaryResult extends ISubmitSummaryFailureResult {
+export interface INackSummaryResult extends IRetryFailureResult {
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }
 
-export type SummarizeResultPart<TSuccess, TFailure> =
+export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			success: true;
 			data: TSuccess;
@@ -257,12 +257,10 @@ export type SummarizeResultPart<TSuccess, TFailure> =
 export interface ISummarizeResults {
 	/** Resolves when we generate, upload, and submit the summary. */
 	readonly summarySubmitted: Promise<
-		SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult>
+		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
 	>;
 	/** Resolves when we observe our summarize op broadcast. */
-	readonly summaryOpBroadcasted: Promise<
-		SummarizeResultPart<IBroadcastSummaryResult, IBaseSummaryFailureResult>
-	>;
+	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
 	/** Resolves when we receive a summaryAck or summaryNack. */
 	readonly receivedSummaryAckOrNack: Promise<
 		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>

@@ -420,7 +420,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 }
 
 // @public (undocumented)
-export interface INackSummaryResult extends ISubmitSummaryFailureResult {
+export interface INackSummaryResult extends IRetryFailureResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
@@ -440,21 +440,17 @@ export interface IRefreshSummaryAckOptions {
     readonly summaryRefSeq: number;
 }
 
+// @public
+export interface IRetryFailureResult {
+    // (undocumented)
+    readonly retryAfterSeconds?: number;
+}
+
 // @public @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
 export function isStableId(str: string): str is StableId;
-
-// Warning: (ae-forgotten-export) The symbol "IBaseSummaryFailureResult" needs to be exported by the entry point index.d.ts
-//
-// @public (undocumented)
-export interface ISubmitSummaryFailureResult extends IBaseSummaryFailureResult {
-    // (undocumented)
-    readonly retryAfterSeconds?: number;
-    // (undocumented)
-    readonly retryCount?: number;
-}
 
 // @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
@@ -492,8 +488,8 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 // @public (undocumented)
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
-    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult, IBaseSummaryFailureResult>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, ISubmitSummaryFailureResult>>;
+    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
+    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
 // @public (undocumented)
@@ -662,6 +658,12 @@ export enum RuntimeMessage {
 }
 
 // @public
+export interface SubmitSummaryFailureData extends IRetryFailureResult {
+    // (undocumented)
+    stage: SummaryStage;
+}
+
+// @public
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @public
@@ -690,7 +692,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 }
 
 // @public (undocumented)
-export type SummarizeResultPart<TSuccess, TFailure> = {
+export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
     data: TSuccess;
 } | {

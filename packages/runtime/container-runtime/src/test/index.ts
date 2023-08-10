@@ -66,7 +66,7 @@ export {
 	OpActionEventListener,
 	OpActionEventName,
 	ICancellableSummarizerController,
-	ISubmitSummaryFailureResult,
+	SubmitSummaryFailureData,
 	SummaryStage,
 } from "../summary";
 export { IChunkedOp, unpackRuntimeMessage } from "../opLifecycle";
