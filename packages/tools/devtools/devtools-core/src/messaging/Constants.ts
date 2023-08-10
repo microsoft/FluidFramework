@@ -9,3 +9,9 @@
  * @internal
  */
 export const devtoolsMessageSource: string = "fluid-client-devtools";
+
+
+/**
+ * TODO
+ */
+export const testMessageSource: string = "test-devtools-extension";

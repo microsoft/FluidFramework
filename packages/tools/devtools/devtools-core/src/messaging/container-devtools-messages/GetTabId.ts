@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDevtoolsMessage } from "../Messages";
+import { ISourcedDevtoolsMessage } from "../Messages";
+import { testMessageSource } from "../Constants"
 
 /**
  * Encapsulates types and logic related to {@link GetTabId.Message}.
@@ -32,7 +33,7 @@ export namespace GetTabId {
 	 *
 	 * @internal
 	 */
-	export interface Message extends IDevtoolsMessage {
+	export interface Message extends ISourcedDevtoolsMessage {
 		/**
 		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
@@ -47,6 +48,7 @@ export namespace GetTabId {
 	export function createMessage(data: MessageData): Message {
 		return {
 			data,
+			source: testMessageSource, 
 			type: MessageType,
 		};
 	}

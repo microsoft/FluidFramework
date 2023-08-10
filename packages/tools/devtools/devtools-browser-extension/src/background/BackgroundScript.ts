@@ -7,7 +7,6 @@ import {
 	ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
-	GetTabId,
 } from "@fluid-experimental/devtools-core";
 
 import { browser } from "../Globals";
@@ -17,6 +16,7 @@ import {
 	DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
+	testMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
@@ -113,19 +113,6 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						},
 					);
 
-					// Listener for GetTabId message.
-					tabConnection.onMessage.addListener((tabMessage: string): void => {
-						if (tabMessage === GetTabId.MessageType) {
-							const activeTabId = chrome.tabs.query({
-								currentWindow: true,
-								active: true,
-							});
-
-							// Set activeTabId as global tabId.
-							globalThis.TEST_TAB_ID_OVERRIDE = activeTabId;
-						}
-					});
-
 					// On tab disconnect, clean up listeners
 					tabConnection.onDisconnect.addListener(() => {
 						console.log(
@@ -182,7 +169,10 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 					message,
 				);
 			} else {
-				if (message.source === extensionMessageSource) {
+				if (
+					message.source === extensionMessageSource ||
+					message.source === testMessageSource
+				) {
 					// Only relay known messages from the extension
 					relayMessageToPort(
 						message,
@@ -198,12 +188,35 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	devtoolsPort.onMessage.addListener(devtoolsMessageListener);
 });
 
+// // Listener for GetTabId message.
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+	if (request.type !== "TEST_GET_TAB_ID") {
+		return;
+	}
+
+	const tabId = sender.tab?.id;
+	
+	if (tabId !== undefined) {
+		sendResponse(
+			type: "TEST_TAB_ID",
+			data: {
+				tabId
+			}); 
+	} else {
+		console.warn("Tab Id Missing!")
+	}
+});
 // const tabConnection = browser.tabs.connect(tabId, { name: "Content Script" });
 
-// tabConnection.onMessage(message: GetTabId, () => {
-// 	// If message is "ask for active tab ID message"
-// 	// Query for active tab // chrome.tabs.query({ currentWindow: true, active: true });
-// 	// Post response message with tab ID
-// 	const testTabId = chrome.tabs.query({ currentWindow: true, active: true });
-// 	window["TEST_TAB_ID_OVERRIDE"] = testTabId;
+// tabConnection.onMessage.addListener((tabMessage: string): void => {
+// if (tabMessage === GetTabId.MessageType) {
+// BELOW NOT NEEEDED 
+// const activeTabId = chrome.tabs.query({
+// 	currentWindow: true,
+// 	active: true,
+// });
+
+// // Set activeTabId as global tabId.
+// globalThis.TEST_TAB_ID_OVERRIDE = activeTabId;
+// }
 // });

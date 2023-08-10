@@ -7,3 +7,8 @@
  * The message {@link ISourcedDevtoolsMessage.source} for all messages posted by the Devtools extension.
  */
 export const extensionMessageSource: string = "fluid-devtools-extension";
+
+/**
+ * TODO
+ */
+export const testMessageSource: string = "test-devtools-extension";

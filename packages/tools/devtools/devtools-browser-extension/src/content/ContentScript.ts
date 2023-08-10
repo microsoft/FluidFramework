@@ -35,7 +35,7 @@ type Port = chrome.runtime.Port;
 console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
 
 // `window` should always be defined in the Content script context.
-if (window === undefined) {
+if (window === undefined || window === null) {
 	throw new Error("Window object is not defined.");
 }
 
@@ -81,7 +81,27 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 			);
 			window!.postMessage(message, "*");
 		}
+		
+
+		// POST to BackgroundScript
+		// if (isDevtoolsMessage(message) && message.type === "GET_TAB_ID") {
+		// 	const tabMessage = GetTabId.createMessage(window.devtools);
+		// 	window!.postMessage(tabMessage, "*"); // -> BackgroundScript
+		// }
+
+		// // POST to Inspected Page.
+		// if (isDevtoolsMessage(message) && message.type === "POST_TAB_ID") {
+		// 	browser.runtime.onMessage.addListener((message: string) => {
+		// 		const activeTabId = message.data as unknown as number;  // TODO: Create Message Type for Post
+
+		// 		window!.postMessage(activeTabId, "*");  // Inspected 
+		// 	})
+		// }
+
+
+
 	});
+
 
 	// When the extension disconnects, clean up listeners.
 	backgroundPort.onDisconnect.addListener(() => {
@@ -89,5 +109,39 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 		window!.removeEventListener("message", relayMessageFromPageToBackground);
 	});
 });
+
+// #region TEST ONLY
+// TODO: compile this out in non-dev builds
+
+// Handle GET_TAB_ID message from webpage
+// window.onmessage(event => {
+// 	const message = event.data;
+// 	if (message.type === "TEST_GET_TAB_ID") {
+// 		console.log("CONTENT SCRIPT: Forwarding tab request from page to background script.");
+// 		// Forward message to background script
+// 		browser.runtime.sendMessage(message);
+// 	}
+// });
+
+window.addEventListener('message', event => {
+	const message = event.data;
+	if (message.type === "TEST_GET_TAB_ID") {
+		console.log("CONTENT SCRIPT: Forwarding tab request from page to background script.");
+		// Forward message to background script
+		browser.runtime.sendMessage(message);
+	}
+});
+
+
+// Handle TAB_ID message from background script
+browser.runtime.onMessage.addListener((message, sender) => {
+	if (message.type === "TEST_TAB_ID") {
+		
+		console.log("CONTENT SCRIPT: Forwarding tab ID from background script to webpage.");
+		window?.postMessage(message); // Sent to Application 
+	}
+});
+
+// #endregion
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */
