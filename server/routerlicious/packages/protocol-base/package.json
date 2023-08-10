@@ -130,6 +130,9 @@
 			"RemovedClassDeclaration_TreeTreeEntry": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IProtocolHandler": {
+				"backCompat": false
 			}
 		}
 	}
