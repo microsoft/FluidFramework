@@ -2180,15 +2180,15 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
-		// Whether or not the message is actually a runtime message.
+		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
-		const runtimeMessage = messageArg.type === MessageType.Operation;
+		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local, runtimeMessage);
+			this.processCore(message, local, modernRuntimeMessage);
 		}
 	}
 
@@ -2198,12 +2198,12 @@ export class ContainerRuntime
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
 	 * @param local - Did this client send the op?
-	 * @param runtimeMessage - Does this appear like a current ContainerRuntimeMessage?  If true, certain validation will occur.
+	 * @param modernRuntimeMessage - Does this appear like a current ContainerRuntimeMessage?
 	 */
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		runtimeMessage: boolean,
+		modernRuntimeMessage: boolean,
 	) {
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
@@ -2214,7 +2214,7 @@ export class ContainerRuntime
 
 		try {
 			let localOpMetadata: unknown;
-			if (local && runtimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
+			if (local && modernRuntimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
 			}
 
@@ -2224,11 +2224,14 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			if (runtimeMessage) {
-				this.validateAndProcessRuntimeMessage(message, localOpMetadata, local);
-			}
+			this.validateAndProcessRuntimeMessage(
+				message,
+				localOpMetadata,
+				local,
+				modernRuntimeMessage,
+			);
 
-			this.emit("op", message, runtimeMessage);
+			this.emit("op", message, modernRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -2252,6 +2255,7 @@ export class ContainerRuntime
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 		local: boolean,
+		expectRuntimeMessageType: boolean,
 	): asserts message is SequencedContainerRuntimeMessage {
 		// Optimistically extract ContainerRuntimeMessage-specific props from the message
 		const { type: maybeContainerMessageType, compatDetails = defaultCompatDetails } =
@@ -2281,6 +2285,12 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				break;
 			default: {
+				// If we didn't necessarily expect a runtime message type, then no worries - just return
+				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
+				if (!expectRuntimeMessageType) {
+					return;
+				}
+
 				((_: never) => {})(maybeContainerMessageType); // Type safety on missing known cases
 
 				const compatBehavior = compatDetails.behavior;
