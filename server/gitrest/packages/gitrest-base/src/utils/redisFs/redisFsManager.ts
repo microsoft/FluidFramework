@@ -342,11 +342,13 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (!data) {
+		if (data === null) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		return getStats();
+		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+
+		return getStats(fsEntityType);
 	}
 
 	/**
