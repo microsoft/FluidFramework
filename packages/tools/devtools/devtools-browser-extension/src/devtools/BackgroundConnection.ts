@@ -191,10 +191,10 @@ export class BackgroundConnection
  * This functions returns the corresponding tabId based on the testing purposes.
  */
 function getTabId(): number {
-	// Unless the test suite has requested for the active tabId to BackgroundScript, condition below will ALWAYS be true.
-	if (window.TEST_TAB_ID_OVERRIDE === undefined) {
-		window.TEST_TAB_ID_OVERRIDE = browser.devtools.inspectedWindow.tabId;
+	// If the property doesn't exist on the window object, it'll be defined.
+	if ((window as any).TEST_TAB_ID_OVERRIDE === undefined) {
+		return ((window as any).TEST_TAB_ID_OVERRIDE = browser.devtools.inspectedWindow.tabId);
 	}
 
-	return window.TEST_TAB_ID_OVERRIDE as unknown as number;
+	return (window as any).TEST_TAB_ID_OVERRIDE as number;
 }

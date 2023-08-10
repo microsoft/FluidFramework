@@ -16,7 +16,6 @@ import {
 	DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
-	testMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
@@ -169,10 +168,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 					message,
 				);
 			} else {
-				if (
-					message.source === extensionMessageSource ||
-					message.source === testMessageSource
-				) {
+				if (message.source === extensionMessageSource) {
 					// Only relay known messages from the extension
 					relayMessageToPort(
 						message,
@@ -188,35 +184,18 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	devtoolsPort.onMessage.addListener(devtoolsMessageListener);
 });
 
-// // Listener for GetTabId message.
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+// Listener for TEST_GET_TAB_ID message.
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	if (request.type !== "TEST_GET_TAB_ID") {
 		return;
 	}
 
 	const tabId = sender.tab?.id;
-	
+
 	if (tabId !== undefined) {
-		sendResponse(
-			type: "TEST_TAB_ID",
-			data: {
-				tabId
-			}); 
+		sendResponse({ type: "TEST_TAB_ID", data: { tabId } });
+		return true;
 	} else {
-		console.warn("Tab Id Missing!")
+		console.warn("Tab Id Missing!");
 	}
 });
-// const tabConnection = browser.tabs.connect(tabId, { name: "Content Script" });
-
-// tabConnection.onMessage.addListener((tabMessage: string): void => {
-// if (tabMessage === GetTabId.MessageType) {
-// BELOW NOT NEEEDED 
-// const activeTabId = chrome.tabs.query({
-// 	currentWindow: true,
-// 	active: true,
-// });
-
-// // Set activeTabId as global tabId.
-// globalThis.TEST_TAB_ID_OVERRIDE = activeTabId;
-// }
-// });

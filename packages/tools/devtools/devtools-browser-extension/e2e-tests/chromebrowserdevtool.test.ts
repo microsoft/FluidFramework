@@ -9,8 +9,6 @@
 
 import { globals } from "../jest.config";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
-import { IMessageRelay, GetTabId, handleIncomingMessage } from "@fluid-experimental/devtools-core";
-import { useMessageRelay } from "@fluid-experimental/devtools-view";
 import puppeteer from "puppeteer";
 
 describe("End to end tests", () => {
@@ -43,10 +41,8 @@ describe("End to end tests", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]); // verify if this only launches the application
+		await page.waitForFunction(() => window["fluidStarted"]);
 		await page.waitForSelector(".text-area");
-
-		// load the extension
 	});
 
 	it("Smoke: verify test app can be launched", async () => {
@@ -78,28 +74,20 @@ describe("End to end tests", () => {
 
 		// Get Tab ID from the running extension scripts (content and background) associated with the app page
 		const tabId = await appPage.evaluate(() => {
-			// Request tab ID
+			// Request TabId to Content Script
 			window.postMessage({
-				type: "TEST_GET_TAB_ID"
+				type: "TEST_GET_TAB_ID",
 			});
 
+			// Receive TabId from ContentScript
 			return new Promise<number>((resolve, reject) => {
-				window.addEventListener('message', event => {
+				window.addEventListener("message", (event) => {
 					const message = event.data;
 					if (message.type === "TEST_TAB_ID") {
 						resolve(message.data.tabId);
 					}
 				});
-			})
-
-			// return new Promise<number>((resolve, reject) => {
-			// 	window.onmessage(event => {
-			// 		const message = event.data;
-			// 		if (message.type === "TEST_TAB_ID") {
-			// 			resolve(message.data.tabId);
-			// 		}
-			// 	});
-			// })
+			});
 		});
 
 		// Target extension and launch in Chromium.
@@ -107,46 +95,16 @@ describe("End to end tests", () => {
 		const extensionTarget = targets.find((target) => target.type() === "service_worker");
 		const partialExtensionUrl = extensionTarget?.url() || "";
 		const [, , extensionId] = partialExtensionUrl.split("/");
-		console.log(extensionId); 
 
 		const extPage = await browser.newPage();
-
-		// Send GetTabID message asking for active tab and wait for response with tab ID.
-		const messageRelay: IMessageRelay = useMessageRelay();
-		messageRelay.postMessage(GetTabId.createMessage(GetTabId.MessageType)); // Content Script 
-
-		// Incoming message handler
-		// function messageHandler(message: PostTabId): void {
-		// 	handleIncomingMessage(message, inboundMessageHandlers, {
-		// 		context: loggingContext,
-		// 	});
-		// }
-
-		// messageRelay.on("message", messageHandler);
-
-		// // POST to Inspected Page.
-		// if (isDevtoolsMessage(message) && message.type === "POST_TAB_ID") {
-		// 	browser.runtime.onMessage.addListener((message: string) => {
-		// 		const activeTabId = message.data as unknown as number; // TODO: Create Message Type for Post
-
-		// 		window!.postMessage(activeTabId, "*"); // Inspected
-		// 	});
-		// }
-
-		// const tabId = globalThis.TEST_TAB_ID_OVERRIDE;
-
-		console.log(tabId); // set the retrieved tabId as GLOBAL variable.
 
 		// Set the mock Tab ID in the extension page so Devtools script picks it up when we navigate to extension URL
 		await extPage.evaluate((_tabId) => {
 			(window as any).TEST_TAB_ID_OVERRIDE = _tabId;
 		}, tabId);
 
-		// TODO: Figure out how to use tabID whnen opening the extension.
-		const extensionUrl = `chrome-extension:/devtools/devtools.html`;
+		const extensionUrl = `chrome-extension://${extensionId}/devtools/devtools.html`;
 		await extPage.goto(extensionUrl, { waitUntil: "load" });
 		await extPage.bringToFront();
-
-		// TODO: Write unit tests.
 	});
 });
