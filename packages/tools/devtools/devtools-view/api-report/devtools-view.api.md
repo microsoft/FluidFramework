@@ -27,9 +27,6 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-// @public
-export function useMessageRelay(): IMessageRelay;
-
 // @internal
 export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
     constructor(
