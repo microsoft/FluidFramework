@@ -61,9 +61,9 @@ function useContainerInfo(
 	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
 		ContainerInfo | undefined
 	>();
-	// const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
-	// 	ContainerInfo | undefined
-	// >();
+	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+		ContainerInfo | undefined
+	>();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
@@ -74,11 +74,11 @@ function useContainerInfo(
 				: loadExistingContainer(containerId, loader);
 		}
 
-		// async function getPrivateContainerData(): Promise<ContainerInfo> {
-		// 	// Always create a new container for the private view.
-		// 	// This isn't shared with other collaborators.
-		// 	return createContainer(loader);
-		// }
+		async function getPrivateContainerData(): Promise<ContainerInfo> {
+			// Always create a new container for the private view.
+			// This isn't shared with other collaborators.
+			return createContainer(loader);
+		}
 
 		getSharedFluidData().then((containerInfo) => {
 			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
@@ -94,14 +94,14 @@ function useContainerInfo(
 			});
 		}, console.error);
 
-		// getPrivateContainerData().then((containerInfo) => {
-		// 	setPrivateContainerInfo(containerInfo);
-		// 	devtools.registerContainerDevtools({
-		// 		container: containerInfo.container,
-		// 		containerKey: privateContainerKey,
-		// 		containerData: containerInfo.appData.getRootObject(),
-		// 	});
-		// }, console.error);
+		getPrivateContainerData().then((containerInfo) => {
+			setPrivateContainerInfo(containerInfo);
+			devtools.registerContainerDevtools({
+				container: containerInfo.container,
+				containerKey: privateContainerKey,
+				containerData: containerInfo.appData.getRootObject(),
+			});
+		}, console.error);
 
 		return (): void => {
 			devtools?.dispose();
@@ -110,7 +110,7 @@ function useContainerInfo(
 
 	return {
 		sharedContainer: sharedContainerInfo,
-		privateContainer: undefined,
+		privateContainer: privateContainerInfo,
 	};
 }
 

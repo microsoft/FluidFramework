@@ -8,7 +8,6 @@ import {
 	AttachState,
 	IContainer,
 	IFluidModuleWithDetails,
-	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
@@ -109,11 +108,7 @@ export class TinyliciousClient {
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const container = await loader.resolve({
-			url: id,
-			headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
-		});
-		container.connect();
+		const container = await loader.resolve({ url: id });
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = this.getContainerServices(container);
