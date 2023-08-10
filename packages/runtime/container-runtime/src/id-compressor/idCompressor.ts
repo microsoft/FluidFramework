@@ -470,26 +470,34 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Layout
 		const totalByteSize =
 			8 + // version
-			1 + // hasLocalState
-			8 + // session count
-			serializedSessions.length * 16 + // session IDs
-			localStateSize + // local state, if present
+			8 + // hasLocalState
 			8 + // cluster capacity
+			8 + // session count
 			8 + // cluster count
-			finalSpace.clusters.length * 8 * 3; // clusters: (sessionIndex, capacity, count)[]
+			serializedSessions.length * 16 + // session IDs
+			finalSpace.clusters.length * 8 * 3 + // clusters: (sessionIndex, capacity, count)[]
+			localStateSize; // local state, if present
 
 		const serialized = new Uint8Array(totalByteSize);
 		let index = 0;
 		index = writeNumber(serialized, index, currentWrittenVersion);
 		index = writeBoolean(serialized, index, hasLocalState);
+		index = writeNumber(serialized, index, this.clusterCapacity);
+		index = writeNumber(serialized, index, serializedSessions.length);
+		index = writeNumber(serialized, index, finalSpace.clusters.length);
 
 		const sessionIndexMap = new Map<Session, number>();
-		index = writeNumber(serialized, index, serializedSessions.length);
 		for (let i = 0; i < serializedSessions.length; i++) {
 			const session = serializedSessions[i];
 			index = writeNumericUuid(serialized, index, session.sessionUuid);
 			sessionIndexMap.set(session, i);
 		}
+
+		finalSpace.clusters.forEach((cluster) => {
+			index = writeNumber(serialized, index, sessionIndexMap.get(cluster.session) as number);
+			index = writeNumber(serialized, index, cluster.capacity);
+			index = writeNumber(serialized, index, cluster.count);
+		});
 
 		if (hasLocalState) {
 			index = writeNumber(serialized, index, this.generatedIdCount);
@@ -500,14 +508,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				index = writeNumber(serialized, index, count);
 			}
 		}
-
-		index = writeNumber(serialized, index, this.clusterCapacity);
-		index = writeNumber(serialized, index, finalSpace.clusters.length);
-		finalSpace.clusters.forEach((cluster) => {
-			index = writeNumber(serialized, index, sessionIndexMap.get(cluster.session) as number);
-			index = writeNumber(serialized, index, cluster.capacity);
-			index = writeNumber(serialized, index, cluster.count);
-		});
 
 		assert(index === totalByteSize, "Serialized size was incorrectly calculated.");
 		this.logger?.sendTelemetryEvent({
@@ -533,9 +533,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const version = readNumber(index);
 		assert(version === currentWrittenVersion, "Unknown serialized version.");
 		const hasLocalState = readBoolean(index);
+		const clusterCapacity = readNumber(index);
+		const sessionCount = readNumber(index);
+		const clusterCount = readNumber(index);
 
 		// Sessions
-		const sessionCount = readNumber(index);
 		let sessionOffset: number;
 		let sessions: [NumericUuid, Session][];
 		if (hasLocalState) {
@@ -557,26 +559,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessions: new Sessions(sessions),
 			localSessionId: stableIdFromNumericUuid(sessions[0][0]) as SessionId,
 		});
-
-		// Local state
-		if (hasLocalState) {
-			assert(sessionId === undefined, "Local state should not exist in serialized form.");
-			compressor.generatedIdCount = readNumber(index);
-			compressor.nextRangeBaseGenCount = readNumber(index);
-			const normalizerCount = readNumber(index);
-			for (let i = 0; i < normalizerCount; i++) {
-				compressor.normalizer.addLocalRange(
-					localIdFromGenCount(readNumber(index)),
-					readNumber(index),
-				);
-			}
-		} else {
-			assert(sessionId !== undefined, "Local state should exist in serialized form.");
-		}
+		compressor.clusterCapacity = clusterCapacity;
 
 		// Clusters
-		compressor.clusterCapacity = readNumber(index);
-		const clusterCount = readNumber(index);
 		let baseFinalId = 0;
 		for (let i = 0; i < clusterCount; i++) {
 			const sessionIndex = readNumber(index);
@@ -596,6 +581,26 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			baseFinalId += capacity;
 		}
 
+		// Local state
+		if (hasLocalState) {
+			assert(sessionId === undefined, "Local state should not exist in serialized form.");
+			compressor.generatedIdCount = readNumber(index);
+			compressor.nextRangeBaseGenCount = readNumber(index);
+			const normalizerCount = readNumber(index);
+			for (let i = 0; i < normalizerCount; i++) {
+				compressor.normalizer.addLocalRange(
+					localIdFromGenCount(readNumber(index)),
+					readNumber(index),
+				);
+			}
+		} else {
+			assert(sessionId !== undefined, "Local state should exist in serialized form.");
+		}
+
+		assert(
+			index.index === index.bytes.byteLength,
+			"Failed to read entire serialized compressor.",
+		);
 		return compressor;
 	}
 

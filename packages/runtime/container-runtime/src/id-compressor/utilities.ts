@@ -235,8 +235,7 @@ export function writeNumericUuid(arr: Uint8Array, index: number, value: NumericU
 }
 
 export function writeBoolean(arr: Uint8Array, index: number, value: boolean): number {
-	arr[index] = value ? 1 : 0;
-	return index + 1; // Boolean values are 1 byte.
+	return writeNumber(arr, index, value ? 1 : 0);
 }
 
 interface Index {
@@ -260,9 +259,7 @@ export function readNumericUuid(index: Index): NumericUuid {
 }
 
 export function readBoolean(index: Index): boolean {
-	const value = index.bytes[index.index] === 1;
-	index.index += 1;
-	return value;
+	return readNumber(index) === 1;
 }
 
 /**
