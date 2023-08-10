@@ -689,6 +689,8 @@ export interface IPendingLocalState {
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-	blobsContents: { [path: string]: ArrayBufferLike };
+	blobsContents: {
+		[path: string]: { encoding: string; data: ArrayBufferLike };
+	};
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }

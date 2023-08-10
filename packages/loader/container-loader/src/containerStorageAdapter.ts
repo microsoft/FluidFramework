@@ -64,7 +64,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		/**
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
-		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
+		private readonly blobContents: {
+			[id: string]: { data: ArrayBufferLike; encoding: string } | string;
+		} = {},
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		forceEnableSummarizeProtocolTree: boolean | undefined,
 	) {
@@ -146,7 +148,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 				const blob = stringToBuffer(maybeBlob, "utf8");
 				return blob;
 			}
-			return maybeBlob;
+			return maybeBlob.data;
 		}
 		return this._storageService.readBlob(id);
 	}
@@ -307,10 +309,10 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
-		const blob = tree.blobsContents[id];
+		const { data: blob, encoding } = tree.blobsContents[id];
 		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
 		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = bufferToString(blob, "utf8");
+		blobs[id] = bufferToString(blob, encoding);
 	}
 }
 
@@ -320,8 +322,8 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	blobs: ISerializableBlobContents,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
-	const blob = tree.blobsContents[id];
+	const { data: blob, encoding } = tree.blobsContents[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
-	blobs[id] = bufferToString(blob, "utf8");
+	blobs[id] = bufferToString(blob, encoding);
 }

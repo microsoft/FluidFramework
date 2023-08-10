@@ -23,7 +23,7 @@ import { DriverErrorType } from "@fluidframework/driver-definitions";
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-	blobsContents: { [path: string]: ArrayBufferLike };
+	blobsContents: { [path: string]: { encoding: string; data: ArrayBufferLike } };
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }
 
@@ -116,11 +116,12 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
 			case SummaryType.Blob: {
 				const blobId = uuid();
 				treeNode.blobs[key] = blobId;
+				const encoding = typeof summaryObject.content === "string" ? "utf8" : "base64";
 				const contentBuffer =
 					typeof summaryObject.content === "string"
 						? stringToBuffer(summaryObject.content, "utf8")
 						: Uint8ArrayToArrayBuffer(summaryObject.content);
-				treeNode.blobsContents[blobId] = contentBuffer;
+				treeNode.blobsContents[blobId] = { encoding, data: contentBuffer };
 				break;
 			}
 			case SummaryType.Handle:

@@ -157,7 +157,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 		assert(id, `blob id for ${key} missing`);
 		const contents = subtree.blobsContents[id];
 		assert(contents, `blob contents for ${key} missing`);
-		return JSON.parse(bufferToString(contents, "utf8")) as T;
+		return JSON.parse(bufferToString(contents.data, contents.encoding)) as T;
 	}
 
 	const assertProtocolAttributes = (s: ISnapshotTreeWithBlobContents) =>
