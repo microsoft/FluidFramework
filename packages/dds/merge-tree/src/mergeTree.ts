@@ -422,18 +422,6 @@ export interface ClientSeq {
 
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
-	/**
-	 * Whether to enable the length calculations implemented in
-	 * https://github.com/microsoft/FluidFramework/pull/11678
-	 *
-	 * These calculations resolve bugginess that causes eventual consistency issues in certain conflicting
-	 * removal cases, but regress some index-based undo-redo implementations. The suggested path for
-	 * consumers is to switch to LocalReference-based undo-redo implementation (see
-	 * https://github.com/microsoft/FluidFramework/pull/11899) and enable this feature flag.
-	 *
-	 * default: false
-	 */
-	mergeTreeUseNewLengthCalculations?: boolean;
 	mergeTreeSnapshotChunkSize?: number;
 	/**
 	 * Whether to use the SnapshotV1 format over SnapshotLegacy.
@@ -731,16 +719,13 @@ export class MergeTree {
 		const removalInfo = toRemovalInfo(segment);
 		if (localSeq === undefined) {
 			if (removalInfo !== undefined) {
-				if (this.options?.mergeTreeUseNewLengthCalculations !== false) {
-					if (!seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
-						return 0;
-					}
-					// this segment removed and outside the collab window which means it is zamboni eligible
-					// this also means the segment could not exist, so we should not consider it
-					// when making decisions about conflict resolutions
-					return undefined;
+				if (!seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
+					return 0;
 				}
-				return 0;
+				// this segment removed and outside the collab window which means it is zamboni eligible
+				// this also means the segment could not exist, so we should not consider it
+				// when making decisions about conflict resolutions
+				return undefined;
 			} else {
 				return segment.cachedLength;
 			}
@@ -1194,59 +1179,21 @@ export class MergeTree {
 			} else {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
-				if (this.options?.mergeTreeUseNewLengthCalculations !== false) {
-					if (removalInfo !== undefined) {
-						if (seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
-							return undefined;
-						}
-						if (
-							seqLTE(removalInfo.removedSeq, refSeq) ||
-							removalInfo.removedClientIds.includes(clientId)
-						) {
-							return 0;
-						}
-					}
-
-					return seqLTE(node.seq ?? 0, refSeq) || segment.clientId === clientId
-						? segment.cachedLength
-						: 0;
-				}
-
-				if (
-					removalInfo !== undefined &&
-					removalInfo.removedSeq !== UnassignedSequenceNumber &&
-					removalInfo.removedSeq <= refSeq
-				) {
-					// this segment is a tombstone eligible for zamboni
-					// so should never be considered, as it may not exist
-					// on other clients
-					return undefined;
-				}
-				if (
-					segment.clientId === clientId ||
-					(segment.seq !== UnassignedSequenceNumber && segment.seq! <= refSeq)
-				) {
-					// Segment happened by reference sequence number or segment from requesting client
-					if (removalInfo !== undefined) {
-						return removalInfo.removedClientIds.includes(clientId)
-							? 0
-							: segment.cachedLength;
-					} else {
-						return segment.cachedLength;
-					}
-				} else {
-					// the segment was inserted and removed before the
-					// this context, so it will never exist for this
-					// context
-					if (
-						removalInfo !== undefined &&
-						removalInfo.removedSeq !== UnassignedSequenceNumber
-					) {
+				if (removalInfo !== undefined) {
+					if (seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
 						return undefined;
 					}
-					// Segment invisible to client at reference sequence number/branch id/client id of op
-					return 0;
+					if (
+						seqLTE(removalInfo.removedSeq, refSeq) ||
+						removalInfo.removedClientIds.includes(clientId)
+					) {
+						return 0;
+					}
 				}
+
+				return seqLTE(node.seq ?? 0, refSeq) || segment.clientId === clientId
+					? segment.cachedLength
+					: 0;
 			}
 		}
 	}
