@@ -213,48 +213,44 @@ export function binarySearch<S, T>(
 	return undefined; // If we reach here, target is not in array.
 }
 
-const float64Buffer = new Float64Array(1);
-const float64Uint8 = new Uint8Array(float64Buffer.buffer);
-
 const bigint64Buffer = new BigUint64Array(2);
-const bigint64Uint8 = new Uint8Array(bigint64Buffer.buffer);
+const bigint64Float64 = new Float64Array(bigint64Buffer.buffer);
 
-export function writeNumber(arr: Uint8Array, index: number, value: number): number {
-	float64Buffer[0] = value;
-	arr.set(float64Uint8, index);
-	return index + 8; // Float64Array elements are 8 bytes.
+export function writeNumber(arr: Float64Array, index: number, value: number): number {
+	arr[index] = value;
+	return index + 1; // Indexed in 8 byte chunks
 }
 
 const halfNumeric = BigInt("0xFFFFFFFFFFFFFFFF");
 const sixtyFour = BigInt(64);
-export function writeNumericUuid(arr: Uint8Array, index: number, value: NumericUuid): number {
+export function writeNumericUuid(arr: Float64Array, index: number, value: NumericUuid): number {
 	bigint64Buffer[0] = value & halfNumeric;
 	bigint64Buffer[1] = value >> sixtyFour;
-	arr.set(bigint64Uint8, index);
-	return index + 16; // BigInt128 values are 16 bytes.
+	arr.set(bigint64Float64, index);
+	return index + 2; // UUID values are 16 bytes.
 }
 
-export function writeBoolean(arr: Uint8Array, index: number, value: boolean): number {
+export function writeBoolean(arr: Float64Array, index: number, value: boolean): number {
 	return writeNumber(arr, index, value ? 1 : 0);
 }
 
 interface Index {
-	bytes: Uint8Array;
+	bytes: Float64Array;
 	index: number;
 }
 
 export function readNumber(index: Index): number {
-	float64Uint8.set(index.bytes.subarray(index.index, index.index + 8));
-	index.index += 8;
-	return float64Buffer[0];
+	const value = index.bytes[index.index];
+	index.index += 1;
+	return value;
 }
 
 export function readNumericUuid(index: Index): NumericUuid {
-	bigint64Uint8.set(index.bytes.subarray(index.index, index.index + 16));
+	bigint64Float64.set(index.bytes.subarray(index.index, index.index + 2));
 	const lowerHalf = bigint64Buffer[0];
 	const upperHalf = bigint64Buffer[1];
 	const value = (upperHalf << sixtyFour) | lowerHalf;
-	index.index += 16;
+	index.index += 2;
 	return value as NumericUuid;
 }
 

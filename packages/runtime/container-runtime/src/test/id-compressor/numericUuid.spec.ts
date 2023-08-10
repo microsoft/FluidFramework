@@ -87,7 +87,7 @@ describe("NumericUuid", () => {
 	it("can serialize a uuid", () => {
 		const uuidString = "00000000-0000-4000-8000-000000000000" as StableId;
 		const numeric = numericUuidFromStableId(uuidString);
-		const serialized = new Uint8Array(16);
+		const serialized = new Float64Array(2);
 		writeNumericUuid(serialized, 0, numeric);
 		const roundtripped = readNumericUuid({ bytes: serialized, index: 0 });
 		assert.equal(roundtripped, numeric);

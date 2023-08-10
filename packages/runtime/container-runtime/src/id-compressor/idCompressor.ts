@@ -462,23 +462,23 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 		const localStateSize = hasLocalState
-			? 8 + // generated ID count
-			  8 + // next range base genCount
-			  8 + // count of normalizer pairs
-			  this.normalizer.contents.size * 16 // pairs
+			? 1 + // generated ID count
+			  1 + // next range base genCount
+			  1 + // count of normalizer pairs
+			  this.normalizer.contents.size * 2 // pairs
 			: 0;
-		// Layout
-		const totalByteSize =
-			8 + // version
-			8 + // hasLocalState
-			8 + // cluster capacity
-			8 + // session count
-			8 + // cluster count
-			serializedSessions.length * 16 + // session IDs
-			finalSpace.clusters.length * 8 * 3 + // clusters: (sessionIndex, capacity, count)[]
+		// Layout size, in 8 byte increments
+		const totalSize =
+			1 + // version
+			1 + // hasLocalState
+			1 + // cluster capacity
+			1 + // session count
+			1 + // cluster count
+			serializedSessions.length * 2 + // session IDs
+			finalSpace.clusters.length * 3 + // clusters: (sessionIndex, capacity, count)[]
 			localStateSize; // local state, if present
 
-		const serialized = new Uint8Array(totalByteSize);
+		const serialized = new Float64Array(totalSize);
 		let index = 0;
 		index = writeNumber(serialized, index, currentWrittenVersion);
 		index = writeBoolean(serialized, index, hasLocalState);
@@ -509,7 +509,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 
-		assert(index === totalByteSize, "Serialized size was incorrectly calculated.");
+		assert(index === totalSize, "Serialized size was incorrectly calculated.");
 		this.logger?.sendTelemetryEvent({
 			eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
 			size: serialized.byteLength,
@@ -529,7 +529,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		serialized: SerializedIdCompressor,
 		sessionId?: SessionId,
 	): IdCompressor {
-		const index = { index: 0, bytes: serialized.bytes };
+		const index = { index: 0, bytes: new Float64Array(serialized.bytes.buffer) };
 		const version = readNumber(index);
 		assert(version === currentWrittenVersion, "Unknown serialized version.");
 		const hasLocalState = readBoolean(index);
@@ -597,10 +597,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			assert(sessionId !== undefined, "Local state should exist in serialized form.");
 		}
 
-		assert(
-			index.index === index.bytes.byteLength,
-			"Failed to read entire serialized compressor.",
-		);
+		assert(index.index === index.bytes.length, "Failed to read entire serialized compressor.");
 		return compressor;
 	}
 
