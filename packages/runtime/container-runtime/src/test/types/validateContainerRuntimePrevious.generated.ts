@@ -1288,26 +1288,26 @@ use_old_EnumDeclaration_RuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SubmitSummaryFailureData": {"forwardCompat": false}
+* "InterfaceDeclaration_SubmitSummaryFailureData": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_SubmitSummaryFailureData():
     TypeOnly<old.SubmitSummaryFailureData>;
-declare function use_current_RemovedInterfaceDeclaration_SubmitSummaryFailureData(
+declare function use_current_InterfaceDeclaration_SubmitSummaryFailureData(
     use: TypeOnly<current.SubmitSummaryFailureData>);
-use_current_RemovedInterfaceDeclaration_SubmitSummaryFailureData(
+use_current_InterfaceDeclaration_SubmitSummaryFailureData(
     get_old_InterfaceDeclaration_SubmitSummaryFailureData());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SubmitSummaryFailureData": {"backCompat": false}
+* "InterfaceDeclaration_SubmitSummaryFailureData": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_SubmitSummaryFailureData():
+declare function get_current_InterfaceDeclaration_SubmitSummaryFailureData():
     TypeOnly<current.SubmitSummaryFailureData>;
 declare function use_old_InterfaceDeclaration_SubmitSummaryFailureData(
     use: TypeOnly<old.SubmitSummaryFailureData>);
 use_old_InterfaceDeclaration_SubmitSummaryFailureData(
-    get_current_RemovedInterfaceDeclaration_SubmitSummaryFailureData());
+    get_current_InterfaceDeclaration_SubmitSummaryFailureData());
 
 /*
 * Validate forward compat by using old type in place of current type

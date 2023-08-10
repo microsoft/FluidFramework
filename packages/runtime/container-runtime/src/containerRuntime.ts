@@ -2952,7 +2952,6 @@ export class ContainerRuntime
 					error,
 				};
 			}
-
 			const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
 			// Now that we have generated the summary, update the message at last summary to the last message processed.
