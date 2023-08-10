@@ -82,7 +82,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"best-random": "^1.0.0",
 		"debug": "^4.1.1",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",

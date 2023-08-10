@@ -78,7 +78,7 @@
 		"@sinclair/typebox": "^0.29.4",
 		"@ungap/structured-clone": "^0.3.4",
 		"sorted-btree": "^1.8.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",

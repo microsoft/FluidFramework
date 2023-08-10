@@ -109,7 +109,7 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
@@ -151,7 +151,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       typescript: 4.5.5
-      uuid: 8.3.2
+      uuid: 9.0.0
 
   azure/packages/azure-local-service:
     specifiers:
@@ -205,11 +205,11 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/protocol-definitions': 1.2.0
       jsrsasign: 10.8.6
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/2.0.0-internal.6.0.0
@@ -272,7 +272,7 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -286,7 +286,7 @@ importers:
       axios: 0.26.1
       events: 3.3.0
       fluid-framework: link:../../../packages/framework/fluid-framework
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-experimental/devtools': link:../../../packages/tools/devtools/devtools
       '@fluidframework/build-common': 2.0.0
@@ -363,7 +363,7 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: ^1.0.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/azure-client': link:../../azure-client
@@ -384,7 +384,7 @@ importers:
       sinon: 7.5.0
       start-server-and-test: 1.15.5
       tinylicious: 1.0.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluidframework/azure-local-service': link:../../azure-local-service
       '@fluidframework/build-common': 2.0.0
@@ -443,7 +443,7 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: ^1.0.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/azure-client': link:../../azure-client
@@ -469,7 +469,7 @@ importers:
       sinon: 7.5.0
       start-server-and-test: 1.15.5
       tinylicious: 1.0.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -704,7 +704,7 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -721,7 +721,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.83.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/build-common': 2.0.0
@@ -811,7 +811,7 @@ importers:
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       url-loader: ^2.1.0
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -839,7 +839,7 @@ importers:
       react-collapsible: 2.10.0_sfoxds7t5ydpegc3knd667wn6m
       react-dom: 17.0.2_react@17.0.2
       react-grid-layout: 0.18.3_sfoxds7t5ydpegc3knd667wn6m
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/build-common': 2.0.0
@@ -3130,7 +3130,7 @@ importers:
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -3146,7 +3146,7 @@ importers:
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.0
@@ -3381,7 +3381,7 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       valid-url: ^1.0.9
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -3417,7 +3417,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.83.0
-      uuid: 8.3.2
+      uuid: 9.0.0
       valid-url: 1.0.9
     devDependencies:
       '@fluidframework/build-common': 2.0.0
@@ -3570,7 +3570,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/pact-map': link:../../../packages/dds/pact-map
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -3594,7 +3594,7 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -3764,7 +3764,7 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -3794,7 +3794,7 @@ importers:
       events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/build-common': 2.0.0
@@ -3901,7 +3901,7 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -3931,7 +3931,7 @@ importers:
       events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_2wska3rv6ra5ajbmktsvyxwga4
       '@fluidframework/build-common': 2.0.0
@@ -4811,7 +4811,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
       '@fluid-experimental/property-properties': link:../property-properties
@@ -4830,7 +4830,7 @@ importers:
       lz4js: 0.2.0
       msgpackr: 1.9.2
       pako: 2.1.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-experimental/property-common': link:../property-common
       '@fluid-internal/test-drivers': link:../../../../packages/test/test-drivers
@@ -5664,7 +5664,7 @@ importers:
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -5680,7 +5680,7 @@ importers:
       denque: 1.5.1
       lru-cache: 6.0.0
       sorted-btree: 1.8.1
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-drivers': link:../../../packages/test/test-drivers
@@ -5834,7 +5834,7 @@ importers:
       sorted-btree: ^1.8.0
       source-map-support: ^0.5.16
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -5849,7 +5849,7 @@ importers:
       '@sinclair/typebox': 0.29.4
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
@@ -6412,7 +6412,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6421,7 +6421,7 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0
       '@fluidframework/build-common': 2.0.0
@@ -6569,7 +6569,7 @@ importers:
       ts-node: ^8.6.2
       tslib: ^1.10.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -6615,7 +6615,7 @@ importers:
       source-map-support: 0.5.21
       ts-node: 8.10.2_typescript@4.5.5
       typescript: 4.5.5
-      uuid: 8.3.2
+      uuid: 9.0.0
 
   packages/dds/merge-tree:
     specifiers:
@@ -6732,7 +6732,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6741,7 +6741,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
@@ -6945,7 +6945,7 @@ importers:
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -6958,7 +6958,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
@@ -7031,7 +7031,7 @@ importers:
       rimraf: ^4.4.0
       ts-node: ^8.6.2
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -7045,7 +7045,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -7562,7 +7562,7 @@ importers:
       socket.io-client: ^4.6.1
       typescript: ~4.5.5
       url: ^0.11.0
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7580,7 +7580,7 @@ importers:
       events: 3.3.0
       jsrsasign: 10.8.6
       url: 0.11.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -7648,7 +7648,7 @@ importers:
       sinon: ^7.4.2
       socket.io-client: ^4.6.1
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -7665,7 +7665,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       node-fetch: 2.6.11
       socket.io-client: 4.6.1
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -7875,7 +7875,7 @@ importers:
       socket.io-client: ^4.6.1
       typescript: ~4.5.5
       url-parse: ^1.5.8
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -7892,7 +7892,7 @@ importers:
       json-stringify-safe: 5.0.1
       socket.io-client: 4.6.1
       url-parse: 1.5.10
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -8007,7 +8007,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -8016,7 +8016,7 @@ importers:
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
       '@fluidframework/server-services-client': 1.0.0
       jsrsasign: 10.8.6
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -8065,7 +8065,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -8079,7 +8079,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/agent-scheduler-previous': /@fluidframework/agent-scheduler/2.0.0-internal.6.0.0
@@ -8134,7 +8134,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -8150,7 +8150,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/synthesize': link:../synthesize
       '@fluidframework/view-interfaces': link:../view-interfaces
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/aqueduct-previous': /@fluidframework/aqueduct/2.0.0-internal.6.0.0
@@ -8763,7 +8763,7 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: ^1.0.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -8777,7 +8777,7 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/aqueduct': link:../aqueduct
@@ -8990,7 +8990,7 @@ importers:
       sinon: ^7.4.2
       typescript: ~4.5.5
       url: ^0.11.0
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9007,7 +9007,7 @@ importers:
       events: 3.3.0
       lodash: 4.17.21
       url: 0.11.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-internal/test-loader-utils': link:../test-loader-utils
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
@@ -9131,7 +9131,7 @@ importers:
       sinon: ^7.4.2
       typescript: ~4.5.5
       url: ^0.11.0
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9143,7 +9143,7 @@ importers:
       axios: 0.26.1
       lz4js: 0.2.0
       url: 0.11.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9307,7 +9307,7 @@ importers:
       sinon: ^7.4.2
       sorted-btree: ^1.8.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9327,7 +9327,7 @@ importers:
       events: 3.3.0
       lz4js: 0.2.0
       sorted-btree: 1.8.1
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
@@ -9439,7 +9439,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9456,7 +9456,7 @@ importers:
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       lodash: 4.17.21
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9675,7 +9675,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9692,7 +9692,7 @@ importers:
       axios: 0.26.1
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9844,7 +9844,7 @@ importers:
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     devDependencies:
@@ -9905,7 +9905,7 @@ importers:
       rimraf: 4.4.1
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
-      uuid: 8.3.2
+      uuid: 9.0.0
       webpack: 5.83.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.83.0
 
@@ -10153,12 +10153,12 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 1.2.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0
       '@fluidframework/build-common': 2.0.0
@@ -10212,7 +10212,7 @@ importers:
       rimraf: ^4.4.0
       semver: ^7.5.3
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluid-internal/test-pairwise-generator': link:../test-pairwise-generator
       '@fluidframework/common-utils': 1.1.1
@@ -10233,7 +10233,7 @@ importers:
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       axios: 0.26.1
       semver: 7.5.3
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -10323,7 +10323,7 @@ importers:
       tinylicious: ^1.0.0
       typescript: ~4.5.5
       url: ^0.11.0
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
@@ -10375,7 +10375,7 @@ importers:
       start-server-and-test: 1.15.5
       tinylicious: 1.0.0
       url: 0.11.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -10387,8 +10387,8 @@ importers:
       '@types/uuid': 8.3.4
       concurrently: 7.6.0
       eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_jzw6huqvrrz5ajpbhg6o7a2xdu
-      eslint-plugin-import: 2.25.4_nfrjsm3ufztdjntgbuqnvazmai
+      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
+      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
@@ -10580,7 +10580,7 @@ importers:
       random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/common-utils': 1.1.1
@@ -10605,7 +10605,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       best-random: 1.0.3
       debug: 4.3.4
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -10693,7 +10693,7 @@ importers:
       semver: ^7.5.3
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     dependencies:
@@ -10742,8 +10742,8 @@ importers:
       concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
-      eslint-import-resolver-typescript: 3.5.5_jzw6huqvrrz5ajpbhg6o7a2xdu
-      eslint-plugin-import: 2.25.4_nfrjsm3ufztdjntgbuqnvazmai
+      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
+      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -10754,7 +10754,7 @@ importers:
       rimraf: 4.4.1
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
-      uuid: 8.3.2
+      uuid: 9.0.0
       webpack: 5.83.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.83.0
 
@@ -11551,7 +11551,7 @@ importers:
       source-map-loader: ^2.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
@@ -11581,7 +11581,7 @@ importers:
       isomorphic-fetch: 3.0.0
       nconf: 0.12.0
       sillyname: 0.1.0
-      uuid: 8.3.2
+      uuid: 9.0.0
       webpack-dev-server: 4.6.0_nwcuyijzf6l5chuh7xhtrzgjly
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_2wska3rv6ra5ajbmktsvyxwga4
@@ -11703,7 +11703,7 @@ importers:
       rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -11711,7 +11711,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       debug: 4.3.4
       events: 3.3.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -19492,7 +19492,7 @@ packages:
       chalk: 4.1.2
       strip-ansi: 6.0.1
       supports-color: 8.1.1
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /@oclif/core/2.4.0:
     resolution: {integrity: sha512-wWUnOOfQQty0k1Cstm/iWW6pbG0mHzU7rcUtab2Sni9kjBPCcy6ENTgpsWbb/WdITopqtXmvpYII2fgcjKdzUA==}
@@ -19522,7 +19522,7 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      tslib: 2.6.0
+      tslib: 2.6.1
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -19574,7 +19574,7 @@ packages:
       npm-run-path: 4.0.1
       semver: 7.5.4
       shelljs: 0.8.5
-      tslib: 2.6.0
+      tslib: 2.6.1
       validate-npm-package-name: 5.0.0
       yarn: 1.22.19
     transitivePeerDependencies:
@@ -19796,7 +19796,7 @@ packages:
       '@octokit/request-error': 2.1.0
       '@octokit/types': 6.41.0
       is-plain-object: 5.0.0
-      node-fetch: 2.6.11
+      node-fetch: 2.6.12
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
@@ -19810,7 +19810,7 @@ packages:
       '@octokit/request-error': 3.0.3
       '@octokit/types': 9.2.2
       is-plain-object: 5.0.0
-      node-fetch: 2.6.11
+      node-fetch: 2.6.12
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
@@ -19966,7 +19966,7 @@ packages:
       is-glob: 4.0.3
       open: 9.1.0
       picocolors: 1.0.0
-      tslib: 2.6.0
+      tslib: 2.6.1
     dev: true
 
   /@pmmmwh/react-refresh-webpack-plugin/0.5.10_bw64nqwvg33hl7aokjyon4wd5e:
@@ -24120,7 +24120,7 @@ packages:
   /async-mutex/0.3.2:
     resolution: {integrity: sha512-HuTK7E7MT7jZEh1P9GtRW9+aTWiDWWi9InbZ5hjxrnRa39KS4BW04+xLBhYNS2aXhHUIKZSw3gj4Pn1pj+qGAA==}
     dependencies:
-      tslib: 2.3.1
+      tslib: 2.6.1
 
   /async-retry/1.2.3:
     resolution: {integrity: sha512-tfDb02Th6CE6pJUF2gjW5ZVjsgwlucVXOEQMvEX9JgSJMs9gAX+Nz3xRuJBKuUYjTSYORqvDBORdAQ3LU59g7Q==}
@@ -25464,7 +25464,7 @@ packages:
     resolution: {integrity: sha512-gxGWBrTT1JuMx6R+o5PTXMmUnhnVzLQ9SNutD4YqKtI6ap897t3tKECYla6gCWEkplXnlNybEkZg9GEGxKFCgw==}
     dependencies:
       pascal-case: 3.1.2
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /camelcase-css/2.0.1:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
@@ -26783,7 +26783,7 @@ packages:
   /cross-fetch/3.1.5:
     resolution: {integrity: sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==}
     dependencies:
-      node-fetch: 2.6.11
+      node-fetch: 2.6.12
     transitivePeerDependencies:
       - encoding
     dev: true
@@ -27245,7 +27245,7 @@ packages:
       memfs-or-file-map-to-github-branch: 1.2.1
       micromatch: 4.0.5
       node-cleanup: 2.1.2
-      node-fetch: 2.6.11
+      node-fetch: 2.6.12
       override-require: 1.1.1
       p-limit: 2.3.0
       parse-diff: 0.7.1
@@ -27944,7 +27944,7 @@ packages:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /dot-prop/4.2.1:
     resolution: {integrity: sha512-l0p4+mIuJIua0mhxGoh4a+iNL9bmeK5DvnSVQa6T0OhrVmaEa1XScX5Etc673FePCJOArq/4Pa2cLGODUWTPOQ==}
@@ -28505,6 +28505,30 @@ packages:
       - supports-color
     dev: true
 
+  /eslint-import-resolver-typescript/3.5.5_wwrwxdavgu4hzdoqb37x5rvvke:
+    resolution: {integrity: sha512-TdJqPHs2lW5J9Zpe17DZNQuDnox4xo2o+0tE7Pggain9Rbc19ik8kFtXdxZ250FVx2kF4vlt2RSf4qlUpG7bhw==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    peerDependencies:
+      eslint: '*'
+      eslint-plugin-import: '*'
+    dependencies:
+      debug: 4.3.4
+      enhanced-resolve: 5.15.0
+      eslint: 8.6.0
+      eslint-module-utils: 2.8.0_av4jjatakjabmml5z5flrwsy3e
+      eslint-plugin-import: 2.25.4_av4jjatakjabmml5z5flrwsy3e
+      get-tsconfig: 4.6.2
+      globby: 13.1.4
+      is-core-module: 2.12.1
+      is-glob: 4.0.3
+      synckit: 0.8.5
+    transitivePeerDependencies:
+      - '@typescript-eslint/parser'
+      - eslint-import-resolver-node
+      - eslint-import-resolver-webpack
+      - supports-color
+    dev: true
+
   /eslint-module-utils/2.8.0_2wwsys6gbnsdc4a7jaa5rcv4nq:
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
@@ -28529,6 +28553,63 @@ packages:
       debug: 3.2.7
       eslint: 8.6.0
       eslint-import-resolver-node: 0.3.7
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /eslint-module-utils/2.8.0_ajv3vlqzjpoxbu6hdlpgvuycsm:
+    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: '*'
+      eslint-import-resolver-node: '*'
+      eslint-import-resolver-typescript: '*'
+      eslint-import-resolver-webpack: '*'
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+      eslint:
+        optional: true
+      eslint-import-resolver-node:
+        optional: true
+      eslint-import-resolver-typescript:
+        optional: true
+      eslint-import-resolver-webpack:
+        optional: true
+    dependencies:
+      debug: 3.2.7
+      eslint: 8.6.0
+      eslint-import-resolver-node: 0.3.7
+      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /eslint-module-utils/2.8.0_av4jjatakjabmml5z5flrwsy3e:
+    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: '*'
+      eslint-import-resolver-node: '*'
+      eslint-import-resolver-typescript: '*'
+      eslint-import-resolver-webpack: '*'
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+      eslint:
+        optional: true
+      eslint-import-resolver-node:
+        optional: true
+      eslint-import-resolver-typescript:
+        optional: true
+      eslint-import-resolver-webpack:
+        optional: true
+    dependencies:
+      debug: 3.2.7
+      eslint: 8.6.0
+      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -28616,7 +28697,7 @@ packages:
       debug: 3.2.7
       eslint: 8.6.0
       eslint-import-resolver-node: 0.3.7
-      eslint-import-resolver-typescript: 3.5.5_jzw6huqvrrz5ajpbhg6o7a2xdu
+      eslint-import-resolver-typescript: 3.5.5_wwrwxdavgu4hzdoqb37x5rvvke
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -28679,6 +28760,36 @@ packages:
       lodash.kebabcase: 4.1.1
       lodash.snakecase: 4.1.1
       lodash.upperfirst: 4.3.1
+    dev: true
+
+  /eslint-plugin-import/2.25.4_av4jjatakjabmml5z5flrwsy3e:
+    resolution: {integrity: sha512-/KJBASVFxpu0xg1kIBn9AUa8hQVnszpwgE7Ld0lKAlx7Ie87yzEzCgSkekt+le/YVhiaosO4Y14GDAOc41nfxA==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+    dependencies:
+      array-includes: 3.1.6
+      array.prototype.flat: 1.3.1
+      debug: 2.6.9
+      doctrine: 2.1.0
+      eslint: 8.6.0
+      eslint-import-resolver-node: 0.3.7
+      eslint-module-utils: 2.8.0_ajv3vlqzjpoxbu6hdlpgvuycsm
+      has: 1.0.3
+      is-core-module: 2.12.1
+      is-glob: 4.0.3
+      minimatch: 3.1.2
+      object.values: 1.1.6
+      resolve: 1.22.2
+      tsconfig-paths: 3.14.2
+    transitivePeerDependencies:
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
     dev: true
 
   /eslint-plugin-import/2.25.4_eslint@8.6.0:
@@ -34313,7 +34424,7 @@ packages:
     dependencies:
       abort-controller: 3.0.0
       ky: 0.12.0
-      node-fetch: 2.6.11
+      node-fetch: 2.6.12
     transitivePeerDependencies:
       - encoding
     dev: true
@@ -34916,7 +35027,7 @@ packages:
   /lower-case/2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /lowercase-keys/1.0.1:
     resolution: {integrity: sha512-G2Lj61tXDnVFFOi8VZds+SoQjtQC3dgokKdDG2mTm1tx4m50NUHBOZSBwQQHyy0V12A0JTG4icfZQH+xPyh8VA==}
@@ -36208,7 +36319,7 @@ packages:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /nock/10.0.6:
     resolution: {integrity: sha512-b47OWj1qf/LqSQYnmokNWM8D88KvUl2y7jT0567NB3ZBAZFz2bWp2PC81Xn7u8F2/vJxzkzNZybnemeFa7AZ2w==}
@@ -36271,6 +36382,18 @@ packages:
         optional: true
     dependencies:
       whatwg-url: 5.0.0
+
+  /node-fetch/2.6.12:
+    resolution: {integrity: sha512-C/fGU2E8ToujUivIO0H+tpQ6HWo4eEmchoPIoXtxCrVghxdKq+QOHqEZW7tuP3KlV3bC8FRMO5nMCC7Zm1VP6g==}
+    engines: {node: 4.x || >=6.0.0}
+    peerDependencies:
+      encoding: ^0.1.0
+    peerDependenciesMeta:
+      encoding:
+        optional: true
+    dependencies:
+      whatwg-url: 5.0.0
+    dev: true
 
   /node-forge/0.10.0:
     resolution: {integrity: sha512-PPmu8eEeG9saEUvI97fm4OYxXVB6bFvyNTyiUOBichBpFG8A1Ljw3bY62+5oOjDEMHRnd0Y7HQ+x7uzxOzC6JA==}
@@ -36956,7 +37079,7 @@ packages:
       normalize-package-data: 3.0.3
       semver: 7.5.4
       shelljs: 0.8.5
-      tslib: 2.6.0
+      tslib: 2.6.1
       yeoman-environment: 3.17.0
       yeoman-generator: 5.8.0_yeoman-environment@3.17.0
       yosay: 2.0.2
@@ -37474,7 +37597,7 @@ packages:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /parent-module/1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -37603,7 +37726,7 @@ packages:
     resolution: {integrity: sha512-uWlGT3YSnK9x3BQJaOdcZwrnV6hPpd8jFH1/ucpiLRPh/2zCVJKS19E4GvYHvaCcACn3foXZ0cLB9Wrx1KGe5g==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /pascalcase/0.1.1:
     resolution: {integrity: sha512-XHXfu/yOQRy9vYOtUDVMN60OEJjW013GoObG1o+xwQTpB9eYJX/BjXMsdW13ZDPruFhYYn0AG22w0xgQMwl3Nw==}
@@ -40047,7 +40170,7 @@ packages:
   /rxjs/7.8.1:
     resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
     dependencies:
-      tslib: 2.6.0
+      tslib: 2.6.1
 
   /safe-array-concat/1.0.0:
     resolution: {integrity: sha512-9dVEFruWIsnie89yym+xWTAYASdpw3CJV7Li/6zBewGf9z2i1j31rP6jnY0pHEO4QZh6N0K11bFjWmdR8UGdPQ==}
@@ -41772,7 +41895,7 @@ packages:
     engines: {node: ^14.18.0 || >=16.0.0}
     dependencies:
       '@pkgr/utils': 2.4.2
-      tslib: 2.6.0
+      tslib: 2.6.1
     dev: true
 
   /syncpack/9.8.6:
@@ -42008,7 +42131,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.17.4
-      webpack: 5.88.1_webpack-cli@4.10.0
+      webpack: 5.88.1
     dev: true
 
   /terser/4.8.1:
@@ -42531,6 +42654,9 @@ packages:
 
   /tslib/2.6.0:
     resolution: {integrity: sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==}
+
+  /tslib/2.6.1:
+    resolution: {integrity: sha512-t0hLfiEKfMUoqhG+U1oid7Pva4bbDPHYfJNiB7BiIjRkj1pyC++4N3huJfqY6aRH6VTB0rvtzQwjM4K6qpfOig==}
 
   /tsutils/3.21.0_typescript@4.5.5:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
@@ -43349,6 +43475,10 @@ packages:
 
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
+
+  /uuid/9.0.0:
+    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
 
   /v8-compile-cache/2.3.0:

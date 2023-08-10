@@ -54,7 +54,7 @@
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",
 		"sorted-btree": "^1.8.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",

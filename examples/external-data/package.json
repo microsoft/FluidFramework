@@ -78,7 +78,7 @@
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0",
-		"uuid": "^8.3.1",
+		"uuid": "^9.0.0",
 		"valid-url": "^1.0.9"
 	},
 	"devDependencies": {

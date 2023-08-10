@@ -42,7 +42,7 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/server-services-client": "^1.0.0",
 		"jsrsasign": "^10.5.25",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",

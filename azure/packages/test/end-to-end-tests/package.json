@@ -72,7 +72,7 @@
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "^1.0.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluidframework/azure-local-service": "workspace:~",
