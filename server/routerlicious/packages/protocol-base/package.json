@@ -133,6 +133,10 @@
 			},
 			"InterfaceDeclaration_IProtocolHandler": {
 				"backCompat": false
+			},
+			"FunctionDeclaration_buildGitTreeHierarchy": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
