@@ -26,11 +26,15 @@ function echoExternalDataWebhookToFluid(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	const signalContent = {
-		taskData,
-		externalTaskListId,
-		version: "1.0", // to allow for signal content to change in the future
-	};
+	// Stringify signal content one time more than POST body requirement
+	// becuase we want this to be passed on to the websocket as is
+	const signalContent = JSON.stringify({
+		type: "ExternalDataChanged_V1.0.0",
+		content: {
+			taskData,
+			externalTaskListId,
+		}
+	});
 
 	const messageBody = JSON.stringify({ tenantId, documentId, signalContent });
 	fetch(fluidServiceUrl, {
