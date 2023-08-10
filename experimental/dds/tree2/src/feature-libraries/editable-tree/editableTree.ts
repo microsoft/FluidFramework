@@ -26,21 +26,24 @@ import { FieldKind } from "../modular-schema";
 import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
+import {
+	EditableTreeEvents,
+	getField,
+	on,
+	parentField,
+	typeSymbol,
+	contextSymbol,
+} from "../untypedTree";
 import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	EditableTreeEvents,
 	UnwrappedEditableField,
-	getField,
-	on,
-	parentField,
 	proxyTargetSymbol,
-	typeSymbol,
-	contextSymbol,
 	NewFieldContent,
 	localNodeKeySymbol,
+	setField,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -170,6 +173,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
+	public setField(fieldKey: FieldKey, content: NewFieldContent): void {
+		this.getField(fieldKey).setContent(content);
+	}
+
 	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
@@ -184,11 +191,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
 		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
-		assert(this.cursor.fieldIndex === index, "mismatched indexes");
+		assert(this.cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), "mismatched keys");
+		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
 		let fieldSchema: FieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.
@@ -279,6 +286,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target[Symbol.iterator].bind(target);
 			case getField:
 				return target.getField.bind(target);
+			case setField:
+				return target.setField.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:
@@ -303,7 +312,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		);
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).content = value;
+			target.setField(fieldKey, value);
 			return true;
 		}
 		return false;
@@ -331,11 +340,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case parentField:
 			case on:
 			case contextSymbol:
-			case localNodeKeySymbol:
 				return true;
+			case localNodeKeySymbol:
+				return target.context.nodeKeyFieldKey !== undefined;
 			case valueSymbol:
-				// Could do `target.value !== ValueSchema.Nothing`
-				// instead if values which could be modified should report as existing.
 				return target.value !== undefined;
 			default:
 				return false;
@@ -399,6 +407,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					configurable: true,
 					enumerable: false,
 					value: target.getField.bind(target),
+					writable: false,
+				};
+			case setField:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.setField.bind(target),
 					writable: false,
 				};
 			case parentField:

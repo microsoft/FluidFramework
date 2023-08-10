@@ -13,7 +13,6 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	IRootSummaryTreeWithStats,
 	isRuntimeMessage,
 	RuntimeMessage,
 	agentSchedulerId,

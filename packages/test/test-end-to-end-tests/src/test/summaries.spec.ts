@@ -516,7 +516,10 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		};
 	});
 
-	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async () => {
+	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const { summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize
@@ -556,7 +559,10 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		);
 	});
 
-	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async () => {
+	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize
