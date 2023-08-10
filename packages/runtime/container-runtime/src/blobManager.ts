@@ -122,11 +122,12 @@ export type IBlobManagerRuntime = Pick<
 	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
-// Note that while offline we "submit" an op before uploading the blob, but we always
+// Note that while shutdown we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
 export enum PendingBlobStatus {
 	Uploading,
 	SendingOp,
+	Stashed,
 }
 
 type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
@@ -175,9 +176,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly redirectTable: Map<string, string | undefined>;
 
 	/**
-	 * Blobs which have not been uploaded or for which we have not yet seen a BlobAttach op round-trip.
-	 * Until we see the op round-trip, there is a possibility we may need to re-upload the blob, so
-	 * we must save it. This is true for both the online and offline flow.
+	 * Blobs which we have not yet seen a BlobAttach op round-trip and not yet attached to a DDS.
 	 */
 	private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
@@ -313,14 +312,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 	}
 
-	private get pendingOfflineUploads() {
+	private get stashedPendingUploads() {
 		return Array.from(this.pendingBlobs.values()).filter(
-			(e) => e.status === PendingBlobStatus.Uploading,
+			(e) => e.status === PendingBlobStatus.Stashed,
 		);
 	}
 
-	public get hasPendingOfflineUploads(): boolean {
-		return this.pendingOfflineUploads.length > 0;
+	public get hasStashedPendingUploads(): boolean {
+		return this.stashedPendingUploads.length > 0;
 	}
 
 	public get allBlobsAttached(): boolean {
@@ -351,7 +350,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	public async onConnected() {
 		this.retryThrottler.cancel();
-		const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
+		const pendingUploads = this.stashedPendingUploads.map(async (e) => e.uploadP);
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -367,6 +366,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		for (const [localId, entry] of this.pendingBlobs) {
 			switch (entry.status) {
 				case PendingBlobStatus.Uploading:
+					entry.status = PendingBlobStatus.Stashed;
 					this.sendBlobAttachOp(localId, entry.storageId);
 				case PendingBlobStatus.SendingOp:
 					entry.handleP.resolve(this.getBlobHandle(localId));
@@ -569,7 +569,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return;
 		}
 		assert(
-			entry.status === PendingBlobStatus.Uploading,
+			entry.status === PendingBlobStatus.Uploading ||
+				entry.status === PendingBlobStatus.Stashed,
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
 		entry.storageId = response.id;
@@ -583,29 +584,24 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		if (!entry.opsent) {
 			this.sendBlobAttachOp(localId, response.id);
 		}
-		if (this.runtime.connected) {
-			if (this.storageIds.has(response.id)) {
-				// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
-				// an existing blob, we don't have to wait for the op to be ack'd since this step has already
-				// happened before and so, the server won't delete it.
-				this.setRedirection(localId, response.id);
-				entry.handleP.resolve(this.getBlobHandle(localId));
-				this.deletePendingBlobMaybe(localId);
-			} else {
-				// If there is already an op for this storage ID, append the local ID to the list. Once any op for
-				// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
-				// blob alive in storage.
-				this.opsInFlight.set(
-					response.id,
-					(this.opsInFlight.get(response.id) ?? []).concat(localId),
-				);
-				entry.status = PendingBlobStatus.SendingOp;
-			}
+		if (this.storageIds.has(response.id)) {
+			// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
+			// an existing blob, we don't have to wait for the op to be ack'd since this step has already
+			// happened before and so, the server won't delete it.
+			this.setRedirection(localId, response.id);
+			entry.handleP.resolve(this.getBlobHandle(localId));
+			this.deletePendingBlobMaybe(localId);
 		} else {
-			// connected to storage but not ordering service?
-			this.mc.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
+			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
+			// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
+			// blob alive in storage.
+			this.opsInFlight.set(
+				response.id,
+				(this.opsInFlight.get(response.id) ?? []).concat(localId),
+			);
 			entry.status = PendingBlobStatus.SendingOp;
 		}
+
 		return response;
 	}
 

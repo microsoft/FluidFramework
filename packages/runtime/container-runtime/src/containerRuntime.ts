@@ -1992,7 +1992,7 @@ export class ContainerRuntime
 		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 		const connecting =
 			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
-		if (connecting && this.blobManager.hasPendingOfflineUploads) {
+		if (connecting && this.blobManager.hasStashedPendingUploads) {
 			assert(
 				!this.delayConnectClientId,
 				0x392 /* Connect event delay must be canceled before subsequent connect event */,
