@@ -345,7 +345,7 @@ export class RedisFs implements IFileSystemPromises {
 
 		Lumberjack.info(`RedisStat: Data is ${filepath} ${data} ${!data} ${typeof data}`);
 
-		if (!data) {
+		if (data === null) {
 			Lumberjack.info(`RedisStat: File does not exist ${filepath}`);
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
