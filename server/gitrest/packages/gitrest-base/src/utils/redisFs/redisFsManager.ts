@@ -238,7 +238,7 @@ export class RedisFs implements IFileSystemPromises {
 	): Promise<undefined | string | void> {
 		const folderpathString = folderpath.toString();
 		const recursive = options && typeof options === "object" && options.recursive;
-
+		Lumberjack.info(`Came to mkdir for ${folderpathString}`);
 		if (recursive) {
 			const folderSeparator = "/";
 			const subfolders = folderpathString.split(folderSeparator);
@@ -342,6 +342,8 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
+
+		Lumberjack.info(`RedisStat: Data is ${filepath} ${data} ${!data} ${typeof data}`);
 
 		if (!data) {
 			Lumberjack.info(`RedisStat: File does not exist ${filepath}`);
