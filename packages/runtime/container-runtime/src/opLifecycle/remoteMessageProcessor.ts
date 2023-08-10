@@ -4,7 +4,11 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	SequencedContainerRuntimeMessage,
+} from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -98,15 +102,18 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 	return message;
 };
 
+//* Bring back type guard?
 /**
- * For a given message, it moves the nested contents and type on level up.
- *
+ * For a given message, it moves the nested ContainerRuntimeMessage props one level up.
  */
 const unpack = (message: ISequencedDocumentMessage) => {
 	const innerContents = message.contents as ContainerRuntimeMessage;
-	message.type = innerContents.type;
-	message.contents = innerContents.contents;
-	//* TODO: Also bump compatDetails up.  Maybe bring back the type guard aspect here from the other PR's branch
+
+	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
+	const sequencedContainerRuntimeMessage = message as SequencedContainerRuntimeMessage;
+	sequencedContainerRuntimeMessage.type = innerContents.type;
+	sequencedContainerRuntimeMessage.contents = innerContents.contents;
+	sequencedContainerRuntimeMessage.compatDetails = innerContents.compatDetails;
 };
 
 //* TEST COVERAGE - unpack
