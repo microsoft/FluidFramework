@@ -216,7 +216,7 @@ export function binarySearch<S, T>(
 const float64Buffer = new Float64Array(1);
 const float64Uint8 = new Uint8Array(float64Buffer.buffer);
 
-const bigint64Buffer = new BigInt64Array(2);
+const bigint64Buffer = new BigUint64Array(2);
 const bigint64Uint8 = new Uint8Array(bigint64Buffer.buffer);
 
 export function writeNumber(arr: Uint8Array, index: number, value: number): number {
@@ -251,8 +251,8 @@ export function readNumber(index: Index): number {
 
 export function readNumericUuid(index: Index): NumericUuid {
 	bigint64Uint8.set(index.bytes.subarray(index.index, index.index + 16));
-	const lowerHalf = BigInt.asUintN(64, bigint64Buffer[0]);
-	const upperHalf = BigInt.asUintN(64, bigint64Buffer[1]);
+	const lowerHalf = bigint64Buffer[0];
+	const upperHalf = bigint64Buffer[1];
 	const value = (upperHalf << sixtyFour) | lowerHalf;
 	index.index += 16;
 	return value as NumericUuid;
