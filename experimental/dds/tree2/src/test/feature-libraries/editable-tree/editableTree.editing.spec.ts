@@ -419,7 +419,7 @@ describe("editable-tree: editing", () => {
 			field.insertNodes(0, ["foo", "bar"]);
 			assert.deepEqual([...field], ["foo", "bar"]);
 
-			field.delete();
+			field.remove();
 			// create using `insertNodes()`
 			["third", "second", "first"].forEach((content) => field.insertNodes(0, [content]));
 			assert.deepEqual([...field], ["first", "second", "third"]);
@@ -528,7 +528,7 @@ describe("editable-tree: editing", () => {
 			});
 
 			// delete method
-			field.delete();
+			field.remove();
 			assert(!(localFieldKey in root));
 			assert.deepEqual([...field], []);
 		});
@@ -613,7 +613,7 @@ describe("editable-tree: editing", () => {
 			assert.equal(root[localFieldKey], "bar");
 
 			// delete method
-			field.delete();
+			field.remove();
 			assert(!(localFieldKey in root));
 			assert.equal(root[localFieldKey], undefined);
 		});
@@ -668,7 +668,7 @@ describe("editable-tree: editing", () => {
 
 			// delete method
 			assert.throws(() => {
-				field.delete();
+				field.remove();
 			});
 		});
 	});

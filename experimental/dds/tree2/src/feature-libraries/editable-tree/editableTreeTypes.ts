@@ -92,7 +92,7 @@ export interface EditableTree
 	 * Sequences (including empty ones) are always exposed as {@link EditableField}s,
 	 * and everything else is either a single EditableTree or undefined depending on if it's empty.
 	 *
-	 * It is possible to use this indexed access to delete the field using the `delete` operator and
+	 * It is possible to use this indexed access to remove the field using the `remove` operator and
 	 * to set the value of the field or, more precisely, of its existing node using the simple assignment operator (`=`)
 	 * if the field is defined as `optional` or `value`, its node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
@@ -100,7 +100,7 @@ export interface EditableTree
 	 * See `EditableTreeContext.unwrappedRoot` for how to use the simple assignment operator in other cases,
 	 * as it works the same way for all children of the tree starting from its root.
 	 *
-	 * Use with the `delete` operator to delete `optional` or `sequence` fields of this node.
+	 * Use with the `remove` operator to remove `optional` or `sequence` fields of this node.
 	 */
 	// TODO: update docs for concurrently deleting the field.
 	[key: string]: UnwrappedEditableField;
@@ -187,7 +187,7 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * See `EditableTreeContext.unwrappedRoot` for more details, as it works the same way for all
  * children of the tree starting from its root.
  *
- * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+ * It is forbidden to remove the node using the `remvoe` operator, use the `removeNodes()` method instead.
  *
  * TODO: split this interface by field kind.
  * @alpha
@@ -219,14 +219,14 @@ export interface EditableField
 	): void;
 
 	/**
-	 * Sequentially deletes the nodes from this field.
+	 * Sequentially remove the nodes from this field.
 	 * Sequence fields only.
 	 *
-	 * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.
-	 * @param count - the number of nodes to be deleted. If not provided, deletes all nodes
+	 * @param index - the index of the first node to be removed. It must be in a range of existing node indices.
+	 * @param count - the number of nodes to be removed. If not provided, removes all nodes
 	 * starting from the index and up to the length of the field.
 	 */
-	deleteNodes(index: number, count?: number): void;
+	removeNodes(index: number, count?: number): void;
 
 	/**
 	 * Sequentially replaces the nodes of this field.
@@ -242,10 +242,10 @@ export interface EditableField
 	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
 
 	/**
-	 * Delete the content of this field.
+	 * Removes the content of this field.
 	 * Only supports field kinds which can be empty.
 	 */
-	delete(): void;
+	remove(): void;
 
 	/**
 	 * The content of this field.

@@ -310,7 +310,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		}
 	}
 
-	public delete(): void {
+	public remove(): void {
 		switch (this.kind.multiplicity) {
 			case Multiplicity.Optional: {
 				const fieldEditor = this.optionalEditor();
@@ -396,7 +396,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return this.cursor.getFieldPath();
 	}
 
-	public deleteNodes(index: number, count?: number): void {
+	public removeNodes(index: number, count?: number): void {
 		const fieldEditor = this.sequenceEditor();
 		assert(
 			this.length === 0 || keyIsValidIndex(index, this.length),

@@ -320,7 +320,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).delete();
+			target.getField(fieldKey).remove();
 			return true;
 		}
 		return false;
