@@ -7,8 +7,13 @@ import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { PendingStateManager } from "../pendingStateManager";
+import Deque from "double-ended-queue";
+import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
+
+type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
+	initialMessages: Deque<IPendingMessageNew>;
+};
 
 describe("Pending State Manager", () => {
 	describe("Rollback", () => {
@@ -279,7 +284,8 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Local state processing", () => {
-		function createPendingStateManager(pendingStates): any {
+		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -292,7 +298,7 @@ describe("Pending State Manager", () => {
 				},
 				{ pendingStates },
 				undefined /* logger */,
-			);
+			) as any;
 		}
 
 		describe("Constructor conversion", () => {
@@ -385,7 +391,7 @@ describe("Pending State Manager", () => {
 
 			await pendingStateManager.applyStashedOpsAt(0);
 
-			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
+			assert.deepStrictEqual(pendingStateManager.getLocalState()?.pendingStates, [
 				{
 					type: "message",
 					content: '{"type":"component"}',
