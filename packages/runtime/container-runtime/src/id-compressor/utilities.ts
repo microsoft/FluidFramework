@@ -45,7 +45,7 @@ export function assertIsStableId(stableId: string): StableId {
  * Asserts that the given string is a stable ID.
  */
 export function assertIsSessionId(stableId: string): SessionId {
-	assert(isStableId(stableId), 0x4a3 /* Expected a StableId */);
+	assertIsStableId(stableId);
 	return stableId as SessionId;
 }
 
