@@ -142,7 +142,7 @@ export function schematizeView(
 			// TODO:
 			// Ideally this would run at the end of the batch containing the schema change, but currently schema changes don't trigger afterBatch.
 			// Fortunately this works out ok, since the tree can't actually become out of schema until its actually edited, which should trigger after batch.
-			// When batching properly handles schema edits, which documentation and related tests should be updated.
+			// When batching properly handles schema edits, this documentation and related tests should be updated.
 			// TODO:
 			// This seems like the correct policy, but more clarity on how schematized views are updating during batches is needed.
 			afterBatchCheck ??= tree.events.on("afterBatch", () => {
