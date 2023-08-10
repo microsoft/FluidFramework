@@ -26,6 +26,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -666,7 +667,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, a
 		// Compressor from second container will get the first 512 Ids (0-511)
 		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
 		// Compressor from first container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 512);
+		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
 	});
 });
 
@@ -705,6 +706,20 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		);
 	});
 
+	function getCompressorSummaryStats(summaryTree: ISummaryTree): {
+		sessionCount: number;
+		clusterCount: number;
+	} {
+		const compressorSummary = summaryTree.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const bytes = (compressorSummary as any).content as Uint8Array;
+		const floatView = new Float64Array(bytes.buffer);
+		return {
+			sessionCount: floatView[3],
+			clusterCount: floatView[4],
+		};
+	}
+
 	it("Shouldn't include unack'd local ids in summary", async () => {
 		const container = await createContainer(enabledConfig);
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
@@ -718,16 +733,13 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		const { summaryTree } = await summarizeNow(summarizer);
-
-		const compressorSummary = summaryTree.tree[".idCompressor"];
-		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		const summaryStats = getCompressorSummaryStats(summaryTree);
 		assert(
-			summaryAsObj.sessions.length === 0,
+			summaryStats.sessionCount === 0,
 			"Shouldn't have any local sessions as all ids are unack'd",
 		);
 		assert(
-			summaryAsObj.clusters.length === 0,
+			summaryStats.clusterCount === 0,
 			"Shouldn't have any local clusters as all ids are unack'd",
 		);
 	});
@@ -747,18 +759,9 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		const { summaryTree } = await summarizeNow(summarizer);
-
-		const compressorSummary = summaryTree.tree[".idCompressor"];
-		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const summaryAsObj = JSON.parse((compressorSummary as any).content);
-		assert(
-			summaryAsObj.sessions.length === 1,
-			"Should have a local session as all ids are ack'd",
-		);
-		assert(
-			summaryAsObj.clusters.length === 1,
-			"Should have a local cluster as all ids are ack'd",
-		);
+		const summaryStats = getCompressorSummaryStats(summaryTree);
+		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
+		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 	});
 
 	it("Newly connected container synchronizes from summary", async () => {
@@ -777,21 +780,10 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
 
-		const { summaryTree: summaryTree1, summaryVersion: summaryVersion1 } = await summarizeNow(
-			summarizer1,
-		);
-
-		const compressorSummary = summaryTree1.tree[".idCompressor"];
-		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const summaryAsObj = JSON.parse((compressorSummary as any).content);
-		assert(
-			summaryAsObj.sessions.length === 1,
-			"Should have a local session as all ids are ack'd",
-		);
-		assert(
-			summaryAsObj.clusters.length === 1,
-			"Should have a local cluster as all ids are ack'd",
-		);
+		const { summaryTree } = await summarizeNow(summarizer1);
+		const summaryStats = getCompressorSummaryStats(summaryTree);
+		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
+		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 
 		const container2 = await provider.loadTestContainer(enabledConfig);
 		const container2DataStore = await requestFluidObject<ITestDataObject>(

@@ -517,7 +517,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessionCount: serializedSessions.length,
 		});
 
-		return { bytes: serialized } as unknown as SerializedIdCompressor;
+		return { bytes: new Uint8Array(serialized.buffer) } as unknown as SerializedIdCompressor;
 	}
 
 	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
