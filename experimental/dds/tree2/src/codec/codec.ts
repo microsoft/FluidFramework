@@ -47,6 +47,11 @@ export interface JsonValidator {
 	/**
 	 * Compiles the provided JSON schema into a validator for that schema.
 	 * @param schema - A valid draft 6 JSON schema
+	 * @remarks - Fluid handles--which have circular property references--are used in various places in the persisted
+	 * format. Handles should only be contained in sections of data which are validated against the empty schema `{}`
+	 * (see https://datatracker.ietf.org/doc/html/draft-wright-json-schema-01#section-4.4).
+	 *
+	 * Implementations of `JsonValidator` must therefore tolerate these values, despite the input not being valid JSON.
 	 */
 	compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
