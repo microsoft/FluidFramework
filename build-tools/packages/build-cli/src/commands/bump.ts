@@ -141,14 +141,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
-		const rgOrPackageName = args.package_or_release_group;
-		if (rgOrPackageName === undefined) {
+		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
 		}
 
-		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
+		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
-			this.error(`Package not found: ${rgOrPackageName}`);
+			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
 		if (bumpType === undefined && flags.exact === undefined) {
@@ -167,7 +166,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		if (rgOrPackage instanceof MonoRepo) {
 			const releaseRepo = rgOrPackage;
-			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackageName}`);
+			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackage.name}`);
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
@@ -216,7 +215,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
 
 		this.logHr();
-		this.log(`Release group: ${chalk.blueBright(rgOrPackageName)}`);
+		this.log(`Release group/package: ${chalk.blueBright(rgOrPackage.name)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
@@ -265,14 +264,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		if (shouldCommit) {
 			const commitMessage = generateBumpVersionCommitMessage(
-				rgOrPackageName,
+				rgOrPackage.name,
 				bumpArg,
 				repoVersion,
 				scheme,
 			);
 
 			const bumpBranch = generateBumpVersionBranchName(
-				rgOrPackageName,
+				rgOrPackage.name,
 				bumpArg,
 				repoVersion,
 				scheme,

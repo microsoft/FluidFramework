@@ -7,7 +7,12 @@ import { FieldStoredSchema, ITreeCursor } from "../../core";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import { Optional, Sequence, ValueFieldKind } from "../default-field-kinds";
 import { NewFieldContent } from "../editable-tree";
-import { UntypedField, UntypedTreeCore } from "../untypedTree";
+import {
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UnwrappedUntypedTree,
+} from "../untypedTree";
 
 /**
  * A sequence field in an {@link UntypedTree}.
@@ -17,7 +22,12 @@ import { UntypedField, UntypedTreeCore } from "../untypedTree";
  * and/or and API supporting more strongly typed data should be added (elsewhere).
  * @alpha
  */
-export interface UntypedSequenceField extends UntypedField {
+export interface UntypedSequenceField<
+	TContext = UntypedTreeContext,
+	TChild = UntypedTree<TContext>,
+	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
+	TNewFieldContent = NewFieldContent,
+> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
 	/**
 	 * The `FieldStoredSchema` of this field.
 	 */
@@ -28,7 +38,7 @@ export interface UntypedSequenceField extends UntypedField {
 	/**
 	 * Inserts new nodes into this field.
 	 */
-	insertNodes(index: number, newContent: NewFieldContent): void;
+	insertNodes(index: number, newContent: TNewFieldContent): void;
 
 	/**
 	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
@@ -38,6 +48,7 @@ export interface UntypedSequenceField extends UntypedField {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
+		// TODO: make the destination type check somehow
 		destinationField?: UntypedField,
 	): void;
 
@@ -60,7 +71,7 @@ export interface UntypedSequenceField extends UntypedField {
 	 * Note that, if multiple clients concurrently call replace on a sequence field,
 	 * all the insertions will be preserved.
 	 */
-	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
+	replaceNodes(index: number, newContent: TNewFieldContent, count?: number): void;
 
 	/**
 	 * Delete the content of this field.
@@ -70,14 +81,19 @@ export interface UntypedSequenceField extends UntypedField {
 	/**
 	 * Sets the content of this field.
 	 */
-	setContent(newContent: NewFieldContent): void;
+	setContent(newContent: TNewFieldContent): void;
 }
 
 /**
  * A value field in an {@link UntypedTree}.
  * @alpha
  */
-export interface UntypedValueField extends UntypedField {
+export interface UntypedValueField<
+	TContext = UntypedTreeContext,
+	TChild = UntypedTree<TContext>,
+	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
+	TNewContent = ContextuallyTypedNodeData,
+> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
 	/**
 	 * The `FieldStoredSchema` of this field.
 	 */
@@ -91,19 +107,23 @@ export interface UntypedValueField extends UntypedField {
 	 * @remarks
 	 * Does not unwrap the content.
 	 */
-	readonly content: UntypedTreeCore;
+	readonly content: TChild;
 
 	/**
 	 * Sets the content of this field.
 	 */
-	setContent(newContent: ITreeCursor | ContextuallyTypedNodeData): void;
+	setContent(newContent: ITreeCursor | TNewContent): void;
 }
 
 /**
  * A value field in an {@link UntypedTree}.
  * @alpha
  */
-export interface UntypedOptionalField extends UntypedField {
+export interface UntypedOptionalField<
+	TContext = UntypedTreeContext,
+	TChild = UntypedTree<TContext>,
+	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
+> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
 	/**
 	 * The `FieldStoredSchema` of this field.
 	 */
@@ -122,7 +142,7 @@ export interface UntypedOptionalField extends UntypedField {
 	 * @remarks
 	 * Does not unwrap the content.
 	 */
-	readonly content: UntypedTreeCore;
+	readonly content: TChild;
 
 	/**
 	 * Sets the content of this field.

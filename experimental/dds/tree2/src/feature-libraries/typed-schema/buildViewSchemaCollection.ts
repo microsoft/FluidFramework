@@ -135,7 +135,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 				errors,
 			);
 		}
-		if (tree.mapFields !== FieldSchema.empty) {
+		if (tree.mapFields !== undefined) {
 			validateField(
 				collection,
 				tree.mapFields,

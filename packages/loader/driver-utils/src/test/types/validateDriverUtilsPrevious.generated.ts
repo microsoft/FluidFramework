@@ -688,6 +688,30 @@ use_old_FunctionDeclaration_buildSnapshotTree(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_calculateMaxWaitTime": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_calculateMaxWaitTime():
+    TypeOnly<typeof old.calculateMaxWaitTime>;
+declare function use_current_FunctionDeclaration_calculateMaxWaitTime(
+    use: TypeOnly<typeof current.calculateMaxWaitTime>);
+use_current_FunctionDeclaration_calculateMaxWaitTime(
+    get_old_FunctionDeclaration_calculateMaxWaitTime());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_calculateMaxWaitTime": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_calculateMaxWaitTime():
+    TypeOnly<typeof current.calculateMaxWaitTime>;
+declare function use_old_FunctionDeclaration_calculateMaxWaitTime(
+    use: TypeOnly<typeof old.calculateMaxWaitTime>);
+use_old_FunctionDeclaration_calculateMaxWaitTime(
+    get_current_FunctionDeclaration_calculateMaxWaitTime());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_canBeCoalescedByService": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_canBeCoalescedByService():
@@ -732,30 +756,6 @@ declare function use_old_VariableDeclaration_canRetryOnError(
     use: TypeOnly<typeof old.canRetryOnError>);
 use_old_VariableDeclaration_canRetryOnError(
     get_current_VariableDeclaration_canRetryOnError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_combineAppAndProtocolSummary": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_combineAppAndProtocolSummary():
-    TypeOnly<typeof old.combineAppAndProtocolSummary>;
-declare function use_current_FunctionDeclaration_combineAppAndProtocolSummary(
-    use: TypeOnly<typeof current.combineAppAndProtocolSummary>);
-use_current_FunctionDeclaration_combineAppAndProtocolSummary(
-    get_old_FunctionDeclaration_combineAppAndProtocolSummary());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_combineAppAndProtocolSummary": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_combineAppAndProtocolSummary():
-    TypeOnly<typeof current.combineAppAndProtocolSummary>;
-declare function use_old_FunctionDeclaration_combineAppAndProtocolSummary(
-    use: TypeOnly<typeof old.combineAppAndProtocolSummary>);
-use_old_FunctionDeclaration_combineAppAndProtocolSummary(
-    get_current_FunctionDeclaration_combineAppAndProtocolSummary());
 
 /*
 * Validate forward compat by using old type in place of current type

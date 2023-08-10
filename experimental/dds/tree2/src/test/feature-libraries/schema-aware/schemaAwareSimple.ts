@@ -18,8 +18,12 @@ import {
 import { ValueSchema } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
-// eslint-disable-next-line import/no-internal-modules
-import { TypedValue } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
+
+import {
+	TypedValue,
+	TypedValueOrUndefined,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/schema-aware/schemaAwareUtil";
 import { Assume, _InlineTrick } from "../../../util";
 
 /**
@@ -34,11 +38,11 @@ export type ValuePropertyFromSchema<TSchema extends ValueSchema> = {
  * Collects the various parts of the API together.
  * @alpha
  */
-export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema> = Record<
+export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | undefined> = Record<
 	string,
 	never
 > extends TTypedFields
-	? TypedValue<TValueSchema>
+	? TypedValueOrUndefined<TValueSchema>
 	: TTypedFields;
 
 /**
@@ -128,7 +132,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
  */
 export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
 	TypedFields<TSchema["structFieldsObject"]>,
-	TSchema["value"]
+	TSchema["leafValue"]
 >;
 
 /**

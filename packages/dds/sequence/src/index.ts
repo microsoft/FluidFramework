@@ -36,7 +36,6 @@ export {
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 } from "./intervalCollection";
-export { IntervalConflictResolver } from "./intervalTree";
 export {
 	IntervalIndex,
 	SequenceIntervalIndexes,

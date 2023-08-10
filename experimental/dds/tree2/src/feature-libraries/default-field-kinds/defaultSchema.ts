@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fieldSchema } from "../../core";
 import { FullSchemaPolicy } from "../modular-schema";
-import { forbidden, fieldKinds } from "./defaultFieldKinds";
-
-/**
- * FieldStoredSchema which is impossible to put anything in.
- * @alpha
- */
-export const emptyField = fieldSchema(forbidden, []);
+import { fieldKinds } from "./defaultFieldKinds";
 
 /**
  * FullSchemaPolicy with the default field kinds.

@@ -128,7 +128,7 @@ describe("Ordered Client Collection", () => {
 				currentSequenceNumber = initialState.electionSequenceNumber;
 			}
 			election = new OrderedClientElection(
-				mockLogger,
+				mockLogger.toTelemetryLogger(),
 				orderedClients,
 				initialState ?? currentSequenceNumber,
 				(c: ITrackedClient) => c.client.details.capabilities.interactive,
