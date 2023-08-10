@@ -854,7 +854,7 @@ describe("Runtime", () => {
 				 * @param attemptNumber - The current attempt number.
 				 * @param totalAttempts - The total number of attempts. After the last attempt, summarizer should close.
 				 * @param lastSuccessfulStage - The stage after which summarization failed.
-				 * @param retryAfterSeconds - The number of seconds after which the next attempt should be tried.ß
+				 * @param retryAfterSeconds - The number of seconds after which the next attempt should be tried.
 				 */
 				const validateSummaryAttemptFails = async (
 					attemptNumber: number,
@@ -1053,6 +1053,43 @@ describe("Runtime", () => {
 							0,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
+						);
+					});
+
+					it(`should update max attempts on failure at ${titleStage} stage as per AttemptsForSubmitFailures`, async () => {
+						const retryAfterSeconds = 5;
+						const maxAttemptsOverride =
+							stage === "submit"
+								? defaultMaxAttempts
+								: maxAttemptsForSubmitFailures - 1;
+						settings["Fluid.Summarizer.AttemptsForSubmitFailures"] =
+							maxAttemptsOverride;
+
+						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
+							submitSummaryCallback(stage, retryAfterSeconds),
+						);
+
+						await emitNextOp();
+						// This should run a summarization because max ops has reached.
+						await emitNextOp(summaryConfig.maxOps);
+
+						for (let attempt = 1; attempt <= maxAttemptsOverride; attempt++) {
+							await validateSummaryAttemptFails(
+								attempt,
+								maxAttemptsOverride,
+								stage,
+								retryAfterSeconds,
+							);
+							// Wait for "retryAfterSeconds". The next attempt should start after this.
+							await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+						}
+
+						// validate that summarization is not run again.
+						assertRunCounts(
+							maxAttemptsOverride,
+							0,
+							0,
+							`Summarization should not have been attempted more than ${maxAttemptsOverride} times`,
 						);
 					});
 				}

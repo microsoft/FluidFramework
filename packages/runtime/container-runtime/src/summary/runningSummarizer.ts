@@ -615,9 +615,14 @@ export class RunningSummarizer implements IDisposable {
 			if (!submitSummaryResult.success) {
 				// The max attempts for submit failures can be overridden via a feature flag. This allows us to
 				// tweak this as per telemetry data until we arrive at a stable number.
+				// If its set to a number higher than `maxAttemptsForSubmitFailures`, it will be ignored.
+				const overrideMaxAttempts = this.mc.config.getNumber(
+					"Fluid.Summarizer.AttemptsForSubmitFailures",
+				);
 				maxAttempts =
-					this.mc.config.getNumber("Fluid.Summarizer.MaxAttemptsForSubmitFailures") ??
-					maxAttemptsForSubmitFailures;
+					overrideMaxAttempts && overrideMaxAttempts <= maxAttemptsForSubmitFailures
+						? overrideMaxAttempts
+						: maxAttemptsForSubmitFailures;
 				retryAfterSeconds = submitSummaryResult.data?.retryAfterSeconds;
 			} else {
 				maxAttempts = defaultMaxAttempts;
