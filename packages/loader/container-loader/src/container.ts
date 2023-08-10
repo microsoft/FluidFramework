@@ -1907,6 +1907,18 @@ export class Container
 				});
 			}
 		});
+
+		protocol.quorum.on("approveProposalComplete", (sequenceNumber, key, value) => {
+			if (key === "code" || key === "code2") {
+				if (!isFluidCodeDetails(value)) {
+					this.mc.logger.sendErrorEvent({
+						eventName: "CodeProposalNotIFluidCodeDetails",
+					});
+				}
+				this.emit("approveProposalComplete", sequenceNumber, key, value);
+			}
+		});
+
 		// we need to make sure this member get set in a synchronous context,
 		// or other things can happen after the object that will be set is created, but not yet set
 		// this was breaking this._initialClients handling

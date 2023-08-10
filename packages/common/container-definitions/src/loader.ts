@@ -130,6 +130,27 @@ export interface IContainerEvents extends IEvent {
 	);
 
 	/**
+	 * Fires when all pending proposals for a proposal key have been processed.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `codeDetails`: The code details being proposed.
+	 *
+	 * - `sequenceNumber`: Proposal sequence number.
+	 *
+	 * - `key`: Proposal key.
+	 *
+	 */
+	(
+		event: "approveProposalComplete",
+		listener: (
+			sequenceNumber: number | undefined,
+			key: string,
+			codeDetails: IFluidCodeDetails,
+		) => void,
+	);
+
+	/**
 	 * Emitted when the {@link IContainer} becomes disconnected from the Fluid service.
 	 *
 	 * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
