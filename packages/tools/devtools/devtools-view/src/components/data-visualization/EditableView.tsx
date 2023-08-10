@@ -12,6 +12,8 @@ import {
 	Input,
 	InputOnChangeData,
 	Option,
+	makeStyles,
+	shorthands,
 	tokens,
 } from "@fluentui/react-components";
 import {
@@ -19,7 +21,6 @@ import {
 	EditData,
 	EditType,
 	FluidObjectValueNode,
-	Primitive,
 } from "@fluid-experimental/devtools-core";
 
 import { useMessageRelay } from "../../MessageRelayContext";
@@ -39,10 +40,15 @@ export interface EditableViewProps {
  */
 interface EditableComponentProps {
 	node: FluidObjectValueNode;
-	setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+	editProp: EditState | undefined;
+	setEditProp: React.Dispatch<React.SetStateAction<EditState | undefined>>;
 	submitChange: (data: EditData) => void;
 }
 
+interface EditState {
+	type: string;
+	value?: EditData;
+}
 /**
  * Render data that is Editable with its corresponding UI
  *
@@ -51,15 +57,7 @@ interface EditableComponentProps {
 export function EditableView(props: EditableViewProps): React.ReactElement {
 	const { node, containerKey, label } = props;
 
-	/**
-	 * State to store whether the user is currently editing data
-	 */
-	const [isEditing, setIsEditing] = React.useState<boolean>(false);
-
-	/**
-	 * State to store the current type, or the type of the intended edit
-	 */
-	const [editType, setEditType] = React.useState<string>(typeOfNodeValue(node.value));
+	const [editProp, setEditProp] = React.useState<EditState | undefined>(undefined);
 
 	const messageRelay = useMessageRelay();
 
@@ -69,17 +67,18 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	 */
 	const submitChange = React.useCallback(
 		(data: EditData): void => {
-			setIsEditing(false);
 			const edit = {
 				fluidObjectId: node.fluidObjectId,
 				data,
 			};
+
 			messageRelay.postMessage(
 				DataEdit.createMessage({
 					containerKey,
 					edit,
 				}),
 			);
+			setEditProp(undefined);
 		},
 		[containerKey, messageRelay, node.fluidObjectId],
 	);
@@ -95,29 +94,13 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 		 * so the blur event only triggers if focus is outside of div and children
 		 */
 		if (!event.currentTarget.contains(event.relatedTarget)) {
-			setIsEditing(false);
+			setEditProp(undefined);
 		}
 	}
-
-	/**
-	 * Updates {@link isEditing} state to true on focus
-	 */
-	function onFocus(): void {
-		setIsEditing(true);
-	}
-
-	/**
-	 * Background updates to keep the UI in sync with the data
-	 */
-	React.useEffect(() => {
-		if (isEditing === false) {
-			setEditType(typeOfNodeValue(node.value));
-		}
-	}, [node.value, isEditing]);
 
 	/**
 	 * Updates {@link editType} and {@link editingComponent} based on the option selected from the dropdown
-	 * If the option selected is null or undefined it will automaticlly send the message to change its value
+	 * If the option selected is null or undefined it will automatically send the message to change its value
 	 * and will only display the dropdown with either "null" or "undefined"
 	 * @param data - The option selected from the dropdown
 	 */
@@ -126,7 +109,6 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 			throw new Error("Invalid option text from dropdown");
 		}
 
-		setEditType(data.optionText);
 		if (data.optionText === "undefined") {
 			submitChange(undefined);
 		}
@@ -136,25 +118,29 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 			// eslint-disable-next-line unicorn/no-null
 			submitChange(null);
 		}
-	};
 
-	/**
-	 * Return the correct type of the node. Includes special case for null since "typeof null === object"
-	 */
-	function typeOfNodeValue(nodeValue: Primitive): string {
-		return nodeValue === null ? "null" : typeof nodeValue;
-	}
+		let newValue: EditData;
+		if (editProp !== undefined) {
+			newValue = data.optionText === editProp.type ? editProp.value : "";
+		} else {
+			newValue = data.optionText === typeof node.value ? node.value : "";
+		}
+		setEditProp({
+			type: data.optionText,
+			value: newValue,
+		});
+	};
 
 	const options = node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
 
 	let innerView: React.ReactElement;
-	switch (editType) {
+	switch (editProp === undefined ? typeof node.value : editProp.type) {
 		case "string":
 			innerView = (
 				<EditableInputComponent
 					node={node}
-					setIsEditing={setIsEditing}
-					isEditing={isEditing}
+					editProp={editProp}
+					setEditProp={setEditProp}
 					submitChange={submitChange}
 					inputType={"string"}
 				/>
@@ -164,8 +150,8 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 			innerView = (
 				<EditableInputComponent
 					node={node}
-					setIsEditing={setIsEditing}
-					isEditing={isEditing}
+					editProp={editProp}
+					setEditProp={setEditProp}
 					submitChange={submitChange}
 					inputType={"number"}
 				/>
@@ -175,8 +161,9 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 			innerView = (
 				<EditableBooleanComponent
 					node={node}
+					setEditProp={setEditProp}
+					editProp={editProp}
 					submitChange={submitChange}
-					setIsEditing={setIsEditing}
 				/>
 			);
 			break;
@@ -192,31 +179,31 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 			throw new Error("Unrecognized edit type.");
 	}
 
+	const styles = useStyles();
+
 	return (
 		<div
-			style={
-				isEditing
-					? {
-							border: "2px solid",
-							borderColor: tokens.colorBrandStroke1,
-							display: "flex",
-					  }
-					: { display: "flex" }
-			}
+			className={editProp !== undefined ? styles.isEditingStyle : styles.isNotEditingStyle}
 			onBlur={onBlur}
-			onFocus={onFocus}
 			onClick={(event): void => event?.preventDefault()}
 		>
 			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />
 			<Dropdown
 				size="small"
-				style={{ minWidth: "10px" }}
+				className={styles.dropdownStyle}
 				onOptionSelect={onOptionSelect}
-				value={editType}
-				selectedOptions={[editType]}
+				value={editProp === undefined ? typeof node.value : editProp.type}
+				selectedOptions={[editProp === undefined ? typeof node.value : editProp.type]}
 			>
 				{options.map((option) => (
-					<Option key={option}>{option}</Option>
+					<Option
+						onMouseDownCapture={(event): void => {
+							event.preventDefault();
+						}}
+						key={option}
+					>
+						{option}
+					</Option>
 				))}
 			</Dropdown>
 			{innerView}
@@ -263,17 +250,13 @@ function EditableBooleanComponent(props: EditableComponentProps): React.ReactEle
  */
 interface EditableInputComponent extends EditableComponentProps {
 	inputType: "string" | "number";
-	isEditing: boolean;
 }
 
 /**
  * Component which allows for number editing
  */
 function EditableInputComponent(props: EditableInputComponent): React.ReactElement {
-	const { node, setIsEditing, submitChange, inputType, isEditing } = props;
-
-	// Clearing out data if it was not already a number
-	const [localData, setLocalData] = React.useState<string>("");
+	const { node, submitChange, inputType, editProp, setEditProp } = props;
 
 	/**
 	 * Provides confirming and canceling an edit functionality
@@ -282,48 +265,37 @@ function EditableInputComponent(props: EditableInputComponent): React.ReactEleme
 		(event: React.KeyboardEvent<HTMLInputElement>) => {
 			const key = event.key;
 
+			if (editProp === undefined) {
+				return;
+			}
 			if (key === "Enter") {
+				submitChange(editProp.type === "number" ? Number(editProp.value) : editProp.value);
 				event.currentTarget.blur();
-				submitChange(inputType === "string" ? localData : Number(localData));
 			}
 
 			if (key === "Escape") {
 				event.currentTarget.blur();
 			}
 		},
-		[inputType, localData, submitChange],
+		[editProp, submitChange],
 	);
-
-	/**
-	 * Background updates to keep the UI in sync with the data
-	 */
-	React.useEffect(() => {
-		if (isEditing === false) {
-			setLocalData(String(node.value));
-		}
-	}, [node.value, isEditing]);
 
 	/**
 	 * Sets the local data to what the user wrote in the component
 	 */
 	function onChange(_ev: React.ChangeEvent<HTMLInputElement>, data: InputOnChangeData): void {
-		setLocalData(data.value);
+		setEditProp({
+			type: editProp === undefined ? typeof node.value : editProp.type,
+			value: data.value,
+		});
 	}
-
-	/**
-	 * Sets {@link isEditing} to false when the component is focused
-	 */
-	const onFocus = React.useCallback(() => {
-		setIsEditing(true);
-	}, [setIsEditing]);
 
 	return (
 		<Input
 			size="small"
 			appearance="underline"
 			contentEditable={true}
-			value={localData}
-			onFocus={onFocus}
+			value={editProp !== undefined ? (editProp.value as string) : (node.value as string)}
 			onKeyDown={onKeyDown}
 			onChange={onChange}
 			type={inputType === "string" ? "text" : "number"}
@@ -338,3 +310,30 @@ const allEdits = [
 	EditType.Null,
 	EditType.Undefined,
 ];
+
+/**
+ * Styles for the editing components
+ */
+const useStyles = makeStyles({
+	/**
+	 * Outline when editing
+	 */
+	isEditingStyle: {
+		...shorthands.border("2px", "solid", tokens.colorBrandStroke1),
+		display: "flex",
+	},
+
+	/**
+	 * Standard visual when not editing
+	 */
+	isNotEditingStyle: {
+		display: "flex",
+	},
+
+	/**
+	 * Dropdown menu
+	 */
+	dropdownStyle: {
+		minWidth: "10px",
+	},
+});
