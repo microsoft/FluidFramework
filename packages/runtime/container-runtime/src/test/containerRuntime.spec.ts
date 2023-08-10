@@ -32,6 +32,7 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
+	ContainerRuntimeMessage,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
@@ -583,6 +584,11 @@ describe("Runtime", () => {
 				attachState: AttachState,
 				addPendingMsg: boolean,
 			): Partial<IContainerContext> => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					contents: "Hello",
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					compatDetails: { behavior: "Ignore" },
+				};
 				const pendingState = {
 					pending: {
 						pendingStates: [
@@ -590,6 +596,11 @@ describe("Runtime", () => {
 								type: "message",
 								messageType: ContainerMessageType.BlobAttach,
 								content: {},
+							},
+							//* TODO: Move to a different test
+							{
+								type: "message",
+								content: JSON.stringify(futureRuntimeMessage),
 							},
 						],
 					},

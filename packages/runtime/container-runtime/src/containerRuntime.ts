@@ -1477,7 +1477,7 @@ export class ContainerRuntime
 
 		this.pendingStateManager = new PendingStateManager(
 			{
-				//* TEST COVERAGE - applyStashedOp, reSubmit
+				//* TEST COVERAGE - applyStashedOp, reSubmit, resubmitBatch
 				applyStashedOp: this.applyStashedOp.bind(this),
 				clientId: () => this.clientId,
 				close: this.closeFn,
