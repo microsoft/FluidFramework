@@ -251,10 +251,11 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		blobMap: Map<string, ArrayBufferLike>,
 	): boolean {
 		let sanitize = false;
-		const blobsContents: { [path: string]: ArrayBufferLike } = (snapshotTree as any)
-			.blobsContents;
+		const blobsContents: { [path: string]: { encoding: string; data: ArrayBufferLike } } = (
+			snapshotTree as any
+		).blobsContents;
 		Object.entries(blobsContents).forEach(([key, value]) => {
-			blobMap.set(key, value);
+			blobMap.set(key, value.data);
 			if (snapshotTree.blobs[key] !== undefined) {
 				sanitize = true;
 			}
