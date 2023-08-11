@@ -119,7 +119,7 @@ importers:
       '@types/node': ^16.18.16
       '@types/semver': ^7.5.0
       '@types/sinon': ^9.0.9
-      '@types/uuid': ^8.3.0
+      '@types/uuid': ^9.0.2
       assert: ^2.0.0
       async: ^3.2.2
       axios: ^0.26.0
@@ -141,7 +141,7 @@ importers:
       source-map-loader: ^0.2.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -165,7 +165,7 @@ importers:
       nconf: 0.12.0
       semver: 7.5.3
       sha.js: 2.4.11
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
       '@fluidframework/build-common': 2.0.0
@@ -180,7 +180,7 @@ importers:
       '@types/nconf': 0.10.3
       '@types/node': 16.18.36
       '@types/sinon': 9.0.11
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.27.0
       mocha: 10.2.0
@@ -286,7 +286,7 @@ importers:
       sinon: ^9.2.3
       ts-loader: ^9.3.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     dependencies:
@@ -301,7 +301,7 @@ importers:
       debug: 4.3.4
       events: 3.3.0
       jsrsasign: 10.8.6
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_uinkotlsnxdpatd4hjpo7xi5ra
       '@fluidframework/build-common': 2.0.0
@@ -346,7 +346,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.1
       '@types/node': ^16.18.16
-      '@types/uuid': ^8.3.0
+      '@types/uuid': ^9.0.2
       '@types/ws': ^6.0.1
       assert: ^2.0.0
       concurrently: ^7.6.0
@@ -361,7 +361,7 @@ importers:
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       webpack: ^5.82.0
       ws: ^7.4.6
     dependencies:
@@ -383,7 +383,7 @@ importers:
       events: 3.3.0
       lodash: 4.17.21
       sillyname: 0.1.0
-      uuid: 8.3.2
+      uuid: 9.0.0
       ws: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
@@ -392,7 +392,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-memory-orderer-previous': /@fluidframework/server-memory-orderer/0.1040.1000
       '@types/mocha': 10.0.1
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.27.0
       mocha: 10.2.0
@@ -560,7 +560,7 @@ importers:
       '@types/sinon': ^9.0.9
       '@types/split': ^0.3.28
       '@types/supertest': ^2.0.5
-      '@types/uuid': ^8.3.0
+      '@types/uuid': ^9.0.2
       '@types/ws': ^6.0.1
       body-parser: ^1.17.1
       bytes: ^3.0.0
@@ -584,7 +584,7 @@ importers:
       sinon: ^9.2.3
       supertest: ^3.1.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       winston: ^3.6.0
       ws: ^7.4.6
     dependencies:
@@ -616,7 +616,7 @@ importers:
       nconf: 0.12.0
       serialize-error: 8.1.0
       sillyname: 0.1.0
-      uuid: 8.3.2
+      uuid: 9.0.0
       winston: 3.9.0
       ws: 7.5.9
     devDependencies:
@@ -643,7 +643,7 @@ importers:
       '@types/sinon': 9.0.11
       '@types/split': 0.3.28
       '@types/supertest': 2.0.12
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       '@types/ws': 6.0.4
       concurrently: 7.6.0
       eslint: 8.27.0
@@ -680,7 +680,7 @@ importers:
       '@types/mocha': ^10.0.1
       '@types/node': ^16.18.16
       '@types/sinon': ^9.0.9
-      '@types/uuid': ^8.3.0
+      '@types/uuid': ^9.0.2
       amqplib: ^0.10.2
       axios: ^0.26.0
       concurrently: ^7.6.0
@@ -701,7 +701,7 @@ importers:
       socket.io: ^4.5.3
       telegrafjs: ^0.1.3
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       winston: ^3.6.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -724,7 +724,7 @@ importers:
       nconf: 0.12.0
       socket.io: 4.6.2
       telegrafjs: 0.1.3
-      uuid: 8.3.2
+      uuid: 9.0.0
       winston: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
@@ -740,7 +740,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/node': 16.18.36
       '@types/sinon': 9.0.11
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.27.0
       ioredis-mock: 8.7.0_nevjj6jngqp4qe6g7n3cd7su4y
@@ -786,7 +786,7 @@ importers:
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': link:../gitresources
@@ -800,7 +800,7 @@ importers:
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
       '@fluidframework/build-common': 2.0.0
@@ -1077,7 +1077,7 @@ importers:
       socket.io-parser: ^4.2.1
       supertest: ^3.1.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       winston: ^3.6.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -1100,7 +1100,7 @@ importers:
       socket.io: 4.6.2
       socket.io-adapter: 2.5.2
       socket.io-parser: 4.2.4
-      uuid: 8.3.2
+      uuid: 9.0.0
       winston: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
@@ -1137,7 +1137,7 @@ importers:
       '@types/mocha': ^10.0.1
       '@types/node': ^16.18.16
       '@types/supertest': ^2.0.5
-      '@types/uuid': ^8.3.0
+      '@types/uuid': ^9.0.2
       concurrently: ^7.6.0
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
@@ -1149,13 +1149,13 @@ importers:
       serialize-error: ^8.1.0
       sinon: ^9.2.3
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
       '@fluidframework/build-common': 2.0.0
@@ -1165,7 +1165,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/node': 16.18.36
       '@types/supertest': 2.0.12
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.27.0
       mocha: 10.2.0
@@ -1197,7 +1197,7 @@ importers:
       '@types/nconf': ^0.10.2
       '@types/node': ^16.18.16
       '@types/supertest': ^2.0.5
-      '@types/uuid': ^8.3.0
+      '@types/uuid': ^9.0.2
       concurrently: ^7.6.0
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -1216,7 +1216,7 @@ importers:
       split: ^1.0.0
       supertest: ^3.1.0
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
       winston: ^3.6.0
       winston-transport: ^4.5.0
     dependencies:
@@ -1234,7 +1234,7 @@ importers:
       serialize-error: 8.1.0
       sillyname: 0.1.0
       split: 1.0.1
-      uuid: 8.3.2
+      uuid: 9.0.0
       winston: 3.9.0
       winston-transport: 4.5.0
     devDependencies:
@@ -1254,7 +1254,7 @@ importers:
       '@types/nconf': 0.10.3
       '@types/node': 16.18.36
       '@types/supertest': 2.0.12
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.27.0
       mocha: 10.2.0
@@ -1296,7 +1296,7 @@ importers:
       sinon: ^9.2.3
       string-hash: ^1.1.3
       typescript: ~4.5.5
-      uuid: ^8.3.1
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': link:../gitresources
@@ -1310,7 +1310,7 @@ importers:
       events: 3.3.0
       lodash: 4.17.21
       string-hash: 1.1.3
-      uuid: 8.3.2
+      uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_fu6vecow5ai5c26swy67nv6dse
       '@fluidframework/build-common': 2.0.0
@@ -5949,8 +5949,8 @@ packages:
   /@types/triple-beam/1.3.2:
     resolution: {integrity: sha512-txGIh+0eDFzKGC25zORnswy+br1Ha7hj5cMVwKIU7+s0U2AxxJru/jZSMU6OC9MJWP6+pc/hc6ZjyZShpsyY2g==}
 
-  /@types/uuid/8.3.4:
-    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
+  /@types/uuid/9.0.2:
+    resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
     dev: true
 
   /@types/vinyl/2.0.7:
@@ -16095,6 +16095,11 @@ packages:
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
+
+  /uuid/9.0.0:
+    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
+    hasBin: true
+    dev: false
 
   /v8-compile-cache-lib/3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
