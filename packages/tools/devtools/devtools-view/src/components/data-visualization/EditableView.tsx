@@ -24,6 +24,7 @@ import {
 	HasContainerKey,
 } from "@fluid-experimental/devtools-core";
 
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { TreeHeader } from "./TreeHeader";
 import { HasLabel } from "./CommonInterfaces";
@@ -46,12 +47,18 @@ interface EditableComponentProps {
 }
 
 /**
- * EditState describes an edit that is currently occuring
- * If value is undefined it means that the value has not been assigned yet
+ * EditState describes the current state of editing
  */
 interface EditState {
+	/**
+	 * The type of data the user will edit with
+	 */
 	type: string;
-	value?: EditData;
+
+	/**
+	 * If value is undefined it means that the value has not been assigned yet
+	 */
+	value?: Serializable<unknown>;
 }
 
 /**
@@ -116,20 +123,22 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 
 		if (data.optionText === "undefined") {
 			submitChange(undefined);
+			return;
 		}
 
 		if (data.optionText === "null") {
 			// We need to support users waiting to use "null" as a value
 			// eslint-disable-next-line unicorn/no-null
 			submitChange(null);
+			return;
 		}
 
 		// This checks if the selected option was the current option, if so it the value stays the same. If not then it clears it.
-		let newValue: EditData;
+		let newValue: Serializable<unknown> | undefined;
 		if (activeEdit !== undefined) {
 			newValue = data.optionText === activeEdit.type ? activeEdit.value : "";
 		} else {
-			newValue = data.optionText === typeof node.value ? node.value : "";
+			newValue = data.optionText === typeof node.value ? node.value ?? undefined : "";
 		}
 		setActiveEdit({
 			type: data.optionText,
@@ -333,7 +342,7 @@ function EditableInputComponent(props: EditableInputComponent): React.ReactEleme
 }
 
 /**
- * This is used when editType is undefined signaling it can have any editType. To simplify creating options this is used.
+ * The list of all edit types supported by the view
  */
 const allEdits = [
 	EditType.Boolean,

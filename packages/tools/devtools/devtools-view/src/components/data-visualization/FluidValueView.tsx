@@ -28,7 +28,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;
 	const { containerFeatureFlags } = useContainerFeaturesContext();
 	const editingEnabled =
-		containerFeatureFlags["container-data-editing"] === true && node.editProps !== undefined;
+		containerFeatureFlags.containerDataEditing === true && node.editProps !== undefined;
 	const header = (
 		<>
 			{editingEnabled === true ? (
