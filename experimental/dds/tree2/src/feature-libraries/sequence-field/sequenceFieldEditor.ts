@@ -57,7 +57,7 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", count: 1, changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, { count: 1, changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],
