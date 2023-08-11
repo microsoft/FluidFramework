@@ -70,10 +70,11 @@ export const on: unique symbol = Symbol("editable-tree:on");
  *
  * @alpha
  */
-export interface UntypedTree extends UntypedTreeCore {
+export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeCore<TContext> {
 	/**
 	 * The name of the node type.
 	 */
+	// TODO: remove this favor of typeSymbol once its the view schema
 	readonly [typeNameSymbol]: TreeSchemaIdentifier;
 
 	/**
@@ -88,7 +89,7 @@ export interface UntypedTree extends UntypedTreeCore {
 	 * Sequences (including empty ones) are always exposed as {@link UntypedField}s,
 	 * and everything else is either a single UntypedTree or undefined depending on if it's empty.
 	 */
-	readonly [key: FieldKey]: UnwrappedUntypedField;
+	readonly [key: FieldKey]: UnwrappedUntypedField<TContext>;
 }
 
 /**
@@ -98,27 +99,29 @@ export interface UntypedTree extends UntypedTreeCore {
  * getField should be made schema aware and moved to `UntypedTree`.
  * @alpha
  */
-export interface UntypedTreeCore extends Iterable<UntypedField> {
+export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>>
+	extends Iterable<TField> {
 	/**
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
+	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
 	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
 	 */
-	readonly [contextSymbol]: UntypedTreeContext;
+	readonly [contextSymbol]: TContext;
 
 	/**
 	 * Gets the field of this node by its key without unwrapping.
 	 */
-	[getField](fieldKey: FieldKey): UntypedField;
+	[getField](fieldKey: FieldKey): TField;
 
 	/**
 	 * The field this tree is in, and the index within that field.
 	 */
-	readonly [parentField]: { readonly parent: UntypedField; readonly index: number };
+	readonly [parentField]: { readonly parent: TField; readonly index: number };
 
 	/**
 	 * {@inheritDoc ISubscribable#on}
@@ -134,7 +137,9 @@ export interface UntypedTreeCore extends Iterable<UntypedField> {
  * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
  * @alpha
  */
-export type UntypedTreeOrPrimitive = UntypedTree | PrimitiveValue;
+export type UntypedTreeOrPrimitive<TContext = UntypedTreeContext> =
+	| UntypedTree<TContext>
+	| PrimitiveValue;
 
 /**
  * UntypedTree, but with these cases of unwrapping:
@@ -143,7 +148,9 @@ export type UntypedTreeOrPrimitive = UntypedTree | PrimitiveValue;
  * - fields are unwrapped based on their schema's multiplicity. See {@link UnwrappedUntypedField}.
  * @alpha
  */
-export type UnwrappedUntypedTree = UntypedTreeOrPrimitive | UntypedField;
+export type UnwrappedUntypedTree<TContext = UntypedTreeContext> =
+	| UntypedTreeOrPrimitive<TContext>
+	| UntypedField<TContext>;
 
 /**
  * Unwrapped field.
@@ -152,13 +159,21 @@ export type UnwrappedUntypedTree = UntypedTreeOrPrimitive | UntypedField;
  * See {@link UnwrappedUntypedTree} for how the children themselves are unwrapped.
  * @alpha
  */
-export type UnwrappedUntypedField = UnwrappedUntypedTree | undefined | UntypedField;
+export type UnwrappedUntypedField<TContext = UntypedTreeContext> =
+	| UnwrappedUntypedTree<TContext>
+	| undefined
+	| UntypedField<TContext>;
 
 /**
  * A field of an {@link UntypedTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedUntypedTree}).
  * @alpha
  */
-export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
+export interface UntypedField<
+	TContext = UntypedTreeContext,
+	TChild = UntypedTree<TContext>,
+	TParent = UntypedTree<TContext>,
+	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
+> extends MarkedArrayLike<TUnwrappedChild> {
 	/**
 	 * The `FieldStoredSchema` of this field.
 	 */
@@ -173,18 +188,18 @@ export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 	 * The node which has this field on it under `fieldKey`.
 	 * `undefined` iff this field is a detached field.
 	 */
-	readonly parent?: UntypedTree;
+	readonly parent?: TParent;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
 	 */
-	readonly context: UntypedTreeContext;
+	readonly context: TContext;
 
 	/**
 	 * Gets a node of this field by its index without unwrapping.
 	 * Note that a node must exist at the given index.
 	 */
-	getNode(index: number): UntypedTree;
+	getNode(index: number): TChild;
 }
 
 /**

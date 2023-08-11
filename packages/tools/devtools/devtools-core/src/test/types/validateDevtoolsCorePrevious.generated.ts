@@ -376,50 +376,38 @@ use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerDevtoolsFeature": {"forwardCompat": false}
+* "RemovedEnumDeclaration_ContainerDevtoolsFeature": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_ContainerDevtoolsFeature():
-    TypeOnly<old.ContainerDevtoolsFeature>;
-declare function use_current_EnumDeclaration_ContainerDevtoolsFeature(
-    use: TypeOnly<current.ContainerDevtoolsFeature>);
-use_current_EnumDeclaration_ContainerDevtoolsFeature(
-    get_old_EnumDeclaration_ContainerDevtoolsFeature());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerDevtoolsFeature": {"backCompat": false}
+* "RemovedEnumDeclaration_ContainerDevtoolsFeature": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_ContainerDevtoolsFeature():
-    TypeOnly<current.ContainerDevtoolsFeature>;
-declare function use_old_EnumDeclaration_ContainerDevtoolsFeature(
-    use: TypeOnly<old.ContainerDevtoolsFeature>);
-use_old_EnumDeclaration_ContainerDevtoolsFeature(
-    get_current_EnumDeclaration_ContainerDevtoolsFeature());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags():
     TypeOnly<old.ContainerDevtoolsFeatureFlags>;
-declare function use_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
+declare function use_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
     use: TypeOnly<current.ContainerDevtoolsFeatureFlags>);
-use_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
+use_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
     get_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags():
+declare function get_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags():
     TypeOnly<current.ContainerDevtoolsFeatureFlags>;
 declare function use_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
     use: TypeOnly<old.ContainerDevtoolsFeatureFlags>);
 use_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
-    get_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags());
+    get_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1168,50 +1156,38 @@ use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_DevtoolsFeature": {"forwardCompat": false}
+* "RemovedEnumDeclaration_DevtoolsFeature": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_DevtoolsFeature():
-    TypeOnly<old.DevtoolsFeature>;
-declare function use_current_EnumDeclaration_DevtoolsFeature(
-    use: TypeOnly<current.DevtoolsFeature>);
-use_current_EnumDeclaration_DevtoolsFeature(
-    get_old_EnumDeclaration_DevtoolsFeature());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_DevtoolsFeature": {"backCompat": false}
+* "RemovedEnumDeclaration_DevtoolsFeature": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_DevtoolsFeature():
-    TypeOnly<current.DevtoolsFeature>;
-declare function use_old_EnumDeclaration_DevtoolsFeature(
-    use: TypeOnly<old.DevtoolsFeature>);
-use_old_EnumDeclaration_DevtoolsFeature(
-    get_current_EnumDeclaration_DevtoolsFeature());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_DevtoolsFeatureFlags": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_DevtoolsFeatureFlags": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_DevtoolsFeatureFlags():
     TypeOnly<old.DevtoolsFeatureFlags>;
-declare function use_current_TypeAliasDeclaration_DevtoolsFeatureFlags(
+declare function use_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags(
     use: TypeOnly<current.DevtoolsFeatureFlags>);
-use_current_TypeAliasDeclaration_DevtoolsFeatureFlags(
+use_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags(
     get_old_TypeAliasDeclaration_DevtoolsFeatureFlags());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_DevtoolsFeatureFlags": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_DevtoolsFeatureFlags": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_DevtoolsFeatureFlags():
+declare function get_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags():
     TypeOnly<current.DevtoolsFeatureFlags>;
 declare function use_old_TypeAliasDeclaration_DevtoolsFeatureFlags(
     use: TypeOnly<old.DevtoolsFeatureFlags>);
 use_old_TypeAliasDeclaration_DevtoolsFeatureFlags(
-    get_current_TypeAliasDeclaration_DevtoolsFeatureFlags());
+    get_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1481,27 +1457,14 @@ use_old_TypeAliasDeclaration_EditSharedObject(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_EditType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_EditType": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_EditType():
-    TypeOnly<old.EditType>;
-declare function use_current_EnumDeclaration_EditType(
-    use: TypeOnly<current.EditType>);
-use_current_EnumDeclaration_EditType(
-    get_old_EnumDeclaration_EditType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_EditType": {"backCompat": false}
+* "RemovedEnumDeclaration_EditType": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_EditType():
-    TypeOnly<current.EditType>;
-declare function use_old_EnumDeclaration_EditType(
-    use: TypeOnly<old.EditType>);
-use_old_EnumDeclaration_EditType(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_EnumDeclaration_EditType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1648,6 +1611,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectTreeNode():
 declare function use_old_InterfaceDeclaration_FluidObjectTreeNode(
     use: TypeOnly<old.FluidObjectTreeNode>);
 use_old_InterfaceDeclaration_FluidObjectTreeNode(
+    // @ts-expect-error compatibility expected to be broken
     // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectTreeNode());
 

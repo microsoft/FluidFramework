@@ -343,11 +343,12 @@ function inverseFromCommit<TChange>(
 	repairData?: ReadonlyRepairDataStore,
 	cache?: boolean,
 ): TaggedChange<TChange> {
-	return tagRollbackInverse(
-		changeRebaser.invert(commit, true, repairData, cache),
-		mintRevisionTag(),
-		commit.revision,
-	);
+	const inverse = commit.inverse ?? changeRebaser.invert(commit, true, repairData);
+	if (cache === true && commit.inverse === undefined) {
+		commit.inverse = inverse;
+	}
+
+	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
 }
 
 /**
@@ -410,9 +411,10 @@ export function findAncestor<T extends { parent?: T }>(
 	}
 	for (let cur = d; cur !== undefined; cur = cur.parent) {
 		if (predicate(cur)) {
+			path?.reverse();
 			return cur;
 		}
-		path?.unshift(cur);
+		path?.push(cur);
 	}
 
 	if (path !== undefined) {
@@ -468,31 +470,36 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
+	const reversePaths = () => {
+		pathA?.reverse();
+		pathB?.reverse();
+	};
+
 	const visited = new Set();
 	while (a !== undefined || b !== undefined) {
 		if (a !== undefined) {
 			if (visited.has(a)) {
 				if (pathB !== undefined) {
-					const indexInPathB = pathB.findIndex((r) => Object.is(r, a));
-					pathB.splice(0, indexInPathB + 1);
+					pathB.length = pathB.findIndex((r) => Object.is(r, a));
 				}
+				reversePaths();
 				return a;
 			}
 			visited.add(a);
-			pathA?.unshift(a);
+			pathA?.push(a);
 			a = a.parent;
 		}
 
 		if (b !== undefined) {
 			if (visited.has(b)) {
 				if (pathA !== undefined) {
-					const indexInPathA = pathA.findIndex((r) => Object.is(r, b));
-					pathA.splice(0, indexInPathA + 1);
+					pathA.length = pathA.findIndex((r) => Object.is(r, b));
 				}
+				reversePaths();
 				return b;
 			}
 			visited.add(b);
-			pathB?.unshift(b);
+			pathB?.push(b);
 			b = b.parent;
 		}
 	}

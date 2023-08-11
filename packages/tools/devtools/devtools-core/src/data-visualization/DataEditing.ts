@@ -22,7 +22,7 @@ export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Prom
  */
 export interface Edit {
 	/**
-	 * Type contains the {@link EditType} of the edit being preformed.
+	 * Type contains the {@link (EditType:type)} of the edit being preformed.
 	 *
 	 * @remarks This is generally expected to be of type `EditType`. `string` is supported strictly for forward / backward compatibility. If "type" is undefined then it assumes the type of data.
 	 */

@@ -80,9 +80,9 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.6.0.0",
-		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.21.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
@@ -119,19 +119,30 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_VisualValueNode": {
+			"EnumDeclaration_ContainerDevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"EnumDeclaration_DevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"EnumDeclaration_EditType": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_VisualTreeNode": {
+			"InterfaceDeclaration_FluidHandleNode": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_VisualNodeBase": {
+			"InterfaceDeclaration_FluidObjectNodeBase": {
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_VisualNode": {
+			"InterfaceDeclaration_FluidObjectTreeNode": {
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_VisualChildNode": {
+			"InterfaceDeclaration_FluidObjectValueNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidUnknownObjectNode": {
 				"backCompat": false
 			},
 			"InterfaceDeclaration_TreeNodeBase": {
@@ -140,34 +151,40 @@
 			"InterfaceDeclaration_UnknownObjectNode": {
 				"backCompat": false
 			},
-			"TypeAliasDeclaration_RootHandleNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_Edit": {
-				"backCompat": false
-			},
-			"EnumDeclaration_EditType": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_FluidHandleNode": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_ValueNodeBase": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_FluidUnknownObjectNode": {
+			"TypeAliasDeclaration_VisualChildNode": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_FluidObjectValueNode": {
+			"TypeAliasDeclaration_VisualNode": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_FluidObjectTreeNode": {
+			"InterfaceDeclaration_VisualNodeBase": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_FluidObjectNodeBase": {
+			"InterfaceDeclaration_VisualTreeNode": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_VisualValueNode": {
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_DevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_EditType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_ContainerDevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"TypeAliasDeclaration_FluidObjectNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_RootHandleNode": {
 				"backCompat": false
 			}
 		}

@@ -18,7 +18,7 @@
                     "tree": {
                         "SchemaString": {
                             "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Handle\",\"structFields\":[],\"value\":4}],\"rootFieldSchema\":{\"kind\":\"Optional\",\"types\":[\"Handle\"]}}"
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"Handle\",\"structFields\":[],\"leafValue\":3}],\"rootFieldSchema\":{\"kind\":\"Optional\",\"types\":[\"Handle\"]}}"
                         }
                     }
                 },
@@ -27,7 +27,7 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "\"[{\\\"type\\\":\\\"Handle\\\",\\\"value\\\":{\\\"type\\\":\\\"__fluid_handle__\\\",\\\"url\\\":\\\"/tree-provider-lite-data-store/TestSharedTree\\\"}}]\""
+                            "content": "[{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/tree-provider-lite-data-store/TestSharedTree\"}}]"
                         }
                     }
                 }

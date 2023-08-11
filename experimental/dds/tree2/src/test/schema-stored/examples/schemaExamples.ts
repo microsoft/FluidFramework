@@ -24,7 +24,7 @@ import { brand } from "../../../util";
 export const codePoint: NamedTreeSchema = {
 	name: brand("Primitive.CodePoint"),
 	structFields: emptyMap,
-	value: ValueSchema.Number,
+	leafValue: ValueSchema.Number,
 };
 
 /**
@@ -34,5 +34,4 @@ export const string: TreeStoredSchema = {
 	structFields: new Map([
 		[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])],
 	]),
-	value: ValueSchema.Nothing,
 };
