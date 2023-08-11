@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	BaseSegment,
+	createGroupOp,
 	IJSONSegment,
 	IMergeTreeDeltaOp,
 	ISegment,
