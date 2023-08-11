@@ -20,6 +20,7 @@ import {
 	UntypedField,
 } from "@fluid-experimental/tree2";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { EditType } from "../CommonInterfaces";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 import {
 	FluidObjectTreeNode,
@@ -62,6 +63,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
+		editProps: { editTypes: [EditType.Number] },
 	};
 };
 
@@ -192,6 +194,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 		value: text,
 		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
+		editProps: { editTypes: [EditType.String] },
 	};
 };
 

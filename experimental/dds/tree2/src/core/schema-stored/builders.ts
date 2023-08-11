@@ -7,7 +7,6 @@ import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
 	FieldStoredSchema,
-	GlobalFieldKey,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	ValueSchema,
@@ -46,32 +45,29 @@ export function fieldSchema(
 
 /**
  * See {@link TreeStoredSchema} for details.
- * @alpha
  */
 export interface TreeSchemaBuilder {
-	readonly localFields?: { [key: string]: FieldStoredSchema };
-	readonly globalFields?: Iterable<GlobalFieldKey>;
-	readonly extraLocalFields: FieldStoredSchema;
-	readonly value?: ValueSchema;
+	readonly structFields?: { [key: string]: FieldStoredSchema };
+	readonly mapFields?: FieldStoredSchema;
+	readonly leafValue?: ValueSchema;
 }
 
 /**
  * Helper for building {@link TreeStoredSchema}.
  */
 export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
-	const localFields = new Map();
-	const local = data.localFields ?? {};
+	const structFields = new Map();
+	const fields = data.structFields ?? {};
 	// eslint-disable-next-line no-restricted-syntax
-	for (const key in local) {
-		if (Object.prototype.hasOwnProperty.call(local, key)) {
-			localFields.set(brand(key), local[key]);
+	for (const key in fields) {
+		if (Object.prototype.hasOwnProperty.call(fields, key)) {
+			structFields.set(brand(key), fields[key]);
 		}
 	}
 
 	return {
-		localFields,
-		globalFields: new Set(data.globalFields ?? []),
-		extraLocalFields: data.extraLocalFields,
-		value: data.value ?? ValueSchema.Nothing,
+		structFields,
+		mapFields: data.mapFields,
+		leafValue: data.leafValue,
 	};
 }

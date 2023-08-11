@@ -115,7 +115,11 @@ describe("Routerlicious", () => {
 				scopes,
 			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
-			const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
+			const deltasCollection = await defaultDbManager.getDeltaCollection(
+				undefined,
+				undefined,
+			);
+			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			const defaultDocumentDeleteService = new DocumentDeleteService();
 			let app: express.Application;

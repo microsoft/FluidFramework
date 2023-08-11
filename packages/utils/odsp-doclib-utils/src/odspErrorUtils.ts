@@ -321,6 +321,8 @@ export function createOdspNetworkError(
 			break;
 	}
 
+	// Set this to true as createOdspNetworkError is called to handle error response from service.
+	error.addTelemetryProperties({ endpointReached: true });
 	enrichOdspError(error, response, facetCodes, undefined);
 	return error;
 }

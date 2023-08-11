@@ -304,6 +304,54 @@ use_old_InterfaceDeclaration_IPersistedCache(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideSessionAwareDriverFactory": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory():
+    TypeOnly<old.IProvideSessionAwareDriverFactory>;
+declare function use_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
+    use: TypeOnly<current.IProvideSessionAwareDriverFactory>);
+use_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
+    get_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideSessionAwareDriverFactory": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory():
+    TypeOnly<current.IProvideSessionAwareDriverFactory>;
+declare function use_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
+    use: TypeOnly<old.IProvideSessionAwareDriverFactory>);
+use_old_InterfaceDeclaration_IProvideSessionAwareDriverFactory(
+    get_current_InterfaceDeclaration_IProvideSessionAwareDriverFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRelaySessionAwareDriverFactory": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory():
+    TypeOnly<old.IRelaySessionAwareDriverFactory>;
+declare function use_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
+    use: TypeOnly<current.IRelaySessionAwareDriverFactory>);
+use_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
+    get_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRelaySessionAwareDriverFactory": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory():
+    TypeOnly<current.IRelaySessionAwareDriverFactory>;
+declare function use_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
+    use: TypeOnly<old.IRelaySessionAwareDriverFactory>);
+use_old_InterfaceDeclaration_IRelaySessionAwareDriverFactory(
+    get_current_InterfaceDeclaration_IRelaySessionAwareDriverFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharingLink": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharingLink():
@@ -372,6 +420,30 @@ declare function use_old_InterfaceDeclaration_ISnapshotOptions(
     use: TypeOnly<old.ISnapshotOptions>);
 use_old_InterfaceDeclaration_ISnapshotOptions(
     get_current_InterfaceDeclaration_ISnapshotOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISocketStorageDiscovery": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISocketStorageDiscovery():
+    TypeOnly<old.ISocketStorageDiscovery>;
+declare function use_current_InterfaceDeclaration_ISocketStorageDiscovery(
+    use: TypeOnly<current.ISocketStorageDiscovery>);
+use_current_InterfaceDeclaration_ISocketStorageDiscovery(
+    get_old_InterfaceDeclaration_ISocketStorageDiscovery());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISocketStorageDiscovery": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISocketStorageDiscovery():
+    TypeOnly<current.ISocketStorageDiscovery>;
+declare function use_old_InterfaceDeclaration_ISocketStorageDiscovery(
+    use: TypeOnly<old.ISocketStorageDiscovery>);
+use_old_InterfaceDeclaration_ISocketStorageDiscovery(
+    get_current_InterfaceDeclaration_ISocketStorageDiscovery());
 
 /*
 * Validate forward compat by using old type in place of current type

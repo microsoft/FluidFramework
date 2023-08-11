@@ -182,10 +182,6 @@ export class MockContainerRuntime {
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
-		assert(
-			this.dataStoreRuntime.createDeltaConnection !== undefined,
-			"Unsupported datastore runtime version",
-		);
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
@@ -223,7 +219,7 @@ export class MockContainerRuntime {
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
 	 * this method was called. Otherwise, calling the method does nothing.
 	 */
-	public flush?() {
+	public flush() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -240,7 +236,7 @@ export class MockContainerRuntime {
 	 *
 	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
 	 */
-	public rebase?() {
+	public rebase() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -388,6 +384,7 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
+	private lastProcessedMessage?: ISequencedDocumentMessage;
 	private processFirstMessage() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
@@ -399,17 +396,17 @@ export class MockContainerRuntimeFactory {
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		this.advanceForFlushMode(FlushMode.Immediate);
+		if (
+			this.runtimeOptions.flushMode === FlushMode.Immediate ||
+			this.lastProcessedMessage?.clientId !== message.clientId
+		) {
+			this.sequenceNumber++;
+		}
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
+		this.lastProcessedMessage = message;
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
-		}
-	}
-
-	private advanceForFlushMode(flushMode: FlushMode) {
-		if (this.runtimeOptions.flushMode === flushMode) {
-			this.sequenceNumber++;
 		}
 	}
 
@@ -420,8 +417,8 @@ export class MockContainerRuntimeFactory {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
+		this.lastProcessedMessage = undefined;
 
-		this.advanceForFlushMode(FlushMode.TurnBased);
 		this.processFirstMessage();
 	}
 
@@ -434,7 +431,7 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
-		this.advanceForFlushMode(FlushMode.TurnBased);
+		this.lastProcessedMessage = undefined;
 
 		for (let i = 0; i < count; i++) {
 			this.processFirstMessage();
@@ -445,8 +442,7 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		this.advanceForFlushMode(FlushMode.TurnBased);
-
+		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
 		}
@@ -575,6 +571,9 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -594,7 +593,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
-	public createDeltaConnection?(): MockDeltaConnection {
+	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
 			(messageContent: any, localOpMetadata: unknown) =>
 				this.submitMessageInternal(messageContent, localOpMetadata),
@@ -737,6 +736,9 @@ export class MockFluidDataStoreRuntime
 		return this.request(request);
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}

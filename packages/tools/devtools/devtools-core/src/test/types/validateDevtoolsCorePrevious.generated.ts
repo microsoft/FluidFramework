@@ -376,50 +376,38 @@ use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerDevtoolsFeature": {"forwardCompat": false}
+* "RemovedEnumDeclaration_ContainerDevtoolsFeature": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_ContainerDevtoolsFeature():
-    TypeOnly<old.ContainerDevtoolsFeature>;
-declare function use_current_EnumDeclaration_ContainerDevtoolsFeature(
-    use: TypeOnly<current.ContainerDevtoolsFeature>);
-use_current_EnumDeclaration_ContainerDevtoolsFeature(
-    get_old_EnumDeclaration_ContainerDevtoolsFeature());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerDevtoolsFeature": {"backCompat": false}
+* "RemovedEnumDeclaration_ContainerDevtoolsFeature": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_ContainerDevtoolsFeature():
-    TypeOnly<current.ContainerDevtoolsFeature>;
-declare function use_old_EnumDeclaration_ContainerDevtoolsFeature(
-    use: TypeOnly<old.ContainerDevtoolsFeature>);
-use_old_EnumDeclaration_ContainerDevtoolsFeature(
-    get_current_EnumDeclaration_ContainerDevtoolsFeature());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags():
     TypeOnly<old.ContainerDevtoolsFeatureFlags>;
-declare function use_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
+declare function use_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
     use: TypeOnly<current.ContainerDevtoolsFeatureFlags>);
-use_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
+use_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
     get_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags():
+declare function get_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags():
     TypeOnly<current.ContainerDevtoolsFeatureFlags>;
 declare function use_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
     use: TypeOnly<old.ContainerDevtoolsFeatureFlags>);
 use_old_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags(
-    get_current_TypeAliasDeclaration_ContainerDevtoolsFeatureFlags());
+    get_current_RemovedTypeAliasDeclaration_ContainerDevtoolsFeatureFlags());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -904,6 +892,102 @@ use_old_InterfaceDeclaration_ContainerStateMetadata(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DataEdit.Message": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_DataEdit_Message():
+    TypeOnly<old.DataEdit.Message>;
+declare function use_current_InterfaceDeclaration_DataEdit_Message(
+    use: TypeOnly<current.DataEdit.Message>);
+use_current_InterfaceDeclaration_DataEdit_Message(
+    get_old_InterfaceDeclaration_DataEdit_Message());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DataEdit.Message": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_DataEdit_Message():
+    TypeOnly<current.DataEdit.Message>;
+declare function use_old_InterfaceDeclaration_DataEdit_Message(
+    use: TypeOnly<old.DataEdit.Message>);
+use_old_InterfaceDeclaration_DataEdit_Message(
+    get_current_InterfaceDeclaration_DataEdit_Message());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DataEdit.MessageData": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_DataEdit_MessageData():
+    TypeOnly<old.DataEdit.MessageData>;
+declare function use_current_InterfaceDeclaration_DataEdit_MessageData(
+    use: TypeOnly<current.DataEdit.MessageData>);
+use_current_InterfaceDeclaration_DataEdit_MessageData(
+    get_old_InterfaceDeclaration_DataEdit_MessageData());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DataEdit.MessageData": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_DataEdit_MessageData():
+    TypeOnly<current.DataEdit.MessageData>;
+declare function use_old_InterfaceDeclaration_DataEdit_MessageData(
+    use: TypeOnly<old.DataEdit.MessageData>);
+use_old_InterfaceDeclaration_DataEdit_MessageData(
+    get_current_InterfaceDeclaration_DataEdit_MessageData());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DataEdit.MessageType": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_DataEdit_MessageType():
+    TypeOnly<typeof old.DataEdit.MessageType>;
+declare function use_current_VariableDeclaration_DataEdit_MessageType(
+    use: TypeOnly<typeof current.DataEdit.MessageType>);
+use_current_VariableDeclaration_DataEdit_MessageType(
+    get_old_VariableDeclaration_DataEdit_MessageType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_DataEdit.MessageType": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_DataEdit_MessageType():
+    TypeOnly<typeof current.DataEdit.MessageType>;
+declare function use_old_VariableDeclaration_DataEdit_MessageType(
+    use: TypeOnly<typeof old.DataEdit.MessageType>);
+use_old_VariableDeclaration_DataEdit_MessageType(
+    get_current_VariableDeclaration_DataEdit_MessageType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_DataEdit.createMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_DataEdit_createMessage():
+    TypeOnly<typeof old.DataEdit.createMessage>;
+declare function use_current_FunctionDeclaration_DataEdit_createMessage(
+    use: TypeOnly<typeof current.DataEdit.createMessage>);
+use_current_FunctionDeclaration_DataEdit_createMessage(
+    get_old_FunctionDeclaration_DataEdit_createMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_DataEdit.createMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_DataEdit_createMessage():
+    TypeOnly<typeof current.DataEdit.createMessage>;
+declare function use_old_FunctionDeclaration_DataEdit_createMessage(
+    use: TypeOnly<typeof old.DataEdit.createMessage>);
+use_old_FunctionDeclaration_DataEdit_createMessage(
+    get_current_FunctionDeclaration_DataEdit_createMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_DataVisualization.Message": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_DataVisualization_Message():
@@ -1072,50 +1156,38 @@ use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_DevtoolsFeature": {"forwardCompat": false}
+* "RemovedEnumDeclaration_DevtoolsFeature": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_DevtoolsFeature():
-    TypeOnly<old.DevtoolsFeature>;
-declare function use_current_EnumDeclaration_DevtoolsFeature(
-    use: TypeOnly<current.DevtoolsFeature>);
-use_current_EnumDeclaration_DevtoolsFeature(
-    get_old_EnumDeclaration_DevtoolsFeature());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_DevtoolsFeature": {"backCompat": false}
+* "RemovedEnumDeclaration_DevtoolsFeature": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_DevtoolsFeature():
-    TypeOnly<current.DevtoolsFeature>;
-declare function use_old_EnumDeclaration_DevtoolsFeature(
-    use: TypeOnly<old.DevtoolsFeature>);
-use_old_EnumDeclaration_DevtoolsFeature(
-    get_current_EnumDeclaration_DevtoolsFeature());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_DevtoolsFeatureFlags": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_DevtoolsFeatureFlags": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_DevtoolsFeatureFlags():
     TypeOnly<old.DevtoolsFeatureFlags>;
-declare function use_current_TypeAliasDeclaration_DevtoolsFeatureFlags(
+declare function use_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags(
     use: TypeOnly<current.DevtoolsFeatureFlags>);
-use_current_TypeAliasDeclaration_DevtoolsFeatureFlags(
+use_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags(
     get_old_TypeAliasDeclaration_DevtoolsFeatureFlags());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_DevtoolsFeatureFlags": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_DevtoolsFeatureFlags": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_DevtoolsFeatureFlags():
+declare function get_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags():
     TypeOnly<current.DevtoolsFeatureFlags>;
 declare function use_old_TypeAliasDeclaration_DevtoolsFeatureFlags(
     use: TypeOnly<old.DevtoolsFeatureFlags>);
 use_old_TypeAliasDeclaration_DevtoolsFeatureFlags(
-    get_current_TypeAliasDeclaration_DevtoolsFeatureFlags());
+    get_current_RemovedTypeAliasDeclaration_DevtoolsFeatureFlags());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1235,7 +1307,6 @@ declare function get_current_ClassDeclaration_DevtoolsLogger():
 declare function use_old_ClassDeclaration_DevtoolsLogger(
     use: TypeOnly<old.DevtoolsLogger>);
 use_old_ClassDeclaration_DevtoolsLogger(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DevtoolsLogger());
 
 /*
@@ -1337,6 +1408,66 @@ use_old_FunctionDeclaration_DisconnectContainer_createMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_Edit": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_Edit():
+    TypeOnly<old.Edit>;
+declare function use_current_InterfaceDeclaration_Edit(
+    use: TypeOnly<current.Edit>);
+use_current_InterfaceDeclaration_Edit(
+    get_old_InterfaceDeclaration_Edit());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_Edit": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_Edit():
+    TypeOnly<current.Edit>;
+declare function use_old_InterfaceDeclaration_Edit(
+    use: TypeOnly<old.Edit>);
+use_old_InterfaceDeclaration_Edit(
+    get_current_InterfaceDeclaration_Edit());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_EditSharedObject": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_EditSharedObject():
+    TypeOnly<old.EditSharedObject>;
+declare function use_current_TypeAliasDeclaration_EditSharedObject(
+    use: TypeOnly<current.EditSharedObject>);
+use_current_TypeAliasDeclaration_EditSharedObject(
+    get_old_TypeAliasDeclaration_EditSharedObject());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_EditSharedObject": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_EditSharedObject():
+    TypeOnly<current.EditSharedObject>;
+declare function use_old_TypeAliasDeclaration_EditSharedObject(
+    use: TypeOnly<old.EditSharedObject>);
+use_old_TypeAliasDeclaration_EditSharedObject(
+    get_current_TypeAliasDeclaration_EditSharedObject());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_EditType": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_EditType": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_FluidDevtoolsProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_FluidDevtoolsProps():
@@ -1356,7 +1487,6 @@ declare function get_current_InterfaceDeclaration_FluidDevtoolsProps():
 declare function use_old_InterfaceDeclaration_FluidDevtoolsProps(
     use: TypeOnly<old.FluidDevtoolsProps>);
 use_old_InterfaceDeclaration_FluidDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*
@@ -1381,6 +1511,7 @@ declare function get_current_InterfaceDeclaration_FluidHandleNode():
 declare function use_old_InterfaceDeclaration_FluidHandleNode(
     use: TypeOnly<old.FluidHandleNode>);
 use_old_InterfaceDeclaration_FluidHandleNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidHandleNode());
 
 /*
@@ -1429,6 +1560,7 @@ declare function get_current_TypeAliasDeclaration_FluidObjectNode():
 declare function use_old_TypeAliasDeclaration_FluidObjectNode(
     use: TypeOnly<old.FluidObjectNode>);
 use_old_TypeAliasDeclaration_FluidObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_FluidObjectNode());
 
 /*
@@ -1453,6 +1585,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectNodeBase():
 declare function use_old_InterfaceDeclaration_FluidObjectNodeBase(
     use: TypeOnly<old.FluidObjectNodeBase>);
 use_old_InterfaceDeclaration_FluidObjectNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectNodeBase());
 
 /*
@@ -1477,6 +1610,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectTreeNode():
 declare function use_old_InterfaceDeclaration_FluidObjectTreeNode(
     use: TypeOnly<old.FluidObjectTreeNode>);
 use_old_InterfaceDeclaration_FluidObjectTreeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectTreeNode());
 
 /*
@@ -1501,6 +1635,7 @@ declare function get_current_InterfaceDeclaration_FluidObjectValueNode():
 declare function use_old_InterfaceDeclaration_FluidObjectValueNode(
     use: TypeOnly<old.FluidObjectValueNode>);
 use_old_InterfaceDeclaration_FluidObjectValueNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectValueNode());
 
 /*
@@ -1525,6 +1660,7 @@ declare function get_current_InterfaceDeclaration_FluidUnknownObjectNode():
 declare function use_old_InterfaceDeclaration_FluidUnknownObjectNode(
     use: TypeOnly<old.FluidUnknownObjectNode>);
 use_old_InterfaceDeclaration_FluidUnknownObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidUnknownObjectNode());
 
 /*
@@ -2653,7 +2789,32 @@ declare function get_current_TypeAliasDeclaration_RootHandleNode():
 declare function use_old_TypeAliasDeclaration_RootHandleNode(
     use: TypeOnly<old.RootHandleNode>);
 use_old_TypeAliasDeclaration_RootHandleNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RootHandleNode());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SharedObjectEdit": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SharedObjectEdit():
+    TypeOnly<old.SharedObjectEdit>;
+declare function use_current_InterfaceDeclaration_SharedObjectEdit(
+    use: TypeOnly<current.SharedObjectEdit>);
+use_current_InterfaceDeclaration_SharedObjectEdit(
+    get_old_InterfaceDeclaration_SharedObjectEdit());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SharedObjectEdit": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SharedObjectEdit():
+    TypeOnly<current.SharedObjectEdit>;
+declare function use_old_InterfaceDeclaration_SharedObjectEdit(
+    use: TypeOnly<old.SharedObjectEdit>);
+use_old_InterfaceDeclaration_SharedObjectEdit(
+    get_current_InterfaceDeclaration_SharedObjectEdit());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2893,6 +3054,7 @@ declare function get_current_InterfaceDeclaration_TreeNodeBase():
 declare function use_old_InterfaceDeclaration_TreeNodeBase(
     use: TypeOnly<old.TreeNodeBase>);
 use_old_InterfaceDeclaration_TreeNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_TreeNodeBase());
 
 /*
@@ -2917,6 +3079,7 @@ declare function get_current_InterfaceDeclaration_UnknownObjectNode():
 declare function use_old_InterfaceDeclaration_UnknownObjectNode(
     use: TypeOnly<old.UnknownObjectNode>);
 use_old_InterfaceDeclaration_UnknownObjectNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_UnknownObjectNode());
 
 /*
@@ -2941,6 +3104,7 @@ declare function get_current_InterfaceDeclaration_ValueNodeBase():
 declare function use_old_InterfaceDeclaration_ValueNodeBase(
     use: TypeOnly<old.ValueNodeBase>);
 use_old_InterfaceDeclaration_ValueNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ValueNodeBase());
 
 /*
@@ -2965,6 +3129,7 @@ declare function get_current_TypeAliasDeclaration_VisualChildNode():
 declare function use_old_TypeAliasDeclaration_VisualChildNode(
     use: TypeOnly<old.VisualChildNode>);
 use_old_TypeAliasDeclaration_VisualChildNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_VisualChildNode());
 
 /*
@@ -2989,6 +3154,7 @@ declare function get_current_TypeAliasDeclaration_VisualNode():
 declare function use_old_TypeAliasDeclaration_VisualNode(
     use: TypeOnly<old.VisualNode>);
 use_old_TypeAliasDeclaration_VisualNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_VisualNode());
 
 /*
@@ -3013,6 +3179,7 @@ declare function get_current_InterfaceDeclaration_VisualNodeBase():
 declare function use_old_InterfaceDeclaration_VisualNodeBase(
     use: TypeOnly<old.VisualNodeBase>);
 use_old_InterfaceDeclaration_VisualNodeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_VisualNodeBase());
 
 /*
@@ -3061,6 +3228,7 @@ declare function get_current_InterfaceDeclaration_VisualTreeNode():
 declare function use_old_InterfaceDeclaration_VisualTreeNode(
     use: TypeOnly<old.VisualTreeNode>);
 use_old_InterfaceDeclaration_VisualTreeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_VisualTreeNode());
 
 /*
@@ -3085,55 +3253,8 @@ declare function get_current_InterfaceDeclaration_VisualValueNode():
 declare function use_old_InterfaceDeclaration_VisualValueNode(
     use: TypeOnly<old.VisualValueNode>);
 use_old_InterfaceDeclaration_VisualValueNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_VisualValueNode());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeChildData": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_VisualizeChildData():
-    TypeOnly<old.VisualizeChildData>;
-declare function use_current_TypeAliasDeclaration_VisualizeChildData(
-    use: TypeOnly<current.VisualizeChildData>);
-use_current_TypeAliasDeclaration_VisualizeChildData(
-    get_old_TypeAliasDeclaration_VisualizeChildData());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeChildData": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_VisualizeChildData():
-    TypeOnly<current.VisualizeChildData>;
-declare function use_old_TypeAliasDeclaration_VisualizeChildData(
-    use: TypeOnly<old.VisualizeChildData>);
-use_old_TypeAliasDeclaration_VisualizeChildData(
-    get_current_TypeAliasDeclaration_VisualizeChildData());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeSharedObject": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_VisualizeSharedObject():
-    TypeOnly<old.VisualizeSharedObject>;
-declare function use_current_TypeAliasDeclaration_VisualizeSharedObject(
-    use: TypeOnly<current.VisualizeSharedObject>);
-use_current_TypeAliasDeclaration_VisualizeSharedObject(
-    get_old_TypeAliasDeclaration_VisualizeSharedObject());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_VisualizeSharedObject": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_VisualizeSharedObject():
-    TypeOnly<current.VisualizeSharedObject>;
-declare function use_old_TypeAliasDeclaration_VisualizeSharedObject(
-    use: TypeOnly<old.VisualizeSharedObject>);
-use_old_TypeAliasDeclaration_VisualizeSharedObject(
-    get_current_TypeAliasDeclaration_VisualizeSharedObject());
 
 /*
 * Validate forward compat by using old type in place of current type
