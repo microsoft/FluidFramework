@@ -9,7 +9,7 @@
                     "tree": {
                         "String": {
                             "type": 2,
-                            "content": "{\"trunk\":[{\"change\":{\"maxId\":1,\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":0},\"changes\":{\"fieldChanges\":[{\"fieldKey\":\"foo\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":1}}]}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000004\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
+                            "content": "{\"trunk\":[{\"change\":{\"maxId\":1,\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":0},\"changes\":{\"fieldChanges\":[{\"fieldKey\":\"foo\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":1}}]}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000004\",\"sequenceNumber\":3,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
                         }
                     }
                 },

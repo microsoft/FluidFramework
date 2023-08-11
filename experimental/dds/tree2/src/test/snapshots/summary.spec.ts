@@ -19,20 +19,20 @@ function getFilepath(name: string): string {
 describe("Summary snapshot", () => {
 	// Only run this test when you want to regenerate the snapshot.
 	if (regenerateSnapshots) {
-		it.only("regenerate", async () => {
-			await Promise.all(
-				generateTestTrees().map(async ({ name, tree }) => {
-					const { summary } = await tree.summarize(true);
+		describe.only("regenerate", () => {
+			for (const { name, tree } of generateTestTrees()) {
+				it(`for ${name}`, async () => {
+					const { summary } = await tree().summarize(true);
 					await createSnapshot(getFilepath(name), summary);
-				}),
-			);
+				});
+			}
 		});
 	}
 
 	describe("matches the historical snapshot", () => {
 		for (const { name, tree } of generateTestTrees()) {
 			it(`for ${name}`, async () => {
-				const { summary } = await tree.summarize(true);
+				const { summary } = await tree().summarize(true);
 				await verifyEqualPastSnapshot(getFilepath(name), summary);
 			});
 		}

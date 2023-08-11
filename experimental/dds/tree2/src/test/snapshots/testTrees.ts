@@ -3,33 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SharedTreeTestFactory,
-	TestTreeProviderLite,
-	initializeTestTree,
-	namedTreeSchema,
-} from "../utils";
+import { TestTreeProviderLite } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, SchemaData, UpPath, ValueSchema, fieldSchema, rootFieldKey } from "../../core";
+import { AllowedUpdateType, FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
 
-const rootFieldSchema = fieldSchema(FieldKinds.sequence);
-const rootNodeSchema = namedTreeSchema({
-	name: "TestInner",
-	mapFields: fieldSchema(FieldKinds.sequence),
-});
-const leafNodeSchema = namedTreeSchema({
-	name: "TestLeaf",
-	leafValue: ValueSchema.String,
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([
-		[rootNodeSchema.name, rootNodeSchema],
-		[leafNodeSchema.name, leafNodeSchema],
-	]),
-	rootFieldSchema,
-};
+const builder = new SchemaBuilder("test trees");
+const rootNodeSchema = builder.map("TestInner", SchemaBuilder.fieldSequence(Any));
+const leafNodeSchema = builder.leaf("TestLeaf", ValueSchema.String);
+const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
 function generateCompleteTree(
 	fields: FieldKey[],
@@ -38,7 +21,11 @@ function generateCompleteTree(
 ): ISharedTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	initializeTestTree(tree, undefined, testSchema);
+	tree.schematize({
+		allowedSchemaModifications: AllowedUpdateType.None,
+		schema: testSchema,
+		initialTree: [],
+	});
 	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
 	provider.processMessages();
 	return tree;
@@ -90,7 +77,11 @@ function generateTreeRecursively(
 	}
 }
 
-export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
+// TODO:
+// The implementation and usage of these implies the edit history of these trees is relevant, but its not exactly clear how.
+// More documentation on what kind of coverage over possible tree histories and contents this is supposed to provide is needed here.
+// Depending on the above, maybe these tests (or at least some of the cases) should probably be changed to use branches and not full trees to avoid depending on a fluid runtime.
+export function generateTestTrees(): { name: string; tree: () => ISharedTree }[] {
 	return [
 		{
 			name: "complete-3x3",
@@ -104,66 +95,77 @@ export function generateTestTrees(): { name: string; tree: ISharedTree }[] {
 		{
 			name: "has-handle",
 			tree: () => {
-				const builder = new SchemaBuilder("has-handle");
-				const handleSchema = builder.leaf("Handle", ValueSchema.Serializable);
-				const docSchema = builder.intoDocumentSchema(
+				const innerBuilder = new SchemaBuilder("has-handle");
+				const handleSchema = innerBuilder.leaf("Handle", ValueSchema.Serializable);
+				const docSchema = innerBuilder.intoDocumentSchema(
 					SchemaBuilder.fieldOptional(handleSchema),
 				);
-				const onCreate = (tree: ISharedTree) => {
-					tree.storedSchema.update(docSchema);
-					const field = tree.editor.optionalField({
-						parent: undefined,
-						field: rootFieldKey,
-					});
-					field.set(
-						singleTextCursor({ type: handleSchema.name, value: tree.handle }),
-						true,
-					);
-				};
 
-				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));
-				return provider.trees[0];
+				const config = {
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: docSchema,
+					initialTree: undefined,
+				};
+				const provider = new TestTreeProviderLite(1);
+				const tree = provider.trees[0];
+				tree.schematize(config);
+
+				const field = tree.editor.optionalField({
+					parent: undefined,
+					field: rootFieldKey,
+				});
+				field.set(singleTextCursor({ type: handleSchema.name, value: tree.handle }), true);
+				provider.processMessages();
+				return tree;
 			},
 		},
 		{
 			name: "nested-sequence-change",
 			tree: () => {
-				const builder = new SchemaBuilder("has-sequence-map");
-				const seqMapSchema = builder.mapRecursive(
+				const innerBuilder = new SchemaBuilder("has-sequence-map");
+				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
 					SchemaBuilder.fieldRecursive(FieldKinds.sequence, () => seqMapSchema),
 				);
-				const docSchema = builder.intoDocumentSchema(
+				const docSchema = innerBuilder.intoDocumentSchema(
 					SchemaBuilder.fieldSequence(seqMapSchema),
 				);
-				const onCreate = (tree: ISharedTree) => {
-					tree.storedSchema.update(docSchema);
-					tree.transaction.start();
-					// We must make this shallow change to the sequence field as part of the same transaction as the
-					// nested change. Otherwise, the nested change will be represented using the generic field kind.
-					tree.editor
-						.sequenceField({
-							parent: undefined,
-							field: rootFieldKey,
-						})
-						.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
-					// The nested change
-					tree.editor
-						.sequenceField({
-							parent: {
-								parent: undefined,
-								parentField: rootFieldKey,
-								parentIndex: 0,
-							},
-							field: brand("foo"),
-						})
-						.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
-					tree.transaction.commit();
+
+				const config = {
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: docSchema,
+					initialTree: [],
 				};
 
-				const provider = new TestTreeProviderLite(1, new SharedTreeTestFactory(onCreate));
-				return provider.trees[0];
+				const provider = new TestTreeProviderLite(1);
+				const tree = provider.trees[0];
+				tree.schematize(config);
+
+				tree.storedSchema.update(docSchema);
+				tree.transaction.start();
+				// We must make this shallow change to the sequence field as part of the same transaction as the
+				// nested change. Otherwise, the nested change will be represented using the generic field kind.
+				tree.editor
+					.sequenceField({
+						parent: undefined,
+						field: rootFieldKey,
+					})
+					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
+				// The nested change
+				tree.editor
+					.sequenceField({
+						parent: {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 0,
+						},
+						field: brand("foo"),
+					})
+					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
+				tree.transaction.commit();
+				provider.processMessages();
+				return tree;
 			},
 		},
-	].map(({ name, tree }) => ({ name, tree: useDeterministicStableId(tree) }));
+	].map(({ name, tree }) => ({ name, tree: () => useDeterministicStableId(tree) }));
 }
