@@ -22,8 +22,6 @@ import {
 /**
  * Base class for creating proxy to the real delta manager. It implements all required methods on IDeltaManager and
  * proxy implementations can override specific methods.
- *
- * @deprecated No replacement API is recommended.
  */
 export class DeltaManagerProxyBase
 	extends EventForwarder<IDeltaManagerEvents>
