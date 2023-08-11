@@ -464,6 +464,7 @@ export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
+    readonly stashed?: boolean;
 }
 
 // @public (undocumented)
