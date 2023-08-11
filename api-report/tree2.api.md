@@ -456,10 +456,11 @@ export type DownPath = PathStep[];
 export interface EditableField extends UntypedField<EditableTreeContext, EditableTree, EditableTree, UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     get content(): EditableTree | undefined | EditableField;
-    delete(): void;
-    deleteNodes(index: number, count?: number): void;
+    getTreeStatus(): TreeStatus;
     insertNodes(index: number, newContent: NewFieldContent): void;
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: EditableField): void;
+    remove(): void;
+    removeNodes(index: number, count?: number): void;
     replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
     setContent(newContent: NewFieldContent): void;
 }
@@ -476,6 +477,7 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, Omit<UntypedTreeCore<EditableTreeContext, EditableField>, typeof Symbol.iterator> {
+    [getTreeStatus](): TreeStatus;
     readonly [localNodeKeySymbol]?: LocalNodeKey;
     readonly [parentField]: {
         readonly parent: EditableField;
@@ -1916,6 +1918,16 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 type TreeSchemaSpecification = [
 FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
+
+// @alpha
+export enum TreeStatus {
+    // (undocumented)
+    Deleted = 2,
+    // (undocumented)
+    InDocument = 0,
+    // (undocumented)
+    Removed = 1
+}
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {

@@ -34,7 +34,12 @@ import {
 	typeSymbol,
 	contextSymbol,
 } from "../untypedTree";
-import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
+import {
+	AdaptingProxyHandler,
+	adaptWithProxy,
+	getStableNodeKey,
+	isParentedUnderRootField,
+} from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -44,6 +49,8 @@ import {
 	NewFieldContent,
 	localNodeKeySymbol,
 	setField,
+	getTreeStatus,
+	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -237,6 +244,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return { parent: proxifiedField, index };
 	}
 
+	public getTreeStatus(): TreeStatus {
+		const path = this.cursor.getPath();
+		if (path === undefined) {
+			return TreeStatus.Deleted;
+		}
+		return isParentedUnderRootField(path) ? TreeStatus.InDocument : TreeStatus.Removed;
+	}
+
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -288,6 +303,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.getField.bind(target);
 			case setField:
 				return target.setField.bind(target);
+			case getTreeStatus:
+				return target.getTreeStatus.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:

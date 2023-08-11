@@ -42,12 +42,14 @@ import {
 	isPrimitive,
 	keyIsValidIndex,
 	getOwnArrayKeys,
+	isParentedUnderRootField,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
 	NewFieldContent,
+	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	areCursors,
@@ -390,6 +392,14 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			destinationFieldPath,
 			destinationIndex,
 		);
+	}
+
+	public getTreeStatus(): TreeStatus {
+		const path = this.cursor.getFieldPath().parent;
+		if (path === undefined) {
+			return TreeStatus.Deleted;
+		}
+		return isParentedUnderRootField(path) ? TreeStatus.InDocument : TreeStatus.Removed;
 	}
 
 	public getfieldPath(): FieldUpPath {

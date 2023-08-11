@@ -165,18 +165,6 @@ export type UnwrappedUntypedField<TContext = UntypedTreeContext> =
 	| UntypedField<TContext>;
 
 /**
- * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
- * InDocument - node is parented under the root field.
- * Removed - node is not parented under the root field.
- * Deleted - node is deleted from the tree.
- */
-export enum TreeStatus {
-	InDocument = 0,
-	Removed = 1,
-	Deleted = 2,
-}
-
-/**
  * A field of an {@link UntypedTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedUntypedTree}).
  * @alpha
  */

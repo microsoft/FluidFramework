@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { FieldKey, TreeStoredSchema } from "../../core";
+import { FieldKey, TreeStoredSchema, UpPath, rootFieldKey } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
@@ -98,4 +98,19 @@ export function getStableNodeKey(
 		);
 		return brand(id);
 	}
+}
+
+export function isParentedUnderRootField(path: UpPath): boolean {
+	let currentPath = path;
+	while (currentPath.parentField !== undefined) {
+		if (currentPath.parentField === rootFieldKey) {
+			return true;
+		}
+		if (currentPath.parent !== undefined) {
+			currentPath = currentPath.parent;
+		} else {
+			break;
+		}
+	}
+	return false;
 }
