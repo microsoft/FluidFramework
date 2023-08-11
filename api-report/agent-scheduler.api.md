@@ -4,14 +4,11 @@
 
 ```ts
 
-import { ConsensusRegisterCollection } from '@fluidframework/register-collection';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -21,22 +18,25 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
-    // Warning: (ae-forgotten-export) The symbol "AgentScheduler" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    static createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler>;
+    static createChildInstance(parentContext: IFluidDataStoreContext): Promise<IAgentScheduler>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;
-    // Warning: (ae-forgotten-export) The symbol "AgentSchedulerRuntime" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<AgentSchedulerRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
     // (undocumented)
     static get registryEntry(): NamedFluidDataStoreRegistryEntry;
     // (undocumented)
     static readonly type = "_scheduler";
     // (undocumented)
     readonly type = "_scheduler";
+}
+
+// @internal (undocumented)
+export class AgentSchedulerRuntime extends FluidDataStoreRuntime {
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
+    // (undocumented)
+    request(request: IRequest): Promise<IResponse>;
 }
 
 // @public (undocumented)
