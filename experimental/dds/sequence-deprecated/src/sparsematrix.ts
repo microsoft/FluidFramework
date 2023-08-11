@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	BaseSegment,
-	createGroupOp,
 	IJSONSegment,
 	IMergeTreeDeltaOp,
 	ISegment,
@@ -21,9 +20,10 @@ import {
 	Serializable,
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence, SubSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedSegmentSequence } from "@fluidframework/sequence";
 import { pkgVersion } from "./packageVersion";
+import { SubSequence } from "./sharedSequence";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.
