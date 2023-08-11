@@ -48,7 +48,7 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-
+import { UsageError } from "@fluidframework/container-utils";
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceInterval } from "./intervals";
@@ -233,14 +233,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The exclusive end of the range to remove
 	 */
 	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		const removeOp = this.client.removeRangeLocal(start, end);
-		this.submitSequenceMessage(removeOp);
-		return removeOp;
+		return ensureNoReentrancy(() => {
+			const removeOp = this.client.removeRangeLocal(start, end);
+			this.submitSequenceMessage(removeOp);
+			return removeOp;
+		});
 	}
 
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
-		this.client.localTransaction(groupOp);
-		this.submitSequenceMessage(groupOp);
+		ensureNoReentrancy(() => {
+			this.client.localTransaction(groupOp);
+			this.submitSequenceMessage(groupOp);
+		});
 	}
 
 	/**
@@ -286,10 +290,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		props: PropertySet,
 		combiningOp?: ICombiningOp,
 	) {
-		const annotateOp = this.client.annotateRangeLocal(start, end, props, combiningOp);
-		if (annotateOp) {
-			this.submitSequenceMessage(annotateOp);
-		}
+		ensureNoReentrancy(() => {
+			const annotateOp = this.client.annotateRangeLocal(start, end, props, combiningOp);
+			if (annotateOp) {
+				this.submitSequenceMessage(annotateOp);
+			}
+		});
 	}
 
 	public getPropertiesAtPosition(pos: number) {
@@ -433,10 +439,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param segment - The segment to insert
 	 */
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
-		const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		ensureNoReentrancy(() => {
+			const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
+			if (insertOp) {
+				this.submitSequenceMessage(insertOp);
+			}
+		});
 	}
 	/**
 	 * Inserts a segment
@@ -445,10 +453,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public insertFromSpec(pos: number, spec: IJSONSegment) {
 		const segment = this.segmentFromSpec(spec);
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		ensureNoReentrancy(() => {
+			const insertOp = this.client.insertSegmentLocal(pos, segment);
+			if (insertOp) {
+				this.submitSequenceMessage(insertOp);
+			}
+		});
 	}
 
 	/**
@@ -811,5 +821,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			const intervalCollection = this.intervalCollections.get(key);
 			intervalCollection.attachGraph(this.client, key);
 		}
+	}
+}
+
+let isRunningLocalChange = false;
+/**
+ * This is a safeguard to avoid corrupting documents in the case of applications submitting reentrant local ops.
+ * See reentrancy.spec.ts for example problematic scenarios.
+ */
+export function ensureNoReentrancy<T>(callback: () => T): T {
+	if (isRunningLocalChange) {
+		throw new UsageError("Reentrancy detected in sequence local ops");
+	}
+	isRunningLocalChange = true;
+	try {
+		return callback();
+	} finally {
+		isRunningLocalChange = false;
 	}
 }
