@@ -270,7 +270,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 			this.pendingBlobs.set(localId, {
 				blob,
-				status: PendingBlobStatus.Uploading,
+				status: PendingBlobStatus.Stashed,
 				handleP: new Deferred(),
 				uploadP: this.uploadBlob(localId, blob),
 				attached,
@@ -637,10 +637,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
-			assert(
-				pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId,
-				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-			);
+			if (
+				!(pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId)
+			) {
+				console.log(pendingEntry?.status);
+				assert(
+					pendingEntry?.status === PendingBlobStatus.SendingOp &&
+						!!pendingEntry?.storageId,
+					0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
+				);
+			}
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
