@@ -27,6 +27,7 @@ import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/cont
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
 
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -712,8 +713,8 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 	} {
 		const compressorSummary = summaryTree.tree[".idCompressor"];
 		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const bytes = (compressorSummary as any).content as Uint8Array;
-		const floatView = new Float64Array(bytes.buffer);
+		const base64Content = (compressorSummary as any).content as string;
+		const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
 		return {
 			sessionCount: floatView[3],
 			clusterCount: floatView[4],

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import {
 	IdCreationRange,
 	IIdCompressor,
@@ -522,7 +522,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessionCount: serializedSessions.length,
 		});
 
-		return { bytes: new Uint8Array(serialized.buffer) } as unknown as SerializedIdCompressor;
+		return bufferToString(serialized.buffer, "base64") as SerializedIdCompressor;
 	}
 
 	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
@@ -534,7 +534,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		serialized: SerializedIdCompressor,
 		sessionId?: SessionId,
 	): IdCompressor {
-		const index = { index: 0, bytes: new Float64Array(serialized.bytes.buffer) };
+		const buffer = stringToBuffer(serialized, "base64");
+		const index = { index: 0, bytes: new Float64Array(buffer) };
 		const version = readNumber(index);
 		assert(version === currentWrittenVersion, "Unknown serialized version.");
 		const hasLocalState = readBoolean(index);

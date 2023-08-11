@@ -490,24 +490,19 @@ export type OpSpaceCompressedId = number & {
 };
 
 // @public
-export interface SerializedIdCompressor {
-    // (undocumented)
-    readonly bytes: Uint8Array;
-    // (undocumented)
+export type SerializedIdCompressor = string & {
     readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
-}
+};
 
 // @public
-export interface SerializedIdCompressorWithNoSession extends SerializedIdCompressor {
-    // (undocumented)
+export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
     readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
-}
+};
 
 // @public
-export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCompressor {
-    // (undocumented)
+export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
     readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
-}
+};
 
 // @public
 export type SessionId = StableId & {

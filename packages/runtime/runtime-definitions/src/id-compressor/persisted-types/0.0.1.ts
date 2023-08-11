@@ -13,24 +13,23 @@ export const currentWrittenVersion = 1;
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  */
-export interface SerializedIdCompressor {
+export type SerializedIdCompressor = string & {
 	readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
-	readonly bytes: Uint8Array;
-}
+};
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  */
-export interface SerializedIdCompressorWithNoSession extends SerializedIdCompressor {
+export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
 	readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
-}
+};
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  */
-export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCompressor {
+export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
 	readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
-}
+};
 
 /**
  * Data describing a range of session-local IDs (from a remote or local session).
