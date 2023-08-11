@@ -1144,9 +1144,12 @@ export class ContainerRuntime
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
 		this.submitFn = submitFn;
-		this.submitBatchFn = (...args) => {
-			return this.shouldSubmit ? submitBatchFn(...args) : -1;
-		};
+
+		if (submitBatchFn) {
+			this.submitBatchFn = (...args) => {
+				return this.shouldSubmit ? submitBatchFn(...args) : -1;
+			};
+		}
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
