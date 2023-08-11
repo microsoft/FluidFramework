@@ -10,9 +10,6 @@ import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
-import { ISharedObjectRegistry } from '@fluidframework/datastore';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -30,13 +27,6 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     static readonly type = "_scheduler";
     // (undocumented)
     readonly type = "_scheduler";
-}
-
-// @internal (undocumented)
-export class AgentSchedulerRuntime extends FluidDataStoreRuntime {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
 }
 
 // @public (undocumented)

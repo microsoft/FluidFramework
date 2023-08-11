@@ -4,5 +4,5 @@
  */
 
 export { IAgentScheduler, IAgentSchedulerEvents, IProvideAgentScheduler } from "./agent";
-export { AgentSchedulerFactory, AgentSchedulerRuntime } from "./scheduler";
+export { AgentSchedulerFactory } from "./scheduler";
 export { ITaskSubscriptionEvents, TaskSubscription } from "./taskSubscription";
