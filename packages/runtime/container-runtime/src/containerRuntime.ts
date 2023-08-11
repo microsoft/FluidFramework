@@ -1917,6 +1917,8 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 		let newState: boolean;
 
+		this.needStashRebase = false;
+
 		try {
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -3732,6 +3734,7 @@ export class ContainerRuntime
 			this.pendingStateManager.rebase();
 			this.flush(); // make sure all resubmitted ops reach PendingStateManager
 			this.shouldSubmit = true;
+			this.needStashRebase = false;
 		}
 
 		return {
