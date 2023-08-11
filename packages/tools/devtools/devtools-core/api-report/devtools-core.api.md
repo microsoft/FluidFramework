@@ -242,6 +242,8 @@ export const EditType: {
     readonly Boolean: "boolean";
     readonly Number: "number";
     readonly String: "string";
+    readonly Undefined: "undefined";
+    readonly Null: "null";
 };
 
 // @internal (undocumented)

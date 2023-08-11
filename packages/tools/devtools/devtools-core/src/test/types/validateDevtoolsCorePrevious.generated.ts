@@ -1612,7 +1612,6 @@ declare function use_old_InterfaceDeclaration_FluidObjectTreeNode(
     use: TypeOnly<old.FluidObjectTreeNode>);
 use_old_InterfaceDeclaration_FluidObjectTreeNode(
     // @ts-expect-error compatibility expected to be broken
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_FluidObjectTreeNode());
 
 /*

@@ -339,8 +339,8 @@ const allEdits = [
 	EditType.Boolean,
 	EditType.String,
 	EditType.Number,
-	EditType.Null,
 	EditType.Undefined,
+	EditType.Null,
 ];
 
 /**
