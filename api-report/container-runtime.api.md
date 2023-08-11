@@ -420,7 +420,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 }
 
 // @public (undocumented)
-export interface INackSummaryResult extends IRetryFailureResult {
+export interface INackSummaryResult extends IRetriableFailureResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
@@ -441,7 +441,7 @@ export interface IRefreshSummaryAckOptions {
 }
 
 // @public
-export interface IRetryFailureResult {
+export interface IRetriableFailureResult {
     // (undocumented)
     readonly retryAfterSeconds?: number;
 }
@@ -658,7 +658,7 @@ export enum RuntimeMessage {
 }
 
 // @public
-export interface SubmitSummaryFailureData extends IRetryFailureResult {
+export interface SubmitSummaryFailureData extends IRetriableFailureResult {
     // (undocumented)
     stage: SummaryStage;
 }

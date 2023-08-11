@@ -39,8 +39,11 @@ import {
 	RetriableSummaryError,
 	IGeneratedSummaryStats,
 } from "../../summary";
-// eslint-disable-next-line import/no-internal-modules
-import { defaultMaxAttempts, maxAttemptsForSubmitFailures } from "../../summary/runningSummarizer";
+import {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../summary/runningSummarizer";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;
@@ -854,7 +857,9 @@ describe("Runtime", () => {
 				const failedStages: SummaryStage[] = ["base", "generate", "upload", "submit"];
 				for (const [stageIndex, stage] of failedStages.entries()) {
 					const maxAttempts =
-						stage === "submit" ? defaultMaxAttempts : maxAttemptsForSubmitFailures;
+						stage === "submit"
+							? defaultMaxAttempts
+							: defaultMaxAttemptsForSubmitFailures;
 					const titleStage = stage === "submit" ? "nack" : stage;
 					it(`should attempt 1 time only on failure without retry specified at ${titleStage} stage`, async () => {
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
@@ -975,7 +980,7 @@ describe("Runtime", () => {
 						const maxAttemptsOverride =
 							stage === "submit"
 								? defaultMaxAttempts
-								: maxAttemptsForSubmitFailures - 1;
+								: defaultMaxAttemptsForSubmitFailures - 1;
 						settings["Fluid.Summarizer.AttemptsForSubmitFailures"] =
 							maxAttemptsOverride;
 
@@ -1088,7 +1093,7 @@ describe("Runtime", () => {
 					await emitNextOp();
 					// This should run a summarization because max ops has reached.
 					await emitNextOp(summaryConfig.maxOps);
-					let maxAttempts = maxAttemptsForSubmitFailures;
+					let maxAttempts = defaultMaxAttemptsForSubmitFailures;
 					let attemptNumber = 1;
 					await validateSummaryAttemptFails(
 						attemptNumber++,
