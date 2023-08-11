@@ -6,10 +6,14 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
-import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList, NoopMarkType } from "./format";
-import { areInputCellsEmpty, areOutputCellsEmpty, getNodeChange, markIsTransient } from "./utils";
+import { Mark, MarkList, NoopMarkType } from "./format";
+import {
+	areInputCellsEmpty,
+	areOutputCellsEmpty,
+	getEffectiveNodeChanges,
+	markIsTransient,
+} from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
@@ -19,116 +23,107 @@ export function sequenceFieldToDelta<TNodeChange>(
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
-		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
-			out.push(deltaFromNodeChange(getNodeChange(mark), mark.count, deltaFromChild));
-		} else if (
-			areInputCellsEmpty(mark) &&
-			areOutputCellsEmpty(mark) &&
-			(!markIsTransient(mark) || mark.changes === undefined)
-		) {
-		} else {
-			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
-			const type = mark.type;
-			assert(type !== NoopMarkType, 0x6b0 /* Cell changing mark must no be a NoopMark */);
-			switch (type) {
-				case "Insert": {
-					const cursors = mark.content.map(singleTextCursor);
-					const insertMark: Mutable<Delta.Insert> = {
-						type: Delta.MarkType.Insert,
-						content: cursors,
-					};
-					if (mark.transientDetach !== undefined) {
-						insertMark.isTransient = true;
-					}
-					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
-					out.pushContent(insertMark);
-					break;
-				}
-				case "MoveIn":
-				case "ReturnTo": {
-					const moveMark: Delta.MoveIn = {
-						type: Delta.MarkType.MoveIn,
-						count: mark.count,
-						moveId: brandOpaque<Delta.MoveId>(mark.id),
-					};
-					out.pushContent(moveMark);
-					break;
-				}
-				case "Modify": {
-					const modify = deltaFromChild(mark.changes);
-					if (modify.fields !== undefined) {
-						out.pushContent(modify);
-					} else {
-						out.pushOffset(1);
-					}
-					break;
-				}
-				case "Delete": {
-					const deleteMark: Mutable<Delta.Delete> = {
-						type: Delta.MarkType.Delete,
-						count: mark.count,
-					};
-					populateChildModificationsIfAny(mark.changes, deleteMark, deltaFromChild);
-					out.pushContent(deleteMark);
-					break;
-				}
-				case "MoveOut":
-				case "ReturnFrom": {
-					const moveMark: Mutable<Delta.MoveOut> = {
-						type: Delta.MarkType.MoveOut,
-						moveId: brandOpaque<Delta.MoveId>(mark.id),
-						count: mark.count,
-					};
-					populateChildModificationsIfAny(mark.changes, moveMark, deltaFromChild);
-					out.pushContent(moveMark);
-					break;
-				}
-				case "Revive": {
-					const insertMark: Mutable<Delta.Insert> = {
-						type: Delta.MarkType.Insert,
-						content: mark.content,
-					};
-					if (mark.transientDetach !== undefined) {
-						insertMark.isTransient = true;
-					}
-					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
-					out.pushContent(insertMark);
-					break;
-				}
-				case "Placeholder":
-					fail("Should not have placeholders in a changeset being converted to delta");
-				default:
-					unreachableCase(type);
-			}
-		}
+		const changes = getEffectiveNodeChanges(mark);
+		const cellDelta = cellDeltaFromMark(mark, changes === undefined);
+		const fullDelta = withChildModificationsIfAny(changes, cellDelta, deltaFromChild);
+		out.push(fullDelta);
 	}
 	return out.list;
 }
 
-function populateChildModificationsIfAny<TNodeChange>(
-	changes: TNodeChange | undefined,
-	deltaMark: Mutable<Delta.HasModifications>,
-	deltaFromChild: ToDelta<TNodeChange>,
-): void {
-	if (changes !== undefined) {
-		const modify = deltaFromChild(changes);
-		populateChildModifications(modify, deltaMark);
+function cellDeltaFromMark<TNodeChange>(
+	mark: Mark<TNodeChange>,
+	ignoreTransient: boolean,
+): Mutable<Delta.Mark> {
+	if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
+		// Since each cell is associated with exactly one node,
+		// the cell starting end ending populated means the cell content has not changed.
+		return mark.count;
+	} else if (
+		areInputCellsEmpty(mark) &&
+		areOutputCellsEmpty(mark) &&
+		(!markIsTransient(mark) || ignoreTransient)
+	) {
+		// The cell starting and ending empty means the cell content has not changed,
+		// unless transient content was inserted/attached.
+		return 0;
+	} else {
+		const type = mark.type;
+		// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+		switch (type) {
+			case "Insert": {
+				const cursors = mark.content.map(singleTextCursor);
+				const insertMark: Mutable<Delta.Insert> = {
+					type: Delta.MarkType.Insert,
+					content: cursors,
+				};
+				if (mark.transientDetach !== undefined) {
+					insertMark.isTransient = true;
+				}
+				return insertMark;
+			}
+			case "MoveIn":
+			case "ReturnTo": {
+				return {
+					type: Delta.MarkType.MoveIn,
+					count: mark.count,
+					moveId: brandOpaque<Delta.MoveId>(mark.id),
+				};
+			}
+			case NoopMarkType: {
+				return mark.count;
+			}
+			case "Delete": {
+				return {
+					type: Delta.MarkType.Delete,
+					count: mark.count,
+				};
+			}
+			case "MoveOut":
+			case "ReturnFrom": {
+				return {
+					type: Delta.MarkType.MoveOut,
+					moveId: brandOpaque<Delta.MoveId>(mark.id),
+					count: mark.count,
+				};
+			}
+			case "Revive": {
+				const insertMark: Mutable<Delta.Insert> = {
+					type: Delta.MarkType.Insert,
+					content: mark.content,
+				};
+				if (mark.transientDetach !== undefined) {
+					insertMark.isTransient = true;
+				}
+				return insertMark;
+			}
+			case "Placeholder":
+				fail("Should not have placeholders in a changeset being converted to delta");
+			default:
+				unreachableCase(type);
+		}
 	}
 }
 
-function deltaFromNodeChange<TNodeChange>(
-	change: TNodeChange | undefined,
-	length: number,
+function withChildModificationsIfAny<TNodeChange>(
+	changes: TNodeChange | undefined,
+	deltaMark: Mutable<Delta.Mark>,
 	deltaFromChild: ToDelta<TNodeChange>,
 ): Delta.Mark {
-	if (change === undefined) {
-		return length;
+	if (changes !== undefined) {
+		const modify = deltaFromChild(changes);
+		if (modify.fields !== undefined) {
+			if (typeof deltaMark === "number") {
+				assert(deltaMark === 1, "Invalid nested changes on non-1 skip mark");
+				return modify;
+			} else {
+				assert(
+					deltaMark.type !== Delta.MarkType.MoveIn,
+					"Invalid nested changes on MoveIn mark",
+				);
+				return { ...deltaMark, fields: modify.fields };
+			}
+		}
 	}
-	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
-	const modify = deltaFromChild(change);
-	return isEmptyModify(modify) ? 1 : modify;
-}
-
-function isEmptyModify(modify: Delta.Modify): boolean {
-	return modify.fields === undefined;
+	return deltaMark;
 }

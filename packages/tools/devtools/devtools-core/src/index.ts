@@ -54,12 +54,7 @@ export {
 	VisualValueNode,
 	UnknownObjectNode,
 } from "./data-visualization";
-export {
-	ContainerDevtoolsFeature,
-	ContainerDevtoolsFeatureFlags,
-	DevtoolsFeature,
-	DevtoolsFeatureFlags,
-} from "./Features";
+export { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features";
 export { IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtoolsProps, initializeDevtools } from "./FluidDevtools";
