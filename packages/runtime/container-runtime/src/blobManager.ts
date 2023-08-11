@@ -284,7 +284,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		});
 
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
-			assert(!!blobId || !this.runtime.connected, "Must only submit ops with no storage ID when disconnected");
+			assert(
+				!!blobId || !this.runtime.connected,
+				"Must only submit ops with no storage ID when disconnected",
+			);
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(
 				pendingEntry !== undefined,
