@@ -207,7 +207,7 @@ export function getEffectiveNodeChanges<TNodeChange>(
 	const type = mark.type;
 	assert(
 		type !== "MoveIn" && type !== "ReturnTo",
-		"MoveIn/ReturnTo marks should not have changes",
+		0x72f /* MoveIn/ReturnTo marks should not have changes */,
 	);
 	switch (type) {
 		case "Insert":
