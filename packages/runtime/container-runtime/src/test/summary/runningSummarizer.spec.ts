@@ -1138,7 +1138,7 @@ describe("Runtime", () => {
 					);
 				});
 
-				it("Should not retry last summary", async () => {
+				it("should not retry last summary", async () => {
 					const stage: SummaryStage = "base";
 					const retryAfterSeconds = 10;
 					await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
@@ -1159,6 +1159,7 @@ describe("Runtime", () => {
 							retryAfterSeconds,
 							summarizeCount: 1,
 							stage,
+							summarizeReason: "lastSummary",
 						},
 					];
 					mockLogger.assertMatch(
@@ -1727,7 +1728,7 @@ describe("Runtime", () => {
 								eventName: "Running:Summarize_end",
 								summarizeCount: runCount,
 								summarizerSuccessfulAttempts: runCount,
-								reason: "maxOps",
+								summarizeReason: "maxOps",
 							},
 						]),
 						"unexpected log sequence 3",
