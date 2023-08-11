@@ -115,7 +115,7 @@ function invertMark<TNodeChange>(
 			return [inverse];
 		}
 		case "Insert": {
-			assert(mark.cellId !== undefined, "Insert marks must have a cellId");
+			assert(mark.cellId !== undefined, 0x72c /* Insert marks must have a cellId */);
 			if (mark.transientDetach !== undefined) {
 				assert(revision !== undefined, 0x720 /* Unable to revert to undefined revision */);
 				return [
