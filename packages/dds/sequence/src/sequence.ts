@@ -207,15 +207,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			dataStoreRuntime.options,
 		);
 
-		this.client.on("delta", (opArgs, deltaArgs) => {
-			if (opArgs.sequencedMessage === undefined) {
+		this.client.prependListener("delta", (opArgs, deltaArgs) => {
+			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
+			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
-			this.emit(
-				"sequenceDelta",
-				new SequenceDeltaEvent(opArgs, deltaArgs, this.client),
-				this,
-			);
+			this.emit("sequenceDelta", event, this);
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {

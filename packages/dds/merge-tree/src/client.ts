@@ -835,27 +835,33 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
-		let metadata: SegmentGroup | SegmentGroup[] | undefined;
-		switch (op.type) {
-			case MergeTreeDeltaType.INSERT:
-				this.applyInsertOp({ op });
-				metadata = this.peekPendingSegmentGroups();
-				break;
-			case MergeTreeDeltaType.REMOVE:
-				this.applyRemoveRangeOp({ op });
-				metadata = this.peekPendingSegmentGroups();
-				break;
-			case MergeTreeDeltaType.ANNOTATE:
-				this.applyAnnotateRangeOp({ op });
-				metadata = this.peekPendingSegmentGroups();
-				break;
-			case MergeTreeDeltaType.GROUP:
-				return op.ops.map((o) => this.applyStashedOp(o));
-			default:
-				unreachableCase(op, "unrecognized op type");
+		const callback = this._mergeTree.mergeTreeDeltaCallback;
+		this._mergeTree.mergeTreeDeltaCallback = undefined;
+		try {
+			let metadata: SegmentGroup | SegmentGroup[] | undefined;
+			switch (op.type) {
+				case MergeTreeDeltaType.INSERT:
+					this.applyInsertOp({ op });
+					metadata = this.peekPendingSegmentGroups();
+					break;
+				case MergeTreeDeltaType.REMOVE:
+					this.applyRemoveRangeOp({ op });
+					metadata = this.peekPendingSegmentGroups();
+					break;
+				case MergeTreeDeltaType.ANNOTATE:
+					this.applyAnnotateRangeOp({ op });
+					metadata = this.peekPendingSegmentGroups();
+					break;
+				case MergeTreeDeltaType.GROUP:
+					return op.ops.map((o) => this.applyStashedOp(o));
+				default:
+					unreachableCase(op, "unrecognized op type");
+			}
+			assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
+			return metadata;
+		} finally {
+			this._mergeTree.mergeTreeDeltaCallback = callback;
 		}
-		assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
-		return metadata;
 	}
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
