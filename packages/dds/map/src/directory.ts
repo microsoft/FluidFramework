@@ -2248,7 +2248,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (op.type === "createSubDirectory") {
 				const dir = this._subdirectories.get(op.subdirName);
 				// Child sub directory create seq number can't be lower than the parent subdirectory.
-				// The sequence number can be consistent when multiple createSubDirectory occurs with grouped batching enabled.
+				// The sequence number for multiple ops can be the same when multiple createSubDirectory occurs with grouped batching enabled, thus <= and not just <.
 				if (this.sequenceNumber !== -1 && this.sequenceNumber <= msg.sequenceNumber) {
 					if (dir?.sequenceNumber === -1) {
 						// Only set the seq on the first message, could be more
