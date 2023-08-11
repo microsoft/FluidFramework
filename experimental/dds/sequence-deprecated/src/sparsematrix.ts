@@ -5,14 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	BaseSegment,
-	createGroupOp,
-	IJSONSegment,
-	IMergeTreeDeltaOp,
-	ISegment,
-	PropertySet,
-} from "@fluidframework/merge-tree";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,

@@ -467,7 +467,7 @@ export interface IMergeTreeDeltaOpArgs {
     readonly stashed?: boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
