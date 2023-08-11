@@ -70,15 +70,12 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 }
 
 // @internal
-export enum ContainerDevtoolsFeature {
-    ContainerData = "container-data",
-    ContainerDataEditing = "container-data-editing"
+export interface ContainerDevtoolsFeatureFlags {
+    // @deprecated
+    "container-data"?: boolean;
+    "containerDataEditing"?: boolean;
+    "containerDataVisualization"?: boolean;
 }
-
-// @internal
-export type ContainerDevtoolsFeatureFlags = {
-    [Feature in ContainerDevtoolsFeature]?: boolean;
-};
 
 // @internal
 export namespace ContainerDevtoolsFeatures {
@@ -192,14 +189,9 @@ export namespace DevtoolsDisposed {
 }
 
 // @internal
-export enum DevtoolsFeature {
-    Telemetry = "telemetry"
+export interface DevtoolsFeatureFlags {
+    telemetry?: boolean;
 }
-
-// @internal
-export type DevtoolsFeatureFlags = {
-    [Feature in DevtoolsFeature]?: boolean;
-};
 
 // @internal
 export namespace DevtoolsFeatures {
@@ -243,14 +235,14 @@ export interface Edit {
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 // @internal
-export enum EditType {
-    // (undocumented)
-    Boolean = "boolean",
-    // (undocumented)
-    Number = "number",
-    // (undocumented)
-    String = "string"
-}
+export const EditType: {
+    readonly Boolean: "boolean";
+    readonly Number: "number";
+    readonly String: "string";
+};
+
+// @internal (undocumented)
+export type EditType = typeof EditType[keyof typeof EditType];
 
 // @public
 export interface FluidDevtoolsProps {

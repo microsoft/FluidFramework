@@ -13,7 +13,7 @@ import {
 	IdAllocator,
 	NodeReviver,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, Modify, ReturnFrom, NoopMarkType, MoveOut } from "./format";
+import { Changeset, Mark, MarkList, ReturnFrom, NoopMarkType, MoveOut, NoopMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -103,7 +103,16 @@ function invertMark<TNodeChange>(
 ): Mark<TNodeChange>[] {
 	switch (mark.type) {
 		case NoopMarkType: {
-			return [mark];
+			const inverse = { ...mark };
+			if (mark.changes !== undefined) {
+				if (mark.cellId === undefined) {
+					inverse.changes = invertChild(mark.changes, inputIndex);
+				} else {
+					// TODO: preserve modifications to the removed nodes.
+					delete inverse.changes;
+				}
+			}
+			return [inverse];
 		}
 		case "Insert": {
 			assert(mark.cellId !== undefined, "Insert marks must have a cellId");
@@ -212,7 +221,7 @@ function invertMark<TNodeChange>(
 						crossFieldManager,
 				  )
 				: [
-						invertModifyOrSkip(
+						invertNodeChangeOrSkip(
 							mark.count,
 							mark.changes,
 							inputIndex,
@@ -220,19 +229,6 @@ function invertMark<TNodeChange>(
 							mark.cellId,
 						),
 				  ];
-		}
-		case "Modify": {
-			if (mark.cellId === undefined) {
-				return [
-					{
-						type: "Modify",
-						count: 1,
-						changes: invertChild(mark.changes, inputIndex),
-					},
-				];
-			}
-			// TODO: preserve modifications to the removed nodes.
-			return [];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
@@ -242,7 +238,7 @@ function invertMark<TNodeChange>(
 			}
 			if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
 				// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
-				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
+				return [invertNodeChangeOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 			}
 			if (mark.changes !== undefined) {
 				assert(
@@ -349,7 +345,7 @@ function applyMovedChanges<TNodeChange>(
 	}
 }
 
-function invertModifyOrSkip<TNodeChange>(
+function invertNodeChangeOrSkip<TNodeChange>(
 	length: number,
 	changes: TNodeChange | undefined,
 	index: number,
@@ -358,15 +354,14 @@ function invertModifyOrSkip<TNodeChange>(
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
-		const modify: Modify<TNodeChange> = {
-			type: "Modify",
+		const noop: NoopMark<TNodeChange> = {
 			count: 1,
 			changes: inverter(changes, index),
 		};
 		if (detachEvent !== undefined) {
-			modify.cellId = detachEvent;
+			noop.cellId = detachEvent;
 		}
-		return modify;
+		return noop;
 	}
 
 	return { count: detachEvent === undefined ? length : 0 };
