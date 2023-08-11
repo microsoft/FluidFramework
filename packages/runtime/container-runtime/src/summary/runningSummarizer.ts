@@ -578,7 +578,8 @@ export class RunningSummarizer implements IDisposable {
 				let overrideDelaySeconds: number | undefined;
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
-				for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length; ) {
+				let summaryAttemptPhase = 0;
+				while (summaryAttemptPhase < attempts.length) {
 					if (this.cancellationToken.cancelled) {
 						return;
 					}
