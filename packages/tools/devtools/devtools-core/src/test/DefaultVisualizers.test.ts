@@ -86,20 +86,17 @@ describe("DefaultVisualizers unit tests", () => {
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: sharedCell.id,
 			children: {
-				renderedData: {
-					children: {
-						test: {
-							nodeKind: VisualNodeKind.ValueNode,
-							typeMetadata: "undefined",
-							value: undefined,
-						},
-					},
-					typeMetadata: "object",
-					nodeKind: VisualNodeKind.TreeNode,
+				test: {
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "undefined",
+					value: undefined,
 				},
 			},
 			nodeKind: VisualNodeKind.FluidTreeNode,
 			typeMetadata: "SharedCell",
+			editProps: {
+				editTypes: undefined,
+			},
 		};
 
 		expect(result).to.deep.equal(expected);
