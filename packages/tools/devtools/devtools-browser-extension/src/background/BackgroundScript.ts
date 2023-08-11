@@ -185,7 +185,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 });
 
 // Listener for TEST_GET_TAB_ID message.
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.type !== "TEST_GET_TAB_ID") {
 		return;
 	}
@@ -193,6 +193,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	const tabId = sender.tab?.id;
 
 	if (tabId !== undefined) {
+		console.log(`BACKGROUND SCRIPT TabId : ${tabId}`);
 		sendResponse({ type: "TEST_TAB_ID", data: { tabId } });
 		return true;
 	} else {

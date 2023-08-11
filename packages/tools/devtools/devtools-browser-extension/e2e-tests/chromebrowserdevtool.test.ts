@@ -75,9 +75,13 @@ describe("End to end tests", () => {
 		// Get Tab ID from the running extension scripts (content and background) associated with the app page
 		const tabId = await appPage.evaluate(() => {
 			// Request TabId to Content Script
+			console.log("PAGE: Posting Message to CONTENT SCRIPT");
+
 			window.postMessage({
 				type: "TEST_GET_TAB_ID",
 			});
+
+			console.log("PAGE: Completedd Posting Message to CONTENT SCRIPT");
 
 			// Receive TabId from ContentScript
 			return new Promise<number>((resolve, reject) => {
@@ -98,9 +102,13 @@ describe("End to end tests", () => {
 
 		const extPage = await browser.newPage();
 
+		console.log("PAGE: Attempting to set global tabId");
+
 		// Set the mock Tab ID in the extension page so Devtools script picks it up when we navigate to extension URL
 		await extPage.evaluate((_tabId) => {
 			(window as any).TEST_TAB_ID_OVERRIDE = _tabId;
+
+			console.log(`PAGE: Completed setting the global tabId to ${_tabId}`);
 		}, tabId);
 
 		const extensionUrl = `chrome-extension://${extensionId}/devtools/devtools.html`;
