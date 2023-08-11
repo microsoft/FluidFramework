@@ -118,6 +118,75 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_ContainerDevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"EnumDeclaration_DevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"EnumDeclaration_EditType": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidHandleNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectNodeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectTreeNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidObjectValueNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_FluidUnknownObjectNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_TreeNodeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_UnknownObjectNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ValueNodeBase": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_VisualChildNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_VisualNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_VisualNodeBase": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_VisualTreeNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_VisualValueNode": {
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_DevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_EditType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_ContainerDevtoolsFeature": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_FluidObjectNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_RootHandleNode": {
+				"backCompat": false
+			}
+		}
 	}
 }

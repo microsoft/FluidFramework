@@ -4,11 +4,7 @@
  */
 import React from "react";
 
-import {
-	ContainerDevtoolsFeature,
-	FluidObjectValueNode,
-	HasContainerKey,
-} from "@fluid-experimental/devtools-core";
+import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
 import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
 import { EditableValueView } from "./EditableValueView";
 
@@ -31,8 +27,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;
 	const { containerFeatureFlags } = useContainerFeaturesContext();
 	const editingEnabled =
-		containerFeatureFlags[ContainerDevtoolsFeature.ContainerDataEditing] === true &&
-		node.editProps !== undefined;
+		containerFeatureFlags.containerDataEditing === true && node.editProps !== undefined;
 	const header = (
 		<>
 			{editingEnabled === true ? (
