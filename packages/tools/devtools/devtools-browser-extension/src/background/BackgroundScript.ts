@@ -186,6 +186,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 // Listener for TEST_GET_TAB_ID message.
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	if (request.type !== "TEST_GET_TAB_ID") {
 		return;
 	}

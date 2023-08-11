@@ -21,6 +21,26 @@ export interface DevToolsInitMessageData {
 }
 
 /**
+ * Message data format used by {@link TestGetTabIdMessage}
+ */
+export interface TestGetTabIdMessage {
+	/**
+	 * Message type to request the active TabId
+	 */
+	type: string;
+}
+
+/**
+ * Message data format used by {@link TestTabIdMessage}
+ */
+export interface TestTabIdMessage {
+	/**
+	 * Message type to send the active TabId
+	 */
+	type: string;
+}
+
+/**
  * Special message format used in Devtools initialization.
  *
  * Sent from Devtools Script to the Background Script to establish connection with tab (Content Script).

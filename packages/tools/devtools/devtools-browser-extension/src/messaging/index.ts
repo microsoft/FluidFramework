@@ -10,6 +10,8 @@ export {
 	DevToolsInitMessage,
 	devToolsInitAcknowledgementType,
 	DevToolsInitAcknowledgement,
+	TestGetTabIdMessage,
+	TestTabIdMessage,
 } from "./Messages";
 export { TypedPortConnection } from "./TypedPortConnection";
 export { postMessageToPort, relayMessageToPort } from "./Utilities";

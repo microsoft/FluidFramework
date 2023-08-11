@@ -106,6 +106,7 @@ describe("End to end tests", () => {
 
 		// Set the mock Tab ID in the extension page so Devtools script picks it up when we navigate to extension URL
 		await extPage.evaluate((_tabId) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(window as any).TEST_TAB_ID_OVERRIDE = _tabId;
 
 			console.log(`PAGE: Completed setting the global tabId to ${_tabId}`);

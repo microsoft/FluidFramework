@@ -10,7 +10,12 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { browser, window } from "../Globals";
-import { extensionMessageSource, relayMessageToPort } from "../messaging";
+import {
+	extensionMessageSource,
+	relayMessageToPort,
+	TestGetTabIdMessage,
+	TestTabIdMessage,
+} from "../messaging";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
@@ -92,18 +97,19 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 
 // #region TEST ONLY
 // TODO: compile this out in non-dev builds
-window.addEventListener("message", (event) => {
-	const message = event.data;
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+window.addEventListener("message", async (event) => {
+	const message = event.data as TestGetTabIdMessage;
 	if (message.type === "TEST_GET_TAB_ID") {
 		console.log("CONTENT SCRIPT: Forwarding tab request from page to background script.");
 
 		// Forward message to background script
-		browser.runtime.sendMessage(message);
+		await browser.runtime.sendMessage(message);
 	}
 });
 
 // Handle TAB_ID message from background script
-browser.runtime.onMessage.addListener((message, sender) => {
+browser.runtime.onMessage.addListener((message: TestTabIdMessage) => {
 	if (message.type === "TEST_TAB_ID") {
 		console.log("CONTENT SCRIPT: Forwarding tab ID from background script to webpage.");
 		window?.postMessage(message); // Sent to Application

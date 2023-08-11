@@ -192,9 +192,12 @@ export class BackgroundConnection
  */
 function getTabId(): number {
 	// If the property doesn't exist on the window object, it'll be defined.
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	if ((window as any).TEST_TAB_ID_OVERRIDE === undefined) {
-		return ((window as any).TEST_TAB_ID_OVERRIDE = browser.devtools.inspectedWindow.tabId);
+		return browser.devtools.inspectedWindow.tabId;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	return (window as any).TEST_TAB_ID_OVERRIDE as number;
 }
