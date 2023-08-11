@@ -24,7 +24,11 @@ import {
 	getBooleanFromConfig,
 	getCorrelationIdWithHttpFallback,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import {
+	getBooleanParam,
+	validateRequestParams,
+	handleResponse,
+} from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import {
@@ -62,6 +66,8 @@ export function create(
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
 	);
+
+	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
 	// Whether to enforce server-generated document ids in create doc flow
 	const enforceServerGeneratedDocumentId: boolean =
 		config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
@@ -172,9 +178,16 @@ export function create(
 			);
 
 			// Protocol state
-			const { sequenceNumber, values, generateToken = false } = request.body;
+			const {
+				sequenceNumber,
+				values,
+				generateToken = false,
+				isEphemeralContainer = false,
+			} = request.body;
 
 			const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
+			const isEphemeral: boolean =
+				getBooleanParam(isEphemeralContainer) && !ignoreEphemeralFlag;
 
 			const createP = storage.createDocument(
 				tenantId,
@@ -187,6 +200,7 @@ export function create(
 				externalDeltaStreamUrl,
 				values,
 				enableDiscovery,
+				isEphemeral,
 			);
 
 			// Handle backwards compatibility for older driver versions.

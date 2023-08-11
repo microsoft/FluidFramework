@@ -79,7 +79,6 @@ describe("Runtime", () => {
 			let lastSummarySeq: number;
 			let mockRuntime: MockRuntime;
 			let heuristicData: ISummarizeHeuristicData;
-			const maxIterationsForSummarizer = 2; // Currently we are restricting the number of iterations to 2.
 			const summaryCommon = {
 				maxAckWaitTime: 120000, // 2 min
 				maxOpsSinceLastSummary: 7000,
@@ -629,62 +628,6 @@ describe("Runtime", () => {
 						]),
 						"unexpected log sequence",
 					);
-
-					if (maxIterationsForSummarizer > 2) {
-						// Should not run, because of 2 min delay
-						await emitNack();
-						await tickAndFlushPromises(2 * 60 * 1000 - 1);
-						assertRunCounts(2, 0, 1, "retry2 should not start until after delay");
-
-						// Should run with refreshLatestAck after second nack
-						await tickAndFlushPromises(1);
-						assertRunCounts(3, 0, 2, "retry2 should be refreshLatestAck");
-						const retryProps3 = {
-							summarizeCount: 1,
-							summaryAttemptsPerPhase: 1,
-							summaryAttempts: 3,
-							summaryAttemptPhase: 3,
-						};
-						assert(
-							mockLogger.matchEvents([
-								{
-									eventName: "Running:Summarize_cancel",
-									...retryProps2,
-									reason: getFailMessage("summaryNack"),
-								},
-								{ eventName: "Running:Summarize_generate", ...retryProps3 },
-								{ eventName: "Running:Summarize_Op", ...retryProps3 },
-							]),
-							"unexpected log sequence",
-						);
-
-						// Should not run, because of 10 min delay
-						await emitNack();
-						await tickAndFlushPromises(10 * 60 * 1000 - 1);
-						assertRunCounts(3, 0, 2, "retry3 should not start until after delay");
-
-						// Should run with fullTree after third nack
-						await tickAndFlushPromises(1);
-						assertRunCounts(4, 1, 3, "retry3 should be fullTree and refreshLatestAck");
-						const retryProps4 = {
-							summarizeCount: 1,
-							summaryAttemptsPerPhase: 1,
-							summaryAttempts: 4,
-							summaryAttemptPhase: 4,
-						};
-						assert(
-							mockLogger.matchEvents([
-								{
-									eventName: "Running:Summarize_cancel",
-									...retryProps3,
-									reason: "summaryNack",
-								},
-								{ eventName: "Running:Summarize_generate", ...retryProps4 },
-								{ eventName: "Running:Summarize_Op", ...retryProps4 },
-							]),
-							"unexpected log sequence",
-						);
-					}
 					// Should stop after final nack
 					assert.strictEqual(stopCall, 0);
 					await emitNack();
@@ -760,36 +703,6 @@ describe("Runtime", () => {
 						]),
 						"unexpected log sequence",
 					);
-
-					if (maxIterationsForSummarizer > 2) {
-						// should not run, because of specified 30 sec delay
-						await emitNack(30);
-						await tickAndFlushPromises(30 * 1000 - 1);
-						assertRunCounts(2, 0, 0, "wait for another retryAfter delay");
-
-						// should run the next stage with refreshLatestAck after delay
-						await tickAndFlushPromises(1);
-						assertRunCounts(3, 0, 1, "retry again with refreshLatestAck");
-						const retryProps3 = {
-							summarizeCount: 1,
-							summaryAttemptsPerPhase: 1,
-							summaryAttempts: 3,
-							summaryAttemptPhase: 2,
-						};
-						assert(
-							mockLogger.matchEvents([
-								{
-									eventName: "Running:Summarize_cancel",
-									...retryProps2,
-									reason: getFailMessage("summaryNack"),
-								},
-								{ eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
-								{ eventName: "Running:Summarize_generate", ...retryProps3 },
-								{ eventName: "Running:Summarize_Op", ...retryProps3 },
-							]),
-							"unexpected log sequence",
-						);
-					}
 				});
 
 				it("Should wait on 429 from uploadSummaryWithContext", async () => {

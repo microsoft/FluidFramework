@@ -70,6 +70,7 @@
 		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
+		"ignoreEphemeralFlag": true,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",

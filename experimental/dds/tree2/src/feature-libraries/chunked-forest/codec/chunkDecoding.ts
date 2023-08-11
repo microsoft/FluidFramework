@@ -78,7 +78,7 @@ export function readValue(stream: StreamCursor, shape: EncodedValueShape): Value
 		} else if (shape === false) {
 			return undefined;
 		} else if (Array.isArray(shape)) {
-			assert(shape.length === 1, "expected a single constant for value");
+			assert(shape.length === 1, 0x734 /* expected a single constant for value */);
 			return shape[0] as Value;
 		} else {
 			// EncodedCounter case:
@@ -100,14 +100,14 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 	// consider keeping SequenceChunks here if they are longer than some threshold.
 	if (chunk instanceof SequenceChunk) {
 		// Could return [] here, however the logic in this file is designed to never produce an empty SequenceChunk, so its better to throw an error here to detect bugs.
-		assert(chunk.subChunks.length > 0, "Unexpected empty sequence");
+		assert(chunk.subChunks.length > 0, 0x735 /* Unexpected empty sequence */);
 		// Logic in this file is designed to never produce an unneeded (single item) SequenceChunks, so its better to throw an error here to detect bugs.
-		assert(chunk.subChunks.length > 1, "Unexpected single item sequence");
+		assert(chunk.subChunks.length > 1, 0x736 /* Unexpected single item sequence */);
 
 		for (const sub of chunk.subChunks) {
 			// The logic in this file is designed to never produce an nested SequenceChunks or emptyChunk, so its better to throw an error here to detect bugs.
-			assert(!(sub instanceof SequenceChunk), "unexpected nested sequence");
-			assert(sub !== emptyChunk, "unexpected empty chunk");
+			assert(!(sub instanceof SequenceChunk), 0x737 /* unexpected nested sequence */);
+			assert(sub !== emptyChunk, 0x738 /* unexpected empty chunk */);
 
 			sub.referenceAdded();
 		}
@@ -155,7 +155,10 @@ export class NestedArrayDecoder implements ChunkDecoder {
 				chunks.push(decoder.decode(decoders, inner));
 			}
 		} else {
-			assert(Array.isArray(data), "expected number of array for encoding of nested array");
+			assert(
+				Array.isArray(data),
+				0x739 /* expected number of array for encoding of nested array */,
+			);
 			const inner = { data, offset: 0 };
 			while (inner.offset !== inner.data.length) {
 				chunks.push(decoder.decode(decoders, inner));

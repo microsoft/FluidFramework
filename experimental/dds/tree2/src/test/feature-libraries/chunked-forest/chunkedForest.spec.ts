@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// This lint is broken in intellisense, causing needless errors.
-
 import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
