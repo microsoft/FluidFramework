@@ -359,6 +359,14 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.clientId = this.stateHandler.clientId();
 
+		this.replayCore();
+	}
+
+	public rebase() {
+		this.replayCore();
+	}
+
+	private replayCore() {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x174 /* "initial states should be empty before replaying pending" */,

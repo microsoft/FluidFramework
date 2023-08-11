@@ -30,7 +30,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1];
+		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
@@ -60,7 +60,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1];
+		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].attached, true);
@@ -92,7 +92,7 @@ describe("getPendingLocalState", () => {
 		await assert.doesNotReject(handleP);
 		await assert.doesNotReject(handleP2);
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1];
+		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 2);
 
 		const summaryData = validateSummary(runtime);

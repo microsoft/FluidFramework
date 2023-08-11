@@ -857,6 +857,8 @@ export class ContainerRuntime
 		batch: boolean,
 		appData?: any,
 	) => number;
+
+	private shouldSubmit = true;
 	/**
 	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
 	 */
@@ -1142,7 +1144,9 @@ export class ContainerRuntime
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
 		this.submitFn = submitFn;
-		this.submitBatchFn = submitBatchFn;
+		this.submitBatchFn = (...args) => {
+			return this.shouldSubmit ? submitBatchFn(...args) : -1;
+		};
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
@@ -2083,8 +2087,12 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
+	private needStashRebase = false;
+
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
+
+		this.needStashRebase = this.needStashRebase || local;
 
 		// Whether or not the message is actually a runtime message.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
@@ -3705,10 +3713,22 @@ export class ContainerRuntime
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
-		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-		// to close current batch.
+
+		if (!pendingAttachmentBlobs && !this.pendingStateManager.hasPendingMessages() && this.outbox.isEmpty) {
+			return; // no pending state to save
+		}
+
+		// make sure we stash any pending batch
 		this.flush();
+
+		// rebase pending ops so they don't depend on our previous sequenced ops (which won't be stashed)
+		if (this.needStashRebase && this.pendingStateManager.hasPendingMessages()) {
+			// these ops may currently be in flight; we don't want to actually submit them
+			this.shouldSubmit = false;
+			this.pendingStateManager.rebase();
+			this.flush(); // make sure all resubmitted ops reach PendingStateManager
+			this.shouldSubmit = true;
+		}
 
 		return {
 			pending: this.pendingStateManager.getLocalState(),

@@ -284,6 +284,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		});
 
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
+			assert(!!blobId || !this.runtime.connected, "Must only submit ops with no storage ID when disconnected");
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(
 				pendingEntry !== undefined,
@@ -703,12 +704,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const pendingEntry = this.pendingBlobs.get(localId);
 
 		if (!blobId) {
-			// We submitted this op while offline. The blob should have been uploaded by now.
-			assert(
-				pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-					!!pendingEntry?.storageId,
-				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-			);
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
@@ -1037,10 +1032,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
+	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs | undefined> {
 		if (waitBlobsToAttach) {
 			await this.shutdownPendingBlobs();
 		}
+
+		if (this.pendingBlobs.size === 0) {
+			return;
+		}
+
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
 			blobs[key] = {
