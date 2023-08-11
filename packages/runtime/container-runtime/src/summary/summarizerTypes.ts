@@ -218,12 +218,12 @@ export type SubmitSummaryResult =
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /** Type for summarization failures that are retriable. */
-export interface IRetryFailureResult {
+export interface IRetriableFailureResult {
 	readonly retryAfterSeconds?: number;
 }
 
 /** The data in summarizer result when submit summary stage fails. */
-export interface SubmitSummaryFailureData extends IRetryFailureResult {
+export interface SubmitSummaryFailureData extends IRetriableFailureResult {
 	stage: SummaryStage;
 }
 
@@ -237,7 +237,7 @@ export interface IAckSummaryResult {
 	readonly ackNackDuration: number;
 }
 
-export interface INackSummaryResult extends IRetryFailureResult {
+export interface INackSummaryResult extends IRetriableFailureResult {
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }

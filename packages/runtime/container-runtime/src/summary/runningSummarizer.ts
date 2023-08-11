@@ -52,10 +52,10 @@ const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
  */
 export const defaultMaxAttempts = 2;
 /**
- * The maximum number of summarization attempts that will be done for summarization failures where
+ * The default value for maximum number of summarization attempts that will be done for summarization failures where
  * submit fails and the failure can be retried.
  */
-export const maxAttemptsForSubmitFailures = 5;
+export const defaultMaxAttemptsForSubmitFailures = 5;
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
@@ -160,6 +160,9 @@ export class RunningSummarizer implements IDisposable {
 
 	private readonly runtimeListener;
 
+	/** The maximum number of summary attempts to do when submit summary fails. */
+	private readonly maxAttemptsForSubmitFailures: number;
+
 	private constructor(
 		baseLogger: ITelemetryBaseLogger,
 		private readonly summaryWatcher: IClientSummaryWatcher,
@@ -253,6 +256,17 @@ export class RunningSummarizer implements IDisposable {
 			this.handleOp(op, runtimeMessage === true);
 		};
 		this.runtime.on("op", this.runtimeListener);
+
+		// The max attempts for submit failures can be overridden via a feature flag. This allows us to
+		// tweak this as per telemetry data until we arrive at a stable number.
+		// If its set to a number higher than `defaultMaxAttemptsForSubmitFailures`, it will be ignored.
+		const overrideMaxAttempts = this.mc.config.getNumber(
+			"Fluid.Summarizer.AttemptsForSubmitFailures",
+		);
+		this.maxAttemptsForSubmitFailures =
+			overrideMaxAttempts && overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
+				? overrideMaxAttempts
+				: defaultMaxAttemptsForSubmitFailures;
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -575,8 +589,15 @@ export class RunningSummarizer implements IDisposable {
 		reason: SummarizeReason,
 		cancellationToken: ISummaryCancellationToken,
 	) {
+		// The max number of attempts are based on the stage at which summarization failed. If it fails before it is
+		// submitted, a different value is used compared to if it fails after submission. Usually, in the former case,
+		// we would retry more often as its cheaper and retries are likely to succeed.
+		// This makes it harder to predict how many attempts would actually happen as that depends on how far an attempt
+		// made. To keep things simple, the max attempts is reset after every attempt based on where it failed. This may
+		// result in some failures not being retried depending on what happened before this attempt. That's fine because
+		// such scenarios are very unlikely and even if it happens, it would resolve when a new summarizer starts over.
 		let maxAttempts = defaultMaxAttempts;
-		let currentAttempts = 0;
+		let currentAttempt = 0;
 
 		let done = false;
 		do {
@@ -584,14 +605,14 @@ export class RunningSummarizer implements IDisposable {
 				return;
 			}
 
-			currentAttempts++;
+			currentAttempt++;
 			const summarizeOptions: ISummarizeOptions = {
 				refreshLatestAck: false,
 				fullTree: false,
 			};
 			const summarizeProps: ISummarizeTelemetryProperties = {
 				reason,
-				summaryAttempts: currentAttempts,
+				summaryAttempts: currentAttempt,
 				...summarizeOptions,
 			};
 			const summarizeResult = this.generator.summarize(
@@ -600,6 +621,7 @@ export class RunningSummarizer implements IDisposable {
 				cancellationToken,
 			);
 
+			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			if (ackNackResult.success) {
 				return;
@@ -613,16 +635,7 @@ export class RunningSummarizer implements IDisposable {
 			// from "receivedSummaryAckOrNack" result.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
 			if (!submitSummaryResult.success) {
-				// The max attempts for submit failures can be overridden via a feature flag. This allows us to
-				// tweak this as per telemetry data until we arrive at a stable number.
-				// If its set to a number higher than `maxAttemptsForSubmitFailures`, it will be ignored.
-				const overrideMaxAttempts = this.mc.config.getNumber(
-					"Fluid.Summarizer.AttemptsForSubmitFailures",
-				);
-				maxAttempts =
-					overrideMaxAttempts && overrideMaxAttempts <= maxAttemptsForSubmitFailures
-						? overrideMaxAttempts
-						: maxAttemptsForSubmitFailures;
+				maxAttempts = this.maxAttemptsForSubmitFailures;
 				retryAfterSeconds = submitSummaryResult.data?.retryAfterSeconds;
 			} else {
 				maxAttempts = defaultMaxAttempts;
@@ -631,7 +644,7 @@ export class RunningSummarizer implements IDisposable {
 
 			// If "retryAfterSeconds" is part of failure params and we haven't done max attempts, add a delay
 			// and retry another attempt.
-			if (retryAfterSeconds !== undefined && currentAttempts < maxAttempts) {
+			if (retryAfterSeconds !== undefined && currentAttempt < maxAttempts) {
 				this.mc.logger.sendPerformanceEvent({
 					eventName: "SummarizeAttemptDelay",
 					duration: retryAfterSeconds,
