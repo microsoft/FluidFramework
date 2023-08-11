@@ -165,10 +165,10 @@ describe("Summarizer Client Election", () => {
 			addClient(id, seq, int);
 		}
 		election = new SummarizerClientElection(
-			mockLogger.toTelemetryLogger(),
+			mockLogger,
 			summaryCollectionEmitter,
 			new OrderedClientElection(
-				mockLogger.toTelemetryLogger(),
+				mockLogger,
 				new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum),
 				initialState ?? currentSequenceNumber,
 				SummarizerClientElection.isClientEligible,

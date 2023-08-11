@@ -108,7 +108,7 @@ async function runTestNoTimer(
 	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		logger.toTelemetryLogger(),
+		logger,
 		mockCache,
 		batchSize,
 		-1, // timerGranularity
@@ -149,7 +149,7 @@ export async function runTestWithTimer(
 	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		logger.toTelemetryLogger(),
+		logger,
 		mockCache,
 		batchSize,
 		1, // timerGranularity
@@ -313,7 +313,7 @@ describe("OpsCache", () => {
 		const logger = new MockLogger();
 		const cache = new OpsCache(
 			initialSeq,
-			logger.toTelemetryLogger(),
+			logger,
 			mockCache,
 			5 /* batchSize */,
 			-1, // timerGranularity
@@ -400,7 +400,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		const logger = new MockLogger();
 		const storage = new OdspDeltaStorageWithCache(
 			snapshotOps,
-			logger.toTelemetryLogger(),
+			logger,
 			batchSize,
 			concurrency,
 			// getFromStorage

@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryPropertiesExt } from "./telemetryTypes";
-import { createChildLogger } from "./logger";
+import { TelemetryLogger } from "./logger";
+import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
  */
-export class MockLogger implements ITelemetryBaseLogger {
+export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	events: ITelemetryBaseEvent[] = [];
+
+	constructor() {
+		super();
+	}
 
 	clear() {
 		this.events = [];
-	}
-
-	toTelemetryLogger() {
-		return createChildLogger({ logger: this });
 	}
 
 	send(event: ITelemetryBaseEvent): void {

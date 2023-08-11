@@ -59,14 +59,15 @@ describe("RouterliciousDriverRestWrapper", () => {
 			};
 			return newToken;
 		};
+
 		restWrapper = await RouterliciousOrdererRestWrapper.load(
 			toInstrumentedR11sOrdererTokenFetcher(
 				"dummytenantid",
 				"dummydocumentid",
 				tokenProvider,
-				logger.toTelemetryLogger(),
+				logger,
 			),
-			logger.toTelemetryLogger(),
+			logger,
 			rateLimiter,
 			false,
 		);

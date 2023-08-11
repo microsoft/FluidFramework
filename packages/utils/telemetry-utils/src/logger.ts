@@ -84,9 +84,32 @@ export const eventNamespaceSeparator = ":" as const;
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  *
+ * @deprecated - In a subsequent release this type will no longer be exported, use ITelemetryLogger instead
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public static readonly eventNamespaceSeparator = eventNamespaceSeparator;
+
+	/**
+	 * @deprecated - use formatTick
+	 */
+	public static formatTick(tick: number): number {
+		return Math.floor(tick);
+	}
+
+	/**
+	 * Attempts to parse number from string.
+	 * If fails,returns original string.
+	 * Used to make telemetry data typed (and support math operations, like comparison),
+	 * in places where we do expect numbers (like contentsize/duration property in http header)
+	 * @deprecated - use numberFromString
+	 */
+	public static numberFromString(str: string | null | undefined): string | number | undefined {
+		if (str === undefined || str === null) {
+			return undefined;
+		}
+		const num = Number(str);
+		return Number.isNaN(num) ? str : num;
+	}
 
 	public static sanitizePkgName(name: string) {
 		return name.replace("@", "").replace("/", "-");
@@ -307,6 +330,9 @@ export function createChildLogger(props?: {
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt {
+	if (props === undefined) {
+		return new TelemetryNullLogger();
+	}
 	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
 }
 
@@ -314,6 +340,7 @@ export function createChildLogger(props?: {
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
+ * @deprecated - Use createChildLogger instead
  */
 export class ChildLogger extends TelemetryLogger {
 	/**
@@ -356,19 +383,14 @@ export class ChildLogger extends TelemetryLogger {
 					? baseLogger.namespace
 					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
-			const child = new ChildLogger(
-				baseLogger.baseLogger,
-				combinedNamespace,
-				combinedProperties,
-			);
-
-			if (!loggerIsMonitoringContext(child) && loggerIsMonitoringContext(baseLogger)) {
-				mixinMonitoringContext(child, baseLogger.config);
-			}
-			return child;
+			return new ChildLogger(baseLogger.baseLogger, combinedNamespace, combinedProperties);
 		}
 
-		return new ChildLogger(baseLogger ? baseLogger : { send() {} }, namespace, properties);
+		return new ChildLogger(
+			baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
+			namespace,
+			properties,
+		);
 	}
 
 	private constructor(
@@ -416,6 +438,7 @@ export function createMultiSinkLogger(props: {
 /**
  * Multi-sink logger
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
+ * @deprecated - use createMultiSinkLogger instead
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[];
@@ -626,6 +649,70 @@ export class PerformanceEvent {
 
 		this.logger.sendPerformanceEvent(event, error);
 	}
+}
+
+/**
+ * Logger that is useful for UT
+ * It can be used in places where logger instance is required, but events should be not send over.
+ * @deprecated - Use createChildLogger instead
+ */
+export class TelemetryUTLogger implements ITelemetryLoggerExt {
+	public send(event: ITelemetryBaseEvent): void {}
+	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {}
+	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+		this.reportError("errorEvent in UT logger!", event, error);
+	}
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
+	public logGenericError(eventName: string, error: any) {
+		this.reportError(`genericError in UT logger!`, { eventName }, error);
+	}
+	public logException(event: ITelemetryErrorEvent, exception: any): void {
+		this.reportError("exception in UT logger!", event, exception);
+	}
+	public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+		this.reportError("debugAssert in UT logger!");
+	}
+	public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+		this.reportError("shipAssert in UT logger!");
+	}
+
+	private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
+		const error = new Error(message);
+		(error as any).error = error;
+		(error as any).event = event;
+		// report to console as exception can be eaten
+		console.error(message);
+		console.error(error);
+		throw error;
+	}
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ * @deprecated - for internal use only
+ */
+export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
+	/**
+	 * Send an event with the logger
+	 *
+	 * @param event - the event to send
+	 */
+	public send(event: ITelemetryBaseEvent): void {
+		return;
+	}
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ * @deprecated - for internal use only
+ */
+export class TelemetryNullLogger implements ITelemetryLoggerExt {
+	public send(event: ITelemetryBaseEvent): void {}
+	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
+	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
 }
 
 /**

@@ -12,6 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
+export { DebugLogger } from "./debugLogger";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
@@ -42,12 +43,15 @@ export {
 } from "./fluidErrorBase";
 export {
 	eventNamespaceSeparator,
+	BaseTelemetryNullLogger,
+	ChildLogger,
 	createChildLogger,
 	createMultiSinkLogger,
 	formatTick,
 	IPerformanceEventMarkers,
 	ITelemetryLoggerPropertyBag,
 	ITelemetryLoggerPropertyBags,
+	MultiSinkLogger,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
@@ -55,6 +59,9 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
+	TelemetryLogger,
+	TelemetryNullLogger,
+	TelemetryUTLogger,
 } from "./logger";
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";

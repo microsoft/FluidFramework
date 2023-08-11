@@ -493,7 +493,7 @@ describe("Loader", () => {
 
 			it("Closed abort reason should be passed fetch abort signal", async () => {
 				const mockLogger = new MockLogger();
-				await startDeltaManager(undefined, mockLogger.toTelemetryLogger(), () => ({
+				await startDeltaManager(undefined, mockLogger, () => ({
 					fetchMessages: (
 						_from: number,
 						_to: number | undefined,

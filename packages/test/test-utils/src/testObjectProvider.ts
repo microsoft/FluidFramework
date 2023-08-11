@@ -29,7 +29,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	createMultiSinkLogger,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -160,7 +164,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
  * any expected events that have not occurred.
  */
-export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
+export class EventAndErrorTrackingLogger extends TelemetryLogger {
 	/**
 	 * Even if these error events are logged, tests should still be allowed to pass
 	 * Additionally, if downgrade is true, then log as generic (e.g. to avoid polluting the e2e test logs)
@@ -175,7 +179,9 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
 	];
 
-	constructor(private readonly baseLogger: ITelemetryBaseLogger) {}
+	constructor(private readonly baseLogger: ITelemetryBaseLogger) {
+		super();
+	}
 
 	private readonly expectedEvents: (
 		| { index: number; event: ITelemetryGenericEvent | undefined }

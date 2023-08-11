@@ -24,6 +24,7 @@ import {
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MockLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -52,12 +53,15 @@ describe("Runtime", () => {
 
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
-		logger = new MockLogger(),
+		logger: ITelemetryLoggerExt = new MockLogger(),
 	): Partial<IContainerContext> => ({
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
 		quorum: new MockQuorumClients(),
-		taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
+		taggedLogger: mixinMonitoringContext(
+			logger,
+			configProvider(settings),
+		) as unknown as MockLogger,
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},

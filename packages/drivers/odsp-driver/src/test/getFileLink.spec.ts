@@ -32,11 +32,7 @@ describe("getFileLink", () => {
 	it("should return share link with existing access", async () => {
 		const result = await mockFetchMultiple(
 			async () =>
-				getFileLink(
-					storageTokenFetcher,
-					{ siteUrl, driveId, itemId: "itemId4" },
-					logger.toTelemetryLogger(),
-				),
+				getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, logger),
 			[
 				async () => okResponse({}, fileItemResponse),
 				async () => okResponse({}, { d: { directUrl: "sharelink" } }),
@@ -56,7 +52,7 @@ describe("getFileLink", () => {
 					getFileLink(
 						storageTokenFetcher,
 						{ siteUrl, driveId, itemId: "itemId5" },
-						logger.toTelemetryLogger(),
+						logger,
 					),
 				[
 					async () => okResponse({}, {}),
@@ -74,7 +70,7 @@ describe("getFileLink", () => {
 				return getFileLink(
 					storageTokenFetcher,
 					{ siteUrl, driveId, itemId: "itemId6" },
-					logger.toTelemetryLogger(),
+					logger,
 				);
 			}, notFound),
 			"File link should reject when not found",

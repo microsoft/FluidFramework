@@ -19,7 +19,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 	describe("Send and receive GenericError instances", () => {
 		it("Send and receive a GenericError with no attached error.", () => {
 			const testError = new GenericError("genericError");
-			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -36,7 +36,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 		// Dangling error objects of any type will be ignored (see constructor):
 		it("Send and receive a GenericError with a dangling error of any type.", () => {
 			const testError = new GenericError("genericError", "placeholder");
-			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -52,7 +52,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 		it("Send and receive a GenericError with a dangling error of object type.", () => {
 			const testErrorObj = new Error("some error");
 			const testError = new GenericError("genericError", testErrorObj);
-			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -76,7 +76,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 				message2: "message2",
 				exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
 			});
-			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{

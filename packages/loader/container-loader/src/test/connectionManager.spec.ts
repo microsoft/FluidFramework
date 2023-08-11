@@ -81,7 +81,7 @@ describe("connectionManager", () => {
 			() => false,
 			client as IClient,
 			true /* reconnectAllowed */,
-			mockLogger.toTelemetryLogger(),
+			mockLogger,
 			props,
 		);
 	}

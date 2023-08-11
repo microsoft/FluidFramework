@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -265,7 +265,7 @@ export class OdspDocumentServiceFactoryCore
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: ITelemetryLogger,
+		odspLogger: TelemetryLogger,
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
