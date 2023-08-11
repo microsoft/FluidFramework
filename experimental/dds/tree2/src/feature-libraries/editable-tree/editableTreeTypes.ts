@@ -267,6 +267,7 @@ export interface EditableField
 	/**
 	 * Removes the content of this field.
 	 * Only supports field kinds which can be empty.
+	 * Once removed, the removed node should return {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}
 	 */
 	remove(): void;
 

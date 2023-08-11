@@ -249,6 +249,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		if (path === undefined) {
 			return TreeStatus.Deleted;
 		}
+		/**
+		 * TODO: This is a slow initial implementation which traverses the entire path up to the root of the tree.
+		 * This should eventually be optimized.
+		 */
 		return isParentedUnderRootField(path) ? TreeStatus.InDocument : TreeStatus.Removed;
 	}
 

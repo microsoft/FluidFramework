@@ -100,6 +100,11 @@ export function getStableNodeKey(
 	}
 }
 
+/**
+ * Checks whether or not a given path is parented under the root field.
+ * @param path - the path you want to check.
+ * @returns a boolean on whether or not the provided path is parented under the root field.
+ */
 export function isParentedUnderRootField(path: UpPath): boolean {
 	let currentPath = path;
 	while (currentPath.parentField !== undefined) {
