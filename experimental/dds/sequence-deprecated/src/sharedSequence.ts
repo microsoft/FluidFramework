@@ -10,19 +10,21 @@ import {
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence } from "./sequence";
+import { SharedSegmentSequence } from "@fluidframework/sequence";
 
 const MaxRun = 128;
 
 /**
- * @deprecated - IJSONRunSegment will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @deprecated IJSONRunSegment is not recommended for use and will be removed in an upcoming release.
+ * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
  */
 export interface IJSONRunSegment<T> extends IJSONSegment {
 	items: Serializable<T>[];
 }
 
 /**
- * @deprecated - SubSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @deprecated SubSequence is not recommended for use and will be removed in an upcoming release.
+ * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
  */
 export class SubSequence<T> extends BaseSegment {
 	public static readonly typeString: string = "SubSequence";
@@ -105,7 +107,8 @@ export class SubSequence<T> extends BaseSegment {
 }
 
 /**
- * @deprecated - SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @deprecated SharedSequence is not recommended for use and will be removed in an upcoming release.
+ * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
  */
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	constructor(
