@@ -159,6 +159,7 @@ export interface IBaseSummarizeResult {
 	/** Reference sequence number as of the generate summary attempt. */
 	readonly referenceSequenceNumber: number;
 	readonly minimumSequenceNumber: number;
+	readonly details?: string;
 }
 
 /** Results of submitSummary after generating the summary tree. */
@@ -515,7 +516,8 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	/** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
 	| "nackRetryAfter"
 	/** The stage at which the submit summary method failed at. This can help determine what type of failure we have */
-	| "stage";
+	| "stage"
+	| "details";
 
 export type SummaryGeneratorTelemetry = Pick<
 	ITelemetryProperties,
