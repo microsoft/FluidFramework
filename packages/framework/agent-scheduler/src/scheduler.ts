@@ -50,9 +50,6 @@ const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
 
 const schedulerId = "scheduler";
 
-/**
- * @internal
- */
 export class AgentScheduler
 	extends TypedEventEmitter<IAgentSchedulerEvents>
 	implements IAgentScheduler
@@ -430,10 +427,7 @@ export class AgentScheduler
 	}
 }
 
-/**
- * @internal
- */
-export class AgentSchedulerRuntime extends FluidDataStoreRuntime {
+class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
 		sharedObjectRegistry: ISharedObjectRegistry,
