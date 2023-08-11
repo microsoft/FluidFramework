@@ -27,8 +27,6 @@ export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNod
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
  *
  * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
- *
- * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node, containerKey } = props;

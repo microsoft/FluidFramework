@@ -48,7 +48,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		editTypes: undefined,
 	};
 
-	// TreeNode and ValueNode are special cases where we want to reduce hierarchy
+	// By separating cases it lets us avoid unnecessary hierarchy by flattening the tree
 	switch (renderedData.nodeKind) {
 		case VisualNodeKind.FluidHandleNode:
 			return {
