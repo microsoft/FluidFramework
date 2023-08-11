@@ -7,7 +7,7 @@ import { IDisposable } from "@fluidframework/core-interfaces";
 
 /**
  * Returns a wrapper around the provided function, which will only invoke the inner function if the provided
- * {@link @fluidframework/common-definitions#IDisposable | disposable} object has not yet been disposed.
+ * {@link @fluidframework/core-interfaces#IDisposable | disposable} object has not yet been disposed.
  *
  * @throws Will throw an error if the item has already been disposed.
  */

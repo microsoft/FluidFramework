@@ -523,7 +523,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;

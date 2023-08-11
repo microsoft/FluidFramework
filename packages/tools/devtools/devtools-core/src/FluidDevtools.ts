@@ -339,14 +339,14 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
 	 */
 	public dispose(): void {
 		if (this.disposed) {

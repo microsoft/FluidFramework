@@ -18,7 +18,7 @@ import { ContainerKey } from "./CommonInterfaces";
  *
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
- * If you wish to dispose of it earlier, you may call its {@link @fluidframework/common-definitions#IDisposable.dispose} method.
+ * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
  *
  * @public
  */

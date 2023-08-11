@@ -28,7 +28,7 @@ export interface IMessageRelayEvents<
  * To send a message **to** the external recipient, call {@link IMessageRelay.postMessage}.
  *
  * To be notified when a message is received **from** the external sender, subscribe to the "message" event
- * via {@link @fluidframework/common-definitions#IEventProvider.on}.
+ * via {@link @fluidframework/core-interfaces#IEventProvider.on}.
  *
  * @internal
  */
