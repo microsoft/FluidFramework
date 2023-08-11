@@ -1305,10 +1305,10 @@ export class MergeTree {
 
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `posPrecedesTile`.
-	 * Uses depthFirstNodeWalk in addition to the block-accelerated functionality introduced for findTile. The search
-	 * position will be included in the nodes to walk, so searching on all positions, including the endpoints, can be considered
-	 * inclusive. Any out of bound search positions will return undefined, so in order to search the whole string, a forward
-	 * search can begin at 0, or a bacward search can begin at length-1.This function will replace findTile, which will be deprecated.
+	 * Uses depthFirstNodeWalk in addition to block-accelerated functionality. The search position will be included in
+	 * the nodes to walk, so searching on all positions, including the endpoints, can be considered inclusive.
+	 * Any out of bound search positions will return undefined, so in order to search the whole string, a forward
+	 * search can begin at 0, or a bacward search can begin at length-1.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
@@ -1327,35 +1327,32 @@ export class MergeTree {
 			tileLabel,
 		};
 
-		const tileShiftHelper = (node: IMergeNode) => {
-			tileShift(node, 0, UniversalSequenceNumber, clientId, startPos, -1, searchInfo);
-		};
-
-		const recordTileStartHelper = (seg: ISegment): boolean | undefined => {
-			const result: boolean = recordTileStart(
-				seg,
-				0,
-				UniversalSequenceNumber,
-				clientId,
-				startPos,
-				-1,
-				searchInfo,
-			);
-			if (!Marker.is(seg)) {
-				return true;
-			}
-			return result;
-		};
 		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
-		if (segment === undefined) {
+		if (segment?.parent === undefined) {
 			return undefined;
 		}
 
 		depthFirstNodeWalk(
-			this.root,
-			this.root.children[segment.index],
-			tileShiftHelper,
-			recordTileStartHelper,
+			segment.parent,
+			segment,
+			(seg) => {
+				if (seg.isLeaf()) {
+					if (Marker.is(seg) && refHasTileLabel(seg, searchInfo.tileLabel)) {
+						searchInfo.tile = seg;
+						return NodeAction.Exit;
+					}
+					return NodeAction.Skip;
+				}
+				const block = <IHierBlock>seg;
+				const marker = searchInfo.tilePrecedesPos
+					? <Marker>block.rightmostTiles[searchInfo.tileLabel]
+					: <Marker>block.leftmostTiles[searchInfo.tileLabel];
+				if (marker !== undefined) {
+					searchInfo.tile = marker;
+					return NodeAction.Exit;
+				}
+			},
+			undefined,
 			undefined,
 			!tilePrecedesPos,
 		);

@@ -1177,8 +1177,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * Replaces the findTile API for searching a string for the nearest tile in either direction.
-	 * Makes use of the same block-accelerated search functions for log(n) complexity.
+	 * Searches a string for the nearest tile in either direction to a given starrt position.
+	 * Makes use of block-accelerated search functions for log(n) complexity.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param tileLabel - Label of the tile to search for
