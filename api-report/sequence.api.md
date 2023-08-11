@@ -549,7 +549,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
-    // (undocumented)
+    // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
     id: string;

@@ -10,6 +10,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IJSONRunSegment } from '@fluidframework/sequence';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -17,13 +18,10 @@ import { Jsonable } from '@fluidframework/datastore-definitions';
 import { PropertySet } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
-import { SubSequence as SubSequence_2 } from '@fluidframework/sequence';
+import { SharedSequence } from '@fluidframework/sequence';
+import { SubSequence } from '@fluidframework/sequence';
 
-// @public @deprecated (undocumented)
-export interface IJSONRunSegment<T> extends IJSONSegment {
-    // (undocumented)
-    items: Serializable<T>[];
-}
+export { IJSONRunSegment }
 
 // @public @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;
@@ -141,18 +139,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     id: string;
 }
 
-// @public @deprecated (undocumented)
-export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, specToSegment: (spec: IJSONSegment) => ISegment);
-    getItemCount(): number;
-    getItems(start: number, end?: number): Serializable<T>[];
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    insert(pos: number, items: Serializable<T>[], props?: PropertySet): void;
-    // (undocumented)
-    remove(start: number, end: number): void;
-}
+export { SharedSequence }
 
 // @public @deprecated (undocumented)
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
@@ -207,34 +194,7 @@ export class SparseMatrixFactory implements IChannelFactory {
 // @public @deprecated (undocumented)
 export type SparseMatrixItem = Serializable;
 
-// @public @deprecated (undocumented)
-export class SubSequence<T> extends BaseSegment {
-    constructor(items: Serializable<T>[]);
-    // (undocumented)
-    append(segment: ISegment): void;
-    // (undocumented)
-    canAppend(segment: ISegment): boolean;
-    // (undocumented)
-    clone(start?: number, end?: number): SubSequence<T>;
-    // (undocumented)
-    protected createSplitSegmentAt(pos: number): SubSequence<T> | undefined;
-    // (undocumented)
-    static fromJSONObject<U>(spec: Serializable): SubSequence<U> | undefined;
-    // (undocumented)
-    static is(segment: ISegment): segment is SubSequence<any>;
-    // (undocumented)
-    items: Serializable<T>[];
-    // (undocumented)
-    removeRange(start: number, end: number): boolean;
-    // (undocumented)
-    toJSONObject(): IJSONRunSegment<T>;
-    // (undocumented)
-    toString(): string;
-    // (undocumented)
-    readonly type: string;
-    // (undocumented)
-    static readonly typeString: string;
-}
+export { SubSequence }
 
 // (No @packageDocumentation comment for this package)
 
