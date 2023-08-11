@@ -102,6 +102,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MockLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

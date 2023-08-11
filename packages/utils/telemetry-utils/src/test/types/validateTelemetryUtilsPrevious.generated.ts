@@ -88,8 +88,6 @@ use_old_TypeAliasDeclaration_ConfigTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-<<<<<<< HEAD
-=======
 * "ClassDeclaration_DebugLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DebugLogger():
@@ -114,7 +112,6 @@ use_old_ClassDeclaration_DebugLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
->>>>>>> parent of 6815efed59 (Remove Telemetry-Utils Deprecations (#16552))
 * "ClassDeclaration_EventEmitterWithErrorHandling": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_EventEmitterWithErrorHandling():
@@ -547,8 +544,6 @@ use_old_InterfaceDeclaration_MonitoringContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-<<<<<<< HEAD
-=======
 * "ClassDeclaration_MultiSinkLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MultiSinkLogger():
@@ -573,7 +568,6 @@ use_old_ClassDeclaration_MultiSinkLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
->>>>>>> parent of 6815efed59 (Remove Telemetry-Utils Deprecations (#16552))
 * "VariableDeclaration_NORMALIZED_ERROR_TYPE": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_NORMALIZED_ERROR_TYPE():
@@ -742,8 +736,6 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-<<<<<<< HEAD
-=======
 * "ClassDeclaration_TelemetryLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TelemetryLogger():
@@ -816,7 +808,6 @@ use_old_ClassDeclaration_TelemetryUTLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
->>>>>>> parent of 6815efed59 (Remove Telemetry-Utils Deprecations (#16552))
 * "ClassDeclaration_ThresholdCounter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ThresholdCounter():
