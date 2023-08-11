@@ -579,6 +579,107 @@ export class RunningSummarizer implements IDisposable {
 		return resultsBuilder.build();
 	}
 
+	/** Heuristics summarize attempt. */
+	private trySummarize(
+		reason: SummarizeReason,
+		cancellationToken = this.cancellationToken,
+	): void {
+		if (this.summarizingLock !== undefined) {
+			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
+			// if it's still needed
+			this.tryWhileSummarizing = true;
+			return;
+		}
+
+		this.lockedSummaryAction(
+			() => {
+				this.beforeSummaryAction();
+			},
+			async () => {
+				await (this.mc.config.getBoolean("Fluid.Summarizer.TryDynamicRetries")
+					? this.trySummarizeWithRetries(reason, cancellationToken)
+					: this.trySummarizeWithStaticAttempts(reason, cancellationToken));
+				this.stopSummarizerCallback("failToSummarize");
+			},
+			() => {
+				this.afterSummaryAction();
+			},
+		).catch((error) => {
+			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+		});
+	}
+
+	/**
+	 * Tries to summarize 2 times with pre-defined summary options. If an attempt fails with "retryAfterSeconds"
+	 * param, that attempt is tried once more.
+	 */
+	private async trySummarizeWithStaticAttempts(
+		reason: SummarizeReason,
+		cancellationToken: ISummaryCancellationToken,
+	) {
+		const attempts: ISummarizeOptions[] = [
+			{ refreshLatestAck: false, fullTree: false },
+			{ refreshLatestAck: true, fullTree: false },
+		];
+		let summaryAttempts = 0;
+		let summaryAttemptsPerPhase = 0;
+		let summaryAttemptPhase = 0;
+		while (summaryAttemptPhase < attempts.length) {
+			if (cancellationToken.cancelled) {
+				return;
+			}
+
+			// We only want to attempt 1 summary when reason is "lastSummary"
+			if (++summaryAttempts > 1 && reason === "lastSummary") {
+				return;
+			}
+
+			summaryAttemptsPerPhase++;
+
+			const summarizeOptions = attempts[summaryAttemptPhase];
+			const summarizeProps: ISummarizeTelemetryProperties = {
+				reason,
+				summaryAttempts,
+				summaryAttemptsPerPhase,
+				summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
+				...summarizeOptions,
+			};
+
+			// Note: no need to account for cancellationToken.waitCancelled here, as
+			// this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
+			const resultSummarize = this.generator.summarize(
+				summarizeProps,
+				summarizeOptions,
+				cancellationToken,
+			);
+			const ackNackResult = await resultSummarize.receivedSummaryAckOrNack;
+			if (ackNackResult.success) {
+				return;
+			}
+
+			// Check for retryDelay that can come from summaryNack, upload summary or submit summary flows.
+			// Retry the same step only once per retryAfter response.
+			const submitResult = await resultSummarize.summarySubmitted;
+			const delaySeconds = !submitResult.success
+				? submitResult.data?.retryAfterSeconds
+				: ackNackResult.data?.retryAfterSeconds;
+			if (delaySeconds === undefined || summaryAttemptsPerPhase > 1) {
+				summaryAttemptPhase++;
+				summaryAttemptsPerPhase = 0;
+			}
+
+			if (delaySeconds !== undefined) {
+				this.mc.logger.sendPerformanceEvent({
+					eventName: "SummarizeAttemptDelay",
+					duration: delaySeconds,
+					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
+					...summarizeProps,
+				});
+				await delay(delaySeconds * 1000);
+			}
+		}
+	}
+
 	/**
 	 * Tries to summarize with retries where retry is based on the failure params.
 	 * For example, summarization may be retried for failures with "retryAfterSeconds" param.
@@ -596,8 +697,7 @@ export class RunningSummarizer implements IDisposable {
 		// such scenarios are very unlikely and even if it happens, it would resolve when a new summarizer starts over.
 		let maxAttempts = defaultMaxAttempts;
 		let currentAttempt = 0;
-
-		let done = false;
+		const done = true;
 		do {
 			if (this.cancellationToken.cancelled) {
 				return;
@@ -640,117 +740,21 @@ export class RunningSummarizer implements IDisposable {
 				retryAfterSeconds = ackNackResult.data?.retryAfterSeconds;
 			}
 
-			// If "retryAfterSeconds" is part of failure params and we haven't done max attempts, add a delay
-			// and retry another attempt.
-			if (retryAfterSeconds !== undefined && currentAttempt < maxAttempts) {
-				this.mc.logger.sendPerformanceEvent({
-					eventName: "SummarizeAttemptDelay",
-					duration: retryAfterSeconds,
-					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
-					stage: submitSummaryResult.data?.stage,
-					dynamicRetries: true, // To differentiate this telemetry from regular retry logic
-					...summarizeProps,
-				});
-				await delay(retryAfterSeconds * 1000);
-			} else {
-				done = true;
+			// If the failure doesn't have "retryAfterSeconds" or the max number of attempts have been done, we're done.
+			if (retryAfterSeconds === undefined || currentAttempt >= maxAttempts) {
+				return;
 			}
-		} while (!done);
 
-		this.stopSummarizerCallback("failToSummarize");
-	}
-
-	/** Heuristics summarize attempt. */
-	private trySummarize(
-		reason: SummarizeReason,
-		cancellationToken = this.cancellationToken,
-	): void {
-		if (this.summarizingLock !== undefined) {
-			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
-			// if it's still needed
-			this.tryWhileSummarizing = true;
-			return;
-		}
-
-		this.lockedSummaryAction(
-			() => {
-				this.beforeSummaryAction();
-			},
-			async () => {
-				if (this.mc.config.getBoolean("Fluid.Summarizer.TryDynamicRetries")) {
-					return this.trySummarizeWithRetries(reason, cancellationToken);
-				}
-
-				const attempts: ISummarizeOptions[] = [
-					{ refreshLatestAck: false, fullTree: false },
-					{ refreshLatestAck: true, fullTree: false },
-				];
-				let summaryAttempts = 0;
-				let summaryAttemptsPerPhase = 0;
-				let summaryAttemptPhase = 0;
-				while (summaryAttemptPhase < attempts.length) {
-					if (this.cancellationToken.cancelled) {
-						return;
-					}
-
-					// We only want to attempt 1 summary when reason is "lastSummary"
-					if (++summaryAttempts > 1 && reason === "lastSummary") {
-						return;
-					}
-
-					summaryAttemptsPerPhase++;
-
-					const summarizeOptions = attempts[summaryAttemptPhase];
-					const summarizeProps: ISummarizeTelemetryProperties = {
-						reason,
-						summaryAttempts,
-						summaryAttemptsPerPhase,
-						summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
-						...summarizeOptions,
-					};
-
-					// Note: no need to account for cancellationToken.waitCancelled here, as
-					// this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
-					const resultSummarize = this.generator.summarize(
-						summarizeProps,
-						summarizeOptions,
-						cancellationToken,
-					);
-					const ackNackResult = await resultSummarize.receivedSummaryAckOrNack;
-					if (ackNackResult.success) {
-						return;
-					}
-
-					// Check for retryDelay that can come from summaryNack, upload summary or submit summary flows.
-					// Retry the same step only once per retryAfter response.
-					const submitResult = await resultSummarize.summarySubmitted;
-					const delaySeconds = !submitResult.success
-						? submitResult.data?.retryAfterSeconds
-						: ackNackResult.data?.retryAfterSeconds;
-					if (delaySeconds === undefined || summaryAttemptsPerPhase > 1) {
-						summaryAttemptPhase++;
-						summaryAttemptsPerPhase = 0;
-					}
-
-					if (delaySeconds !== undefined) {
-						this.mc.logger.sendPerformanceEvent({
-							eventName: "SummarizeAttemptDelay",
-							duration: delaySeconds,
-							summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
-							...summarizeProps,
-						});
-						await delay(delaySeconds * 1000);
-					}
-				}
-
-				this.stopSummarizerCallback("failToSummarize");
-			},
-			() => {
-				this.afterSummaryAction();
-			},
-		).catch((error) => {
-			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
-		});
+			this.mc.logger.sendPerformanceEvent({
+				eventName: "SummarizeAttemptDelay",
+				duration: retryAfterSeconds,
+				summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
+				stage: submitSummaryResult.data?.stage,
+				dynamicRetries: true, // To differentiate this telemetry from regular retry logic
+				...summarizeProps,
+			});
+			await delay(retryAfterSeconds * 1000);
+		} while (done);
 	}
 
 	/** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */

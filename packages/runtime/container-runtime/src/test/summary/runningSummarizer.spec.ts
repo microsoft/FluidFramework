@@ -1137,6 +1137,39 @@ describe("Runtime", () => {
 						`Summarization should not have been attempted more than ${maxAttempts} times`,
 					);
 				});
+
+				it("Should not retry last summary", async () => {
+					const stage: SummaryStage = "base";
+					const retryAfterSeconds = 10;
+					await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
+						submitSummaryCallback(stage, retryAfterSeconds),
+					);
+
+					// This should trigger last summary when summarizer stops.
+					await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
+					const stopP = summarizer.waitStop(true /* allowLastSummary */);
+					await flushPromises();
+					await stopP;
+					summarizer.dispose();
+
+					assertRunCounts(1, 0, 0, "should perform lastSummary");
+					const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [
+						{
+							eventName: "Running:Summarize_cancel",
+							retryAfterSeconds,
+							summarizeCount: 1,
+							stage,
+						},
+					];
+					mockLogger.assertMatch(
+						expectedEvents,
+						`last summary attempt did not fail as expected`,
+					);
+
+					// Wait for "retryAfterSeconds". There shouldn't be any more attempts.
+					await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+					assertRunCounts(1, 0, 0, "should not retry lastSummary");
+				});
 			});
 
 			describe("On-demand Summaries", () => {
