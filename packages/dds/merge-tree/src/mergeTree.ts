@@ -1313,17 +1313,12 @@ export class MergeTree {
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param tileLabel - Label of the tile to search for
-	 * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
+	 * @param backwards - Whether the desired tile comes before (true) or after (false) `startPos`
 	 */
-	public searchForTile(
-		startPos: number,
-		clientId: number,
-		tileLabel: string,
-		tilePrecedesPos = true,
-	) {
+	public searchForTile(startPos: number, clientId: number, tileLabel: string, backwards = true) {
 		const searchInfo: IReferenceSearchInfo = {
 			mergeTree: this,
-			tilePrecedesPos,
+			tilePrecedesPos: backwards,
 			tileLabel,
 		};
 
@@ -1354,7 +1349,7 @@ export class MergeTree {
 			},
 			undefined,
 			undefined,
-			!tilePrecedesPos,
+			!backwards,
 		);
 
 		if (searchInfo.tile) {

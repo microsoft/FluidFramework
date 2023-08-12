@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { UniversalSequenceNumber } from "../constants";
-import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes";
+import { Marker, MaxNodesInBlock, reservedMarkerIdKey } from "../mergeTreeNodes";
 import { ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
@@ -394,6 +394,57 @@ describe("TestClient", () => {
 			assert(tile, "Returned tile undefined.");
 
 			assert.equal(tile.pos, 6, "Tile with label not at expected position");
+		});
+
+		it("Should be able to find non preceding tile with multiple segments and tiles", () => {
+			const tileLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock * 2 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
+			for (let i = 0; i <= client.getLength(); i += 3) {
+				client.insertMarkerLocal(i, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [tileLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+			for (let index = 0; index < client.getLength(); index++) {
+				const tile = client.searchForTile(index, tileLabel, false);
+
+				assert(tile, `Returned tile undefined @ ${index}.`);
+
+				const expected = index % 3 === 0 ? index % 3 : 3 - (index % 3);
+				assert.equal(
+					tile.pos,
+					index + expected,
+					`Tile with label not at expected position: index ${index}, tile.pos ${tile.pos}`,
+				);
+			}
+		});
+
+		it("Should be able to find preceding tile with multiple segments and tiles", () => {
+			const tileLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock * 2 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
+			for (let i = 0; i <= client.getLength(); i += 3) {
+				client.insertMarkerLocal(i, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [tileLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+			for (let index = client.getLength() - 1; index >= 0; index--) {
+				const tile = client.searchForTile(index, tileLabel, true);
+
+				assert(tile, `Returned tile undefined @ ${index}.`);
+
+				assert.equal(
+					tile.pos,
+					index - (index % 3),
+					`Tile with label not at expected position: index ${index}, tile.pos ${tile.pos}`,
+				);
+			}
 		});
 
 		it("Should be able to find tile from client with text length 1", () => {
