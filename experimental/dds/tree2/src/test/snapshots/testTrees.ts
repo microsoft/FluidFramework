@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TestTreeProviderLite } from "../utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand, useDeterministicStableId } from "../../util";
 import { AllowedUpdateType, FieldKey, UpPath, ValueSchema, rootFieldKey } from "../../core";
-import { ISharedTree, ISharedTreeView } from "../../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { Any, FieldKinds, SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { typeboxValidator } from "../../external-utilities";
+
+const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
 const builder = new SchemaBuilder("test trees");
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.fieldSequence(Any));
@@ -19,15 +22,16 @@ function generateCompleteTree(
 	height: number,
 	nodesPerField: number,
 ): ISharedTree {
-	const provider = new TestTreeProviderLite();
-	const tree = provider.trees[0];
+	const tree = factory.create(
+		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+		"test",
+	);
 	tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema: testSchema,
 		initialTree: [],
 	});
 	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
-	provider.processMessages();
 	return tree;
 }
 
@@ -81,6 +85,8 @@ function generateTreeRecursively(
 // The implementation and usage of these implies the edit history of these trees is relevant, but its not exactly clear how.
 // More documentation on what kind of coverage over possible tree histories and contents this is supposed to provide is needed here.
 // Depending on the above, maybe these tests (or at least some of the cases) should probably be changed to use branches and not full trees to avoid depending on a fluid runtime.
+// Currently these tests all replicate pre-attachment states.
+// Coverage for other states should be added (including cases with collaboration).
 export function generateTestTrees(): { name: string; tree: () => ISharedTree }[] {
 	return [
 		{
@@ -106,8 +112,10 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					schema: docSchema,
 					initialTree: undefined,
 				};
-				const provider = new TestTreeProviderLite(1);
-				const tree = provider.trees[0];
+				const tree = factory.create(
+					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					"test",
+				);
 				tree.schematize(config);
 
 				const field = tree.editor.optionalField({
@@ -115,7 +123,6 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					field: rootFieldKey,
 				});
 				field.set(singleTextCursor({ type: handleSchema.name, value: tree.handle }), true);
-				provider.processMessages();
 				return tree;
 			},
 		},
@@ -137,8 +144,10 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					initialTree: [],
 				};
 
-				const provider = new TestTreeProviderLite(1);
-				const tree = provider.trees[0];
+				const tree = factory.create(
+					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
+					"test",
+				);
 				tree.schematize(config);
 
 				tree.storedSchema.update(docSchema);
@@ -163,7 +172,6 @@ export function generateTestTrees(): { name: string; tree: () => ISharedTree }[]
 					})
 					.insert(0, [singleTextCursor({ type: brand("SeqMap") })]);
 				tree.transaction.commit();
-				provider.processMessages();
 				return tree;
 			},
 		},
