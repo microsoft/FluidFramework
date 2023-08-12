@@ -30,7 +30,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer, generateStableId } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ISharedTree,
@@ -82,7 +82,7 @@ import {
 	treeSchema,
 	FieldUpPath,
 } from "../core";
-import { JsonCompatible, Mutable, brand, makeArray } from "../util";
+import { JsonCompatible, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
