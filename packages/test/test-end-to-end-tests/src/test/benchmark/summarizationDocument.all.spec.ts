@@ -14,7 +14,6 @@ import {
 	IDocumentLoaderAndSummarizer,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
-const exceptionLogger = console.log;
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;
@@ -83,7 +82,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 					summaryVersion = this.summarizerClient.summaryVersion;
 					this.summarizerClient.summarizer.close();
 				} catch (error) {
-					exceptionLogger(`Error summarizing: ${error}`);
+					throw new Error(`Error summarizing: ${error}`);
 				}
 				this.container.close();
 			}
