@@ -41,7 +41,7 @@ import {
 	makeReducer,
 	RevertibleSharedString,
 	isRevertibleSharedString,
-	OperationGenerationConfig,
+	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
 } from "./intervalCollection.fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
@@ -150,7 +150,7 @@ const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 
 type ClientOpState = FuzzTestState;
 function operationGenerator(
-	optionsParam: OperationGenerationConfig,
+	optionsParam: IntervalOperationGenerationConfig,
 ): Generator<RevertOperation, ClientOpState> {
 	async function revertSharedStringRevertibles(
 		state: ClientOpState,
@@ -207,11 +207,7 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, optionsWithEmitter);
 });
 
-/**
- * Disabled as all tests are failing due to eventual consistency issues.
- * ADO:5083 to deal with the failures.
- */
-describe.skip("IntervalCollection fuzz testing with rebasing", () => {
+describe("IntervalCollection fuzz testing with rebasing", () => {
 	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles and rebasing",
 		generatorFactory: () =>

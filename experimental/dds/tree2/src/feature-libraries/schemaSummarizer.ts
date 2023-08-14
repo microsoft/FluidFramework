@@ -14,8 +14,8 @@ import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	cachedValue,
@@ -72,10 +72,8 @@ export class SchemaSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const builder = new SummaryTreeBuilder();
 		const dataString = this.codec.encode(this.schema);
-		builder.addBlob(schemaStringKey, dataString);
-		return builder.getSummaryTree();
+		return createSingleBlobSummary(schemaStringKey, dataString);
 	}
 
 	public async summarize(
@@ -85,9 +83,7 @@ export class SchemaSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		const schemaBlobHandle = await this.schemaBlob.get();
-		const builder = new SummaryTreeBuilder();
-		builder.addBlob(schemaBlobKey, stringify(schemaBlobHandle));
-		return builder.getSummaryTree();
+		return createSingleBlobSummary(schemaBlobKey, stringify(schemaBlobHandle));
 	}
 
 	public getGCData(fullGC?: boolean): IGarbageCollectionData {

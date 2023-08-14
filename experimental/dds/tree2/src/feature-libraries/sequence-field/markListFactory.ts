@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Mark, MarkList, NoopMark } from "./format";
+import { Mark, MarkList } from "./format";
 import { isNoopMark, tryExtendMark } from "./utils";
 
 /**
@@ -21,14 +21,7 @@ export class MarkListFactory<TNodeChange> {
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
-			if (isNoopMark(item)) {
-				// A noop targeting an empty cell can be omitted from the final mark list
-				if (item.cellId === undefined) {
-					this.pushOffset(item.count);
-				}
-			} else {
-				this.pushContent(item);
-			}
+			this.pushContent(item);
 		}
 	}
 
@@ -36,17 +29,24 @@ export class MarkListFactory<TNodeChange> {
 		this.offset += offset;
 	}
 
-	public pushContent(mark: Exclude<Mark<TNodeChange>, NoopMark>): void {
-		if (this.offset > 0) {
-			this.list.push({ count: this.offset });
-			this.offset = 0;
-		}
-		const prev = this.list[this.list.length - 1];
-		if (prev !== undefined && prev.type === mark.type) {
-			if (tryExtendMark(prev, mark)) {
-				return;
+	public pushContent(mark: Mark<TNodeChange>): void {
+		if (isNoopMark(mark) && mark.changes === undefined) {
+			// A noop targeting an empty cell can be omitted from the final mark list
+			if (mark.cellId === undefined) {
+				this.pushOffset(mark.count);
 			}
+		} else {
+			if (this.offset > 0) {
+				this.list.push({ count: this.offset });
+				this.offset = 0;
+			}
+			const prev = this.list[this.list.length - 1];
+			if (prev !== undefined && prev.type === mark.type) {
+				if (tryExtendMark(prev, mark)) {
+					return;
+				}
+			}
+			this.list.push(mark);
 		}
-		this.list.push(mark);
 	}
 }
