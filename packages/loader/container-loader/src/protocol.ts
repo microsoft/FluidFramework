@@ -50,7 +50,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		quorumSnapshot: IQuorumSnapshot,
 		sendProposal: (key: string, value: any) => number,
 		public readonly audience: IAudienceOwner,
-		public readonly shouldClientHaveLeft: (clientId: string) => boolean,
+		private readonly shouldClientHaveLeft: (clientId: string) => boolean,
 	) {
 		super(
 			attributes.minimumSequenceNumber,
