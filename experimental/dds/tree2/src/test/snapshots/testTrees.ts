@@ -84,7 +84,7 @@ function generateTreeRecursively(
 // TODO:
 // The implementation and usage of these implies the edit history of these trees is relevant, but its not exactly clear how.
 // More documentation on what kind of coverage over possible tree histories and contents this is supposed to provide is needed here.
-// Depending on the above, maybe these tests (or at least some of the cases) should probably be changed to use branches and not full trees to avoid depending on a fluid runtime.
+// Depending on the above, maybe these tests (or at least some of the cases) should probably be changed to use branches and not full trees to avoid depending on a Fluid runtime.
 // Currently these tests all replicate pre-attachment states.
 // Coverage for other states should be added (including cases with collaboration).
 export function generateTestTrees(): { name: string; tree: () => ISharedTree }[] {
