@@ -7,6 +7,11 @@ import { assert } from "@fluidframework/common-utils";
 import { IdCluster, Session, clustersEqual } from "./sessions";
 import { FinalCompressedId } from "./identifiers";
 
+/**
+ * All IDs that have been finalized (acked), grouped into clusters sorted by their base final IDs.
+ * These clusters span the positive integer space and are not sparse, meaning a cluster's base final
+ * ID will always be one greater than the last final ID in the previous cluster (or 0 if there is not one).
+ */
 export class FinalSpace {
 	private readonly clusterList: IdCluster[] = [];
 

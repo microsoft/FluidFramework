@@ -18,11 +18,10 @@ export {
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
 	addNumericUuids,
-	readNumericUuid,
-	writeNumericUuid,
 	assertIsStableId,
 	generateStableId,
 	isStableId,
 } from "./utilities";
+export { readNumericUuid, writeNumericUuid } from "./persistanceUtilities";
 export { AppendOnlySortedMap } from "./appendOnlySortedMap";
 export { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";

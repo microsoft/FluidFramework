@@ -27,19 +27,21 @@ import {
 	genCountFromLocalId,
 	numericUuidFromStableId,
 	offsetNumericUuid,
+	stableIdFromNumericUuid,
+	subtractNumericUuids,
+	fail,
+} from "./utilities";
+import {
 	readBoolean,
 	readNumber,
 	readNumericUuid,
 	writeBoolean,
 	writeNumber,
 	writeNumericUuid,
-	stableIdFromNumericUuid,
-	subtractNumericUuids,
-	fail,
-} from "./utilities";
+} from "./persistanceUtilities";
 import {
 	getAlignedLocal,
-	getAllocatedFinal,
+	getAlignedFinal,
 	IdCluster,
 	lastAllocatedLocal,
 	lastFinalizedLocal,
@@ -437,7 +439,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 					return alignedLocal;
 				} else if (genCountFromLocalId(alignedLocal) <= this.generatedIdCount) {
 					// Id is an eager final
-					return getAllocatedFinal(containingCluster, alignedLocal) as
+					return getAlignedFinal(containingCluster, alignedLocal) as
 						| SessionSpaceCompressedId
 						| undefined;
 				} else {
@@ -446,7 +448,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			} else {
 				// Not the local session
 				return genCountFromLocalId(alignedLocal) >= lastFinalizedLocal(containingCluster)
-					? (getAllocatedFinal(containingCluster, alignedLocal) as
+					? (getAlignedFinal(containingCluster, alignedLocal) as
 							| SessionSpaceCompressedId
 							| undefined)
 					: undefined;
@@ -459,7 +461,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public serialize(hasLocalState: boolean): SerializedIdCompressor {
 		const { normalizer, finalSpace, sessions } = this;
 		const serializedSessions: Session[] = [];
-		for (const session of sessions.sessions) {
+		for (const session of sessions.sessions()) {
 			// Filter empty sessions to prevent them accumulating in the serialized state.
 			// This can only happen via serializing with local state repeatedly.
 			if (!session.isEmpty() || (hasLocalState && session === this.localSession)) {

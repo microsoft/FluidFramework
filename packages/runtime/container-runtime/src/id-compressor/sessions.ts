@@ -7,7 +7,6 @@ import BTree from "sorted-btree";
 import { SessionId, StableId } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
-	binarySearch,
 	compareBigints,
 	localIdFromGenCount,
 	genCountFromLocalId,
@@ -19,32 +18,33 @@ import {
 import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers";
 
 /**
- * The local/UUID space within an individual session.
- * Contains a collection of all sessions that make up a distributed document's IDs.
+ * A collection of all sessions known to the compressor (i.e. all finalized/acked allocated UUIDs and their corresponding local and final forms).
+ * This collection of all sessions comprises a distributed document's IDs.
  */
 export class Sessions {
-	private readonly sessionCache = new Map<StableId, Session>();
-	private readonly sessionMap = new BTree<NumericUuid, Session>(undefined, compareBigints);
-	private readonly sessionList: Session[] = [];
+	// A range-queryable store of all sessions. A btree is used as it solves the predecessor problem for any given UUID, allowing
+	// us to quickly find the session that may have produced it.
+	private readonly uuidSpace = new BTree<NumericUuid, Session>(undefined, compareBigints);
+	// A fast lookup table from session ID to the session object, used to avoid accessing the slower btree
+	private readonly sessionCache = new Map<SessionId, Session>();
 
 	public constructor(sessions?: [NumericUuid, Session][]) {
 		if (sessions !== undefined) {
 			// bulk load path
-			this.sessionList = sessions.map((session) => session[1]);
 			for (const [numeric, session] of sessions) {
-				this.sessionCache.set(stableIdFromNumericUuid(numeric), session);
+				this.sessionCache.set(stableIdFromNumericUuid(numeric) as SessionId, session);
 			}
-			this.sessionMap = new BTree(sessions, compareBigints);
+			this.uuidSpace = new BTree(sessions, compareBigints);
 			assert(
-				this.sessionCache.size === this.sessionList.length &&
-					this.sessionList.length === this.sessionMap.size,
+				this.sessionCache.size === sessions.length &&
+					sessions.length === this.uuidSpace.size,
 				"Cannot resume existing session.",
 			);
 		}
 	}
 
-	public get sessions(): readonly Session[] {
-		return this.sessionList;
+	public sessions(): IterableIterator<Session> {
+		return this.sessionCache.values();
 	}
 
 	public getOrCreate(sessionId: SessionId): Session {
@@ -53,8 +53,7 @@ export class Sessions {
 			return existing;
 		}
 		const session = new Session(sessionId);
-		this.sessionList.push(session);
-		assert(this.sessionMap.set(session.sessionUuid, session), "Duplicate session in map.");
+		assert(this.uuidSpace.set(session.sessionUuid, session), "Duplicate session in map.");
 		this.sessionCache.set(sessionId, session);
 		return session;
 	}
@@ -67,7 +66,7 @@ export class Sessions {
 		query: StableId,
 	): [cluster: IdCluster, alignedLocal: LocalCompressedId] | undefined {
 		const numericStable = numericUuidFromStableId(query);
-		const possibleMatch = this.sessionMap.getPairOrNextLower(numericStable);
+		const possibleMatch = this.uuidSpace.getPairOrNextLower(numericStable);
 		if (possibleMatch === undefined) {
 			return undefined;
 		}
@@ -89,7 +88,7 @@ export class Sessions {
 		);
 		const clusterMaxNumeric = offsetNumericUuid(clusterBaseNumeric, cluster.capacity - 1);
 		let closestMatch: [NumericUuid, Session] | undefined =
-			this.sessionMap.getPairOrNextLower(clusterMaxNumeric);
+			this.uuidSpace.getPairOrNextLower(clusterMaxNumeric);
 		// Find the first non-empty session that is not the owner of this new cluster.
 		// Once we have that, check to see if its cluster chain overlaps with the new cluster.
 		// Consider the following diagram of UUID space:
@@ -104,7 +103,7 @@ export class Sessions {
 			closestMatch !== undefined &&
 			(closestMatch[1] === owningSession || closestMatch[1].isEmpty())
 		) {
-			closestMatch = this.sessionMap.nextLowerPair(closestMatch[0]);
+			closestMatch = this.uuidSpace.nextLowerPair(closestMatch[0]);
 		}
 		if (closestMatch === undefined) {
 			return false;
@@ -124,41 +123,36 @@ export class Sessions {
 	}
 
 	public equals(other: Sessions, includeLocalState: boolean): boolean {
-		const emptySessionsThis: Session[] = [];
-		for (const [stableId, session] of this.sessionCache.entries()) {
-			if (session.getTailCluster() === undefined) {
-				emptySessionsThis.push(session);
-			} else {
-				const otherSession = other.sessionCache.get(stableId);
-				if (otherSession === undefined || !otherSession.equals(session)) {
+		const checkIsSubset = (sessionsA: Sessions, sessionsB: Sessions) => {
+			const first = sessionsA.sessions().next();
+			const firstSessionThis = first.done ? undefined : first.value;
+			for (const [stableId, session] of sessionsA.sessionCache.entries()) {
+				const otherSession = sessionsB.sessionCache.get(stableId);
+				if (otherSession === undefined) {
+					if (!session.isEmpty() || includeLocalState) {
+						return false;
+					}
+					assert(
+						session === firstSessionThis,
+						"The only non-empty session must be the local session.",
+					);
+				} else if (!session.equals(otherSession)) {
 					return false;
 				}
 			}
-		}
-		const emptySessionsOther: Session[] = [];
-		other.sessionList.forEach((session) => {
-			if (session.getTailCluster() === undefined) {
-				emptySessionsOther.push(session);
-			}
-		});
-		assert(
-			emptySessionsThis.length <= 1 && emptySessionsOther.length <= 1,
-			"Only the local session can be empty.",
-		);
-		return (
-			!includeLocalState ||
-			emptySessionsThis.length === 0 ||
-			emptySessionsThis[0].equals(emptySessionsOther[0])
-		);
+			return true;
+		};
+		return checkIsSubset(this, other) && checkIsSubset(other, this);
 	}
 }
 
 /**
- * The IDs created by a specific session, stored as a cluster chain to allow for fast searches.
+ * The IDs created by a specific session, stored as a cluster chain to allow for fast conversions.
  */
 export class Session {
 	// All clusters created by this session, in creation order (thus sorted by base final and local ID).
 	private readonly clusterChain: IdCluster[] = [];
+	// The numeric form of the SessionId
 	public readonly sessionUuid: NumericUuid;
 
 	public constructor(sessionId: SessionId | NumericUuid) {
@@ -166,6 +160,9 @@ export class Session {
 			typeof sessionId === "string" ? numericUuidFromStableId(sessionId) : sessionId;
 	}
 
+	/**
+	 * Adds a new empty cluster to the cluster chain of this session.
+	 */
 	public addEmptyCluster(
 		baseFinalId: FinalCompressedId,
 		baseLocalId: LocalCompressedId,
@@ -186,10 +183,17 @@ export class Session {
 		return this.clusterChain.length === 0;
 	}
 
+	/**
+	 * Returns the last cluster in this session's cluster chain, if any.
+	 */
 	public getTailCluster(): IdCluster | undefined {
 		return this.isEmpty() ? undefined : this.clusterChain[this.clusterChain.length - 1];
 	}
 
+	/**
+	 * Converts the local ID from this session to a final ID, if possible.
+	 * @param includeAllocated - true if the conversion should succeed even if the local ID aligns with a part of the cluster that is allocated but not finalized.
+	 */
 	public tryConvertToFinal(
 		searchLocal: LocalCompressedId,
 		includeAllocated: boolean,
@@ -198,9 +202,13 @@ export class Session {
 		if (containingCluster === undefined) {
 			return undefined;
 		}
-		return getAllocatedFinal(containingCluster, searchLocal);
+		return getAlignedFinal(containingCluster, searchLocal);
 	}
 
+	/**
+	 * Returns the cluster containing the supplied local ID, if possible.
+	 * @param includeAllocated - true if the conversion should succeed even if the local ID aligns with a part of the cluster that is allocated but not finalized.
+	 */
 	public getClusterByLocal(
 		localId: LocalCompressedId,
 		includeAllocated: boolean,
@@ -208,7 +216,7 @@ export class Session {
 		const lastValidLocal: (cluster: IdCluster) => LocalCompressedId = includeAllocated
 			? lastAllocatedLocal
 			: lastFinalizedLocal;
-		const matchedCluster = binarySearch(
+		const matchedCluster = Session.binarySearch(
 			localId,
 			this.clusterChain,
 			(local, cluster): number => {
@@ -225,15 +233,22 @@ export class Session {
 		return matchedCluster;
 	}
 
+	/**
+	 * Returns the cluster containing the supplied final ID, if possible.
+	 */
 	public getClusterByAllocatedFinal(final: FinalCompressedId): IdCluster | undefined {
 		return Session.getContainingCluster(final, this.clusterChain);
 	}
 
+	/**
+	 * Returns the cluster from the supplied cluster chain containing the supplied final ID, if possible.
+	 * `clusterChain` must be sorted by final/local base ID.
+	 */
 	public static getContainingCluster(
 		finalId: FinalCompressedId,
-		sortedClusters: IdCluster[],
+		clusterChain: IdCluster[],
 	): IdCluster | undefined {
-		return binarySearch(finalId, sortedClusters, (final, cluster) => {
+		return Session.binarySearch(finalId, clusterChain, (final, cluster) => {
 			const lastFinal = lastAllocatedFinal(cluster);
 			if (final < cluster.baseFinalId) {
 				return -1;
@@ -245,6 +260,27 @@ export class Session {
 		});
 	}
 
+	static binarySearch<S, T>(
+		search: S,
+		arr: readonly T[],
+		comparator: (a: S, b: T) => number,
+	): T | undefined {
+		let left = 0;
+		let right = arr.length - 1;
+		while (left <= right) {
+			const mid = Math.floor((left + right) / 2);
+			const c = comparator(search, arr[mid]);
+			if (c === 0) {
+				return arr[mid]; // Found the target, return its index.
+			} else if (c > 0) {
+				left = mid + 1; // Continue search on right half.
+			} else {
+				right = mid - 1; // Continue search on left half.
+			}
+		}
+		return undefined; // If we reach here, target is not in array.
+	}
+
 	public equals(other: Session): boolean {
 		for (let i = 0; i < this.clusterChain.length; i++) {
 			if (!clustersEqual(this.clusterChain[i], other.clusterChain[i])) {
@@ -253,16 +289,6 @@ export class Session {
 		}
 		return this.sessionUuid === other.sessionUuid;
 	}
-}
-
-export function clustersEqual(a: IdCluster, b: IdCluster): boolean {
-	return (
-		a.session.sessionUuid === b.session.sessionUuid &&
-		a.baseFinalId === b.baseFinalId &&
-		a.baseLocalId === b.baseLocalId &&
-		a.capacity === b.capacity &&
-		a.count === b.count
-	);
 }
 
 /**
@@ -298,7 +324,21 @@ export interface IdCluster {
 	count: number;
 }
 
-export function getAllocatedFinal(
+export function clustersEqual(a: IdCluster, b: IdCluster): boolean {
+	return (
+		a.session.sessionUuid === b.session.sessionUuid &&
+		a.baseFinalId === b.baseFinalId &&
+		a.baseLocalId === b.baseLocalId &&
+		a.capacity === b.capacity &&
+		a.count === b.count
+	);
+}
+
+/**
+ * Returns the final ID that is aligned with the supplied local ID within a cluster.
+ * Includes allocated IDs.
+ */
+export function getAlignedFinal(
 	cluster: IdCluster,
 	localWithin: LocalCompressedId,
 ): FinalCompressedId | undefined {
@@ -310,6 +350,10 @@ export function getAllocatedFinal(
 	return undefined;
 }
 
+/**
+ * Returns the local ID that is aligned with the supplied final ID within a cluster.
+ * Includes allocated IDs.
+ */
 export function getAlignedLocal(
 	cluster: IdCluster,
 	finalWithin: FinalCompressedId,
@@ -321,18 +365,30 @@ export function getAlignedLocal(
 	return (cluster.baseLocalId - finalDelta) as LocalCompressedId;
 }
 
+/**
+ * Returns the last allocated final ID (i.e. any ID between base final and base final + capacity) within a cluster
+ */
 export function lastAllocatedFinal(cluster: IdCluster): FinalCompressedId {
 	return ((cluster.baseFinalId as number) + (cluster.capacity - 1)) as FinalCompressedId;
 }
 
+/**
+ * Returns the last allocated final ID (i.e. any ID between base final and base final + count) within a cluster
+ */
 export function lastFinalizedFinal(cluster: IdCluster): FinalCompressedId {
 	return ((cluster.baseFinalId as number) + (cluster.count - 1)) as FinalCompressedId;
 }
 
+/**
+ * Returns the last allocated local ID (i.e. any ID between base local and base local + capacity) within a cluster
+ */
 export function lastAllocatedLocal(cluster: IdCluster): LocalCompressedId {
 	return ((cluster.baseLocalId as number) - (cluster.capacity - 1)) as LocalCompressedId;
 }
 
+/**
+ * Returns the last allocated local ID (i.e. any ID between base local and base local + count) within a cluster
+ */
 export function lastFinalizedLocal(cluster: IdCluster): LocalCompressedId {
 	return ((cluster.baseLocalId as number) - (cluster.count - 1)) as LocalCompressedId;
 }
