@@ -10,6 +10,7 @@ import { DataProcessingError } from "@fluidframework/container-utils";
 import Deque from "double-ended-queue";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
+import { ContainerMessageType, ContainerRuntimeMessage } from "..";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessageNew>;
@@ -300,6 +301,28 @@ describe("Pending State Manager", () => {
 				undefined /* logger */,
 			) as any;
 		}
+
+		describe("Future op compat behavior", () => {
+			it("pending op roundtrip", async () => {
+				const pendingStateManager = createPendingStateManager([]);
+				const futureRuntimeMessage: ContainerRuntimeMessage &
+					Partial<ISequencedDocumentMessage> = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
+				};
+
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(futureRuntimeMessage),
+					0,
+					undefined,
+					undefined,
+				);
+				pendingStateManager.processPendingLocalMessage(
+					futureRuntimeMessage as ISequencedDocumentMessage,
+				);
+			});
+		});
 
 		describe("Constructor conversion", () => {
 			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor (AB#4763)

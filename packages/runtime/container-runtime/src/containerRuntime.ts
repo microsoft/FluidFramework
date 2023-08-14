@@ -238,6 +238,12 @@ export interface IContainerRuntimeMessageCompatDetails {
 /** If a message doesn't specify compat behavior, it is not suitable for old clients to process */
 const defaultCompatDetails: IContainerRuntimeMessageCompatDetails = { behavior: "FailToProcess" };
 
+/**
+ * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
+ *
+ * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
+ * This way stringified values can be compared.
+ */
 export interface ContainerRuntimeMessage {
 	type: ContainerMessageType;
 	contents: any;
@@ -2176,7 +2182,7 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	//* TEST COVERAGE - processCore, RMP->unpack, pendingStateManager.processPendingLocalMessage
+	//* TEST COVERAGE - pendingStateManager.processPendingLocalMessage
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 

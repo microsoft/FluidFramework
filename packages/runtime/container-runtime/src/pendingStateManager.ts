@@ -11,7 +11,7 @@ import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
-import { ContainerMessageType } from "./containerRuntime";
+import { ContainerMessageType, SequencedContainerRuntimeMessage } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";
 
@@ -243,9 +243,14 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
-		//* Needs to include compatDetails - Write failing test first
-		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
-		// Stringified content does not match
+		//* How/where is best to model the types here?
+
+		// IMPORTANT: Order matters here, this must match the order of the properties used
+		// when submitting the message.
+		const { type, contents, compatDetails } = message as SequencedContainerRuntimeMessage;
+		const messageContent = JSON.stringify({ type, contents, compatDetails });
+
+		// Stringified content should match
 		if (pendingMessage.content !== messageContent) {
 			this.stateHandler.close(
 				DataProcessingError.create(
