@@ -790,12 +790,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private logSessionStartMetrics(failMetric: boolean = false) {
 		if (this.sessionStartMetric?.isCompleted()) {
-			this.sessionStartMetric = createSessionMetric(
-				this.tenantId,
-				this.documentId,
-				LumberEventName.StartSessionResult,
-				this.serviceConfiguration,
-			);
+			return;
 		}
 
 		if (failMetric) {
