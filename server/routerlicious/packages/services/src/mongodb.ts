@@ -59,6 +59,7 @@ const errorResponseKeysAllowList = new Set([
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
+	private consecutiveFailedCount = 0;
 	constructor(
 		private readonly collection: Collection<T>,
 		public readonly retryEnabled = false,
@@ -68,6 +69,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		private readonly apiCounterIntervalMS: number,
 		private readonly apiFailureRateTerminationThreshold: number,
 		private readonly apiMinimumCountToEnableTermination: number,
+		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
 	) {
 		setInterval(() => {
 			if (!this.apiCounter.countersAreActive) {
@@ -455,21 +457,36 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			}
 		}
 
-		if (totalCount < this.apiMinimumCountToEnableTermination) {
-			// too little requests to consider
-			return;
-		}
 		const failureRate = totalFailedCount / totalCount;
+		const logProperties = {
+			failureRate,
+			totalCount,
+			totalFailedCount,
+			apiFailureRateTerminationThreshold: this.apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination: this.apiMinimumCountToEnableTermination,
+			consecutiveFailedCount: this.consecutiveFailedCount,
+			consecutiveFailedThresholdForLowerTotalRequests:
+				this.consecutiveFailedThresholdForLowerTotalRequests,
+		};
 		if (failureRate <= this.apiFailureRateTerminationThreshold) {
-			// OK, no need to terminate
+			this.consecutiveFailedCount = 0;
 			return;
 		}
 
+		this.consecutiveFailedCount++;
+		if (
+			totalCount < this.apiMinimumCountToEnableTermination &&
+			this.consecutiveFailedCount < this.consecutiveFailedThresholdForLowerTotalRequests
+		) {
+			Lumberjack.warning("Total could didn't met min threshold", logProperties);
+			return;
+		}
+
+		// reset consecutive Failed count to 0 before self killing pod
+		this.consecutiveFailedCount = 0;
 		// This logic is to automate the process of terminates application if db become unfunctional, so
 		// kubernetes would automatically handle the restart process.
-		Lumberjack.warning(
-			`Failure rate ${failureRate} more than threshold ${this.apiFailureRateTerminationThreshold}`,
-		);
+		Lumberjack.warning("Failure rate more than threshold, terminating", logProperties);
 		process.kill(process.pid, "SIGTERM");
 	}
 }
@@ -483,6 +500,7 @@ export class MongoDb implements core.IDb {
 		private readonly apiCounterIntervalMS: number,
 		private readonly apiFailureRateTerminationThreshold: number,
 		private readonly apiMinimumCountToEnableTermination: number,
+		private readonly consecutiveFailedThresholdForLowerTotalRequests: number,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -505,6 +523,7 @@ export class MongoDb implements core.IDb {
 			this.apiCounterIntervalMS,
 			this.apiFailureRateTerminationThreshold,
 			this.apiMinimumCountToEnableTermination,
+			this.consecutiveFailedThresholdForLowerTotalRequests,
 		);
 	}
 
@@ -548,6 +567,7 @@ const DefaultApiCounterIntervalMS = 60000;
 // 1 means 100%, using 2 just for safety for incorrect calculations and meaning this feature disabled
 const DefaultApiFailureRateTerminationThreshold = 2;
 const DefaultApiMinimumCountToEnableTermination = 30;
+const DefaultConsecutiveFailedTresholdForLowerTotalRequests = 3;
 const DefaultServerSelectionTimeoutMS = 30000;
 
 interface IMongoDBConfig {
