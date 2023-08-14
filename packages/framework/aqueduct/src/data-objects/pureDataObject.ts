@@ -202,7 +202,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
 	 * in a future release.
 	 */
 	protected static isEmitterEvent(event: string): boolean {
