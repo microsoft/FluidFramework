@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { compareArrays } from "./compare";
+export { compareArrays, compareJson } from "./compare";
 export { Lazy, LazyPromise } from "./lazy";
 export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";

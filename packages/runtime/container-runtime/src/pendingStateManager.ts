@@ -7,14 +7,13 @@ import { IDisposable } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { Lazy } from "@fluidframework/core-utils";
+import { Lazy, compareJson } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";
-import { deepCompareForSerialization } from "@fluidframework/core-utils/dist/compare";
 
 /**
  * ! TODO: Remove this interface in "2.0.0-internal.7.0.0" once we only read IPendingMessageNew (AB#4763)
@@ -243,14 +242,9 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
-		// Ensure content matches
-		if (
-			//* TODO: This is bad, to parse then stringify then parse again pendingMessage.content
-			!deepCompareForSerialization(JSON.parse(pendingMessage.content), {
-				type: message.type,
-				contents: message.contents,
-			})
-		) {
+		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
+		// Stringified content does not match
+		if (!compareJson(pendingMessage.content, messageContent)) {
 			this.stateHandler.close(
 				DataProcessingError.create(
 					"pending local message content mismatch",
