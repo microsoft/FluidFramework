@@ -22,6 +22,7 @@ import { ITelemetryPerformanceEventExt } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryPropertiesExt } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
+import { NORMALIZED_ERROR_TYPE } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyTypeExt } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -223,8 +224,7 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-// @public
-export const NORMALIZED_ERROR_TYPE = "genericError";
+export { NORMALIZED_ERROR_TYPE }
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;

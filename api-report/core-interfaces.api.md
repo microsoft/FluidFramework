@@ -302,6 +302,9 @@ export interface ITelemetryPropertiesExt {
 }
 
 // @public
+export const NORMALIZED_ERROR_TYPE = "genericError";
+
+// @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public

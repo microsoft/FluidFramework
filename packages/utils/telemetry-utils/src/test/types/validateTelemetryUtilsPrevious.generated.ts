@@ -184,50 +184,50 @@ use_old_InterfaceDeclaration_IPerformanceEventMarkers(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {"forwardCompat": false}
+* "InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt():
     TypeOnly<old.ITaggedTelemetryPropertyTypeExt>;
-declare function use_current_RemovedInterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
+declare function use_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
     use: TypeOnly<current.ITaggedTelemetryPropertyTypeExt>);
-use_current_RemovedInterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
+use_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
     get_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {"backCompat": false}
+* "InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ITaggedTelemetryPropertyTypeExt():
+declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt():
     TypeOnly<current.ITaggedTelemetryPropertyTypeExt>;
 declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
     use: TypeOnly<old.ITaggedTelemetryPropertyTypeExt>);
 use_old_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt(
-    get_current_RemovedInterfaceDeclaration_ITaggedTelemetryPropertyTypeExt());
+    get_current_InterfaceDeclaration_ITaggedTelemetryPropertyTypeExt());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryErrorEventExt": {"forwardCompat": false}
+* "InterfaceDeclaration_ITelemetryErrorEventExt": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryErrorEventExt():
     TypeOnly<old.ITelemetryErrorEventExt>;
-declare function use_current_RemovedInterfaceDeclaration_ITelemetryErrorEventExt(
+declare function use_current_InterfaceDeclaration_ITelemetryErrorEventExt(
     use: TypeOnly<current.ITelemetryErrorEventExt>);
-use_current_RemovedInterfaceDeclaration_ITelemetryErrorEventExt(
+use_current_InterfaceDeclaration_ITelemetryErrorEventExt(
     get_old_InterfaceDeclaration_ITelemetryErrorEventExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryErrorEventExt": {"backCompat": false}
+* "InterfaceDeclaration_ITelemetryErrorEventExt": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ITelemetryErrorEventExt():
+declare function get_current_InterfaceDeclaration_ITelemetryErrorEventExt():
     TypeOnly<current.ITelemetryErrorEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
     use: TypeOnly<old.ITelemetryErrorEventExt>);
 use_old_InterfaceDeclaration_ITelemetryErrorEventExt(
-    get_current_RemovedInterfaceDeclaration_ITelemetryErrorEventExt());
+    get_current_InterfaceDeclaration_ITelemetryErrorEventExt());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -256,50 +256,50 @@ use_old_InterfaceDeclaration_ITelemetryEventExt(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryGenericEventExt": {"forwardCompat": false}
+* "InterfaceDeclaration_ITelemetryGenericEventExt": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryGenericEventExt():
     TypeOnly<old.ITelemetryGenericEventExt>;
-declare function use_current_RemovedInterfaceDeclaration_ITelemetryGenericEventExt(
+declare function use_current_InterfaceDeclaration_ITelemetryGenericEventExt(
     use: TypeOnly<current.ITelemetryGenericEventExt>);
-use_current_RemovedInterfaceDeclaration_ITelemetryGenericEventExt(
+use_current_InterfaceDeclaration_ITelemetryGenericEventExt(
     get_old_InterfaceDeclaration_ITelemetryGenericEventExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryGenericEventExt": {"backCompat": false}
+* "InterfaceDeclaration_ITelemetryGenericEventExt": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ITelemetryGenericEventExt():
+declare function get_current_InterfaceDeclaration_ITelemetryGenericEventExt():
     TypeOnly<current.ITelemetryGenericEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
     use: TypeOnly<old.ITelemetryGenericEventExt>);
 use_old_InterfaceDeclaration_ITelemetryGenericEventExt(
-    get_current_RemovedInterfaceDeclaration_ITelemetryGenericEventExt());
+    get_current_InterfaceDeclaration_ITelemetryGenericEventExt());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryLoggerExt": {"forwardCompat": false}
+* "InterfaceDeclaration_ITelemetryLoggerExt": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryLoggerExt():
     TypeOnly<old.ITelemetryLoggerExt>;
-declare function use_current_RemovedInterfaceDeclaration_ITelemetryLoggerExt(
+declare function use_current_InterfaceDeclaration_ITelemetryLoggerExt(
     use: TypeOnly<current.ITelemetryLoggerExt>);
-use_current_RemovedInterfaceDeclaration_ITelemetryLoggerExt(
+use_current_InterfaceDeclaration_ITelemetryLoggerExt(
     get_old_InterfaceDeclaration_ITelemetryLoggerExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryLoggerExt": {"backCompat": false}
+* "InterfaceDeclaration_ITelemetryLoggerExt": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ITelemetryLoggerExt():
+declare function get_current_InterfaceDeclaration_ITelemetryLoggerExt():
     TypeOnly<current.ITelemetryLoggerExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryLoggerExt(
     use: TypeOnly<old.ITelemetryLoggerExt>);
 use_old_InterfaceDeclaration_ITelemetryLoggerExt(
-    get_current_RemovedInterfaceDeclaration_ITelemetryLoggerExt());
+    get_current_InterfaceDeclaration_ITelemetryLoggerExt());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -352,50 +352,50 @@ use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBags(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryPerformanceEventExt": {"forwardCompat": false}
+* "InterfaceDeclaration_ITelemetryPerformanceEventExt": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryPerformanceEventExt():
     TypeOnly<old.ITelemetryPerformanceEventExt>;
-declare function use_current_RemovedInterfaceDeclaration_ITelemetryPerformanceEventExt(
+declare function use_current_InterfaceDeclaration_ITelemetryPerformanceEventExt(
     use: TypeOnly<current.ITelemetryPerformanceEventExt>);
-use_current_RemovedInterfaceDeclaration_ITelemetryPerformanceEventExt(
+use_current_InterfaceDeclaration_ITelemetryPerformanceEventExt(
     get_old_InterfaceDeclaration_ITelemetryPerformanceEventExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryPerformanceEventExt": {"backCompat": false}
+* "InterfaceDeclaration_ITelemetryPerformanceEventExt": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ITelemetryPerformanceEventExt():
+declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEventExt():
     TypeOnly<current.ITelemetryPerformanceEventExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
     use: TypeOnly<old.ITelemetryPerformanceEventExt>);
 use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
-    get_current_RemovedInterfaceDeclaration_ITelemetryPerformanceEventExt());
+    get_current_InterfaceDeclaration_ITelemetryPerformanceEventExt());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
+* "InterfaceDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryPropertiesExt():
     TypeOnly<old.ITelemetryPropertiesExt>;
-declare function use_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt(
+declare function use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<current.ITelemetryPropertiesExt>);
-use_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt(
+use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
     get_old_InterfaceDeclaration_ITelemetryPropertiesExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
+* "InterfaceDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt():
+declare function get_current_InterfaceDeclaration_ITelemetryPropertiesExt():
     TypeOnly<current.ITelemetryPropertiesExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<old.ITelemetryPropertiesExt>);
 use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
-    get_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt());
+    get_current_InterfaceDeclaration_ITelemetryPropertiesExt());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -592,26 +592,26 @@ use_old_EnumDeclaration_TelemetryDataTag(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
+* "TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt():
     TypeOnly<old.TelemetryEventPropertyTypeExt>;
-declare function use_current_RemovedTypeAliasDeclaration_TelemetryEventPropertyTypeExt(
+declare function use_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
     use: TypeOnly<current.TelemetryEventPropertyTypeExt>);
-use_current_RemovedTypeAliasDeclaration_TelemetryEventPropertyTypeExt(
+use_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
     get_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"backCompat": false}
+* "TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"backCompat": false}
 */
-declare function get_current_RemovedTypeAliasDeclaration_TelemetryEventPropertyTypeExt():
+declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt():
     TypeOnly<current.TelemetryEventPropertyTypeExt>;
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
     use: TypeOnly<old.TelemetryEventPropertyTypeExt>);
 use_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt(
-    get_current_RemovedTypeAliasDeclaration_TelemetryEventPropertyTypeExt());
+    get_current_TypeAliasDeclaration_TelemetryEventPropertyTypeExt());
 
 /*
 * Validate forward compat by using old type in place of current type

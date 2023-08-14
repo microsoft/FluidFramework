@@ -39,3 +39,6 @@ export interface IFluidErrorBase extends Error {
 	/** Add telemetry properties to this error which will be logged with the error */
 	addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
+
+/** The Error class used when normalizing an external error */
+export const NORMALIZED_ERROR_TYPE = "genericError";

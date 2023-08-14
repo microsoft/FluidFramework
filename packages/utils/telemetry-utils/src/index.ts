@@ -22,7 +22,6 @@ export {
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 	LoggingError,
-	NORMALIZED_ERROR_TYPE,
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
@@ -97,4 +96,8 @@ export {
 	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
 	 */
 	ITelemetryPropertiesExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	NORMALIZED_ERROR_TYPE,
 } from "@fluidframework/core-interfaces";

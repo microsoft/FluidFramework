@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IFluidErrorBase } from "./error";
+export { IFluidErrorBase, NORMALIZED_ERROR_TYPE } from "./error";
 
 export {
 	IFluidLoadable,
