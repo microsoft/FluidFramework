@@ -67,7 +67,7 @@ export class ValueMapProperty extends MapProperty {
 	/**
 	 * Return a JSON representation of the map and its items.
 	 * @return {object} A JSON representation of the map and its items.
-	 * @private
+	 * @protected
 	 */
 	_toJson() {
 		return {
