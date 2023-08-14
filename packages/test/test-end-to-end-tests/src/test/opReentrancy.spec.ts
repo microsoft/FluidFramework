@@ -124,6 +124,18 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		},
 	);
 
+	function sendFutureOp(container: IContainer) {
+		(
+			container.context.containerRuntime as unknown as {
+				submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+			}
+		).submit({
+			type: "FUTURE_TYPE" as ContainerMessageType,
+			contents: "Hello",
+			compatDetails: { behavior: "Ignore" },
+		});
+	}
+
 	[false, true].forEach((enableGroupedBatching) => {
 		itSkipsFailureOnSpecificDrivers(
 			`Eventual consistency with op reentry - ${

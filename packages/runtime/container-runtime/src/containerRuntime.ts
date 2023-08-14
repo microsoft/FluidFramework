@@ -258,9 +258,11 @@ function compatBehaviorAllowsMessageType(
  * This way stringified values can be compared.
  */
 export interface ContainerRuntimeMessage {
+	/** Type of the op, within the ContainerRuntime's domain */
 	type: ContainerMessageType;
+	/** Domain-specific contents, interpreted according to the type */
 	contents: any;
-	/** @see defaultCompatDetails */
+	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
 	compatDetails?: IContainerRuntimeMessageCompatDetails;
 }
 

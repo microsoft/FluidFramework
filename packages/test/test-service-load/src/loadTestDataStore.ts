@@ -650,8 +650,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
 					}
 				).submit({
-					contents: "Hello",
 					type: "FUTURE_TYPE" as ContainerMessageType,
+					contents: "Hello",
 					compatDetails: { behavior: "Ignore" },
 				});
 			}

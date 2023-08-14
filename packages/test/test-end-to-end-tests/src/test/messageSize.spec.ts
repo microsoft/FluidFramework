@@ -330,6 +330,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			},
 		).timeout(chunkingBatchesTimeoutMs);
 
+		//* TEST: Put an op with compatDetails in the here and ensure it roundtrips properly
+
 		describe(`Large payloads (exceeding the 1MB limit) - ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batches`, () => {
