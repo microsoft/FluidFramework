@@ -83,7 +83,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			}
 			const pendingBlobs = await runtimeOf(dataStore1)
 				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState)?.pendingAttachmentBlobs as IPendingBlobs | undefined);
+				.then(
+					(s) =>
+						(s as PendingLocalState)?.pendingAttachmentBlobs as
+							| IPendingBlobs
+							| undefined,
+				);
 			assert.strictEqual(pendingBlobs, undefined);
 		});
 
@@ -183,7 +188,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			map.set(testKey, blob);
 			const pendingBlobs = await runtimeOf(dataStore1)
 				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs | undefined);
+				.then(
+					(s) =>
+						(s as PendingLocalState).pendingAttachmentBlobs as
+							| IPendingBlobs
+							| undefined,
+				);
 			assert.strictEqual(pendingBlobs, undefined);
 		});
 
@@ -200,7 +210,12 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			}
 			const pendingBlobs = await runtimeOf(dataStore1)
 				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs | undefined);
+				.then(
+					(s) =>
+						(s as PendingLocalState).pendingAttachmentBlobs as
+							| IPendingBlobs
+							| undefined,
+				);
 			assert.strictEqual(pendingBlobs, undefined);
 		});
 	});

@@ -114,7 +114,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_ContainerRuntime": {"forwardCompat": false}
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
+			}
 		}
 	}
 }
