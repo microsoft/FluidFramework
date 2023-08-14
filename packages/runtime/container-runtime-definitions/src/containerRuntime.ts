@@ -10,7 +10,7 @@ import {
 	IResponse,
 	IFluidRouter,
 	FluidObject,
-  IFluidHandle,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
