@@ -75,9 +75,6 @@ export enum CreateSummarizerNodeSource {
 }
 
 // @public
-export const currentWrittenVersion = 1;
-
-// @public
 export const defaultClusterCapacity = 512;
 
 // @alpha

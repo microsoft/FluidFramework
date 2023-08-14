@@ -77,6 +77,5 @@ export {
 	StableId,
 	IdCreationRange,
 	IdCreationRangeWithStashedState,
-	currentWrittenVersion,
 	defaultClusterCapacity,
 } from "./id-compressor";

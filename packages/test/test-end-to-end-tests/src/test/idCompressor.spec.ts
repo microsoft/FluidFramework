@@ -248,10 +248,12 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 
 		// After synchronization, each compressor should allocate a cluster. Because the order is deterministic
 		// in e2e tests, we can directly validate the cluster ranges. After synchronizing, each compressor will
-		// get a positive id cluster that corresponds to its locally allocated ranges. Compressor states after synchronizing:
-		// SharedMap1 Compressor: { first: 0, last: 511 }
-		// SharedMap2 Compressor: { first: 512, last: 1023 }
-		// SharedMap3 Compressor: { first: 1024, last: 1535 }
+		// get a positive id cluster that corresponds to its locally allocated ranges. Each cluster will be sized
+		// as the number of IDs produced + the default cluster size (512).
+		// Compressor states after synchronizing:
+		// SharedMap1 Compressor: { first: 0, last: 1023 }
+		// SharedMap2 Compressor: { first: 1024, last: 2047 }
+		// SharedMap3 Compressor: { first: 2048, last: 2559 }
 		for (let i = 0; i < 512; i++) {
 			assert.strictEqual(
 				getIdCompressor(sharedMapContainer1).normalizeToOpSpace(

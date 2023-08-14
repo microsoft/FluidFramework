@@ -15,7 +15,6 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	currentWrittenVersion,
 	defaultClusterCapacity,
 } from "@fluidframework/runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -50,6 +49,12 @@ import {
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
+
+/**
+ * The version of IdCompressor that is currently persisted.
+ * This should not be changed without careful consideration to compatibility.
+ */
+const currentWrittenVersion = 1;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
