@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { ILoggerEventsFilterConfig, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
@@ -26,6 +26,7 @@ import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
+	generateLoggerConfig,
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix";
@@ -191,6 +192,7 @@ async function runnerProcess(
 	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
+	const loggerConfigOptions: ILoggerEventsFilterConfig[] = generateLoggerConfig(seed, undefined);
 
 	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
 
@@ -215,6 +217,8 @@ async function runnerProcess(
 			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
 			// Construct the loader
+			runConfig.logger.eventsConfig =
+				loggerConfigOptions[runConfig.runId % loggerConfigOptions.length];
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),

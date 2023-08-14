@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	LogLevel,
+	TelemetryEventCategory,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Property types that can be logged.
@@ -83,18 +87,27 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send information telemetry event
 	 * @param event - Event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
-	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
+	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel): void;
 
 	/**
 	 * Send error telemetry event
 	 * @param event - Event to send
+	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
-	sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: any, logLevel?: LogLevel): void;
 
 	/**
 	 * Send performance telemetry event
 	 * @param event - Event to send
+	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
-	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
+	sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: any,
+		logLevel?: LogLevel,
+	): void;
 }

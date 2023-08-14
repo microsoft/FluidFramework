@@ -11,7 +11,7 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ILoggerEventsFilterConfig, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -31,6 +31,7 @@ import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
+	generateLoggerConfig,
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix";
@@ -173,6 +174,9 @@ export async function initialize(
 	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
+	const loggerConfigOptions: ILoggerEventsFilterConfig = random.pick(
+		generateLoggerConfig(seed, undefined),
+	);
 
 	const logger = await createLogger({
 		driverType: testDriver.type,
@@ -180,6 +184,7 @@ export async function initialize(
 		profile: profileName,
 		runId: undefined,
 	});
+	logger.eventsConfig = loggerConfigOptions;
 
 	// Construct the loader
 	const loader = new Loader({

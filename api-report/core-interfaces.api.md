@@ -116,6 +116,12 @@ export interface IFluidRunnable {
     stop(reason?: string): void;
 }
 
+// @public (undocumented)
+export interface ILoggerEventsFilterConfig {
+    // (undocumented)
+    logLevel?: LogLevel;
+}
+
 // @public
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryProperties;
@@ -212,7 +218,9 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 // @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
+    eventsConfig?: ILoggerEventsFilterConfig;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
 // @public
@@ -231,10 +239,10 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 
 // @public
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any, logLevel?: LogLevel): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel): void;
 }
 
 // @public
@@ -247,6 +255,18 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+}
+
+// @public
+export enum LogLevel {
+    // (undocumented)
+    default = 1,
+    // (undocumented)
+    error = 3,
+    // (undocumented)
+    verbose = 0,
+    // (undocumented)
+    warning = 2
 }
 
 // @public

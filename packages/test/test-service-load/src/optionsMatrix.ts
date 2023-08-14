@@ -16,6 +16,7 @@ import {
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { ILoaderOptions } from "@fluidframework/container-loader";
+import { ILoggerEventsFilterConfig, LogLevel } from "@fluidframework/core-interfaces";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
@@ -121,6 +122,20 @@ export function generateConfigurations(
 		return [{}];
 	}
 	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
+}
+
+export function generateLoggerConfig(
+	seed: number,
+	overrides: Partial<OptionsMatrix<ILoggerEventsFilterConfig>> | undefined,
+): ILoggerEventsFilterConfig[] {
+	const loggerEventsFilterConfig: OptionsMatrix<ILoggerEventsFilterConfig> = {
+		logLevel: [LogLevel.verbose, LogLevel.default],
+	};
+
+	return generatePairwiseOptions<ILoggerEventsFilterConfig>(
+		applyOverrides<ILoggerEventsFilterConfig>(loggerEventsFilterConfig, overrides),
+		seed,
+	);
 }
 
 /**
