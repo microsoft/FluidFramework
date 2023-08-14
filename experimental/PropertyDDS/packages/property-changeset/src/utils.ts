@@ -890,7 +890,9 @@ export namespace Utils {
 						break;
 					case ArrayIteratorOperationTypes.REMOVE:
 						in_context._operationType = "remove";
-						for (i = 0; i < arrayIterator.opDescription.operation[1]; ++i) {
+						// WARNING: 'operation[1]' is 'string | number | genericArray'.  The cast to 'number'
+						//          preserves the JavaScript coercion behavior, which was permitted prior to TS5.
+						for (i = 0; i < (arrayIterator.opDescription.operation[1] as number); ++i) {
 							// For removals, we don't have a typeid and we use the ChangeSet of the removal operation as nested
 							// ChangeSet -- TODO: doing this is maybe not really nice here
 							processChange(

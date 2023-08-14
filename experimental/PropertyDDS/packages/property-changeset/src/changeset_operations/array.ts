@@ -1379,7 +1379,12 @@ const handleRebaseCombinations = function (
 						opB.operation[2] = opA.operation[1].slice();
 					}
 				}
-				if (opB.type === ArrayChangeSetIterator.types.REMOVE && opB.operation[1] > 0) {
+				// WARNING: 'operation[1]' is 'string | number | genericArray'.  The cast to 'number'
+				//          preserves the JavaScript coercion behavior, which was permitted prior to TS5.
+				if (
+					opB.type === ArrayChangeSetIterator.types.REMOVE &&
+					(opB.operation[1] as number) > 0
+				) {
 					delete opA._absoluteBegin;
 					delete opB.offset;
 					let conflict = {
