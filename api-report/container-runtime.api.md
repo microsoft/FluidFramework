@@ -61,6 +61,13 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 // @public
 export function assertIsStableId(stableId: string): StableId;
 
+// @internal
+export type CompatModeBehavior =
+/** Ignore the op. It won't be persisted if this client summarizes */
+"Ignore"
+/** Fail processing immediately. (The container will close) */
+| "FailToProcess";
+
 // @public
 export enum CompressionAlgorithms {
     // (undocumented)
@@ -231,15 +238,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @public (undocumented)
+// @public
 export interface ContainerRuntimeMessage {
     // Warning: (ae-incompatible-release-tags) The symbol "compatDetails" is marked as @public, but its signature references "IContainerRuntimeMessageCompatDetails" which is marked as @internal
-    //
-    // (undocumented)
     compatDetails?: IContainerRuntimeMessageCompatDetails;
-    // (undocumented)
     contents: any;
-    // (undocumented)
     type: ContainerMessageType;
 }
 
@@ -359,7 +362,6 @@ export interface IConnectableRuntime {
 
 // @internal
 export interface IContainerRuntimeMessageCompatDetails {
-    // Warning: (ae-forgotten-export) The symbol "CompatModeBehavior" needs to be exported by the entry point index.d.ts
     behavior: CompatModeBehavior;
 }
 

@@ -1019,8 +1019,8 @@ describe("Runtime", () => {
 
 			it("process remote op with unrecognized type and no compat behavior", async () => {
 				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					contents: "Hello",
 					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
 				};
 

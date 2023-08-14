@@ -261,7 +261,7 @@ export interface ContainerRuntimeMessage {
 }
 
 /**
- * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents
+ * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents/etc
  * promoted up to the outer object
  */
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
