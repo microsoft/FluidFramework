@@ -487,7 +487,9 @@ export class DataBindingTree {
 				parentNode._actualLength = originalLength;
 			}
 			// if the array already contained a child with a path callback but the new index is higher, we have to update it
-			if (lastElem! > parentNode._highestPathCallbackIndex) {
+			// WARNING: 'lastElem' is 'string | number'.  The cast to 'number' preserves the JavaScript coercion
+			//          behavior, which was permitted prior to TS5.
+			if ((lastElem as number)! > parentNode._highestPathCallbackIndex) {
 				parentNode._highestPathCallbackIndex = parseInt(lastElem as string, 10);
 			}
 		}
