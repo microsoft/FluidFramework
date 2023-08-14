@@ -75,6 +75,12 @@ export interface IContext {
 
 export interface IPartitionLambda {
 	/**
+	 * Expire document partition after this long of no activity.
+	 * When undefined, the default global IDocumentLambdaServerConfiguration.partitionActivityTimeout is used.
+	 */
+	readonly activityTimeout?: number;
+
+	/**
 	 * Processes an incoming message
 	 */
 	handler(message: IQueuedMessage): Promise<void> | undefined;

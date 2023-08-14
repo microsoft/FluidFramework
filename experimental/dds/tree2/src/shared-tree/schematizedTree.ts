@@ -9,8 +9,6 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	SimpleObservingDependent,
-	lookupGlobalFieldSchema,
-	rootFieldKey,
 	SchemaData,
 	ITreeCursor,
 } from "../core";
@@ -20,8 +18,8 @@ import {
 	FieldKinds,
 	allowsRepoSuperset,
 	TypedSchemaCollection,
-	GlobalFieldSchema,
 	SchemaAware,
+	FieldSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISharedTreeView } from "./sharedTreeView";
@@ -45,7 +43,7 @@ export function schematizeView(
 		if (tree.context.root.length === 0 && schemaDataIsEmpty(tree.storedSchema)) {
 			tree.transaction.start();
 
-			const rootSchema = lookupGlobalFieldSchema(config.schema, rootFieldKey);
+			const rootSchema = config.schema.rootFieldSchema;
 			const rootKind = rootSchema.kind.identifier;
 
 			// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
@@ -59,14 +57,12 @@ export function schematizeView(
 			} else {
 				assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
 				// Replace value kind with optional kind in root field schema:
-				const globalFieldSchema = new Map(config.schema.globalFieldSchema);
-				globalFieldSchema.set(rootFieldKey, {
-					kind: FieldKinds.optional,
-					types: rootSchema.types,
-				});
 				incrementalSchemaUpdate = {
 					...config.schema,
-					globalFieldSchema,
+					rootFieldSchema: {
+						kind: FieldKinds.optional,
+						types: rootSchema.types,
+					},
 				};
 			}
 
@@ -82,7 +78,7 @@ export function schematizeView(
 			// Update to intermediate schema
 			tree.storedSchema.update(incrementalSchemaUpdate);
 			// Insert initial tree
-			tree.root = config.initialTree;
+			tree.setContent(config.initialTree);
 
 			// If intermediate schema is not final desired schema, update to the final schema:
 			if (incrementalSchemaUpdate !== config.schema) {
@@ -130,6 +126,10 @@ export function schematizeView(
 		}
 	}
 
+	// Callback to cleanup afterBatch schema checking.
+	// Set only when such a callback is pending.
+	let afterBatchCheck: undefined | (() => void);
+
 	// TODO: errors thrown by this will usually be in response to remote edits, and thus may not surface to the app.
 	// Two fixes should be done related to this:
 	// 1. Ensure errors in response to edits like this crash app and report telemetry.
@@ -137,19 +137,33 @@ export function schematizeView(
 	// out of schema handlers which update the schematized view of the tree instead of throwing.
 	tree.storedSchema.registerDependent(
 		new SimpleObservingDependent(() => {
-			const compatibility = viewSchema.checkCompatibility(tree.storedSchema);
-			if (compatibility.read !== Compatibility.Compatible) {
-				fail(
-					"Stored schema changed to one that permits data incompatible with the view schema",
-				);
-			}
+			// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
+			// This avoids erroring about invalid schema in the middle of a batch of changes.
+			// TODO:
+			// Ideally this would run at the end of the batch containing the schema change, but currently schema changes don't trigger afterBatch.
+			// Fortunately this works out ok, since the tree can't actually become out of schema until its actually edited, which should trigger after batch.
+			// When batching properly handles schema edits, this documentation and related tests should be updated.
+			// TODO:
+			// This seems like the correct policy, but more clarity on how schematized views are updating during batches is needed.
+			afterBatchCheck ??= tree.events.on("afterBatch", () => {
+				assert(afterBatchCheck !== undefined, 0x728 /* unregistered event ran */);
+				afterBatchCheck();
+				afterBatchCheck = undefined;
 
-			if (compatibility.write !== Compatibility.Compatible) {
-				// TODO: support readonly mode in this case.
-				fail(
-					"Stored schema changed to one that does not support all data allowed by view schema",
-				);
-			}
+				const compatibility = viewSchema.checkCompatibility(tree.storedSchema);
+				if (compatibility.read !== Compatibility.Compatible) {
+					fail(
+						"Stored schema changed to one that permits data incompatible with the view schema",
+					);
+				}
+
+				if (compatibility.write !== Compatibility.Compatible) {
+					// TODO: support readonly mode in this case.
+					fail(
+						"Stored schema changed to one that does not support all data allowed by view schema",
+					);
+				}
+			});
 		}),
 	);
 
@@ -162,7 +176,7 @@ export function schematizeView(
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
+export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
@@ -176,6 +190,6 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
 		| readonly ITreeCursor[];
 }

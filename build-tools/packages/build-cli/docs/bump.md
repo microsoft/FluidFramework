@@ -88,6 +88,7 @@ USAGE
   $ flub bump deps PACKAGE_OR_RELEASE_GROUP [-v | --quiet] [--prerelease -t
     latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g
     client|server|azure|build-tools|gitrest|historian | -p <value>] [-x | --install | --commit |  |  | ]
+    [--updateChecker ncu|homegrown]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -108,6 +109,13 @@ FLAGS
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
   --quiet        Disable all logging.
+
+EXPERIMENTAL FLAGS
+  --updateChecker=<option>  Specify the implementation to use to update dependencies. The default, 'ncu', uses
+                            npm-check-updates under the covers. The 'homegrown' value is a new experimental updater
+                            written specifically for the Fluid Framework repo. This flag is experimental and may change
+                            or be removed at any time.
+                            <options: ncu|homegrown>
 
 DESCRIPTION
   Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

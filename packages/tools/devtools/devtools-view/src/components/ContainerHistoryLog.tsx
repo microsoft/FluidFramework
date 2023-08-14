@@ -23,8 +23,8 @@ import {
 	LockClosed20Filled,
 } from "@fluentui/react-icons";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
-import { ThemeContext } from "../ThemeHelper";
-import { ThemeOption } from "./SettingsView";
+
+import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { LabelCellLayout } from "./utility-components";
 
 /**

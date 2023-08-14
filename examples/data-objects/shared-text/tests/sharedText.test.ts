@@ -14,7 +14,7 @@ describe("sharedText", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	test("The title of the document is the same for both users", async () => {
@@ -67,7 +67,7 @@ describe("sharedText", () => {
 		}, word);
 
 		// wait for all changes to propagate
-		await page.waitFor(() => window["FluidLoader"].isSynchronized());
+		await page.waitForFunction(() => window["FluidLoader"].isSynchronized());
 
 		// The text returned has extra spaces so remove the extra spaces
 		let textLeft = await getText(0);

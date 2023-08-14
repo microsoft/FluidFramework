@@ -1,0 +1,37 @@
+{
+    "type": 1,
+    "tree": {
+        "indexes": {
+            "type": 1,
+            "tree": {
+                "EditManager": {
+                    "type": 1,
+                    "tree": {
+                        "String": {
+                            "type": 2,
+                            "content": "{\"trunk\":[{\"change\":{\"maxId\":1,\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":0},\"changes\":{\"fieldChanges\":[{\"fieldKey\":\"foo\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":1}}]}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000004\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
+                        }
+                    }
+                },
+                "Schema": {
+                    "type": 1,
+                    "tree": {
+                        "SchemaString": {
+                            "type": 2,
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]},\"structFields\":[]}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]}}"
+                        }
+                    }
+                },
+                "Forest": {
+                    "type": 1,
+                    "tree": {
+                        "ForestTree": {
+                            "type": 2,
+                            "content": "[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -2,15 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MonoRepoKind } from "@fluidframework/build-tools";
+import { MonoRepo, MonoRepoKind, Package } from "@fluidframework/build-tools";
 import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { sortVersions } from "../../lib";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
+import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
+import { findPackageOrReleaseGroup } from "../../args";
+
+const tagRefPrefix = "refs/tags/";
 
 /**
  * The `release fromTag` command is used to get release information from a git tag.
@@ -33,7 +36,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 	};
 
 	defaultMode: ReleaseSelectionMode = "inRepo";
-	releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
+	releaseGroupName: ReleaseGroup | undefined;
 
 	static examples = [
 		{
@@ -59,17 +62,17 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		const tagInput = this.args.tag;
 		const context = await this.getContext();
 
-		const [releaseGroup, version, tag] = parseTag(tagInput);
-		this.releaseGroupOrPackage = releaseGroup;
+		const [releaseGroup, version, tag] = await this.parseTag(tagInput);
+		this.releaseGroupName = releaseGroup.name;
 
 		this.releaseData = await this.collectReleaseData(
 			context,
 			this.defaultMode,
-			this.releaseGroupOrPackage,
+			this.releaseGroupName,
 			false,
 		);
 
-		const release = this.releaseData[this.releaseGroupOrPackage];
+		const release = this.releaseData[this.releaseGroupName];
 		const versions = sortVersions([...release.versions], "version");
 		const taggedReleaseIndex = versions.findIndex((v) => v.version === version.version);
 		if (taggedReleaseIndex === -1) {
@@ -89,12 +92,12 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 			);
 		}
 
-		this.log(`${this.releaseGroupOrPackage} v${version.version} (${releaseType})`);
+		this.log(`${this.releaseGroupName} v${version.version} (${releaseType})`);
 
 		// When the --json flag is passed, the command will return the raw data as JSON.
 		return sortJson({
-			packageOrReleaseGroup: this.releaseGroupOrPackage,
-			title: getReleaseTitle(releaseGroup, version, releaseType),
+			packageOrReleaseGroup: this.releaseGroupName,
+			title: getReleaseTitle(this.releaseGroupName, version, releaseType),
 			tag,
 			date: release.latestReleasedVersion.date,
 			releaseType,
@@ -103,32 +106,44 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 			previousTag:
 				prevVersionDetails === undefined
 					? undefined
-					: `${this.releaseGroupOrPackage}_v${previousVersion}`,
+					: `${this.releaseGroupName}_v${previousVersion}`,
 		});
 	}
+
+	/**
+	 * Parses a git tag string into a release group and a semver version.
+	 * @param input - A git tag as a string.
+	 * @returns A 3-tuple of the release group, the semver version, and the original tag.
+	 */
+	private async parseTag(input: string): Promise<[MonoRepo | Package, semver.SemVer, string]> {
+		const tag = input.startsWith(tagRefPrefix) ? input.slice(tagRefPrefix.length) : input;
+		const [rg, ver] = tag.split("_v");
+
+		const version = semver.parse(ver);
+		if (version === null) {
+			throw new Error(`Invalid version parsed from tag: ${ver}`);
+		}
+
+		const context = await this.getContext();
+		const releaseGroupOrPackage = findPackageOrReleaseGroup(rg, context);
+		if (releaseGroupOrPackage === undefined) {
+			this.error(`Can't find release group or package with name: ${rg}`, {
+				exit: 1,
+			});
+		}
+
+		if (releaseGroupOrPackage instanceof Package) {
+			this.error(
+				`"${rg}" is a package, not a release group. Only release groups are supported.`,
+				{
+					exit: 2,
+				},
+			);
+		}
+
+		return [releaseGroupOrPackage, version, tag];
+	}
 }
-
-const pre = "refs/tags/";
-
-/**
- * Parses a git tag string into a release group and a semver version.
- * @param input - A git tag as a string.
- * @returns A 3-tuple of the release group, the semver version, and the original tag.
- */
-const parseTag = (input: string): [ReleaseGroup, semver.SemVer, string] => {
-	const tag = input.startsWith(pre) ? input.slice(pre.length) : input;
-	const [rg, ver] = tag.split("_v");
-	if (!isReleaseGroup(rg)) {
-		throw new Error(`Unknown release group parsed from tag: ${rg}`);
-	}
-
-	const version = semver.parse(ver);
-	if (version === null) {
-		throw new Error(`Invalid version parsed from tag: ${ver}`);
-	}
-
-	return [rg, version, tag];
-};
 
 const getReleaseTitle = (
 	releaseGroup: ReleaseGroup,

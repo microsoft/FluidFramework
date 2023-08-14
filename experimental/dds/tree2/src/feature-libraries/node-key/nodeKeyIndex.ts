@@ -4,15 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { LocalFieldKey, SchemaData, ValueSchema } from "../../core";
+import { FieldKey, SchemaData, ValueSchema } from "../../core";
 import { FieldKinds } from "../default-field-kinds";
-import {
-	EditableTree,
-	EditableTreeContext,
-	localNodeKeySymbol,
-	typeSymbol,
-} from "../editable-tree";
+import { EditableTree, EditableTreeContext, localNodeKeySymbol } from "../editable-tree";
 import { oneFromSet } from "../../util";
+import { typeSymbol } from "../untypedTree";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
@@ -23,7 +19,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 	private readonly nodes: Map<LocalNodeKey, EditableTree>;
 
 	public constructor(
-		public readonly fieldKey: LocalFieldKey,
+		public readonly fieldKey: FieldKey,
 		keys: Iterable<[LocalNodeKey, EditableTree]> = [],
 	) {
 		this.nodes = new Map(keys);
@@ -38,7 +34,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 		if (treeSchema === undefined) {
 			return false;
 		}
-		return treeSchema.value === ValueSchema.String;
+		return treeSchema.leafValue === ValueSchema.String;
 	}
 
 	/**
@@ -108,7 +104,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 	private *findKeys(node: EditableTree): Iterable<[key: LocalNodeKey, node: EditableTree]> {
 		const key = node[localNodeKeySymbol];
 		if (key !== undefined) {
-			const field = node[typeSymbol].localFields.get(this.fieldKey);
+			const field = node[typeSymbol].structFields.get(this.fieldKey);
 			assert(field !== undefined, 0x6e2 /* Found node key that is not in schema */);
 			assert(
 				field.kind.identifier === FieldKinds.nodeKey.identifier,
@@ -122,7 +118,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, EditableTree> {
 			yield [key, node];
 		} else {
 			assert(
-				!node[typeSymbol].localFields.has(this.fieldKey),
+				!node[typeSymbol].structFields.has(this.fieldKey),
 				0x6e3 /* Node key absent but required by schema */,
 			);
 		}

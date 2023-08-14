@@ -181,7 +181,9 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	public async initializeDocument(): Promise<void> {
-		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory);
+		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory, {
+			logger: this.props.logger,
+		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
@@ -207,9 +209,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			url: requestUrl,
 		};
 
-		const loader = this.props.provider.createLoader([
-			[this.props.provider.defaultCodeDetails, this.runtimeFactory],
-		]);
+		const loader = this.props.provider.createLoader(
+			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
+			{ logger: this.props.logger },
+		);
 		const container2 = await loader.resolve(request);
 		return container2;
 	}
@@ -222,17 +225,15 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	public async summarize(
+		_container: IContainer,
 		summaryVersion?: string,
 		closeContainer: boolean = true,
 	): Promise<ISummarizeResult> {
-		assert(
-			this._mainContainer !== undefined,
-			"Container should be initialized before summarize",
-		);
+		assert(_container !== undefined, "Container should be initialized before summarize");
 		const { container: containerClient, summarizer: summarizerClient } =
 			await createSummarizerFromFactory(
 				this.props.provider,
-				this._mainContainer,
+				_container,
 				this.dataObjectFactory,
 				summaryVersion,
 				undefined,
