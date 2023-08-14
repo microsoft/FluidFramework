@@ -6,17 +6,15 @@
 import {
 	IFluidErrorBase,
 	ILoggingError,
-	ITaggedTelemetryPropertyType,
+	ITelemetryLoggerExt,
 	ITelemetryProperties,
+	ITaggedTelemetryPropertyType,
+	ITaggedTelemetryPropertyTypeExt,
 	TelemetryEventPropertyType,
+	TelemetryEventPropertyTypeExt,
 } from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
 import { hasErrorInstanceId, isFluidError, isValidLegacyError } from "./fluidErrorBase";
-import {
-	ITaggedTelemetryPropertyTypeExt,
-	ITelemetryLoggerExt,
-	TelemetryEventPropertyTypeExt,
-} from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {

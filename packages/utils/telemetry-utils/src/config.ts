@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, ITelemetryLoggerExt } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils";
 import { createChildLogger, tagCodeArtifacts } from "./logger";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 

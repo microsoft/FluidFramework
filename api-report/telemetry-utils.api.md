@@ -11,13 +11,19 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IFluidErrorBase } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
+import { ITaggedTelemetryPropertyTypeExt } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryErrorEventExt } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEventExt } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/core-interfaces';
+import { ITelemetryPerformanceEventExt } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryPropertiesExt } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
-import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryEventPropertyTypeExt } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
@@ -135,19 +141,9 @@ export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeEx
 // @public
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
-// @public
-export interface ITaggedTelemetryPropertyTypeExt {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryEventPropertyTypeExt;
-}
+export { ITaggedTelemetryPropertyTypeExt }
 
-// @public
-export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
-    eventName: string;
-}
+export { ITelemetryErrorEventExt }
 
 // @public
 export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
@@ -157,20 +153,9 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @public
-export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
-    category?: TelemetryEventCategory;
-    // (undocumented)
-    eventName: string;
-}
+export { ITelemetryGenericEventExt }
 
-// @public
-export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
-    sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
-}
+export { ITelemetryLoggerExt }
 
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
@@ -186,17 +171,9 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
-// @public
-export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
-    // (undocumented)
-    duration?: number;
-}
+export { ITelemetryPerformanceEventExt }
 
-// @public
-export interface ITelemetryPropertiesExt {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
-}
+export { ITelemetryPropertiesExt }
 
 // @public (undocumented)
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L): MonitoringContext<L>;
@@ -320,11 +297,7 @@ export enum TelemetryDataTag {
     UserData = "UserData"
 }
 
-// @public
-export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
-    [key: string]: // Flat objects can have the same properties as the event itself
-    string | number | boolean | undefined | (string | number | boolean)[];
-};
+export { TelemetryEventPropertyTypeExt }
 
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;

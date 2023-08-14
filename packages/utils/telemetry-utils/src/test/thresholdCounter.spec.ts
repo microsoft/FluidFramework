@@ -7,11 +7,11 @@ import assert from "assert";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryErrorEvent,
-	ITelemetryPerformanceEvent,
 	ITelemetryGenericEvent,
+	ITelemetryLoggerExt,
+	ITelemetryPerformanceEvent,
 } from "@fluidframework/core-interfaces";
 import { ThresholdCounter } from "../thresholdCounter";
-import { ITelemetryLoggerExt } from "../telemetryTypes";
 
 class FakeTelemetryLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryGenericEvent[] = [];

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "./telemetryTypes";
+import { ITelemetryLoggerExt } from "@fluidframework/core-interfaces";
 
 /**
  * Utility counter which will send event only if the provided value

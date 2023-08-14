@@ -8,11 +8,11 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
+	ITelemetryLoggerExt,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
-import { ITelemetryLoggerExt } from "../telemetryTypes";
 
 /**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper

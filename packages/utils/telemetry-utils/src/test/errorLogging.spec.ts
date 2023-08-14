@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import {
+	IFluidErrorBase,
+	ITelemetryBaseEvent,
+	ITelemetryProperties,
+} from "@fluidframework/core-interfaces";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
 import {
 	LoggingError,
@@ -18,12 +22,7 @@ import {
 	extractLogSafeErrorProperties,
 	isExternalError,
 } from "../errorLogging";
-import {
-	hasErrorInstanceId,
-	IFluidErrorBase,
-	isFluidError,
-	isValidLegacyError,
-} from "../fluidErrorBase";
+import { hasErrorInstanceId, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {

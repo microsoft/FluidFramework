@@ -60,20 +60,41 @@ export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
 export { logIfFalse } from "./utils";
-export {
-	TelemetryEventPropertyTypeExt,
-	ITelemetryEventExt,
-	ITelemetryGenericEventExt,
-	ITelemetryErrorEventExt,
-	ITelemetryPerformanceEventExt,
-	ITelemetryLoggerExt,
-	ITaggedTelemetryPropertyTypeExt,
-	ITelemetryPropertiesExt,
-} from "./telemetryTypes";
+export { ITelemetryEventExt } from "./telemetryTypes";
 
 // Deprecated exports
 
-/**
- * @deprecated Import from "\@fluidframework/core-interfaces" instead.
- */
-export { IFluidErrorBase } from "@fluidframework/core-interfaces";
+export {
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	IFluidErrorBase,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	TelemetryEventPropertyTypeExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	ITelemetryGenericEventExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	ITelemetryErrorEventExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	ITelemetryPerformanceEventExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	ITelemetryLoggerExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	ITaggedTelemetryPropertyTypeExt,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	ITelemetryPropertiesExt,
+} from "@fluidframework/core-interfaces";

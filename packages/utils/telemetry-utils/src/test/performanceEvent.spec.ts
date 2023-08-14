@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ITelemetryLoggerExt } from "@fluidframework/core-interfaces";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
-import { ITelemetryLoggerExt } from "../telemetryTypes";
 
 class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;

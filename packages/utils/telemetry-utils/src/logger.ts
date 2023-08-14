@@ -4,14 +4,19 @@
  */
 
 import {
+	ITaggedTelemetryPropertyType,
+	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
+	ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
 	ITelemetryPerformanceEvent,
+	ITelemetryPerformanceEventExt,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
-	ITaggedTelemetryPropertyType,
+	TelemetryEventPropertyTypeExt,
 	TelemetryEventCategory,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
@@ -22,14 +27,7 @@ import {
 	generateStack,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging";
-import {
-	ITaggedTelemetryPropertyTypeExt,
-	ITelemetryEventExt,
-	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
-	ITelemetryPerformanceEventExt,
-	TelemetryEventPropertyTypeExt,
-} from "./telemetryTypes";
+import { ITelemetryEventExt } from "./telemetryTypes";
 
 export interface Memory {
 	usedJSHeapSize: number;

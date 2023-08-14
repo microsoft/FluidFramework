@@ -4,14 +4,17 @@
  */
 
 import assert from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import {
+	ITaggedTelemetryPropertyTypeExt,
+	ITelemetryBaseEvent,
+	TelemetryEventPropertyTypeExt,
+} from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerPropertyBags,
 	ITelemetryLoggerPropertyBag,
 	TelemetryLogger,
 	convertToBasePropertyType,
 } from "../logger";
-import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "../telemetryTypes";
 
 class TestTelemetryLogger extends TelemetryLogger {
 	public events: ITelemetryBaseEvent[] = [];
