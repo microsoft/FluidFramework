@@ -4,8 +4,9 @@
  */
 
 import { IDeltaManager, ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { DeltaManagerProxyBase } from "@fluidframework/container-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
 import { summarizerClientType } from "./summary";
 
 /**
