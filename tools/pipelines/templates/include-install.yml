@@ -13,9 +13,7 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
 
-steps:
-  - template: include-use-node-version.yml
-
+steps: 
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
     - template: include-install-pnpm.yml
       parameters:

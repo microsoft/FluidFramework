@@ -88,6 +88,8 @@ jobs:
             TestCoverage=$(testCoverage)
           "
 
+    - template: include-use-node-version.yml
+    
     - template: include-install.yml 
       parameters:
         packageManager: ${{ parameters.packageManager }}
