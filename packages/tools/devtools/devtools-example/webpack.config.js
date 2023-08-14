@@ -23,8 +23,21 @@ module.exports = (env) => {
 			module: {
 				rules: [
 					{
+						test: /\.m?js/,
+						type: "javascript/auto",
+					},
+					{
+						test: /\.m?js/,
+						resolve: {
+							fullySpecified: false,
+						},
+					},
+					{
 						test: /\.tsx?$/,
 						loader: require.resolve("ts-loader"),
+						resolve: {
+							fullySpecified: false,
+						},
 					},
 				],
 			},
