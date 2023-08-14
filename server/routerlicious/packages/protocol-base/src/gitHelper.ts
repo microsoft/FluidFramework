@@ -9,7 +9,7 @@ import {
 	SummaryType,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "./unreachable";
 
 /**
  * Take a summary object and returns its git mode.
