@@ -62,7 +62,7 @@
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",

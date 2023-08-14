@@ -83,7 +83,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",

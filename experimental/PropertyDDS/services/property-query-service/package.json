@@ -75,7 +75,7 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/property-dds": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",

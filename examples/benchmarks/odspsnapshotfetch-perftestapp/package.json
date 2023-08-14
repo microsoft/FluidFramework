@@ -35,7 +35,6 @@
 	},
 	"dependencies": {
 		"@fluid-tools/fluidapp-odsp-urlresolver": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",

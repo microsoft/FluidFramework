@@ -36,10 +36,10 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+    "@fluidframework-internal/client-utils": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",

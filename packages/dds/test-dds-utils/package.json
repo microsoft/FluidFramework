@@ -55,7 +55,7 @@
 	},
 	"dependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",

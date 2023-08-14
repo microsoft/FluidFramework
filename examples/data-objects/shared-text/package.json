@@ -40,9 +40,9 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/example-utils": "workspace:~",
+    "@fluid-example/example-utils": "workspace:~",
+    "@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",

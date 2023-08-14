@@ -60,7 +60,7 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/replay-tool": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",

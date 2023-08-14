@@ -36,7 +36,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/tree": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework-internal/client-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@graphql-codegen/plugin-helpers": "^1.18.2",
 		"@graphql-codegen/visitor-plugin-common": "^1.18.2",
