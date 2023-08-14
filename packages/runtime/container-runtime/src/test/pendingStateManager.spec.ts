@@ -11,6 +11,7 @@ import Deque from "double-ended-queue";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
 import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { SequencedContainerRuntimeMessage } from "../containerRuntime";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessageNew>;
@@ -305,8 +306,7 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: ContainerRuntimeMessage &
-					Partial<ISequencedDocumentMessage> = {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
 					type: "FROM_THE_FUTURE" as ContainerMessageType,
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
@@ -319,7 +319,7 @@ describe("Pending State Manager", () => {
 					undefined,
 				);
 				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage,
+					futureRuntimeMessage as SequencedContainerRuntimeMessage,
 				);
 			});
 		});

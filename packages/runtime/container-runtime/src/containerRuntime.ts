@@ -239,6 +239,21 @@ export interface IContainerRuntimeMessageCompatDetails {
 const defaultCompatDetails: IContainerRuntimeMessageCompatDetails = { behavior: "FailToProcess" };
 
 /**
+ * Utility to implement compat behaviors given an unknown message type
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param _unknownContainerRuntimeMessageType - Typed as never, to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
+ */
+function compatBehaviorAllowsMessageType(
+	_unknownContainerRuntimeMessageType: never,
+	compatBehavior: "Ignore" | "FailToProcess",
+): boolean {
+	return compatBehavior === "Ignore";
+}
+
+/**
  * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
  *
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
@@ -256,47 +271,6 @@ export interface ContainerRuntimeMessage {
  * promoted up to the outer object
  */
 export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
-
-//* Remove if unused
-/** Throws if the given message doesn't match certain expectations of a ContainerRuntimeMessage */
-export function requireContainerRuntimeMessage(
-	message: any,
-): asserts message is ContainerRuntimeMessage {
-	const maybeContainerRuntimeMessage = message as ContainerRuntimeMessage;
-	switch (maybeContainerRuntimeMessage.type) {
-		case ContainerMessageType.Attach:
-		case ContainerMessageType.Alias:
-		case ContainerMessageType.FluidDataStoreOp:
-		case ContainerMessageType.BlobAttach:
-		case ContainerMessageType.IdAllocation:
-		case ContainerMessageType.ChunkedOp:
-		case ContainerMessageType.Rejoin:
-			return;
-		default: {
-			// Type safety on missing known cases
-			((_: never) => {})(maybeContainerRuntimeMessage.type);
-
-			// If it has compatDetails, we may be able to handle it
-			if (maybeContainerRuntimeMessage.compatDetails !== undefined) {
-				return;
-			}
-
-			const error = DataProcessingError.create(
-				// Former assert 0x3ce
-				"Runtime message of unknown type",
-				"OpProcessing",
-				message,
-				{
-					type: message.type,
-					contentType: typeof message.contents,
-					batch: message.metadata?.batch,
-					compression: message.compression,
-				},
-			);
-			throw error;
-		}
-	}
-}
 
 export interface ISummaryBaseConfiguration {
 	/**
@@ -2056,12 +2030,24 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
-			//* Replace asserts with throw DPE
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
 				// e.g. if an app rolled back its container version
 				const compatBehavior = compatDetails.behavior;
+				if (!compatBehaviorAllowsMessageType(type, compatBehavior)) {
+					throw DataProcessingError.create(
+						"Stashed runtime message of unknown type",
+						"applyStashedOp",
+						undefined /* sequencedMessage */,
+						{
+							type,
+							messageDetails: JSON.stringify({
+								compatBehavior,
+							}),
+						},
+					);
+				}
 				switch (compatBehavior) {
 					case "FailToProcess":
 						unreachableCase(type, `Unknown ContainerMessageType [${type}]`);
@@ -2207,7 +2193,7 @@ export class ContainerRuntime
 	 * @param modernRuntimeMessage - Does this appear like a current ContainerRuntimeMessage?
 	 */
 	private processCore(
-		message: ISequencedDocumentMessage,
+		message: ISequencedDocumentMessage | SequencedContainerRuntimeMessage,
 		local: boolean,
 		modernRuntimeMessage: boolean,
 	) {
@@ -2221,7 +2207,9 @@ export class ContainerRuntime
 		try {
 			let localOpMetadata: unknown;
 			if (local && modernRuntimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
+				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
+					message as SequencedContainerRuntimeMessage,
+				);
 			}
 
 			// If there are no more pending messages after processing a local message,
@@ -2297,30 +2285,25 @@ export class ContainerRuntime
 					return;
 				}
 
-				((_: never) => {})(maybeContainerMessageType); // Type safety on missing known cases
-
 				const compatBehavior = compatDetails.behavior;
-				if (compatBehavior === "Ignore") {
-					return;
+				if (!compatBehaviorAllowsMessageType(maybeContainerMessageType, compatBehavior)) {
+					throw DataProcessingError.create(
+						// Former assert 0x3ce
+						"Runtime message of unknown type",
+						"OpProcessing",
+						message,
+						{
+							local,
+							type: message.type,
+							messageDetails: JSON.stringify({
+								contentType: typeof message.contents,
+								compatBehavior,
+								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
+								compression: message.compression,
+							}),
+						},
+					);
 				}
-				((_: "FailToProcess") => {})(compatBehavior); // Type safety on missing known cases
-
-				throw DataProcessingError.create(
-					// Former assert 0x3ce
-					"Runtime message of unknown type",
-					"OpProcessing",
-					message,
-					{
-						local,
-						type: message.type,
-						messageDetails: JSON.stringify({
-							contentType: typeof message.contents,
-							compatBehavior,
-							batch: (message.metadata as IBatchMetadata | undefined)?.batch,
-							compression: message.compression,
-						}),
-					},
-				);
 			}
 		}
 	}

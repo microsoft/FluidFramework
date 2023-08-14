@@ -28,7 +28,6 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
-	//* TEST COVERAGE - unpack
 	/**
 	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
 	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
@@ -102,11 +101,16 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 	return message;
 };
 
-//* Bring back type guard?
 /**
  * For a given message, it moves the nested ContainerRuntimeMessage props one level up.
+ *
+ * The return type illustrates the assumption that the message param
+ * becomes a ContainerRuntimeMessage by the time the function returns
+ * (but there is no runtime validation of the 'type' or 'compatDetails' values)
  */
-const unpack = (message: ISequencedDocumentMessage) => {
+function unpack(
+	message: ISequencedDocumentMessage,
+): asserts message is SequencedContainerRuntimeMessage {
 	const innerContents = message.contents as ContainerRuntimeMessage;
 
 	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
@@ -114,9 +118,8 @@ const unpack = (message: ISequencedDocumentMessage) => {
 	sequencedContainerRuntimeMessage.type = innerContents.type;
 	sequencedContainerRuntimeMessage.contents = innerContents.contents;
 	sequencedContainerRuntimeMessage.compatDetails = innerContents.compatDetails;
-};
+}
 
-//* TEST COVERAGE - unpack
 /**
  * Unpacks runtime messages.
  *

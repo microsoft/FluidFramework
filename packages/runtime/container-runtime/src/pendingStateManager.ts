@@ -231,7 +231,7 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
+	public processPendingLocalMessage(message: SequencedContainerRuntimeMessage): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 
@@ -243,11 +243,9 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
-		//* How/where is best to model the types here?
-
 		// IMPORTANT: Order matters here, this must match the order of the properties used
 		// when submitting the message.
-		const { type, contents, compatDetails } = message as SequencedContainerRuntimeMessage;
+		const { type, contents, compatDetails } = message;
 		const messageContent = JSON.stringify({ type, contents, compatDetails });
 
 		// Stringified content should match
