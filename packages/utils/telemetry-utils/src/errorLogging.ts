@@ -4,18 +4,14 @@
  */
 
 import {
+	IFluidErrorBase,
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
-import {
-	hasErrorInstanceId,
-	IFluidErrorBase,
-	isFluidError,
-	isValidLegacyError,
-} from "./fluidErrorBase";
+import { hasErrorInstanceId, isFluidError, isValidLegacyError } from "./fluidErrorBase";
 import {
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryLoggerExt,

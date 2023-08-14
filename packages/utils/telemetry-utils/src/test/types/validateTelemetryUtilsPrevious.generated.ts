@@ -136,26 +136,26 @@ use_old_InterfaceDeclaration_IFluidErrorAnnotations(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidErrorBase": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidErrorBase": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidErrorBase():
     TypeOnly<old.IFluidErrorBase>;
-declare function use_current_InterfaceDeclaration_IFluidErrorBase(
+declare function use_current_RemovedInterfaceDeclaration_IFluidErrorBase(
     use: TypeOnly<current.IFluidErrorBase>);
-use_current_InterfaceDeclaration_IFluidErrorBase(
+use_current_RemovedInterfaceDeclaration_IFluidErrorBase(
     get_old_InterfaceDeclaration_IFluidErrorBase());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidErrorBase": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidErrorBase": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidErrorBase():
+declare function get_current_RemovedInterfaceDeclaration_IFluidErrorBase():
     TypeOnly<current.IFluidErrorBase>;
 declare function use_old_InterfaceDeclaration_IFluidErrorBase(
     use: TypeOnly<old.IFluidErrorBase>);
 use_old_InterfaceDeclaration_IFluidErrorBase(
-    get_current_InterfaceDeclaration_IFluidErrorBase());
+    get_current_RemovedInterfaceDeclaration_IFluidErrorBase());
 
 /*
 * Validate forward compat by using old type in place of current type

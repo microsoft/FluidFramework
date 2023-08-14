@@ -13,7 +13,7 @@ import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDeltaSender } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
+import { IFluidErrorBase } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';

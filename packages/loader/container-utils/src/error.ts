@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidErrorBase } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IGenericError,
@@ -12,7 +13,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	LoggingError,
-	IFluidErrorBase,
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,

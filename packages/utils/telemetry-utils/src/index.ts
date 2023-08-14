@@ -36,7 +36,7 @@ export {
 } from "./events";
 export {
 	hasErrorInstanceId,
-	IFluidErrorBase,
+	// IFluidErrorBase,
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase";
@@ -70,3 +70,10 @@ export {
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
 } from "./telemetryTypes";
+
+// Deprecated exports
+
+/**
+ * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+ */
+export { IFluidErrorBase } from "@fluidframework/core-interfaces";

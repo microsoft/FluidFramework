@@ -8,6 +8,7 @@ import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
+import { IFluidErrorBase } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -107,16 +108,7 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
 }
 
-// @public
-export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
-    readonly errorInstanceId: string;
-    readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties;
-    readonly message: string;
-    readonly name: string;
-    readonly stack?: string;
-}
+export { IFluidErrorBase }
 
 // @public
 export interface IPerformanceEventMarkers {

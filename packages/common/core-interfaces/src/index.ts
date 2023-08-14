@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { IFluidErrorBase } from "./error";
+
 export {
 	IFluidLoadable,
 	IProvideFluidLoadable,

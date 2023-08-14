@@ -42,6 +42,17 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
+// @public
+export interface IFluidErrorBase extends Error {
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    readonly errorInstanceId: string;
+    readonly errorType: string;
+    getTelemetryProperties(): ITelemetryProperties;
+    readonly message: string;
+    readonly name: string;
+    readonly stack?: string;
+}
+
 // @public (undocumented)
 export const IFluidHandle: keyof IProvideFluidHandle;
 
