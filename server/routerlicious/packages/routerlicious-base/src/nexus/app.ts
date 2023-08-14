@@ -20,7 +20,7 @@ import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from 
 
 export function create(config: Provider) {
 	// Maximum REST request size
-	const requestSize = config.get("alfred:restJsonSize");
+	const requestSize = config.get("nexus:restJsonSize");
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -44,7 +44,7 @@ export function create(config: Provider) {
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
-			jsonMorganLoggerMiddleware("alfred", (tokens, req, res) => {
+			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
 				return {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),

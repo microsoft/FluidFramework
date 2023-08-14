@@ -100,9 +100,9 @@ export class NexusResources implements core.IResources {
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 	) {
-		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const socketIoConfig = config.get("alfred:socketIo");
+		const socketIoConfig = config.get("nexus:socketIo");
 		this.webServerFactory = new services.SocketIoWebServerFactory(
 			this.redisConfig,
 			socketIoAdapterConfig,
@@ -130,7 +130,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
 		const kafkaLibrary = config.get("kafka:lib:name");
 		const kafkaClientId = config.get("alfred:kafkaClientId");
-		const topic = config.get("alfred:topic");
+		const topic = config.get("nexus:topic");
 		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
@@ -312,14 +312,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		// Socket Connection Throttler
 		const socketConnectionThrottleConfigPerTenant = utils.getThrottleConfig(
-			config.get("alfred:throttling:socketConnectionsPerTenant"),
+			config.get("nexus:throttling:socketConnectionsPerTenant"),
 		);
 		const socketConnectTenantThrottler = configureThrottler(
 			socketConnectionThrottleConfigPerTenant,
 		);
 
 		const socketConnectionThrottleConfigPerCluster = utils.getThrottleConfig(
-			config.get("alfred:throttling:socketConnectionsPerCluster"),
+			config.get("nexus:throttling:socketConnectionsPerCluster"),
 		);
 		const socketConnectClusterThrottler = configureThrottler(
 			socketConnectionThrottleConfigPerCluster,
@@ -327,13 +327,13 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		// Socket SubmitOp Throttler
 		const submitOpThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:submitOps"),
+			config.get("nexus:throttling:submitOps"),
 		);
 		const socketSubmitOpThrottler = configureThrottler(submitOpThrottleConfig);
 
 		// Socket SubmitSignal Throttler
 		const submitSignalThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:submitSignals"),
+			config.get("nexus:throttling:submitSignals"),
 		);
 		const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
 		const documentRepository =
@@ -384,15 +384,15 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			storageNameAllocator,
 		);
 
-		const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
+		const maxSendMessageSize = bytes.parse(config.get("nexus:maxMessageSize"));
 		// Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
 		// Therefore, default clients will ignore server's 16kb message size limit.
-		const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
+		const verifyMaxMessageSize = config.get("nexus:verifyMaxMessageSize") ?? false;
 		const address = `${await utils.getHostIp()}:4000`;
 
 		// This cache will be used to store connection counts for logging connectionCount metrics.
 		let redisCache: core.ICache;
-		if (config.get("alfred:enableConnectionCountLogging")) {
+		if (config.get("nexus:enableConnectionCountLogging")) {
 			const redisOptions: Redis.RedisOptions = {
 				host: redisConfig.host,
 				port: redisConfig.port,
@@ -478,7 +478,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			});
 		}
 
-		const webSocketLibrary = config.get("alfred:webSocketLib");
+		const webSocketLibrary = config.get("nexus:webSocketLib");
 
 		return new NexusResources(
 			config,
