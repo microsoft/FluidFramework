@@ -12,6 +12,7 @@ SECURITY.md
 **/lib/*
 !common/lib/*
 !**/src/lib/**
+!**/test/lib/**
 common/lib/**/lib
 common/build/eslint-config-fluid/printed-configs/
 build-tools/packages/*/docs/*.md

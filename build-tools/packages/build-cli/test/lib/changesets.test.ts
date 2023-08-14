@@ -4,13 +4,9 @@
  */
 import { assert, expect } from "chai";
 import { pathExistsSync } from "fs-extra";
+import path from "node:path";
 
-import {
-	flattenChangesets,
-	groupByPackage,
-	loadChangesets,
-} from "../../src/lib/changesets";
-import path from "path";
+import { flattenChangesets, groupByPackage, loadChangesets } from "../../src/lib/changesets";
 
 const changesetsPath = path.resolve(__dirname, "../data");
 assert.isTrue(pathExistsSync(changesetsPath));
@@ -31,6 +27,6 @@ describe("changesets", async () => {
 		const changesets = await loadChangesets(changesetsPath);
 		const flattened = flattenChangesets(changesets);
 		const grouped = groupByPackage(flattened);
-	expect(grouped.size).to.equal(4);
+		expect(grouped.size).to.equal(4);
 	});
 });
