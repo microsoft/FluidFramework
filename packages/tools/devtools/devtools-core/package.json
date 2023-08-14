@@ -119,9 +119,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"EnumDeclaration_DevtoolsFeature": {
-				"backCompat": false
-			},
 			"EnumDeclaration_ContainerDevtoolsFeature": {
 				"backCompat": false,
 				"forwardCompat": false

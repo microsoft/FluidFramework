@@ -4,14 +4,39 @@
  */
 
 import React from "react";
-import { Body1, Body1Strong, Subtitle1 } from "@fluentui/react-components";
+import { Body1, Body1Strong, Subtitle1, makeStyles } from "@fluentui/react-components";
 import { DynamicComposedChart } from "./graphs";
+
+const useStyles = makeStyles({
+	flexColumn: {
+		display: "flex",
+		flexDirection: "column",
+	},
+	flexRow: {
+		display: "flex",
+		flexDirection: "row",
+	},
+	/**
+	 * Where the graph is described
+	 */
+	graphAboutContainer: {
+		marginTop: "15px",
+	},
+	/**
+	 * Where the op lifecycle phases are described
+	 */
+	opPhasesSection: {
+		marginTop: "15px",
+	},
+});
 
 /**
  * Page that shows op latency metrics.
- * @remarks TODO: Once Op Latency telemetry is available from {@link messageRelay}, the op latency data should be passed into the graph instead of this test data set.
+ * @remarks TODO: Once Op Latency data is available from {@link messageRelay}, the op latency data should be passed into the graph instead of this test data set.
  */
 export function OpLatencyView(): React.ReactElement {
+	const styles = useStyles();
+
 	return (
 		<div style={{ width: "100%", height: "300px" }} data-testid="test-op-latency-view">
 			<h3>Op Latency</h3>
@@ -30,8 +55,8 @@ export function OpLatencyView(): React.ReactElement {
 				// NOTE: Because Op Latency Telemetry is not yet available, this is a placeholder
 				dataSets={[]}
 			/>
-			<div style={{ marginTop: "15px" }}>
-				<div style={{ display: "flex", flexDirection: "column" }}>
+			<div className={styles.graphAboutContainer}>
+				<div className={styles.flexColumn}>
 					<Subtitle1>About</Subtitle1>
 					<Body1>
 						{`This Graph shows Fluid Op (Operation) Latency metrics.
@@ -47,7 +72,7 @@ export function OpLatencyView(): React.ReactElement {
 					</Body1>
 				</div>
 
-				<div style={{ marginTop: "15px" }}>
+				<div className={styles.opPhasesSection}>
 					<Body1Strong>{`Ops in Fluid go through four steps:`}</Body1Strong>
 					<ol>
 						<li>
@@ -76,19 +101,19 @@ export function OpLatencyView(): React.ReactElement {
 				</Body1Strong>
 				<ol>
 					<li>
-						<div style={{ display: "flex", flexDirection: "row" }}>
+						<div className={styles.flexRow}>
 							<Body1Strong>{`Duration Outbound:`}&nbsp;</Body1Strong>
 							<Body1>{`Time in milliseconds between (1) and (2); The time between an op being submitted by the application and it being put in the outbound queue to be sent to the ordering service.`}</Body1>
 						</div>
 					</li>
 					<li>
-						<div style={{ display: "flex", flexDirection: "row" }}>
+						<div className={styles.flexRow}>
 							<Body1Strong>{`Duration Network:`}&nbsp;</Body1Strong>
 							<Body1>{`Time between (2) and (3); how long in milliseconds it took for the op to be sequenced by the service, sent back, and received by the Fluid client.`}</Body1>
 						</div>
 					</li>
 					<li>
-						<div style={{ display: "flex", flexDirection: "row" }}>
+						<div className={styles.flexRow}>
 							<Body1Strong>{`Duration Inbound:`}&nbsp;</Body1Strong>
 							<Body1>{`Time between (3) and (4); how long in milliseconds it took to do framework-related processing on a received op before letting the application react to it`}</Body1>
 						</div>
