@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DevtoolsFeatureFlags as Features } from "../../Features";
+import { DevtoolsFeatureFlags } from "../../Features";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -28,7 +28,7 @@ export namespace DevtoolsFeatures {
 		/**
 		 * Describes the set of features supported by the {@link IFluidDevtools} instance.
 		 */
-		features: Features;
+		features: DevtoolsFeatureFlags;
 
 		/**
 		 * Package version of devtools-core.

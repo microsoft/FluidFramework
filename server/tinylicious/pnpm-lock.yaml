@@ -14,7 +14,7 @@ importers:
       '@fluidframework/gitresources': ^1.0.0
       '@fluidframework/mocha-test-setup': ^1.0.0
       '@fluidframework/protocol-base': ^1.0.0
-      '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/protocol-definitions': ^2.1.0
       '@fluidframework/server-lambdas': ^1.0.0
       '@fluidframework/server-local-server': ^1.0.0
       '@fluidframework/server-memory-orderer': ^1.0.0
@@ -77,7 +77,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 1.0.0
       '@fluidframework/protocol-base': 1.0.0
-      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/protocol-definitions': 2.1.0
       '@fluidframework/server-lambdas': 1.0.0
       '@fluidframework/server-local-server': 1.0.0
       '@fluidframework/server-memory-orderer': 1.0.0
@@ -288,6 +288,12 @@ packages:
 
   /@fluidframework/protocol-definitions/1.1.0:
     resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+    dev: false
+
+  /@fluidframework/protocol-definitions/2.1.0:
+    resolution: {integrity: sha512-aRM1FYLpGi0JrQnG91garwaizG3DRu/ZqjR0Gwovu8i4fd6YyqYJefH6A9R11D/VAxv/p4bYvttq04sXgLzqLQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
     dev: false

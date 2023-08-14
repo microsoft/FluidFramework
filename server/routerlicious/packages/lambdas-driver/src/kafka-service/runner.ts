@@ -135,11 +135,15 @@ export class KafkaRunner implements IRunner {
 			}
 			this.deferred = undefined;
 			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.success("Kafka runner stopped");
+				this.runnerMetric.success("KafkaRunner stopped");
+			} else {
+				Lumberjack.info("KafkaRunner stopped");
 			}
 		} catch (error) {
 			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.error("Kafka runner encountered an error during stop", error);
+				this.runnerMetric.error("KafkaRunner encountered an error during stop", error);
+			} else {
+				Lumberjack.error("KafkaRunner encountered an error during stop", undefined, error);
 			}
 			if (caller === "sigterm") {
 				this.deferred?.resolve();

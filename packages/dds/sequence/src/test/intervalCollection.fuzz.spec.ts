@@ -261,11 +261,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	});
 });
 
-/**
- * Disabled as all tests are failing due to eventual consistency issues.
- * ADO:5083 to deal with the failures.
- */
-describe.skip("IntervalCollection fuzz testing with rebased batches", () => {
+describe("IntervalCollection fuzz testing with rebased batches", () => {
 	const noReconnectWithRebaseModel = {
 		...baseModel,
 		workloadName: "interval collection with rebasing",
@@ -273,6 +269,8 @@ describe.skip("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
+		// ADO:5083, eventual consistency issue was detected
+		skip: [9, 12, 29],
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {
