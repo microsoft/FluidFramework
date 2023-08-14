@@ -1325,29 +1325,29 @@ export class MergeTree {
 		};
 
 		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
-		if (segment?.parent === undefined) {
+		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+		if (segWithParent?.parent === undefined) {
 			return undefined;
 		}
 
 		depthFirstNodeWalk(
-			segment.parent,
-			segment,
+			segWithParent.parent,
+			segWithParent,
 			(seg) => {
 				if (seg.isLeaf()) {
 					if (Marker.is(seg) && refHasTileLabel(seg, searchInfo.tileLabel)) {
 						searchInfo.tile = seg;
-						return NodeAction.Exit;
 					}
-					return NodeAction.Skip;
+				} else {
+					const block = <IHierBlock>seg;
+					const marker = searchInfo.tilePrecedesPos
+						? <Marker>block.rightmostTiles[searchInfo.tileLabel]
+						: <Marker>block.leftmostTiles[searchInfo.tileLabel];
+					if (marker !== undefined) {
+						searchInfo.tile = marker;
+					}
 				}
-				const block = <IHierBlock>seg;
-				const marker = searchInfo.tilePrecedesPos
-					? <Marker>block.rightmostTiles[searchInfo.tileLabel]
-					: <Marker>block.leftmostTiles[searchInfo.tileLabel];
-				if (marker !== undefined) {
-					searchInfo.tile = marker;
-					return NodeAction.Exit;
-				}
+				return searchInfo.tile !== undefined ? NodeAction.Exit : NodeAction.Skip;
 			},
 			undefined,
 			undefined,
