@@ -5,7 +5,7 @@
 PureDataObject temporarily extends EventForwarder and implements IDisposable again
 
 `PureDataObject` extends `EventForwarder` and implements `IDìsposable` again to ease the transition to `2.0.0-internal.6.x`.
-These changes will be undone in `2.0.0-internal.7.0.0`.
+These interfaces will no longer be implemented on `PureDataObject` in version `2.0.0-internal.7.0.0`.
 
 The original deprecation announcement for these members can be found [here](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.5.2.0).
 
