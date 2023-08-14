@@ -56,10 +56,27 @@ export const IBroadcastSignalEventPayloadType = {
 	RuntimeMessage: "RuntimeMessage",
 } as const;
 
-export const createRuntimeMessage = (signalContent: string): ISignalMessage => ({
+export const IRuntimeSignalMessageBody = {
+	/**
+	 * Indicates that the data associated with an edit is or must be a `boolean`.
+	 */
+	content: "RuntimeMessage",
+} as const;
+
+export interface IRuntimeSignalMessageBody {
+	/**
+	 * Mirrors ISignalEnvelope from runtime defitions. Contains the contents of the envelope
+	 */
+	contents: {
+		type: string;
+		content: any;
+	};
+}
+
+export const createRuntimeMessage = (signalContent: IRuntimeSignalMessageBody): ISignalMessage => ({
 	clientId: null,
 	content: JSON.stringify({
 		type: IBroadcastSignalEventPayloadType.RuntimeMessage,
-		contents: JSON.parse(signalContent),
+		contents: signalContent.contents,
 	}),
 });

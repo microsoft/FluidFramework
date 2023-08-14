@@ -42,6 +42,7 @@ import {
 	createRoomLeaveMessage,
 	createRuntimeMessage,
 	generateClientId,
+	IRuntimeSignalMessageBody,
 } from "../utils";
 import { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 
@@ -623,7 +624,7 @@ export function configureWebSocketServices(
 				);
 			}
 
-			// Send signal to room from broadcast-signal endpoint
+			// Send signal to collaboration session from broadcast-signal endpoint
 			if (collborationSessionEventEmitter !== undefined) {
 				collborationSessionEventEmitter.on(
 					"broadcastSignal",
@@ -639,9 +640,10 @@ export function configureWebSocketServices(
 							roomToBroadcastSignal.documentId === room.documentId &&
 							roomToBroadcastSignal.tenantId === room.tenantId
 						) {
-							const runtimeMessage = createRuntimeMessage(
+							const contents = JSON.parse(
 								broadcastSignal.signalContent,
-							);
+							) as IRuntimeSignalMessageBody;
+							const runtimeMessage = createRuntimeMessage(contents);
 
 							socket
 								.emitToRoom(
