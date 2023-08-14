@@ -107,6 +107,13 @@
 	},
 	"module:es5": "es5/index.js",
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_PureDataObject": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_DataObject": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
