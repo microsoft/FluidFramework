@@ -2,6 +2,8 @@
 "@fluidframework/telemetry-utils": minor
 ---
 
+Removed `TelemetryNullLogger` class is again exported from @fluidframework/telemetry-utils
+
 The `TelemetryNullLogger` class has been brought back to ease the transition to `2.0.0-internal.6.x`
 *but is still deprecated* and will be removed in `2.0.0-internal.7.0.0`.
 
