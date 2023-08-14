@@ -225,7 +225,6 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
-	//* TEST COVERAGE
 	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.

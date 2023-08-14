@@ -584,11 +584,6 @@ describe("Runtime", () => {
 				attachState: AttachState,
 				addPendingMsg: boolean,
 			): Partial<IContainerContext> => {
-				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					contents: "Hello",
-					type: "FROM_THE_FUTURE" as ContainerMessageType,
-					compatDetails: { behavior: "Ignore" },
-				};
 				const pendingState = {
 					pending: {
 						pendingStates: [
@@ -596,11 +591,6 @@ describe("Runtime", () => {
 								type: "message",
 								messageType: ContainerMessageType.BlobAttach,
 								content: {},
-							},
-							//* TODO: Move to a different test
-							{
-								type: "message",
-								content: JSON.stringify(futureRuntimeMessage),
 							},
 						],
 					},
@@ -989,8 +979,8 @@ describe("Runtime", () => {
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					contents: "Hello",
 					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
 					compatDetails: { behavior: "Ignore" },
 				};
 
@@ -1005,13 +995,13 @@ describe("Runtime", () => {
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
 				const futureRuntimeMessage: ContainerRuntimeMessage = {
-					contents: "Hello",
 					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
 				};
 
 				const packedOp: Partial<ISequencedDocumentMessage> = {
-					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
+					contents: JSON.stringify(futureRuntimeMessage),
 					sequenceNumber: 123,
 					clientId: "someClientId",
 				};
@@ -1027,7 +1017,6 @@ describe("Runtime", () => {
 				);
 			});
 
-			//* If the ContainerRuntime instance is shared across the tests, this one fails (after previous one threw on process)
 			it("process remote op with unrecognized type and no compat behavior", async () => {
 				const futureRuntimeMessage: ContainerRuntimeMessage = {
 					contents: "Hello",

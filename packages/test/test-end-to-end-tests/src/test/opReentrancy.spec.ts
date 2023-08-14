@@ -25,6 +25,8 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
+//* TEST: Ensure coverage of rebase
+
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
 	const sharedStringId = "sharedStringKey";

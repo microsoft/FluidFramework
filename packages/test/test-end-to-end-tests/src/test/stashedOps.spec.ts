@@ -48,6 +48,20 @@ const registry: ChannelFactoryRegistry = [
 	[directoryId, SharedDirectory.getFactory()],
 ];
 
+//* TEST: Stash a future op (e.g. in case of code deployment rollback)
+export const futureRuntimeMessage: ContainerRuntimeMessage = {
+	type: "FROM_THE_FUTURE" as ContainerMessageType,
+	contents: "Hello",
+	compatDetails: { behavior: "Ignore" },
+};
+
+export const packedOp: Partial<ISequencedDocumentMessage> = {
+	contents: JSON.stringify(futureRuntimeMessage),
+	type: MessageType.Operation,
+	sequenceNumber: 123,
+	clientId: "someClientId",
+};
+
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });

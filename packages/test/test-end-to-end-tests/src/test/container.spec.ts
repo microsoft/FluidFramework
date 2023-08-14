@@ -58,6 +58,8 @@ const testRequest: IRequest = { url: id };
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
+//* TEST: Get test coverage for local op roundtrip with compatDetails
+
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

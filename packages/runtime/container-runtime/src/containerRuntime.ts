@@ -1455,7 +1455,6 @@ export class ContainerRuntime
 
 		this.pendingStateManager = new PendingStateManager(
 			{
-				//* TEST COVERAGE - applyStashedOp, reSubmit, resubmitBatch
 				applyStashedOp: this.applyStashedOp.bind(this),
 				clientId: () => this.clientId,
 				close: this.closeFn,
@@ -1485,7 +1484,6 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(this.submitFn, this.innerDeltaManager);
 
-		//* TEST COVERAGE - resubmit
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -2039,8 +2037,8 @@ export class ContainerRuntime
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
-							type,
 							messageDetails: JSON.stringify({
+								type,
 								compatBehavior,
 							}),
 						},
@@ -2155,7 +2153,6 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	//* TEST COVERAGE - pendingStateManager.processPendingLocalMessage
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
@@ -2281,8 +2278,8 @@ export class ContainerRuntime
 						message,
 						{
 							local,
-							type: message.type,
 							messageDetails: JSON.stringify({
+								type: message.type,
 								contentType: typeof message.contents,
 								compatBehavior,
 								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
@@ -2392,7 +2389,6 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
-	//* TEST COVERAGE - rollback
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
@@ -3533,6 +3529,7 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			default:
+				//* FIX: stashed ops come through this codepath too - need to check compatDetails
 				// Don't check message.compatDetails because this is for resubmitting a local op so the type will be known
 				unreachableCase(
 					message.type,
