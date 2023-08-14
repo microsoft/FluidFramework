@@ -541,7 +541,7 @@ const DefaultMongoDbMonitoringEvents = [
 ];
 const DefaultHeartbeatFrequencyMS = 30000;
 const DefaultKeepAliveInitialDelay = 60000;
-const DefaultSocketTimeoutMS = 100000;
+const DefaultSocketTimeoutMS = 0;
 const DefaultConnectionTimeoutMS = 120000;
 const DefaultMinHeartbeatFrequencyMS = 10000;
 const DefaultApiCounterIntervalMS = 60000;
