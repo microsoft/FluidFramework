@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { compareObjects, deepCompareForSerialization } from "../../compare";
+import { deepCompareForSerialization } from "../../compare";
 
 const o = { o: "o" };
 const s = Symbol("s");
@@ -86,7 +86,8 @@ describe("deepCompareObjectEntries", () => {
 		[true, true, true],
 		[undefined, undefined, true],
 		[null, null, true],
-		[Symbol("s"), undefined, true],
+		[null, undefined, false],
+		[Symbol("s"), undefined, false],
 	];
 
 	function check(left: any, right: any, expected: boolean) {
@@ -95,7 +96,7 @@ describe("deepCompareObjectEntries", () => {
 		}be equal`, () => {
 			const actual = deepCompareForSerialization(left, right);
 			assert.equal(actual, expected);
-			const commuted = compareObjects(right, left);
+			const commuted = deepCompareForSerialization(right, left);
 			assert.equal(commuted, expected);
 		});
 	}
