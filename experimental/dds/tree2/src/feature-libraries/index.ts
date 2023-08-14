@@ -53,6 +53,7 @@ export {
 	compileSyntaxTree,
 	setField,
 	TreeStatus,
+	getTreeStatus,
 } from "./editable-tree";
 
 export {
