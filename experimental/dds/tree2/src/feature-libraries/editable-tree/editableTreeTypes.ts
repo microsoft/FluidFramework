@@ -35,6 +35,7 @@ export const setField: unique symbol = Symbol("editable-tree:setField()");
 
 /**
  * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
+ * @alpha
  */
 export const getTreeStatus: unique symbol = Symbol("editable-tree:getTreeStatus()");
 
