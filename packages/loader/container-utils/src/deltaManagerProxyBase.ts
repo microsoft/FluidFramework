@@ -23,7 +23,10 @@ import {
  * Base class for creating proxy to the real delta manager. It implements all required methods on IDeltaManager and
  * proxy implementations can override specific methods.
  *
- * @deprecated No replacement API is recommended.
+ * @deprecated
+ *
+ * This class is only used internally in FluidFramework code and will no longer be exported in a future release.
+ * No replacement API is intended for external consumers.
  */
 export class DeltaManagerProxyBase
 	extends EventForwarder<IDeltaManagerEvents>
