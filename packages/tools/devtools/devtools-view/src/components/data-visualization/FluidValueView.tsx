@@ -6,7 +6,7 @@ import React from "react";
 
 import { FluidObjectValueNode, HasContainerKey } from "@fluid-experimental/devtools-core";
 import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
-import { EditableValueView } from "./EditableValueView";
+import { EditableView } from "./EditableView";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeItem } from "./TreeItem";
@@ -16,6 +16,7 @@ import { TreeHeader } from "./TreeHeader";
  * {@link ValueView} input props.
  */
 export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode> &
+	HasContainerKey &
 	HasContainerKey;
 
 /**
@@ -31,7 +32,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const header = (
 		<>
 			{editingEnabled === true ? (
-				<EditableValueView label={label} containerKey={containerKey} node={node} />
+				<EditableView label={label} containerKey={containerKey} node={node} />
 			) : (
 				<TreeHeader
 					label={label}
