@@ -457,12 +457,6 @@ stages:
               inputs:
                 workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
 
-            - task: npmAuthenticate@0
-              displayName: 'npm authenticate (office feed)'
-              inputs:
-                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
-                customEndpoint: 'Office Packages - Readonly'
-
             - task: Bash@3
               displayName: 'List report.json and .npmrc'
               inputs:
