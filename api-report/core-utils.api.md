@@ -7,6 +7,9 @@
 // @internal
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
+// @internal
+export function compareJson(left: string, right: string): boolean;
+
 // @public
 export class Lazy<T> {
     constructor(valueGenerator: () => T);
