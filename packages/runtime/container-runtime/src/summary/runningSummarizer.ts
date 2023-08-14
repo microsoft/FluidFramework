@@ -774,7 +774,7 @@ export class RunningSummarizer implements IDisposable {
 		}
 
 		const result = this.trySummarizeOnce(
-			{ summarizeReason: `onDemand/${reason}` },
+			{ summarizeReason: `onDemand;${reason}` },
 			options,
 			this.cancellationToken,
 			resultsBuilder,
@@ -789,7 +789,7 @@ export class RunningSummarizer implements IDisposable {
 		override = false,
 		...options
 	}: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
-		const onDemandReason = `enqueue;${reason}` as const;
+		const enqueueReason = `enqueue;${reason}` as const;
 		let overridden = false;
 		if (this.enqueuedSummary !== undefined) {
 			if (!override) {
@@ -804,7 +804,7 @@ export class RunningSummarizer implements IDisposable {
 			overridden = true;
 		}
 		this.enqueuedSummary = {
-			reason: onDemandReason,
+			reason: enqueueReason,
 			afterSequenceNumber,
 			options,
 			resultsBuilder: new SummarizeResultBuilder(),
@@ -837,7 +837,7 @@ export class RunningSummarizer implements IDisposable {
 		// Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
 		this.enqueuedSummary = undefined;
 		this.trySummarizeOnce(
-			{ summarizeReason: `enqueuedSummary/${reason}` },
+			{ summarizeReason: reason },
 			options,
 			this.cancellationToken,
 			resultsBuilder,
