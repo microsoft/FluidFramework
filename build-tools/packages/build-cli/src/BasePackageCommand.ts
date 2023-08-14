@@ -129,21 +129,20 @@ export abstract class PackageCommand<
 		}
 
 		try {
-			await async.mapLimit(
-				packages,
-				this.flags.concurrency,
-				async (details: PackageWithKind) => {
-					started += 1;
+			await async.mapLimit(packages, this.flags.concurrency, async (pkg: PackageWithKind) => {
+				started += 1;
+				updateStatus();
+				try {
+					await this.processPackage(pkg, pkg.kind);
+					succeeded += 1;
+				} catch (error: unknown) {
+					this.errorLog(`Error updating ${pkg.name}: ${error}`);
+					this.log((error as Error).stack);
+				} finally {
+					finished += 1;
 					updateStatus();
-					try {
-						await this.processPackage(details, details.kind);
-						succeeded += 1;
-					} finally {
-						finished += 1;
-						updateStatus();
-					}
-				},
-			);
+				}
+			});
 		} finally {
 			// Stop the spinner if needed.
 			if (!verbose) {

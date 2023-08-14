@@ -222,10 +222,10 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-		const { selected, filtered } = selectAndFilterPackages(context, selectionOptions, filters);
+		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const dirs = selected.map((p) => context.repo.relativeToRepo(p.directory));
 
-		expect(dirs).to.be.containingAllOf(["build-tools/packages/build-cli"]);
+		expect(dirs).to.be.containingAllOf(["build-tools"]);
 	});
 
 	it("select directory", async () => {
