@@ -235,9 +235,6 @@ export interface IContainerRuntimeMessageCompatDetails {
 	behavior: CompatModeBehavior;
 }
 
-/** If a message doesn't specify compat behavior, it is not suitable for old clients to process */
-const defaultCompatDetails: IContainerRuntimeMessageCompatDetails = { behavior: "FailToProcess" };
-
 /**
  * Utility to implement compat behaviors given an unknown message type
  * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
@@ -248,8 +245,9 @@ const defaultCompatDetails: IContainerRuntimeMessageCompatDetails = { behavior: 
  */
 function compatBehaviorAllowsMessageType(
 	_unknownContainerRuntimeMessageType: never,
-	compatBehavior: "Ignore" | "FailToProcess",
+	compatBehavior: "Ignore" | "FailToProcess" | undefined,
 ): boolean {
+	// undefined defaults to same behavior as "FailToProcess"
 	return compatBehavior === "Ignore";
 }
 
@@ -2011,7 +2009,7 @@ export class ContainerRuntime
 
 	private async applyStashedOp(op: string): Promise<unknown> {
 		// Need to parse from string for back-compat
-		const { type, contents, compatDetails = defaultCompatDetails } = this.parseOpContent(op);
+		const { type, contents, compatDetails } = this.parseOpContent(op);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.dataStores.applyStashedOp(contents as IEnvelope);
@@ -2034,7 +2032,7 @@ export class ContainerRuntime
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
 				// e.g. if an app rolled back its container version
-				const compatBehavior = compatDetails.behavior;
+				const compatBehavior = compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(type, compatBehavior)) {
 					throw DataProcessingError.create(
 						"Stashed runtime message of unknown type",
@@ -2047,17 +2045,6 @@ export class ContainerRuntime
 							}),
 						},
 					);
-				}
-				switch (compatBehavior) {
-					case "FailToProcess":
-						unreachableCase(type, `Unknown ContainerMessageType [${type}]`);
-					case "Ignore":
-						return;
-					default:
-						unreachableCase(
-							compatBehavior,
-							`Unknown CompatModeBehavior [${compatBehavior}]`,
-						);
 				}
 			}
 		}
@@ -2252,7 +2239,7 @@ export class ContainerRuntime
 		expectRuntimeMessageType: boolean,
 	): asserts message is SequencedContainerRuntimeMessage {
 		// Optimistically extract ContainerRuntimeMessage-specific props from the message
-		const { type: maybeContainerMessageType, compatDetails = defaultCompatDetails } =
+		const { type: maybeContainerMessageType, compatDetails } =
 			message as ContainerRuntimeMessage;
 
 		switch (maybeContainerMessageType) {
@@ -2285,7 +2272,7 @@ export class ContainerRuntime
 					return;
 				}
 
-				const compatBehavior = compatDetails.behavior;
+				const compatBehavior = compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(maybeContainerMessageType, compatBehavior)) {
 					throw DataProcessingError.create(
 						// Former assert 0x3ce
