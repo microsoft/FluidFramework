@@ -2419,6 +2419,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
+			() => this.resolvedUrl?.id,
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,
