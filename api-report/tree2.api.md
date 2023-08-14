@@ -2040,13 +2040,13 @@ interface UntypedOptionalField<TContext = UntypedTreeContext, TChild = UntypedTr
 
 // @alpha
 interface UntypedSequenceField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>, TNewFieldContent = NewFieldContent> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
-    delete(): void;
-    deleteNodes(index: number, count?: number): void;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Sequence;
     };
     insertNodes(index: number, newContent: TNewFieldContent): void;
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: UntypedField): void;
+    remove(): void;
+    removeNodes(index: number, count?: number): void;
     replaceNodes(index: number, newContent: TNewFieldContent, count?: number): void;
     setContent(newContent: TNewFieldContent): void;
 }

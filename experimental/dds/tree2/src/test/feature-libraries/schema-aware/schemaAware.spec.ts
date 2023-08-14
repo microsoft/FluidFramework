@@ -476,7 +476,7 @@ describe("SchemaAware Editing", () => {
 		assert.deepEqual([...field], ["foo", "bar"]);
 		field.moveNodes(0, 1, 1);
 		assert.deepEqual([...field], ["bar", "foo"]);
-		field.delete();
+		field.remove();
 		assert.deepEqual([...field], []);
 	});
 });
