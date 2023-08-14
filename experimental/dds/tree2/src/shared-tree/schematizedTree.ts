@@ -146,7 +146,7 @@ export function schematizeView(
 			// TODO:
 			// This seems like the correct policy, but more clarity on how schematized views are updating during batches is needed.
 			afterBatchCheck ??= tree.events.on("afterBatch", () => {
-				assert(afterBatchCheck !== undefined, "unregistered event ran");
+				assert(afterBatchCheck !== undefined, 0x728 /* unregistered event ran */);
 				afterBatchCheck();
 				afterBatchCheck = undefined;
 

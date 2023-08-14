@@ -20,7 +20,7 @@ import {
 	postMessagesToWindow,
 } from "./messaging";
 import { IFluidDevtools } from "./IFluidDevtools";
-import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
+import { DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { ContainerKey } from "./CommonInterfaces";
 import { pkgVersion as devtoolsVersion } from "./packageVersion";
@@ -380,7 +380,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+			telemetry: this.logger !== undefined,
 		};
 	}
 }
