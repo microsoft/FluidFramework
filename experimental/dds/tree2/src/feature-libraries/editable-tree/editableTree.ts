@@ -44,6 +44,9 @@ import {
 	NewFieldContent,
 	localNodeKeySymbol,
 	setField,
+	TreeStatus,
+	isParentedUnderRootField,
+	getTreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -237,6 +240,18 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return { parent: proxifiedField, index };
 	}
 
+	public getTreeStatus(): TreeStatus {
+		const path = this.cursor.getPath();
+		if (path === undefined) {
+			return TreeStatus.Deleted;
+		}
+		/**
+		 * TODO: This is a slow initial implementation which traverses the entire path up to the root of the tree.
+		 * This should eventually be optimized.
+		 */
+		return isParentedUnderRootField(path) ? TreeStatus.InDocument : TreeStatus.Removed;
+	}
+
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -288,6 +303,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.getField.bind(target);
 			case setField:
 				return target.setField.bind(target);
+			case getTreeStatus:
+				return target.getTreeStatus.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:

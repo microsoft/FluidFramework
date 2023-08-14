@@ -476,6 +476,7 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, Omit<UntypedTreeCore<EditableTreeContext, EditableField>, typeof Symbol.iterator> {
+    [getTreeStatus](): TreeStatus;
     readonly [localNodeKeySymbol]?: LocalNodeKey;
     readonly [parentField]: {
         readonly parent: EditableField;
@@ -780,6 +781,9 @@ export function getPrimaryField(schema: TreeStoredSchema): {
     key: FieldKey;
     schema: FieldStoredSchema;
 } | undefined;
+
+// @alpha
+export const getTreeStatus: unique symbol;
 
 // @alpha (undocumented)
 export interface HasFieldChanges {
@@ -1916,6 +1920,16 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 type TreeSchemaSpecification = [
 FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
+
+// @alpha
+export enum TreeStatus {
+    // (undocumented)
+    Deleted = 2,
+    // (undocumented)
+    InDocument = 0,
+    // (undocumented)
+    Removed = 1
+}
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {

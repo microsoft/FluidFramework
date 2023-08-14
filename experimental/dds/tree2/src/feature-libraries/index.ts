@@ -52,6 +52,8 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
+	getTreeStatus,
+	TreeStatus,
 } from "./editable-tree";
 
 export {

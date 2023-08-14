@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Value, TreeSchemaIdentifier, ITreeCursor, isCursor, FieldKey } from "../../core";
+import {
+	Value,
+	TreeSchemaIdentifier,
+	ITreeCursor,
+	isCursor,
+	FieldKey,
+	UpPath,
+	rootFieldKey,
+} from "../../core";
 import {
 	PrimitiveValue,
 	typeNameSymbol,
@@ -32,6 +40,25 @@ export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNode
  * @alpha
  */
 export const setField: unique symbol = Symbol("editable-tree:setField()");
+
+/**
+ * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
+ * @alpha
+ */
+export const getTreeStatus: unique symbol = Symbol("editable-tree:getTreeStatus()");
+
+/**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * InDocument - node is parented under the root field.
+ * Removed - node is not parented under the root field, but can be added back to the original document tree.
+ * Deleted - node is removed and cannot be added back to the original document tree.
+ * @alpha
+ */
+export enum TreeStatus {
+	InDocument = 0,
+	Removed = 1,
+	Deleted = 2,
+}
 
 /**
  * A tree which can be traversed and edited.
@@ -117,6 +144,11 @@ export interface EditableTree
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
+
+	/**
+	 * Gets the {@link TreeStatus} of the tree.
+	 */
+	[getTreeStatus](): TreeStatus;
 }
 
 /**
@@ -265,4 +297,24 @@ export interface EditableField
 	 * prevent providing strongly typed getters and setters with the types required.
 	 */
 	setContent(newContent: NewFieldContent): void;
+}
+
+/**
+ * Checks whether or not a given path is parented under the root field.
+ * @param path - the path you want to check.
+ * @returns a boolean on whether or not the provided path is parented under the root field.
+ */
+export function isParentedUnderRootField(path: UpPath): boolean {
+	let currentPath = path;
+	while (currentPath.parentField !== undefined) {
+		if (currentPath.parentField === rootFieldKey) {
+			return true;
+		}
+		if (currentPath.parent !== undefined) {
+			currentPath = currentPath.parent;
+		} else {
+			break;
+		}
+	}
+	return false;
 }

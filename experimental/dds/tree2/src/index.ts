@@ -265,6 +265,8 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	nodeKeyFieldKey,
+	TreeStatus,
+	getTreeStatus,
 } from "./feature-libraries";
 
 export {
