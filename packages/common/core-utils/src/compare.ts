@@ -33,14 +33,13 @@ export const compareArrays = <T>(
 };
 
 /**
- * Deep compare left and right to see if their serializations would be equivalent.
- * Roundtrips through JSON, then does a recursive comparison iterating at each level via Object.keys
+ * Given two JSON strings, determines if the objects they represent are equivalent
  *
  * @internal
  */
-export function deepCompareForSerialization(left: unknown, right: unknown) {
-	// This helper only handles values round-trippable through JSON.
-	function deepCompareRoundtrippedInputs(a: unknown, b: unknown) {
+export function compareJson(left: string, right: string) {
+	// This helper only handles inputs parsed from JSON
+	function deepCompareParsedInputs(a: unknown, b: unknown) {
 		// Start with strict equality
 		if (a === b) {
 			return true;
@@ -61,7 +60,7 @@ export function deepCompareForSerialization(left: unknown, right: unknown) {
 
 		// Ensure all properties of A are found identically in B
 		for (const key of keysA) {
-			if (!deepCompareRoundtrippedInputs(a[key], b[key])) {
+			if (!deepCompareParsedInputs(a[key], b[key])) {
 				return false;
 			}
 		}
@@ -69,15 +68,16 @@ export function deepCompareForSerialization(left: unknown, right: unknown) {
 		return true;
 	}
 
-	// Handle undefined first, since JSON.stringify(undefined) throws
-	if (left === undefined || right === undefined) {
-		return left === right;
+	// If the strings match, return immediately without bothering to parse
+	if (left === right) {
+		return true;
 	}
 
-	// Roundtrip each input through JSON
-	const leftRoundtripped = JSON.parse(JSON.stringify(left));
-	const rightRoundtripped = JSON.parse(JSON.stringify(right));
-
-	// Compare the roundtripped inputs
-	return deepCompareRoundtrippedInputs(leftRoundtripped, rightRoundtripped);
+	// Parse and compare the results
+	try {
+		return deepCompareParsedInputs(JSON.parse(left), JSON.parse(right));
+	} catch (e) {
+		// If either fails to parse, they can't be considered equivalent
+		return false;
+	}
 }

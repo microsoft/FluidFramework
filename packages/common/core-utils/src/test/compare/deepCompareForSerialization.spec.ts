@@ -4,36 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { deepCompareForSerialization } from "../../compare";
-
-const o = { o: "o" };
-const s = Symbol("s");
-
-export const tests_old: [unknown, unknown, boolean][] = [
-	[[], [], true],
-	[[0], [], false],
-	[[], [0], false],
-	[[0], [0], true],
-	[[1], [0], false],
-	[[0], [1], false],
-
-	[[0, 1], [0], false],
-	[[0], [0, 1], false],
-	[[0, 1], [0, 2], false],
-	[[0, 1], [-1, 1], false],
-	[[0, 1], [0, 1], true],
-
-	// Object.is() semantics:
-	[[Number.NaN], [Number.NaN], true],
-	[[0], [-0], false],
-
-	[[null], [undefined], false],
-	[[""], [0], false],
-	[[{}], [{}], false],
-	[[o], [o], true],
-	[[Symbol("sl")], [Symbol("sr")], false],
-	[[s], [s], true],
-];
+import { compareJson } from "../../compare";
 
 describe("deepCompareObjectEntries", () => {
 	const jsonEquivalenceClassCases: [any, any, boolean][] = [
@@ -67,6 +38,11 @@ describe("deepCompareObjectEntries", () => {
 		[{ a: { c: 3 }, b: 2 }, { a: { c: 4 }, b: 2 }, false],
 		[{ a: 1 }, { a: 1, b: 2 }, false],
 		[{ a: { c: 3 } }, { a: { c: 3 }, b: 2 }, false],
+		[{ a: 1, b: 2, c: [3, 4] }, { a: 1, b: 2, c: [3, 4] }, true],
+		[{ a: 1, b: 2, c: [3, 4] }, { a: 1, b: 2, c: [3, 5] }, false],
+		[{ a: 1, b: 2, c: [3, 4] }, { a: 1, d: 2, c: [3, 4] }, false],
+		[{ a: 1, b: 2, c: [3, 4] }, { a: 1, b: 2 }, false],
+		[{ a: { x: 1 }, b: { y: [2] } }, { a: { x: 1 }, b: { y: [2] } }, true],
 	];
 
 	const arrayCases: [any, any, boolean][] = [
@@ -87,19 +63,7 @@ describe("deepCompareObjectEntries", () => {
 		[undefined, undefined, true],
 		[null, null, true],
 		[null, undefined, false],
-		[Symbol("s"), undefined, false],
 	];
-
-	function check(left: any, right: any, expected: boolean) {
-		it(`${JSON.stringify(left)} and ${JSON.stringify(right)} must ${
-			expected ? "" : "not "
-		}be equal`, () => {
-			const actual = deepCompareForSerialization(left, right);
-			assert.equal(actual, expected);
-			const commuted = deepCompareForSerialization(right, left);
-			assert.equal(commuted, expected);
-		});
-	}
 
 	const allCases = [
 		...arrayCases,
@@ -109,13 +73,18 @@ describe("deepCompareObjectEntries", () => {
 		...nonObjectCases,
 		...jsonEquivalenceClassCases,
 	];
-	const debug: [any, any, boolean][] = [
-		//
-		[{ a: { b: 1 } }, { a: { b: 1 } }, true],
-	];
 	for (const [left, right, expected] of allCases) {
-		check(left, right, expected);
+		const [leftString, rightString] = [JSON.stringify(left), JSON.stringify(right)];
+		it(`${leftString} and ${rightString} must ${expected ? "" : "not "}be equal`, () => {
+			const actual = compareJson(leftString, rightString);
+			assert.equal(actual, expected);
+			const commuted = compareJson(rightString, leftString);
+			assert.equal(commuted, expected);
+		});
 	}
-	//*
-	return debug;
+
+	it("Acts like === for non-JSON inputs", () => {
+		assert.equal(compareJson("hello", "hello"), true, "Matching non-JSON strings are ok");
+		assert.equal(compareJson("hello", "world"), false, "Non-matching non-JSON strings not ok");
+	});
 });
