@@ -291,7 +291,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly rawDeltasProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
-		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+		private readonly sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
@@ -790,12 +790,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 	private logSessionStartMetrics(failMetric: boolean = false) {
 		if (this.sessionStartMetric?.isCompleted()) {
-			this.sessionStartMetric = createSessionMetric(
-				this.tenantId,
-				this.documentId,
-				LumberEventName.StartSessionResult,
-				this.serviceConfiguration,
-			);
+			return;
 		}
 
 		if (failMetric) {
