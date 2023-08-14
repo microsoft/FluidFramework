@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { compareArrays } from "../compare";
+import { compareArrays } from "../../compare";
 
 const o = { o: "o" };
 const s = Symbol("s");
