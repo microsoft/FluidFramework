@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ChildLogger } from "../logger";
+import { ChildLogger, createChildLogger } from "../logger";
 import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
 import { createSampledLoggerSend, createSystematicSamplingCallback } from "../utils";
 describe("ChildLogger", () => {
@@ -205,18 +205,17 @@ describe("ChildLogger", () => {
 				"Fluid.Telemetry.DisableSampling": true,
 			};
 			const logger = getBaseLoggerWithConfig(injectedSettings);
-			const childLogger = ChildLogger.create(logger);
 
 			const logAllEvents = createSampledLoggerSend(
-				childLogger,
+				logger,
 				createSystematicSamplingCallback(1),
 			);
 			const logEveryThirdEvents = createSampledLoggerSend(
-				childLogger,
+				logger,
 				createSystematicSamplingCallback(3),
 			);
 			const logEvery5thEvent = createSampledLoggerSend(
-				childLogger,
+				logger,
 				createSystematicSamplingCallback(5),
 			);
 

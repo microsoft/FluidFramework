@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { logIfFalse } from "../utils";
+import { createSampledLoggerSend, createSystematicSamplingCallback, logIfFalse } from "../utils";
 import { TelemetryDataTag, tagData } from "../logger";
+import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
 
 class TestLogger implements ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent): void {
@@ -67,5 +68,57 @@ describe("tagData", () => {
 		};
 
 		assert.deepEqual(taggedData, expected);
+	});
+});
+
+describe("Sampling", () => {
+	let events: ITelemetryBaseEvent[] = [];
+	function getBaseLoggerWithConfig(
+		configDictionary?: Record<string, ConfigTypes>,
+	): ITelemetryBaseLogger {
+		const logger: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {
+				events.push(event);
+			},
+		};
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
+	}
+
+	beforeEach(() => {
+		events = [];
+	});
+
+	it("Systematic Sampling works as expected", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getBaseLoggerWithConfig(injectedSettings);
+
+		const logAllEvents = createSampledLoggerSend(logger, createSystematicSamplingCallback(1));
+		const logEveryThirdEvents = createSampledLoggerSend(
+			logger,
+			createSystematicSamplingCallback(3),
+		);
+		const logEvery5thEvent = createSampledLoggerSend(
+			logger,
+			createSystematicSamplingCallback(5),
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			logAllEvents({ category: "generic", eventName: "noSampling" });
+			logEveryThirdEvents({ category: "generic", eventName: "oneEveryThree" });
+			logEvery5thEvent({ category: "generic", eventName: "oneEveryFive" });
+		}
+
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+		assert.equal(events.filter((event) => event.eventName === "oneEveryThree").length, 5);
+		assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 3);
 	});
 });
