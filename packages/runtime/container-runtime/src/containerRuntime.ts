@@ -858,7 +858,7 @@ export class ContainerRuntime
 		appData?: any,
 	) => number;
 
-	private shouldSubmit = true;
+	public shouldSubmit = true;
 	/**
 	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
 	 */

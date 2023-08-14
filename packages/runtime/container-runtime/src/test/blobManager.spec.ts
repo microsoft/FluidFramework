@@ -160,6 +160,7 @@ export class MockRuntime
 	public blobManager: BlobManager;
 	public connected = false;
 	public closed = false;
+	public readonly shouldSubmit = true;
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();

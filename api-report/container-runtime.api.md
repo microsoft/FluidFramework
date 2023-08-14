@@ -203,6 +203,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
+    shouldSubmit: boolean;
+    // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
     submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;

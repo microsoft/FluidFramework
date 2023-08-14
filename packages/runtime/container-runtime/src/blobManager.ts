@@ -119,7 +119,7 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "logger" | "clientDetails"
 > &
-	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
+	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed" | "shouldSubmit"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
@@ -284,10 +284,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		});
 
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
-			assert(
-				!!blobId || !this.runtime.connected,
-				"Must only submit ops with no storage ID when disconnected",
-			);
+			assert(!!blobId || !this.runtime.connected || !!this.runtime.shouldSubmit, "Ops with no storage ID should never be submitted on the wire");
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(
 				pendingEntry !== undefined,

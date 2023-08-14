@@ -26,6 +26,7 @@ describe("getPendingLocalState", () => {
 		await runtime.connect();
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
+		runtime.disconnect();
 		const pendingStateP = runtime.getPendingLocalState(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
@@ -56,6 +57,7 @@ describe("getPendingLocalState", () => {
 		const blob = IsoBuffer.from("blob", "utf8");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs();
+		runtime.disconnect();
 		const pendingStateP = runtime.getPendingLocalState(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
@@ -87,6 +89,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processBlobs();
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
+		runtime.disconnect();
 		const pendingStateP = runtime.getPendingLocalState(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
