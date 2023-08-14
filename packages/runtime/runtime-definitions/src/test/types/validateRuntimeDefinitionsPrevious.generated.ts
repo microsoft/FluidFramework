@@ -1306,80 +1306,38 @@ use_old_TypeAliasDeclaration_OpSpaceCompressedId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressor": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressor": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedIdCompressor():
-    TypeOnly<old.SerializedIdCompressor>;
-declare function use_current_InterfaceDeclaration_SerializedIdCompressor(
-    use: TypeOnly<current.SerializedIdCompressor>);
-use_current_InterfaceDeclaration_SerializedIdCompressor(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_InterfaceDeclaration_SerializedIdCompressor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressor": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressor": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedIdCompressor():
-    TypeOnly<current.SerializedIdCompressor>;
-declare function use_old_InterfaceDeclaration_SerializedIdCompressor(
-    use: TypeOnly<old.SerializedIdCompressor>);
-use_old_InterfaceDeclaration_SerializedIdCompressor(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_SerializedIdCompressor());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession():
-    TypeOnly<old.SerializedIdCompressorWithNoSession>;
-declare function use_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    use: TypeOnly<current.SerializedIdCompressorWithNoSession>);
-use_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession():
-    TypeOnly<current.SerializedIdCompressorWithNoSession>;
-declare function use_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    use: TypeOnly<old.SerializedIdCompressorWithNoSession>);
-use_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession():
-    TypeOnly<old.SerializedIdCompressorWithOngoingSession>;
-declare function use_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    use: TypeOnly<current.SerializedIdCompressorWithOngoingSession>);
-use_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession():
-    TypeOnly<current.SerializedIdCompressorWithOngoingSession>;
-declare function use_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    use: TypeOnly<old.SerializedIdCompressorWithOngoingSession>);
-use_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession());
 
 /*
 * Validate forward compat by using old type in place of current type

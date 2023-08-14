@@ -1819,8 +1819,8 @@ export class ContainerRuntime
 				this.idCompressor !== undefined,
 				0x67a /* IdCompressor should be defined if enabled */,
 			);
-			const idCompressorState = this.idCompressor.serialize(false);
-			addBlobToSummary(summaryTree, idCompressorBlobName, JSON.stringify(idCompressorState));
+			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
+			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {

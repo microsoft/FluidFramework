@@ -106,15 +106,15 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_SerializedIdCompressor": {
+			"RemovedInterfaceDeclaration_SerializedIdCompressor": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_SerializedIdCompressorWithNoSession": {
+			"RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {
+			"RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
