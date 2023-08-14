@@ -186,6 +186,9 @@
 			},
 			"TypeAliasDeclaration_RootHandleNode": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_Edit": {
+				"backCompat": false
 			}
 		}
 	}
