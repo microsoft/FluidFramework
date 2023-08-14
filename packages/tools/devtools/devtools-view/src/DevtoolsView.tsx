@@ -556,7 +556,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		);
 	}
 
-	if (supportedFeatures[DevtoolsFeature.OpLatencyTelemetry] === true) {
+	if (supportedFeatures.opLatencyTelemetry === true) {
 		menuSections.push(
 			<MenuSection
 				header="Op Latency"
