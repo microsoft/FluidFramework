@@ -4,6 +4,7 @@
  */
 import { AzureClient } from "@fluidframework/azure-client";
 import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { CommanderStatic } from "commander";
 
 export enum RunnerStatus {
 	NotStarted = "notStarted",
