@@ -31,7 +31,11 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
@@ -47,20 +51,6 @@ const registry: ChannelFactoryRegistry = [
 	[counterId, SharedCounter.getFactory()],
 	[directoryId, SharedDirectory.getFactory()],
 ];
-
-//* TEST: Stash a future op (e.g. in case of code deployment rollback)
-export const futureRuntimeMessage: ContainerRuntimeMessage = {
-	type: "FROM_THE_FUTURE" as ContainerMessageType,
-	contents: "Hello",
-	compatDetails: { behavior: "Ignore" },
-};
-
-export const packedOp: Partial<ISequencedDocumentMessage> = {
-	contents: JSON.stringify(futureRuntimeMessage),
-	type: MessageType.Operation,
-	sequenceNumber: 123,
-	clientId: "someClientId",
-};
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -246,6 +236,18 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			counter.increment(testIncrementValue);
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, testValue);
+
+			// Submit a message with an unrecognized type
+			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
+			(
+				d.context.containerRuntime as unknown as {
+					submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+				}
+			).submit({
+				type: "FUTURE_TYPE" as ContainerMessageType,
+				contents: "Hello",
+				compatDetails: { behavior: "Ignore" },
+			});
 		});
 
 		// load container with pending ops, which should resend the op not sent by previous container

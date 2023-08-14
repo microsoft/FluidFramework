@@ -27,13 +27,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import {
-	assert,
-	delay,
-	Trace,
-	TypedEventEmitter,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, delay, Trace, TypedEventEmitter } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
@@ -3530,13 +3524,29 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				this.submit(message);
 				break;
-			default:
-				//* FIX: stashed ops come through this codepath too - need to check compatDetails
-				// Don't check message.compatDetails because this is for resubmitting a local op so the type will be known
-				unreachableCase(
-					message.type,
-					`Unknown ContainerMessageType [type: ${message.type}]`,
-				);
+			default: {
+				// This case should be very rare - it would imply an op was stashed from a
+				// future version of runtime code and now is being applied on an older version
+				const compatBehavior = message.compatDetails?.behavior;
+				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
+					this.logger.sendTelemetryEvent({
+						eventName: "resubmitUnrecognizedMessageTypeAllowed",
+						messageDetails: { type: message.type, compatBehavior },
+					});
+				} else {
+					throw DataProcessingError.create(
+						"Resubmitting runtime message of unknown type",
+						"reSubmitCore",
+						undefined /* sequencedMessage */,
+						{
+							messageDetails: JSON.stringify({
+								type: message.type,
+								compatBehavior,
+							}),
+						},
+					);
+				}
+			}
 		}
 	}
 
