@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidErrorBase } from "@fluidframework/core-interfaces";
+import { IFluidErrorBase, ITelemetryLoggerExt } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IGenericError,
@@ -18,7 +18,6 @@ import {
 	wrapErrorAndLog,
 	isExternalError,
 	NORMALIZED_ERROR_TYPE,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
