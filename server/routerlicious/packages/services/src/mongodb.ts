@@ -567,7 +567,7 @@ const DefaultApiCounterIntervalMS = 60000;
 // 1 means 100%, using 2 just for safety for incorrect calculations and meaning this feature disabled
 const DefaultApiFailureRateTerminationThreshold = 2;
 const DefaultApiMinimumCountToEnableTermination = 30;
-const DefaultConsecutiveFailedTresholdForLowerTotalRequests = 3;
+const DefaultConsecutiveFailedThresholdForLowerTotalRequests = 3;
 const DefaultServerSelectionTimeoutMS = 30000;
 
 interface IMongoDBConfig {
@@ -591,6 +591,7 @@ interface IMongoDBConfig {
 	apiFailureRateTerminationThreshold?: number;
 	apiMinimumCountToEnableTermination?: number;
 	serverSelectionTimeoutMS?: number;
+	consecutiveFailedThresholdForLowerTotalRequests: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -613,6 +614,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly apiFailureRateTerminationThreshold: number;
 	private readonly apiMinimumCountToEnableTermination: number;
 	private readonly serverSelectionTimeoutMS: number;
+	private readonly consecutiveFailedThresholdForLowerTotalRequests: number;
 
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -633,6 +635,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			apiFailureRateTerminationThreshold,
 			apiMinimumCountToEnableTermination,
 			serverSelectionTimeoutMS,
+			consecutiveFailedThresholdForLowerTotalRequests,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -660,6 +663,9 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.apiMinimumCountToEnableTermination =
 			apiMinimumCountToEnableTermination ?? DefaultApiMinimumCountToEnableTermination;
 		this.serverSelectionTimeoutMS = serverSelectionTimeoutMS ?? DefaultServerSelectionTimeoutMS;
+		this.consecutiveFailedThresholdForLowerTotalRequests =
+			consecutiveFailedThresholdForLowerTotalRequests ??
+			DefaultConsecutiveFailedThresholdForLowerTotalRequests;
 	}
 
 	public async connect(global = false): Promise<core.IDb> {
@@ -717,6 +723,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.apiCounterIntervalMS,
 			this.apiFailureRateTerminationThreshold,
 			this.apiMinimumCountToEnableTermination,
+			this.consecutiveFailedThresholdForLowerTotalRequests,
 		);
 	}
 }
