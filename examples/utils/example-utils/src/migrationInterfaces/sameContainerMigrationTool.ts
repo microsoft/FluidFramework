@@ -5,6 +5,7 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import type { IContainer } from "@fluidframework/container-definitions";
+import { ISameContainerMigratableModel } from "./sameContainerMigratableModel";
 
 /**
  * The collaboration session may be in one of these states:
@@ -92,4 +93,13 @@ export interface ISameContainerMigrationTool
 	 * @param container - the reference to the IContainer associated with this migration tool
 	 */
 	readonly setContainerRef: (container: IContainer) => void;
+
+	/**
+	 * Give a callback to IModelLoader.loadExistingPaused().  The migration tool must have this reference in order to
+	 * complete the migration flow.
+	 * @param fn - the callback function that calls IModelLoader.loadExistingPaused()
+	 */
+	readonly setLoadPausedContainerFn: (
+		fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>,
+	) => void;
 }

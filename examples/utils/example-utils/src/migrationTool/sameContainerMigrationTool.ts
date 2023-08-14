@@ -10,7 +10,11 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
 
-import type { ISameContainerMigrationTool } from "../migrationInterfaces";
+import { assert } from "@fluidframework/common-utils";
+import type {
+	ISameContainerMigratableModel,
+	ISameContainerMigrationTool,
+} from "../migrationInterfaces";
 
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";
@@ -24,12 +28,42 @@ const newVersionKey = "newVersion";
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 	private readonly _containerP: Promise<IContainer>;
+	private readonly _loadPausedContainerFnP: Promise<
+		(sequenceNumber: number) => Promise<ISameContainerMigratableModel>
+	>;
+
 	private _setContainerRef: ((container: IContainer) => void) | undefined;
 	public get setContainerRef(): (container: IContainer) => void {
 		if (this._setContainerRef === undefined) {
 			throw new Error("_setContainerRef did not initialize properly");
 		}
 		return this._setContainerRef;
+	}
+
+	private _setLoadPausedContainerFn:
+		| ((fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>) => void)
+		| undefined;
+	public get setLoadPausedContainerFn(): (
+		fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>,
+	) => void {
+		if (this._setLoadPausedContainerFn === undefined) {
+			throw new Error("_setloadPausedContainerFn did not initialize properly");
+		}
+		return this._setLoadPausedContainerFn;
+	}
+
+	/**
+	 * The sequence number that the proposal was accepted at, or undefined if it was not yet accepted.
+	 */
+	private _acceptedSeqNum: number | undefined;
+	/**
+	 * The sequence number that the proposal was accepted at.
+	 */
+	private get acceptedSeqNum(): number {
+		if (this._acceptedSeqNum === undefined) {
+			throw new Error("_acceptedSeqNum did not initialize properly");
+		}
+		return this._acceptedSeqNum;
 	}
 
 	/**
@@ -46,10 +80,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 * A promise that will resolve when the proposal is accepted.
 	 */
 	private _acceptedP: Promise<void> | undefined;
-	/**
-	 * The sequence number that the proposal was accepted at, or undefined if it was not yet accepted.
-	 */
-	private _acceptedSeqNum: number | undefined;
 	/**
 	 * A promise that will resolve when we know the final v1 summary was successfully submitted.
 	 * Note that even when loading from that summary, we should expect to see the summaryAck as part of the logTail
@@ -120,6 +150,13 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		super(props);
 		this._containerP = new Promise<IContainer>((resolve) => {
 			this._setContainerRef = (container: IContainer) => resolve(container);
+		});
+		this._loadPausedContainerFnP = new Promise<
+			(sequenceNumber: number) => Promise<ISameContainerMigratableModel>
+		>((resolve) => {
+			this._setLoadPausedContainerFn = (
+				fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>,
+			) => resolve(fn);
 		});
 	}
 
@@ -325,7 +362,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				this._acceptedSeqNum = pactWithDetails.acceptedSequenceNumber;
 				console.log(
 					"Resolving this._acceptedP: Acceptance already exists at load time at sequence number:",
-					this._acceptedSeqNum,
+					this.acceptedSeqNum,
 				);
 				resolve();
 				return;
@@ -341,7 +378,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					}
 					console.log(
 						"Resolving this._acceptedP: Saw acceptance during run time at sequence number:",
-						this._acceptedSeqNum,
+						this.acceptedSeqNum,
 					);
 					resolve();
 				}
@@ -474,6 +511,16 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// in between the microtasks - bearing in mind that we still need to send out our accept op.
 		this.stopCollaboration();
 		await this._acceptedP;
+
+		// TODO: issues if we summarize then connect a new client :(
+
+		// TODO: If we re-enable heuristics (summaries), then we need to ensure we don't do a summary after this?
+		const loadPausedContainerFn = await this._loadPausedContainerFnP;
+		const pausedModel = await loadPausedContainerFn(this.acceptedSeqNum);
+		assert(
+			pausedModel.container.deltaManager.lastSequenceNumber === this.acceptedSeqNum,
+			"paused container should be paused at this.acceptedSeqNum",
+		);
 
 		// After the proposal is detected to be accepted, we need to ensure the final v1 summary is taken.
 		// Even if a client loads from this v1 summary it will still see its summarize and summaryAck in the logTail and

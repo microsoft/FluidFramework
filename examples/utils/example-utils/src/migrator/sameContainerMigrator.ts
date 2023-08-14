@@ -24,6 +24,14 @@ export class SameContainerMigrator
 		return this._currentModel;
 	}
 
+	private _pausedModel: ISameContainerMigratableModel | undefined;
+	public get pausedModel(): ISameContainerMigratableModel {
+		if (this._pausedModel === undefined) {
+			throw new Error("_pausedModel has not been initialized");
+		}
+		return this._currentModel;
+	}
+
 	private _currentModelId: string;
 	public get currentModelId(): string {
 		return this._currentModelId;
@@ -64,6 +72,14 @@ export class SameContainerMigrator
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
 		this._currentModel.migrationTool.setContainerRef(this._currentModel.container);
+		const loadPausedContainerCallback = async (sequenceNumber: number) => {
+			this._pausedModel = await this.modelLoader.loadExistingPaused(
+				this._currentModelId,
+				sequenceNumber,
+			);
+			return this.pausedModel;
+		};
+		this._currentModel.migrationTool.setLoadPausedContainerFn(loadPausedContainerCallback);
 		this.takeAppropriateActionForCurrentMigratable();
 	}
 
@@ -144,7 +160,7 @@ export class SameContainerMigrator
 				const detachedModel = await this.modelLoader.createDetached(acceptedVersion);
 				const migratedModel = detachedModel.model;
 
-				const exportedData = await migratable.exportData();
+				const exportedData = await this.pausedModel.exportData();
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then
