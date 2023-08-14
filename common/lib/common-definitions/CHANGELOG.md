@@ -4,7 +4,10 @@
 
 ### Deprecated interfaces and types
 
-The following interfaces and types are deprecated in this release. Their replacements have been moved to another package.
+The following interfaces and types are deprecated in this release. They can now be found in
+@fluidframework/core-interfaces.
+
+These deprecated APIs will be removed in version 2.0.0.
 
 #### Moved to @fluidframework/core-interfaces
 
