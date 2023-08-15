@@ -208,6 +208,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private stashingAndClosing: boolean = false;
+
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -385,6 +387,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	private async shutdownPendingBlobs(): Promise<void> {
+		this.stashingAndClosing = true;
 		for (const [localId, entry] of this.pendingBlobs) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.sendBlobAttachOp(localId, entry.storageId);
@@ -582,6 +585,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
+		if(this.stashingAndClosing) {
+			return;
+		}
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		if (entry.abortSignal?.aborted === true && !entry.opsent) {
@@ -637,6 +643,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	private async onUploadReject(localId: string, error: any) {
+		if(this.stashingAndClosing) {
+			return;
+		}
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
 		if (entry.abortSignal?.aborted === true && !entry.opsent) {
