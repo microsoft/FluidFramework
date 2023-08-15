@@ -18,7 +18,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
-// @alpha
+// @alpha (undocumented)
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
@@ -233,7 +233,7 @@ export function createAnnotateRangeOp(start: number, end: number, props: Propert
 // @public (undocumented)
 export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
@@ -269,7 +269,7 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
-// @alpha
+// @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
@@ -464,9 +464,10 @@ export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
+    readonly stashed?: boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
@@ -504,7 +505,6 @@ export interface IMergeTreeOptions {
     catchUpBlobName?: string;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;
-    mergeTreeUseNewLengthCalculations?: boolean;
     newMergeTreeSnapshotFormat?: boolean;
 }
 
@@ -754,7 +754,7 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 // @public (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// @alpha
+// @alpha (undocumented)
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
     trackingGroup: ITrackingGroup;
@@ -792,7 +792,7 @@ export const MergeTreeMaintenanceType: {
 // @public (undocumented)
 export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
 
-// @alpha
+// @alpha (undocumented)
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
@@ -1001,7 +1001,7 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 // @public (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
-// @alpha
+// @alpha (undocumented)
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)

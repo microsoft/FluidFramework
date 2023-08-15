@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-end-to-end-tests",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.7.0.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -146,6 +146,14 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test": [
+				"...",
+				"@fluidframework/container-runtime#build:test"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

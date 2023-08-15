@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-client",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.7.0.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Tinylicious service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -33,7 +33,7 @@
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
-		"test:realsvc:tinylicious:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit",
+		"test:realsvc:tinylicious:run": "mocha --unhandled-rejections=strict --recursive 'dist/test/**/*.spec.js' --exit",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"

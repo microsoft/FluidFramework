@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.7.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -53,7 +53,7 @@
 		"lint:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix",
 		"policy-check": "flub check policy",
 		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
-		"policy-check:asserts": "flub check policy --handler assert-short-codes --fix",
+		"policy-check:asserts": "flub check policy --handler assert-short-codes --fix && pretty-quick",
 		"policy-check:fix": "flub check policy --excludeHandler assert-short-codes --fix",
 		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "npm run prettier:root && pnpm run -r --no-sort --stream prettier",

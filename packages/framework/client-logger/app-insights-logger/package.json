@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/app-insights-logger",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.7.0.0",
 	"private": true,
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
@@ -32,7 +32,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive dist/test/**/*.spec.js -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha": "mocha --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
