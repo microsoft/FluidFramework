@@ -80,6 +80,7 @@ export interface AddClient {
 
 export interface Synchronize {
 	type: "synchronize";
+	clients?: Set<string>;
 }
 
 interface HasWorkloadName {
@@ -552,7 +553,7 @@ export function mixinSynchronization<
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
 					baseGenerator,
-					repeat({ type: "synchronize" } as const),
+					repeat({ type: "synchronize" }),
 					validationStrategy.interval,
 					1,
 					ExitBehavior.OnEitherExhausted,
