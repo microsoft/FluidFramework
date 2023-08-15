@@ -405,10 +405,6 @@ export interface IMergeNodeCommon {
     // (undocumented)
     isLeaf(): this is ISegment;
     ordinal: string;
-    // Warning: (ae-forgotten-export) The symbol "IMergeBlock" needs to be exported by the entry point index.d.ts
-    //
-    // @internal @deprecated (undocumented)
-    parent?: IMergeBlock;
 }
 
 // @public (undocumented)
