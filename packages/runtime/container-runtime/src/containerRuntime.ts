@@ -3722,7 +3722,11 @@ export class ContainerRuntime
 		}
 		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
 
-		if (!pendingAttachmentBlobs && !this.pendingStateManager.hasPendingMessages() && this.outbox.isEmpty) {
+		if (
+			!pendingAttachmentBlobs &&
+			!this.pendingStateManager.hasPendingMessages() &&
+			this.outbox.isEmpty
+		) {
 			return; // no pending state to save
 		}
 
