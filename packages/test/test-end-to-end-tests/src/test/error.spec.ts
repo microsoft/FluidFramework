@@ -16,7 +16,7 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerErrorType } from "@fluidframework/core-interfaces";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Errors Types", (getTestObjectProvider) => {

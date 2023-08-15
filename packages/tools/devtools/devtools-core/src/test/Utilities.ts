@@ -11,11 +11,10 @@ import {
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
-	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

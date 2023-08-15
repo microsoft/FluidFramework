@@ -5,13 +5,12 @@
 
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
-import { IErrorBase } from "@fluidframework/container-definitions";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";

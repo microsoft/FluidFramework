@@ -13,9 +13,9 @@ import {
 	IsoBuffer,
 	TypedEventEmitter,
 } from "@fluidframework/common-utils";
-import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
