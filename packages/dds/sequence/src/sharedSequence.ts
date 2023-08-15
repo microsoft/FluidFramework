@@ -127,10 +127,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 		if (props) {
 			segment.addProperties(props);
 		}
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.client.insertSegmentLocal(pos, segment);
 	}
 
 	/**

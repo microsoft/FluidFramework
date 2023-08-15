@@ -550,10 +550,15 @@ export class MockFluidDataStoreRuntime
 	extends EventEmitter
 	implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext
 {
-	constructor(overrides?: { clientId?: string; entryPoint?: IFluidHandle<FluidObject> }) {
+	constructor(overrides?: {
+		clientId?: string;
+		entryPoint?: IFluidHandle<FluidObject>;
+		id?: string;
+	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
+		this.id = overrides?.id ?? uuid();
 	}
 
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
@@ -579,7 +584,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public readonly documentId: string = undefined as any;
-	public readonly id: string = uuid();
+	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
 	public options: ILoaderOptions = {};
 	public clientId: string;

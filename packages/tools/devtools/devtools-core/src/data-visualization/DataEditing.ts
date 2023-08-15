@@ -17,7 +17,7 @@ import { EditType, HasFluidObjectId } from "../CommonInterfaces";
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 /**
- * Interface to contain information necesary for an edit
+ * Interface to contain information necessary for an edit
  * @internal
  */
 export interface Edit {
@@ -31,8 +31,16 @@ export interface Edit {
 	/**
 	 * Data contains the new data that will be edited into the DDS
 	 */
-	data: Serializable<unknown>;
+	data: EditData;
 }
+
+/**
+ * This combines all the types data might be when using EditingUI
+ *
+ * @internal
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type EditData = Serializable<unknown> | null | undefined;
 
 /**
  * Interface to contain information necesary for an edit of a SharedObject
