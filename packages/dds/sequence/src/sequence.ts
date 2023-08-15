@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -48,7 +48,6 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceInterval } from "./intervals";
@@ -118,6 +117,21 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	get loaded(): Promise<void> {
 		return this.loadedDeferred.promise;
 	}
+
+	/**
+	 * This is a safeguard to avoid problematic reentrancy of local ops. This type of scenario occurs if the user of SharedString subscribes
+	 * to the `sequenceDelta` event and uses the callback for a local op to submit further local ops.
+	 * Historically (before 2.0.0-internal.6.1.0), doing so would result in eventual consistency issues or a corrupted document.
+	 * These issues were fixed in #16815 which makes such reentrancy no different from applying the ops in order but not from within the change events,
+	 * but there is still little test coverage for reentrant scenarios.
+	 * Additionally, applications submitting ops from inside change events need to take extreme care that their data models also support reentrancy.
+	 * Since this is likely not the case, by default SharedString throws when encountering reentrant ops.
+	 *
+	 * An application using SharedString which explicitly wants to opt in to allowing reentrancy anyway can set `sharedStringPreventReentrancy`
+	 * on the data store options to `false`.
+	 * @internal
+	 */
+	protected guardReentrancy: <T>(callback: () => T) => T;
 
 	private static createOpsFromDelta(event: SequenceDeltaEvent): IMergeTreeDeltaOp[] {
 		const ops: IMergeTreeDeltaOp[] = [];
@@ -194,6 +208,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
+		this.guardReentrancy =
+			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
+				? ensureNoReentrancy
+				: createReentrancyDetector((depth) => {
+						if (totalReentrancyLogs > 0) {
+							totalReentrancyLogs--;
+							this.logger.sendTelemetryEvent(
+								{ eventName: "LocalOpReentry", depth },
+								new LoggingError(reentrancyErrorMessage),
+							);
+						}
+				  });
+
 		this.loadedDeferred.promise.catch((error) => {
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
@@ -233,7 +260,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The exclusive end of the range to remove
 	 */
 	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		return ensureNoReentrancy(() => {
+		return this.guardReentrancy(() => {
 			const removeOp = this.client.removeRangeLocal(start, end);
 			this.submitSequenceMessage(removeOp);
 			return removeOp;
@@ -241,7 +268,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			this.client.localTransaction(groupOp);
 			this.submitSequenceMessage(groupOp);
 		});
@@ -290,7 +317,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		props: PropertySet,
 		combiningOp?: ICombiningOp,
 	) {
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const annotateOp = this.client.annotateRangeLocal(start, end, props, combiningOp);
 			if (annotateOp) {
 				this.submitSequenceMessage(annotateOp);
@@ -439,7 +466,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param segment - The segment to insert
 	 */
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
 			if (insertOp) {
 				this.submitSequenceMessage(insertOp);
@@ -453,7 +480,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public insertFromSpec(pos: number, spec: IJSONSegment) {
 		const segment = this.segmentFromSpec(spec);
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const insertOp = this.client.insertSegmentLocal(pos, segment);
 			if (insertOp) {
 				this.submitSequenceMessage(insertOp);
@@ -824,19 +851,33 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 }
 
-let isRunningLocalChange = false;
-/**
- * This is a safeguard to avoid corrupting documents in the case of applications submitting reentrant local ops.
- * See reentrancy.spec.ts for example problematic scenarios.
- */
-export function ensureNoReentrancy<T>(callback: () => T): T {
-	if (isRunningLocalChange) {
-		throw new UsageError("Reentrancy detected in sequence local ops");
+function createReentrancyDetector(
+	onReentrancy: (depth: number) => void,
+): <T>(callback: () => T) => T {
+	let depth = 0;
+	function detectReentrancy<T>(callback: () => T): T {
+		if (depth > 0) {
+			onReentrancy(depth);
+		}
+		depth++;
+		try {
+			return callback();
+		} finally {
+			depth--;
+		}
 	}
-	isRunningLocalChange = true;
-	try {
-		return callback();
-	} finally {
-		isRunningLocalChange = false;
-	}
+
+	return detectReentrancy;
 }
+
+/**
+ * Apps which generate reentrant behavior may do so at a high frequency.
+ * Logging even per-SharedSegmentSequence instance might be too noisy, and having a few logs from a session
+ * is likely enough.
+ */
+let totalReentrancyLogs = 3;
+
+const reentrancyErrorMessage = "Reentrancy detected in sequence local ops";
+const ensureNoReentrancy = createReentrancyDetector(() => {
+	throw new LoggingError(reentrancyErrorMessage);
+});

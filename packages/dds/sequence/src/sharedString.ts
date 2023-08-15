@@ -19,7 +19,7 @@ import {
 	TextSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { ensureNoReentrancy, SharedSegmentSequence } from "./sequence";
+import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
 /**
@@ -118,7 +118,7 @@ export class SharedString
 		}
 
 		const pos = this.posFromRelativePos(relativePos1);
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const insertOp = this.client.insertSegmentLocal(pos, segment);
 			if (insertOp) {
 				this.submitSequenceMessage(insertOp);
@@ -139,7 +139,7 @@ export class SharedString
 			segment.addProperties(props);
 		}
 
-		return ensureNoReentrancy(() => {
+		return this.guardReentrancy(() => {
 			const insertOp = this.client.insertSegmentLocal(pos, segment);
 			if (insertOp) {
 				this.submitSequenceMessage(insertOp);
@@ -161,7 +161,7 @@ export class SharedString
 		}
 
 		const pos = this.posFromRelativePos(relativePos1);
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const insertOp = this.client.insertSegmentLocal(pos, segment);
 			if (insertOp) {
 				this.submitSequenceMessage(insertOp);
@@ -178,7 +178,7 @@ export class SharedString
 			segment.addProperties(props);
 		}
 
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const insertOp = this.client.insertSegmentLocal(pos, segment);
 			if (insertOp) {
 				this.submitSequenceMessage(insertOp);
@@ -218,7 +218,7 @@ export class SharedString
 		props: PropertySet,
 		callback: (m: Marker) => void,
 	) {
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
 			if (annotateOp) {
 				this.submitSequenceMessage(annotateOp);
@@ -233,7 +233,7 @@ export class SharedString
 	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
-		ensureNoReentrancy(() => {
+		this.guardReentrancy(() => {
 			const annotateOp = this.client.annotateMarker(marker, props, combiningOp);
 			if (annotateOp) {
 				this.submitSequenceMessage(annotateOp);

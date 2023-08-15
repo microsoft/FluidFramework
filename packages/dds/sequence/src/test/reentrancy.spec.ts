@@ -60,6 +60,8 @@ describe("SharedString op-reentrancy", () => {
 	 *
 	 * Symptoms may include various merge-tree asserts that the pending segments queue is inconsistent on the client which
 	 * triggered a reentrant op (ex: 0x046) and doc corruption from the perspective of other clients.
+	 *
+	 * This was fixed in #16815 by moving op submission to before raising the `sequenceDelta` event.
 	 */
 	it("throws on local re-entrancy", () => {
 		sharedString.insertText(0, "abcX");
