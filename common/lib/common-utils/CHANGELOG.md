@@ -12,10 +12,49 @@ moved to other packages.
 -   class Lazy<T>
 -   class LazyPromise<T>
 -   class PromiseCache<TKey, TResult>
--   type PromiseCacheExpiry
 -   interface PromiseCacheOptions
+-   type PromiseCacheExpiry
+-   class Deferred
+-   class Heap
+-   class PromiseTimer
+-   class Timer
+-   const delay
+-   const NumberComparer
+-   function assert
+-   function safelyParseJSON
+-   function setLongTimeout
+-   function unreachableCase
+-   interface IComparer
+-   interface IHeapNode
+-   interface IPromiseTimer
+-   interface IPromiseTimerResult
+-   interface ITimer
+
+#### Moved to @fluid-internal/client-utils
+
+-   class Buffer
+-   class EventForwarder
+-   class Trace
+-   class TypedEventEmitter
+-   class TypedEventTransform
+-   function bufferToString
+-   function fromBase64ToUtf8
+-   function fromUtf8ToBase64
+-   function gitHashFile
+-   function hashFile
+-   function stringToBuffer
+-   function toUtf8
+-   function Uint8ArrayToArrayBuffer
+-   function Uint8ArrayToString
+-   interface ITraceEvent
+-   type EventEmitterEventType
+-   type IsoBuffer
+-   type IsomorphicPerformance
 
 #### Deprecated with no replacement
 
 -   function doIfNotDisposed
 -   class RateLimiter
+-   class RangeTracker
+-   interface IRange
+-   interface IRangeTrackerSnapshot
