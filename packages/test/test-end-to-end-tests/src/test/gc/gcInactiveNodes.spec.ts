@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -25,6 +25,9 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+// eslint-disable-next-line import/no-internal-modules
+import { InactiveResponseHeaderKey } from "@fluidframework/container-runtime/dist/containerRuntime.js";
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
@@ -39,7 +42,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-			gcOptions: { gcAllowed: true, inactiveTimeoutMs },
+			gcOptions: { gcAllowed: true, inactiveTimeoutMs, throwOnInactiveLoad: true },
 		},
 	};
 
@@ -280,7 +283,24 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			},
 		);
 
-		itExpects(
+		function manufactureHandle<T>(
+			handleContext: IFluidHandleContext,
+			unreferencedId: string,
+		): IFluidHandle<T> {
+			const serializer = new FluidSerializer(handleContext, () => {});
+			const handle: IFluidHandle<T> = parseHandles(
+				{ type: "__fluid_handle__", url: unreferencedId },
+				serializer,
+			);
+			return handle;
+		}
+
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		itExpects.only(
 			"can generate events for non-summarizer clients",
 			[
 				{
@@ -312,6 +332,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					"",
 				);
 				const url = dataStore.handle.absolutePath;
+				const unreferencedId = dataStore._context.id;
+
 				defaultDataStore._root.set("dataStore", dataStore.handle);
 				defaultDataStore._root.delete("dataStore");
 
@@ -338,7 +360,37 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				await waitForContainerWriteModeConnectionWrite(container2);
 
 				// Load the inactive data store. This should result in a loaded event from the non-summarizer container.
-				await container2.request({ url });
+				const handle = manufactureHandle<ITestDataObject>(
+					defaultDataStoreContainer2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+					unreferencedId,
+				);
+				// This fails because the DataStore is tombstoned
+				let inactiveError:
+					| (Error & {
+							code: number;
+							underlyingResponseHeaders?: { [InactiveResponseHeaderKey]: boolean };
+					  })
+					| undefined;
+				try {
+					await handle.get();
+				} catch (error: any) {
+					inactiveError = error;
+				}
+				assert.equal(
+					inactiveError?.code,
+					404,
+					"Interactive error from handle.get should have 404 status code",
+				);
+				assert.equal(
+					inactiveError?.message,
+					`DataStore is inactive: ${unreferencedId}`,
+					"Incorrect message for Inactive error from handle.get",
+				);
+				assert.equal(
+					inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
+					true,
+					"Inactive error from handle.get should include the tombstone flag",
+				);
 				mockLogger.assertMatch(
 					[
 						{

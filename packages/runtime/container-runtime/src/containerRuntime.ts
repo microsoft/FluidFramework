@@ -460,6 +460,9 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in th
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned";
+/** Inactive error responses will have this header set to true */
+export const InactiveResponseHeaderKey = "isInactive";
+//* EXPORT IT PROPERLY
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
