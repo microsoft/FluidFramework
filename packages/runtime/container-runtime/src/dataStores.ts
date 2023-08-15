@@ -136,6 +136,7 @@ export class DataStores implements IDisposable {
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
+		private readonly getGcInfo: any, //*
 	) {
 		this.mc = loggerToMonitoringContext(ChildLogger.create(baseLogger));
 		this.containerRuntimeHandle = new FluidObjectHandle(
@@ -178,6 +179,7 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
+					getGcInfo: this.getGcInfo, //*
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -196,6 +198,7 @@ export class DataStores implements IDisposable {
 					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
 					snapshotTree,
 					isRootDataStore: undefined,
+					getGcInfo: this.getGcInfo, //*
 				});
 			}
 			this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -275,6 +278,7 @@ export class DataStores implements IDisposable {
 				},
 			}),
 			pkg,
+			getGcInfo: this.getGcInfo, //*
 		});
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);

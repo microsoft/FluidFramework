@@ -124,6 +124,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
+	readonly getGcInfo: any; //*
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
