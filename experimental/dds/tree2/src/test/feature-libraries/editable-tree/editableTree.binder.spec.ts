@@ -489,7 +489,6 @@ describe("editable-tree: data binder", () => {
 					},
 					"type": "delete",
 				},
-				// TODO
 				{
 					"0": {
 						field: "address",
@@ -642,7 +641,6 @@ describe("editable-tree: data binder", () => {
 					},
 					"type": "delete",
 				},
-				// TODO
 				{
 					"0": {
 						field: "address",
@@ -819,7 +817,6 @@ describe("editable-tree: data binder", () => {
 						},
 						"type": "delete",
 					},
-					// TODO
 					{
 						"0": {
 							field: "address",
@@ -1000,7 +997,7 @@ describe("editable-tree: data binder", () => {
 			];
 			assert.deepEqual(batchLog, expectedBatchLog);
 			// the incremental log should contain all other changes except the zip modifications
-			assert.equal(incrLog.length, 5);
+			assert.equal(incrLog.length, 6);
 			const expectedIncrLog = [
 				{
 					"0": {
@@ -1013,7 +1010,6 @@ describe("editable-tree: data binder", () => {
 					},
 					"type": "delete",
 				},
-				// TODO
 				{
 					"0": {
 						field: "address",
@@ -1192,7 +1188,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index. Triggers step === undefined in getListeners.accumulateMatching", () => {
-			const { tree, root, address } = retrieveNodes();
+			const { tree, root } = retrieveNodes();
 			const options: BinderOptions = createBinderOptions({
 				matchPolicy: "subtree",
 			});
@@ -1221,6 +1217,7 @@ describe("editable-tree: data binder", () => {
 				},
 			);
 			root[getField](fieldAddress).content = { zip: "33428", phones: ["12345"] };
+			const address = root[getField](fieldAddress).getNode(0);
 			address.phones = [111, 112];
 			address.zip = "66566";
 			assert.deepEqual(addrLog, [

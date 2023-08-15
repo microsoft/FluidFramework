@@ -640,25 +640,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 					content.length,
 				);
 			},
-			onMoveOut: (start: number, count: number, id: Delta.MoveId, isDelete?: true): void => {
+			onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
 				maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
 					() => this.events.emit("childrenChanging", this),
 				);
-
-				if (isDelete) {
-					const upPath: UpPath = {
-						parent,
-						parentField,
-						parentIndex: start,
-					};
-					for (const visitors of pathVisitors.values()) {
-						for (const pathVisitor of visitors) {
-							pathVisitor.onDelete(upPath, count);
-						}
-					}
-				}
 
 				const fieldKey = this.createEmptyDetachedField();
 				const source = { parent, parentField, parentIndex: start };
@@ -714,7 +701,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			},
 		};
 		this.events.emit("treeChanging", this);
-		visitDelta(delta, visitor);
+		visitDelta(delta, visitor, false);
 	}
 }
 

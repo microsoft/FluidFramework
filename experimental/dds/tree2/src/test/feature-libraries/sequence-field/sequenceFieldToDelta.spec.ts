@@ -176,6 +176,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveIn,
 			count: 10,
 			moveId: brand(0),
+			isDelete: true,
 		};
 		const expected: Delta.MarkList = [mark];
 		const { repairDataBuilder } = makeRepairDataBuilder();
@@ -231,6 +232,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveIn,
 			count: 10,
 			moveId: brand(0),
+			isDelete: true,
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
@@ -329,6 +331,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveIn,
 			count: 1,
 			moveId: brand(0),
+			isDelete: true,
 		};
 		const expected: Delta.MarkList = [mark];
 		const { repairDataBuilder } = makeRepairDataBuilder();

@@ -115,6 +115,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 							type: Delta.MarkType.MoveIn,
 							count: mark.count,
 							moveId,
+							isDelete: true,
 						},
 					]);
 					break;

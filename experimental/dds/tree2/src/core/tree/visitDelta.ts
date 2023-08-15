@@ -78,7 +78,11 @@ import { FieldKey } from "./types";
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  */
-export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
+export function visitDelta(
+	delta: Delta.Root,
+	visitor: DeltaVisitor,
+	allowRepairDataMoves = true,
+): void {
 	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
 	const movedOutNodes: RangeMap<Delta.MoveId> = [];
 	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
@@ -86,6 +90,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 		applyValueChanges: true,
 		modsToMovedTrees,
 		movedOutRanges: movedOutNodes,
+		allowRepairDataMoves,
 	});
 	if (containsMovesOrDeletes) {
 		visitFieldMarks(delta, visitor, {
@@ -93,6 +98,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 			applyValueChanges: false,
 			modsToMovedTrees,
 			movedOutRanges: movedOutNodes,
+			allowRepairDataMoves,
 		});
 	}
 }
@@ -100,7 +106,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 export interface DeltaVisitor {
 	onDelete(index: number, count: number): void;
 	onInsert(index: number, content: Delta.ProtoNodes): void;
-	onMoveOut(index: number, count: number, id: Delta.MoveId, isDelete?: true): void;
+	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
 	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
 	// TODO: better align this with ITreeCursor:
 	// maybe rename its up and down to enter / exit? Maybe Also)?
@@ -118,6 +124,8 @@ interface PassConfig {
 
 	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
 	readonly movedOutRanges: RangeMap<Delta.MoveId>;
+
+	readonly allowRepairDataMoves: boolean;
 }
 
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
@@ -175,11 +183,18 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					markHasMoveOrDelete = true;
 					break;
 				case Delta.MarkType.MoveOut:
+					if (!config.allowRepairDataMoves && mark.isDelete) {
+						// Handled in the second pass
+						visitModify(index, mark, visitor, config);
+						index += mark.count;
+						break;
+					}
+
 					markHasMoveOrDelete = visitModify(index, mark, visitor, config);
 					if (markHasMoveOrDelete) {
 						config.modsToMovedTrees.set(mark.moveId, mark);
 					}
-					visitor.onMoveOut(index, mark.count, mark.moveId, mark.isDelete);
+					visitor.onMoveOut(index, mark.count, mark.moveId);
 					setInRangeMap(
 						config.movedOutRanges,
 						extractFromOpaque(mark.moveId),
@@ -225,7 +240,11 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					visitor.onDelete(index, mark.count);
 					break;
 				case Delta.MarkType.MoveOut:
-					// Handled in the first pass
+					// This is the repair data case, the normal case is handled in the first pass
+					if (!config.allowRepairDataMoves && mark.isDelete) {
+						visitModify(index, mark, visitor, config);
+						visitor.onDelete(index, mark.count);
+					}
 					break;
 				case Delta.MarkType.Modify:
 					visitModify(index, mark, visitor, config);
@@ -240,6 +259,12 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					}
 					break;
 				case Delta.MarkType.MoveIn: {
+					// If this move in is the result of a delete and should be treated as a normal delete,
+					// it is handled in the move out case instead.
+					if (!config.allowRepairDataMoves && mark.isDelete) {
+						break;
+					}
+
 					let entry = getFirstFromRangeMap(
 						config.movedOutRanges,
 						extractFromOpaque(mark.moveId),
