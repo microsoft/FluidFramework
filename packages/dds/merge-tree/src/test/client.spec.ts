@@ -215,7 +215,7 @@ describe("TestClient", () => {
 			});
 
 			assert.equal(client.getLength(), 1);
-			const foundTile = client.searchForTile(client.getLength(), "Eop", false);
+			const foundTile = client.searchForTile(client.getLength(), "Eop", true);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -228,7 +228,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1);
 
-			const foundTile = client.searchForTile(-1, "Eop", true);
+			const foundTile = client.searchForTile(-1, "Eop", false);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -242,7 +242,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4);
 
-			const foundTile = client.searchForTile(client.getLength(), "Eop", false);
+			const foundTile = client.searchForTile(client.getLength(), "Eop", true);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -256,7 +256,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4);
 
-			const foundTile = client.searchForTile(-1, "Eop", true);
+			const foundTile = client.searchForTile(-1, "Eop", false);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -310,11 +310,17 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const tile = client.searchForTile(0, tileLabel, false);
+			const tile = client.searchForTile(0, tileLabel, true);
 
 			assert(tile, "Returned tile undefined.");
 
-			assert.equal(tile.pos, 3, "Tile with label not at expected position");
+			const exp = client.mergeTree.referencePositionToLocalPosition(
+				tile,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 3, "Tile with label not at expected position");
 		});
 
 		it("Should be able to find non preceding tile position based on label from client with single tile", () => {
@@ -329,14 +335,56 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 6, "length not expected");
 
-			const tile = client.searchForTile(0, tileLabel, false);
+			const tile = client.searchForTile(0, tileLabel, true);
 
 			assert(tile, "Returned tile undefined.");
 
-			assert.equal(tile.pos, 1, "Tile with label not at expected position");
+			const exp = client.mergeTree.referencePositionToLocalPosition(
+				tile,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+			assert.equal(exp, 1, "Tile with label not at expected position");
+			// assert.equal(tile.tile, ref, "not equal");
 		});
 
 		it("Should be able to find preceding tile position based on label from client with multiple tile", () => {
+			const tileLabel = "EOP";
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedTileLabelsKey]: [tileLabel],
+				[reservedMarkerIdKey]: "some-id",
+			});
+
+			client.insertTextLocal(0, "abc d");
+
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedTileLabelsKey]: [tileLabel],
+				[reservedMarkerIdKey]: "some-id",
+			});
+
+			client.insertTextLocal(7, "ef");
+			client.insertMarkerLocal(8, ReferenceType.Tile, {
+				[reservedTileLabelsKey]: [tileLabel],
+				[reservedMarkerIdKey]: "some-id",
+			});
+			console.log(client.getText());
+
+			assert.equal(client.getLength(), 10, "length not expected");
+
+			const tile = client.searchForTile(5, tileLabel, false);
+
+			assert(tile, "Returned tile undefined.");
+
+			const exp = client.mergeTree.referencePositionToLocalPosition(
+				tile,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Tile with label not at expected position");
+		});
+
+		it("Should be able to find non preceding tile position from client with multiple tile", () => {
 			const tileLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
 				[reservedTileLabelsKey]: [tileLabel],
@@ -363,42 +411,18 @@ describe("TestClient", () => {
 
 			assert(tile, "Returned tile undefined.");
 
-			assert.equal(tile.pos, 0, "Tile with label not at expected position");
-		});
+			const exp = client.mergeTree.referencePositionToLocalPosition(
+				tile,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
 
-		it("Should be able to find non preceding tile position from client with multiple tile", () => {
-			const tileLabel = "EOP";
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
-				[reservedMarkerIdKey]: "some-id",
-			});
-
-			client.insertTextLocal(0, "abc d");
-
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
-				[reservedMarkerIdKey]: "some-id",
-			});
-
-			client.insertTextLocal(7, "ef");
-			client.insertMarkerLocal(8, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
-				[reservedMarkerIdKey]: "some-id",
-			});
-			console.log(client.getText());
-
-			assert.equal(client.getLength(), 10, "length not expected");
-
-			const tile = client.searchForTile(5, tileLabel, false);
-
-			assert(tile, "Returned tile undefined.");
-
-			assert.equal(tile.pos, 6, "Tile with label not at expected position");
+			assert.equal(exp, 6, "Tile with label not at expected position");
 		});
 
 		it("Should be able to find non preceding tile with multiple segments and tiles", () => {
 			const tileLabel = "EOP";
-			Array.from({ length: MaxNodesInBlock * 2 }).forEach((_, i) =>
+			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
 			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
@@ -409,22 +433,28 @@ describe("TestClient", () => {
 				});
 			}
 			for (let index = 0; index < client.getLength(); index++) {
-				const tile = client.searchForTile(index, tileLabel, false);
+				const tile = client.searchForTile(index, tileLabel, true);
 
 				assert(tile, `Returned tile undefined @ ${index}.`);
 
-				const expected = index % 3 === 0 ? index % 3 : 3 - (index % 3);
+				const exp = client.mergeTree.referencePositionToLocalPosition(
+					tile,
+					UniversalSequenceNumber,
+					client.getClientId(),
+				);
+
+				const offset = index % 3 === 0 ? index % 3 : 3 - (index % 3);
 				assert.equal(
-					tile.pos,
-					index + expected,
-					`Tile with label not at expected position: index ${index}, tile.pos ${tile.pos}`,
+					exp,
+					index + offset,
+					`Tile with label not at expected position: index ${index}, tile.pos ${exp}`,
 				);
 			}
 		});
 
 		it("Should be able to find preceding tile with multiple segments and tiles", () => {
 			const tileLabel = "EOP";
-			Array.from({ length: MaxNodesInBlock * 2 }).forEach((_, i) =>
+			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
 			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
@@ -435,14 +465,20 @@ describe("TestClient", () => {
 				});
 			}
 			for (let index = client.getLength() - 1; index >= 0; index--) {
-				const tile = client.searchForTile(index, tileLabel, true);
+				const tile = client.searchForTile(index, tileLabel, false);
 
 				assert(tile, `Returned tile undefined @ ${index}.`);
 
+				const exp = client.mergeTree.referencePositionToLocalPosition(
+					tile,
+					UniversalSequenceNumber,
+					client.getClientId(),
+				);
+
 				assert.equal(
-					tile.pos,
+					exp,
 					index - (index % 3),
-					`Tile with label not at expected position: index ${index}, tile.pos ${tile.pos}`,
+					`Tile with label not at expected position: index ${index}, tile.pos ${exp}`,
 				);
 			}
 		});
@@ -462,13 +498,25 @@ describe("TestClient", () => {
 
 			assert(tile, "Returned tile undefined.");
 
-			assert.equal(tile.pos, 0, "Tile with label not at expected position");
+			let exp = client.mergeTree.referencePositionToLocalPosition(
+				tile,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Tile with label not at expected position");
 
 			const tile1 = client.searchForTile(0, tileLabel, true);
 
 			assert(tile1, "Returned tile undefined.");
 
-			assert.equal(tile1.pos, 0, "Tile with label not at expected position");
+			exp = client.mergeTree.referencePositionToLocalPosition(
+				tile,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Tile with label not at expected position");
 		});
 
 		it("Should be able to find only preceding but not non preceding tile with index out of bound", () => {
@@ -483,15 +531,15 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const tile = client.searchForTile(5, tileLabel, false);
+			const tile = client.searchForTile(5, tileLabel, true);
 
 			assert.equal(typeof tile, "undefined", "Returned tile should be undefined.");
 
-			const tile1 = client.searchForTile(5, tileLabel);
+			const tile1 = client.searchForTile(5, tileLabel, false);
 
 			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 
-			const tile2 = client.searchForTile(-1, tileLabel);
+			const tile2 = client.searchForTile(-1, tileLabel, false);
 
 			assert.equal(typeof tile2, "undefined", "Returned tile should be undefined.");
 		});
