@@ -904,6 +904,17 @@ export class GarbageCollector implements IGarbageCollector {
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
+
+		//* Differentiate and check againts config
+		if (
+			reason === "Loaded" &&
+			["Inactive", "SweepReady", "Tombstoned"].includes(
+				this.getGCReferenceInfo(nodePath)?.state ?? "",
+			)
+		) {
+			//* Fashion the right kind of error
+			throw new Error("HELLO WORLD");
+		}
 	}
 
 	/**

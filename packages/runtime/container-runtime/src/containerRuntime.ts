@@ -457,6 +457,8 @@ export enum RuntimeHeaders {
 
 /** True if a tombstoned object should be returned without erroring */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+/** [IGNORED IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned";
@@ -1787,16 +1789,6 @@ export class ContainerRuntime
 			dataStoreContext.packagePath,
 			request?.headers,
 		);
-
-		//* Differentiate and check againts config
-		if (
-			["Inactive", "SweepReady", "Tombstoned"].includes(
-				dataStoreContext.experimentalGCInfo?.state ?? "",
-			)
-		) {
-			//* Fashion the right kind of error
-			throw new Error("HELLO WORLD");
-		}
 
 		return dataStoreChannel;
 	}
