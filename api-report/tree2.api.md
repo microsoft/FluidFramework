@@ -2031,10 +2031,10 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
 // @alpha
 interface UntypedOptionalField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly content: TChild;
-    delete(): void;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Optional;
     };
+    remove(): void;
     setContent(newContent: ITreeCursor | ContextuallyTypedNodeData | undefined): void;
 }
 

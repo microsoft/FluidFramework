@@ -132,9 +132,9 @@ export interface UntypedOptionalField<
 	};
 
 	/**
-	 * Delete the content of this field.
+	 * Removes the content of this field.
 	 */
-	delete(): void;
+	remove(): void;
 
 	/**
 	 * The child within this field.
