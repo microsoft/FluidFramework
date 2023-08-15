@@ -1174,10 +1174,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param tileLabel - Label of the tile to search for
-	 * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
+	 * @param forwards - Whether the desired tile comes before (false) or after (true) `startPos`
 	 */
-	searchForTile(startPos: number, tileLabel: string, preceding = true) {
+	searchForTile(startPos: number, tileLabel: string, forwards = true) {
 		const clientId = this.getClientId();
-		return this._mergeTree.searchForTile(startPos, clientId, tileLabel, preceding);
+		return this._mergeTree.searchForTile(startPos, clientId, tileLabel, forwards);
 	}
 }

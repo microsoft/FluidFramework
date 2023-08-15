@@ -129,9 +129,9 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
 };
 
 interface IReferenceSearchInfo {
-	mergeTree: MergeTree;
+	mergeTree?: MergeTree;
 	tileLabel: string;
-	tilePrecedesPos?: boolean;
+	forwards?: boolean;
 	tile?: ReferencePosition;
 }
 
@@ -222,14 +222,14 @@ function tileShift(
 ) {
 	if (node.isLeaf()) {
 		const seg = node;
-		if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
+		if ((searchInfo.mergeTree?.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
 			if (refHasTileLabel(seg, searchInfo.tileLabel)) {
 				searchInfo.tile = seg;
 			}
 		}
 	} else {
 		const block = <IHierBlock>node;
-		const marker = searchInfo.tilePrecedesPos
+		const marker = searchInfo.forwards
 			? <Marker>block.rightmostTiles[searchInfo.tileLabel]
 			: <Marker>block.leftmostTiles[searchInfo.tileLabel];
 		if (marker !== undefined) {
@@ -1263,8 +1263,7 @@ export class MergeTree {
 	 */
 	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
 		const searchInfo: IReferenceSearchInfo = {
-			mergeTree: this,
-			tilePrecedesPos,
+			forwards: tilePrecedesPos,
 			tileLabel,
 		};
 
@@ -1317,10 +1316,9 @@ export class MergeTree {
 	 * @param tileLabel - Label of the tile to search for
 	 * @param backwards - Whether the desired tile comes before (true) or after (false) `startPos`
 	 */
-	public searchForTile(startPos: number, clientId: number, tileLabel: string, backwards = true) {
+	public searchForTile(startPos: number, clientId: number, tileLabel: string, forwards = true) {
 		const searchInfo: IReferenceSearchInfo = {
-			mergeTree: this,
-			tilePrecedesPos: backwards,
+			forwards,
 			tileLabel,
 		};
 
@@ -1335,14 +1333,14 @@ export class MergeTree {
 			segWithParent,
 			(seg) => {
 				if (seg.isLeaf()) {
-					if (Marker.is(seg) && refHasTileLabel(seg, searchInfo.tileLabel)) {
+					if (Marker.is(seg) && refHasTileLabel(seg, tileLabel)) {
 						searchInfo.tile = seg;
 					}
 				} else {
 					const block = <IHierBlock>seg;
-					const marker = searchInfo.tilePrecedesPos
-						? <Marker>block.rightmostTiles[searchInfo.tileLabel]
-						: <Marker>block.leftmostTiles[searchInfo.tileLabel];
+					const marker = searchInfo.forwards
+						? <Marker>block.leftmostTiles[tileLabel]
+						: <Marker>block.rightmostTiles[tileLabel];
 					if (marker !== undefined) {
 						searchInfo.tile = marker;
 					}
@@ -1351,26 +1349,10 @@ export class MergeTree {
 			},
 			undefined,
 			undefined,
-			!backwards,
+			forwards,
 		);
 
-		if (searchInfo.tile) {
-			let pos: number;
-			if (searchInfo.tile.isLeaf()) {
-				const marker = <Marker>searchInfo.tile;
-				pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
-			} else {
-				const localRef = searchInfo.tile;
-				pos = this.referencePositionToLocalPosition(
-					localRef,
-					UniversalSequenceNumber,
-					clientId,
-				);
-			}
-			return { tile: searchInfo.tile, pos };
-		}
-
-		return undefined;
+		return searchInfo.tile ?? undefined;
 	}
 
 	private search<TClientData>(

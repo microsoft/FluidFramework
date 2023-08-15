@@ -169,10 +169,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     rollback?(op: any, localOpMetadata: unknown): void;
-    searchForTile(startPos: number, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
+    searchForTile(startPos: number, tileLabel: string, forwards?: boolean): ReferencePosition | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
