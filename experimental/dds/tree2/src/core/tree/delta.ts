@@ -226,10 +226,10 @@ export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly moveId: MoveId;
 
 	/**
-	 * When set, indicates that the delta was generated from a delete operation.
+	 * When set, indicates that the delta was generated from a remove operation.
 	 * This means that the content being moved is repair data.
 	 */
-	readonly isDelete?: true;
+	readonly isRemoval?: true;
 }
 
 /**
