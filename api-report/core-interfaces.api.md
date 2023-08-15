@@ -32,7 +32,7 @@ export function generateStack(): string | undefined;
 export const getCircularReplacer: () => (key: string, value: any) => any;
 
 // @public (undocumented)
-export const hasErrorInstanceId: (x: any) => x is {
+export const hasErrorInstanceId: (x: unknown) => x is {
     errorInstanceId: string;
 };
 
@@ -231,7 +231,7 @@ export function isExternalError(e: any): boolean;
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public
-export function isFluidError(e: any): e is IFluidErrorBase;
+export function isFluidError(e: unknown): e is IFluidErrorBase;
 
 // @public @deprecated
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
@@ -243,7 +243,7 @@ export const isILoggingError: (x: any) => x is ILoggingError;
 export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt;
 
 // @public
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
+export function isValidLegacyError(e: unknown): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public
 export interface ITaggedTelemetryPropertyType {
