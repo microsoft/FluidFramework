@@ -26,9 +26,9 @@ export { LayerGraph } from "./layerCheck/layerGraph";
 export { type Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
 export type {
-	PolicyConfig,
 	IFluidBuildConfig,
 	IFluidRepoPackage,
+	PackageNamePolicyConfig,
+	PolicyConfig,
 	PreviousVersionStyle,
-  PackageNamePolicyConfig,
 } from "./common/fluidRepo";
