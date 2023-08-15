@@ -213,6 +213,9 @@ export interface UntypedField<
 	 */
 	getNode(index: number): TChild;
 
+	/**
+	 * Gets the {@link TreeStatus} of this field.
+	 */
 	getTreeStatus(): TreeStatus;
 }
 
