@@ -208,12 +208,12 @@ export function App(): React.ReactElement {
 			{sharedContainer === undefined ? (
 				<LoadingView containerKey={sharedContainerKey} />
 			) : (
-				<AppView obj={sharedContainer.appData} containerKey={sharedContainerKey} />
+				<AppView appData={sharedContainer.appData} containerKey={sharedContainerKey} />
 			)}
 			{privateContainer === undefined ? (
 				<LoadingView containerKey={privateContainerKey} />
 			) : (
-				<AppView obj={privateContainer.appData} containerKey={privateContainerKey} />
+				<AppView appData={privateContainer.appData} containerKey={privateContainerKey} />
 			)}
 		</div>
 	);
