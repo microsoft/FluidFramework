@@ -34,13 +34,13 @@ describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
 				assert(this.iteration > 0, "testTitle needs to be defined");
 				console.log(`this will run for each iteration ${this.iteration}`);
 			}
-			before(): void {
+			async before(): Promise<void> {
 				console.log(`this will run before the measurements`);
 			}
 			beforeIteration(): void {
 				console.log(`this will run before each iteration ${this.iteration}`);
 			}
-			after(): void {
+			async after(): Promise<void> {
 				this.iteration = 0;
 			}
 		})(),
@@ -58,13 +58,13 @@ describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
 				assert(this.iteration > 0, "testTitle needs to be defined");
 				console.log(`this will run for each iteration ${this.iteration}`);
 			}
-			before(): void {
+			async before(): Promise<void> {
 				console.log(`this will run before the measurements`);
 			}
 			beforeIteration(): void {
 				console.log(`this will run before each iteration ${this.iteration}`);
 			}
-			after(): void {
+			async after(): Promise<void> {
 				this.iteration = 0;
 			}
 		})(),

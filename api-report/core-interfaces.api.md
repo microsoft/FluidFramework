@@ -347,7 +347,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
-    get errorInstanceId(): any;
+    get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;

@@ -6144,6 +6144,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^16.18.38
+      '@types/uuid': ^8.3.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -6161,6 +6162,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/node': 16.18.38
+      '@types/uuid': 8.3.4
       concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0

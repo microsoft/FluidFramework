@@ -376,10 +376,10 @@ export class LoggingError
 	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
 {
 	private _errorInstanceId = uuid();
-	get errorInstanceId() {
+	get errorInstanceId(): string {
 		return this._errorInstanceId;
 	}
-	overwriteErrorInstanceId(id: string) {
+	overwriteErrorInstanceId(id: string): void {
 		this._errorInstanceId = id;
 	}
 

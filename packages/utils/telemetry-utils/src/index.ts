@@ -34,6 +34,7 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
+	TelemetryNullLogger,
 } from "./logger";
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
@@ -41,7 +42,8 @@ export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
 export { logIfFalse } from "./utils";
 export { ITelemetryEventExt } from "./telemetryTypes";
 
-// Deprecated exports
+// Deprecated exports (moved to core-interfaces).
+// Kept here to preserve compatibility. They will be removed in a subsequent release.
 
 export {
 	/**
@@ -127,6 +129,10 @@ export {
 	/**
 	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
 	 */
+	NORMALIZED_ERROR_TYPE,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
 	normalizeError,
 	/**
 	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
@@ -136,7 +142,4 @@ export {
 	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
 	 */
 	wrapErrorAndLog,
-} from /**
- * @deprecated Import from "\@fluidframework/core-interfaces" instead.
- */
-"@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces";
