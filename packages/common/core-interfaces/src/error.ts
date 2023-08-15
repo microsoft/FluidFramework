@@ -73,11 +73,10 @@ export interface IErrorBase extends Partial<Error> {
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
  */
-export const IGenericError extends IErrorBase {
+export interface IGenericError extends IErrorBase {
 	readonly errorType: ContainerErrorType.genericError;
 	error?: any;
 }
-
 
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
