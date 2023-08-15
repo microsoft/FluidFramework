@@ -551,6 +551,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
+    // @internal
+    protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
     // (undocumented)
     id: string;
     // (undocumented)

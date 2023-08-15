@@ -131,7 +131,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * on the data store options to `false`.
 	 * @internal
 	 */
-	protected guardReentrancy: <T>(callback: () => T) => T;
+	protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
 
 	private static createOpsFromDelta(event: SequenceDeltaEvent): IMergeTreeDeltaOp[] {
 		const ops: IMergeTreeDeltaOp[] = [];
@@ -856,6 +856,13 @@ function createReentrancyDetector(
  * is likely enough.
  */
 let totalReentrancyLogs = 3;
+
+/**
+ * Resets the reentrancy log counter. Test-only API.
+ */
+export function resetReentrancyLogCounter() {
+	totalReentrancyLogs = 3;
+}
 
 const reentrancyErrorMessage = "Reentrancy detected in sequence local ops";
 const ensureNoReentrancy = createReentrancyDetector(() => {
