@@ -424,13 +424,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						assert.fail("Expected handle.get to throw");
 					} catch (error: any) {
 						const inactiveError: InactiveLoadError = error;
-						//* 404
-						assert.equal(inactiveError?.code, 500, "Incorrect error status code");
-						//* `DataStore is inactive: ${unreferencedId}`,
-						assert.equal(inactiveError?.message ?? "", "Error: HELLO WORLD");
+						assert.equal(inactiveError?.code ?? -1, 404, "Incorrect error status code");
+						assert.equal(
+							inactiveError?.message ?? "",
+							`DataStore is inactive: /${unreferencedId}`,
+						);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
-							undefined, //* true,
+							true,
 							"Inactive error from handle.get should include the tombstone flag",
 						);
 					}

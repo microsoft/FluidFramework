@@ -6,7 +6,7 @@
 import { Timer } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
 	IGarbageCollectionData,
@@ -14,7 +14,11 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import {
+	ReadAndParseBlob,
+	createResponseError,
+	responseToException,
+} from "@fluidframework/runtime-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -23,7 +27,11 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
-import { RuntimeHeaders } from "../containerRuntime";
+import {
+	AllowInactiveRequestHeaderKey,
+	InactiveResponseHeaderKey,
+	RuntimeHeaders,
+} from "../containerRuntime";
 import { RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
@@ -905,15 +913,22 @@ export class GarbageCollector implements IGarbageCollector {
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
 
-		//* Differentiate and check againts config
+		const state = this.unreferencedNodesState.get(nodePath)?.state;
 		if (
 			reason === "Loaded" &&
-			["Inactive", "SweepReady", "Tombstoned"].includes(
-				this.getGCReferenceInfo(nodePath)?.state ?? "",
-			)
+			state === "Inactive" &&
+			this.configs.throwOnInactiveLoad &&
+			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true
 		) {
-			//* Fashion the right kind of error
-			throw new Error("HELLO WORLD");
+			const request: IRequest = { url: nodePath }; //* Double-check url here
+			const error = responseToException(
+				//* Finalize message
+				createResponseError(404, "DataStore is inactive", request, {
+					[InactiveResponseHeaderKey]: true,
+				}),
+				request,
+			);
+			throw error;
 		}
 	}
 
