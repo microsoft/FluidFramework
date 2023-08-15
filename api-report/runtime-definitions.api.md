@@ -74,9 +74,6 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
-// @public
-export const defaultClusterCapacity = 512;
-
 // @alpha
 export interface DetachedAttributionKey {
     id: 0;
@@ -315,21 +312,14 @@ export interface IGarbageCollectionDetailsBase {
 
 // @public
 export interface IIdCompressor {
-    // Warning: (ae-incompatible-release-tags) The symbol "decompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     decompress(id: SessionSpaceCompressedId): StableId;
-    // Warning: (ae-incompatible-release-tags) The symbol "generateCompressedId" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     generateCompressedId(): SessionSpaceCompressedId;
     // (undocumented)
     localSessionId: SessionId;
-    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToOpSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    // Warning: (ae-incompatible-release-tags) The symbol "recompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     tryDecompress(id: SessionSpaceCompressedId): StableId | undefined;
-    // Warning: (ae-incompatible-release-tags) The symbol "tryRecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
@@ -351,6 +341,9 @@ export interface IInboundSignalMessage extends ISignalMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
+
+// @public
+export const initialClusterCapacity = 512;
 
 // @public (undocumented)
 export interface IProvideFluidDataStoreFactory {
@@ -506,7 +499,7 @@ export type SessionId = StableId & {
     readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
 };
 
-// @alpha
+// @public
 export type SessionSpaceCompressedId = number & {
     readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
 };

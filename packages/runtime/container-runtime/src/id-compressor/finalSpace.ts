@@ -20,15 +20,15 @@ export class FinalSpace {
 	}
 
 	public getTailCluster(): IdCluster | undefined {
-		return this.clusterList.length === 0
-			? undefined
-			: this.clusterList[this.clusterList.length - 1];
+		return this.clusterList[this.clusterList.length - 1];
 	}
 
 	public addCluster(newCluster: IdCluster) {
 		const tailCluster = this.getTailCluster();
 		assert(
-			tailCluster === undefined || newCluster.baseFinalId > tailCluster.baseFinalId,
+			tailCluster === undefined ||
+				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+				newCluster.baseFinalId === tailCluster.baseFinalId + tailCluster.capacity,
 			"Cluster insert to final_space is out of order.",
 		);
 		this.clusterList.push(newCluster);
@@ -38,6 +38,9 @@ export class FinalSpace {
 		return Session.getContainingCluster(finalId, this.clusterList);
 	}
 
+	/**
+	 * @returns the upper bound (exclusive) of final IDs in final space, i.e. one greater than the last final ID in the last cluster.
+	 */
 	public getFinalIdLimit(): FinalCompressedId {
 		if (this.clusterList.length === 0) {
 			return 0 as FinalCompressedId;

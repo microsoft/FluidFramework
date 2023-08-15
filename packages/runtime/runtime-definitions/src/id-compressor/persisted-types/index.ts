@@ -9,5 +9,5 @@ export {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 	IdCreationRangeWithStashedState,
-	defaultClusterCapacity,
+	initialClusterCapacity,
 } from "./0.0.1";

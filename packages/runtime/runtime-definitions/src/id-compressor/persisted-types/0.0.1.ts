@@ -43,7 +43,7 @@ export interface IdCreationRange {
  * Roughly equates to a minimum of 1M sessions before we start allocating 64 bit IDs.
  * This value must *NOT* change without careful consideration to compatibility.
  */
-export const defaultClusterCapacity = 512;
+export const initialClusterCapacity = 512;
 
 export type IdCreationRangeWithStashedState = IdCreationRange & {
 	stashedState: SerializedIdCompressorWithOngoingSession;

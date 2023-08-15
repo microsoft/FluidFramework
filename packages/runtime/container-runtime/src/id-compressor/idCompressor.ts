@@ -15,7 +15,7 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	defaultClusterCapacity,
+	initialClusterCapacity,
 } from "@fluidframework/runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -31,6 +31,7 @@ import {
 	fail,
 } from "./utilities";
 import {
+	Index,
 	readBoolean,
 	readNumber,
 	readNumericUuid,
@@ -63,7 +64,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * Max allowed initial cluster size.
 	 */
-	public static maxClusterSize = 2 ** 20;
+	public static readonly maxClusterSize = 2 ** 20;
 
 	// ----- Local state -----
 	public readonly localSessionId: SessionId;
@@ -99,7 +100,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			assert(localSession !== undefined, "Malformed sessions on deserialization.");
 			this.localSession = localSession;
 		}
-		this.newClusterCapacity = defaultClusterCapacity;
+		this.newClusterCapacity = initialClusterCapacity;
 	}
 
 	public static create(logger?: ITelemetryBaseLogger): IdCompressor;
@@ -490,46 +491,51 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			finalSpace.clusters.length * 3 + // clusters: (sessionIndex, capacity, count)[]
 			localStateSize; // local state, if present
 
-		const serialized = new Float64Array(totalSize);
+		const serializedFloat = new Float64Array(totalSize);
+		const serializedUint = new BigUint64Array(serializedFloat.buffer);
 		let index = 0;
-		index = writeNumber(serialized, index, currentWrittenVersion);
-		index = writeBoolean(serialized, index, hasLocalState);
-		index = writeNumber(serialized, index, this.clusterCapacity);
-		index = writeNumber(serialized, index, serializedSessions.length);
-		index = writeNumber(serialized, index, finalSpace.clusters.length);
+		index = writeNumber(serializedFloat, index, currentWrittenVersion);
+		index = writeBoolean(serializedFloat, index, hasLocalState);
+		index = writeNumber(serializedFloat, index, this.clusterCapacity);
+		index = writeNumber(serializedFloat, index, serializedSessions.length);
+		index = writeNumber(serializedFloat, index, finalSpace.clusters.length);
 
 		const sessionIndexMap = new Map<Session, number>();
 		for (let i = 0; i < serializedSessions.length; i++) {
 			const session = serializedSessions[i];
-			index = writeNumericUuid(serialized, index, session.sessionUuid);
+			index = writeNumericUuid(serializedUint, index, session.sessionUuid);
 			sessionIndexMap.set(session, i);
 		}
 
 		finalSpace.clusters.forEach((cluster) => {
-			index = writeNumber(serialized, index, sessionIndexMap.get(cluster.session) as number);
-			index = writeNumber(serialized, index, cluster.capacity);
-			index = writeNumber(serialized, index, cluster.count);
+			index = writeNumber(
+				serializedFloat,
+				index,
+				sessionIndexMap.get(cluster.session) as number,
+			);
+			index = writeNumber(serializedFloat, index, cluster.capacity);
+			index = writeNumber(serializedFloat, index, cluster.count);
 		});
 
 		if (hasLocalState) {
-			index = writeNumber(serialized, index, this.generatedIdCount);
-			index = writeNumber(serialized, index, this.nextRangeBaseGenCount);
-			index = writeNumber(serialized, index, normalizer.contents.size);
+			index = writeNumber(serializedFloat, index, this.generatedIdCount);
+			index = writeNumber(serializedFloat, index, this.nextRangeBaseGenCount);
+			index = writeNumber(serializedFloat, index, normalizer.contents.size);
 			for (const [leadingLocal, count] of normalizer.contents.entries()) {
-				index = writeNumber(serialized, index, genCountFromLocalId(leadingLocal));
-				index = writeNumber(serialized, index, count);
+				index = writeNumber(serializedFloat, index, genCountFromLocalId(leadingLocal));
+				index = writeNumber(serializedFloat, index, count);
 			}
 		}
 
 		assert(index === totalSize, "Serialized size was incorrectly calculated.");
 		this.logger?.sendTelemetryEvent({
 			eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
-			size: serialized.byteLength,
+			size: serializedFloat.byteLength,
 			clusterCount: finalSpace.clusters.length,
 			sessionCount: serializedSessions.length,
 		});
 
-		return bufferToString(serialized.buffer, "base64") as SerializedIdCompressor;
+		return bufferToString(serializedFloat.buffer, "base64") as SerializedIdCompressor;
 	}
 
 	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
@@ -542,7 +548,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		sessionId?: SessionId,
 	): IdCompressor {
 		const buffer = stringToBuffer(serialized, "base64");
-		const index = { index: 0, bytes: new Float64Array(buffer) };
+		const index: Index = {
+			index: 0,
+			bufferFloat: new Float64Array(buffer),
+			bufferUint: new BigUint64Array(buffer),
+		};
 		const version = readNumber(index);
 		assert(version === currentWrittenVersion, "Unknown serialized version.");
 		const hasLocalState = readBoolean(index);
@@ -610,7 +620,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			assert(sessionId !== undefined, "Local state should exist in serialized form.");
 		}
 
-		assert(index.index === index.bytes.length, "Failed to read entire serialized compressor.");
+		assert(
+			index.index === index.bufferFloat.length,
+			"Failed to read entire serialized compressor.",
+		);
 		return compressor;
 	}
 

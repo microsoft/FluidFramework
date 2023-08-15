@@ -7,7 +7,6 @@
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to
  * the scope of the session (i.e. compressor) that produced them.
- * @alpha
  */
 export type SessionSpaceCompressedId = number & {
 	readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";

@@ -14,7 +14,7 @@ import {
 	SessionSpaceCompressedId,
 	SessionId,
 	StableId,
-	defaultClusterCapacity,
+	initialClusterCapacity,
 } from "@fluidframework/runtime-definitions";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import { IdCompressor, createSessionId, fail } from "../../id-compressor";
@@ -107,7 +107,7 @@ describe("IdCompressor Perf", () => {
 		type,
 		title: `allocate local ID`,
 		before: () => {
-			setupCompressors(defaultClusterCapacity, true, true);
+			setupCompressors(initialClusterCapacity, true, true);
 		},
 		benchmarkFn: () => {
 			perfCompressor!.generateCompressedId();
@@ -118,7 +118,7 @@ describe("IdCompressor Perf", () => {
 		type,
 		title: "take an ID creation range",
 		before: () => {
-			setupCompressors(defaultClusterCapacity, true, true);
+			setupCompressors(initialClusterCapacity, true, true);
 		},
 		benchmarkFn: () => {
 			perfCompressor!.generateCompressedId();
@@ -177,7 +177,7 @@ describe("IdCompressor Perf", () => {
 				isLocal ? "local" : "final"
 			} ID from a remote session to session space`,
 			before: () => {
-				const network = setupCompressors(defaultClusterCapacity, true, true);
+				const network = setupCompressors(initialClusterCapacity, true, true);
 				const remoteSession = getIdMadeBy(remoteClient, false, network);
 				opSpaceId = (
 					isLocal
@@ -199,7 +199,7 @@ describe("IdCompressor Perf", () => {
 				eagerFinal ? "eager final" : "local"
 			} ID from op space to the local session`,
 			before: () => {
-				const network = setupCompressors(defaultClusterCapacity, true, true);
+				const network = setupCompressors(initialClusterCapacity, true, true);
 				const opId = perfCompressor.normalizeToOpSpace(
 					getIdMadeBy(localClient, eagerFinal, network),
 				);
@@ -221,7 +221,7 @@ describe("IdCompressor Perf", () => {
 				isLocalOriginator ? "local" : "remote"
 			} session to a small session space (common case)`,
 			before: () => {
-				const network = setupCompressors(defaultClusterCapacity, false, true);
+				const network = setupCompressors(initialClusterCapacity, false, true);
 				// Ensure the local session has several different clusters
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
 					network.allocateAndSendIds(localClient, perfCompressor.clusterCapacity);
@@ -243,7 +243,7 @@ describe("IdCompressor Perf", () => {
 		type,
 		title: `normalize an unacked local ID from the local session to op space`,
 		before: () => {
-			const network = setupCompressors(defaultClusterCapacity, true, false);
+			const network = setupCompressors(initialClusterCapacity, true, false);
 			// Ensure no eager finals
 			network.allocateAndSendIds(
 				localClient,
@@ -268,7 +268,7 @@ describe("IdCompressor Perf", () => {
 				eagerFinal ? "eager final" : "local"
 			} ID from the local session to op space`,
 			before: () => {
-				const network = setupCompressors(defaultClusterCapacity, true, true);
+				const network = setupCompressors(initialClusterCapacity, true, true);
 				id = getIdMadeBy(localClient, eagerFinal, network);
 			},
 			benchmarkFn: () => {
@@ -285,7 +285,7 @@ describe("IdCompressor Perf", () => {
 				local ? "local" : "remote"
 			} client into a stable ID`,
 			before: () => {
-				const network = setupCompressors(defaultClusterCapacity, true, true);
+				const network = setupCompressors(initialClusterCapacity, true, true);
 				finalIdToDecompress = getIdMadeBy(
 					local ? localClient : remoteClient,
 					true,
@@ -303,7 +303,7 @@ describe("IdCompressor Perf", () => {
 		type,
 		title: `decompress a local ID into a stable ID`,
 		before: () => {
-			const network = setupCompressors(defaultClusterCapacity, true, true);
+			const network = setupCompressors(initialClusterCapacity, true, true);
 			localIdToDecompress = getIdMadeBy(localClient, false, network);
 		},
 		benchmarkFn: () => {
@@ -317,7 +317,7 @@ describe("IdCompressor Perf", () => {
 			type,
 			title: `recompress a stable ID to a ${eagerFinal ? "local" : "final"} ID`,
 			before: () => {
-				const network = setupCompressors(defaultClusterCapacity, true, true);
+				const network = setupCompressors(initialClusterCapacity, true, true);
 				stableToCompress = perfCompressor.decompress(
 					getIdMadeBy(localClient, eagerFinal, network),
 				);
@@ -336,9 +336,9 @@ describe("IdCompressor Perf", () => {
 			})`,
 			before: () => {
 				if (manySessions) {
-					perfCompressor = buildHugeCompressor(undefined, defaultClusterCapacity);
+					perfCompressor = buildHugeCompressor(undefined, initialClusterCapacity);
 				} else {
-					setupCompressors(defaultClusterCapacity, false, true);
+					setupCompressors(initialClusterCapacity, false, true);
 				}
 			},
 			benchmarkFn: () => {
@@ -357,9 +357,9 @@ describe("IdCompressor Perf", () => {
 			})`,
 			before: () => {
 				if (manySessions) {
-					perfCompressor = buildHugeCompressor(undefined, defaultClusterCapacity);
+					perfCompressor = buildHugeCompressor(undefined, initialClusterCapacity);
 				} else {
-					setupCompressors(defaultClusterCapacity, false, true);
+					setupCompressors(initialClusterCapacity, false, true);
 				}
 				serialized = perfCompressor.serialize(false);
 			},

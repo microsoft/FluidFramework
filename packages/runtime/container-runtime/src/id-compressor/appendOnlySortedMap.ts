@@ -1,3 +1,4 @@
+/* eslint-disable tsdoc/syntax */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -132,7 +133,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * Adds a new key/value pair to the map. `key` must be \> to all keys in the map.
+	 * Adds a new key/value pair to the map. `key` must be > to all keys in the map.
 	 * @param key - the key to add.
 	 * @param value - the value to add.
 	 */
@@ -148,7 +149,7 @@ export class AppendOnlySortedMap<K, V> {
 
 	/**
 	 * Replaces the last key/value pair with the given one. If the map is empty, it simply appends.
-	 * `key` must be \> to all keys in the map.
+	 * `key` must be > to all keys in the map prior to the one replaced.
 	 * @param key - the key to add.
 	 * @param value - the value to add.
 	 */
