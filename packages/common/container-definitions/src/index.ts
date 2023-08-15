@@ -63,27 +63,25 @@ export {
 	IRuntimeFactory,
 } from "./runtime";
 
-/**
- * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IErrorBase } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated ContainerErrorType is being deprecated as a public export is moving to "core-interfaces".
- */
-export { ContainerErrorType } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IGenericError } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IThrottlingWarning } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IUsageError } from "@fluidframework/core-interfaces";
+export {
+	/**
+	 * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IErrorBase,
+	/**
+	 * @deprecated ContainerErrorType is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	ContainerErrorType,
+	/**
+	 * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IGenericError,
+	/**
+	 * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IThrottlingWarning,
+	/**
+	 * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IUsageError,
+} from "@fluidframework/core-interfaces";

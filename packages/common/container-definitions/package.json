@@ -63,22 +63,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ContainerWarning": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IErrorBase": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IGenericError": {
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IThrottlingWarning": {
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_IUsageError": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
 			"RemovedEnumDeclaration_ContainerErrorType": {
 				"backCompat": false
 			},
