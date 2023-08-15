@@ -1,1 +1,1 @@
-# @fluidframework-internal/client-utils
+# @fluid-internal/client-utils

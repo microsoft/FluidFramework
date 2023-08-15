@@ -1,7 +1,8 @@
 {
-	"name": "@fluidframework-internal/client-utils",
+	"name": "@fluid-internal/client-utils",
 	"version": "2.0.0-internal.6.1.0",
-	"description": "Not intended for use outside the Fluid client repo.",
+  "private": true,
+	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",

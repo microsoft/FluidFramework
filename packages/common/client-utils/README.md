@@ -1,4 +1,4 @@
-# @fluidframework-internal/client-utils
+# @fluid-internal/client-utils
 
 This package contains common utility functions and classes used by the Fluid Framework.
 
