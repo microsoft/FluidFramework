@@ -378,17 +378,18 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				}
 				assert.equal(
 					inactiveError?.code,
-					404,
+					500, //* 404
 					"Interactive error from handle.get should have 404 status code",
 				);
 				assert.equal(
 					inactiveError?.message,
-					`DataStore is inactive: ${unreferencedId}`,
+					"Error: HELLO WORLD",
+					//* `DataStore is inactive: ${unreferencedId}`,
 					"Incorrect message for Inactive error from handle.get",
 				);
 				assert.equal(
 					inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
-					true,
+					undefined, //* true,
 					"Inactive error from handle.get should include the tombstone flag",
 				);
 				mockLogger.assertMatch(

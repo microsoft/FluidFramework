@@ -1787,6 +1787,17 @@ export class ContainerRuntime
 			dataStoreContext.packagePath,
 			request?.headers,
 		);
+
+		//* Differentiate and check againts config
+		if (
+			["Inactive", "SweepReady", "Tombstoned"].includes(
+				dataStoreContext.experimentalGCInfo?.state ?? "",
+			)
+		) {
+			//* Fashion the right kind of error
+			throw new Error("HELLO WORLD");
+		}
+
 		return dataStoreChannel;
 	}
 
