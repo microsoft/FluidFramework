@@ -8,5 +8,5 @@ import { IPendingLocalState } from "../pendingStateManager";
 
 export interface PendingLocalState {
 	pending: IPendingLocalState | undefined;
-	pendingAttachmentBlobs: IPendingBlobs;
+	pendingAttachmentBlobs?: IPendingBlobs;
 }

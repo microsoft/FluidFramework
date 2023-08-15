@@ -81,6 +81,12 @@ export interface IRuntimeStateHandler {
 export class PendingStateManager implements IDisposable {
 	private readonly pendingMessages = new Deque<IPendingMessageNew>();
 	private readonly initialMessages = new Deque<IPendingMessageNew>();
+
+	/**
+	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
+	 */
+	private savedOps: IPendingMessageNew[] = [];
+
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
 		this.pendingMessages.clear();
@@ -226,8 +232,6 @@ export class PendingStateManager implements IDisposable {
 			this.pendingMessages.push(this.initialMessages.shift()!);
 		}
 	}
-
-	public savedOps: IPendingMessageNew[] = [];
 
 	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
@@ -428,6 +432,9 @@ export class PendingStateManager implements IDisposable {
 				});
 			}
 		}
+
+		// pending ops should no longer depend on previous sequenced local ops after resubmit
+		this.savedOps = [];
 
 		// We replayPendingStates on read connections too - we expect these to get nack'd though, and to then reconnect
 		// on a write connection and replay again. This filters out the replay that happens on the read connection so

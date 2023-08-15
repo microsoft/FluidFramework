@@ -1120,7 +1120,8 @@ export class Container
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
 			term: OnlyValidTermValue,
-			clientId: this.clientId,
+			// no need to save this if there is no pending runtime state
+			clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 		};
 
 		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });

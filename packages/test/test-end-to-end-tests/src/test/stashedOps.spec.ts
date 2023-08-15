@@ -958,7 +958,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				// of how small this window is.
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
-					(container as any).processRemoteMessage = (message) => console.debug(message);
+					(container as any).processRemoteMessage = (message) => null;
 					const pendingStateP = container.closeAndGetPendingLocalState?.();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);

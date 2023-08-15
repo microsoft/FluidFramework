@@ -509,7 +509,10 @@ interface IPendingRuntimeState {
 	 * Pending blobs from BlobManager
 	 */
 	pendingAttachmentBlobs?: IPendingBlobs;
-	clientIds?: string[];
+	/**
+	 * Used to recognize replayed local sequenced ops
+	 */
+	clientId?: string;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1088,6 +1091,11 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
+	 * clientId of previous container instance. Used to recognize replayed local sequenced ops.
+	 */
+	private readonly stashClientId?: string;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1289,7 +1297,7 @@ export class ContainerRuntime
 		}
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
-		this.stashClientIds = new Set<string>(pendingRuntimeState?.clientIds);
+		this.stashClientId = pendingRuntimeState?.clientId;
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -2085,8 +2093,6 @@ export class ContainerRuntime
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
-	private readonly stashClientIds: Set<string>;
-
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
@@ -2097,12 +2103,9 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		const pretendLocal = this.stashClientIds.has(messageArg.clientId);
-		if (local) {
-			this.stashClientIds.add(messageArg.clientId);
-		}
+		const stashedLocal = this.stashClientId === messageArg.clientId;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local || pretendLocal, runtimeMessage);
+			this.processCore(message, local || stashedLocal, runtimeMessage);
 		}
 	}
 
@@ -3137,11 +3140,6 @@ export class ContainerRuntime
 			return;
 		}
 
-		if (!dirty) {
-			this.stashClientIds.clear();
-			this.pendingStateManager.savedOps = [];
-		}
-
 		this.dirtyContainer = dirty;
 		if (this.emitDirtyDocumentEvent) {
 			this.emit(dirty ? "dirty" : "saved");
@@ -3723,6 +3721,11 @@ export class ContainerRuntime
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+
+		if (!pendingAttachmentBlobs && !this.pendingStateManager.hasPendingMessages() && this.outbox.isEmpty) {
+			return; // no pending state to save
+		}
+
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 		// to close current batch.
@@ -3732,8 +3735,7 @@ export class ContainerRuntime
 		const pendingState: IPendingRuntimeState = {
 			pending: pendingOps,
 			pendingAttachmentBlobs,
-			// we don't need to save these if we don't have pending ops
-			clientIds: pendingOps ? Array.from(this.stashClientIds) : undefined,
+			clientId: this.clientId,
 		};
 		return pendingState;
 	}

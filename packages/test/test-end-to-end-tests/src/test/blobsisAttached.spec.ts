@@ -81,10 +81,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, undefined);
 			}
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+			const pendingState: PendingLocalState | undefined = await runtimeOf(dataStore1).getPendingLocalState() as PendingLocalState | undefined;
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("blob is aborted after upload succeds", async function () {
@@ -181,10 +179,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			map.set(testKey, blob);
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+			const pendingState: PendingLocalState | undefined = await runtimeOf(dataStore1).getPendingLocalState();
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
 		it("removes multiple pending blobs after attached and acked", async function () {
@@ -198,10 +194,8 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
 				map.set(`${i}`, blob);
 			}
-			const pendingBlobs: IPendingBlobs = await runtimeOf(dataStore1)
-				.getPendingLocalState()
-				.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
-			assert.strictEqual(Object.keys(pendingBlobs).length, 0);
+			const pendingState: PendingLocalState | undefined = await runtimeOf(dataStore1).getPendingLocalState();
+			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 	});
 
