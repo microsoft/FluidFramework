@@ -3,12 +3,33 @@
  * Licensed under the MIT License.
  */
 
+export type { IDisposable } from "./disposable";
+
+export {
+	ContainerErrorType,
+	IErrorBase,
+	IGenericError,
+	IUsageError,
+	IThrottlingWarning,
+} from "./error";
+
 export {
 	IFluidLoadable,
 	IProvideFluidLoadable,
 	IFluidRunnable,
 	IProvideFluidRunnable,
 } from "./fluidLoadable";
+
+export {
+	IFluidPackageEnvironment,
+	IFluidPackage,
+	isFluidPackage,
+	IFluidCodeDetailsConfig,
+	IFluidCodeDetails,
+	isFluidCodeDetails,
+	IFluidCodeDetailsComparer,
+	IProvideFluidCodeDetailsComparer,
+} from "./fluidPackage";
 
 // Typescript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
@@ -28,19 +49,6 @@ export {
 	IProvideFluidHandle,
 } from "./handles";
 
-export {
-	IFluidPackageEnvironment,
-	IFluidPackage,
-	isFluidPackage,
-	IFluidCodeDetailsConfig,
-	IFluidCodeDetails,
-	isFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IProvideFluidCodeDetailsComparer,
-} from "./fluidPackage";
-
-export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
-export type { IDisposable } from "./disposable";
 export type {
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
@@ -54,3 +62,5 @@ export type {
 	TelemetryEventCategory,
 	TelemetryEventPropertyType,
 } from "./logger";
+
+export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";

@@ -160,26 +160,26 @@ use_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerErrorType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_ContainerErrorType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ContainerErrorType():
     TypeOnly<old.ContainerErrorType>;
-declare function use_current_EnumDeclaration_ContainerErrorType(
+declare function use_current_RemovedEnumDeclaration_ContainerErrorType(
     use: TypeOnly<current.ContainerErrorType>);
-use_current_EnumDeclaration_ContainerErrorType(
+use_current_RemovedEnumDeclaration_ContainerErrorType(
     get_old_EnumDeclaration_ContainerErrorType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerErrorType": {"backCompat": false}
+* "RemovedEnumDeclaration_ContainerErrorType": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_ContainerErrorType():
+declare function get_current_RemovedEnumDeclaration_ContainerErrorType():
     TypeOnly<current.ContainerErrorType>;
 declare function use_old_EnumDeclaration_ContainerErrorType(
     use: TypeOnly<old.ContainerErrorType>);
 use_old_EnumDeclaration_ContainerErrorType(
-    get_current_EnumDeclaration_ContainerErrorType());
+    get_current_RemovedEnumDeclaration_ContainerErrorType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -203,6 +203,7 @@ declare function get_current_InterfaceDeclaration_ContainerWarning():
 declare function use_old_InterfaceDeclaration_ContainerWarning(
     use: TypeOnly<old.ContainerWarning>);
 use_old_InterfaceDeclaration_ContainerWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerWarning());
 
 /*
@@ -568,26 +569,20 @@ use_old_InterfaceDeclaration_IDeltaSender(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IErrorBase": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IErrorBase": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IErrorBase():
     TypeOnly<old.IErrorBase>;
-declare function use_current_InterfaceDeclaration_IErrorBase(
+declare function use_current_RemovedInterfaceDeclaration_IErrorBase(
     use: TypeOnly<current.IErrorBase>);
-use_current_InterfaceDeclaration_IErrorBase(
+use_current_RemovedInterfaceDeclaration_IErrorBase(
     get_old_InterfaceDeclaration_IErrorBase());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IErrorBase": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IErrorBase": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IErrorBase():
-    TypeOnly<current.IErrorBase>;
-declare function use_old_InterfaceDeclaration_IErrorBase(
-    use: TypeOnly<old.IErrorBase>);
-use_old_InterfaceDeclaration_IErrorBase(
-    get_current_InterfaceDeclaration_IErrorBase());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -856,26 +851,20 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IGenericError": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IGenericError():
-    TypeOnly<old.IGenericError>;
-declare function use_current_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<current.IGenericError>);
-use_current_InterfaceDeclaration_IGenericError(
-    get_old_InterfaceDeclaration_IGenericError());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGenericError": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IGenericError": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IGenericError():
+declare function get_current_RemovedInterfaceDeclaration_IGenericError():
     TypeOnly<current.IGenericError>;
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: TypeOnly<old.IGenericError>);
 use_old_InterfaceDeclaration_IGenericError(
-    get_current_InterfaceDeclaration_IGenericError());
+    get_current_RemovedInterfaceDeclaration_IGenericError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1192,50 +1181,32 @@ use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IThrottlingWarning():
     TypeOnly<old.IThrottlingWarning>;
-declare function use_current_InterfaceDeclaration_IThrottlingWarning(
+declare function use_current_RemovedInterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<current.IThrottlingWarning>);
-use_current_InterfaceDeclaration_IThrottlingWarning(
+use_current_RemovedInterfaceDeclaration_IThrottlingWarning(
     get_old_InterfaceDeclaration_IThrottlingWarning());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IThrottlingWarning():
-    TypeOnly<current.IThrottlingWarning>;
-declare function use_old_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<old.IThrottlingWarning>);
-use_old_InterfaceDeclaration_IThrottlingWarning(
-    get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IUsageError": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IUsageError": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IUsageError():
-    TypeOnly<old.IUsageError>;
-declare function use_current_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<current.IUsageError>);
-use_current_InterfaceDeclaration_IUsageError(
-    get_old_InterfaceDeclaration_IUsageError());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IUsageError": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IUsageError": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IUsageError():
-    TypeOnly<current.IUsageError>;
-declare function use_old_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<old.IUsageError>);
-use_old_InterfaceDeclaration_IUsageError(
-    get_current_InterfaceDeclaration_IUsageError());
 
 /*
 * Validate forward compat by using old type in place of current type
