@@ -33,6 +33,13 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
  */
 export interface IMergeNodeCommon {
 	/**
+	 *
+	 * @deprecated - In subsequent releases this will no longer be exported
+	 * @internal
+	 */
+	parent?: IMergeBlock;
+
+	/**
 	 * The index of this node in its parent's list of children.
 	 */
 	index: number;
