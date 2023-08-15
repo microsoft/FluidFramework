@@ -1,10 +1,35 @@
 # @fluidframework/core-utils
 
-Intended for internally sharing/promoting best-practice implementations of Fluid agnostic utility functions across packages in the client repo.
+This package is intended for sharing and promoting best-practice implementations of Fluid-agnostic utility functions
+across packages in the Fluid Framework repo.
 
-Use outside of the Fluid Framework client repo is not supported or recommended.
+Use outside of the Fluid Framework repo is not supported or recommended.
 
-All exports must be designated @internal. This package must not depend on other packages.
+## Adding code to this package
+
+As a utility package, this package does not have a strong identity. This means that it's easy to become a "dumping
+ground" for code that we think we should share but doesn't have an obvious home. We try to avoid dumping things into
+utility packages, and this one is no exception.
+
+New code should only be added to this package in rare circumstances. In most cases, the code would be better placed in a
+package with a clear identity (e.g. an "events" package for shared event infrastructure) or not shared at all.
+
+## Requirements
+
+This package has important requirements for the code within it.
+
+1. **Code in this package must have zero dependencies.** That is, it must not depend on other packages, even within the
+   Fluid Framework repo. `devDependencies` are OK.
+1. **All exports must be designated `@internal`.** This code is intended for use within the Fluid Framework only.
+1. This package should **only contain 'implementation' code, not type definitions.** This is the most flexible rule, and
+   there are some exceptions. If the type is _only_ necessary when using this package, then it is probably OK. However,
+   usually such types would be better placed in core-interfaces or in a package that corresponds to the purpose.
+
+If you want to add code that does not meet these requirements, these other packages may be a better choice:
+
+-   **Types and interfaces** that are intended to be broadly shared across the client release group should be put in the
+    **core-interfaces** package.
+-   **Shared implementation code with dependencies** should be put in the **client-utils** package.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
