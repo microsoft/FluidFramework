@@ -74,7 +74,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	// -----------------------
 
 	// ----- Final state -----
-	private nextRangeBaseGenCount: number = 1;
+	private nextRangeBaseGenCount = 1;
 	private newClusterCapacity: number;
 	private readonly sessions = new Sessions();
 	private readonly finalSpace = new FinalSpace();
