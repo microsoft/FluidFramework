@@ -62,8 +62,8 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 }
 
 /** type guard for ILoggingError interface */
-export const isILoggingError = (x: any): x is ILoggingError =>
-	typeof x?.getTelemetryProperties === "function";
+export const isILoggingError = (x: unknown): x is ILoggingError =>
+	typeof (x as any)?.getTelemetryProperties === "function";
 
 /** Copy props from source onto target, but do not overwrite an existing prop that matches */
 function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {

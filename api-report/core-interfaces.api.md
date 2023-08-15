@@ -237,7 +237,7 @@ export function isFluidError(e: unknown): e is IFluidErrorBase;
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
 
 // @public
-export const isILoggingError: (x: any) => x is ILoggingError;
+export const isILoggingError: (x: unknown) => x is ILoggingError;
 
 // @public
 export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt;
