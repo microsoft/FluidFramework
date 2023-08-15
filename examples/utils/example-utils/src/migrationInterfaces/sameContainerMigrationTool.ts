@@ -28,7 +28,7 @@ export type SameContainerMigrationState =
 	| "collaborating"
 	| "proposingMigration"
 	| "stoppingCollaboration"
-	| "generatingV1Summary"
+	| "loadingV1PausedContainer"
 	| "uploadingV1Summary"
 	| "submittingV1Summary"
 	// TODO: "waitingForV2Proposal"?  Not a guarantee that we will issue a proposal here, if we see the proposal during catch up?

@@ -81,14 +81,9 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 */
 	private _acceptedP: Promise<void> | undefined;
 	/**
-	 * A promise that will resolve when we know the final v1 summary was successfully submitted.
-	 * Note that even when loading from that summary, we should expect to see the summaryAck as part of the logTail
+	 * This boolean will make it easier to synchronously determine if the v1 pause is done.
 	 */
-	private _v1SummaryP: Promise<void> | undefined;
-	/**
-	 * This boolean will make it easier to synchronously determine if the v1 summary is done.
-	 */
-	private _v1SummaryDone: boolean = false;
+	private _v1PauseDone: boolean = false;
 	/**
 	 * A promise that will resolve upon seeing the _first_ proposal, even before it is approved.  This lets us know that we don't need to submit our own proposal.
 	 */
@@ -132,11 +127,11 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			return "readyForMigration";
 		} else if (this._anyQuorumProposalSeen) {
 			return "waitingForV2ProposalCompletion";
-		} else if (this._v1SummaryDone) {
+		} else if (this._v1PauseDone) {
 			return "proposingV2Code";
 		} else if (this.acceptedVersion !== undefined) {
-			// TODO: other phases of v1 summary upload/submit?
-			return "generatingV1Summary";
+			// TODO: other phases of v1 paused container?
+			return "loadingV1PausedContainer";
 		} else if (this.proposedVersion !== undefined) {
 			return "stoppingCollaboration";
 		} else if (this._proposalP !== undefined) {
@@ -240,43 +235,16 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		this.emit("stoppingCollaboration");
 	};
 
-	private readonly ensureV1Summary = async () => {
-		// TODO: Start by awaiting connected?
-		// If someone else finishes this while the local client is still working on it, the local
-		// client should immediately abort this step and move on to the next one.
-		// Retain the generated summary and summary handle for retry in subsequent phases
-		// TODO: actual implementation
-		// TODO: This is basically executing the summary flow outside of the container.  How much of this should stay inside the container?
-		// Main concern is that we want to race it with the summary already being done by another client, and not retry after it's done.
-		// TODO: We may want all clients to race to avoid the problem of the missing v1 summaryAck?  BUT need to acknowledge that sucessful upload
-		// is only "done" for single-commit summary.
-		const generateV1Summary = async () => {
-			// TODO: retry also
-			this.emit("generatingV1Summary");
-			return "This is the v1 summary I generated";
-		};
-		const uploadV1Summary = async (_v1Summary) => {
-			// Do upload of v1Summary
-			// TODO: Retry also
-			this.emit("uploadingV1Summary");
-			return "This is the handle I got back after successfully uploading the v1 summary";
-		};
-		const submitV1Summary = async (_v1SummaryHandle) => {
-			// Submit summarize op for v1Summary
-			this.emit("submittingV1Summary");
-			// TODO: Retry also
-			// TODO: Returning a never-resolving promise for now so we at least wait on some real summary.
-			return new Promise((resolve) => {});
-		};
-		const v1Summary = await Promise.race([generateV1Summary(), this._v1SummaryP]);
-		if (this._v1SummaryDone) {
-			return;
-		}
-		const v1SummaryHandle = await Promise.race([uploadV1Summary(v1Summary), this._v1SummaryP]);
-		if (this._v1SummaryDone) {
-			return;
-		}
-		await Promise.race([submitV1Summary(v1SummaryHandle), this._v1SummaryP]);
+	private readonly loadV1PausedContainer = async () => {
+		// TODO: issues if we summarize then connect a new client ? each client needs to do this?
+		const loadPausedContainerFn = await this._loadPausedContainerFnP;
+		const pausedModel = await loadPausedContainerFn(this.acceptedSeqNum);
+		assert(
+			pausedModel.container.deltaManager.lastSequenceNumber === this.acceptedSeqNum,
+			"paused container should be paused at this.acceptedSeqNum",
+		);
+		this._v1PauseDone = true;
+		this.emit("loadingV1PausedContainer");
 	};
 
 	private readonly ensureQuorumCodeDetails = async () => {
@@ -386,33 +354,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			this.pactMap.on("accepted", watchForAccepted);
 		});
 
-		this._v1SummaryP = new Promise<void>((resolve) => {
-			// TODO implement for real
-			// Challenge here: ContainerRuntime only emits "op" for runtime ops, which doesn't include summaryAck.
-			// SummaryCollection's approach is to go listen to the deltaManager directly, which is gross but works.
-			// Alternatively could have ContainerRuntime emit some summaryAck event
-			// TODO Figure out plan for when the summaryAck is missing entirely
-			const watchForV1Ack = (op: ISequencedDocumentMessage) => {
-				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
-				// random ack.  Probably means storing the PactMap accept sequence number and verifying the summary is based on that sequence number.
-				// Probably not the referenceSequenceNumber, since the summarizer will be generating based on a sequence number that is probably below the MSN.
-				// TODO: Not really appropriate to check the pactMap here, I'm just using this as an approximation of v1 summaryAck detection
-				// as in "Is this the first summary we've seen after proposal acceptance".
-				if (
-					this.pactMap.get(newVersionKey) !== undefined &&
-					op.type === MessageType.SummaryAck
-				) {
-					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
-					// Or maybe set that up in ensureV1Summary().
-					this.context.deltaManager.off("op", watchForV1Ack);
-					this._v1SummaryDone = true;
-					console.log("Resolving this._v1SummaryP");
-					resolve();
-				}
-			};
-			this.context.deltaManager.on("op", watchForV1Ack);
-		});
-
 		this._anyQuorumProposalSeenP = new Promise<void>((resolve) => {
 			// Here we want to watch the quorum and resolve on the first sequenced proposal.
 			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
@@ -484,7 +425,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				// random ack.  Probably means storing the Quorum code accept sequence number and verifying the summary is based on that sequence number.
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
-				if (this._v1SummaryDone && op.type === MessageType.SummaryAck) {
+				if (this._v1PauseDone && op.type === MessageType.SummaryAck) {
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.
@@ -512,20 +453,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		this.stopCollaboration();
 		await this._acceptedP;
 
-		// TODO: issues if we summarize then connect a new client :(
-
-		// TODO: If we re-enable heuristics (summaries), then we need to ensure we don't do a summary after this?
-		const loadPausedContainerFn = await this._loadPausedContainerFnP;
-		const pausedModel = await loadPausedContainerFn(this.acceptedSeqNum);
-		assert(
-			pausedModel.container.deltaManager.lastSequenceNumber === this.acceptedSeqNum,
-			"paused container should be paused at this.acceptedSeqNum",
-		);
-
-		// After the proposal is detected to be accepted, we need to ensure the final v1 summary is taken.
-		// Even if a client loads from this v1 summary it will still see its summarize and summaryAck in the logTail and
-		// know that this step is done.
-		await this.ensureV1Summary();
+		// After the proposal is detected to be accepted, we need to load a paused container with the v1 data.
+		await this.loadV1PausedContainer();
 
 		// The last step to prepare for the migration phase is to put the new code details into the quorum.  We have to
 		// do this here to ensure the correct summary is produced for services that have server-produced .protocol trees.
