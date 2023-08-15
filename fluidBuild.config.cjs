@@ -133,6 +133,36 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 		},
+		packageNames: {
+			// The allowed package scopes for the repo.
+			allowedScopes: [
+				"@fluidframework",
+				"@fluid-example",
+				"@fluid-experimental",
+				"@fluid-internal",
+				"@fluid-tools",
+			],
+			// These packages are known unscoped packages.
+			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
+
+			// These packages will always be published to npm.
+			mustPublishToNpm: ["@fluidframework", "fluid-framework", "tinylicious"],
+
+			// These packages may be published to npm in some cases. Policy doesn't enforce this.
+			mayPublishToNpm: ["@fluid-experimental", "@fluid-tools"],
+
+			// A list of packages known to be an internally published package but not to npm. Note that packages published to
+			// npm will also be published internally, however. This should be a minimal set required for legacy compat of
+			// internal partners or internal CI requirements.
+			mustPublishInternalFeedOnly: [
+				// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
+				"@fluid-internal/test-app-insights-logger",
+				"@fluid-internal/test-service-load",
+				// Most examples should be private, but table-document needs to publish internally for legacy compat
+				"@fluid-example/table-document",
+			],
+			mayPublishInternalFeed: ["@fluid-internal"],
+		},
 		dependencies: {
 			// use by npm-package-json-script-dep policy
 			// A list of script commands and the package that contains the command
