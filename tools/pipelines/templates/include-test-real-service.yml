@@ -173,7 +173,7 @@ jobs:
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-            echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+            echo "@microsoft:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/office/npm/registry/" >> ./.npmrc
             echo "always-auth=true" >> ./.npmrc
             cat .npmrc
 
@@ -189,13 +189,6 @@ jobs:
         displayName: 'npm authenticate (internal feed)'
         inputs:
           workingFile: ${{ parameters.testWorkspace }}/.npmrc
-
-      # Auth to Office feed
-      - task: npmAuthenticate@0
-        displayName: 'npm authenticate (office feed)'
-        inputs:
-          workingFile: ${{ parameters.testWorkspace }}/.npmrc
-          customEndpoint: 'Office Packages - Readonly'
 
       # Install test and logger package
       - task: Npm@1
