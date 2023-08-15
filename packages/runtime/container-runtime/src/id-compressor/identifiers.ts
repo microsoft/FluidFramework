@@ -6,16 +6,6 @@
 import { OpSpaceCompressedId, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 
 /**
- * An identifier (v4 UUID) that has been shortened by a distributed compression algorithm.
- * Lacks a space (session/op), meaning its scope is the same as the space-specific ID from which it was derived.
- */
-export type CompressedId =
-	| SessionSpaceCompressedId
-	| OpSpaceCompressedId
-	| FinalCompressedId
-	| LocalCompressedId;
-
-/**
  * A compressed ID that is stable and unique within the scope of network of compressors (i.e. a document).
  * It can only be used/decompressed in the context of the originating document.
  */
@@ -38,7 +28,9 @@ export type LocalCompressedId = number & {
 /**
  * @returns true if the supplied ID is a final ID.
  */
-export function isFinalId(id: CompressedId): id is FinalCompressedId {
+export function isFinalId(
+	id: SessionSpaceCompressedId | OpSpaceCompressedId,
+): id is FinalCompressedId {
 	return id >= 0;
 }
 
