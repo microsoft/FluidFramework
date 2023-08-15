@@ -23,7 +23,7 @@ import {
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, ITenantService } from "./services";
+import { ICache, IDenyList, ITenantService } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
@@ -35,6 +35,7 @@ export function create(
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -93,6 +94,7 @@ export function create(
 		cache,
 		asyncLocalStorage,
 		revokedTokenChecker,
+		denyList,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
