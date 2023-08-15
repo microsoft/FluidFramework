@@ -458,6 +458,13 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 
 		const failureRate = totalFailedCount / totalCount;
+
+		if (failureRate <= this.apiFailureRateTerminationThreshold) {
+			this.consecutiveFailedCount = 0;
+			return;
+		}
+
+		this.consecutiveFailedCount++;
 		const logProperties = {
 			failureRate,
 			totalCount,
@@ -468,22 +475,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			consecutiveFailedThresholdForLowerTotalRequests:
 				this.consecutiveFailedThresholdForLowerTotalRequests,
 		};
-		if (failureRate <= this.apiFailureRateTerminationThreshold) {
-			this.consecutiveFailedCount = 0;
-			return;
-		}
-
-		this.consecutiveFailedCount++;
 		if (
 			totalCount < this.apiMinimumCountToEnableTermination &&
 			this.consecutiveFailedCount < this.consecutiveFailedThresholdForLowerTotalRequests
 		) {
-			Lumberjack.warning("Total could didn't met min threshold", logProperties);
+			Lumberjack.warning("Total count didn't meet min threshold", logProperties);
 			return;
 		}
 
-		// reset consecutive Failed count to 0 before self killing pod
-		this.consecutiveFailedCount = 0;
 		// This logic is to automate the process of terminates application if db become unfunctional, so
 		// kubernetes would automatically handle the restart process.
 		Lumberjack.warning("Failure rate more than threshold, terminating", logProperties);
