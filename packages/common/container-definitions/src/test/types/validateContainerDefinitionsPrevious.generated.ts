@@ -174,12 +174,6 @@ use_current_RemovedEnumDeclaration_ContainerErrorType(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedEnumDeclaration_ContainerErrorType": {"backCompat": false}
 */
-declare function get_current_RemovedEnumDeclaration_ContainerErrorType():
-    TypeOnly<current.ContainerErrorType>;
-declare function use_old_EnumDeclaration_ContainerErrorType(
-    use: TypeOnly<old.ContainerErrorType>);
-use_old_EnumDeclaration_ContainerErrorType(
-    get_current_RemovedEnumDeclaration_ContainerErrorType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -203,7 +197,6 @@ declare function get_current_InterfaceDeclaration_ContainerWarning():
 declare function use_old_InterfaceDeclaration_ContainerWarning(
     use: TypeOnly<old.ContainerWarning>);
 use_old_InterfaceDeclaration_ContainerWarning(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerWarning());
 
 /*
@@ -876,6 +869,7 @@ declare function get_current_InterfaceDeclaration_IGenericError():
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: TypeOnly<old.IGenericError>);
 use_old_InterfaceDeclaration_IGenericError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericError());
 
 /*
@@ -1212,6 +1206,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
@@ -1236,6 +1231,7 @@ declare function get_current_InterfaceDeclaration_IUsageError():
 declare function use_old_InterfaceDeclaration_IUsageError(
     use: TypeOnly<old.IUsageError>);
 use_old_InterfaceDeclaration_IUsageError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUsageError());
 
 /*

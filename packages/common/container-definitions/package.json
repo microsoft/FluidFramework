@@ -78,6 +78,18 @@
 			"RemovedInterfaceDeclaration_IUsageError": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedEnumDeclaration_ContainerErrorType": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IGenericError": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IThrottlingWarning": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IUsageError": {
+				"backCompat": false
 			}
 		}
 	}
