@@ -18,8 +18,8 @@ describe.only("SharedString op-reentrancy", () => {
 	/**
 	 * This is an example scenario where reentrancy of submission of local ops was problematic which we saw in production.
 	 *
-	 * Reentrant local ops were a problem before #16815 as most SharedString local application methods
-	 * were set up along the lines of:
+	 * Reentrant local ops were a problem before #16815 as most SharedString local application methods were set up along
+	 * the following lines:
 	 * ```ts
 	 * const op = this.client.insert(start, content);
 	 * this.submitLocalMessage(op);
@@ -27,9 +27,9 @@ describe.only("SharedString op-reentrancy", () => {
 	 *
 	 * However, `this.client.insert` triggers SharedString's delta event. Thus, if the application uses that event to submit
 	 * further ops, from merge-tree's perspective they would have occurred *after* the first op, but the call to submit the op
-	 * to the container runtime happened *before* the call to submit the outermost op.
+	 * to the container runtime would happen *before* the call to submit the outermost op.
 	 *
-	 * Symptoms included various merge-tree asserts that the pending segments queue is inconsistent on the client which
+	 * Symptoms included various merge-tree asserts that the pending segments queue was inconsistent on the client which
 	 * triggered a reentrant op (ex: 0x046) and doc corruption from the perspective of other clients.
 	 *
 	 * #16815 fixed this by moving op submission to before raising the `sequenceDelta` event.
