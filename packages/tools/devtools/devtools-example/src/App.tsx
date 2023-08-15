@@ -14,91 +14,30 @@ import {
 } from "@fluentui/react-components";
 import React from "react";
 
-import { ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";
-import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experimental/devtools";
+import {
+	ContainerKey,
+	DevtoolsLogger,
+	HasContainerKey,
+	IFluidDevtools,
+	initializeDevtools,
+} from "@fluid-experimental/devtools-core";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer, SharedObjectClass } from "@fluidframework/fluid-static";
-import { SharedCell } from "@fluidframework/cell";
-import { SharedMap } from "@fluidframework/map";
+import { SessionStorageModelLoader } from "@fluid-example/example-utils";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import {
-	AllowedUpdateType,
-	FieldKinds,
-	ISharedTree,
-	SchemaBuilder,
-	ValueSchema,
-	SharedTreeFactory,
-	valueSymbol,
-} from "@fluid-experimental/tree2";
-import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
+	ContainerInfo,
+	createLoader,
+	createContainer,
+	loadExistingContainer,
+} from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
+import { IAppModel } from "./Container";
+import { AppData } from "./FluidObject";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";
-
-/**
- * Key in the app's `rootMap` under which the SharedString object is stored.
- */
-const sharedTextKey = "shared-text";
-
-/**
- * Key in the app's `rootMap` under which the SharedCounter object is stored.
- */
-const sharedCounterKey = "shared-counter";
-
-/**
- * Key in the app's `rootMap` under which the SharedTree object is stored.
- */
-const sharedTreeKey = "shared-tree";
-
-/**
- * Key in the app's `rootMap` under which the SharedCell object is stored.
- */
-const emojiMatrixKey = "emoji-matrix";
-
-/**
- * Function to create an instance which contains getFactory method returning SharedTreeFactory.
- * The example application calls container.create() to create a new DDS, and the method requires:
- * #1. static factory method
- * #2. class object with a constructor returning a type with a handle field
- *
- * The function below satisfies the requirements to populate the SharedTree within the application.
- */
-function castSharedTreeType(): SharedObjectClass<ISharedTree> {
-	/**
-	 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-	class SharedTree {
-		public static getFactory(): SharedTreeFactory {
-			return new SharedTreeFactory();
-		}
-	}
-
-	return SharedTree as unknown as SharedObjectClass<ISharedTree>;
-}
-
-const sharedTreeObject = castSharedTreeType();
-
-/**
- * Schema used by the app.
- */
-const containerSchema: ContainerSchema = {
-	initialObjects: {
-		rootMap: SharedMap,
-	},
-	dynamicObjectTypes: [
-		SharedCell,
-		SharedCounter,
-		SharedMap,
-		SharedMatrix,
-		SharedString,
-		sharedTreeObject,
-	],
-};
 
 /**
  * Helper function to read the Container ID from the URL location.
@@ -108,124 +47,13 @@ function getContainerIdFromLocation(location: Location): string {
 }
 
 /**
- * Populate the app's `rootMap` with the desired initial data for use with the client debug view.
- */
-async function populateRootMap(container: IFluidContainer): Promise<void> {
-	const rootMap = container.initialObjects.rootMap as SharedMap;
-	if (rootMap === undefined) {
-		throw new Error('"rootMap" not found in initialObjects tree.');
-	}
-
-	// Set up SharedMatrix of SharedCell_s for emoji grid
-	const emojiMatrix = await container.create(SharedMatrix);
-	const matrixDimension = 2; // Height and Width
-	emojiMatrix.insertRows(0, matrixDimension);
-	emojiMatrix.insertCols(0, matrixDimension);
-	for (let row = 0; row < matrixDimension; row++) {
-		for (let col = 0; col < matrixDimension; col++) {
-			const emojiCell = await container.create(SharedCell);
-			emojiMatrix.setCell(row, col, emojiCell.handle);
-		}
-	}
-
-	rootMap.set(emojiMatrixKey, emojiMatrix.handle);
-
-	// Set up SharedText for text form
-	const sharedText = await container.create(SharedString);
-	sharedText.insertText(0, "Enter text here.");
-	rootMap.set(sharedTextKey, sharedText.handle);
-
-	// Set up SharedCounter for counter widget
-	const sharedCounter = await container.create(SharedCounter);
-	rootMap.set(sharedCounterKey, sharedCounter.handle);
-
-	// Set up SharedTree for visualization
-	const sharedTree = await container.create(sharedTreeObject);
-
-	const builder = new SchemaBuilder("Devtools_Example_SharedTree");
-
-	const stringSchema = builder.leaf("string-property", ValueSchema.String);
-	const numberSchema = builder.leaf("number-property", ValueSchema.Number);
-	const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-
-	const serializableSchema = builder.leaf("serializable-property", ValueSchema.Serializable);
-
-	const leafSchema = builder.struct("leaf-item", {
-		leafField: SchemaBuilder.fieldValue(serializableSchema),
-	});
-
-	const childSchema = builder.struct("child-item", {
-		childField: SchemaBuilder.fieldValue(stringSchema, booleanSchema),
-		childData: SchemaBuilder.fieldOptional(leafSchema),
-	});
-
-	const rootNodeSchema = builder.struct("root-item", {
-		childrenOne: SchemaBuilder.fieldSequence(childSchema),
-		childrenTwo: SchemaBuilder.fieldValue(numberSchema),
-	});
-
-	const schema = builder.intoDocumentSchema(
-		SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
-	);
-
-	sharedTree.schematize({
-		schema,
-		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: {
-			childrenOne: [
-				{
-					childField: "Hello world!",
-					childData: { leafField: { [valueSymbol]: "Hello world again!" } },
-				},
-				{
-					childField: true,
-					childData: {
-						leafField: {
-							[valueSymbol]: false, // TODO: SharedTree should encode the handle.
-						},
-					},
-				},
-			],
-			childrenTwo: 32,
-		},
-	});
-
-	rootMap.set(sharedTreeKey, sharedTree.handle);
-
-	// Also set a couple of primitives for testing the debug view
-	rootMap.set("numeric-value", 42);
-	rootMap.set("string-value", "Hello world!");
-	rootMap.set("record-value", {
-		aNumber: 37,
-		aString: "Here is some text content.",
-		anObject: {
-			a: "a",
-			b: "b",
-		},
-	});
-}
-
-/**
- * Registers container described by the input `containerInfo` with the provided devtools instance.
- */
-function registerContainerWithDevtools(
-	devtools: IDevtools,
-	container: IFluidContainer,
-	containerKey: ContainerKey,
-): void {
-	devtools.registerContainerDevtools({
-		container,
-		containerKey,
-	});
-}
-
-/**
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
 function useContainerInfo(
-	devtools: IDevtools,
+	devtools: IFluidDevtools,
 	logger: DevtoolsLogger,
+	loader: SessionStorageModelLoader<IAppModel>,
 ): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
@@ -242,37 +70,48 @@ function useContainerInfo(
 		async function getSharedFluidData(): Promise<ContainerInfo> {
 			const containerId = getContainerIdFromLocation(window.location);
 			return containerId.length === 0
-				? createFluidContainer(containerSchema, logger, populateRootMap)
-				: loadExistingFluidContainer(containerId, containerSchema, logger);
+				? createContainer(loader)
+				: loadExistingContainer(containerId, loader);
+		}
+
+		async function getPrivateContainerData(): Promise<ContainerInfo> {
+			// Always create a new container for the private view.
+			// This isn't shared with other collaborators.
+			return createContainer(loader);
 		}
 
 		getSharedFluidData().then((containerInfo) => {
 			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
 				window.location.hash = containerInfo.containerId;
+				document.title = `Devtoolsl Example test app - ${containerInfo.containerId}`;
 			}
 
 			setSharedContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo.container, sharedContainerKey);
+			devtools.registerContainerDevtools({
+				container: containerInfo.container,
+				containerKey: sharedContainerKey,
+				containerData: containerInfo.appData.getRootObject(),
+			});
 		}, console.error);
-
-		async function getPrivateContainerData(): Promise<ContainerInfo> {
-			// Always create a new container for the private view.
-			// This isn't shared with other collaborators.
-
-			return createFluidContainer(containerSchema, logger, populateRootMap);
-		}
 
 		getPrivateContainerData().then((containerInfo) => {
 			setPrivateContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo.container, privateContainerKey);
+			devtools.registerContainerDevtools({
+				container: containerInfo.container,
+				containerKey: privateContainerKey,
+				containerData: containerInfo.appData.getRootObject(),
+			});
 		}, console.error);
 
 		return (): void => {
 			devtools?.dispose();
 		};
-	}, [devtools, logger]);
+	}, [devtools, loader, logger]);
 
-	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
+	return {
+		sharedContainer: sharedContainerInfo,
+		privateContainer: privateContainerInfo,
+	};
 }
 
 const appTheme: BrandVariants = {
@@ -346,6 +185,9 @@ export function App(): React.ReactElement {
 	// Initialize the Devtools logger
 	const logger = React.useMemo(() => new DevtoolsLogger(), []);
 
+	// Initialize the Fluid Container loader
+	const loader = React.useMemo(() => createLoader(logger), [logger]);
+
 	// Initialize Devtools
 	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
@@ -357,7 +199,7 @@ export function App(): React.ReactElement {
 	}, [devtools]);
 
 	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
+	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger, loader);
 
 	const styles = useStyles();
 
@@ -366,12 +208,12 @@ export function App(): React.ReactElement {
 			{sharedContainer === undefined ? (
 				<LoadingView containerKey={sharedContainerKey} />
 			) : (
-				<AppView {...sharedContainer} containerKey={sharedContainerKey} />
+				<AppView appData={sharedContainer.appData} containerKey={sharedContainerKey} />
 			)}
 			{privateContainer === undefined ? (
 				<LoadingView containerKey={privateContainerKey} />
 			) : (
-				<AppView {...privateContainer} containerKey={privateContainerKey} />
+				<AppView appData={privateContainer.appData} containerKey={privateContainerKey} />
 			)}
 		</div>
 	);
@@ -401,7 +243,12 @@ function LoadingView(props: LoadingViewProps): React.ReactElement {
 /**
  * {@link AppView} input props.
  */
-interface AppViewProps extends ContainerInfo, HasContainerKey {}
+interface AppViewProps extends HasContainerKey {
+	/**
+	 * Container object.
+	 */
+	appData: AppData;
+}
 
 /**
  * Inner app view.
@@ -409,57 +256,26 @@ interface AppViewProps extends ContainerInfo, HasContainerKey {}
  * @remarks Valid to display once the container has been created / loaded.
  */
 function AppView(props: AppViewProps): React.ReactElement {
-	const { container, containerKey } = props;
+	const { appData, containerKey } = props;
 
 	const styles = useStyles();
-
-	const rootMap = container.initialObjects.rootMap as SharedMap;
-	if (rootMap === undefined) {
-		throw new Error('"rootMap" not found in initialObjects tree.');
-	}
-
-	const sharedTextHandle = rootMap.get(sharedTextKey) as IFluidHandle<SharedString>;
-	if (sharedTextHandle === undefined) {
-		throw new Error(`"${sharedTextKey}" entry not found in rootMap.`);
-	}
-
-	const sharedCounterHandle = rootMap.get(sharedCounterKey) as IFluidHandle<SharedCounter>;
-	if (sharedCounterHandle === undefined) {
-		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
-	}
-
-	const emojiMatrixHandle = rootMap.get(emojiMatrixKey) as IFluidHandle<
-		SharedMatrix<IFluidHandle<SharedCell<boolean>>>
-	>;
-	if (emojiMatrixHandle === undefined) {
-		throw new Error(`"${emojiMatrixKey}" entry not found in rootMap.`);
-	}
 
 	return (
 		<div className={styles.appView}>
 			<h4>{containerKey}</h4>
-			<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />
-			<CounterView sharedCounterHandle={sharedCounterHandle} />
-			<TextView sharedTextHandle={sharedTextHandle} />
+			<EmojiMatrixView emojiMatrix={appData.emojiMatrix} />
+			<CounterView sharedCounter={appData.counter} />
+			<TextView sharedText={appData.text} />
 		</div>
 	);
 }
 
 interface TextViewProps {
-	sharedTextHandle: IFluidHandle<SharedString>;
+	sharedText: SharedString;
 }
 
 function TextView(props: TextViewProps): React.ReactElement {
-	const { sharedTextHandle } = props;
-
-	const [sharedText, setSharedText] = React.useState<SharedString | undefined>();
-
-	React.useEffect(() => {
-		sharedTextHandle.get().then(setSharedText, (error) => {
-			console.error("Error encountered loading SharedString:", error);
-			throw error;
-		});
-	}, [sharedTextHandle, setSharedText]);
+	const { sharedText } = props;
 
 	return sharedText === undefined ? (
 		<Spinner />
@@ -469,39 +285,21 @@ function TextView(props: TextViewProps): React.ReactElement {
 }
 
 interface CounterViewProps {
-	sharedCounterHandle: IFluidHandle<SharedCounter>;
+	sharedCounter: SharedCounter;
 }
 
 function CounterView(props: CounterViewProps): React.ReactElement {
-	const { sharedCounterHandle } = props;
-
-	const [sharedCounter, setSharedCounter] = React.useState<SharedCounter | undefined>();
-
-	React.useEffect(() => {
-		sharedCounterHandle.get().then(setSharedCounter, (error) => {
-			console.error("Error encountered loading SharedCounter:", error);
-			throw error;
-		});
-	}, [sharedCounterHandle, setSharedCounter]);
+	const { sharedCounter } = props;
 
 	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
 }
 
 interface EmojiMatrixViewProps {
-	emojiMatrixHandle: IFluidHandle<SharedMatrix>;
+	emojiMatrix: SharedMatrix;
 }
 
 function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
-	const { emojiMatrixHandle } = props;
-
-	const [emojiMatrix, setEmojiMatrix] = React.useState<SharedMatrix | undefined>();
-
-	React.useEffect(() => {
-		emojiMatrixHandle.get().then(setEmojiMatrix, (error) => {
-			console.error("Error encountered loading SharedMatrix:", error);
-			throw error;
-		});
-	}, [emojiMatrixHandle, setEmojiMatrix]);
+	const { emojiMatrix } = props;
 
 	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
 }
