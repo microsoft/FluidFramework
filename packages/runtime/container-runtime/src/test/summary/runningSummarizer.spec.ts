@@ -38,7 +38,6 @@ import {
 	SubmitSummaryResult,
 	RetriableSummaryError,
 	IGeneratedSummaryStats,
-	SummarizeReason,
 } from "../../summary";
 import {
 	defaultMaxAttempts,
@@ -1139,7 +1138,7 @@ describe("Runtime", () => {
 					);
 				});
 
-				it("should not retry last summary", async () => {
+				it("Should not retry last summary", async () => {
 					const stage: SummaryStage = "base";
 					const retryAfterSeconds = 10;
 					await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
@@ -1160,7 +1159,6 @@ describe("Runtime", () => {
 							retryAfterSeconds,
 							summarizeCount: 1,
 							stage,
-							summarizeReason: "lastSummary",
 						},
 					];
 					mockLogger.assertMatch(
@@ -1175,17 +1173,13 @@ describe("Runtime", () => {
 			});
 
 			describe("On-demand Summaries", () => {
-				const reason = "test";
-				// This is used to validate the summarizeReason property in telemetry.
-				const summarizeReason: SummarizeReason = `onDemand;${reason}`;
-
 				beforeEach(async () => {
 					await startRunningSummarizer();
 				});
 
 				it("Should create an on-demand summary", async () => {
 					await emitNextOp(2); // set ref seq to 2
-					const result = summarizer.summarizeOnDemand(undefined, { reason });
+					const result = summarizer.summarizeOnDemand(undefined, { reason: "test" });
 
 					const submitResult = await result.summarySubmitted;
 					assertRunCounts(1, 0, 0, "on-demand should run");
@@ -1222,16 +1216,8 @@ describe("Runtime", () => {
 
 					assert(
 						mockLogger.matchEvents([
-							{
-								eventName: "Running:Summarize_generate",
-								summarizeCount: runCount,
-								summarizeReason,
-							},
-							{
-								eventName: "Running:Summarize_Op",
-								summarizeCount: runCount,
-								summarizeReason,
-							},
+							{ eventName: "Running:Summarize_generate", summarizeCount: runCount },
+							{ eventName: "Running:Summarize_Op", summarizeCount: runCount },
 						]),
 						"unexpected log sequence",
 					);
@@ -1260,7 +1246,7 @@ describe("Runtime", () => {
 
 					let resolved = false;
 					try {
-						summarizer.summarizeOnDemand(undefined, { reason });
+						summarizer.summarizeOnDemand(undefined, { reason: "test" });
 						resolved = true;
 					} catch {}
 
@@ -1270,7 +1256,7 @@ describe("Runtime", () => {
 
 				it("On-demand summary should fail on nack", async () => {
 					await emitNextOp(2); // set ref seq to 2
-					const result = summarizer.summarizeOnDemand(undefined, { reason });
+					const result = summarizer.summarizeOnDemand(undefined, { reason: "test" });
 
 					const submitResult = await result.summarySubmitted;
 					assertRunCounts(1, 0, 0, "on-demand should run");
@@ -1307,16 +1293,8 @@ describe("Runtime", () => {
 
 					assert(
 						mockLogger.matchEvents([
-							{
-								eventName: "Running:Summarize_generate",
-								summarizeCount: runCount,
-								summarizeReason,
-							},
-							{
-								eventName: "Running:Summarize_Op",
-								summarizeCount: runCount,
-								summarizeReason,
-							},
+							{ eventName: "Running:Summarize_generate", summarizeCount: runCount },
+							{ eventName: "Running:Summarize_Op", summarizeCount: runCount },
 						]),
 						"unexpected log sequence",
 					);
@@ -1425,10 +1403,6 @@ describe("Runtime", () => {
 			});
 
 			describe("Enqueue Summaries", () => {
-				const reason = "test";
-				// This is used to validate the summarizeReason property in telemetry.
-				const summarizeReason: SummarizeReason = `enqueue;${reason}`;
-
 				beforeEach(async () => {
 					await startRunningSummarizer();
 				});
@@ -1437,7 +1411,7 @@ describe("Runtime", () => {
 					await emitNextOp(2); // set ref seq to 2
 					const afterSequenceNumber = 9;
 					const result = summarizer.enqueueSummarize({
-						reason,
+						reason: "test",
 						afterSequenceNumber,
 					});
 					assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
@@ -1481,16 +1455,8 @@ describe("Runtime", () => {
 
 					assert(
 						mockLogger.matchEvents([
-							{
-								eventName: "Running:Summarize_generate",
-								summarizeCount: runCount,
-								summarizeReason,
-							},
-							{
-								eventName: "Running:Summarize_Op",
-								summarizeCount: runCount,
-								summarizeReason,
-							},
+							{ eventName: "Running:Summarize_generate", summarizeCount: runCount },
+							{ eventName: "Running:Summarize_Op", summarizeCount: runCount },
 						]),
 						"unexpected log sequence",
 					);
@@ -1520,7 +1486,7 @@ describe("Runtime", () => {
 					assertRunCounts(1, 0, 0);
 
 					const result = summarizer.enqueueSummarize({
-						reason,
+						reason: "test",
 						afterSequenceNumber,
 					});
 					assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
@@ -1607,7 +1573,7 @@ describe("Runtime", () => {
 					await emitNextOp(2); // set ref seq to 2
 					const afterSequenceNumber = 9;
 					const result = summarizer.enqueueSummarize({
-						reason,
+						reason: "test",
 						afterSequenceNumber,
 					});
 					assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
@@ -1761,7 +1727,7 @@ describe("Runtime", () => {
 								eventName: "Running:Summarize_end",
 								summarizeCount: runCount,
 								summarizerSuccessfulAttempts: runCount,
-								summarizeReason: "maxOps",
+								reason: "maxOps",
 							},
 						]),
 						"unexpected log sequence 3",
