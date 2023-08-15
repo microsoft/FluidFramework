@@ -59,7 +59,6 @@ import {
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 	MessageType2,
-	canBeCoalescedByService,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -761,7 +760,19 @@ export class Container
 		this.scope = scope;
 		this.detachedBlobStorage = detachedBlobStorage;
 		this.protocolHandlerBuilder =
-			protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
+			protocolHandlerBuilder ??
+			((
+				attributes: IDocumentAttributes,
+				quorumSnapshot: IQuorumSnapshot,
+				sendProposal: (key: string, value: any) => number,
+			) =>
+				new ProtocolHandler(
+					attributes,
+					quorumSnapshot,
+					sendProposal,
+					new Audience(),
+					(clientId: string) => this.clientsWhoShouldHaveLeft.has(clientId),
+				));
 
 		// Note that we capture the createProps here so we can replicate the creation call when we want to clone.
 		this.clone = async (
@@ -2252,28 +2263,6 @@ export class Container
 			this.savedOps.push(message);
 		}
 		const local = this.clientId === message.clientId;
-
-		// Check and report if we're getting messages from a clientId that we previously
-		// flagged should have left, or from a client that's not in the quorum but should be
-		if (message.clientId != null) {
-			const client = this.protocolHandler.quorum.getMember(message.clientId);
-
-			if (client === undefined && message.type !== MessageType.ClientJoin) {
-				// pre-0.58 error message: messageClientIdMissingFromQuorum
-				throw new Error("Remote message's clientId is missing from the quorum");
-			}
-
-			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
-			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
-			// document we don't need to blow up aggressively.
-			if (
-				this.clientsWhoShouldHaveLeft.has(message.clientId) &&
-				!canBeCoalescedByService(message)
-			) {
-				// pre-0.58 error message: messageClientIdShouldHaveLeft
-				throw new Error("Remote message's clientId already should have left");
-			}
-		}
 
 		// Allow the protocol handler to process the message
 		const result = this.protocolHandler.processMessage(message, local);
