@@ -14,7 +14,6 @@ export {
 	areCursors,
 	localNodeKeySymbol,
 	setField,
-	getTreeStatus,
 	TreeStatus,
 } from "./editableTreeTypes";
 

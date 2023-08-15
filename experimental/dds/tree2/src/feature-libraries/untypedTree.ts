@@ -16,6 +16,7 @@ import {
 } from "../core";
 import { ISubscribable } from "../events";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
+import { TreeStatus } from "./editable-tree";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -61,6 +62,12 @@ export const contextSymbol: unique symbol = Symbol("editable-tree:context");
  * @alpha
  */
 export const on: unique symbol = Symbol("editable-tree:on");
+
+/**
+ * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
+ * @alpha
+ */
+export const getTreeStatus: unique symbol = Symbol("editable-tree:getTreeStatus()");
 
 /**
  * A tree of an unknown type.
@@ -117,6 +124,11 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * Gets the field of this node by its key without unwrapping.
 	 */
 	[getField](fieldKey: FieldKey): TField;
+
+	/**
+	 * Gets the {@link TreeStatus} of the tree.
+	 */
+	[getTreeStatus](): TreeStatus;
 
 	/**
 	 * The field this tree is in, and the index within that field.
@@ -200,6 +212,8 @@ export interface UntypedField<
 	 * Note that a node must exist at the given index.
 	 */
 	getNode(index: number): TChild;
+
+	getTreeStatus(): TreeStatus;
 }
 
 /**

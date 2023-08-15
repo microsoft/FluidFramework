@@ -53,7 +53,6 @@ export {
 	compileSyntaxTree,
 	setField,
 	TreeStatus,
-	getTreeStatus,
 } from "./editable-tree";
 
 export {
@@ -206,6 +205,7 @@ export {
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	getTreeStatus,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.

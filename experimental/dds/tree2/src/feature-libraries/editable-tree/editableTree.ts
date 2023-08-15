@@ -33,6 +33,7 @@ import {
 	parentField,
 	typeSymbol,
 	contextSymbol,
+	getTreeStatus,
 } from "../untypedTree";
 import {
 	AdaptingProxyHandler,
@@ -49,7 +50,6 @@ import {
 	NewFieldContent,
 	localNodeKeySymbol,
 	setField,
-	getTreeStatus,
 	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";

@@ -456,7 +456,6 @@ export type DownPath = PathStep[];
 export interface EditableField extends UntypedField<EditableTreeContext, EditableTree, EditableTree, UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     get content(): EditableTree | undefined | EditableField;
-    getTreeStatus(): TreeStatus;
     insertNodes(index: number, newContent: NewFieldContent): void;
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: EditableField): void;
     remove(): void;
@@ -477,7 +476,6 @@ UntypedSequenceField & MarkedArrayLike<TypedChild>
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, Omit<UntypedTreeCore<EditableTreeContext, EditableField>, typeof Symbol.iterator> {
-    [getTreeStatus](): TreeStatus;
     readonly [localNodeKeySymbol]?: LocalNodeKey;
     readonly [parentField]: {
         readonly parent: EditableField;
@@ -782,6 +780,9 @@ export function getPrimaryField(schema: TreeStoredSchema): {
     key: FieldKey;
     schema: FieldStoredSchema;
 } | undefined;
+
+// @alpha
+export const getTreeStatus: unique symbol;
 
 // @alpha (undocumented)
 export interface HasFieldChanges {
@@ -2025,6 +2026,8 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldStoredSchema;
     getNode(index: number): TChild;
+    // (undocumented)
+    getTreeStatus(): TreeStatus;
     readonly parent?: TParent;
 }
 
@@ -2072,6 +2075,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>> extends Iterable<TField> {
     readonly [contextSymbol]: TContext;
     [getField](fieldKey: FieldKey): TField;
+    [getTreeStatus](): TreeStatus;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly [parentField]: {

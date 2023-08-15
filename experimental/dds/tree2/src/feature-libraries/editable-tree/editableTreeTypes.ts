@@ -34,12 +34,6 @@ export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNode
 export const setField: unique symbol = Symbol("editable-tree:setField()");
 
 /**
- * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
- * @alpha
- */
-export const getTreeStatus: unique symbol = Symbol("editable-tree:getTreeStatus()");
-
-/**
  * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
  * InDocument - node is parented under the root field.
  * Removed - node is not parented under the root field, but can be added back to the original document tree.
@@ -136,11 +130,6 @@ export interface EditableTree
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
-
-	/**
-	 * Gets the {@link TreeStatus} of the tree.
-	 */
-	[getTreeStatus](): TreeStatus;
 }
 
 /**
@@ -290,9 +279,4 @@ export interface EditableField
 	 * prevent providing strongly typed getters and setters with the types required.
 	 */
 	setContent(newContent: NewFieldContent): void;
-
-	/**
-	 * Gets the {@link TreeStatus} of the field.
-	 */
-	getTreeStatus(): TreeStatus;
 }
