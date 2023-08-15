@@ -460,6 +460,7 @@ stages:
           - task: Npm@1
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
@@ -498,12 +499,6 @@ stages:
               displayName: 'npm authenticate (internal feed)'
               inputs:
                 workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
-
-            - task: npmAuthenticate@0
-              displayName: 'npm authenticate (office feed)'
-              inputs:
-                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
-                customEndpoint: 'Office Packages - Readonly'
 
             - task: Bash@3
               displayName: 'List report.json and .npmrc'

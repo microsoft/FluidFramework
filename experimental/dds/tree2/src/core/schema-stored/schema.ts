@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, brandedStringType } from "../../util";
+import { Brand, brand, brandedStringType } from "../../util";
 
 /**
  * Example internal schema representation types.
@@ -23,7 +23,7 @@ import { Brand, brandedStringType } from "../../util";
  * Use the identifier to associate it with schema when loading to check that the schema match.
  * @alpha
  */
-export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
+export type SchemaIdentifier = TreeSchemaIdentifier;
 
 /**
  * SchemaIdentifier for a Tree.
@@ -37,8 +37,8 @@ export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier
  * Key (aka Name or Label) for a field which is scoped to a specific TreeStoredSchema.
  * @alpha
  */
-export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
-export const LocalFieldKeySchema = brandedStringType<LocalFieldKey>();
+export type FieldKey = Brand<string, "tree.FieldKey">;
+export const FieldKeySchema = brandedStringType<FieldKey>();
 
 /**
  * Identifier for a FieldKind.
@@ -49,15 +49,6 @@ export const LocalFieldKeySchema = brandedStringType<LocalFieldKey>();
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
-
-/**
- * SchemaIdentifier for a "global field",
- * meaning a field which has the same meaning for all usages within the document
- * (not scoped to a specific TreeStoredSchema like LocalFieldKey).
- * @alpha
- */
-export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
-export const GlobalFieldKeySchema = brandedStringType<GlobalFieldKey>();
 
 /**
  * Example for how we might want to handle values.
@@ -80,16 +71,14 @@ export const GlobalFieldKeySchema = brandedStringType<GlobalFieldKey>();
  * @alpha
  */
 export enum ValueSchema {
-	Nothing,
 	Number,
 	String,
 	Boolean,
 	/**
 	 * Any Fluid serializable data.
 	 *
-	 * This includes Nothing / undefined.
+	 * This does not include Nothing / undefined.
 	 *
-	 * If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset` would need adjusting.
 	 */
 	Serializable,
 }
@@ -157,6 +146,23 @@ export interface FieldStoredSchema {
 }
 
 /**
+ * Identifier used for the FieldKind for fields which must be empty.
+ *
+ * @remarks
+ * This mainly show up in:
+ * 1. The root default field for documents.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ *
+ * @alpha
+ */
+export const forbiddenFieldKindIdentifier = "Forbidden";
+
+export const storedEmptyFieldSchema: FieldStoredSchema = {
+	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
+	types: undefined,
+};
+
+/**
  * @alpha
  */
 export interface TreeStoredSchema {
@@ -166,34 +172,22 @@ export interface TreeStoredSchema {
 	 * This refers to the FieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
-	 * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
+	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
+	readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
 
 	/**
-	 * Schema for fields with keys scoped to the whole document.
+	 * Constraint for fields not mentioned in `structFields`.
+	 * If undefined, all such fields must be empty.
 	 *
-	 * Having a centralized map indexed by FieldSchemaIdentifier
-	 * can be used for fields which have the same meaning in multiple places,
-	 * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
-	 */
-	readonly globalFields: ReadonlySet<GlobalFieldKey>;
-
-	/**
-	 * Constraint for local fields not mentioned in `localFields`.
-	 *
-	 * Allows using using the local fields as a map, with the keys being
-	 * LocalFieldKeys and the values being constrained by this FieldStoredSchema.
-	 *
-	 * To forbid this map like usage, use {@link emptyField} here.
+	 * Allows using using the fields as a map, with the keys being
+	 * FieldKeys and the values being constrained by this FieldStoredSchema.
 	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
-	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
-	 * and can be useful in special cases (like a default stored schema when none is specified).
 	 */
-	readonly extraLocalFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree
@@ -207,7 +201,7 @@ export interface TreeStoredSchema {
 	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
 	 * This is simply one approach that can work for modeling them in the internal schema representation.
 	 */
-	readonly value: ValueSchema;
+	readonly leafValue?: ValueSchema;
 }
 
 /**
@@ -221,7 +215,6 @@ export interface Named<TName> {
  * @alpha
  */
 export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
-export type NamedFieldSchema = Named<GlobalFieldKey> & FieldStoredSchema;
 
 /**
  * View of schema data that can be stored in a document.
@@ -231,26 +224,6 @@ export type NamedFieldSchema = Named<GlobalFieldKey> & FieldStoredSchema;
  * @alpha
  */
 export interface SchemaData {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldStoredSchema>;
+	readonly rootFieldSchema: FieldStoredSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
-}
-
-/**
- * Policy from the app for interpreting the stored schema.
- * The app must ensure consistency for all users of the document.
- * @alpha
- */
-export interface SchemaPolicy {
-	/**
-	 * Schema used when there is no schema explicitly specified for an identifier.
-	 * Typically a "never" schema which forbids any nodes with that type.
-	 */
-	readonly defaultTreeSchema: TreeStoredSchema;
-
-	/**
-	 * Schema used when there is no schema explicitly specified for an identifier.
-	 * Typically an "empty" schema which forbids any field with that type from having children.
-	 * TODO: maybe this must be an empty field? Anything else might break things.
-	 */
-	readonly defaultGlobalFieldSchema: FieldStoredSchema;
 }

@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/common-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -146,7 +146,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 			0,
 			"Inbound queue should be empty",
 		);
-		const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+		const containerId = (container.resolvedUrl as IResolvedUrl).id;
 		assert.ok(container, "No container ID");
 		if (provider.driver.type === "local") {
 			assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
@@ -813,68 +813,27 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
-			if (runtimeMessage === false) {
-				return;
-			}
-			assert.strictEqual(
-				(
-					((message.contents as { contents: unknown }).contents as { content: unknown })
-						.content as { address?: unknown }
-				).address,
-				sparseMatrixId,
-				"Address should be sparse matrix",
-			);
-			if (
-				(
-					(
-						(
-							(
-								(message.contents as { contents: unknown }).contents as {
-									content: unknown;
-								}
-							).content as { contents: unknown }
-						).contents as { ops: unknown[] }
-					).ops[0] as { type?: unknown }
-				).type === MergeTreeDeltaType.INSERT
-			) {
+			try {
+				if (runtimeMessage === false) {
+					return;
+				}
+				const envelope = message.contents.contents.content;
 				assert.strictEqual(
-					JSON.stringify(
-						(
-							(
-								(
-									(
-										(message.contents as { contents: unknown }).contents as {
-											content: unknown;
-										}
-									).content as { contents: unknown }
-								).contents as { ops: unknown[] }
-							).ops[0] as { seg?: unknown }
-						).seg,
-					),
-					JSON.stringify(seg),
-					"Seg should be same",
+					envelope.address,
+					sparseMatrixId,
+					"Address should be sparse matrix",
 				);
-			} else {
-				assert.strictEqual(
-					JSON.stringify(
-						(
-							(
-								(
-									(
-										(message.contents as { contents: unknown }).contents as {
-											content: unknown;
-										}
-									).content as { contents: unknown }
-								).contents as { ops: unknown[] }
-							).ops[1] as { seg?: unknown }
-						).seg,
-					),
-					JSON.stringify(seg),
-					"Seg should be same",
-				);
+				if (envelope.contents.type === MergeTreeDeltaType.INSERT) {
+					assert.strictEqual(
+						JSON.stringify(envelope.contents.seg),
+						JSON.stringify(seg),
+						"Seg should be same",
+					);
+				}
+				defPromise.resolve();
+			} catch (e) {
+				defPromise.reject(e);
 			}
-			defPromise.resolve();
-			return 0;
 		});
 
 		// Fire op before attaching the container
@@ -946,7 +905,9 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		await defPromise.promise;
 	});
 
+	// TODO: remove this test when caching is removed (AB#5046)
 	it("Load attached container from cache and check if they are same", async () => {
+		loader.services.options.cache = true;
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Now attach the container and get the sub dataStore.
@@ -955,7 +916,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Create a new request url from the resolvedUrl of the first container.
 		assert(container.resolvedUrl);
 		const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-		const container2 = await loader.resolve({ url: requestUrl2 });
+		const container2 = await loader.resolve({
+			url: requestUrl2,
+			headers: { [LoaderHeader.cache]: true },
+		});
 		assert.strictEqual(container, container2, "Both containers should be same");
 	});
 });
@@ -1015,7 +979,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 			0,
 			"Inbound queue should be empty",
 		);
-		const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;
+		const containerId = (container.resolvedUrl as IResolvedUrl).id;
 		assert.ok(containerId, "No container ID");
 		if (provider.driver.type === "local") {
 			assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");

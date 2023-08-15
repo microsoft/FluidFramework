@@ -24,7 +24,7 @@ import {
 	rebaseTagged,
 	toDelta,
 } from "./utils";
-import { ChangeMaker as Change } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -74,12 +74,9 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"TransientInsert",
 		(i) => [
 			{ count: i },
-			{
-				type: "Insert",
-				content: [singleTextCursor({ type, value: 1 })],
-				id: brand(0),
+			Mark.insert([singleTextCursor({ type, value: 1 })], brand(0), {
 				transientDetach: { revision: tag1, localId: brand(0) },
-			},
+			}),
 		],
 	],
 	["Delete", (i) => Change.delete(i, 2)],
@@ -96,13 +93,14 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"TransientRevive",
 		(i) => [
 			{ count: i },
-			{
-				type: "Revive",
-				count: 1,
-				cellId: { revision: tag1, localId: brand(0) },
-				content: [singleTextCursor({ type, value: 1 })],
-				transientDetach: { revision: tag1, localId: brand(0) },
-			},
+			Mark.revive(
+				[singleTextCursor({ type, value: 1 })],
+				{
+					revision: tag1,
+					localId: brand(0),
+				},
+				{ transientDetach: { revision: tag1, localId: brand(0) } },
+			),
 		],
 	],
 	[

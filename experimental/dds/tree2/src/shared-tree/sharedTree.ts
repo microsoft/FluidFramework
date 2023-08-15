@@ -35,13 +35,13 @@ import {
 	DefaultChangeset,
 	buildForest,
 	ForestRepairDataStoreProvider,
-	GlobalFieldSchema,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	NewFieldContent,
 	ModularChangeset,
 	nodeKeyFieldKey,
+	FieldSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -89,7 +89,7 @@ export class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(runtime, forest);
+		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
 		// TODO: remove
 		const repairProvider = new ForestRepairDataStoreProvider(
@@ -142,8 +142,8 @@ export class SharedTree
 		return this.view.root;
 	}
 
-	public set root(data: NewFieldContent) {
-		this.view.root = data;
+	public setContent(data: NewFieldContent): void {
+		this.view.setContent(data);
 	}
 
 	public get context(): EditableTreeContext {
@@ -154,7 +154,7 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
+	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);

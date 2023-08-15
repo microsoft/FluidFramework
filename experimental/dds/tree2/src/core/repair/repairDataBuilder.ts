@@ -5,7 +5,8 @@
 
 import { fail } from "../../util";
 import { ChangeAtomId } from "../rebase";
-import { Delta, FieldKey } from "../tree";
+import { FieldKey } from "../schema-stored";
+import { Delta } from "../tree";
 
 /**
  * A function that associates a change that produces repair data with the detached

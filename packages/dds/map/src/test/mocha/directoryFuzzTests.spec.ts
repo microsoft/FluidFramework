@@ -18,6 +18,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 } from "@fluid-internal/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { DirectoryFactory } from "../../directory";
 import { IDirectory } from "../../interfaces";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
@@ -313,7 +314,7 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 	return withLogging(reducer);
 }
 
-describe("SharedDirectory fuzz Create/Delete concenterated", () => {
+describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 	const options: OperationGenerationConfig = {
 		setKeyWeight: 0,
 		clearKeysWeight: 0,
@@ -345,6 +346,32 @@ describe("SharedDirectory fuzz Create/Delete concenterated", () => {
 		// replay: 21,
 		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1") },
 	});
+
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "default directory 1 with rebasing" },
+		{
+			validationStrategy: {
+				type: "fixedInterval",
+				interval: defaultOptions.validateInterval,
+			},
+			rebaseProbability: 0.15,
+			containerRuntimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			},
+			numberOfClients: 3,
+			clientJoinOptions: {
+				maxNumberOfClients: 3,
+				clientAddProbability: 0.08,
+			},
+			defaultTestCount: 25,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 21,
+			saveFailures: {
+				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1"),
+			},
+		},
+	);
 });
 
 describe("SharedDirectory fuzz", () => {
@@ -371,4 +398,32 @@ describe("SharedDirectory fuzz", () => {
 		// replay: 0,
 		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2") },
 	});
+
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "default directory 2 with rebasing" },
+		{
+			validationStrategy: {
+				type: "fixedInterval",
+				interval: defaultOptions.validateInterval,
+			},
+			rebaseProbability: 0.15,
+			containerRuntimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			},
+			numberOfClients: 3,
+			clientJoinOptions: {
+				// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
+				// was refactored to use the DDS fuzz harness.
+				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
+				clientAddProbability: 0.08,
+			},
+			defaultTestCount: 25,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+			saveFailures: {
+				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2"),
+			},
+		},
+	);
 });

@@ -4,19 +4,7 @@
  */
 
 /**
- * Describes features supported by {@link IFluidDevtools}.
- *
- * @internal
- */
-export enum DevtoolsFeature {
-	/**
-	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid telemetry events.
-	 */
-	Telemetry = "telemetry",
-}
-
-/**
- * Describes the set of {@link DevtoolsFeature | features} supported by a {@link IFluidDevtools} instance.
+ * Describes the set of features supported by a {@link IFluidDevtools} instance.
  *
  * @remarks
  *
@@ -31,28 +19,19 @@ export enum DevtoolsFeature {
  *
  * @internal
  */
-export type DevtoolsFeatureFlags = {
+export interface DevtoolsFeatureFlags {
 	/**
-	 * Indicates whether or not a given {@link DevtoolsFeature} is supported by an instance of the Devtools.
+	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid telemetry events.
 	 */
-	[Feature in DevtoolsFeature]?: boolean;
-};
-
-/**
- * Describes features supported by the Devtools for a specific Container instance.
- *
- * @internal
- */
-export enum ContainerDevtoolsFeature {
+	telemetry?: boolean;
 	/**
-	 * Indicates that the Container Devtools is capable of generating visual summaries of application data associated with
-	 * the Container.
+	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid Op Latency telemetry events
 	 */
-	ContainerData = "container-data",
+	opLatencyTelemetry?: boolean;
 }
 
 /**
- * Describes the set of {@link ContainerDevtoolsFeature | container-related features} supported by the Devtools.
+ * Describes the set of container-related features supported by the Devtools.
  *
  * @remarks
  *
@@ -67,9 +46,24 @@ export enum ContainerDevtoolsFeature {
  *
  * @internal
  */
-export type ContainerDevtoolsFeatureFlags = {
+export interface ContainerDevtoolsFeatureFlags {
 	/**
-	 * Indicates whether or not a given {@link ContainerDevtoolsFeature} is supported by an instance of Devtools.
+	 * Indicates that the Container Devtools supports visualizing the data associated with the Container.
 	 */
-	[Feature in ContainerDevtoolsFeature]?: boolean;
-};
+	"containerDataVisualization"?: boolean;
+
+	/**
+	 * Indicates that the Container Devtools supports editing the data associated with the Container.
+	 */
+	"containerDataEditing"?: boolean;
+
+	/**
+	 * Indicates that the Container Devtools supports visualizing the data associated with the Container.
+	 *
+	 * @deprecated
+	 *
+	 * This exists for backwards compatibility only.
+	 * Use {@link ContainerDevtoolsFeatureFlags.containerDataVisualization} instead.
+	 */
+	"container-data"?: boolean;
+}

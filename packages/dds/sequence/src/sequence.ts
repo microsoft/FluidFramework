@@ -207,12 +207,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			dataStoreRuntime.options,
 		);
 
-		this.client.on("delta", (opArgs, deltaArgs) => {
-			this.emit(
-				"sequenceDelta",
-				new SequenceDeltaEvent(opArgs, deltaArgs, this.client),
-				this,
-			);
+		this.client.prependListener("delta", (opArgs, deltaArgs) => {
+			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
+			if (opArgs.stashed !== true && event.isLocal) {
+				this.submitSequenceMessage(opArgs.op);
+			}
+			this.emit("sequenceDelta", event, this);
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
@@ -233,14 +233,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The exclusive end of the range to remove
 	 */
 	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		const removeOp = this.client.removeRangeLocal(start, end);
-		this.submitSequenceMessage(removeOp);
-		return removeOp;
+		return this.client.removeRangeLocal(start, end);
 	}
 
+	/**
+	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.client.localTransaction(groupOp);
-		this.submitSequenceMessage(groupOp);
 	}
 
 	/**
@@ -286,10 +286,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		props: PropertySet,
 		combiningOp?: ICombiningOp,
 	) {
-		const annotateOp = this.client.annotateRangeLocal(start, end, props, combiningOp);
-		if (annotateOp) {
-			this.submitSequenceMessage(annotateOp);
-		}
+		this.client.annotateRangeLocal(start, end, props, combiningOp);
 	}
 
 	public getPropertiesAtPosition(pos: number) {
@@ -364,6 +361,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
+	/**
+	 * @deprecated - This method will no longer be public in an upcoming release as it is not safe to use outside of this class
+	 */
 	public submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
 			return;
@@ -433,10 +433,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param segment - The segment to insert
 	 */
 	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
-		const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.client.insertAtReferencePositionLocal(pos, segment);
 	}
 	/**
 	 * Inserts a segment
@@ -445,10 +442,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	public insertFromSpec(pos: number, spec: IJSONSegment) {
 		const segment = this.segmentFromSpec(spec);
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.client.insertSegmentLocal(pos, segment);
 	}
 
 	/**
@@ -523,11 +517,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const insert = this.client.insertSegmentLocal(insertIndex, segment);
 		if (insert) {
 			if (start < end) {
-				const remove = this.client.removeRangeLocal(start, end);
-				const op = remove ? createGroupOp(insert, remove) : insert;
-				this.submitSequenceMessage(op);
-			} else {
-				this.submitSequenceMessage(insert);
+				this.client.removeRangeLocal(start, end);
 			}
 		}
 	}

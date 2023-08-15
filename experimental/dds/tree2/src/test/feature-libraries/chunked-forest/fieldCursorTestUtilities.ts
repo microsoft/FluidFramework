@@ -10,7 +10,7 @@ import {
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
-	rootFieldKeySymbol,
+	rootFieldKey,
 } from "../../../core";
 import { jsonArray, jsonNumber } from "../../../domains";
 import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
@@ -49,7 +49,7 @@ export function validateChunkCursor(
 	chunk: TreeChunk,
 	expected: JsonableTree[],
 	expectedPath: FieldUpPath = {
-		field: rootFieldKeySymbol,
+		field: rootFieldKey,
 		parent: undefined,
 	},
 ): void {

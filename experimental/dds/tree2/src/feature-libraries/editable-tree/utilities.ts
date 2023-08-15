@@ -5,12 +5,13 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { LocalFieldKey, TreeStoredSchema, ValueSchema } from "../../core";
+import { FieldKey, TreeStoredSchema } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
-import { EditableTree, getField } from "./editableTreeTypes";
+import { getField } from "../untypedTree";
+import { EditableTree } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -26,10 +27,9 @@ export function isPrimitive(schema: TreeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (
-		schema.value !== ValueSchema.Nothing &&
-		schema.localFields.size === 0 &&
-		schema.globalFields.size === 0 &&
-		schema.extraLocalFields.kind.identifier === FieldKinds.forbidden.identifier
+		schema.leafValue !== undefined &&
+		schema.structFields.size === 0 &&
+		schema.mapFields === undefined
 	);
 }
 
@@ -79,7 +79,7 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
  * @returns the {@link StableNodeKey} on `node`, or undefined if there is none.
  */
 export function getStableNodeKey(
-	nodeKeyFieldKey: LocalFieldKey,
+	nodeKeyFieldKey: FieldKey,
 	node: EditableTree,
 ): StableNodeKey | undefined {
 	if (nodeKeyFieldKey in node) {

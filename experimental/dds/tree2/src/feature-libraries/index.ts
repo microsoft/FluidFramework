@@ -9,18 +9,12 @@ export {
 	EditableTreeContext,
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
-	typeSymbol,
 	isEditableField,
 	isPrimitive,
 	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
 	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
@@ -57,6 +51,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	setField,
 } from "./editable-tree";
 
 export {
@@ -150,7 +145,6 @@ export {
 	FieldSchema,
 	TypedSchemaCollection,
 	Any,
-	GlobalFieldSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	LazyTreeSchema,
@@ -163,8 +157,6 @@ export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRe
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { TreeIndex } from "./treeIndex";
-
-export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
@@ -196,9 +188,6 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-	emptyField,
-	neverField,
-	neverTree,
 } from "./default-field-kinds";
 
 export {
@@ -209,6 +198,12 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
+	typeSymbol,
+	getField,
+	parentField,
+	EditableTreeEvents,
+	on,
+	contextSymbol,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.

@@ -27,7 +27,6 @@ import {
 	IDefaultEditBuilder,
 	StableNodeKey,
 	EditableTree,
-	GlobalFieldSchema,
 	DefaultChangeset,
 	NodeKeyIndex,
 	buildForest,
@@ -44,6 +43,7 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	TreeIndex,
+	FieldSchema,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -92,7 +92,7 @@ export interface ViewEvents {
  */
 export interface ISharedTreeView extends AnchorLocator {
 	/**
-	 * Gets or sets the root field of the tree.
+	 * Gets the root field of the tree.
 	 *
 	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
 	 *
@@ -105,7 +105,13 @@ export interface ISharedTreeView extends AnchorLocator {
 	 */
 	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
 	get root(): UnwrappedEditableField;
-	set root(data: NewFieldContent);
+
+	/**
+	 * Sets the content of the root field of the tree.
+	 *
+	 * See {@link EditableTreeContext.unwrappedRoot} on how this works.
+	 */
+	setContent(data: NewFieldContent): void;
 
 	/**
 	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
@@ -289,9 +295,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TRoot extends GlobalFieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
+	schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
 }
 
 /**
@@ -485,7 +489,7 @@ export class SharedTreeView implements ISharedTreeView {
 		this.branch.redo();
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
+	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
@@ -556,8 +560,8 @@ export class SharedTreeView implements ISharedTreeView {
 		return this.context.unwrappedRoot;
 	}
 
-	public set root(data: NewFieldContent) {
-		this.context.unwrappedRoot = data;
+	public setContent(data: NewFieldContent) {
+		this.context.setContent(data);
 	}
 
 	/**

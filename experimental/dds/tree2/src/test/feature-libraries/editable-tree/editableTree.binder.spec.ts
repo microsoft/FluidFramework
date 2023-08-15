@@ -36,6 +36,7 @@ import {
 	compileSyntaxTree,
 	BindTree,
 	InvalidationBindingContext,
+	setField,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
@@ -211,7 +212,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.zip = "33428";
 			address.street = "street xyz";
-			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			address[setField](fieldSequencePhones, ["112", "911"]); // should not trigger binder
 			dataBinder.flush();
 			// phones should not trigger binder as not modified even though specified in binding tree
 			// sequencePhones should not trigger binder as not specified in binding tree
@@ -275,7 +276,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.zip = "33428";
 			address.street = "street xyz";
-			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			address[setField](fieldSequencePhones, ["112", "911"]); // should not trigger binder
 			dataBinder.flush();
 			// zip should be logged by log1
 			assert.deepEqual(log1, [
@@ -342,7 +343,7 @@ describe("editable-tree: data binder", () => {
 			);
 			address.zip = "33428";
 			address.street = "street xyz";
-			address.sequencePhones = ["112", "911"]; // should not trigger binder
+			address[setField](fieldSequencePhones, ["112", "911"]); // should not trigger binder
 			dataBinder.flush();
 			// zip should be logged by log1
 			assert.deepEqual(log1, [
@@ -395,8 +396,8 @@ describe("editable-tree: data binder", () => {
 					log.push(downPath);
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, ["111", "112"]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -434,7 +435,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -471,8 +472,8 @@ describe("editable-tree: data binder", () => {
 					log.push({ ...downPath, type: BindingType.Delete });
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, [111, 112]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -570,7 +571,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -624,9 +625,9 @@ describe("editable-tree: data binder", () => {
 			// changes in random order
 			address.zip = "33428";
 			address.street = "street 1";
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			address.zip = "92629"; // zip twice
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			// manual flush
 			dataBinder.flush();
 			const expectedLog = [
@@ -744,7 +745,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -796,8 +797,8 @@ describe("editable-tree: data binder", () => {
 					log.push(batch);
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, [111, 112]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -899,7 +900,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, expectedLog);
 			dataBinder.unregisterAll();
 			log.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(log, []);
 		});
 
@@ -959,8 +960,8 @@ describe("editable-tree: data binder", () => {
 					batchLog.push(batch);
 				},
 			);
-			address.phones = [111, 112];
-			address.sequencePhones = ["111", "112"];
+			address[setField](fieldPhones, [111, 112]);
+			address[setField](fieldSequencePhones, ["111", "112"]);
 			address.zip = "33428";
 			address.street = "street 1";
 			// manual flush
@@ -1069,7 +1070,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(incrLog, expectedIncrLog);
 			dataBinder.unregisterAll();
 			incrLog.length = 0;
-			address.sequencePhones = ["114", "115"];
+			address[setField](fieldSequencePhones, ["114", "115"]);
 			assert.deepEqual(incrLog, []);
 		});
 	});
@@ -1094,11 +1095,11 @@ describe("editable-tree: data binder", () => {
 					invalidationCount++;
 				},
 			);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			assert.equal(invalidationCount, 1);
 			dataBinder.unregisterAll();
 			invalidationCount = 0;
-			address.phones = [113, 114];
+			address[setField](fieldPhones, [113, 114]);
 			assert.equal(invalidationCount, 0);
 		});
 		it("registers to root, enables autoFlush, matches paths with path policy and any index. multiple callbacks", () => {
@@ -1175,7 +1176,7 @@ describe("editable-tree: data binder", () => {
 					log.push(downPath);
 				},
 			);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			assert.deepEqual(log, [
 				[
 					{ field: fieldAddress, index: 0 },
@@ -1216,9 +1217,9 @@ describe("editable-tree: data binder", () => {
 					phonesLog.push(downPath);
 				},
 			);
-			root[getField](fieldAddress).content = { zip: "33428", phones: ["12345"] };
+			root[setField](fieldAddress, { zip: "33428", phones: ["12345"] });
 			const address = root[getField](fieldAddress).getNode(0);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			address.zip = "66566";
 			assert.deepEqual(addrLog, [
 				[{ field: fieldAddress, index: 1 }],
@@ -1284,7 +1285,7 @@ describe("editable-tree: data binder", () => {
 					zipLog.push(downPath);
 				},
 			);
-			address.phones = [111, 112];
+			address[setField](fieldPhones, [111, 112]);
 			address.zip = "66566";
 			assert.deepEqual(addrLog, []);
 			assert.deepEqual(phonesLog, [

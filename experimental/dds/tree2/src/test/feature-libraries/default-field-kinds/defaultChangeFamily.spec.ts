@@ -15,7 +15,7 @@ import {
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	TaggedChange,
 	UpPath,
 	ChangeAtomId,
@@ -38,7 +38,7 @@ import { makeRepairDataBuilder } from "../repairDataTestUtils";
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
 const family = defaultChangeFamily;
 
-const rootKey = rootFieldKeySymbol;
+const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
 const barKey = brand<FieldKey>("bar");
 

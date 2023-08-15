@@ -6,6 +6,7 @@
 import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import { Brand, Opaque, brand } from "../../util";
 import { TreeSchemaIdentifier } from "../../core";
+
 /**
  * A key which uniquely identifies a node in the tree within this session.
  * @remarks {@link LocalNodeKey}s must not be serialized and stored as data without first being converted into a {@link StableNodeKey}.
