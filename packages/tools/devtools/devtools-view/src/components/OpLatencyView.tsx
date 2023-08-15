@@ -17,6 +17,13 @@ const useStyles = makeStyles({
 		flexDirection: "row",
 	},
 	/**
+	 * Main container housing all the child components
+	 */
+	mainContainer: {
+		width: "100%",
+		height: "300px",
+	},
+	/**
 	 * Where the graph is described
 	 */
 	graphAboutContainer: {
@@ -38,7 +45,7 @@ export function OpLatencyView(): React.ReactElement {
 	const styles = useStyles();
 
 	return (
-		<div style={{ width: "100%", height: "300px" }} data-testid="test-op-latency-view">
+		<div className={styles.mainContainer} data-testid="test-op-latency-view">
 			<h3>Op Latency</h3>
 			<DynamicComposedChart
 				margin={{
@@ -52,7 +59,7 @@ export function OpLatencyView(): React.ReactElement {
 					bottom: -5,
 				}}
 				yAxisUnitDisplayName="ms"
-				// NOTE: Because Op Latency Telemetry is not yet available, this is a placeholder
+				// NOTE: Because Op Latency data is not yet available, this is a placeholder
 				dataSets={[]}
 			/>
 			<div className={styles.graphAboutContainer}>
