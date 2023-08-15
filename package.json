@@ -182,6 +182,10 @@
 			"@types/react-dom": "17.0.18",
 			"@oclif/core": "~2.4.0"
 		},
+		"peerDependencyComments": [
+			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
+			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency."
+		],
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"react": "17.0.2",
@@ -189,6 +193,7 @@
 				"webpack": "^5.82.0"
 			},
 			"ignoreMissing": [
+				"@types/node",
 				"fluid-framework"
 			]
 		}
