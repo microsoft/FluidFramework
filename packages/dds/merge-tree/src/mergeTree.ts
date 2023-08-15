@@ -128,8 +128,8 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
-interface IReferenceSearchInfo {
-	mergeTree?: MergeTree;
+export interface IReferenceSearchInfo {
+	mergeTree: MergeTree;
 	tileLabel: string;
 	forwards?: boolean;
 	tile?: ReferencePosition;
@@ -1263,6 +1263,7 @@ export class MergeTree {
 	 */
 	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
 		const searchInfo: IReferenceSearchInfo = {
+			mergeTree: this,
 			forwards: tilePrecedesPos,
 			tileLabel,
 		};
@@ -1318,6 +1319,7 @@ export class MergeTree {
 	 */
 	public searchForTile(startPos: number, clientId: number, tileLabel: string, forwards = true) {
 		const searchInfo: IReferenceSearchInfo = {
+			mergeTree: this,
 			forwards,
 			tileLabel,
 		};
