@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { TreeValue } from "../../../core";
 import { _InlineTrick, assertValidIndex, fail, objectToMap } from "../../../util";
 import { TreeChunk } from "../chunk";

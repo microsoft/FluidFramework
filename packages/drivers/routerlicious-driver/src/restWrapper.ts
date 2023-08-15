@@ -9,7 +9,8 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { fromUtf8ToBase64, performance } from "@fluidframework-internal/client-utils";
 import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
 	CorrelationIdHeaderName,

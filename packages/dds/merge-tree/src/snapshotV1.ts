@@ -6,7 +6,7 @@
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";

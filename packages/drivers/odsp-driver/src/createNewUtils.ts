@@ -14,7 +14,7 @@ import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluidframework-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";

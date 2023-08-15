@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common-utils";
+import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework-internal/client-utils";
 
 /**
  * Event Emitter helper class

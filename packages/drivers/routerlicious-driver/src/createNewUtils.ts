@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { Uint8ArrayToString } from "@fluidframework-internal/client-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 
 /**

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 import BTree from 'sorted-btree';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';

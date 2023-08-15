@@ -4,7 +4,7 @@
  */
 
 import { resolve } from 'path';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { LocalServerTestDriver } from '@fluid-internal/test-drivers';

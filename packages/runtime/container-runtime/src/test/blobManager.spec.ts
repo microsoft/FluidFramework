@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	bufferToString,
-	Deferred,
 	gitHashFile,
 	IsoBuffer,
 	TypedEventEmitter,
-} from "@fluidframework/common-utils";
+} from "@fluidframework-internal/client-utils";
 import { AttachState, IErrorBase } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

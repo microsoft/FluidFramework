@@ -4,7 +4,7 @@
  */
 
 import { Definition, ChangeNode, SharedTree, NodeIdContext } from '@fluid-experimental/tree';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { expect } from 'chai';
 import { Maybe } from 'graphql-tools';
 import { SharedTreeQuerier } from '../SharedTreeQuerier';

@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {

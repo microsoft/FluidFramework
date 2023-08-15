@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventForwarder } from "@fluidframework/common-utils";
+import { EventForwarder } from "@fluidframework-internal/client-utils";
 import {
 	IDeltaManager,
 	IDeltaManagerEvents,

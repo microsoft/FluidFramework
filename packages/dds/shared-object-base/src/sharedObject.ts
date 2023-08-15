@@ -14,7 +14,8 @@ import {
 	SampledTelemetryHelper,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { EventEmitterEventType } from "@fluidframework-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {

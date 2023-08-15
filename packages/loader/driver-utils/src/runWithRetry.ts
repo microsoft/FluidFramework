@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {

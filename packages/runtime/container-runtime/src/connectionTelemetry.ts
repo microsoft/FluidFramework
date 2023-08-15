@@ -14,7 +14,7 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 
 /**

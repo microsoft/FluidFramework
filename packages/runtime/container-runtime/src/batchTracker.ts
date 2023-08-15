@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

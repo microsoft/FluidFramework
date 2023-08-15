@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Deferred, bufferToString, assert } from "@fluidframework/common-utils";
+import { assert, Deferred} from "@fluidframework/core-utils";
+import { bufferToString } from "@fluidframework-internal/client-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {

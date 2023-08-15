@@ -4,7 +4,7 @@
  */
 
 import type { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { Response } from "node-fetch";
 import { ITaskListData, ITaskData } from "../model-interface";
 

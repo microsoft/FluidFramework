@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";

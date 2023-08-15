@@ -4,7 +4,7 @@
  */
 
 import BTree from 'sorted-btree';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { fail, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { comparePayloads } from './PayloadUtilities';

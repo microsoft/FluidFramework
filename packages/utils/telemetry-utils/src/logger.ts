@@ -14,7 +14,7 @@ import {
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
 } from "@fluidframework/core-interfaces";
-import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
+import { IsomorphicPerformance, performance } from "@fluidframework-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
 	isILoggingError,

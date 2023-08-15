@@ -22,7 +22,7 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { ReplayController } from "./replayController";
 

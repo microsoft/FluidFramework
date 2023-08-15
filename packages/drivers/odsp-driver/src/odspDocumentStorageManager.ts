@@ -8,7 +8,7 @@ import {
 	loggerToMonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { assert, delay } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";

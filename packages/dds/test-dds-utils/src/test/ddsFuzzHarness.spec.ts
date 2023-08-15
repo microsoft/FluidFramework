@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
 import execa from "execa";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	SummaryType,

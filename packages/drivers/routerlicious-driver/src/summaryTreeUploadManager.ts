@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";

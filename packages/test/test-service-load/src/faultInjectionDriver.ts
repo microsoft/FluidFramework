@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/core-interfaces";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	DriverErrorType,

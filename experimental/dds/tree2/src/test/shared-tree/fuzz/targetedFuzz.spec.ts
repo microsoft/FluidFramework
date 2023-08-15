@@ -14,7 +14,7 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import {
 	moveToDetachedField,
 	compareUpPaths,

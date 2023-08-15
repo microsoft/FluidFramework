@@ -9,7 +9,7 @@ import {
 	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
-} from "@fluidframework/common-utils";
+} from "@fluidframework-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {

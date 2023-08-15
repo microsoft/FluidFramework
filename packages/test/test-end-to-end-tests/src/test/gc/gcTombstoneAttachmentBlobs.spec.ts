@@ -16,7 +16,7 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {

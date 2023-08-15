@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {

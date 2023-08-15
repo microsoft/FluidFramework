@@ -6,8 +6,8 @@ import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { performance } from "@fluidframework/common-utils";
 import { assert } from "@fluidframework/core-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
 	DataCorruptionError,

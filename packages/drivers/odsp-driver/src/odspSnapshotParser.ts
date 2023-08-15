@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts";

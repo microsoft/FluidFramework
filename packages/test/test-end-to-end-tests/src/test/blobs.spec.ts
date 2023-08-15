@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework-internal/client-utils";
 import { IErrorBase } from "@fluidframework/container-definitions";
 import {
 	CompressionAlgorithms,

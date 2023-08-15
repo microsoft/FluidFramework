@@ -19,7 +19,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";

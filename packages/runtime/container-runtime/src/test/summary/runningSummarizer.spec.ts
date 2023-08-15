@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import {
 	IDocumentMessage,
@@ -45,6 +45,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../summary/runningSummarizer";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;

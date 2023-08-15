@@ -6,7 +6,7 @@
 import { assert, Timer } from "@fluidframework/core-utils";
 import { UnreferencedState } from "./gcDefinitions";
 
-/** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
+/** A wrapper around core-utils Timer that requires the timeout when calling start/restart */
 class TimerWithNoDefaultTimeout extends Timer {
 	constructor(private readonly callback: () => void) {
 		// The default timeout/handlers will never be used since start/restart pass overrides below

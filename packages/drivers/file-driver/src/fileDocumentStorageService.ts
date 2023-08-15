@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";

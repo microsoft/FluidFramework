@@ -26,7 +26,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework-internal/client-utils";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {

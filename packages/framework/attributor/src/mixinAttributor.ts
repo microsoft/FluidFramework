@@ -20,7 +20,7 @@ import {
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import {

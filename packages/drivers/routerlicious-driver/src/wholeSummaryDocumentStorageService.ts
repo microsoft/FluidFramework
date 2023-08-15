@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { performance, stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { performance, stringToBuffer, Uint8ArrayToString } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {

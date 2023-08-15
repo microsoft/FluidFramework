@@ -4,7 +4,7 @@
  */
 
 import { IErrorEvent } from '@fluidframework/common-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluidframework-internal/client-utils';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { newEditId } from './EditUtilities';
 import { TreeView } from './TreeView';

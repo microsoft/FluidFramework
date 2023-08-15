@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { bufferToString } from "@fluidframework-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {

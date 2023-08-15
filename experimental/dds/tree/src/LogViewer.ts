@@ -5,7 +5,8 @@
 
 import Denque from 'denque';
 import { IEvent } from '@fluidframework/common-definitions';
-import { assert, TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter  } from '@fluidframework-internal/client-utils';
+import { assert } from '@fluidframework/core-utils';
 import { fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';

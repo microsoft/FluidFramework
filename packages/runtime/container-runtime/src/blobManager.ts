@@ -17,13 +17,12 @@ import {
 	responseToException,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
+import { assert, Deferred} from "@fluidframework/core-utils";
 import {
-	assert,
 	bufferToString,
-	Deferred,
 	stringToBuffer,
 	TypedEventEmitter,
-} from "@fluidframework/common-utils";
+} from "@fluidframework-internal/client-utils";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,

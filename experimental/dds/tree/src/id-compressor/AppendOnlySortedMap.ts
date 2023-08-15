@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { fail } from '../Common';
 
 /**

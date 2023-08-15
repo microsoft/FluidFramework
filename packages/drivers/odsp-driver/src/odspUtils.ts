@@ -12,7 +12,7 @@ import {
 	NonRetryableError,
 	NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	ITelemetryLoggerExt,

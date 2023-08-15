@@ -4,7 +4,7 @@
  */
 
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluidframework-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { compress } from "lz4js";

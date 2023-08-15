@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework-internal/client-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import {
