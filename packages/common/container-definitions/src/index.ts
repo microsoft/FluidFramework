@@ -24,15 +24,7 @@ export {
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas";
-export {
-	ContainerErrorType,
-	ContainerWarning,
-	ICriticalContainerError,
-	IErrorBase,
-	IGenericError,
-	IUsageError,
-	IThrottlingWarning,
-} from "./error";
+export { ContainerWarning, ICriticalContainerError } from "./error";
 export {
 	ConnectionState,
 	ICodeDetailsLoader,
@@ -70,3 +62,28 @@ export {
 	IRuntime,
 	IRuntimeFactory,
 } from "./runtime";
+
+/**
+ * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
+ */
+export { IErrorBase } from "@fluidframework/core-interfaces";
+
+/**
+ * @deprecated ContainerErrorType is being deprecated as a public export is moving to "core-interfaces".
+ */
+export { ContainerErrorType } from "@fluidframework/core-interfaces";
+
+/**
+ * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
+ */
+export { IGenericError } from "@fluidframework/core-interfaces";
+
+/**
+ * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
+ */
+export { IThrottlingWarning } from "@fluidframework/core-interfaces";
+
+/**
+ * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
+ */
+export { IUsageError } from "@fluidframework/core-interfaces";

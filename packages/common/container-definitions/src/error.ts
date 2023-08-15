@@ -6,31 +6,6 @@
 import { IErrorBase } from "@fluidframework/core-interfaces";
 
 /**
- * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IErrorBase } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated ContainerErrorType is being deprecated as a public export is moving to "core-interfaces".
- */
-export { ContainerErrorType } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IGenericError } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IThrottlingWarning } from "@fluidframework/core-interfaces";
-
-/**
- * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
- */
-export { IUsageError } from "@fluidframework/core-interfaces";
-
-/**
  * Represents warnings raised on container.
  */
 export interface ContainerWarning extends IErrorBase {
