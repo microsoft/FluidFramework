@@ -25,7 +25,7 @@ import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
-const errorSanitizationMessage = "REDACTED";
+const errorSanitizationMessage = "FluidREDACTED";
 const errorResponseKeysAllowList = new Set([
 	"_id",
 	"code",
