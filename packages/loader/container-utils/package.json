@@ -64,6 +64,7 @@
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
@@ -93,12 +94,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DataCorruptionError": {
+			"ClassDeclaration_ClientSessionExpiredError": {
 				"backCompat": false
 			},
-			"ClassDeclaration_ClientSessionExpiredError": {
-				"backCompat": false,
-				"forwardCompat": false
+			"ClassDeclaration_DataCorruptionError": {
+				"backCompat": false
 			},
 			"ClassDeclaration_DataProcessingError": {
 				"backCompat": false
