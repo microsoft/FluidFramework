@@ -8,6 +8,8 @@ import { performance } from "./indexNode";
 /**
  * Helper class for tracing performance of events
  * Time measurements are in milliseconds as a floating point with a decimal
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export class Trace {
 	public static start(): Trace {
@@ -34,6 +36,8 @@ export class Trace {
 
 /**
  * Event in a performance trace including time elapsed.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export interface ITraceEvent {
 	/**
