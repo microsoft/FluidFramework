@@ -92,6 +92,26 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DataCorruptionError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ClientSessionExpiredError": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_DataProcessingError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_GenericError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ThrottlingWarning": {
+				"backCompat": false
+			},
+			"ClassDeclaration_UsageError": {
+				"backCompat": false
+			}
+		}
 	}
 }

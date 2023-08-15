@@ -5,6 +5,19 @@
 ```ts
 
 // @public
+export const ContainerErrorType: {
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+};
+
+// @public (undocumented)
+export type ContainerErrorType = typeof ContainerErrorType[keyof typeof ContainerErrorType];
+
+// @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
@@ -19,6 +32,15 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
+}
+
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
 }
 
 // @public @deprecated
@@ -114,6 +136,14 @@ export interface IFluidRunnable {
     run(...args: any[]): Promise<void>;
     // (undocumented)
     stop(reason?: string): void;
+}
+
+// @public
+export interface IGenericError extends IErrorBase {
+    // (undocumented)
+    error?: any;
+    // (undocumented)
+    readonly errorType: typeof ContainerErrorType.genericError;
 }
 
 // @public
@@ -247,6 +277,20 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+}
+
+// @public
+export interface IThrottlingWarning extends IErrorBase {
+    // (undocumented)
+    readonly errorType: typeof ContainerErrorType.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+}
+
+// @public
+export interface IUsageError extends IErrorBase {
+    // (undocumented)
+    readonly errorType: typeof ContainerErrorType.usageError;
 }
 
 // @public

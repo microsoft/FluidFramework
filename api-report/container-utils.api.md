@@ -28,7 +28,7 @@ import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
     constructor(message: string, expiryMs: number);
     // (undocumented)
-    readonly errorType = ContainerErrorType.clientSessionExpiredError;
+    readonly errorType: "clientSessionExpiredError";
     // (undocumented)
     readonly expiryMs: number;
 }
@@ -39,7 +39,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = ContainerErrorType.dataCorruptionError;
+    readonly errorType: "dataCorruptionError";
 }
 
 // @public
@@ -48,7 +48,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly canRetry = false;
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     // (undocumented)
-    readonly errorType = ContainerErrorType.dataProcessingError;
+    readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
@@ -113,13 +113,13 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
     // (undocumented)
     readonly error?: any;
     // (undocumented)
-    readonly errorType = ContainerErrorType.genericError;
+    readonly errorType: "genericError";
 }
 
 // @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     // (undocumented)
-    readonly errorType = ContainerErrorType.throttlingError;
+    readonly errorType: "throttlingError";
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
@@ -129,7 +129,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
     constructor(message: string, props?: ITelemetryProperties);
     // (undocumented)
-    readonly errorType = ContainerErrorType.usageError;
+    readonly errorType: "usageError";
 }
 
 // (No @packageDocumentation comment for this package)

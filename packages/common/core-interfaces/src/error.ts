@@ -40,6 +40,7 @@ export const ContainerErrorType = {
 	 */
 	clientSessionExpiredError: "clientSessionExpiredError",
 } as const;
+export type ContainerErrorType = typeof ContainerErrorType[keyof typeof ContainerErrorType];
 
 /**
  * Base interface for all errors and warnings at container level
@@ -74,7 +75,7 @@ export interface IErrorBase extends Partial<Error> {
  * Generic wrapper for an unrecognized/uncategorized error object
  */
 export interface IGenericError extends IErrorBase {
-	readonly errorType: ContainerErrorType.genericError;
+	readonly errorType: typeof ContainerErrorType.genericError;
 	error?: any;
 }
 
@@ -82,13 +83,13 @@ export interface IGenericError extends IErrorBase {
  * Error indicating an API is being used improperly resulting in an invalid operation.
  */
 export interface IUsageError extends IErrorBase {
-	readonly errorType: ContainerErrorType.usageError;
+	readonly errorType: typeof ContainerErrorType.usageError;
 }
 
 /**
  * Warning emitted when requests to storage are being throttled
  */
 export interface IThrottlingWarning extends IErrorBase {
-	readonly errorType: ContainerErrorType.throttlingError;
+	readonly errorType: typeof ContainerErrorType.throttlingError;
 	readonly retryAfterSeconds: number;
 }
