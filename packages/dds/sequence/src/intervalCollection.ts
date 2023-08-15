@@ -63,6 +63,29 @@ import {
 	createOverlappingIntervalsIndex,
 } from "./intervalIndex";
 
+/**
+ * todo: docs
+ * Defines a place relative to sibling.
+ *
+ * For this purpose, traits look like:
+ *
+ * `{undefined} - {Node 0} - {Node 1} - ... - {Node N} - {undefined}`
+ *
+ * Each `{value}` in the diagram is a possible sibling, which is either a Node or undefined.
+ * Each `-` in the above diagram is a `Place`, and can be describe as being `After` a particular `{sibling}` or `Before` it.
+ * This means that `After` `{undefined}` means the same `Place` as before the first node
+ * and `Before` `{undefined}` means the `Place` after the last Node.
+ *
+ * Each place can be specified, (aka 'anchored') in two ways (relative to the sibling before or after):
+ * the choice of which way to anchor a place only matters when the kept across an edit, and thus evaluated in multiple contexts where the
+ * two place description may no longer evaluate to the same place.
+ * @public
+ */
+export enum Side {
+	Before = 0,
+	After = 1,
+}
+
 const reservedIntervalIdKey = "intervalId";
 
 export interface ISerializedIntervalCollectionV2 {
@@ -86,7 +109,9 @@ function decompressInterval(
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
 		stickiness: interval[5],
-		canBeExclusive: interval[6],
+		canSlideToEndpoint: interval[6],
+		startSide: interval[7] ?? Side.Before,
+		endSide: interval[8] ?? Side.After,
 	};
 }
 
@@ -97,7 +122,7 @@ function decompressInterval(
 function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
 	const { start, end, sequenceNumber, intervalType, properties } = interval;
 
-	const base: CompressedSerializedInterval = [
+	let base: CompressedSerializedInterval = [
 		start,
 		end,
 		sequenceNumber,
@@ -107,11 +132,46 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 		{ ...properties, [reservedRangeLabelsKey]: undefined },
 	];
 
-	if (interval.stickiness !== undefined && interval.stickiness !== IntervalStickiness.END) {
-		base.push(interval.stickiness);
+	if (
+		interval.stickiness !== undefined &&
+		interval.stickiness !== IntervalStickiness.END &&
+		interval.canSlideToEndpoint
+	) {
+		// reassignment to make it easier for typescript to reason about types
+		base = [
+			...base,
+			interval.stickiness,
+			interval.canSlideToEndpoint,
+			interval.startSide ?? Side.Before,
+			interval.endSide ?? Side.After,
+		];
 	}
 
 	return base;
+}
+
+/**
+ * @internal
+ */
+export function endpointPosAndSide(
+	start: number | "start" | "end" | { pos: number; side: Side } | undefined,
+	end: number | "start" | "end" | { pos: number; side: Side } | undefined,
+) {
+	const startIsPlainEndpoint = typeof start === "number" || start === "start" || start === "end";
+	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
+
+	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
+	const endSide = endIsPlainEndpoint ? Side.After : end?.side;
+
+	const startPos = startIsPlainEndpoint ? start : start?.pos;
+	const endPos = endIsPlainEndpoint ? end : end?.pos;
+
+	return {
+		startSide,
+		endSide,
+		startPos,
+		endPos,
+	};
 }
 
 export function createIntervalIndex() {
@@ -210,7 +270,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
-		canBeExclusive: boolean = false,
+		canSlideToEndpoint: boolean = false,
+		startSide: Side = Side.Before,
+		endSide: Side = Side.After,
 	): TInterval {
 		return this.helpers.create(
 			this.label,
@@ -221,7 +283,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			op,
 			undefined,
 			stickiness,
-			canBeExclusive,
+			canSlideToEndpoint,
+			startSide,
+			endSide,
 		);
 	}
 
@@ -232,7 +296,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
-		canBeExclusive: boolean = false,
+		canSlideToEndpoint: boolean = false,
+		startSide: Side = Side.Before,
+		endSide: Side = Side.After,
 	) {
 		const interval: TInterval = this.createInterval(
 			start,
@@ -240,7 +306,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			intervalType,
 			op,
 			stickiness,
-			canBeExclusive,
+			canSlideToEndpoint,
+			startSide,
+			endSide,
 		);
 		if (interval) {
 			if (!interval.properties) {
@@ -650,7 +718,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * Intervals may not be Transient.
 	 * @param props - properties of the interval
 	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
-	 * @param canBeExclusive - Whether the endpoints of the interval can be made
+	 * todo: docs below
+	 * @param canSlideToEndpoint - Whether the endpoints of the interval can be made
 	 * exclusive (as opposed to inclusive). This is primarily useful in combination
 	 * with stickiness. If this value is set to true, the sticky endpoints of the
 	 * interval will be automatically adjusted to be the exclusive counterpart.
@@ -662,12 +731,11 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * with how the current half-open behavior is represented.
 	 */
 	add(
-		start: number,
-		end: number,
+		start: number | "start" | "end" | { pos: number; side: Side },
+		end: number | "start" | "end" | { pos: number; side: Side },
 		intervalType: IntervalType,
 		props?: PropertySet,
 		stickiness?: IntervalStickiness,
-		canBeExclusive?: boolean,
 	): TInterval;
 	/**
 	 * Removes an interval from the collection.
@@ -1018,12 +1086,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * {@inheritdoc IIntervalCollection.add}
 	 */
 	public add(
-		_start: number,
-		_end: number,
+		start: number | "start" | "end" | { pos: number; side: Side },
+		end: number | "start" | "end" | { pos: number; side: Side },
 		intervalType: IntervalType,
 		props?: PropertySet,
-		stickiness: IntervalStickiness = IntervalStickiness.END,
-		canBeExclusive: boolean = false,
 	): TInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1031,50 +1097,64 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (intervalType & IntervalType.Transient) {
 			throw new LoggingError("Can not add transient intervals");
 		}
-		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
+
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+
+		assert(
+			startPos !== undefined &&
+				endPos !== undefined &&
+				startSide !== undefined &&
+				endSide !== undefined,
+			"start and end cannot be undefined because they were not passed in as undefined",
+		);
+
+		// for back-compat, if both endpoints are passed as plain numbers, they
+		// cannot slide to endpoint segments
+		const canSlideToEndpoint = typeof start !== "number" || typeof end !== "number";
+
+		let stickiness: IntervalStickiness = IntervalStickiness.NONE;
+
+		if (startSide === Side.After || start === "start" || start === "end") {
+			stickiness |= IntervalStickiness.START;
+		}
+
+		if (endSide === Side.Before || end === "start" || end === "end") {
+			stickiness |= IntervalStickiness.END;
+		}
+
+		// special case for back-compat. if a user specifies both endpoints as
+		// plain numbers (as in the case of existing calls), use end stickiness
+		if (typeof start === "number" && typeof end === "number") {
+			stickiness = IntervalStickiness.END;
+		} else if (!this.options.intervalStickinessEnabled) {
 			throw new UsageError(
 				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
 			);
 		}
 
-		// if the interval has exclusive endpoints, automatically move the
-		// endpoints over based on stickiness
-
-		let start;
-
-		if (stickiness & IntervalStickiness.START && canBeExclusive) {
-			start = _start === 0 ? "start" : _start - 1;
-		} else {
-			start = _start;
-		}
-
-		let end;
-
-		if (stickiness & IntervalStickiness.END && canBeExclusive) {
-			end = _end === (this.client?.getLength() ?? 0) - 1 ? "end" : _end + 1;
-		} else {
-			end = _end;
-		}
-
 		const interval: TInterval = this.localCollection.addInterval(
-			start,
-			end,
+			startPos,
+			endPos,
 			intervalType,
 			props,
 			undefined,
-			stickiness,
-			canBeExclusive,
+			stickiness as IntervalStickiness,
+			canSlideToEndpoint,
+			startSide,
+			endSide,
 		);
 
 		if (interval) {
 			const serializedInterval: ISerializedInterval = {
-				end,
+				start: startPos,
+				end: endPos,
 				intervalType,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-				start,
-				stickiness,
-				canBeExclusive,
+				stickiness: stickiness as IntervalStickiness,
+				canSlideToEndpoint,
+				startSide,
+				endSide,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -1383,12 +1463,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		const {
-			intervalType,
-			properties,
-			stickiness,
-			canBeExclusive: isExclusive,
-		} = serializedInterval;
+		const { intervalType, properties, stickiness, canSlideToEndpoint, startSide, endSide } =
+			serializedInterval;
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
@@ -1403,7 +1479,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 			properties,
 			stickiness,
-			canBeExclusive: isExclusive,
+			canSlideToEndpoint,
+			startSide,
+			endSide,
 		};
 
 		if (
@@ -1527,7 +1605,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					startReferenceSlidingPreference(interval.stickiness),
-					interval.isExclusive &&
+					interval.canSlideToEndpoint &&
 						startReferenceSlidingPreference(interval.stickiness) ===
 							SlidingPreference.BACKWARD,
 				);
@@ -1550,7 +1628,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					endReferenceSlidingPreference(interval.stickiness),
-					interval.isExclusive &&
+					interval.canSlideToEndpoint &&
 						endReferenceSlidingPreference(interval.stickiness) ===
 							SlidingPreference.FORWARD,
 				);

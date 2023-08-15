@@ -12,6 +12,8 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { Side } from "../intervalCollection";
+
 /**
  * Basic interval abstraction
  */
@@ -121,10 +123,13 @@ export interface ISerializedInterval {
 	 */
 	stickiness?: IntervalStickiness;
 	/**
-	 * Whether or not the endpoints of this interval can be exclusive. Exclusivity
-	 * is based on stickiness
+	 * Whether or not the endpoints of this interval can be slide to the special
+	 * endpoint segments denoting the position immediately before or after the
+	 * string
 	 */
-	canBeExclusive?: boolean;
+	canSlideToEndpoint?: boolean;
+	startSide?: Side;
+	endSide?: Side;
 	/** Any properties the interval has */
 	properties?: PropertySet;
 }
@@ -166,7 +171,17 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  *
  * Intervals are of the format:
  *
- * [start, end, sequenceNumber, intervalType, properties, stickiness?]
+ * [
+ * start,
+ * end,
+ * sequenceNumber,
+ * intervalType,
+ * properties,
+ * stickiness?,
+ * canSlideToEndpoint?,
+ * startSide?,
+ * endSide?,
+ * ]
  */
 export type CompressedSerializedInterval =
 	| [
@@ -177,6 +192,8 @@ export type CompressedSerializedInterval =
 			PropertySet,
 			IntervalStickiness,
 			boolean,
+			Side,
+			Side,
 	  ]
 	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
 
@@ -207,7 +224,9 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
 		stickiness?: IntervalStickiness,
-		canBeExclusive?: boolean,
+		canSlideToEndpoint?: boolean,
+		startSide?: Side,
+		endSide?: Side,
 	): TInterval;
 }
 

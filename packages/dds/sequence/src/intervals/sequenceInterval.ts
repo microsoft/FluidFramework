@@ -26,6 +26,7 @@ import {
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
+import { Side } from "../intervalCollection";
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -59,7 +60,7 @@ const reservedIntervalIdKey = "intervalId";
  * length of the associated sequence, there exist special endpoint segments, "start" and "end",
  * which represent the position immediately before or immediately after the string respectively.
  *
- * If a `SequenceInterval` is created with `canBeExclusive` set to true, the
+ * If a `SequenceInterval` is created with `canSlideToEndpoint` set to true, the
  * endpoints of the interval that are sticky will be automatically created as
  * exclusive and will have the ability to slide to these special endpoint
  * segments.
@@ -90,7 +91,9 @@ export class SequenceInterval implements ISerializableInterval {
 		public intervalType: IntervalType,
 		props?: PropertySet,
 		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
-		public readonly isExclusive: boolean = false,
+		public readonly canSlideToEndpoint: boolean = false,
+		public readonly startSide: Side = Side.Before,
+		public readonly endSide: Side = Side.After,
 	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
@@ -148,7 +151,9 @@ export class SequenceInterval implements ISerializableInterval {
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			canBeExclusive: this.isExclusive,
+			canSlideToEndpoint: this.canSlideToEndpoint,
+			startSide: this.startSide,
+			endSide: this.endSide,
 		};
 
 		if (this.properties) {
@@ -172,7 +177,9 @@ export class SequenceInterval implements ISerializableInterval {
 			this.intervalType,
 			this.properties,
 			this.stickiness,
-			this.isExclusive,
+			this.canSlideToEndpoint,
+			this.startSide,
+			this.endSide,
 		);
 	}
 
@@ -205,20 +212,39 @@ export class SequenceInterval implements ISerializableInterval {
 	 * {@inheritDoc IInterval.compareStart}
 	 */
 	public compareStart(b: SequenceInterval) {
-		return compareReferencePositions(this.start, b.start);
+		const dist = compareReferencePositions(this.start, b.start);
+		if (dist !== 0 || this.startSide === b.startSide) {
+			return dist;
+		}
+
+		if (this.startSide === Side.Before) {
+			return 1;
+		}
+
+		return -1;
 	}
 
 	/**
 	 * {@inheritDoc IInterval.compareEnd}
 	 */
-	public compareEnd(b: SequenceInterval) {
-		return compareReferencePositions(this.end, b.end);
+	public compareEnd(b: SequenceInterval): number {
+		const dist = compareReferencePositions(this.end, b.end);
+		if (dist !== 0 || this.endSide === b.endSide) {
+			return dist;
+		}
+
+		if (this.endSide === Side.Before) {
+			return 1;
+		}
+
+		return -1;
 	}
 
 	/**
 	 * {@inheritDoc IInterval.overlaps}
 	 */
 	public overlaps(b: SequenceInterval) {
+		// todo: account for side
 		const result =
 			compareReferencePositions(this.start, b.end) <= 0 &&
 			compareReferencePositions(this.end, b.start) >= 0;
@@ -239,14 +265,20 @@ export class SequenceInterval implements ISerializableInterval {
 	 * @internal
 	 */
 	public union(b: SequenceInterval) {
+		const newStart = minReferencePosition(this.start, b.start);
+		const newEnd = maxReferencePosition(this.end, b.end);
+
 		return new SequenceInterval(
 			this.client,
-			minReferencePosition(this.start, b.start),
-			maxReferencePosition(this.end, b.end),
+			newStart,
+			newEnd,
 			this.intervalType,
 			undefined,
+			// todo: not happy with how merging here works
 			(this.stickiness | b.stickiness) as IntervalStickiness,
-			this.isExclusive,
+			this.canSlideToEndpoint || b.canSlideToEndpoint,
+			this.start === newStart ? this.startSide : b.startSide,
+			this.end === newEnd ? this.endSide : b.endSide,
 		);
 	}
 
@@ -303,7 +335,7 @@ export class SequenceInterval implements ISerializableInterval {
 				undefined,
 				localSeq,
 				startReferenceSlidingPreference(this.stickiness),
-				this.isExclusive &&
+				this.canSlideToEndpoint &&
 					startReferenceSlidingPreference(this.stickiness) === SlidingPreference.BACKWARD,
 			);
 			if (this.start.properties) {
@@ -321,7 +353,7 @@ export class SequenceInterval implements ISerializableInterval {
 				undefined,
 				localSeq,
 				endReferenceSlidingPreference(this.stickiness),
-				this.isExclusive &&
+				this.canSlideToEndpoint &&
 					endReferenceSlidingPreference(this.stickiness) === SlidingPreference.FORWARD,
 			);
 			if (this.end.properties) {
@@ -336,7 +368,9 @@ export class SequenceInterval implements ISerializableInterval {
 			this.intervalType,
 			undefined,
 			this.stickiness,
-			this.isExclusive,
+			this.canSlideToEndpoint,
+			this.startSide,
+			this.endSide,
 		);
 		if (this.properties) {
 			newInterval.initializeProperties();
@@ -467,7 +501,9 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	stickiness: IntervalStickiness = IntervalStickiness.END,
-	canBeExclusive: boolean = false,
+	canSlideToEndpoint: boolean = false,
+	startSide: Side = Side.Before,
+	endSide: Side = Side.After,
 ): SequenceInterval {
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
@@ -499,7 +535,7 @@ export function createSequenceInterval(
 		fromSnapshot,
 		undefined,
 		startReferenceSlidingPreference(stickiness),
-		canBeExclusive &&
+		canSlideToEndpoint &&
 			startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
 	);
 
@@ -511,7 +547,8 @@ export function createSequenceInterval(
 		fromSnapshot,
 		undefined,
 		endReferenceSlidingPreference(stickiness),
-		canBeExclusive && endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+		canSlideToEndpoint &&
+			endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
 	);
 
 	const rangeProp = {
@@ -527,7 +564,9 @@ export function createSequenceInterval(
 		intervalType,
 		rangeProp,
 		stickiness,
-		canBeExclusive,
+		canSlideToEndpoint,
+		startSide,
+		endSide,
 	);
 	return ival;
 }
