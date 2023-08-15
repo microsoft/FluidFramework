@@ -268,7 +268,7 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
  * False for any error we created and raised within the FF codebase via LoggingError base class,
  * or wrapped in a well-known error type
  */
-export function isExternalError(e: any): boolean {
+export function isExternalError(e: unknown): boolean {
 	// LoggingErrors are an internal FF error type. However, an external error can be converted
 	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin flag to
 	// determine whether the original error was infact external.
@@ -296,7 +296,7 @@ export function isTaggedTelemetryPropertyValue(
  * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
  * otherwise returns null since this is what we support at the moment.
  */
-function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyType {
+function filterValidTelemetryProps(x: unknown, key: string): TelemetryEventPropertyType {
 	if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
 		return JSON.stringify(x);
 	}
@@ -309,7 +309,7 @@ function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyT
 }
 
 // checking type of x, returns false if x is null
-function isTelemetryEventPropertyValue(x: any): x is TelemetryEventPropertyType {
+function isTelemetryEventPropertyValue(x: unknown): x is TelemetryEventPropertyType {
 	switch (typeof x) {
 		case "string":
 		case "number":

@@ -225,7 +225,7 @@ export interface IResponse {
 }
 
 // @public
-export function isExternalError(e: any): boolean;
+export function isExternalError(e: unknown): boolean;
 
 // @public @deprecated (undocumented)
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
