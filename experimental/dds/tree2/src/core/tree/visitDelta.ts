@@ -187,6 +187,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 						// Handled in the second pass
 						visitModify(index, mark, visitor, config);
 						index += mark.count;
+						markHasMoveOrDelete = true;
 						break;
 					}
 
