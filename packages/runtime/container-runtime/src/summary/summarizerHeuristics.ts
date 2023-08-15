@@ -102,19 +102,19 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 	public constructor(
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly configuration: ISummaryConfigurationHeuristics,
-		trySummarize: (summarizeReason: SummarizeReason) => void,
+		trySummarize: (reason: SummarizeReason) => void,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
 	) {
 		this.idleTimer = new Timer(this.idleTime, () => this.runSummarize("idle"));
 
-		this.runSummarize = (summarizeReason: SummarizeReason) => {
+		this.runSummarize = (reason: SummarizeReason) => {
 			this.idleTimer?.clear();
 
 			// We shouldn't attempt a summary if there are no new processed ops
 			const opsSinceLastAck = this.opsSinceLastAck;
 			if (opsSinceLastAck > 0) {
-				trySummarize(summarizeReason);
+				trySummarize(reason);
 			}
 		};
 	}
