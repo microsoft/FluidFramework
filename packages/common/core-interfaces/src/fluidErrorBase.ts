@@ -40,28 +40,28 @@ export interface IFluidErrorBase extends Error {
 	addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
 
-const hasTelemetryPropFunctions = (x: any): boolean =>
-	typeof x?.getTelemetryProperties === "function" &&
-	typeof x?.addTelemetryProperties === "function";
+const hasTelemetryPropFunctions = (x: unknown): boolean =>
+	typeof (x as any)?.getTelemetryProperties === "function" &&
+	typeof (x as any)?.addTelemetryProperties === "function";
 
-export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
-	typeof x?.errorInstanceId === "string";
+export const hasErrorInstanceId = (x: unknown): x is { errorInstanceId: string } =>
+	typeof (x as any)?.errorInstanceId === "string";
 
 /** type guard for IFluidErrorBase interface */
-export function isFluidError(e: any): e is IFluidErrorBase {
+export function isFluidError(e: unknown): e is IFluidErrorBase {
 	return (
-		typeof e?.errorType === "string" &&
-		typeof e?.message === "string" &&
+		typeof (e as Partial<IFluidErrorBase>)?.errorType === "string" &&
+		typeof (e as Partial<IFluidErrorBase>)?.message === "string" &&
 		hasErrorInstanceId(e) &&
 		hasTelemetryPropFunctions(e)
 	);
 }
 
 /** type guard for old standard of valid/known errors */
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId"> {
+export function isValidLegacyError(e: unknown): e is Omit<IFluidErrorBase, "errorInstanceId"> {
 	return (
-		typeof e?.errorType === "string" &&
-		typeof e?.message === "string" &&
+		typeof (e as Partial<IFluidErrorBase>)?.errorType === "string" &&
+		typeof (e as Partial<IFluidErrorBase>)?.message === "string" &&
 		hasTelemetryPropFunctions(e)
 	);
 }
