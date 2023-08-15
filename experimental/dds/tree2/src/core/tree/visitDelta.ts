@@ -260,8 +260,8 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					}
 					break;
 				case Delta.MarkType.MoveIn: {
-					// If this move in is the result of a delete and should be treated as a normal delete,
-					// it is handled in the move out case instead.
+					// If this move-in is the result of a removal and the visitor wishes to treat removals as deletions,
+					// then there is no data to move in.
 					if (!config.allowRepairDataMoves && mark.isDelete) {
 						break;
 					}
