@@ -216,8 +216,14 @@ export type SubmitSummaryResult =
 
 /** The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage. */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
+
+/** Type for summarization failures that are retriable. */
+export interface IRetriableFailureResult {
+	readonly retryAfterSeconds?: number;
+}
+
 /** The data in summarizer result when submit summary stage fails. */
-export interface SubmitSummaryFailureData {
+export interface SubmitSummaryFailureData extends IRetriableFailureResult {
 	stage: SummaryStage;
 }
 
@@ -231,7 +237,7 @@ export interface IAckSummaryResult {
 	readonly ackNackDuration: number;
 }
 
-export interface INackSummaryResult {
+export interface INackSummaryResult extends IRetriableFailureResult {
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }
@@ -246,7 +252,6 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			data: TFailure | undefined;
 			message: string;
 			error: any;
-			retryAfterSeconds?: number;
 	  };
 
 export interface ISummarizeResults {
@@ -437,7 +442,7 @@ export interface ISummarizeHeuristicRunner {
 
 type ISummarizeTelemetryRequiredProperties =
 	/** Reason code for attempting to summarize */
-	"reason";
+	"summarizeReason";
 
 type ISummarizeTelemetryOptionalProperties =
 	/** Number of attempts within the last time window, used for calculating the throttle delay. */
