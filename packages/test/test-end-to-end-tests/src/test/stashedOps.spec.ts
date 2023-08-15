@@ -1272,21 +1272,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		const stashedChanges = await stashedChangesP;
 
-		const container3 = await loadOffline(provider, { url }, stashedChanges);
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			container3.container,
-			"default",
-		);
+		const container3 = await loader.resolve({ url }, stashedChanges);
+		const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
 		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
-		// Blob is accessible locally while offline
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-
-		container3.connect();
-		await waitForContainerConnection(container3.container);
 		await provider.ensureSynchronized();
 
 		// Blob is uploaded and accessible by all clients

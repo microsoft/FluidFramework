@@ -42,6 +42,7 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
+		await runtime2.stashing();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -72,6 +73,7 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
+		await runtime2.stashing();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -79,6 +81,7 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable.size, 1);
 	});
+
 	it("shutdown multiple blobs", async () => {
 		await runtime.attach();
 		await runtime.connect();
@@ -101,6 +104,7 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
+		await runtime2.stashing();
 		await runtime2.connect();
 		await runtime2.processAll();
 

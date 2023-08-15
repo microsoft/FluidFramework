@@ -264,6 +264,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						minTTLInSeconds: entry.minTTLInSeconds,
 						attached,
 						acked,
+						opsent: true,
 					});
 					return;
 				}
@@ -275,6 +276,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				uploadP: this.uploadBlob(localId, blob),
 				attached,
 				acked,
+				opsent: true,
 			});
 		});
 
@@ -312,16 +314,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 	}
 
-	private get stashedPendingUploads() {
-		return Array.from(this.pendingBlobs.values()).filter(
-			(e) => e.status === PendingBlobStatus.Stashed,
-		);
-	}
-
-	public get hasStashedPendingUploads(): boolean {
-		return this.stashedPendingUploads.length > 0;
-	}
-
 	public get allBlobsAttached(): boolean {
 		for (const [, entry] of this.pendingBlobs) {
 			if (entry.attached === false) {
@@ -348,13 +340,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
 	 */
-	public async onConnected() {
+	public async processStashedChanges() {
 		this.retryThrottler.cancel();
-		const pendingUploads = this.stashedPendingUploads.map(async (e) => e.uploadP);
+		const pendingUploads = Array.from(this.pendingBlobs.values())
+			.filter((e) => e.status === PendingBlobStatus.Stashed)
+			.map(async (e) => e.uploadP);
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
-				eventName: "BlobUploadOnConnected",
+				eventName: "BlobUploadProcessStashedChanges",
 				count: pendingUploads.length,
 			},
 			async () => Promise.all(pendingUploads),
@@ -362,7 +356,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	private async shutdownPendingBlobs(): Promise<void> {
+	private async stashPendingBlobs(): Promise<void> {
 		for (const [localId, entry] of this.pendingBlobs) {
 			switch (entry.status) {
 				case PendingBlobStatus.Uploading:
@@ -640,7 +634,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			if (
 				!(pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId)
 			) {
-				console.log(pendingEntry?.status);
 				assert(
 					pendingEntry?.status === PendingBlobStatus.SendingOp &&
 						!!pendingEntry?.storageId,
@@ -972,7 +965,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
 		if (waitBlobsToAttach) {
-			await this.shutdownPendingBlobs();
+			await this.stashPendingBlobs();
 		}
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {

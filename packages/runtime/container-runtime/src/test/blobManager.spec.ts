@@ -226,19 +226,20 @@ export class MockRuntime
 	public async connect(delay?: number) {
 		assert(!this.connected);
 		await new Promise<void>((resolve) => setTimeout(resolve, 0));
-		if (this.blobManager.hasStashedPendingUploads) {
-			const uploadP = this.blobManager.onConnected();
-			this.processing = true;
-			await this.processBlobs();
-			await uploadP;
-			this.processing = false;
-		}
 		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
 		const ops = this.ops;
 		this.ops = [];
 		ops.forEach((op) => this.blobManager.reSubmit(op.metadata));
+	}
+
+	public async stashing() {
+		const uploadP = this.blobManager.processStashedChanges();
+		this.processing = true;
+		await this.processBlobs();
+		await uploadP;
+		this.processing = false;
 	}
 
 	public disconnect() {

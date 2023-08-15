@@ -621,7 +621,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	it("reconnection does not block ops when having pending blobs", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
-		const blobManager = (container1 as any).runtime.blobManager;
+		const runtimeStorage = (container1 as any).runtime.storage;
 
 		let resolveUploadBlob = () => {};
 		const uploadBlobPromise = new Promise<void>((resolve) => {
@@ -635,12 +635,12 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			return result;
 		};
 
-		const delayedUploadBlob = new Proxy(blobManager.uploadBlob.bind(blobManager), {
+		const delayedUploadBlob = new Proxy(runtimeStorage.createBlob.bind(runtimeStorage), {
 			async apply(target, thisArg, args) {
 				return uploadBlobWithDelay(target, thisArg, args);
 			},
 		});
-		blobManager.uploadBlob = delayedUploadBlob;
+		runtimeStorage.createBlob = delayedUploadBlob;
 
 		const handleP = dataStore1._runtime.uploadBlob(stringToBuffer("test string", "utf8"));
 
@@ -654,7 +654,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		assert.strictEqual(Object.values<any>(pendingBlobs).length, 1);
 		const acked = Object.values<any>(pendingBlobs)[0].acked;
 		assert.strictEqual(acked, false, "reconnection should not reupload pending blobs");
-		// sending some ops to confirm pending blob is not blocking
+		// sending some ops to confirm pending blob is not blocking other ops
 		dataStore1._root.set("key", "value");
 		dataStore1._root.set("another key", "another value");
 		await provider.ensureSynchronized();
@@ -666,6 +666,6 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			.getPendingLocalState()
 			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, true);
-		blobManager.uploadBlob = delayedUploadBlob;
+		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });
