@@ -2026,7 +2026,6 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldStoredSchema;
     getNode(index: number): TChild;
-    // (undocumented)
     getTreeStatus(): TreeStatus;
     readonly parent?: TParent;
 }
