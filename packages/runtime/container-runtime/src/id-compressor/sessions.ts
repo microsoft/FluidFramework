@@ -246,7 +246,7 @@ export class Session {
 	 */
 	public static getContainingCluster(
 		finalId: FinalCompressedId,
-		clusterChain: IdCluster[],
+		clusterChain: readonly IdCluster[],
 	): IdCluster | undefined {
 		return Session.binarySearch(finalId, clusterChain, (final, cluster) => {
 			const lastFinal = lastAllocatedFinal(cluster);

@@ -378,7 +378,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public tryDecompress(id: SessionSpaceCompressedId): StableId | undefined {
 		if (isFinalId(id)) {
-			const containingCluster = this.finalSpace.getContainingCluster(id);
+			const containingCluster = Session.getContainingCluster(id, this.finalSpace.clusters);
 			if (containingCluster === undefined) {
 				return undefined;
 			}

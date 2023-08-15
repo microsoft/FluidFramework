@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IdCluster, Session, clustersEqual } from "./sessions";
+import { IdCluster, clustersEqual } from "./sessions";
 import { FinalCompressedId } from "./identifiers";
 
 /**
@@ -32,10 +32,6 @@ export class FinalSpace {
 			"Cluster insert to final_space is out of order.",
 		);
 		this.clusterList.push(newCluster);
-	}
-
-	public getContainingCluster(finalId: FinalCompressedId): IdCluster | undefined {
-		return Session.getContainingCluster(finalId, this.clusterList);
 	}
 
 	/**
