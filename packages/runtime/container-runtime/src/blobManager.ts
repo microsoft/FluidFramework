@@ -631,15 +631,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
-			if (
-				!(pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId)
-			) {
-				assert(
-					pendingEntry?.status === PendingBlobStatus.SendingOp &&
-						!!pendingEntry?.storageId,
-					0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-				);
-			}
+			assert(
+				pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId,
+				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
+			);
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
