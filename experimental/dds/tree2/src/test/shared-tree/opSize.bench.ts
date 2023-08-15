@@ -429,7 +429,7 @@ describe("Op Size", () => {
 		});
 		table.sort(["Avg. Op Size (Bytes)|des"]);
 
-		console.log("-- Op Size Benchmark Statistics Sorted by Avg. Op Size -- ");
+		console.log("-- Op Size Benchmark Statistics -- ");
 		console.log(table.toString());
 	});
 
