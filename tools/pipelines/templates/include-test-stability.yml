@@ -89,19 +89,37 @@ jobs:
           "
 
     - template: include-use-node-version.yml
-    
-    - template: include-install.yml 
-      parameters:
-        packageManager: ${{ parameters.packageManager }}
-        buildDirectory: ${{ parameters.buildDirectory }}
-        packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
 
-    - template: include-build-lint.yml 
-      parameters:
-        taskBuild: ${{ parameters.taskBuild }}
-        taskLint: ${{ parameters.taskLint }}
-        taskLintName: ${{ parameters.taskLintName }}
-        buildDirectory: ${{ parameters.buildDirectory }}
+    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - template: include-install-pnpm.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+
+    - task: Bash@3
+      displayName: Install dependencies
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          ${{ parameters.packageManagerInstallCommand }}
+
+    # Build
+    - ${{ if ne(parameters.taskBuild, 'false') }}:
+      - task: Npm@1
+        displayName: npm run ${{ parameters.taskBuild }}
+        inputs:
+          command: 'custom'
+          workingDir: ${{ parameters.buildDirectory }}
+          customCommand: 'run ${{ parameters.taskBuild }}'
+
+    # Lint
+    - ${{ if ne(parameters.taskLint, false) }}:
+      - task: Npm@1
+        displayName: npm run ${{ parameters.taskLintName }}
+        inputs:
+          command: 'custom'
+          workingDir: ${{ parameters.buildDirectory }}
+          customCommand: 'run ${{ parameters.taskLintName }}'
 
     # Test
     - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -111,10 +129,24 @@ jobs:
         displayName: Start Test
 
       - ${{ each taskTestStep in parameters.taskTest }}:
-        - template: include-task-test.yml
-          parameters:
-            taskTestStep: ${{ taskTestStep }}
-            buildDirectory: ${{ parameters.buildDirectory }}
+        # Test - With coverage
+        - ${{ if and(eq(variables['testCoverage'], true), startsWith(taskTestStep, 'ci:test')) }}:
+          - task: Npm@1
+            displayName: npm run ${{ taskTestStep }}:coverage
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ${{ taskTestStep }}:coverage'
+            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+        # Test - No coverage
+        - ${{ if or(eq(variables['testCoverage'], false), eq(startsWith(taskTestStep, 'ci:test'), false)) }}:
+            - task: Npm@1
+              displayName: npm run ${{ taskTestStep }}
+              inputs:
+                command: 'custom'
+                workingDir: ${{ parameters.buildDirectory }}
+                customCommand: 'run ${{ taskTestStep }}'
+              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
         # Verify if the tinylicious log exists
         - task: Bash@3
           displayName: Validate Tinylicious Log 

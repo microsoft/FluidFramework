@@ -242,12 +242,19 @@ stages:
               fi
 
         - template: include-use-node-version.yml
-        
-        - template: include-install.yml 
-          parameters:
-            packageManager: ${{ parameters.packageManager }}
-            buildDirectory: ${{ parameters.buildDirectory }}
-            packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - template: include-install-pnpm.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              ${{ parameters.packageManagerInstallCommand }}
 
         # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
         # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
@@ -262,12 +269,23 @@ stages:
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
 
-        - template: include-build-lint.yml 
-          parameters:
-            taskBuild: ${{ parameters.taskBuild }}
-            taskLint: ${{ parameters.taskLint }}
-            taskLintName: ${{ parameters.taskLintName }}
-            buildDirectory: ${{ parameters.buildDirectory }}
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
+
+        # Lint
+        - ${{ if ne(parameters.taskLint, false) }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskLintName }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskLintName }}'
 
         # Test
         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -277,10 +295,35 @@ stages:
             displayName: Start Test
 
           - ${{ each taskTestStep in parameters.taskTest }}:
-            - template: include-task-test.yml
-              parameters:
-                taskTestStep: ${{ taskTestStep }}
-                buildDirectory: ${{ parameters.buildDirectory }}
+            # Test - With coverage
+            - ${{ if and(eq(variables['testCoverage'], true), startsWith(taskTestStep, 'ci:test')) }}:
+              - task: Npm@1
+                displayName: npm run ${{ taskTestStep }}:coverage
+                inputs:
+                  command: 'custom'
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: 'run ${{ taskTestStep }}:coverage'
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
+
+              # Test - No coverage
+            - ${{ else }}:
+              - task: Npm@1
+                displayName: npm run ${{ taskTestStep }}
+                inputs:
+                  command: 'custom'
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: 'run ${{ taskTestStep }}'
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                env:
+                  ${{ if contains(taskTestStep, 'tinylicious') }}:
+                    # Disable colorization for tinylicious logs (not useful when printing to a file)
+                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+                    logger__morganFormat: tiny
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them
