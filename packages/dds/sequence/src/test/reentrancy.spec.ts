@@ -14,7 +14,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { resetReentrancyLogCounter } from "../sequence";
 
-describe.only("SharedString op-reentrancy", () => {
+describe("SharedString op-reentrancy", () => {
 	/**
 	 * This is an example scenario where reentrancy of submission of local ops was problematic which we saw in production.
 	 *
