@@ -4,6 +4,10 @@
  */
 
 import {
+	extractLogSafeErrorProperties,
+	generateStack,
+	isILoggingError,
+	isTaggedTelemetryPropertyValue,
 	ITaggedTelemetryPropertyType,
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryBaseEvent,
@@ -21,12 +25,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
-import {
-	isILoggingError,
-	extractLogSafeErrorProperties,
-	generateStack,
-	isTaggedTelemetryPropertyValue,
-} from "./errorLogging";
 import { ITelemetryEventExt } from "./telemetryTypes";
 
 export interface Memory {

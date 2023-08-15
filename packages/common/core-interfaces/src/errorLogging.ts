@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import {
 	IFluidErrorBase,
+	hasErrorInstanceId,
+	isFluidError,
+	isValidLegacyError,
+} from "./fluidErrorBase";
+import {
 	ILoggingError,
-	ITelemetryLoggerExt,
-	ITelemetryProperties,
 	ITaggedTelemetryPropertyType,
 	ITaggedTelemetryPropertyTypeExt,
+	ITelemetryLoggerExt,
+	ITelemetryProperties,
 	TelemetryEventPropertyType,
 	TelemetryEventPropertyTypeExt,
-	NORMALIZED_ERROR_TYPE,
-} from "@fluidframework/core-interfaces";
-import { v4 as uuid } from "uuid";
-import { hasErrorInstanceId, isFluidError, isValidLegacyError } from "./fluidErrorBase";
+} from "./logger";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -444,6 +447,8 @@ export class LoggingError
 	}
 }
 
+/** The Error class used when normalizing an external error */
+export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
 	// Note that this matches ContainerErrorType/DriverErrorType's genericError

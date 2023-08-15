@@ -3,7 +3,21 @@
  * Licensed under the MIT License.
  */
 
-export { IFluidErrorBase, NORMALIZED_ERROR_TYPE } from "./error";
+export {
+	extractLogSafeErrorProperties,
+	generateErrorWithStack,
+	generateStack,
+	getCircularReplacer,
+	IFluidErrorAnnotations,
+	isExternalError,
+	isILoggingError,
+	isTaggedTelemetryPropertyValue,
+	LoggingError,
+	NORMALIZED_ERROR_TYPE,
+	normalizeError,
+	wrapError,
+	wrapErrorAndLog,
+} from "./errorLogging";
 
 export {
 	IFluidLoadable,
@@ -11,6 +25,13 @@ export {
 	IFluidRunnable,
 	IProvideFluidRunnable,
 } from "./fluidLoadable";
+
+export {
+	hasErrorInstanceId,
+	IFluidErrorBase,
+	isFluidError,
+	isValidLegacyError,
+} from "./fluidErrorBase";
 
 // Typescript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:

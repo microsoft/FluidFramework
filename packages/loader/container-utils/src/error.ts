@@ -5,8 +5,13 @@
 
 import {
 	IFluidErrorBase,
+	isExternalError,
 	ITelemetryLoggerExt,
+	LoggingError,
 	NORMALIZED_ERROR_TYPE,
+	normalizeError,
+	wrapError,
+	wrapErrorAndLog,
 } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
@@ -15,13 +20,6 @@ import {
 	IThrottlingWarning,
 	IUsageError,
 } from "@fluidframework/container-definitions";
-import {
-	LoggingError,
-	normalizeError,
-	wrapError,
-	wrapErrorAndLog,
-	isExternalError,
-} from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 

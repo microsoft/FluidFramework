@@ -38,6 +38,9 @@
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
+	"dependencies": {
+		"uuid": "^8.3.1"
+	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",

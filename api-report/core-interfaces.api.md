@@ -5,6 +5,13 @@
 ```ts
 
 // @public
+export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
+    message: string;
+    errorType?: string | undefined;
+    stack?: string | undefined;
+};
+
+// @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
@@ -14,6 +21,20 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @public
+export function generateErrorWithStack(): Error;
+
+// @public (undocumented)
+export function generateStack(): string | undefined;
+
+// @public
+export const getCircularReplacer: () => (key: string, value: any) => any;
+
+// @public (undocumented)
+export const hasErrorInstanceId: (x: any) => x is {
+    errorInstanceId: string;
+};
 
 // @public
 export interface IDisposable {
@@ -40,6 +61,11 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
 export interface IFluidCodeDetailsConfig {
     // (undocumented)
     readonly [key: string]: string;
+}
+
+// @public
+export interface IFluidErrorAnnotations {
+    props?: ITelemetryProperties;
 }
 
 // @public
@@ -198,11 +224,26 @@ export interface IResponse {
     value: any;
 }
 
+// @public
+export function isExternalError(e: any): boolean;
+
 // @public @deprecated (undocumented)
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
+// @public
+export function isFluidError(e: any): e is IFluidErrorBase;
+
 // @public @deprecated
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export const isILoggingError: (x: any) => x is ILoggingError;
+
+// @public
+export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt;
+
+// @public
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public
 export interface ITaggedTelemetryPropertyType {
@@ -302,7 +343,22 @@ export interface ITelemetryPropertiesExt {
 }
 
 // @public
+export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
+    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
+    addTelemetryProperties(props: ITelemetryProperties): void;
+    // (undocumented)
+    get errorInstanceId(): any;
+    getTelemetryProperties(): ITelemetryProperties;
+    // (undocumented)
+    overwriteErrorInstanceId(id: string): void;
+    static typeCheck(object: unknown): object is LoggingError;
+}
+
+// @public
 export const NORMALIZED_ERROR_TYPE = "genericError";
+
+// @public
+export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
@@ -315,6 +371,12 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
     [key: string]: // Flat objects can have the same properties as the event itself
     string | number | boolean | undefined | (string | number | boolean)[];
 };
+
+// @public
+export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
+
+// @public
+export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLoggerExt): T;
 
 // (No @packageDocumentation comment for this package)
 

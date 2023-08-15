@@ -40,9 +40,28 @@ export interface IFluidErrorBase extends Error {
 	addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
 
-/**
- * The Error class used when normalizing an external error.
- *
- * @privateRemarks TODO: unify "genericError" string literals once related members have been moved into this package.
- */
-export const NORMALIZED_ERROR_TYPE = "genericError";
+const hasTelemetryPropFunctions = (x: any): boolean =>
+	typeof x?.getTelemetryProperties === "function" &&
+	typeof x?.addTelemetryProperties === "function";
+
+export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
+	typeof x?.errorInstanceId === "string";
+
+/** type guard for IFluidErrorBase interface */
+export function isFluidError(e: any): e is IFluidErrorBase {
+	return (
+		typeof e?.errorType === "string" &&
+		typeof e?.message === "string" &&
+		hasErrorInstanceId(e) &&
+		hasTelemetryPropFunctions(e)
+	);
+}
+
+/** type guard for old standard of valid/known errors */
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId"> {
+	return (
+		typeof e?.errorType === "string" &&
+		typeof e?.message === "string" &&
+		hasTelemetryPropFunctions(e)
+	);
+}

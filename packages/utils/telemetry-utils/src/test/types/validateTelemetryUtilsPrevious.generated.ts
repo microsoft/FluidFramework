@@ -472,26 +472,26 @@ use_old_InterfaceDeclaration_MonitoringContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_NORMALIZED_ERROR_TYPE": {"forwardCompat": false}
+* "RemovedVariableDeclaration_NORMALIZED_ERROR_TYPE": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_NORMALIZED_ERROR_TYPE():
     TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>;
-declare function use_current_VariableDeclaration_NORMALIZED_ERROR_TYPE(
+declare function use_current_RemovedVariableDeclaration_NORMALIZED_ERROR_TYPE(
     use: TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>);
-use_current_VariableDeclaration_NORMALIZED_ERROR_TYPE(
+use_current_RemovedVariableDeclaration_NORMALIZED_ERROR_TYPE(
     get_old_VariableDeclaration_NORMALIZED_ERROR_TYPE());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_NORMALIZED_ERROR_TYPE": {"backCompat": false}
+* "RemovedVariableDeclaration_NORMALIZED_ERROR_TYPE": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_NORMALIZED_ERROR_TYPE():
+declare function get_current_RemovedVariableDeclaration_NORMALIZED_ERROR_TYPE():
     TypeOnly<typeof current.NORMALIZED_ERROR_TYPE>;
 declare function use_old_VariableDeclaration_NORMALIZED_ERROR_TYPE(
     use: TypeOnly<typeof old.NORMALIZED_ERROR_TYPE>);
 use_old_VariableDeclaration_NORMALIZED_ERROR_TYPE(
-    get_current_VariableDeclaration_NORMALIZED_ERROR_TYPE());
+    get_current_RemovedVariableDeclaration_NORMALIZED_ERROR_TYPE());
 
 /*
 * Validate forward compat by using old type in place of current type

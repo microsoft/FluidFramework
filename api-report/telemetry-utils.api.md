@@ -6,10 +6,20 @@
 
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
+import { extractLogSafeErrorProperties } from '@fluidframework/core-interfaces';
+import { generateErrorWithStack } from '@fluidframework/core-interfaces';
+import { generateStack } from '@fluidframework/core-interfaces';
+import { getCircularReplacer } from '@fluidframework/core-interfaces';
+import { hasErrorInstanceId } from '@fluidframework/core-interfaces';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/common-definitions';
+import { IFluidErrorAnnotations } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/core-interfaces';
-import { ILoggingError } from '@fluidframework/core-interfaces';
+import { isExternalError } from '@fluidframework/core-interfaces';
+import { isFluidError } from '@fluidframework/core-interfaces';
+import { isILoggingError } from '@fluidframework/core-interfaces';
+import { isTaggedTelemetryPropertyValue } from '@fluidframework/core-interfaces';
+import { isValidLegacyError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyTypeExt } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -22,10 +32,13 @@ import { ITelemetryPerformanceEventExt } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryPropertiesExt } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
-import { NORMALIZED_ERROR_TYPE } from '@fluidframework/core-interfaces';
+import { LoggingError } from '@fluidframework/core-interfaces';
+import { normalizeError } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyTypeExt } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { wrapError } from '@fluidframework/core-interfaces';
+import { wrapErrorAndLog } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -64,29 +77,18 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
 // @public (undocumented)
 export const eventNamespaceSeparator: ":";
 
-// @public
-export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
-    message: string;
-    errorType?: string | undefined;
-    stack?: string | undefined;
-};
+export { extractLogSafeErrorProperties }
 
 // @public (undocumented)
 export function formatTick(tick: number): number;
 
-// @public
-export function generateErrorWithStack(): Error;
+export { generateErrorWithStack }
 
-// @public (undocumented)
-export function generateStack(): string | undefined;
+export { generateStack }
 
-// @public
-export const getCircularReplacer: () => (key: string, value: any) => any;
+export { getCircularReplacer }
 
-// @public (undocumented)
-export const hasErrorInstanceId: (x: any) => x is {
-    errorInstanceId: string;
-};
+export { hasErrorInstanceId }
 
 // @public
 export interface IConfigProvider extends IConfigProviderBase {
@@ -110,10 +112,7 @@ export interface IConfigProviderBase {
     getRawConfig(name: string): ConfigTypes;
 }
 
-// @public
-export interface IFluidErrorAnnotations {
-    props?: ITelemetryProperties;
-}
+export { IFluidErrorAnnotations }
 
 export { IFluidErrorBase }
 
@@ -127,20 +126,15 @@ export interface IPerformanceEventMarkers {
     start?: true;
 }
 
-// @public
-export function isExternalError(e: any): boolean;
+export { isExternalError }
 
-// @public
-export function isFluidError(e: any): e is IFluidErrorBase;
+export { isFluidError }
 
-// @public
-export const isILoggingError: (x: any) => x is ILoggingError;
+export { isILoggingError }
 
-// @public
-export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt;
+export { isTaggedTelemetryPropertyValue }
 
-// @public
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
+export { isValidLegacyError }
 
 export { ITaggedTelemetryPropertyTypeExt }
 
@@ -179,17 +173,7 @@ export { ITelemetryPropertiesExt }
 // @public (undocumented)
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L): MonitoringContext<L>;
 
-// @public
-export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
-    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryProperties): void;
-    // (undocumented)
-    get errorInstanceId(): string;
-    getTelemetryProperties(): ITelemetryProperties;
-    // (undocumented)
-    overwriteErrorInstanceId(id: string): void;
-    static typeCheck(object: unknown): object is LoggingError;
-}
+export { LoggingError }
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
@@ -224,10 +208,7 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     logger: L;
 }
 
-export { NORMALIZED_ERROR_TYPE }
-
-// @public
-export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
+export { normalizeError }
 
 // @public
 export function numberFromString(str: string | null | undefined): string | number | undefined;
@@ -309,11 +290,9 @@ export class ThresholdCounter {
     sendIfMultiple(eventName: string, value: number): void;
 }
 
-// @public
-export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
+export { wrapError }
 
-// @public
-export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLoggerExt): T;
+export { wrapErrorAndLog }
 
 // (No @packageDocumentation comment for this package)
 

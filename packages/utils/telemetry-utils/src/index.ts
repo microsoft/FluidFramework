@@ -12,20 +12,6 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
-export {
-	extractLogSafeErrorProperties,
-	generateErrorWithStack,
-	generateStack,
-	getCircularReplacer,
-	IFluidErrorAnnotations,
-	isExternalError,
-	isILoggingError,
-	isTaggedTelemetryPropertyValue,
-	LoggingError,
-	normalizeError,
-	wrapError,
-	wrapErrorAndLog,
-} from "./errorLogging";
 export { EventEmitterWithErrorHandling } from "./eventEmitterWithErrorHandling";
 export {
 	connectedEventName,
@@ -33,12 +19,6 @@ export {
 	raiseConnectedEvent,
 	safeRaiseEvent,
 } from "./events";
-export {
-	hasErrorInstanceId,
-	// IFluidErrorBase,
-	isFluidError,
-	isValidLegacyError,
-} from "./fluidErrorBase";
 export {
 	eventNamespaceSeparator,
 	createChildLogger,
@@ -99,5 +79,64 @@ export {
 	/**
 	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
 	 */
-	NORMALIZED_ERROR_TYPE,
-} from "@fluidframework/core-interfaces";
+	hasErrorInstanceId,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	isFluidError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	isValidLegacyError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	extractLogSafeErrorProperties,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	generateErrorWithStack,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	generateStack,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	getCircularReplacer,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	IFluidErrorAnnotations,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	isExternalError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	isILoggingError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	isTaggedTelemetryPropertyValue,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	LoggingError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	normalizeError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	wrapError,
+	/**
+	 * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+	 */
+	wrapErrorAndLog,
+} from /**
+ * @deprecated Import from "\@fluidframework/core-interfaces" instead.
+ */
+"@fluidframework/core-interfaces";

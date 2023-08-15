@@ -21,7 +21,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IUsageError } from '@fluidframework/container-definitions';
-import { LoggingError } from '@fluidframework/telemetry-utils';
+import { LoggingError } from '@fluidframework/core-interfaces';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 
 // @public

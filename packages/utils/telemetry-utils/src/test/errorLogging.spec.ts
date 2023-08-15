@@ -10,9 +10,6 @@ import {
 	IFluidErrorBase,
 	ITelemetryBaseEvent,
 	ITelemetryProperties,
-} from "@fluidframework/core-interfaces";
-import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import {
 	LoggingError,
 	isTaggedTelemetryPropertyValue,
 	normalizeError,
@@ -21,8 +18,11 @@ import {
 	wrapErrorAndLog,
 	extractLogSafeErrorProperties,
 	isExternalError,
-} from "../errorLogging";
-import { hasErrorInstanceId, isFluidError, isValidLegacyError } from "../fluidErrorBase";
+	hasErrorInstanceId,
+	isFluidError,
+	isValidLegacyError,
+} from "@fluidframework/core-interfaces";
+import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
 import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
