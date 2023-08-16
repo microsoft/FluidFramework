@@ -337,7 +337,10 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return false;
 	}
 	const type = rhs.type;
-	if (!areMergeableChangeAtoms(lhs.cellId, lhs.count, rhs.cellId)) {
+	if (
+		!areMergeableChangeAtoms(lhs.cellId, lhs.count, rhs.cellId) ||
+		!areSameLineage(lhs.cellId?.lineage ?? [], rhs.cellId?.lineage ?? [])
+	) {
 		return false;
 	}
 

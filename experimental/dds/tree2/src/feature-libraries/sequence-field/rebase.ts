@@ -129,9 +129,10 @@ function rebaseMarkList<TNodeChange>(
 	// At the time we process an attach we don't know about detaches of later nodes,
 	// so we record marks which should have their lineage updated if we encounter a detach.
 	const lineageRecipients: Mark<TNodeChange>[] = [];
+	const lineageEntries: LineageEntry[] = [];
 
 	// List of IDs of detaches encountered in the base changeset which are adjacent to the current position.
-	let lineageEntries: IdRange[] = [];
+	let detachBlock: IdRange[] = [];
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
 		if ("revision" in baseMark) {
@@ -141,8 +142,10 @@ function rebaseMarkList<TNodeChange>(
 				0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
 			);
 		}
+
+		const length = getInputLength(baseMark);
 		assert(
-			getInputLength(baseMark) === getInputLength(currMark),
+			length === getInputLength(currMark),
 			0x4f6 /* The two marks should be the same size */,
 		);
 
@@ -161,27 +164,45 @@ function rebaseMarkList<TNodeChange>(
 		// `rebasedMark` should already have a detach event for `baseMark`.
 		if (markEmptiesCells(baseMark)) {
 			assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
-			addLineageToRecipients(lineageRecipients, baseIntention, baseMark.id, baseMark.count);
+			const detachId = getDetachCellId(baseMark, baseIntention);
+			assert(detachId.revision !== undefined, "Detach ID should have a revision");
+			addLineageToRecipients(lineageRecipients, detachId.revision, detachId.localId, length);
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), "Only detaches empty cells");
 				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
-					setMarkAdjacentCells(rebasedMark, lineageEntries);
+					setMarkAdjacentCells(rebasedMark, detachBlock);
 				}
 			} else {
-				handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
+				handleLineage(
+					rebasedMark,
+					lineageRecipients,
+					baseIntention,
+					detachBlock,
+					lineageEntries,
+				);
 			}
 		}
 		factory.push(rebasedMark);
 
 		if (markEmptiesCells(baseMark)) {
 			assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
-			addIdRange(lineageEntries, { id: baseMark.id, count: baseMark.count });
+			const detachId = getDetachCellId(baseMark, baseIntention);
+			if (detachId.revision === baseIntention) {
+				addIdRange(detachBlock, { id: baseMark.id, count: baseMark.count });
+			} else {
+				assert(detachId.revision !== undefined, "Detach ID should have revision");
+				lineageEntries.push({
+					revision: detachId.revision,
+					id: detachId.localId,
+					count: length,
+				});
+			}
 		} else if (!areOutputCellsEmpty(baseMark)) {
 			lineageRecipients.length = 0;
-			lineageEntries = [];
+			detachBlock = [];
 		}
 	}
 
@@ -658,11 +679,18 @@ function getMovedMark<T>(
 	return undefined;
 }
 
+interface LineageEntry {
+	revision: RevisionTag;
+	id: ChangesetLocalId;
+	count: number;
+}
+
 function handleLineage<T>(
 	rebasedMark: Mark<T>,
 	lineageRecipients: Mark<T>[],
-	lineageEntries: IdRange[],
 	baseIntention: RevisionTag,
+	detachBlock: IdRange[],
+	lineageEntries: LineageEntry[],
 ) {
 	// If the changeset we are rebasing over has the same intention as an event in rebasedMark's lineage,
 	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
@@ -672,8 +700,17 @@ function handleLineage<T>(
 	const lineageHolder = getLineageHolder(rebasedMark);
 	tryRemoveLineageEvents(lineageHolder, baseIntention);
 
+	const cellRevision = getInputCellId(rebasedMark, undefined)?.revision;
+	if (baseIntention !== cellRevision) {
+		for (const entry of detachBlock) {
+			addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
+		}
+	}
+
 	for (const entry of lineageEntries) {
-		addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
+		if (entry.revision !== cellRevision) {
+			addLineageEntry(lineageHolder, entry.revision, entry.id, entry.count, entry.count);
+		}
 	}
 
 	lineageRecipients.push(rebasedMark);
@@ -686,7 +723,9 @@ function addLineageToRecipients(
 	count: number,
 ) {
 	for (const mark of recipients) {
-		addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
+		if (getInputCellId(mark, undefined)?.revision !== revision) {
+			addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
+		}
 	}
 }
 
