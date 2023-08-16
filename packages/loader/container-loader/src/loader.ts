@@ -38,6 +38,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/container-utils";
+import { IClientDetails } from "@fluidframework/protocol-definitions";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -359,13 +360,14 @@ export class Loader implements IHostLoader {
 
 	public async createDetachedContainer(
 		codeDetails: IFluidCodeDetails,
-		containerCreateHeaders?: IRequestHeader,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
 	): Promise<IContainer> {
-		// "this.services" doesn't contain property for clientDetailsOverride
 		const container = await Container.createDetached(
 			{
-				canReconnect: containerCreateHeaders?.[LoaderHeader.reconnect],
-				clientDetailsOverride: containerCreateHeaders?.[LoaderHeader.clientDetails],
+				...createDetachedProps,
 				...this.services,
 			},
 			codeDetails,
@@ -386,12 +388,14 @@ export class Loader implements IHostLoader {
 
 	public async rehydrateDetachedContainerFromSnapshot(
 		snapshot: string,
-		containerCreateHeaders?: IRequestHeader,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
 	): Promise<IContainer> {
 		return Container.rehydrateDetachedFromSnapshot(
 			{
-				canReconnect: containerCreateHeaders?.[LoaderHeader.reconnect],
-				clientDetailsOverride: containerCreateHeaders?.[LoaderHeader.clientDetails],
+				...createDetachedProps,
 				...this.services,
 			},
 			snapshot,
