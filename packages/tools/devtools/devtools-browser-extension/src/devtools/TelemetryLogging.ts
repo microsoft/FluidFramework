@@ -101,15 +101,16 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	public send(event: ITelemetryBaseEvent): void {
 		// console.log(event);
 		// return;
+
+		// Note: some APIs might fail if the last part of the eventName is not uppercase
+		const category = event.category ? `${event.category.charAt(0).toUpperCase()}${event.category.substring(1)}` : "Generic";
+		const eventType = `Office.Fluid.Ffautomation.${category}`
+
 		const telemetryEvent = {
-			name: "Office.Fluid.Ffautomation.Generic", // Dictates which table the event goes to
+			name: eventType, // Dictates which table the event goes to
 			data: {
 				["Event.Time"]: new Date().toISOString(),
-				["Event.Name"]: "Office.Fluid.Ffautomation.Generic", // Kind of redundant with 'name' but is an actual column in Kusto
-				// ["Data.eventName"]: "MyCustomEvent",
-				// ["Data.details"]: `{"myCustomProp":"myCustomValue", "uuid":"${uuid()}"}`,
-				// ["Data.devtoolsVersion"]: "2.0.0-internal.6.1.0",
-				// ['Data.category']: "generic",
+				["Event.Name"]: eventType, // Kind of redundant with 'name' but is an actual column in Kusto
 			},
 		};
 
