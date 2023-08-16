@@ -188,15 +188,8 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 
 		// build up the tree
 		for (const node of params.tree) {
-			builder
-				.insert(node.path, nodegit.Oid.fromString(node.sha), parseInt(node.mode, 8))
-				.catch((error) => {
-					Lumberjack.error(
-						"Error inserting node into NodeGit tree",
-						this.lumberjackBaseProperties,
-						error,
-					);
-				});
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			builder.insert(node.path, nodegit.Oid.fromString(node.sha), parseInt(node.mode, 8));
 		}
 
 		const id = await builder.write();
