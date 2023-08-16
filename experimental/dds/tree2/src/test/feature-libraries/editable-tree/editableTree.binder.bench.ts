@@ -31,7 +31,7 @@ import { fieldPhones, retrieveNodes } from "./editableTree.binder.spec";
 describe("Data binder benchmarks", () => {
 	describe("Direct data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, { maxDepth: 10 });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: BinderOptions = createBinderOptions({});
 		benchmark({
 			type: BenchmarkType.Measurement,
@@ -63,7 +63,7 @@ describe("Data binder benchmarks", () => {
 
 	describe("Invalidation data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, { maxDepth: 10 });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
 		});
@@ -95,7 +95,7 @@ describe("Data binder benchmarks", () => {
 
 	describe("Buffering data binder", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, { maxDepth: 10 });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
 		});
@@ -128,7 +128,7 @@ describe("Data binder benchmarks", () => {
 	for (const listeners of [10, 50, 100, 500, 1000]) {
 		describe(`Buffering data binder, invoke ${listeners} listener of ${2 * listeners}`, () => {
 			const { tree, root, address } = retrieveNodes();
-			const bindTree: BindPolicy = compileSyntaxTree({ address: true }, { maxDepth: 10 });
+			const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
 			});
@@ -164,7 +164,7 @@ describe("Data binder benchmarks", () => {
 	}
 	describe("Buffering data binder, batched notification", () => {
 		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, { maxDepth: 10 });
+		const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 			autoFlushPolicy: "afterBatch",
 		});

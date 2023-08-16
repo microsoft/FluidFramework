@@ -75,22 +75,25 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
 /**
  * Match policy for binding: subtree or path.
  *
- * - {@link SubtreePolicy} match policy means that path filtering would return events matching the exact path and its subpaths,
- * ie. changes to (nested) children would be allowed to bubble up to parent listeners. Max depth can be specified.
+ * - `subtree` match policy means that path filtering would return events matching the exact path and its subpaths,
+ * ie. changes to (nested) children would be allowed to bubble up to parent listeners.
+ * - {@link SubtreePolicy} match policy is  equivalent with `subtree` match policy, while allowing to specify a maximum
+ * depth for the subtree.
  * - `path` match policy means that path filtering would return events matching the _exact_ path only. In this case
  * _exact_ semantics include interpreting an `undefined` _index_ field in the {@link PathStep} as a wildcard.
  *
+ *
  * @alpha
  */
-export type MatchPolicy = SubtreePolicy | "path";
+export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
 /**
- * Subtree match policy. Max depth can be specified. If not specified, all subpaths are matched.
+ * Subtree match policy where max depth can be specified.
  *
  * @alpha
  */
 export interface SubtreePolicy {
-	maxDepth?: number;
+	maxDepth: number;
 }
 
 /**
@@ -444,6 +447,10 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					if (index === downPath.length - 1) {
 						treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
 					}
+				});
+			} else if (foundRoot.matchPolicy === "subtree") {
+				accumulateMatching(foundRoot, 0, (index: number, treeNode: CallTree): void => {
+					treeNode.listeners.forEach((listener) => matchedNodes.add(listener));
 				});
 			} else {
 				const matchPolicy: SubtreePolicy | undefined = foundRoot.matchPolicy;
@@ -837,7 +844,6 @@ export function createDataBinderInvalidating<E extends Events<E>>(
 
 /**
  * Create binder options. If not specified, the default values are:
- * - matchPolicy: "path"
  * - sortFn: no sorting
  *
  * @alpha
@@ -848,7 +854,6 @@ export function createBinderOptions({ sortFn }: { sortFn?: BinderEventsCompare }
 
 /**
  * Create flushable binder options. If not specified, the default values are:
- * - matchPolicy: "path"
  * - sortFn: no sorting
  * - sortAnchorsFn: no sorting
  * - autoFlush: true

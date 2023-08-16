@@ -189,7 +189,7 @@ describe("editable-tree: data binder", () => {
 			const insertSyntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 1 });
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 1 }); // subtree policy
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
 			});
@@ -224,7 +224,7 @@ describe("editable-tree: data binder", () => {
 			const insertSyntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 1 });
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 1 }); // subtree policy
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
 			});
@@ -257,7 +257,7 @@ describe("editable-tree: data binder", () => {
 			const insertSyntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 3 });
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 3 }); // subtree policy
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlushPolicy: "afterBatch",
 			});
@@ -300,7 +300,7 @@ describe("editable-tree: data binder", () => {
 					phones: true,
 				},
 			};
-			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree);
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, "path");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
@@ -479,7 +479,7 @@ describe("editable-tree: data binder", () => {
 			const insertSyntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, { maxDepth: 10 });
+			const insertTree: BindPolicy = compileSyntaxTree(insertSyntaxTree, "subtree");
 			const prescribeOrder = [fieldZip, fieldStreet, fieldPhones, fieldSequencePhones];
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlush: false,
@@ -858,7 +858,7 @@ describe("editable-tree: data binder", () => {
 			const syntaxTree: BindSyntaxTree = {
 				address: true,
 			};
-			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, { maxDepth: 10 });
+			const bindTree: BindPolicy = compileSyntaxTree(syntaxTree, "subtree");
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",

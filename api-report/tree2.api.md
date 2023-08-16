@@ -1296,7 +1296,7 @@ const MarkType: {
 };
 
 // @alpha
-export type MatchPolicy = SubtreePolicy | "path";
+export type MatchPolicy = SubtreePolicy | "subtree" | "path";
 
 // @alpha
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
@@ -1847,7 +1847,7 @@ interface StructSchemaSpecification {
 // @alpha
 export interface SubtreePolicy {
     // (undocumented)
-    maxDepth?: number;
+    maxDepth: number;
 }
 
 // @alpha (undocumented)
