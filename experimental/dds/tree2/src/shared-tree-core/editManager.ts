@@ -575,9 +575,11 @@ export class EditManager<
 	 */
 	private getClosestTrunkCommit(sequenceNumber: SeqNumber): [SeqNumber, GraphCommit<TChangeset>] {
 		const keyValue = this.sequenceMap.getPairOrNextLower(sequenceNumber);
-		assert(keyValue !== undefined, 0x72a /* Sequence number has been evicted */);
+		assert(
+			keyValue !== undefined && keyValue[1].length > 0,
+			0x72a /* Sequence number has been evicted */,
+		);
 		const [commitSequenceNumber, commits] = keyValue;
-		assert(commits.length > 0, 0x72a /* Sequence number has been evicted */);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const lastCommit = commits.get(commits.maxKey()!)!;
 		return [commitSequenceNumber, lastCommit];
