@@ -83,7 +83,7 @@ export function mapMark<TIn, TOut>(
 				count: mark.count,
 				moveId: mark.moveId,
 				...mapModifications(mark, func),
-			}
+			};
 
 			if (mark.isRemoval) {
 				delta.isRemoval = true;

@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { ChangeAtomId, FieldKey } from "../core";
-import { brand } from "../util";
+import { ChangeAtomId, ChangesetLocalId, FieldKey, RevisionTag } from "../core";
+import { SizedNestedMap, brand } from "../util";
 
 /**
  * The tree index records detached field ids and associates them with a change atom ID.
  */
 export class TreeIndex {
-	private readonly detachedFields = new Map<ChangeAtomId, FieldKey>();
+	private readonly detachedFields = new SizedNestedMap<
+		RevisionTag | undefined,
+		ChangesetLocalId,
+		FieldKey
+	>();
 
 	public constructor(private readonly name: string) {}
 
 	/**
-	 * Returns a field key for the given change atom ID and ID. Should be unique for
-	 * this index.
+	 * Returns a field key for the given ID. Should be unique for this index.
+	 * This does not save the field key on the index. To do so, call {@link setFieldKey}.
 	 */
-	public getFieldKey(changeAtomId: ChangeAtomId, id: string): FieldKey {
-		assert(!this.detachedFields.has(changeAtomId), "Detached field already exists");
+	public getFieldKey(id: string): FieldKey {
 		return brand(`${this.name}-${id}`);
 	}
 
@@ -28,6 +30,7 @@ export class TreeIndex {
 	 * Associates the change atom ID with the field key on this index.
 	 */
 	public setFieldKey(changeAtomId: ChangeAtomId, fieldKey: FieldKey): void {
-		this.detachedFields.set(changeAtomId, fieldKey);
+		const { revision, localId } = changeAtomId;
+		this.detachedFields.set(revision, localId, fieldKey);
 	}
 }
