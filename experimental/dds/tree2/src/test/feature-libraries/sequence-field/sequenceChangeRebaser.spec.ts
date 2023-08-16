@@ -4,12 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
-	SequenceField as SF,
-	singleTextCursor,
-} from "../../../feature-libraries";
-import {
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,

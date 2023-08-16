@@ -6,10 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "../../util";
-import { RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
