@@ -1484,7 +1484,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				idleClient.clientId,
 				idleClient.serverMetadata,
 			);
-			void this.sendToRawDeltas(leaveMessage);
+			this.sendToRawDeltas(leaveMessage).catch((error) => {
+				const lumberjackProperties = {
+					...getLumberBaseProperties(this.documentId, this.tenantId),
+					clientId: idleClient.clientId,
+				};
+				Lumberjack.error(
+					"Error sending idle write client leave message to raw deltas",
+					lumberjackProperties,
+					error,
+				);
+			});
 		}
 	}
 
@@ -1502,7 +1512,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			// write client idle is handled by checkIdleWriteClients
 			if (client.mode === "read" && exp < currentTime) {
 				const leaveMessage = this.createLeaveMessage(clientId);
-				void this.sendToRawDeltas(leaveMessage);
+				this.sendToRawDeltas(leaveMessage).catch((error) => {
+					const lumberjackProperties = {
+						...getLumberBaseProperties(this.documentId, this.tenantId),
+						clientId,
+					};
+					Lumberjack.error(
+						"Error sending idle read client leave message to raw deltas",
+						lumberjackProperties,
+						error,
+					);
+				});
 			}
 		}
 	}
@@ -1735,7 +1755,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.activityIdleTimer = setTimeout(() => {
 			if (!this.noActiveClients) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
-				void this.sendToRawDeltas(noOpMessage);
+				this.sendToRawDeltas(noOpMessage).catch((error) => {
+					const lumberjackProperties = {
+						...getLumberBaseProperties(this.documentId, this.tenantId),
+					};
+					Lumberjack.error(
+						"Error refreshing activity idle timer with noOp message",
+						lumberjackProperties,
+						error,
+					);
+				});
 			}
 		}, this.serviceConfiguration.deli.activityTimeout);
 	}
@@ -1769,7 +1798,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.noopEvent = setTimeout(() => {
 			if (!this.noActiveClients) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
-				void this.sendToRawDeltas(noOpMessage);
+				this.sendToRawDeltas(noOpMessage).catch((error) => {
+					const lumberjackProperties = {
+						...getLumberBaseProperties(this.documentId, this.tenantId),
+					};
+					Lumberjack.error(
+						"Error sending noOp event to raw deltas",
+						lumberjackProperties,
+						error,
+					);
+				});
 			}
 		}, this.serviceConfiguration.deli.noOpConsolidationTimeout);
 	}
@@ -1918,22 +1956,26 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
 				}
-				void this.checkpointContext.checkpoint(
-					checkpointParams,
-					this.restartOnCheckpointFailure,
-					globalCheckpointOnly,
-				);
-				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
-				const lumberjackProperties = {
+				const lumberjackProperties: Record<string, any> = {
 					...getLumberBaseProperties(this.documentId, this.tenantId),
-					checkpointReason,
 					lastOffset: this.logOffset,
 					deliCheckpointOffset: checkpointParams.deliCheckpointMessage.offset,
 					deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
 					kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
 					kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
 				};
+				this.checkpointContext
+					.checkpoint(
+						checkpointParams,
+						this.restartOnCheckpointFailure,
+						globalCheckpointOnly,
+					)
+					.catch((error) => {
+						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
+					});
+				const checkpointReason = CheckpointReason[checkpointParams.reason];
+				lumberjackProperties.checkpointReason = checkpointReason;
+				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
 				Lumberjack.info(checkpointResult, lumberjackProperties);
 			})
 			.catch((error) => {

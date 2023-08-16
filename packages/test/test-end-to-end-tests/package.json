@@ -123,7 +123,7 @@
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "^1.0.0",
 		"url": "^0.11.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
@@ -133,7 +133,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^16.18.38",
-		"@types/uuid": "^8.3.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"eslint-import-resolver-typescript": "^3.5.5",

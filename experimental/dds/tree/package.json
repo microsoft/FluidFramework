@@ -54,7 +54,7 @@
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",
 		"sorted-btree": "^1.8.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
@@ -75,7 +75,7 @@
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
 		"@types/mocha": "^9.1.1",
-		"@types/uuid": "^8.3.0",
+		"@types/uuid": "^9.0.2",
 		"chai": "^4.2.0",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
