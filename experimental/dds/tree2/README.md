@@ -333,6 +333,7 @@ flowchart
             forest-->tree
             undo-->rebase
             undo-->change-family
+            rebase-->schema-stored
         end
         core-->events-->util
         core-->id-compressor-->util
