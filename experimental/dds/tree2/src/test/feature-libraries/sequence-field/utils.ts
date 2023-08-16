@@ -164,16 +164,11 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	const {
-		repairDataBuilder: { handler, marks },
-	} = makeRepairDataBuilder();
+	const { repairDataBuilder } = makeRepairDataBuilder();
 	return SF.sequenceFieldToDelta(
 		change,
 		TestChange.toDelta,
-		{
-			handler,
-			marks,
-		},
+		repairDataBuilder,
 		idAllocatorFromMaxId(brand(0)),
 	);
 }

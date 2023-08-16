@@ -18,7 +18,6 @@ import {
 	rootFieldKey,
 	TaggedChange,
 	UpPath,
-	ChangeAtomId,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
@@ -101,7 +100,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	builder: DefaultEditBuilder;
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
-	repairDataFields: Map<ChangeAtomId, FieldKey>;
+	repairDataMarks: Map<FieldKey, Delta.MarkList>;
 } {
 	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = buildForest(schema);
@@ -111,7 +110,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
-	const { repairDataFields, repairDataBuilder } = makeRepairDataBuilder();
+	const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
@@ -128,7 +127,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		builder,
 		changes,
 		deltas,
-		repairDataFields,
+		repairDataMarks,
 	};
 }
 

@@ -404,7 +404,7 @@ describe("Generic FieldKind", () => {
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-		const { repairDataBuilder } = makeRepairDataBuilder();
+		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 		const actual = genericFieldKind.changeHandler.intoDelta(
 			input,
 			childToDelta,
@@ -412,7 +412,7 @@ describe("Generic FieldKind", () => {
 			idAllocatorFromMaxId(brand(3)),
 		);
 		assert.deepEqual(actual, expected);
-		assert.deepEqual(repairDataBuilder.marks, new Map());
+		assert.deepEqual(repairDataMarks, new Map());
 	});
 
 	describe("Encoding", () => {

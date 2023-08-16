@@ -5,6 +5,7 @@
 
 export {
 	RepairDataHandler,
+	RepairDataAccumulator,
 	RepairDataBuilder,
 	unsupportedRepairDataHandler,
 } from "./repairDataBuilder";

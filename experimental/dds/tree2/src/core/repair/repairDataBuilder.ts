@@ -16,6 +16,12 @@ import { Delta } from "../tree";
 export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
 
 /**
+ * A function that collects a delta that produces repair data associated with the given detached field.
+ * @alpha
+ */
+export type RepairDataAccumulator = (key: FieldKey, delta: Delta.MarkList) => void;
+
+/**
  * A builder for generating and keeping track of repair data.
  * @alpha
  */
@@ -25,9 +31,9 @@ export interface RepairDataBuilder {
 	 */
 	handler: RepairDataHandler;
 	/**
-	 * A map of detached fields to the delta that would move in the appropriate repair data.
+	 * {@inheritDoc RepairDataAccumulator}
 	 */
-	marks: Map<FieldKey, Delta.MarkList>;
+	accumulator: RepairDataAccumulator;
 }
 
 /**

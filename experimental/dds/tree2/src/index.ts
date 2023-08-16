@@ -62,6 +62,7 @@ export {
 	TaggedChange,
 	RepairDataHandler,
 	RepairDataBuilder,
+	RepairDataAccumulator,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
 	SchemaEvents,

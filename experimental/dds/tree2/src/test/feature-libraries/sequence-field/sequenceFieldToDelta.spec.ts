@@ -13,6 +13,7 @@ import {
 	mintRevisionTag,
 	ChangesetLocalId,
 	unsupportedRepairDataHandler,
+	RepairDataBuilder,
 } from "../../../core";
 import {
 	FieldChange,
@@ -49,7 +50,10 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 
 function toDelta(
 	change: TestChangeset,
-	repairDataBuilder = { handler: unsupportedRepairDataHandler, marks: new Map() },
+	repairDataBuilder: RepairDataBuilder = {
+		handler: unsupportedRepairDataHandler,
+		accumulator: () => fail("Unexpected call to accumulator"),
+	},
 ): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
@@ -62,7 +66,10 @@ function toDelta(
 
 function toDeltaShallow(
 	change: TestChangeset,
-	repairDataBuilder = { handler: unsupportedRepairDataHandler, marks: new Map() },
+	repairDataBuilder: RepairDataBuilder = {
+		handler: unsupportedRepairDataHandler,
+		accumulator: () => fail("Unexpected call to accumulator"),
+	},
 ): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
@@ -139,7 +146,7 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, changes);
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
-		const { repairDataBuilder } = makeRepairDataBuilder();
+		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 		const actual = SF.sequenceFieldToDelta(
 			changeset,
 			deltaFromChild,
@@ -154,7 +161,7 @@ describe("SequenceField - toDelta", () => {
 			},
 		];
 		assertMarkListEqual(actual, expected);
-		assert.deepEqual(repairDataBuilder.marks, new Map([]));
+		assert.deepEqual(repairDataMarks, new Map([]));
 	});
 
 	it("delete produces repair data", () => {
@@ -173,10 +180,10 @@ describe("SequenceField - toDelta", () => {
 			isDelete: true,
 		};
 		const expected: Delta.MarkList = [mark];
-		const { repairDataBuilder } = makeRepairDataBuilder();
+		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 		const actual = toDelta(changeset, repairDataBuilder);
 		assert.deepStrictEqual(actual, expected);
-		assert.deepStrictEqual(repairDataBuilder.marks, new Map([[repairDataKey, [repairData]]]));
+		assert.deepStrictEqual(repairDataMarks, new Map([[repairDataKey, [repairData]]]));
 	});
 
 	it("move", () => {
@@ -245,11 +252,11 @@ describe("SequenceField - toDelta", () => {
 			]),
 		};
 		const expected: Delta.MarkList = [del, 3, ins, 1, modify];
-		const { repairDataBuilder } = makeRepairDataBuilder();
+		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 		const actual = toDelta(changeset, repairDataBuilder);
 		assert.deepStrictEqual(actual, expected);
 		// TestChange does not produce repair data so we expect only one from the sequence field
-		assert.deepStrictEqual(repairDataBuilder.marks, new Map([[repairDataKey, [repairData]]]));
+		assert.deepStrictEqual(repairDataMarks, new Map([[repairDataKey, [repairData]]]));
 	});
 
 	it("insert and modify => insert", () => {
@@ -320,10 +327,10 @@ describe("SequenceField - toDelta", () => {
 			isDelete: true,
 		};
 		const expected: Delta.MarkList = [mark];
-		const { repairDataBuilder } = makeRepairDataBuilder();
+		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 		const actual = toDelta(changeset, repairDataBuilder);
 		assertMarkListEqual(actual, expected);
-		assert.deepStrictEqual(repairDataBuilder.marks, new Map([[repairDataKey, [repairData]]]));
+		assert.deepStrictEqual(repairDataMarks, new Map([[repairDataKey, [repairData]]]));
 	});
 
 	it("modify and move-out => move-out", () => {
@@ -377,7 +384,7 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
-		const { repairDataBuilder } = makeRepairDataBuilder();
+		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 		const actual = SF.sequenceFieldToDelta(
 			changeset,
 			deltaFromChild,
@@ -385,7 +392,7 @@ describe("SequenceField - toDelta", () => {
 			idAllocatorFromMaxId(brand(3)),
 		);
 		assertMarkListEqual(actual, expected);
-		assert.deepEqual(repairDataBuilder.marks, new Map([]));
+		assert.deepEqual(repairDataMarks, new Map([]));
 	});
 
 	describe("Muted changes", () => {

@@ -7,24 +7,24 @@ import { ChangeAtomId, Delta, FieldKey, RepairDataBuilder } from "../../core";
 import { brand } from "../../util";
 
 export function makeRepairDataBuilder(): {
-	repairDataFields: Map<ChangeAtomId, FieldKey>;
 	repairDataBuilder: RepairDataBuilder;
+	repairDataMarks: Map<FieldKey, Delta.MarkList>;
 } {
-	const repairDataFields = new Map<ChangeAtomId, FieldKey>();
 	const repairDataMarks = new Map<FieldKey, Delta.MarkList>();
 	let repairDataCounter = 0;
 
-	const repairDataHandler = (changeAtomId: ChangeAtomId) => {
+	const repairDataHandler = () => {
 		const fieldKey: FieldKey = brand(`repair-data-${repairDataCounter++}`);
-		repairDataFields.set(changeAtomId, fieldKey);
 		return fieldKey;
 	};
 
 	return {
-		repairDataFields,
 		repairDataBuilder: {
 			handler: repairDataHandler,
-			marks: repairDataMarks,
+			accumulator: (key, marks) => {
+				repairDataMarks.set(key, marks);
+			},
 		},
+		repairDataMarks,
 	};
 }

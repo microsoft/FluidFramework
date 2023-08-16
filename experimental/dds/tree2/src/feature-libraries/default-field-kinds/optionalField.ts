@@ -353,7 +353,7 @@ function deltaForDelete(
 	}
 
 	const moveIn: Delta.MoveIn = { type: Delta.MarkType.MoveIn, count: 1, moveId, isDelete: true };
-	repairDataBuilder.marks.set(repairDataBuilder.handler(changeAtomId), [moveIn]);
+	repairDataBuilder.accumulator(repairDataBuilder.handler(changeAtomId), [moveIn]);
 
 	return [moveDelta];
 }

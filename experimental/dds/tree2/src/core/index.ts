@@ -165,6 +165,11 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { RepairDataHandler, RepairDataBuilder, unsupportedRepairDataHandler } from "./repair";
+export {
+	RepairDataHandler,
+	RepairDataAccumulator,
+	RepairDataBuilder,
+	unsupportedRepairDataHandler,
+} from "./repair";
 
 export { UndoRedoManager, LocalCommitSource } from "./undo";

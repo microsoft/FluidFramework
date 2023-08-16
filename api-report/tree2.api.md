@@ -1568,10 +1568,12 @@ type RecursiveTreeSchemaSpecification = unknown;
 type _RecursiveTrick = never;
 
 // @alpha
+export type RepairDataAccumulator = (key: FieldKey, delta: Delta.MarkList) => void;
+
+// @alpha
 export interface RepairDataBuilder {
-    // (undocumented)
+    accumulator: RepairDataAccumulator;
     handler: RepairDataHandler;
-    marks: Map<FieldKey, Delta.MarkList>;
 }
 
 // @alpha

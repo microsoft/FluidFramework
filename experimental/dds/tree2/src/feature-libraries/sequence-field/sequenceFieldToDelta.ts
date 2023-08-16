@@ -99,7 +99,7 @@ function cellDeltaFromMark<TNodeChange>(
 					localId: mark.id,
 				});
 				const moveId = brandOpaque<Delta.MoveId>(idAllocator());
-				repairDataBuilder.marks.set(detachedField, [
+				repairDataBuilder.accumulator(detachedField, [
 					{
 						type: Delta.MarkType.MoveIn,
 						count: mark.count,

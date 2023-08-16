@@ -59,13 +59,13 @@ const failCrossFieldManager: CrossFieldManager = {
 
 const deltaFromChild1 = (
 	child: NodeChangeset,
-	{ marks, handler }: RepairDataBuilder,
+	{ accumulator, handler }: RepairDataBuilder,
 	idAllocator: IdAllocator,
 ): Delta.Modify => {
 	assert.deepEqual(child, nodeChange1);
 
 	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
-	marks.set(handler({ revision: change1Revision, localId: brand(0) }), [
+	accumulator(handler({ revision: change1Revision, localId: brand(0) }), [
 		{ type: Delta.MarkType.MoveIn, count: 1, moveId },
 	]);
 
@@ -88,13 +88,13 @@ const deltaFromChild1 = (
 
 const deltaFromChild2 = (
 	child: NodeChangeset,
-	{ marks, handler }: RepairDataBuilder,
+	{ accumulator, handler }: RepairDataBuilder,
 	idAllocator: IdAllocator,
 ): Delta.Modify => {
 	assert.deepEqual(child, nodeChange2);
 
 	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
-	marks.set(handler({ revision: change1Revision, localId: brand(0) }), [
+	accumulator(handler({ revision: change1Revision, localId: brand(0) }), [
 		{ type: Delta.MarkType.MoveIn, count: 1, moveId },
 	]);
 
@@ -387,7 +387,7 @@ describe("optionalField", () => {
 				],
 			]);
 
-			const { repairDataBuilder } = makeRepairDataBuilder();
+			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 			assertMarkListEqual(
 				optionalFieldIntoDelta(
 					change1.change,
@@ -397,7 +397,7 @@ describe("optionalField", () => {
 				),
 				expected,
 			);
-			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
+			assert.deepEqual(repairDataMarks, expectedRepairData);
 		});
 
 		it("can be converted to a delta when replacing content", () => {
@@ -434,7 +434,7 @@ describe("optionalField", () => {
 				],
 			]);
 
-			const { repairDataBuilder } = makeRepairDataBuilder();
+			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 			assertMarkListEqual(
 				optionalFieldIntoDelta(
 					change.change,
@@ -444,7 +444,7 @@ describe("optionalField", () => {
 				),
 				expected,
 			);
-			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
+			assert.deepEqual(repairDataMarks, expectedRepairData);
 		});
 
 		it("can be converted to a delta when restoring content", () => {
@@ -467,7 +467,7 @@ describe("optionalField", () => {
 				],
 			]);
 
-			const { repairDataBuilder } = makeRepairDataBuilder();
+			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 			const actual = optionalFieldIntoDelta(
 				revertChange2,
 				deltaFromChild1,
@@ -475,7 +475,7 @@ describe("optionalField", () => {
 				idAllocatorFromMaxId(),
 			);
 			assertMarkListEqual(actual, expected);
-			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
+			assert.deepEqual(repairDataMarks, expectedRepairData);
 		});
 
 		it("can be converted to a delta with only child changes", () => {
@@ -510,7 +510,7 @@ describe("optionalField", () => {
 				],
 			]);
 
-			const { repairDataBuilder } = makeRepairDataBuilder();
+			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
 			assertMarkListEqual(
 				optionalFieldIntoDelta(
 					change4.change,
@@ -520,7 +520,7 @@ describe("optionalField", () => {
 				),
 				expected,
 			);
-			assert.deepEqual(repairDataBuilder.marks, expectedRepairData);
+			assert.deepEqual(repairDataMarks, expectedRepairData);
 		});
 	});
 });

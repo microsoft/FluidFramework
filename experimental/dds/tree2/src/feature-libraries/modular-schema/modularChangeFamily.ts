@@ -721,21 +721,21 @@ export class ModularChangeFamily
 	public intoDelta(
 		change: ModularChangeset,
 		repairDataHandler: RepairDataHandler,
-		repairDataMarks = new Map<FieldKey, Delta.MarkList>(),
+		delta: Map<FieldKey, Delta.MarkList> = new Map(),
 	): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
-		const repairDataBuilder = {
+		const repairDataBuilder: RepairDataBuilder = {
 			handler: repairDataHandler,
-			marks: repairDataMarks,
+			accumulator: (key, repairDataMarks) => {
+				delta.set(key, repairDataMarks);
+			},
 		};
 		const idAllocator = idAllocatorFromMaxId(change.maxId);
-		const delta = this.intoDeltaImpl(change.fieldChanges, repairDataBuilder, idAllocator);
-
-		repairDataBuilder.marks.forEach((marks, field) => delta.set(field, marks));
+		this.intoDeltaImpl(change.fieldChanges, repairDataBuilder, idAllocator, delta);
 
 		return delta;
 	}
@@ -747,8 +747,8 @@ export class ModularChangeFamily
 		change: FieldChangeMap,
 		repairDataBuilder: RepairDataBuilder,
 		idAllocator: IdAllocator,
+		delta: Map<FieldKey, Delta.MarkList> = new Map(),
 	): Map<FieldKey, Delta.MarkList> {
-		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
