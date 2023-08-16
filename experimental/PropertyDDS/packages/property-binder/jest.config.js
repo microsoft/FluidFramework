@@ -11,4 +11,8 @@ module.exports = {
 
 	// An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
 	testPathIgnorePatterns: ["/node_modules/"],
+
+	// Force the CJS entry point for 'msgpackr'.  (Problem still present in msgpackr@1.9.7).
+	// See: https://stackoverflow.com/questions/73203367/jest-syntaxerror-unexpected-token-export-with-uuid-library
+	moduleNameMapper: { "^msgpackr$": "msgpackr" },
 };
