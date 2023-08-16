@@ -21,20 +21,9 @@ const fetchHttpXHROverride: IXHROverride = {
 			method: "POST",
 			headers: payload.headers,
 			credentials: "include",
-			// 'Content-Length': Buffer.byteLength(requestData).toString()
 		};
-		console.log("RequestUrl:\n", payload.urlString);
-		console.log("RequestHeaders:\n", requestInit.headers);
-		console.log("RequestBody:\n", requestInit.body);
 		fetch(payload.urlString, requestInit)
 			.then((response) => {
-				// console.log(
-				// 	"Response:",
-				// 	response.status,
-				// 	response.statusText,
-				// 	"\n",
-				// 	response.headers,
-				// );
 				const headerMap: { [key: string]: string } = {};
 				// response.headers is not a run-of-the-mill array, it satisfies a particular interface that
 				// only has forEach, not a general iterator.
@@ -47,11 +36,9 @@ const fetchHttpXHROverride: IXHROverride = {
 					response
 						.text()
 						.then((text) => {
-							// console.log("Response data:", text);
 							oncomplete(response.status, headerMap, text);
 						})
 						.catch((error) => {
-							// console.error("Error parsing response body:", error);
 							// Something wrong with the response body? Play it safe by passing the response status; don't try to
 							// explicitly re-send the telemetry events by specifying status 0.
 							oncomplete(response.status, headerMap, "");
@@ -78,7 +65,6 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		const channelConfig: IChannelConfiguration = {
 			alwaysUseXhrOverride: true,
 			httpXHROverride: fetchHttpXHROverride,
-			eventsLimitInMem: 5000,
 		};
 
 		// Configure App insights core to send to collector
@@ -99,9 +85,6 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	}
 
 	public send(event: ITelemetryBaseEvent): void {
-		// console.log(event);
-		// return;
-
 		// Note: some APIs might fail if the last part of the eventName is not uppercase
 		const category = event.category ? `${event.category.charAt(0).toUpperCase()}${event.category.substring(1)}` : "Generic";
 		const eventType = `Office.Fluid.Devtools.${category}`
