@@ -59,6 +59,7 @@ export {
 	SchemaData,
 	FieldAnchor,
 	RevisionTag,
+	ChangesetLocalId,
 	TaggedChange,
 	RepairDataIndexer,
 	RepairDataBuilder,

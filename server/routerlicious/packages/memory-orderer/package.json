@@ -74,7 +74,7 @@
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
 		"sillyname": "^0.1.0",
-		"uuid": "^8.3.1",
+		"uuid": "^9.0.0",
 		"ws": "^7.4.6"
 	},
 	"devDependencies": {
@@ -84,7 +84,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@0.1040.1000",
 		"@types/mocha": "^10.0.1",
-		"@types/uuid": "^8.3.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",

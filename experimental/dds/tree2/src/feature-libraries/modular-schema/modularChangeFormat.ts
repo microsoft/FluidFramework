@@ -5,10 +5,10 @@
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import {
-	ChangesetLocalId,
 	FieldKindIdentifierSchema,
 	FieldKeySchema,
 	RevisionTagSchema,
+	ChangesetLocalId,
 } from "../../core";
 import {
 	brandedNumberType,

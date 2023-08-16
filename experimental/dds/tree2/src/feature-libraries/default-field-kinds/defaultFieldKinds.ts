@@ -7,8 +7,8 @@ import {
 	FieldKindIdentifier,
 	Delta,
 	ITreeCursor,
-	ChangesetLocalId,
 	forbiddenFieldKindIdentifier,
+	ChangesetLocalId,
 } from "../../core";
 import { fail } from "../../util";
 import {

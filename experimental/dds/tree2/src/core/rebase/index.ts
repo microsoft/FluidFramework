@@ -13,6 +13,8 @@ export {
 	GraphCommit,
 	RevisionTag,
 	RevisionTagSchema,
+	ChangesetLocalId,
+	ChangeAtomId,
 	SessionId,
 	SessionIdSchema,
 } from "./types";
