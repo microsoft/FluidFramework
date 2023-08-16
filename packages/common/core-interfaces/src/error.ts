@@ -8,7 +8,7 @@ import { ITelemetryProperties } from "./index";
 /**
  * Different error types the Container may report out to the Host
  */
-export const FluidErrorType = {
+export const FluidErrorTypes = {
 	/**
 	 * Some error, most likely an exception caught by runtime and propagated to container as critical error
 	 */
@@ -34,7 +34,7 @@ export const FluidErrorType = {
 	 */
 	usageError: "usageError",
 } as const;
-export type FluidErrorType = typeof FluidErrorType[keyof typeof FluidErrorType];
+export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
 
 /**
  * Base interface for all errors and warnings at container level
@@ -69,7 +69,7 @@ export interface IErrorBase extends Partial<Error> {
  * Generic wrapper for an unrecognized/uncategorized error object
  */
 export interface IGenericError extends IErrorBase {
-	readonly errorType: typeof FluidErrorType.genericError;
+	readonly errorType: typeof FluidErrorTypes.genericError;
 	error?: any;
 }
 
@@ -77,13 +77,13 @@ export interface IGenericError extends IErrorBase {
  * Error indicating an API is being used improperly resulting in an invalid operation.
  */
 export interface IUsageError extends IErrorBase {
-	readonly errorType: typeof FluidErrorType.usageError;
+	readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
 /**
  * Warning emitted when requests to storage are being throttled
  */
 export interface IThrottlingWarning extends IErrorBase {
-	readonly errorType: typeof FluidErrorType.throttlingError;
+	readonly errorType: typeof FluidErrorTypes.throttlingError;
 	readonly retryAfterSeconds: number;
 }

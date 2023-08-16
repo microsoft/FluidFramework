@@ -6,7 +6,7 @@
 export type { IDisposable } from "./disposable";
 
 export {
-	FluidErrorType,
+	FluidErrorTypes,
 	IErrorBase,
 	IGenericError,
 	IUsageError,

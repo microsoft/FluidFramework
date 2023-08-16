@@ -5,7 +5,7 @@
 ```ts
 
 // @public
-export const FluidErrorType: {
+export const FluidErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly dataCorruptionError: "dataCorruptionError";
@@ -14,7 +14,7 @@ export const FluidErrorType: {
 };
 
 // @public (undocumented)
-export type FluidErrorType = typeof FluidErrorType[keyof typeof FluidErrorType];
+export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -142,7 +142,7 @@ export interface IGenericError extends IErrorBase {
     // (undocumented)
     error?: any;
     // (undocumented)
-    readonly errorType: typeof FluidErrorType.genericError;
+    readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
 // @public
@@ -281,7 +281,7 @@ export interface ITelemetryProperties {
 // @public
 export interface IThrottlingWarning extends IErrorBase {
     // (undocumented)
-    readonly errorType: typeof FluidErrorType.throttlingError;
+    readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
 }
@@ -289,7 +289,7 @@ export interface IThrottlingWarning extends IErrorBase {
 // @public
 export interface IUsageError extends IErrorBase {
     // (undocumented)
-    readonly errorType: typeof FluidErrorType.usageError;
+    readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
 // @public

@@ -25,7 +25,7 @@ export {
 	ReadOnlyInfo,
 } from "./deltas";
 export {
-	ClientSessionErrorType,
+	ContainerErrorTypes,
 	ContainerErrorType,
 	ContainerWarning,
 	ICriticalContainerError,

@@ -3,26 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { FluidErrorType, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
 
 /**
  * Different error types the ClientSession may report out to the Host.
  */
-export const ClientSessionErrorType = {
-	...FluidErrorType,
+export const ContainerErrorTypes = {
+	...FluidErrorTypes,
 	/**
 	 * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
 	 * aids in safely deleting unused objects.
 	 */
 	clientSessionExpiredError: "clientSessionExpiredError",
 } as const;
-export type ClientSessionErrorType =
-	typeof ClientSessionErrorType[keyof typeof ClientSessionErrorType];
+export type ContainerErrorTypes = typeof ContainerErrorTypes[keyof typeof ContainerErrorTypes];
 
 /**
  * Different error types the Container may report out to the Host.
  *
- * @deprecated ContainerErrorType is being deprecated as a public export. Please use {@link ClientSessionErrorType#clientSessionExpiredError} instead.
+ * @deprecated ContainerErrorType is being deprecated as a public export. Please use {@link ContainerErrorTypes#clientSessionExpiredError} instead.
  */
 export enum ContainerErrorType {
 	/**

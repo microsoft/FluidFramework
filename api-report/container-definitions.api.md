@@ -44,19 +44,6 @@ export enum AttachState {
 }
 
 // @public
-export const ClientSessionErrorType: {
-    readonly clientSessionExpiredError: "clientSessionExpiredError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly dataCorruptionError: "dataCorruptionError";
-    readonly dataProcessingError: "dataProcessingError";
-    readonly usageError: "usageError";
-};
-
-// @public (undocumented)
-export type ClientSessionErrorType = typeof ClientSessionErrorType[keyof typeof ClientSessionErrorType];
-
-// @public
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
@@ -76,6 +63,19 @@ export enum ContainerErrorType {
     throttlingError = "throttlingError",
     usageError = "usageError"
 }
+
+// @public
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type ContainerErrorTypes = typeof ContainerErrorTypes[keyof typeof ContainerErrorTypes];
 
 // @public
 export interface ContainerWarning extends IErrorBase {
