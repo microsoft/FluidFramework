@@ -2852,7 +2852,6 @@ export class ContainerRuntime
 			const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
 				createChildLogger({
 					logger: summaryNumberLogger,
-					namespace: undefined,
 					properties: { all: { safeSummary: true } },
 				}),
 			);
