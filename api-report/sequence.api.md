@@ -136,7 +136,13 @@ export interface IInterval {
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
-    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, canBeExclusive?: boolean): TInterval;
+    add(start: number | "start" | "end" | {
+        pos: number;
+        side: Side;
+    }, end: number | "start" | "end" | {
+        pos: number;
+        side: Side;
+    }, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
@@ -181,7 +187,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | "start" | "end" | undefined, end: number | "start" | "end" | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, canBeExclusive?: boolean): TInterval;
+    create(label: string, start: number | "start" | "end" | undefined, end: number | "start" | "end" | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, canSlideToEndpoint?: boolean, startSide?: Side, endSide?: Side): TInterval;
 }
 
 // @public (undocumented)
@@ -314,8 +320,20 @@ export enum IntervalType {
 // @public (undocumented)
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findOverlappingIntervals(start: number, end: number): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
+    findOverlappingIntervals(start: number | {
+        pos: number;
+        side: Side;
+    }, end: number | {
+        pos: number;
+        side: Side;
+    }): TInterval[];
+    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number | {
+        pos: number;
+        side: Side;
+    }, end?: number | {
+        pos: number;
+        side: Side;
+    }): void;
 }
 
 // @public
@@ -340,12 +358,16 @@ export interface ISerializableInterval extends IInterval {
 
 // @internal
 export interface ISerializedInterval {
-    canBeExclusive?: boolean;
+    canSlideToEndpoint?: boolean;
     end: number | "start" | "end";
+    // (undocumented)
+    endSide?: Side;
     intervalType: IntervalType;
     properties?: PropertySet;
     sequenceNumber: number;
     start: number | "start" | "end";
+    // (undocumented)
+    startSide?: Side;
     stickiness?: IntervalStickiness;
 }
 
@@ -411,22 +433,24 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(client: Client,
     start: LocalReferencePosition,
-    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, isExclusive?: boolean);
+    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, canSlideToEndpoint?: boolean, startSide?: Side, endSide?: Side);
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // @internal (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    // (undocumented)
+    readonly canSlideToEndpoint: boolean;
     // (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
     end: LocalReferencePosition;
+    // (undocumented)
+    readonly endSide: Side;
     getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
-    // (undocumented)
-    readonly isExclusive: boolean;
     // @internal
     modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
     // (undocumented)
@@ -441,6 +465,8 @@ export class SequenceInterval implements ISerializableInterval {
     // @internal (undocumented)
     serialize(): ISerializedInterval;
     start: LocalReferencePosition;
+    // (undocumented)
+    readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
     // @internal
@@ -654,6 +680,14 @@ export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertib
 
 // @public (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
+
+// @public
+export enum Side {
+    // (undocumented)
+    After = 1,
+    // (undocumented)
+    Before = 0
+}
 
 // @public (undocumented)
 export class SubSequence<T> extends BaseSegment {

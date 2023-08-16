@@ -64,21 +64,22 @@ import {
 } from "./intervalIndex";
 
 /**
- * todo: docs
- * Defines a place relative to sibling.
+ * Defines a position relative to a character in a sequence.
  *
- * For this purpose, traits look like:
+ * For this purpose, sequences look like:
  *
- * `{undefined} - {Node 0} - {Node 1} - ... - {Node N} - {undefined}`
+ * `{start} - {character 0} - {character 1} - ... - {character N} - {end}`
  *
- * Each `{value}` in the diagram is a possible sibling, which is either a Node or undefined.
- * Each `-` in the above diagram is a `Place`, and can be describe as being `After` a particular `{sibling}` or `Before` it.
- * This means that `After` `{undefined}` means the same `Place` as before the first node
- * and `Before` `{undefined}` means the `Place` after the last Node.
+ * Each `{value}` in the diagram is a possible character.
+ * Each `-` in the above diagram is a position, and can be described as being
+ * `After` a particular character or `Before` it.
  *
- * Each place can be specified, (aka 'anchored') in two ways (relative to the sibling before or after):
- * the choice of which way to anchor a place only matters when the kept across an edit, and thus evaluated in multiple contexts where the
- * two place description may no longer evaluate to the same place.
+ * The special endpoints `{start}` and `{end}` refer to positions outside the
+ * contents of the string.
+ *
+ * This gives us 2N + 2 possible positions to refer to within a string, where N
+ * is the number of characters.
+ *
  * @public
  */
 export enum Side {
@@ -718,14 +719,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * Intervals may not be Transient.
 	 * @param props - properties of the interval
 	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
-	 * todo: docs below
-	 * @param canSlideToEndpoint - Whether the endpoints of the interval can be made
-	 * exclusive (as opposed to inclusive). This is primarily useful in combination
-	 * with stickiness. If this value is set to true, the sticky endpoints of the
-	 * interval will be automatically adjusted to be the exclusive counterpart.
-	 * That is, if an exclusive interval is created with end stickiness, the
-	 * interval [0, 3] would become `[0, 4)` and the endpoint would automatically
-	 * be placed onto the character at position 4, rather than 3.
+	 * @param canSlideToEndpoint - Whether the endpoints of the interval can
+	 * slide to the special endpoint segments denoting the positions immediately
+	 * before and after the string. This is primarily useful in the case of
+	 * intervals containing exclusive endpoints.
 	 * @returns - the created interval
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
