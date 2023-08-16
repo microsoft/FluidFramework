@@ -345,14 +345,14 @@ function deltaForDelete(
 		type: Delta.MarkType.MoveOut,
 		count: 1,
 		moveId,
-		isDelete: true,
+		isRemoval: true,
 	};
 	if (nodeChange !== undefined) {
 		const modify = deltaFromNode(nodeChange, repairDataBuilder, idAllocator);
 		moveDelta.fields = modify.fields;
 	}
 
-	const moveIn: Delta.MoveIn = { type: Delta.MarkType.MoveIn, count: 1, moveId, isDelete: true };
+	const moveIn: Delta.MoveIn = { type: Delta.MarkType.MoveIn, count: 1, moveId, isRemoval: true };
 	repairDataBuilder.accumulator(repairDataBuilder.handler(changeAtomId), [moveIn]);
 
 	return [moveDelta];

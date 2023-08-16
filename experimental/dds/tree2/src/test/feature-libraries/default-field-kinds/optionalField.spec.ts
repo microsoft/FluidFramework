@@ -66,7 +66,7 @@ const deltaFromChild1 = (
 
 	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
 	accumulator(handler({ revision: change1Revision, localId: brand(0) }), [
-		{ type: Delta.MarkType.MoveIn, count: 1, moveId },
+		{ type: Delta.MarkType.MoveIn, count: 1, moveId, isRemoval: true },
 	]);
 
 	return {
@@ -75,7 +75,7 @@ const deltaFromChild1 = (
 			[
 				fooKey,
 				[
-					{ type: Delta.MarkType.MoveOut, count: 1, moveId },
+					{ type: Delta.MarkType.MoveOut, count: 1, moveId, isRemoval: true },
 					{
 						type: Delta.MarkType.Insert,
 						content: [testTreeCursor("nodeChange1")],
@@ -95,7 +95,7 @@ const deltaFromChild2 = (
 
 	const moveId = brandOpaque<Delta.MoveId>(idAllocator());
 	accumulator(handler({ revision: change1Revision, localId: brand(0) }), [
-		{ type: Delta.MarkType.MoveIn, count: 1, moveId },
+		{ type: Delta.MarkType.MoveIn, count: 1, moveId, isRemoval: true },
 	]);
 
 	return {
@@ -104,7 +104,7 @@ const deltaFromChild2 = (
 			[
 				fooKey,
 				[
-					{ type: Delta.MarkType.MoveOut, count: 1, moveId },
+					{ type: Delta.MarkType.MoveOut, count: 1, moveId, isRemoval: true },
 					{
 						type: Delta.MarkType.Insert,
 						content: [testTreeCursor("nodeChange2")],
@@ -363,7 +363,12 @@ describe("optionalField", () => {
 						[
 							fooKey,
 							[
-								{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
+								{
+									type: Delta.MarkType.MoveOut,
+									count: 1,
+									moveId: brand(0),
+									isRemoval: true,
+								},
 								{
 									type: Delta.MarkType.Insert,
 									content: [testTreeCursor("nodeChange1")],
@@ -382,6 +387,7 @@ describe("optionalField", () => {
 							type: Delta.MarkType.MoveIn,
 							count: 1,
 							moveId: brand(0),
+							isRemoval: true,
 						},
 					],
 				],
@@ -413,7 +419,7 @@ describe("optionalField", () => {
 			);
 
 			const expected: Delta.MarkList = [
-				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0), isDelete: true },
+				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0), isRemoval: true },
 				{
 					type: Delta.MarkType.Insert,
 					content: [testTreeCursor("tree1")],
@@ -428,7 +434,7 @@ describe("optionalField", () => {
 							type: Delta.MarkType.MoveIn,
 							count: 1,
 							moveId: brand(0),
-							isDelete: true,
+							isRemoval: true,
 						},
 					],
 				],
@@ -449,7 +455,7 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta when restoring content", () => {
 			const expected: Delta.MarkList = [
-				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0), isDelete: true },
+				{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0), isRemoval: true },
 				{ type: Delta.MarkType.Insert, content: [testTreeCursor("tree1")] },
 			];
 
@@ -461,7 +467,7 @@ describe("optionalField", () => {
 							type: Delta.MarkType.MoveIn,
 							count: 1,
 							moveId: brand(0),
-							isDelete: true,
+							isRemoval: true,
 						},
 					],
 				],
@@ -486,7 +492,12 @@ describe("optionalField", () => {
 						[
 							fooKey,
 							[
-								{ type: Delta.MarkType.MoveOut, count: 1, moveId: brand(0) },
+								{
+									type: Delta.MarkType.MoveOut,
+									count: 1,
+									moveId: brand(0),
+									isRemoval: true,
+								},
 								{
 									type: Delta.MarkType.Insert,
 									content: [testTreeCursor("nodeChange2")],
@@ -505,6 +516,7 @@ describe("optionalField", () => {
 							type: Delta.MarkType.MoveIn,
 							count: 1,
 							moveId: brand(0),
+							isRemoval: true,
 						},
 					],
 				],

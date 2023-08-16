@@ -104,14 +104,14 @@ function cellDeltaFromMark<TNodeChange>(
 						type: Delta.MarkType.MoveIn,
 						count: mark.count,
 						moveId,
-						isDelete: true,
+						isRemoval: true,
 					},
 				]);
 				return {
 					type: Delta.MarkType.MoveOut,
 					moveId,
 					count: mark.count,
-					isDelete: true,
+					isRemoval: true,
 				};
 			}
 			case "MoveOut":

@@ -183,7 +183,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					markHasMoveOrDelete = true;
 					break;
 				case Delta.MarkType.MoveOut:
-					if (!config.allowRepairDataMoves && mark.isDelete) {
+					if (!config.allowRepairDataMoves && mark.isRemoval) {
 						// Handled in the second pass
 						visitModify(index, mark, visitor, config);
 						index += mark.count;
@@ -242,7 +242,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					break;
 				case Delta.MarkType.MoveOut:
 					// This is the repair data case, the normal case is handled in the first pass
-					if (!config.allowRepairDataMoves && mark.isDelete) {
+					if (!config.allowRepairDataMoves && mark.isRemoval) {
 						visitModify(index, mark, visitor, config);
 						visitor.onDelete(index, mark.count);
 					}
@@ -262,7 +262,7 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 				case Delta.MarkType.MoveIn: {
 					// If this move-in is the result of a removal and the visitor wishes to treat removals as deletions,
 					// then there is no data to move in.
-					if (!config.allowRepairDataMoves && mark.isDelete) {
+					if (!config.allowRepairDataMoves && mark.isRemoval) {
 						break;
 					}
 

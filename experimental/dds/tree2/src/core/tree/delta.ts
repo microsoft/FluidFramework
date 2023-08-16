@@ -248,7 +248,7 @@ export interface MoveIn {
 	 * When set, indicates that the delta was generated from a delete operation.
 	 * This means that the content being moved is repair data.
 	 */
-	readonly isDelete?: true;
+	readonly isRemoval?: true;
 }
 
 /**

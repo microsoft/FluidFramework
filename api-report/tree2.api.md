@@ -1324,7 +1324,7 @@ interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 interface MoveIn {
     // (undocumented)
     readonly count: number;
-    readonly isDelete?: true;
+    readonly isRemoval?: true;
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveIn;
@@ -1333,7 +1333,7 @@ interface MoveIn {
 // @alpha
 interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
-    readonly isDelete?: true;
+    readonly isRemoval?: true;
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveOut;

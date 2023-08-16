@@ -38,7 +38,6 @@ const moveId = brand<ChangesetLocalId>(4242);
 const tag: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
-const tag3: RevisionTag = mintRevisionTag();
 const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
 const fooField = brand<FieldKey>("foo");
 
@@ -170,14 +169,14 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			count: 10,
 			moveId: brand(0),
-			isDelete: true,
+			isRemoval: true,
 		};
 		const repairDataKey: FieldKey = brand("repair-data-0");
 		const repairData: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			count: 10,
 			moveId: brand(0),
-			isDelete: true,
+			isRemoval: true,
 		};
 		const expected: Delta.MarkList = [mark];
 		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
@@ -218,14 +217,14 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			count: 10,
 			moveId: brand(0),
-			isDelete: true,
+			isRemoval: true,
 		};
 		const repairDataKey: FieldKey = brand("repair-data-0");
 		const repairData: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			count: 10,
 			moveId: brand(0),
-			isDelete: true,
+			isRemoval: true,
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
@@ -300,7 +299,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
 			moveId: brand(0),
-			isDelete: true,
+			isRemoval: true,
 			fields: new Map([
 				[
 					brand("foo"),
@@ -324,7 +323,7 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveIn,
 			count: 1,
 			moveId: brand(0),
-			isDelete: true,
+			isRemoval: true,
 		};
 		const expected: Delta.MarkList = [mark];
 		const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();

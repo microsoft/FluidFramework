@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, Delta, FieldKey, RepairDataBuilder } from "../../core";
+import { Delta, FieldKey, RepairDataBuilder } from "../../core";
 import { brand } from "../../util";
 
 export function makeRepairDataBuilder(): {
