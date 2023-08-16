@@ -385,6 +385,14 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 		return false;
 	}
 
+	if (
+		isDetachMark(lhs) &&
+		isDetachMark(rhs) &&
+		!areMergeableCellIds(getOverrideCellId(lhs), lhs.count, getOverrideCellId(rhs))
+	) {
+		return false;
+	}
+
 	if (rhs.changes !== undefined || lhs.changes !== undefined) {
 		return false;
 	}

@@ -26,6 +26,7 @@ import {
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
+	getDetachCellId,
 	getInputLength,
 	isConflictedReattach,
 	isReattachConflicted,
@@ -160,7 +161,10 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						type: "Revive",
-						cellId: { revision: mark.revision ?? revision, localId: mark.id },
+						cellId: mark.detachIdOverride ?? {
+							revision: mark.revision ?? revision,
+							localId: mark.id,
+						},
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: mark.revision ?? revision,
@@ -268,13 +272,13 @@ function invertMark<TNodeChange>(
 				);
 			}
 
-			const cellId =
-				mark.type === "ReturnFrom" && mark.detachIdOverride !== undefined
-					? mark.detachIdOverride
-					: {
-							revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-							localId: mark.id,
-					  };
+			const cellId = getDetachCellId(
+				mark,
+				mark.revision ?? revision ?? fail("Revision must be defined"),
+			) ?? {
+				revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+				localId: mark.id,
+			};
 			return [
 				{
 					type: "ReturnTo",
