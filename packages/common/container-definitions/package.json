@@ -63,9 +63,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedEnumDeclaration_ContainerErrorType": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_IGenericError": {
 				"backCompat": false
 			},
