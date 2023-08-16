@@ -18,8 +18,7 @@ import {
 	describeNoCompat,
 	itExpects,
 } from "@fluid-internal/test-version-utils";
-import { ContainerErrorType } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";

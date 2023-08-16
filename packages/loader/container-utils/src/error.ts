@@ -4,12 +4,12 @@
  */
 
 import {
-	ContainerErrorType,
 	IGenericError,
 	IErrorBase,
 	IThrottlingWarning,
 	IUsageError,
 } from "@fluidframework/core-interfaces";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import {
 	LoggingError,
 	IFluidErrorBase,

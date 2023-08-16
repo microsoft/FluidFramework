@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { createSandbox } from "sinon";
 import {
 	AttachState,
+	ContainerErrorType,
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
@@ -26,7 +27,6 @@ import {
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	ContainerErrorType,
 	IErrorBase,
 	IRequest,
 	IResponse,

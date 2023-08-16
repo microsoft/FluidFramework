@@ -14,10 +14,10 @@ import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { ContainerErrorType, IErrorBase } from "@fluidframework/container-definitions";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 
 describe("FluidDataStoreRuntime Tests", () => {
