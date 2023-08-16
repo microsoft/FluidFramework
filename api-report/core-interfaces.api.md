@@ -116,7 +116,7 @@ export interface IFluidRunnable {
     stop(reason?: string): void;
 }
 
-// @public (undocumented)
+// @public
 export interface ILoggerEventsFilterConfig {
     // (undocumented)
     logLevel?: LogLevel;
@@ -240,7 +240,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 // @public
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any, logLevel?: LogLevel): void;
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel): void;
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel): void;
 }

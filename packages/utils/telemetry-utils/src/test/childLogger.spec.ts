@@ -176,4 +176,19 @@ describe("ChildLogger", () => {
 		childLogger2.send({ category: "generic", eventName: "testEvent" });
 		assert(sent, "event should be sent");
 	});
+
+	it("should not create multiple child loggers", () => {
+		const logger: ITelemetryBaseLogger = {
+			send(event: ITelemetryBaseEvent): void {},
+		};
+		const childLogger1 = ChildLogger.create(logger);
+		const childLogger2 = ChildLogger.create(childLogger1) as ChildLogger;
+		const childLogger3 = ChildLogger.create(childLogger2) as ChildLogger;
+
+		assert(
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			childLogger3["baseLogger"]["baseLogger"]["baseLogger"] === undefined,
+			"created multiple loggers",
+		);
+	});
 });

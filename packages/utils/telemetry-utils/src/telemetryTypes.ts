@@ -95,9 +95,8 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send error telemetry event
 	 * @param event - Event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
 	 */
-	sendErrorEvent(event: ITelemetryErrorEventExt, error?: any, logLevel?: LogLevel): void;
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
 
 	/**
 	 * Send performance telemetry event

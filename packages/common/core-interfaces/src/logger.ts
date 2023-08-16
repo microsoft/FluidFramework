@@ -49,12 +49,15 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  * Enum to specify a level to the log to filter out logs based on the level.
  */
 export enum LogLevel {
-	verbose = 0,
-	default = 1,
-	warning = 2,
-	error = 3,
+	verbose = 0, // To log any verbose event for example when you are debugging something.
+	default = 1, // Default log level
+	warning = 2, // For events which are not errors but are also not ideal situations in the flow.
+	error = 3, // To log errors.
 }
 
+/**
+ * Configurtion specified to filter out events based on log verboseness level or namespace etc.
+ */
 export interface ILoggerEventsFilterConfig {
 	logLevel?: LogLevel;
 }
@@ -131,10 +134,9 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * Send error telemetry event
 	 * @param event - Event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sendErrorEvent(event: ITelemetryErrorEvent, error?: any, logLevel?: LogLevel): void;
+	sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
 
 	/**
 	 * Send performance telemetry event
