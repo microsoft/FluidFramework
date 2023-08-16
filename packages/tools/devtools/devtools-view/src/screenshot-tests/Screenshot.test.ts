@@ -191,6 +191,8 @@ async function generateTestSuite(): Promise<void> {
 									);
 
 									const page = await browser.newPage({
+										viewport,
+
 										// Dark mode vs light mode setting
 										// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
 										colorScheme: colorSchemeFromTheme(theme),
