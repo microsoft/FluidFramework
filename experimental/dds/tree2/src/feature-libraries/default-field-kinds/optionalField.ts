@@ -315,14 +315,14 @@ function deltaFromInsertAndChange(
 			content: [insertedContent],
 		};
 		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange, repairDataBuilder, idAllocator);
+			const nodeDelta = deltaFromNode(nodeChange);
 			populateChildModifications(nodeDelta, insert);
 		}
 		return [insert];
 	}
 
 	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange, repairDataBuilder, idAllocator)];
+		return [deltaFromNode(nodeChange)];
 	}
 
 	return [];
@@ -348,7 +348,7 @@ function deltaForDelete(
 		isRemoval: true,
 	};
 	if (nodeChange !== undefined) {
-		const modify = deltaFromNode(nodeChange, repairDataBuilder, idAllocator);
+		const modify = deltaFromNode(nodeChange);
 		moveDelta.fields = modify.fields;
 	}
 
@@ -366,7 +366,7 @@ export function optionalFieldIntoDelta(
 ) {
 	if (change.fieldChange === undefined) {
 		if (change.deletedBy === undefined && change.childChange !== undefined) {
-			return [deltaFromChild(change.childChange, repairDataBuilder, idAllocator)];
+			return [deltaFromChild(change.childChange)];
 		}
 		return [];
 	}

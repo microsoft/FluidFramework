@@ -69,9 +69,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild, repairData, idAllocator) => [
-		deltaFromChild(change, repairData, idAllocator),
-	],
+	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 

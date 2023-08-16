@@ -57,9 +57,21 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should modify CrossFieldManager"),
 };
 
-const deltaFromChild1 = (
+function makeDeltaFromChild(
+	repairDataBuilder: RepairDataBuilder,
+	idAllocator: IdAllocator,
+	deltaFn: (
+		child: NodeChangeset,
+		repairDataBuilder: RepairDataBuilder,
+		idAllocator: IdAllocator,
+	) => Delta.Modify,
+): (child: NodeChangeset) => Delta.Modify {
+	return (child: NodeChangeset) => deltaFn(child, repairDataBuilder, idAllocator);
+}
+
+const deltaFromChild1Proto = (
 	child: NodeChangeset,
-	{ accumulator, handler }: RepairDataBuilder,
+	{ handler, accumulator }: RepairDataBuilder,
 	idAllocator: IdAllocator,
 ): Delta.Modify => {
 	assert.deepEqual(child, nodeChange1);
@@ -86,7 +98,7 @@ const deltaFromChild1 = (
 	};
 };
 
-const deltaFromChild2 = (
+const deltaFromChild2Proto = (
 	child: NodeChangeset,
 	{ accumulator, handler }: RepairDataBuilder,
 	idAllocator: IdAllocator,
@@ -394,12 +406,13 @@ describe("optionalField", () => {
 			]);
 
 			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
+			const idAllocator = idAllocatorFromMaxId();
 			assertMarkListEqual(
 				optionalFieldIntoDelta(
 					change1.change,
-					deltaFromChild1,
+					makeDeltaFromChild(repairDataBuilder, idAllocator, deltaFromChild1Proto),
 					repairDataBuilder,
-					idAllocatorFromMaxId(),
+					idAllocator,
 				),
 				expected,
 			);
@@ -474,9 +487,10 @@ describe("optionalField", () => {
 			]);
 
 			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
+			const idAllocator = idAllocatorFromMaxId();
 			const actual = optionalFieldIntoDelta(
 				revertChange2,
-				deltaFromChild1,
+				makeDeltaFromChild(repairDataBuilder, idAllocator, deltaFromChild2Proto),
 				repairDataBuilder,
 				idAllocatorFromMaxId(),
 			);
@@ -523,10 +537,11 @@ describe("optionalField", () => {
 			]);
 
 			const { repairDataBuilder, repairDataMarks } = makeRepairDataBuilder();
+			const idAllocator = idAllocatorFromMaxId();
 			assertMarkListEqual(
 				optionalFieldIntoDelta(
 					change4.change,
-					deltaFromChild2,
+					makeDeltaFromChild(repairDataBuilder, idAllocator, deltaFromChild2Proto),
 					repairDataBuilder,
 					idAllocatorFromMaxId(),
 				),
