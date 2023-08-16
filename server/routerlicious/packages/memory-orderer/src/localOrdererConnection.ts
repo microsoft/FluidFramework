@@ -21,6 +21,7 @@ import {
 	IServiceConfiguration,
 	RawOperationType,
 } from "@fluidframework/server-services-core";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
@@ -132,7 +133,11 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		};
 
 		// Submits the message.
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this.producer.send([boxcar], this.tenantId, this.documentId);
+		this.producer.send([boxcar], this.tenantId, this.documentId).catch((err) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			};
+			Lumberjack.error("Error sending boxcar to producer", lumberjackProperties, err);
+		});
 	}
 }
