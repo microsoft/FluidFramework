@@ -2028,7 +2028,7 @@ export class ContainerRuntime
 				// e.g. if an app rolled back its container version
 				const compatBehavior = compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(type, compatBehavior)) {
-					throw DataProcessingError.create(
+					const error = DataProcessingError.create(
 						"Stashed runtime message of unknown type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
@@ -2039,6 +2039,8 @@ export class ContainerRuntime
 							}),
 						},
 					);
+					this.closeFn(error);
+					throw error;
 				}
 			}
 		}
@@ -2267,7 +2269,7 @@ export class ContainerRuntime
 
 				const compatBehavior = compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(maybeContainerMessageType, compatBehavior)) {
-					throw DataProcessingError.create(
+					const error = DataProcessingError.create(
 						// Former assert 0x3ce
 						"Runtime message of unknown type",
 						"OpProcessing",
@@ -2283,6 +2285,8 @@ export class ContainerRuntime
 							}),
 						},
 					);
+					this.closeFn(error);
+					throw error;
 				}
 			}
 		}
@@ -3534,7 +3538,7 @@ export class ContainerRuntime
 						messageDetails: { type: message.type, compatBehavior },
 					});
 				} else {
-					throw DataProcessingError.create(
+					const error = DataProcessingError.create(
 						"Resubmitting runtime message of unknown type",
 						"reSubmitCore",
 						undefined /* sequencedMessage */,
@@ -3545,6 +3549,8 @@ export class ContainerRuntime
 							}),
 						},
 					);
+					this.closeFn(error);
+					throw error;
 				}
 			}
 		}

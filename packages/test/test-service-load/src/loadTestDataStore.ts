@@ -15,11 +15,7 @@ import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import {
-	ContainerMessageType,
-	ContainerRuntimeMessage,
-	IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -561,10 +557,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
 		const opsPerCycle = (config.testConfig.opRatePerMin * cycleMs) / 60000;
 		const opsGapMs = cycleMs / opsPerCycle;
-		const futureOpPeriod =
-			config.testConfig.futureOpRate !== undefined && config.testConfig.futureOpRate > 0
-				? 1 / config.testConfig.futureOpRate
-				: undefined;
 		const opSizeinBytes =
 			typeof config.testConfig.content?.opSizeinBytes === "undefined"
 				? 0
@@ -643,18 +635,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 			dataModel.counter.increment(1);
 			opsSent++;
-
-			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
-				(
-					this.context.containerRuntime as unknown as {
-						submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
-					}
-				).submit({
-					type: "FUTURE_TYPE" as ContainerMessageType,
-					contents: "Hello",
-					compatDetails: { behavior: "Ignore" },
-				});
-			}
 		};
 
 		const enableQuickRampDown = () => {
