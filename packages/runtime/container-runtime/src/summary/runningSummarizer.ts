@@ -454,7 +454,7 @@ export class RunningSummarizer implements IDisposable {
 			if (this.summarizingLock === undefined) {
 				this.trySummarizeOnce(
 					// summarizeProps
-					{ reason: "lastSummary" },
+					{ summarizeReason: "lastSummary" },
 					// ISummarizeOptions, using defaults: { refreshLatestAck: false, fullTree: false }
 					{},
 				);
@@ -637,7 +637,7 @@ export class RunningSummarizer implements IDisposable {
 
 			const summarizeOptions = attempts[summaryAttemptPhase];
 			const summarizeProps: ISummarizeTelemetryProperties = {
-				reason,
+				summarizeReason: reason,
 				summaryAttempts,
 				summaryAttemptsPerPhase,
 				summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
@@ -712,7 +712,7 @@ export class RunningSummarizer implements IDisposable {
 				fullTree: false,
 			};
 			const summarizeProps: ISummarizeTelemetryProperties = {
-				reason,
+				summarizeReason: reason,
 				summaryAttempts: currentAttempt,
 				...summarizeOptions,
 			};
@@ -786,7 +786,7 @@ export class RunningSummarizer implements IDisposable {
 		}
 
 		const result = this.trySummarizeOnce(
-			{ reason: `onDemand/${reason}` },
+			{ summarizeReason: `onDemand/${reason}` },
 			options,
 			this.cancellationToken,
 			resultsBuilder,
@@ -849,7 +849,7 @@ export class RunningSummarizer implements IDisposable {
 		// Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
 		this.enqueuedSummary = undefined;
 		this.trySummarizeOnce(
-			{ reason: `enqueuedSummary/${reason}` },
+			{ summarizeReason: `enqueuedSummary/${reason}` },
 			options,
 			this.cancellationToken,
 			resultsBuilder,

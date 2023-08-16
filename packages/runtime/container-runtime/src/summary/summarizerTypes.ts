@@ -442,7 +442,7 @@ export interface ISummarizeHeuristicRunner {
 
 type ISummarizeTelemetryRequiredProperties =
 	/** Reason code for attempting to summarize */
-	"reason";
+	"summarizeReason";
 
 type ISummarizeTelemetryOptionalProperties =
 	/** Number of attempts within the last time window, used for calculating the throttle delay. */
