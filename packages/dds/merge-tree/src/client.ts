@@ -1040,6 +1040,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(
 			startPos,
