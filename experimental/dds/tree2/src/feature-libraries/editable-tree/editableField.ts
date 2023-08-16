@@ -18,7 +18,6 @@ import {
 	inCursorNode,
 	FieldUpPath,
 	ITreeCursor,
-	rootField,
 } from "../../core";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -43,7 +42,7 @@ import {
 	isPrimitive,
 	keyIsValidIndex,
 	getOwnArrayKeys,
-	getDetachedFieldContainingPath,
+	treeStatusFromPath,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -395,16 +394,13 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		);
 	}
 
-	public getTreeStatus(): TreeStatus {
-		const path = this.cursor.getFieldPath().parent;
-		if (path === undefined) {
+	public treeStatus(): TreeStatus {
+		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		// TODO: This is a slow initial implementation which traverses the entire path up to the root of the tree.
-		// This should eventually be optimized.
-		return getDetachedFieldContainingPath(path) === rootField
-			? TreeStatus.InDocument
-			: TreeStatus.Removed;
+		const path = this.cursor.getFieldPath().parent;
+		assert(path !== undefined, "path must be defined.");
+		return treeStatusFromPath(path);
 	}
 
 	public getfieldPath(): FieldUpPath {

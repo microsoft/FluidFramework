@@ -5,13 +5,20 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { DetachedField, FieldKey, TreeStoredSchema, UpPath, keyAsDetachedField } from "../../core";
+import {
+	DetachedField,
+	FieldKey,
+	TreeStoredSchema,
+	UpPath,
+	keyAsDetachedField,
+	rootField,
+} from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { getField } from "../untypedTree";
-import { EditableTree } from "./editableTreeTypes";
+import { EditableTree, TreeStatus } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -115,4 +122,17 @@ export function getDetachedFieldContainingPath(path: UpPath): DetachedField {
 		}
 	}
 	return keyAsDetachedField(path.parentField);
+}
+
+/**
+ * Checks the path and returns the TreeStatus based on whether or not the detached field is the root field.
+ * TODO: Performance: This is a slow initial implementation which traverses the entire path up to the root of the tree.
+ * This should eventually be optimized.
+ * @param path - the path you want to check
+ * @returns the {@link TreeStatus} from the path provided.
+ */
+export function treeStatusFromPath(path: UpPath): TreeStatus {
+	return getDetachedFieldContainingPath(path) === rootField
+		? TreeStatus.InDocument
+		: TreeStatus.Removed;
 }

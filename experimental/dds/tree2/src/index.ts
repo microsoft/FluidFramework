@@ -266,7 +266,7 @@ export {
 	compileSyntaxTree,
 	nodeKeyFieldKey,
 	TreeStatus,
-	getTreeStatus,
+	treeStatus,
 } from "./feature-libraries";
 
 export {

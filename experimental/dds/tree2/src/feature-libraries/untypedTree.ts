@@ -67,7 +67,7 @@ export const on: unique symbol = Symbol("editable-tree:on");
  * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
  * @alpha
  */
-export const getTreeStatus: unique symbol = Symbol("editable-tree:getTreeStatus()");
+export const treeStatus: unique symbol = Symbol("editable-tree:treeStatus()");
 
 /**
  * A tree of an unknown type.
@@ -128,7 +128,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	/**
 	 * Gets the {@link TreeStatus} of the tree.
 	 */
-	[getTreeStatus](): TreeStatus;
+	[treeStatus](): TreeStatus;
 
 	/**
 	 * The field this tree is in, and the index within that field.
@@ -216,7 +216,7 @@ export interface UntypedField<
 	/**
 	 * Gets the {@link TreeStatus} of this field.
 	 */
-	getTreeStatus(): TreeStatus;
+	treeStatus(): TreeStatus;
 }
 
 /**

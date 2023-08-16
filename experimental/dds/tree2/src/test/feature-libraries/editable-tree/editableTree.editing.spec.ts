@@ -25,6 +25,8 @@ import {
 	NewFieldContent,
 	setField,
 	EditableTree,
+	treeStatus,
+	TreeStatus,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -670,6 +672,43 @@ describe("editable-tree: editing", () => {
 			assert.throws(() => {
 				field.remove();
 			});
+		});
+	});
+	describe("TreeStatus", () => {
+		it("root node returns TreeStatus.InDocument", () => {
+			const view = createSharedTreeView().schematize({
+				schema: getTestSchema(FieldKinds.sequence),
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: { foo: [], foo2: [] },
+			});
+			const rootNode = view.root;
+			assert(isEditableTree(rootNode));
+			const rootNodeStatus = rootNode[treeStatus]();
+
+			assert.equal(rootNodeStatus, TreeStatus.InDocument);
+		});
+		it("removed node returns TreeStatus.Deleted", () => {
+			const view = createSharedTreeView().schematize({
+				schema: getTestSchema(FieldKinds.sequence),
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: { foo: [], foo2: [] },
+			});
+			const root = view.root;
+			assert(isEditableTree(root));
+			const field = root[localFieldKey];
+			assert(isEditableField(field));
+
+			// create using `insertNodes`
+			field.insertNodes(0, ["foo", "bar"]);
+			assert.deepEqual([...field], ["foo", "bar"]);
+
+			const node = field.getNode(0);
+			const statusBeforeRemove = node[treeStatus]();
+			assert.equal(statusBeforeRemove, TreeStatus.InDocument);
+
+			field.remove();
+			const statusAfterRemove = node[treeStatus]();
+			assert.equal(statusAfterRemove, TreeStatus.Deleted);
 		});
 	});
 });

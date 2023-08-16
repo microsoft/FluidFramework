@@ -781,9 +781,6 @@ export function getPrimaryField(schema: TreeStoredSchema): {
     schema: FieldStoredSchema;
 } | undefined;
 
-// @alpha
-export const getTreeStatus: unique symbol;
-
 // @alpha (undocumented)
 export interface HasFieldChanges {
     // (undocumented)
@@ -1927,6 +1924,9 @@ export enum TreeStatus {
     Removed = 1
 }
 
+// @alpha
+export const treeStatus: unique symbol;
+
 // @alpha (undocumented)
 export interface TreeStoredSchema {
     readonly leafValue?: ValueSchema;
@@ -2023,8 +2023,8 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldStoredSchema;
     getNode(index: number): TChild;
-    getTreeStatus(): TreeStatus;
     readonly parent?: TParent;
+    treeStatus(): TreeStatus;
 }
 
 // @alpha
@@ -2071,13 +2071,13 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>> extends Iterable<TField> {
     readonly [contextSymbol]: TContext;
     [getField](fieldKey: FieldKey): TField;
-    [getTreeStatus](): TreeStatus;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly [parentField]: {
         readonly parent: TField;
         readonly index: number;
     };
+    [treeStatus](): TreeStatus;
     readonly [typeSymbol]: NamedTreeSchema;
 }
 

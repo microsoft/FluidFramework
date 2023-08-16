@@ -20,7 +20,6 @@ import {
 	AnchorNode,
 	inCursorField,
 	rootFieldKey,
-	rootField,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
@@ -34,13 +33,13 @@ import {
 	parentField,
 	typeSymbol,
 	contextSymbol,
-	getTreeStatus,
+	treeStatus,
 } from "../untypedTree";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
-	getDetachedFieldContainingPath,
 	getStableNodeKey,
+	treeStatusFromPath,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -245,16 +244,13 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return { parent: proxifiedField, index };
 	}
 
-	public getTreeStatus(): TreeStatus {
-		const path = this.cursor.getPath();
-		if (path === undefined) {
+	public treeStatus(): TreeStatus {
+		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		// TODO: This is a slow initial implementation which traverses the entire path up to the root of the tree.
-		// This should eventually be optimized.
-		return getDetachedFieldContainingPath(path) === rootField
-			? TreeStatus.InDocument
-			: TreeStatus.Removed;
+		const path = this.cursor.getPath();
+		assert(path !== undefined, "path must be defined.");
+		return treeStatusFromPath(path);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
@@ -308,8 +304,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.getField.bind(target);
 			case setField:
 				return target.setField.bind(target);
-			case getTreeStatus:
-				return target.getTreeStatus.bind(target);
+			case treeStatus:
+				return target.treeStatus.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:

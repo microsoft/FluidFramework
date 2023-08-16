@@ -205,7 +205,7 @@ export {
 	EditableTreeEvents,
 	on,
 	contextSymbol,
-	getTreeStatus,
+	treeStatus,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.
