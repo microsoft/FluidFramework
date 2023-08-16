@@ -1922,11 +1922,8 @@ FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpec
 
 // @alpha
 export enum TreeStatus {
-    // (undocumented)
     Deleted = 2,
-    // (undocumented)
     InDocument = 0,
-    // (undocumented)
     Removed = 1
 }
 
