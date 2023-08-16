@@ -47,10 +47,19 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 	const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
 	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
 	const inactiveTimeoutMs = 100;
+
+	// KEEP THESE CONFIGS IN SYNC ON ALL COMMON PROPERTIES
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 			gcOptions: { gcAllowed: true, inactiveTimeoutMs },
+		},
+	};
+	// KEEP THESE CONFIGS IN SYNC ON ALL COMMON PROPERTIES
+	const testContainerConfigWithThrowOption: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+			gcOptions: { gcAllowed: true, inactiveTimeoutMs, throwOnInactiveLoad: true },
 		},
 	};
 
@@ -133,7 +142,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			[{ eventName: changedEvent }, { eventName: loadedEvent }, { eventName: revivedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
-					...testContainerConfig,
+					...testContainerConfigWithThrowOption, // But summarizer should NOT throw
 					loaderProps: { logger: mockLogger },
 				});
 				const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
@@ -160,7 +169,12 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				dataObject._root.set("key", "value");
 				await provider.ensureSynchronized();
 				// Load the data store and validate that we get loadedEvent.
-				await summarizerRuntime.resolveHandle({ url });
+				const response = await summarizerRuntime.resolveHandle({ url });
+				assert.equal(
+					response.status,
+					200,
+					"Loading the inactive object should succeed despite throwOnInactiveLoad option",
+				);
 				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[
@@ -291,12 +305,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			},
 		);
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		describe.only("Interactive (non-summarizer) clients", () => {
+		describe("Interactive (non-summarizer) clients", () => {
 			/**
 			 * We manufacture a handle to simulate a bug where an object is unrefenced in GC's view
 			 * (and reminder, interactive clients never update their GC data after loading),
@@ -322,13 +331,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				await provider.ensureSynchronized();
 				const summaryResult = await summarizeNow(summarizer);
 				return summaryResult.summaryVersion;
-			};
-
-			const testContainerConfigWithThrowOption: ITestContainerConfig = {
-				runtimeOptions: {
-					summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-					gcOptions: { gcAllowed: true, inactiveTimeoutMs, throwOnInactiveLoad: true },
-				},
 			};
 
 			/**
@@ -427,7 +429,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						assert.equal(inactiveError?.code ?? -1, 404, "Incorrect error status code");
 						assert.equal(
 							inactiveError?.message ?? "",
-							`DataStore is inactive: /${unreferencedId}`,
+							`Object is inactive: /${unreferencedId}`,
 						);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],

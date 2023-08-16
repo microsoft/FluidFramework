@@ -901,6 +901,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
 			id: nodePath,
 			usageType: reason,
@@ -913,17 +914,17 @@ export class GarbageCollector implements IGarbageCollector {
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
 
+		// We may throw when loading an Inactive object, depending on these preconditions
+		const shouldThrowOnInactiveLoad =
+			!this.isSummarizerClient &&
+			this.configs.throwOnInactiveLoad === true &&
+			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
 		const state = this.unreferencedNodesState.get(nodePath)?.state;
-		if (
-			reason === "Loaded" &&
-			state === "Inactive" &&
-			this.configs.throwOnInactiveLoad &&
-			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true
-		) {
-			const request: IRequest = { url: nodePath }; //* Double-check url here
+
+		if (shouldThrowOnInactiveLoad && reason === "Loaded" && state === "Inactive") {
+			const request: IRequest = { url: nodePath };
 			const error = responseToException(
-				//* Finalize message
-				createResponseError(404, "DataStore is inactive", request, {
+				createResponseError(404, "Object is inactive", request, {
 					[InactiveResponseHeaderKey]: true,
 				}),
 				request,
