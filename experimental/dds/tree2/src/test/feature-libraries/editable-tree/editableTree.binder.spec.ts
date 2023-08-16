@@ -37,7 +37,6 @@ import {
 	BindTree,
 	InvalidationBindingContext,
 	setField,
-	isEditableField,
 	isEditableTree,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
