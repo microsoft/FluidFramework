@@ -6,7 +6,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 
@@ -60,6 +60,7 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
  */
 class CollaborativeText extends DataObject {
 	private readonly textKey = "textKey";
+	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
 
 	private _text: SharedString | undefined;
 	public get text() {
@@ -67,6 +68,10 @@ class CollaborativeText extends DataObject {
 			throw new Error("The SharedString was not initialized correctly");
 		}
 		return this._text;
+	}
+
+	public get initialObjects(): Record<string, IFluidLoadable> {
+		return this._initialObjects;
 	}
 
 	public static get Name() {
@@ -88,6 +93,7 @@ class CollaborativeText extends DataObject {
 		// Create the SharedString and store the handle in our root SharedDirectory
 		const text = SharedString.create(this.runtime);
 		this.root.set(this.textKey, text.handle);
+		this._initialObjects[this.textKey] = text.IFluidLoadable;
 	}
 
 	protected async hasInitialized() {

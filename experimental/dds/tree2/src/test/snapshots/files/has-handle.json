@@ -9,7 +9,7 @@
                     "tree": {
                         "String": {
                             "type": 2,
-                            "content": "{\"trunk\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Optional\",\"change\":{\"fieldChange\":{\"id\":0,\"wasEmpty\":true,\"newContent\":{\"set\":{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/tree-provider-lite-data-store/TestSharedTree\"}}}}}}]},\"revision\":\"beefbeef-beef-4000-8000-000000000002\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
+                            "content": "{\"trunk\":[{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Optional\",\"change\":{\"fieldChange\":{\"id\":0,\"wasEmpty\":true}}}]},\"revision\":\"beefbeef-beef-4000-8000-000000000003\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"},{\"change\":{\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Optional\",\"change\":{\"fieldChange\":{\"id\":0,\"wasEmpty\":true,\"newContent\":{\"set\":{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/test/test\"}}}}}}]},\"revision\":\"beefbeef-beef-4000-8000-000000000004\",\"sequenceNumber\":-9007199254740989,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
                         }
                     }
                 },
@@ -27,7 +27,7 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "[{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/tree-provider-lite-data-store/TestSharedTree\"}}]"
+                            "content": "[{\"type\":\"Handle\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/test/test\"}}]"
                         }
                     }
                 }

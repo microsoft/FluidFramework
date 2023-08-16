@@ -114,12 +114,12 @@ function withChildModificationsIfAny<TNodeChange>(
 		const modify = deltaFromChild(changes);
 		if (modify.fields !== undefined) {
 			if (typeof deltaMark === "number") {
-				assert(deltaMark === 1, "Invalid nested changes on non-1 skip mark");
+				assert(deltaMark === 1, 0x72d /* Invalid nested changes on non-1 skip mark */);
 				return modify;
 			} else {
 				assert(
 					deltaMark.type !== Delta.MarkType.MoveIn,
-					"Invalid nested changes on MoveIn mark",
+					0x72e /* Invalid nested changes on MoveIn mark */,
 				);
 				return { ...deltaMark, fields: modify.fields };
 			}
