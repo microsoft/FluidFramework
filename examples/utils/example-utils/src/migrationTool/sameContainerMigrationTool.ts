@@ -236,7 +236,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	};
 
 	private readonly loadV1PausedContainer = async () => {
-		// TODO: issues if we summarize then connect a new client ? each client needs to do this?
+		// TODO: Error handling/retry logic
 		const loadPausedContainerFn = await this._loadPausedContainerFnP;
 		const pausedModel = await loadPausedContainerFn(this.acceptedSeqNum);
 		assert(
