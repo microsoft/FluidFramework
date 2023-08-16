@@ -31,7 +31,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { PendingLocalState, IPendingBlobs } from "@fluidframework/container-runtime/dist/test";
+import { PendingLocalState, IPendingBlobs } from "@fluidframework/container-runtime/src/test";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -648,7 +648,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
 		let pendingBlobs: IPendingBlobs = await (container1 as any).runtime
 			.getPendingLocalState()
-			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
+			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs);
 		assert.strictEqual(Object.values<any>(pendingBlobs).length, 1);
 		const acked = Object.values<any>(pendingBlobs)[0].acked;
 		assert.strictEqual(acked, false, "reconnection should not reupload pending blobs");
@@ -662,7 +662,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		await assert.doesNotReject(handleP);
 		pendingBlobs = await (container1 as any).runtime
 			.getPendingLocalState()
-			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs as IPendingBlobs);
+			.then((s) => (s as PendingLocalState).pendingAttachmentBlobs);
 		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, true);
 		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
