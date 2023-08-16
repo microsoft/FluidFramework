@@ -7,7 +7,9 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDisposable } from '@fluidframework/core-interfaces';
+import { IErrorBase } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
+import { IGenericError } from '@fluidframework/container-definitions';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -16,10 +18,22 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryProperties as ITelemetryProperties_2 } from '@fluidframework/common-definitions';
+import { IThrottlingWarning } from '@fluidframework/container-definitions';
+import { IUsageError } from '@fluidframework/container-definitions';
 import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+
+// @public
+export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
+    constructor(message: string, expiryMs: number);
+    // (undocumented)
+    readonly errorType = ContainerErrorType.clientSessionExpiredError;
+    // (undocumented)
+    readonly expiryMs: number;
+}
 
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -44,6 +58,15 @@ export function createMultiSinkLogger(props: {
     loggers?: (ITelemetryBaseLogger | undefined)[];
     tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
+
+// @public
+export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    constructor(message: string, props: ITelemetryProperties_2);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = ContainerErrorType.dataCorruptionError;
+}
 
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
@@ -73,6 +96,15 @@ export function generateErrorWithStack(): Error;
 
 // @public (undocumented)
 export function generateStack(): string | undefined;
+
+// @public
+export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+    constructor(message: string, error?: any, props?: ITelemetryProperties_2);
+    // (undocumented)
+    readonly error?: any;
+    // (undocumented)
+    readonly errorType = ContainerErrorType.genericError;
+}
 
 // @public
 export const getCircularReplacer: () => (key: string, value: any) => any;
@@ -356,6 +388,22 @@ export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLoggerExt, thresholdMultiple?: number);
     send(eventName: string, value: number): void;
     sendIfMultiple(eventName: string, value: number): void;
+}
+
+// @public
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+    // (undocumented)
+    readonly errorType = ContainerErrorType.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
+}
+
+// @public
+export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
+    constructor(message: string, props?: ITelemetryProperties_2);
+    // (undocumented)
+    readonly errorType = ContainerErrorType.usageError;
 }
 
 // @public

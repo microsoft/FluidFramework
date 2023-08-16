@@ -4,10 +4,13 @@
  */
 /* eslint-disable @rushstack/no-new-null */
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { summarizerClientType } from "./summarizerClientElection";

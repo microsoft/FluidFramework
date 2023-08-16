@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { GenericError, DataCorruptionError } from "../error";
+import { MockLogger } from "../mockLogger";
+import { createChildLogger } from "../logger";
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
 	// In all tests below, the `stack` prop will be left out of validation because it is difficult to properly

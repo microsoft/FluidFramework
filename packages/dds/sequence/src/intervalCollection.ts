@@ -7,7 +7,6 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import {
 	addProperties,
 	Client,
@@ -24,7 +23,7 @@ import {
 	DetachedReferencePosition,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	IMapMessageLocalMetadata,

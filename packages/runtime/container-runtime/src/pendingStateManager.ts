@@ -6,10 +6,10 @@
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType, SequencedContainerRuntimeMessage } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";

@@ -12,6 +12,7 @@ import {
 	PerformanceEvent,
 	sessionStorageConfigProvider,
 	createChildMonitoringContext,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBaseLogger,
@@ -37,7 +38,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";

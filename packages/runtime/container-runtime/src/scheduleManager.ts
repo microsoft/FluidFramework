@@ -5,14 +5,17 @@
 import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert, performance } from "@fluidframework/common-utils";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
+	createChildLogger,
+	ITelemetryLoggerExt,
 	DataCorruptionError,
+} from "@fluidframework/telemetry-utils";
+import { assert, performance } from "@fluidframework/common-utils";
+import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";

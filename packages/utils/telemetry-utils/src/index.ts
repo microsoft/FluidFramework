@@ -15,8 +15,6 @@ export {
 export {
 	ClientSessionExpiredError,
 	DataCorruptionError,
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
 	GenericError,
 	ThrottlingWarning,
 	UsageError,

@@ -5,7 +5,6 @@
 
 import { Timer } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
-import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -16,13 +15,14 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
+	ClientSessionExpiredError,
 	createChildLogger,
 	createChildMonitoringContext,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { RuntimeHeaders } from "../containerRuntime";
 import { RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";

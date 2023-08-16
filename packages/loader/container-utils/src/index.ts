@@ -4,14 +4,28 @@
  */
 
 export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
+export { DataProcessingError, extractSafePropertiesFromMessage } from "./error";
 
 // Deprecated exports for backwards compatibility
 export {
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	ClientSessionExpiredError,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	DataCorruptionError,
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	GenericError,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	ThrottlingWarning,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	UsageError,
 } from "@fluidframework/telemetry-utils";
