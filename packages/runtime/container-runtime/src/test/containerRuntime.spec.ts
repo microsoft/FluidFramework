@@ -26,12 +26,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	IErrorBase,
-	IRequest,
-	IResponse,
-	FluidObject,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
