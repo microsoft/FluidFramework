@@ -54,6 +54,7 @@ export {
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
+	cloneMark,
 } from "./utils";
 export {
 	isMoveMark,

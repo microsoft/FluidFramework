@@ -20,12 +20,12 @@ import { TestChange } from "../../testChange";
 import { deepFreeze, isDeltaVisible } from "../../utils";
 import { brand } from "../../../util";
 import {
-	checkDeltaEquality,
 	compose,
 	composeAnonChanges,
 	invert,
 	rebaseTagged,
 	toDelta,
+	withoutLineage,
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 
@@ -143,7 +143,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r2 = rebaseTagged(r1, inv);
 
 							// We do not expect exact equality because r2 may have accumulated some lineage.
-							checkDeltaEquality(r2.change, change1.change);
+							assert.deepEqual(withoutLineage(r2.change), change1.change);
 						}
 					}
 				});
@@ -182,7 +182,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const inv = tagChange(invert(change2), tag6);
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
-							checkDeltaEquality(r2.change, change1.change);
+							const r2WithoutLineage = withoutLineage(r2.change);
+							assert.deepEqual(r2WithoutLineage, change1.change);
 						}
 					}
 				});
@@ -226,7 +227,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inverse2);
 							const r3 = rebaseTagged(r2, change2);
-							assert.deepEqual(r3, r1);
+							assert.deepEqual(withoutLineage(r3.change), withoutLineage(r1.change));
 						}
 					}
 				});
