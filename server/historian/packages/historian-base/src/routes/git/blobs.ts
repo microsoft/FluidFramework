@@ -18,7 +18,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -30,6 +30,7 @@ export function create(
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.createBlob(body);
 	}
@@ -72,6 +74,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getBlob(sha, useCache);
 	}
@@ -143,8 +146,8 @@ export function create(
 				useCache,
 			);
 
-			blobP.then(
-				(blob) => {
+			blobP
+				.then((blob) => {
 					if (useCache) {
 						response.setHeader("Cache-Control", "public, max-age=31536000");
 					}
@@ -158,11 +161,10 @@ export function create(
 					response
 						.status(200)
 						.write(Buffer.from(blob.content, "base64"), () => response.end());
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(error?.code ?? 400).json(error?.message ?? error);
-				},
-			);
+				});
 		},
 	);
 

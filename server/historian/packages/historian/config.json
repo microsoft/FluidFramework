@@ -8,6 +8,7 @@
 	},
 	"riddler": "http://riddler:5000",
 	"requestSizeLimit": "1gb",
+	"ignoreEphemeralFlag": true,
 	"redis": {
 		"host": "redis",
 		"port": 6379,
@@ -80,7 +81,8 @@
 		}
 	},
 	"restGitService": {
-		"disableGitCache": false
+		"disableGitCache": false,
+		"maxCacheableSummarySize": 100000000
 	},
 	"storageUrl": "",
 	"tokenRevocation": {

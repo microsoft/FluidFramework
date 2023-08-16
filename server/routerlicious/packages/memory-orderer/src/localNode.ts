@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	IDatabaseManager,
 	IDocumentStorage,
@@ -199,8 +199,18 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 							connectMessage.client,
 						);
 
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						connection.connect();
+						connection.connect().catch((err) => {
+							Lumberjack.error(
+								"Error handling connect message",
+								{
+									...getLumberBaseProperties(
+										connectMessage.documentId,
+										connectMessage.tenantId,
+									),
+								},
+								err,
+							);
+						});
 
 						// Need to subscribe to both channels. Then broadcast subscription across pipe
 						// on receiving a message
@@ -221,8 +231,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 					case "disconnect": {
 						const connection = this.connectionMap.get(message.cid);
 						assert(connection);
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						connection.disconnect();
+						connection.disconnect().catch((err) => {
+							Lumberjack.error("Error handling disconnect message", undefined, err);
+						});
 						this.connectionMap.delete(message.cid);
 
 						break;
@@ -232,8 +243,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 						const orderMessage = message.payload as IDocumentMessage;
 						const connection = this.connectionMap.get(message.cid);
 						assert(connection);
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						connection.order([orderMessage]);
+						connection.order([orderMessage]).catch((err) => {
+							Lumberjack.error("Error handling order message", undefined, err);
+						});
 						break;
 					}
 

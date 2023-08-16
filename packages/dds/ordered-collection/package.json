@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/ordered-collection",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Consensus Collection",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,13 +68,13 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.21.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/ordered-collection-previous": "npm:@fluidframework/ordered-collection@2.0.0-internal.6.0.0",

@@ -1,5 +1,9 @@
 # @fluid-example/data-object-grid
 
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.0.0
 
 Dependency updates only.

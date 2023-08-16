@@ -34,6 +34,7 @@ import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
+	CommonProperties,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
@@ -70,8 +71,6 @@ export class DocumentStorage implements IDocumentStorage {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: sequenceNumber,
 			sequenceNumber,
-			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-			term: 1,
 		};
 
 		const summary: ISummaryTree = {
@@ -128,12 +127,15 @@ export class DocumentStorage implements IDocumentStorage {
 		deltaStreamUrl: string,
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
+		isEphemeralContainer: boolean = false,
 	): Promise<IDocumentDetails> {
 		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
 		const gitManager = await this.tenantManager.getTenantGitManager(
 			tenantId,
 			documentId,
 			storageName,
+			false /* includeDisabledTenant */,
+			isEphemeralContainer,
 		);
 
 		const storageNameAssignerEnabled = !!this.storageNameAssigner;
@@ -143,6 +145,7 @@ export class DocumentStorage implements IDocumentStorage {
 			storageName,
 			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
 			storageNameAssignerExists: storageNameAssignerEnabled,
+			isEphemeralContainer,
 		};
 		if (storageNameAssignerEnabled && !storageName) {
 			// Using a warning instead of an error just in case there are some outliers that we don't know about.
@@ -273,7 +276,12 @@ export class DocumentStorage implements IDocumentStorage {
 					tenantId,
 					version: "0.1",
 					storageName,
+					isEphemeralContainer,
 				},
+			);
+			createDocumentCollectionMetric.setProperty(
+				CommonProperties.isEphemeralContainer,
+				isEphemeralContainer,
 			);
 			createDocumentCollectionMetric.success("Successfully created document");
 			return result;
@@ -398,11 +406,11 @@ export class DocumentStorage implements IDocumentStorage {
 		const document = await this.documentRepository.readOne({ documentId, tenantId });
 		if (document === null) {
 			// Guard against storage failure. Returns false if storage is unresponsive.
-			const foundInSummaryP = this.readFromSummary(tenantId, documentId).then(
-				(result) => {
+			const foundInSummaryP = this.readFromSummary(tenantId, documentId)
+				.then((result) => {
 					return result;
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
 					winston.error(err);
 					const lumberjackProperties = {
@@ -411,8 +419,7 @@ export class DocumentStorage implements IDocumentStorage {
 					};
 					Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
 					return false;
-				},
-			);
+				});
 
 			const inSummary = await foundInSummaryP;
 			Lumberjack.warning("Backfilling document from summary!", {

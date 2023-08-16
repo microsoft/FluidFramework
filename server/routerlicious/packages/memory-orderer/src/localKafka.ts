@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IQueuedMessage, IProducer } from "@fluidframework/server-services-core";
 import Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
@@ -77,7 +78,9 @@ export class LocalKafka implements IProducer {
 		}
 
 		for (const subscription of this.subscriptions) {
-			void subscription.process();
+			subscription.process().catch((error) => {
+				Lumberjack.error("Error processing local kafka subscription", undefined, error);
+			});
 		}
 	}
 

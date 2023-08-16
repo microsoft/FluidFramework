@@ -31,7 +31,11 @@ import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils"
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
@@ -232,6 +236,18 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			counter.increment(testIncrementValue);
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, testValue);
+
+			// Submit a message with an unrecognized type
+			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
+			(
+				d.context.containerRuntime as unknown as {
+					submit: (containerRuntimeMessage: ContainerRuntimeMessage) => void;
+				}
+			).submit({
+				type: "FUTURE_TYPE" as ContainerMessageType,
+				contents: "Hello",
+				compatDetails: { behavior: "Ignore" },
+			});
 		});
 
 		// load container with pending ops, which should resend the op not sent by previous container
@@ -912,9 +928,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				// first and everything will work fine. If ops are arriving on the network, there's no guarantee
 				// of how small this window is.
 				if (JSON.stringify(op).includes("attach")) {
-					const pendingState = container.closeAndGetPendingLocalState?.();
-					assert.ok(pendingState);
-					resolve(pendingState);
+					(container as any).processRemoteMessage = (message) => null;
+					const pendingStateP = container.closeAndGetPendingLocalState?.();
+					assert.ok(pendingStateP);
+					resolve(pendingStateP);
 				}
 			});
 		});
@@ -926,6 +943,60 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		// of the attach op
 		const container2 = await loader.resolve({ url }, stashedOps);
 		await waitForContainerConnection(container2);
+	});
+
+	it.skip("handles stashed ops created on top of sequenced local ops", async function () {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+		const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+		const string = await defaultDataStore.getSharedObject<SharedString>(stringId);
+
+		await provider.ensureSynchronized();
+		await provider.opProcessingController.pauseProcessing(container);
+
+		// generate local op
+		assert.strictEqual(string.getText(), "hello");
+		string.insertText(5, "; long amount of text that will produce a high index");
+
+		// op is submitted on top of first op at some later time (not in the same JS turn, so not batched)
+		await Promise.resolve();
+		string.insertText(string.getLength(), ", for testing purposes");
+		assert.strictEqual(
+			string.getText(),
+			"hello; long amount of text that will produce a high index, for testing purposes",
+		);
+
+		const stashP = new Promise<string>((resolve) => {
+			container.on("op", (op) => {
+				// Stash right after we see the first op. If we stash the first op, it will be applied
+				// first and everything will work fine. If ops are arriving on the network, there's no guarantee
+				// of how small this window is.
+				if (op.clientId === container.clientId) {
+					// hacky; but we need to make sure we don't process further ops
+					(container as any).processRemoteMessage = (message) => console.debug(message);
+					const pendingStateP = container.closeAndGetPendingLocalState?.();
+					assert.ok(pendingStateP);
+					resolve(pendingStateP);
+				}
+			});
+		});
+		provider.opProcessingController.resumeProcessing(container);
+		const stashedOps = await stashP;
+
+		// when this container tries to apply the second op, it will not have replayed the first
+		// op yet, because the reference sequence number of the second op is lower than the sequence number
+		// of the first op
+		const container2 = await loader.resolve({ url }, stashedOps);
+		const defaultDataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		const string2 = await defaultDataStore2.getSharedObject<SharedString>(stringId);
+		await waitForContainerConnection(container2);
+		assert.strictEqual(
+			string2.getText(),
+			"hello; long amount of text that will produce a high index, for testing purposes",
+		);
+		await provider.ensureSynchronized();
+		assert.strictEqual(string2.getText(), string1.getText());
 	});
 
 	itExpects(
