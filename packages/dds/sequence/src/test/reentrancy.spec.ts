@@ -126,7 +126,7 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(0, "A");
 
 			containerRuntimeFactory.processAllMessages();
-			const eventName = "LocalOpReentry";
+			const eventName = "fluid:MockFluidDataStoreRuntime:LocalOpReentry";
 			logger.assertMatchStrict([
 				{ eventName, depth: 1 },
 				{ eventName, depth: 2 },

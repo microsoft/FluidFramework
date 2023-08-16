@@ -560,11 +560,10 @@ export class MockFluidDataStoreRuntime
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
 		this.id = overrides?.id ?? uuid();
-		this.logger =
-			overrides?.logger ??
-			createChildLogger({
-				namespace: "fluid:MockFluidDataStoreRuntime",
-			});
+		this.logger = createChildLogger({
+			logger: overrides?.logger,
+			namespace: "fluid:MockFluidDataStoreRuntime",
+		});
 	}
 
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
