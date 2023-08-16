@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ICriticalContainerError, IErrorBase } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IErrorBase } from "@fluidframework/core-interfaces";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
