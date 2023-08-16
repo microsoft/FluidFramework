@@ -78,20 +78,18 @@ export function mapMark<TIn, TOut>(
 			};
 		}
 		case Delta.MarkType.MoveOut: {
-			return mark.isRemoval
-				? {
-						type: Delta.MarkType.MoveOut,
-						count: mark.count,
-						moveId: mark.moveId,
-						isRemoval: true,
-						...mapModifications(mark, func),
-				  }
-				: {
-						type: Delta.MarkType.MoveOut,
-						count: mark.count,
-						moveId: mark.moveId,
-						...mapModifications(mark, func),
-				  };
+			const delta: Mutable<Delta.MoveOut<TOut>> = {
+				type: Delta.MarkType.MoveOut,
+				count: mark.count,
+				moveId: mark.moveId,
+				...mapModifications(mark, func),
+			}
+
+			if (mark.isRemoval) {
+				delta.isRemoval = true;
+			}
+
+			return delta;
 		}
 		case Delta.MarkType.Delete: {
 			return {
