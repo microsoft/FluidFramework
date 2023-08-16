@@ -104,7 +104,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 
 		// Note: some APIs might fail if the last part of the eventName is not uppercase
 		const category = event.category ? `${event.category.charAt(0).toUpperCase()}${event.category.substring(1)}` : "Generic";
-		const eventType = `Office.Fluid.Ffautomation.${category}`
+		const eventType = `Office.Fluid.Devtools.${category}`
 
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
