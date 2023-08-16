@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ContainerErrorType } from '@fluidframework/core-interfaces';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
@@ -45,6 +44,19 @@ export enum AttachState {
 }
 
 // @public
+export const ClientSessionErrorType: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type ClientSessionErrorType = typeof ClientSessionErrorType[keyof typeof ClientSessionErrorType];
+
+// @public
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
@@ -55,7 +67,15 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-export { ContainerErrorType }
+// @public @deprecated
+export enum ContainerErrorType {
+    clientSessionExpiredError = "clientSessionExpiredError",
+    dataCorruptionError = "dataCorruptionError",
+    dataProcessingError = "dataProcessingError",
+    genericError = "genericError",
+    throttlingError = "throttlingError",
+    usageError = "usageError"
+}
 
 // @public
 export interface ContainerWarning extends IErrorBase {

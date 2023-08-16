@@ -24,7 +24,12 @@ export {
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas";
-export { ContainerWarning, ICriticalContainerError } from "./error";
+export {
+	ClientSessionErrorType,
+	ContainerErrorType,
+	ContainerWarning,
+	ICriticalContainerError,
+} from "./error";
 export {
 	ConnectionState,
 	ICodeDetailsLoader,
@@ -68,10 +73,6 @@ export {
 	 * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
 	 */
 	IErrorBase,
-	/**
-	 * @deprecated ContainerErrorType is being deprecated as a public export is moving to "core-interfaces".
-	 */
-	ContainerErrorType,
 	/**
 	 * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
 	 */

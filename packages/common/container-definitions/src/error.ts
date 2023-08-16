@@ -3,7 +3,59 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorType, IErrorBase } from "@fluidframework/core-interfaces";
+
+/**
+ * Different error types the ClientSession may report out to the Host.
+ */
+export const ClientSessionErrorType = {
+	...FluidErrorType,
+	/**
+	 * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
+	 * aids in safely deleting unused objects.
+	 */
+	clientSessionExpiredError: "clientSessionExpiredError",
+} as const;
+export type ClientSessionErrorType =
+	typeof ClientSessionErrorType[keyof typeof ClientSessionErrorType];
+
+/**
+ * Different error types the Container may report out to the Host.
+ *
+ * @deprecated ContainerErrorType is being deprecated as a public export. Please use {@link ClientSessionErrorType#clientSessionExpiredError} instead.
+ */
+export enum ContainerErrorType {
+	/**
+	 * Some error, most likely an exception caught by runtime and propagated to container as critical error
+	 */
+	genericError = "genericError",
+
+	/**
+	 * Throttling error from server. Server is busy and is asking not to reconnect for some time
+	 */
+	throttlingError = "throttlingError",
+
+	/**
+	 * Data loss error detected by Container / DeltaManager. Likely points to storage issue.
+	 */
+	dataCorruptionError = "dataCorruptionError",
+
+	/**
+	 * Error encountered when processing an operation. May correlate with data corruption.
+	 */
+	dataProcessingError = "dataProcessingError",
+
+	/**
+	 * Error indicating an API is being used improperly resulting in an invalid operation.
+	 */
+	usageError = "usageError",
+
+	/**
+	 * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
+	 * aids in safely deleting unused objects.
+	 */
+	clientSessionExpiredError = "clientSessionExpiredError",
+}
 
 /**
  * Represents warnings raised on container.

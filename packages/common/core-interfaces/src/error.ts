@@ -8,7 +8,7 @@ import { ITelemetryProperties } from "./index";
 /**
  * Different error types the Container may report out to the Host
  */
-export const ContainerErrorType = {
+export const FluidErrorType = {
 	/**
 	 * Some error, most likely an exception caught by runtime and propagated to container as critical error
 	 */
@@ -33,14 +33,8 @@ export const ContainerErrorType = {
 	 * Error indicating an API is being used improperly resulting in an invalid operation.
 	 */
 	usageError: "usageError",
-
-	/**
-	 * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
-	 * aids in safely deleting unused objects.
-	 */
-	clientSessionExpiredError: "clientSessionExpiredError",
 } as const;
-export type ContainerErrorType = typeof ContainerErrorType[keyof typeof ContainerErrorType];
+export type FluidErrorType = typeof FluidErrorType[keyof typeof FluidErrorType];
 
 /**
  * Base interface for all errors and warnings at container level
@@ -75,7 +69,7 @@ export interface IErrorBase extends Partial<Error> {
  * Generic wrapper for an unrecognized/uncategorized error object
  */
 export interface IGenericError extends IErrorBase {
-	readonly errorType: typeof ContainerErrorType.genericError;
+	readonly errorType: typeof FluidErrorType.genericError;
 	error?: any;
 }
 
@@ -83,13 +77,13 @@ export interface IGenericError extends IErrorBase {
  * Error indicating an API is being used improperly resulting in an invalid operation.
  */
 export interface IUsageError extends IErrorBase {
-	readonly errorType: typeof ContainerErrorType.usageError;
+	readonly errorType: typeof FluidErrorType.usageError;
 }
 
 /**
  * Warning emitted when requests to storage are being throttled
  */
 export interface IThrottlingWarning extends IErrorBase {
-	readonly errorType: typeof ContainerErrorType.throttlingError;
+	readonly errorType: typeof FluidErrorType.throttlingError;
 	readonly retryAfterSeconds: number;
 }

@@ -5,17 +5,16 @@
 ```ts
 
 // @public
-export const ContainerErrorType: {
+export const FluidErrorType: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
-    readonly clientSessionExpiredError: "clientSessionExpiredError";
 };
 
 // @public (undocumented)
-export type ContainerErrorType = typeof ContainerErrorType[keyof typeof ContainerErrorType];
+export type FluidErrorType = typeof FluidErrorType[keyof typeof FluidErrorType];
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -143,7 +142,7 @@ export interface IGenericError extends IErrorBase {
     // (undocumented)
     error?: any;
     // (undocumented)
-    readonly errorType: typeof ContainerErrorType.genericError;
+    readonly errorType: typeof FluidErrorType.genericError;
 }
 
 // @public
@@ -282,7 +281,7 @@ export interface ITelemetryProperties {
 // @public
 export interface IThrottlingWarning extends IErrorBase {
     // (undocumented)
-    readonly errorType: typeof ContainerErrorType.throttlingError;
+    readonly errorType: typeof FluidErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
 }
@@ -290,7 +289,7 @@ export interface IThrottlingWarning extends IErrorBase {
 // @public
 export interface IUsageError extends IErrorBase {
     // (undocumented)
-    readonly errorType: typeof ContainerErrorType.usageError;
+    readonly errorType: typeof FluidErrorType.usageError;
 }
 
 // @public
