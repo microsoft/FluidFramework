@@ -31,9 +31,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { PendingLocalState } from "@fluidframework/container-runtime/dist/test";
-// eslint-disable-next-line import/no-internal-modules
-import { IPendingBlobs } from "@fluidframework/container-runtime/dist/blobManager.js";
+import { PendingLocalState, IPendingBlobs } from "@fluidframework/container-runtime/dist/test";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
