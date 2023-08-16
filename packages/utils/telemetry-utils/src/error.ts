@@ -10,18 +10,19 @@ import {
 	IThrottlingWarning,
 	IUsageError,
 } from "@fluidframework/container-definitions";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import {
 	LoggingError,
-	IFluidErrorBase,
+	NORMALIZED_ERROR_TYPE,
+	isExternalError,
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
-	isExternalError,
-	NORMALIZED_ERROR_TYPE,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+} from "./errorLogging";
+import { IFluidErrorBase } from "./fluidErrorBase";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object

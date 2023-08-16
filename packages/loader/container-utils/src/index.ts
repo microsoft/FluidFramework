@@ -4,6 +4,8 @@
  */
 
 export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
+
+// Deprecated exports for backwards compatibility
 export {
 	ClientSessionExpiredError,
 	DataCorruptionError,
@@ -12,4 +14,4 @@ export {
 	GenericError,
 	ThrottlingWarning,
 	UsageError,
-} from "./error";
+} from "@fluidframework/telemetry-utils";

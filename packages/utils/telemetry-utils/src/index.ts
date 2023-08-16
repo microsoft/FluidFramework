@@ -13,6 +13,15 @@ export {
 	loggerToMonitoringContext,
 } from "./config";
 export {
+	ClientSessionExpiredError,
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	GenericError,
+	ThrottlingWarning,
+	UsageError,
+} from "./error";
+export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
 	generateStack,
