@@ -141,7 +141,7 @@ export class MockContainerRuntimeFactory {
     minSeq: Map<string, number>;
     // (undocumented)
     get outstandingMessageCount(): number;
-    processAllMessages(): void;
+    processAllMessages(clients?: string[]): void;
     processOneMessage(): void;
     processSomeMessages(count: number): void;
     // (undocumented)
@@ -150,7 +150,7 @@ export class MockContainerRuntimeFactory {
     readonly quorum: MockQuorumClients;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
-    protected readonly runtimes: MockContainerRuntime[];
+    protected readonly runtimes: Map<string, MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
 }
