@@ -73,7 +73,7 @@
 		"nconf": "^0.12.0",
 		"semver": "^7.5.3",
 		"sha.js": "^2.4.11",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
@@ -89,7 +89,7 @@
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^16.18.16",
 		"@types/sinon": "^9.0.9",
-		"@types/uuid": "^8.3.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",

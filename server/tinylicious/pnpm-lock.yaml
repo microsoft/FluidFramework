@@ -39,7 +39,7 @@ importers:
       '@types/node': ^16.18.16
       '@types/rimraf': ^3.0.0
       '@types/split': ^0.3.28
-      '@types/uuid': ^8.3.1
+      '@types/uuid': ^9.0.2
       agentkeepalive: ^4.2.1
       axios: ^0.26.0
       body-parser: ^1.17.1
@@ -71,7 +71,7 @@ importers:
       split: ^1.0.0
       ts-node: ^8.6.2
       typescript: ~4.5.5
-      uuid: ^8.3.2
+      uuid: ^9.0.0
       winston: ^3.6.0
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -105,7 +105,7 @@ importers:
       nconf: 0.12.0
       socket.io: 4.6.0
       split: 1.0.1
-      uuid: 8.3.2
+      uuid: 9.0.0
       winston: 3.8.1
     devDependencies:
       '@fluidframework/build-common': 2.0.0
@@ -126,7 +126,7 @@ importers:
       '@types/node': 16.18.21
       '@types/rimraf': 3.0.2
       '@types/split': 0.3.28
-      '@types/uuid': 8.3.4
+      '@types/uuid': 9.0.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -896,8 +896,8 @@ packages:
       '@types/node': 16.18.21
     dev: true
 
-  /@types/uuid/8.3.4:
-    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
+  /@types/uuid/9.0.2:
+    resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
     dev: true
 
   /@types/ws/6.0.4:
@@ -5805,6 +5805,11 @@ packages:
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
+
+  /uuid/9.0.0:
+    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
+    hasBin: true
+    dev: false
 
   /v8-compile-cache/2.3.0:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}

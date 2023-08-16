@@ -54,7 +54,7 @@
 		"lz4js": "^0.2.0",
 		"msgpackr": "^1.4.7",
 		"pako": "^2.0.4",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-experimental/property-common": "workspace:~",
