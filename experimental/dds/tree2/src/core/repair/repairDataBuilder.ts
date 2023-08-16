@@ -13,7 +13,7 @@ import { Delta } from "../tree";
  * field where the repair data should be stored.
  * @alpha
  */
-export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
+export type RepairDataIndexer = (changeId: ChangeAtomId) => FieldKey;
 
 /**
  * A function that collects a delta that produces repair data associated with the given detached field.
@@ -27,9 +27,9 @@ export type RepairDataAccumulator = (key: FieldKey, delta: Delta.MarkList) => vo
  */
 export interface RepairDataBuilder {
 	/**
-	 * {@inheritDoc RepairDataHandler}
+	 * {@inheritDoc RepairDataIndexer}
 	 */
-	handler: RepairDataHandler;
+	handler: RepairDataIndexer;
 	/**
 	 * {@inheritDoc RepairDataAccumulator}
 	 */
@@ -40,5 +40,5 @@ export interface RepairDataBuilder {
  * A repair data handler which will throw an error if called.
  * This should be used for any change family which does not support repair data.
  */
-export const unsupportedRepairDataHandler: RepairDataHandler = () =>
+export const unsupportedRepairDataHandler: RepairDataIndexer = () =>
 	fail("Unexpected call to repairDataHandler");

@@ -194,7 +194,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			if (change !== undefined) {
 				this.changeEvents.emit(
 					"newLocalState",
-					this.changeFamily.intoDelta(change, () => EmptyKey),
+					this.changeFamily.intoDelta(change, (changeId: ChangeAtomId) => {
+						const fieldKey = this.repairDataIndex.getFieldKey(
+							`${this.repairDataCounter++}`,
+						);
+						newRepairData.set(changeId, fieldKey);
+						return fieldKey;
+					}),
 				);
 			}
 		});

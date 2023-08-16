@@ -166,7 +166,7 @@ export {
 } from "./schema-view";
 
 export {
-	RepairDataHandler,
+	RepairDataIndexer,
 	RepairDataAccumulator,
 	RepairDataBuilder,
 	unsupportedRepairDataHandler,

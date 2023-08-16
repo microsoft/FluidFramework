@@ -4,7 +4,7 @@
  */
 
 export {
-	RepairDataHandler,
+	RepairDataIndexer,
 	RepairDataAccumulator,
 	RepairDataBuilder,
 	unsupportedRepairDataHandler,

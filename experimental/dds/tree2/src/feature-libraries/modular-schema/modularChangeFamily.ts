@@ -22,7 +22,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	ChangesetLocalId,
-	RepairDataHandler,
+	RepairDataIndexer,
 	EmptyKey,
 	RepairDataBuilder,
 } from "../../core";
@@ -720,7 +720,7 @@ export class ModularChangeFamily
 
 	public intoDelta(
 		change: ModularChangeset,
-		repairDataHandler: RepairDataHandler,
+		repairDataHandler: RepairDataIndexer,
 		delta: Map<FieldKey, Delta.MarkList> = new Map(),
 	): Delta.Root {
 		// Return an empty delta for changes with constraint violations

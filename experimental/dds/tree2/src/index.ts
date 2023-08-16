@@ -60,7 +60,7 @@ export {
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
-	RepairDataHandler,
+	RepairDataIndexer,
 	RepairDataBuilder,
 	RepairDataAccumulator,
 	RepairDataStore,

@@ -1573,11 +1573,11 @@ export type RepairDataAccumulator = (key: FieldKey, delta: Delta.MarkList) => vo
 // @alpha
 export interface RepairDataBuilder {
     accumulator: RepairDataAccumulator;
-    handler: RepairDataHandler;
+    handler: RepairDataIndexer;
 }
 
 // @alpha
-export type RepairDataHandler = (changeId: ChangeAtomId) => FieldKey;
+export type RepairDataIndexer = (changeId: ChangeAtomId) => FieldKey;
 
 // @alpha
 export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
