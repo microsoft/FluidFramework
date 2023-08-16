@@ -124,10 +124,6 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			"Container should be initialized before creating data stores",
 		);
 		assert(
-			this.containerRuntime !== undefined,
-			"ContainerRuntime should be initialized before creating data stores",
-		);
-		assert(
 			this.mainDataStore !== undefined,
 			"mainDataStore should be initialized before creating data stores",
 		);
@@ -146,7 +142,6 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 				sharedString.insertText(0, randomString);
 				matrix.setCell(i, j, sharedString.getText());
 			}
-			await this.waitForContainerSave(this._mainContainer);
 		}
 	}
 
@@ -193,15 +188,29 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	}
 
 	public async initializeDocument(): Promise<void> {
-		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory, {
-			logger: this.props.logger,
-		});
+		const loader = this.props.provider.createLoader(
+			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
+			{ logger: this.props.logger },
+		);
+		this._mainContainer = await loader.createDetachedContainer(
+			this.props.provider.defaultCodeDetails,
+		);
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
-		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
-		await this.ensureContainerConnectedWriteMode(this._mainContainer);
+
 		await this.createDataStores();
+
+		await this._mainContainer.attach(
+			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
+		);
+
+		await this.waitForContainerSave(this._mainContainer);
+		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
+
+		if (this._mainContainer.deltaManager.active) {
+			await this.ensureContainerConnectedWriteMode(this._mainContainer);
+		}
 	}
 
 	/**
