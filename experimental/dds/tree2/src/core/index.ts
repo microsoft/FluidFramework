@@ -131,8 +131,6 @@ export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 export {
 	assertIsRevisionTag,
 	ChangeRebaser,
-	ChangesetLocalId,
-	ChangeAtomId,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,

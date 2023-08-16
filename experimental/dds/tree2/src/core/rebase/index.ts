@@ -4,8 +4,6 @@
  */
 
 export {
-	ChangesetLocalId,
-	ChangeAtomId,
 	assertIsRevisionTag,
 	mintRevisionTag,
 	isRevisionTag,

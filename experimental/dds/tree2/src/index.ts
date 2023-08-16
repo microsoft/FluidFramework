@@ -22,7 +22,6 @@ export {
 	FieldUpPath,
 	Anchor,
 	RootField,
-	ChangesetLocalId,
 	ChangeAtomId,
 	ChildCollection,
 	ChildLocation,
