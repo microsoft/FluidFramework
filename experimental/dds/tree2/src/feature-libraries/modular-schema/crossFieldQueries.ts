@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
+import { ChangesetLocalId, RevisionTag } from "../../core";
 import {
 	RangeEntry,
 	RangeMap,
@@ -14,7 +14,6 @@ import {
 	setInRangeMap,
 } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
-import { ChangesetLocalId } from "./modularChangeTypes";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;

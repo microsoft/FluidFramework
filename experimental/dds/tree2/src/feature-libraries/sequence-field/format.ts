@@ -4,14 +4,15 @@
  */
 
 import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import { ITreeCursorSynchronous, JsonableTree, RevisionTag, RevisionTagSchema } from "../../core";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
-	NodeChangeset,
-} from "../modular-schema";
+	ITreeCursorSynchronous,
+	JsonableTree,
+	RevisionTag,
+	RevisionTagSchema,
+} from "../../core";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../modular-schema";
 
 // TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
 // Currently, types in this file are largely used for both.

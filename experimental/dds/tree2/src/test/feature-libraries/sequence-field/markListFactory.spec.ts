@@ -4,8 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	mintRevisionTag,
+	RevisionTag,
+	TreeSchemaIdentifier,
+} from "../../../core";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { MarkMaker as Mark } from "./testEdits";
