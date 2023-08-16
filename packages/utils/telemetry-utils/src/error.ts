@@ -9,7 +9,7 @@ import {
 	IErrorBase,
 	IThrottlingWarning,
 	IUsageError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/core-interfaces";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 import { LoggingError, wrapErrorAndLog } from "./errorLogging";

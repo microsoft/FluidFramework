@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerErrorType } from "@fluidframework/core-interfaces";
 import { GenericError, DataCorruptionError } from "../error";
 import { MockLogger } from "../mockLogger";
 import { createChildLogger } from "../logger";
