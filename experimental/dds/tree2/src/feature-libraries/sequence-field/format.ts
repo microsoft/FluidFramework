@@ -111,6 +111,11 @@ export const IdRange = Type.Object({
  * @alpha
  */
 export interface CellId extends ChangeAtomId, HasLineage {
+	/**
+	 * List of all cell local IDs (including this one) which were adjacent and emptied in the same revision as this one.
+	 * The IDs are ordered in sequence order, and are used for determining the relative position of cells.
+	 * `CellId` objects may share an array, so this should not be mutated.
+	 */
 	adjacentCells?: IdRange[];
 }
 
