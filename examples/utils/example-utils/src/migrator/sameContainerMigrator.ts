@@ -29,7 +29,7 @@ export class SameContainerMigrator
 		if (this._pausedModel === undefined) {
 			throw new Error("_pausedModel has not been initialized");
 		}
-		return this._currentModel;
+		return this._pausedModel;
 	}
 
 	private _currentModelId: string;
