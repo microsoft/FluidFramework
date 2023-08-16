@@ -110,7 +110,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			name: eventType, // Dictates which table the event goes to
 			data: {
 				["Event.Time"]: new Date().toISOString(),
-				["Event.Name"]: eventType, // Kind of redundant with 'name' but is an actual column in Kusto
+				["Event.Name"]: eventType, // Same as 'name' but is an actual column in Kusto; useful for cross-table queries
 			},
 		};
 
