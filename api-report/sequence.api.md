@@ -551,7 +551,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     };
     // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
-    // (undocumented)
+    // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
     id: string;
@@ -582,7 +582,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    // (undocumented)
+    // @deprecated (undocumented)
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;

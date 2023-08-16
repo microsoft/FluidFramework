@@ -71,8 +71,6 @@ export class DocumentStorage implements IDocumentStorage {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: sequenceNumber,
 			sequenceNumber,
-			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-			term: 1,
 		};
 
 		const summary: ISummaryTree = {
