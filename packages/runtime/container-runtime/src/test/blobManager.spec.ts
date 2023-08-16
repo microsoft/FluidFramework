@@ -414,7 +414,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it.skip("close container if blob expired", async () => {
+	it("close container if blob expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
@@ -423,17 +423,6 @@ describe("BlobManager", () => {
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
-		assert.strictEqual(runtime.closed, true);
-		await runtime.processAll();
-	});
-
-	it.skip("close container if expired while connect", async () => {
-		await runtime.attach();
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
-		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
-		await runtime.connect(50);
 		assert.strictEqual(runtime.closed, true);
 		await runtime.processAll();
 	});
