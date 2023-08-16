@@ -234,7 +234,7 @@ export class MockRuntime
 		ops.forEach((op) => this.blobManager.reSubmit(op.metadata));
 	}
 
-	public async stashing() {
+	public async processStashed() {
 		const uploadP = this.blobManager.processStashedChanges();
 		this.processing = true;
 		await this.processBlobs();

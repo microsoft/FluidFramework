@@ -42,7 +42,7 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.stashing();
+		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -73,7 +73,7 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.stashing();
+		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 
@@ -104,7 +104,7 @@ describe("getPendingLocalState", () => {
 
 		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
 		await runtime2.attach();
-		await runtime2.stashing();
+		await runtime2.processStashed();
 		await runtime2.connect();
 		await runtime2.processAll();
 
