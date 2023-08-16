@@ -42,8 +42,11 @@ const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
 type TestCommit = Commit<TestChange> & {
 	seqNumber: SeqNumber;
+	clientSeqNumber: SeqNumber;
 	refNumber: SeqNumber;
 };
+
+const dummyClientSequenceNumber: SeqNumber = brand(0);
 
 /**
  * Represents the minting and sending of a new local change.
@@ -56,6 +59,10 @@ interface UnitTestPushStep {
 	 * provided to make tests easier to read and debug.
 	 */
 	seq?: number;
+	/**
+	 * The future client sequence number for this change.
+	 */
+	clientSeq?: number;
 }
 
 /**
@@ -69,6 +76,10 @@ interface UnitTestAckStep {
 	 * for which there is no `UnitTestAckStep` step.
 	 */
 	seq: number;
+	/**
+	 * The client sequence number for this change.
+	 */
+	clientSeq: number;
 }
 
 /**
@@ -80,6 +91,10 @@ interface UnitTestPullStep {
 	 * The sequence number for this change.
 	 */
 	seq: number;
+	/**
+	 * The client sequence number for this change.
+	 */
+	clientSeq: number;
 	/**
 	 * The sequence number of the latest change that the issuer of this change knew about
 	 * at the time they issued this change.
@@ -102,135 +117,198 @@ type UnitTestScenarioStep = UnitTestPushStep | UnitTestAckStep | UnitTestPullSte
 describe("EditManager", () => {
 	describe("Unit Tests", () => {
 		runUnitTestScenario("Can handle non-concurrent local changes being sequenced immediately", [
-			{ seq: 1, type: "Push" },
-			{ seq: 1, type: "Ack" },
-			{ seq: 2, type: "Push" },
-			{ seq: 2, type: "Ack" },
-			{ seq: 3, type: "Push" },
-			{ seq: 3, type: "Ack" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Ack" },
 		]);
 
 		runUnitTestScenario("Can handle non-concurrent local changes being sequenced later", [
-			{ seq: 1, type: "Push" },
-			{ seq: 2, type: "Push" },
-			{ seq: 3, type: "Push" },
-			{ seq: 1, type: "Ack" },
-			{ seq: 2, type: "Ack" },
-			{ seq: 3, type: "Ack" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Ack" },
 		]);
 
 		runUnitTestScenario("Can handle non-concurrent local changes partially sequenced later", [
-			{ seq: 1, type: "Push" },
-			{ seq: 2, type: "Push" },
-			{ seq: 1, type: "Ack" },
-			{ seq: 3, type: "Push" },
-			{ seq: 2, type: "Ack" },
-			{ seq: 3, type: "Ack" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Ack" },
 		]);
 
 		runUnitTestScenario("Can handle non-concurrent peer changes sequenced immediately", [
-			{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 2, type: "Pull", ref: 1, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 2, from: peer1 },
 		]);
 
 		runUnitTestScenario("Can handle non-concurrent peer changes sequenced later", [
-			{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
 		]);
 
 		runUnitTestScenario("Can handle non-concurrent peer changes partially sequenced later", [
-			{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer1 },
 		]);
 
 		runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
-			{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 2, type: "Pull", ref: 1, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
-			{ seq: 4, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 2, from: peer1 },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
 		]);
 
 		runUnitTestScenario("Can rebase multiple non-interleaved peer changes", [
-			{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 2, type: "Pull", ref: 1, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
-			{ seq: 4, type: "Pull", ref: 0, from: peer2 },
-			{ seq: 5, type: "Pull", ref: 0, from: peer2 },
-			{ seq: 6, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 2, from: peer1 },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 5, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 6, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
 		]);
 
 		runUnitTestScenario("Can rebase multiple interleaved peer changes", [
-			{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 2, type: "Pull", ref: 0, from: peer2 },
-			{ seq: 3, type: "Pull", ref: 1, from: peer1 },
-			{ seq: 4, type: "Pull", ref: 2, from: peer1 },
-			{ seq: 5, type: "Pull", ref: 0, from: peer2 },
-			{ seq: 6, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer1 },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 2, from: peer1 },
+			{ seq: 5, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 6, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer2 },
 		]);
 
 		runUnitTestScenario("Can rebase peer changes over a local change", [
-			{ seq: 1, type: "Push" },
-			{ seq: 1, type: "Ack" },
-			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
 		]);
 
 		runUnitTestScenario("Can rebase multiple local changes", [
-			{ seq: 3, type: "Push" },
-			{ seq: 4, type: "Push" },
-			{ seq: 5, type: "Push" },
-			{ seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [-5, -4, -3, 1, 3, 4, 5] },
-			{ seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [-5, -4, -3, 2, 3, 4, 5] },
-			{ seq: 3, type: "Ack" },
-			{ seq: 4, type: "Ack" },
-			{ seq: 5, type: "Ack" },
-			{ seq: 6, type: "Pull", ref: 2, from: peer1, expectedDelta: [6] },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 5, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{
+				seq: 1,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 0,
+				from: peer1,
+				expectedDelta: [-5, -4, -3, 1, 3, 4, 5],
+			},
+			{
+				seq: 2,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 1,
+				from: peer1,
+				expectedDelta: [-5, -4, -3, 2, 3, 4, 5],
+			},
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 5, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{
+				seq: 6,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 2,
+				from: peer1,
+				expectedDelta: [6],
+			},
 		]);
 
 		runUnitTestScenario("Can rebase multiple interleaved peer and local changes", [
-			{ seq: 3, type: "Push" },
-			{ seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [-3, 1, 3] },
-			{ seq: 2, type: "Pull", ref: 0, from: peer2, expectedDelta: [-3, 2, 3] },
-			{ seq: 6, type: "Push" },
-			{ seq: 8, type: "Push" },
-			{ seq: 3, type: "Ack" },
-			{ seq: 4, type: "Pull", ref: 1, from: peer1, expectedDelta: [-8, -6, 4, 6, 8] },
-			{ seq: 5, type: "Pull", ref: 2, from: peer1, expectedDelta: [-8, -6, 5, 6, 8] },
-			{ seq: 6, type: "Ack" },
-			{ seq: 7, type: "Pull", ref: 0, from: peer2, expectedDelta: [-8, 7, 8] },
-			{ seq: 8, type: "Ack" },
-			{ seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{
+				seq: 1,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 0,
+				from: peer1,
+				expectedDelta: [-3, 1, 3],
+			},
+			{
+				seq: 2,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 0,
+				from: peer2,
+				expectedDelta: [-3, 2, 3],
+			},
+			{ seq: 6, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 8, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{
+				seq: 4,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 1,
+				from: peer1,
+				expectedDelta: [-8, -6, 4, 6, 8],
+			},
+			{
+				seq: 5,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 2,
+				from: peer1,
+				expectedDelta: [-8, -6, 5, 6, 8],
+			},
+			{ seq: 6, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{
+				seq: 7,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 0,
+				from: peer2,
+				expectedDelta: [-8, 7, 8],
+			},
+			{ seq: 8, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{
+				seq: 9,
+				clientSeq: dummyClientSequenceNumber,
+				type: "Pull",
+				ref: 0,
+				from: peer2,
+				expectedDelta: [9],
+			},
 		]);
 
 		runUnitTestScenario("Can handle ref numbers to operations that are not commits", [
-			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 4, type: "Pull", ref: 1, from: peer2 },
-			{ seq: 6, type: "Pull", ref: 3, from: peer1 },
-			{ seq: 8, type: "Pull", ref: 3, from: peer1 },
-			{ seq: 10, type: "Pull", ref: 1, from: peer2 },
-			{ seq: 12, type: "Pull", ref: 1, from: peer2 },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer2 },
+			{ seq: 6, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 3, from: peer1 },
+			{ seq: 8, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 3, from: peer1 },
+			{ seq: 10, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer2 },
+			{ seq: 12, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 1, from: peer2 },
 		]);
 
 		runUnitTestScenario("Can rebase changes from a peer that catches up", [
-			{ seq: 1, type: "Push" },
-			{ seq: 4, type: "Push" },
-			{ seq: 1, type: "Ack" },
-			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Push" },
+			{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+			{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", ref: 2, from: peer1 },
 		]);
 
 		runUnitTestScenario(
 			// See the test "Rebases peer branches during trunk eviction" for a more detailed analysis of this case.
 			"Can handle changes from a lagging peer which catches up after a local ack",
 			[
-				{ seq: 1, type: "Pull", from: peer1, ref: 0 },
-				{ seq: 2, type: "Push" },
-				{ seq: 2, type: "Ack" },
-				{ seq: 3, type: "Pull", from: peer1, ref: 0 },
-				{ seq: 4, type: "Pull", from: peer1, ref: 3 },
+				{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Pull", from: peer1, ref: 0 },
+				{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Push" },
+				{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+				{ seq: 3, clientSeq: dummyClientSequenceNumber, type: "Pull", from: peer1, ref: 0 },
+				{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Pull", from: peer1, ref: 3 },
 			],
 		);
 
@@ -270,7 +348,12 @@ describe("EditManager", () => {
 			it("Evicts trunk commits according to a provided minimum sequence number", () => {
 				const { manager } = editManagerFactory({});
 				for (let i = 1; i <= 10; ++i) {
-					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
+					manager.addSequencedChange(
+						applyLocalCommit(manager),
+						brand(i),
+						dummyClientSequenceNumber,
+						brand(i - 1),
+					);
 				}
 
 				assert.equal(manager.getTrunkChanges().length, 10);
@@ -279,7 +362,12 @@ describe("EditManager", () => {
 				manager.advanceMinimumSequenceNumber(brand(10));
 				assert.equal(manager.getTrunkChanges().length, 0);
 				for (let i = 11; i <= 20; ++i) {
-					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
+					manager.addSequencedChange(
+						applyLocalCommit(manager),
+						brand(i),
+						dummyClientSequenceNumber,
+						brand(i - 1),
+					);
 				}
 
 				assert.equal(manager.getTrunkChanges().length, 10);
@@ -291,13 +379,28 @@ describe("EditManager", () => {
 
 			it("Evicts trunk commits at exactly the minimum sequence number", () => {
 				const { manager } = editManagerFactory({});
-				manager.addSequencedChange(applyLocalCommit(manager), brand(1), brand(0));
+				manager.addSequencedChange(
+					applyLocalCommit(manager),
+					brand(1),
+					dummyClientSequenceNumber,
+					brand(0),
+				);
 				assert.equal(manager.getTrunkChanges().length, 1);
-				manager.addSequencedChange(applyLocalCommit(manager), brand(2), brand(1));
+				manager.addSequencedChange(
+					applyLocalCommit(manager),
+					brand(2),
+					dummyClientSequenceNumber,
+					brand(1),
+				);
 				assert.equal(manager.getTrunkChanges().length, 2);
 				manager.advanceMinimumSequenceNumber(brand(1));
 				assert.equal(manager.getTrunkChanges().length, 1);
-				manager.addSequencedChange(applyLocalCommit(manager), brand(3), brand(2));
+				manager.addSequencedChange(
+					applyLocalCommit(manager),
+					brand(3),
+					dummyClientSequenceNumber,
+					brand(2),
+				);
 				assert.equal(manager.getTrunkChanges().length, 2);
 				manager.advanceMinimumSequenceNumber(brand(3));
 				assert.equal(manager.getTrunkChanges().length, 0);
@@ -307,14 +410,24 @@ describe("EditManager", () => {
 				// This is a regression test that ensures peer branches are rebased up to at least the new tail of the trunk after trunk commits are evicted.
 				const { manager } = editManagerFactory({});
 				// First, we receive a commit from a peer ("1").
-				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
+				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0), brand(0));
 				// We then submit and ack a local commit ("2").
 				// This prevents an upcoming rebase of the peer branch from hitting an eager fast-path that keeps the branch caught up to the head of the trunk.
-				manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(2), brand(1));
+				manager.addSequencedChange(
+					applyLocalCommit(manager, [1], 2),
+					brand(2),
+					dummyClientSequenceNumber,
+					brand(1),
+				);
 				// We receive a second commit from the peer ("3").
 				// Based on the ref seq number, we know that the peer is lagging "behind" by two commits,
 				// i.e. it has sent a second op without receiving its first op ("1") or the local op ("2") that we applied just above.
-				manager.addSequencedChange(peerCommit(peer1, [1], 3), brand(3), brand(0));
+				manager.addSequencedChange(
+					peerCommit(peer1, [1], 3),
+					brand(3),
+					dummyClientSequenceNumber,
+					brand(0),
+				);
 				// Our trunk should have all the commits we've sequenced so far.
 				checkChangeList(manager, [1, 2, 3]);
 				// Suppose that the peer catches up, and we are informed of the new minimum sequence number via some means (e.g. an op).
@@ -324,33 +437,58 @@ describe("EditManager", () => {
 				// We also expect our copy of the peer's local branch to be updated even though we have not received any new commits from that peer since commit "3".
 				// We can check this by receiving another commit from our peer.
 				// We'll fail when trying to rebase if the branch was not already updated and is referencing evicted commits.
-				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
+				manager.addSequencedChange(
+					peerCommit(peer1, [1, 2, 3], 4),
+					brand(4),
+					dummyClientSequenceNumber,
+					brand(3),
+				);
 				checkChangeList(manager, [4]);
 			});
 
 			it("Evicts properly when the minimum sequence number advances past the trunk (and there are no local commits)", () => {
 				const { manager } = editManagerFactory({});
-				manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
+				manager.addSequencedChange(
+					applyLocalCommit(manager, [], 1),
+					brand(1),
+					dummyClientSequenceNumber,
+					brand(0),
+				);
 				manager.advanceMinimumSequenceNumber(brand(2));
-				manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(3), brand(2));
+				manager.addSequencedChange(
+					applyLocalCommit(manager, [1], 2),
+					brand(3),
+					dummyClientSequenceNumber,
+					brand(2),
+				);
 				checkChangeList(manager, [2]);
 			});
 
 			it("Evicts properly when the minimum sequence number advances past the trunk (and there are local commits)", () => {
 				const { manager } = editManagerFactory({});
-				manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
+				manager.addSequencedChange(
+					applyLocalCommit(manager, [], 1),
+					brand(1),
+					dummyClientSequenceNumber,
+					brand(0),
+				);
 				const local = applyLocalCommit(manager, [1], 2);
 				manager.advanceMinimumSequenceNumber(brand(2));
-				manager.addSequencedChange(local, brand(3), brand(2));
+				manager.addSequencedChange(local, brand(3), dummyClientSequenceNumber, brand(2));
 				checkChangeList(manager, [2]);
 			});
 
 			it("Delays eviction of a branch base commit until the branch is disposed", () => {
 				const { manager } = editManagerFactory({});
-				manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
+				manager.addSequencedChange(
+					applyLocalCommit(manager, [], 1),
+					brand(1),
+					dummyClientSequenceNumber,
+					brand(0),
+				);
 				const local = applyLocalCommit(manager, [1], 2);
 				const fork = manager.localBranch.fork();
-				manager.addSequencedChange(local, brand(2), brand(1));
+				manager.addSequencedChange(local, brand(2), dummyClientSequenceNumber, brand(1));
 				checkChangeList(manager, [1, 2]);
 				manager.advanceMinimumSequenceNumber(brand(2));
 				checkChangeList(manager, [2]);
@@ -362,10 +500,10 @@ describe("EditManager", () => {
 				const { manager } = editManagerFactory({});
 				const local1 = applyLocalCommit(manager, [], 1);
 				const fork1 = manager.localBranch.fork();
-				manager.addSequencedChange(local1, brand(1), brand(0));
+				manager.addSequencedChange(local1, brand(1), dummyClientSequenceNumber, brand(0));
 				const local2 = applyLocalCommit(manager, [1], 2);
 				const fork2 = manager.localBranch.fork();
-				manager.addSequencedChange(local2, brand(2), brand(1));
+				manager.addSequencedChange(local2, brand(2), dummyClientSequenceNumber, brand(1));
 				checkChangeList(manager, [1, 2]);
 				manager.advanceMinimumSequenceNumber(brand(2));
 				checkChangeList(manager, [1, 2]);
@@ -398,6 +536,7 @@ describe("EditManager", () => {
 					sessionId: peer1,
 				},
 				brand(1),
+				dummyClientSequenceNumber,
 				brand(0),
 			);
 			assert.deepEqual(anchors.rebases, [change]);
@@ -416,6 +555,7 @@ describe("EditManager", () => {
 						revision,
 						sessionId: "0",
 						sequenceNumber: brand(1),
+						clientSequenceNumber: dummyClientSequenceNumber,
 					},
 				],
 				branches: new Map(),
@@ -427,6 +567,7 @@ describe("EditManager", () => {
 					sessionId: "1",
 				},
 				brand(2),
+				dummyClientSequenceNumber,
 				brand(1),
 			);
 			assert.equal(manager.localBranch.getHead(), manager.getTrunkHead());
@@ -450,6 +591,7 @@ describe("EditManager", () => {
 						sessionId: peer1,
 					},
 					brand(1),
+					dummyClientSequenceNumber,
 					brand(0),
 				);
 				manager.addSequencedChange(
@@ -459,6 +601,7 @@ describe("EditManager", () => {
 						sessionId: manager.localSessionId,
 					},
 					brand(2),
+					dummyClientSequenceNumber,
 					brand(0),
 				);
 				assert.equal(manager.getLongestBranchLength(), 2);
@@ -475,6 +618,7 @@ describe("EditManager", () => {
 						sessionId: manager.localSessionId,
 					},
 					brand(1),
+					dummyClientSequenceNumber,
 					brand(0),
 				);
 				manager.addSequencedChange(
@@ -484,6 +628,7 @@ describe("EditManager", () => {
 						sessionId: peer1,
 					},
 					brand(2),
+					dummyClientSequenceNumber,
 					brand(0),
 				);
 				manager.addSequencedChange(
@@ -493,6 +638,7 @@ describe("EditManager", () => {
 						sessionId: peer1,
 					},
 					brand(3),
+					dummyClientSequenceNumber,
 					brand(0),
 				);
 				assert.equal(manager.getLongestBranchLength(), 2);
@@ -505,26 +651,74 @@ describe("EditManager", () => {
 			runUnitTestScenario(
 				"Sequenced changes that are based on the trunk should not be rebased",
 				[
-					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 3, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 4, type: "Pull", ref: 3, from: peer2 },
-					{ seq: 5, type: "Pull", ref: 4, from: peer2 },
-					{ seq: 6, type: "Pull", ref: 5, from: peer1 },
-					{ seq: 7, type: "Pull", ref: 5, from: peer1 },
+					{
+						seq: 1,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+					},
+					{
+						seq: 2,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+					},
+					{
+						seq: 3,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+					},
+					{
+						seq: 4,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 3,
+						from: peer2,
+					},
+					{
+						seq: 5,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 4,
+						from: peer2,
+					},
+					{
+						seq: 6,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 5,
+						from: peer1,
+					},
+					{
+						seq: 7,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 5,
+						from: peer1,
+					},
 				],
 				new UnrebasableTestChangeRebaser(),
 			);
 			runUnitTestScenario(
 				"Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
 				[
-					{ seq: 1, type: "Push" },
-					{ seq: 2, type: "Push" },
-					{ seq: 4, type: "Push" },
-					{ seq: 1, type: "Ack" },
-					{ seq: 2, type: "Ack" },
-					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-					{ seq: 4, type: "Ack" },
+					{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Push" },
+					{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Push" },
+					{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Push" },
+					{ seq: 1, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+					{ seq: 2, clientSeq: dummyClientSequenceNumber, type: "Ack" },
+					{
+						seq: 3,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 2,
+						from: peer2,
+					},
+					{ seq: 4, clientSeq: dummyClientSequenceNumber, type: "Ack" },
 				],
 				new ConstrainedTestChangeRebaser(
 					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
@@ -538,10 +732,34 @@ describe("EditManager", () => {
 			runUnitTestScenario(
 				"Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
 				[
-					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 3, type: "Pull", ref: 2, from: peer2 },
-					{ seq: 4, type: "Pull", ref: 0, from: peer1 },
+					{
+						seq: 1,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+					},
+					{
+						seq: 2,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+					},
+					{
+						seq: 3,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 2,
+						from: peer2,
+					},
+					{
+						seq: 4,
+						clientSeq: dummyClientSequenceNumber,
+						type: "Pull",
+						ref: 0,
+						from: peer1,
+					},
 				],
 				new ConstrainedTestChangeRebaser(
 					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
@@ -672,7 +890,7 @@ function* buildScenario(
 		if (meta.inFlight > 0) {
 			meta.inFlight -= 1;
 			meta.seq += 1;
-			scenario.push({ type: "Ack", seq: meta.seq });
+			scenario.push({ type: "Ack", seq: meta.seq, clientSeq: dummyClientSequenceNumber });
 			for (const built of buildScenario(scenario, meta)) {
 				yield built;
 			}
@@ -687,7 +905,13 @@ function* buildScenario(
 			const prevRef = meta.peerRefs[iPeer];
 			for (let ref = prevRef; ref < meta.seq; ++ref) {
 				meta.peerRefs[iPeer] = ref;
-				scenario.push({ type: "Pull", seq: meta.seq, ref, from: peers[iPeer] });
+				scenario.push({
+					type: "Pull",
+					seq: meta.seq,
+					clientSeq: dummyClientSequenceNumber,
+					ref,
+					from: peers[iPeer],
+				});
 				for (const built of buildScenario(scenario, meta)) {
 					yield built;
 				}
@@ -724,9 +948,19 @@ function runUnitTestScenario(
 		 */
 		const recordSequencedEdit = (commit: TestCommit): void => {
 			trunk.push(commit.seqNumber);
-			summarizer.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
+			summarizer.addSequencedChange(
+				commit,
+				commit.seqNumber,
+				commit.clientSeqNumber,
+				commit.refNumber,
+			);
 			for (const j of joiners) {
-				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
+				j.addSequencedChange(
+					commit,
+					commit.seqNumber,
+					commit.clientSeqNumber,
+					commit.refNumber,
+				);
 			}
 		};
 		/**
@@ -797,13 +1031,16 @@ function runUnitTestScenario(
 			switch (type) {
 				case "Push": {
 					let seq = step.seq;
+					let clientSeq = step.clientSeq;
 					if (seq === undefined) {
 						seq =
 							iNextAck < acks.length
 								? acks[iNextAck].seq
 								: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
 								  finalSequencedEdit + 1 + iNextAck - acks.length;
+						clientSeq = dummyClientSequenceNumber;
 					}
+					assert(clientSeq !== undefined, "client sequence number must be defined");
 					iNextAck += 1;
 					const changeset = TestChange.mint(knownToLocal, seq);
 					const revision = mintRevisionTag();
@@ -811,6 +1048,7 @@ function runUnitTestScenario(
 						revision,
 						sessionId: localSessionId,
 						seqNumber: brand(seq),
+						clientSeqNumber: brand(clientSeq),
 						refNumber: brand(localRef),
 						change: changeset,
 					};
@@ -839,6 +1077,7 @@ function runUnitTestScenario(
 						manager,
 						commit,
 						commit.seqNumber,
+						commit.clientSeqNumber,
 						commit.refNumber,
 					);
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
@@ -874,6 +1113,7 @@ function runUnitTestScenario(
 						revision: mintRevisionTag(),
 						sessionId: step.from,
 						seqNumber: brand(seq),
+						clientSeqNumber: brand(step.clientSeq),
 						refNumber: brand(step.ref),
 						change: TestChange.mint(knownToPeer, seq),
 					};
@@ -893,6 +1133,7 @@ function runUnitTestScenario(
 						manager,
 						commit,
 						commit.seqNumber,
+						commit.clientSeqNumber,
 						commit.refNumber,
 					);
 					assert.deepEqual(delta, asDelta(expected));

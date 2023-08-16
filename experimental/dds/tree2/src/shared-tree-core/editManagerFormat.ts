@@ -40,10 +40,14 @@ const SeqNumber = brandedNumberType<SeqNumber>();
  */
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
 	sequenceNumber: SeqNumber;
+	clientSequenceNumber: SeqNumber;
 }
 const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Composite(
-		[CommitBase(tChange), Type.Object({ sequenceNumber: SeqNumber })],
+		[
+			CommitBase(tChange),
+			Type.Object({ sequenceNumber: SeqNumber, clientSequenceNumber: SeqNumber }),
+		],
 		noAdditionalProps,
 	);
 

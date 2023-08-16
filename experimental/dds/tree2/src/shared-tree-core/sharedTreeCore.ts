@@ -268,6 +268,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.editManager.addSequencedChange(
 				{ ...commit, sessionId: this.editManager.localSessionId },
 				newRevision,
+				brand(0),
 				this.detachedRevision,
 			);
 		}
@@ -289,6 +290,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.addSequencedChange(
 			commit,
 			brand(message.sequenceNumber),
+			brand(message.clientSequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
 

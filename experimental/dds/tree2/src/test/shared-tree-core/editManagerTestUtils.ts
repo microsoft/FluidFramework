@@ -69,7 +69,12 @@ export function rebaseLocalEditsOverTrunkEdits(
 	}));
 	const run = () => {
 		for (let iChange = 0; iChange < trunkEditCount; iChange++) {
-			manager.addSequencedChange(trunkEdits[iChange], brand(iChange + 1), brand(iChange));
+			manager.addSequencedChange(
+				trunkEdits[iChange],
+				brand(iChange + 1),
+				brand(0),
+				brand(iChange),
+			);
 		}
 	};
 	return defer ? run : run();
@@ -101,6 +106,7 @@ export function rebasePeerEditsOverTrunkEdits(
 				sessionId: "trunk",
 			},
 			brand(iChange + 1),
+			brand(0),
 			brand(iChange),
 		);
 	}
@@ -114,6 +120,7 @@ export function rebasePeerEditsOverTrunkEdits(
 			manager.addSequencedChange(
 				peerEdits[iChange],
 				brand(iChange + trunkEditCount + 1),
+				brand(0),
 				brand(0),
 			);
 		}
@@ -151,7 +158,7 @@ export function rebaseConcurrentPeerEdits(
 	}
 	const run = () => {
 		for (let iChange = 0; iChange < peerEdits.length; iChange++) {
-			manager.addSequencedChange(peerEdits[iChange], brand(iChange + 1), brand(0));
+			manager.addSequencedChange(peerEdits[iChange], brand(iChange + 1), brand(0), brand(0));
 		}
 	};
 	return defer ? run : run();

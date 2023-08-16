@@ -19,18 +19,21 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 		sessionId: "1",
 		change: TestChange.mint([0], 1),
 		sequenceNumber: brand(1),
+		clientSequenceNumber: brand(0),
 	},
 	{
 		revision: tags[1],
 		sessionId: "2",
 		change: TestChange.mint([0, 1], 2),
 		sequenceNumber: brand(2),
+		clientSequenceNumber: brand(0),
 	},
 	{
 		revision: tags[2],
 		sessionId: "1",
 		change: TestChange.mint([0, 1, 2], 3),
 		sequenceNumber: brand(3),
+		clientSequenceNumber: brand(0),
 	},
 ];
 

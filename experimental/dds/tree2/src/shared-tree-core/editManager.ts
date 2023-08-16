@@ -58,13 +58,16 @@ export class EditManager<
 	 */
 	private readonly trunkMetadata = new Map<
 		RevisionTag,
-		{ sequenceNumber: SeqNumber; sessionId: SessionId }
+		{ sequenceNumber: SeqNumber; clientSequenceNumber: SeqNumber; sessionId: SessionId }
 	>();
 	/**
 	 * A map from a sequence number to the commit in the {@link trunk} which has that sequence number.
 	 * This also includes an entry for the {@link trunkBase} which always has the lowest key in the map.
 	 */
-	private readonly sequenceMap = new BTree<SeqNumber, GraphCommit<TChangeset>>();
+	private readonly sequenceMap = new BTree<
+		SeqNumber,
+		BTree<SeqNumber, GraphCommit<TChangeset>>
+	>();
 
 	/** The {@link UndoRedoManager} associated with the trunk */
 	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
@@ -136,7 +139,7 @@ export class EditManager<
 			revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			change: changeFamily.rebaser.compose([]),
 		};
-		this.sequenceMap.set(minimumPossibleSequenceNumber, this.trunkBase);
+		this.setCommitInSequenceMap(minimumPossibleSequenceNumber, brand(0), this.trunkBase);
 		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
 		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
 		this.trunk = new SharedTreeBranch(
@@ -157,6 +160,20 @@ export class EditManager<
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
 		// they require and therefore we monitor them explicitly.
 		onForkTransitive(this.localBranch, (fork) => this.registerBranch(fork));
+	}
+
+	private setCommitInSequenceMap(
+		sequenceNumber: SeqNumber,
+		clientSequenceNumber: SeqNumber,
+		commit: GraphCommit<TChangeset>,
+	): void {
+		let commitsWithSameSeqNumber = this.sequenceMap.get(sequenceNumber);
+		if (commitsWithSameSeqNumber !== undefined) {
+			commitsWithSameSeqNumber.set(clientSequenceNumber, commit);
+		} else {
+			commitsWithSameSeqNumber = new BTree([[clientSequenceNumber, commit]]);
+			this.sequenceMap.set(sequenceNumber, commitsWithSameSeqNumber);
+		}
 	}
 
 	/**
@@ -278,18 +295,24 @@ export class EditManager<
 				minimumPossibleSequenceNumber,
 				sequenceNumber,
 				true,
-				(s, { revision }) => {
-					// Cleanup look-aside data for each evicted commit
-					this.trunkMetadata.delete(revision);
-					this.localBranchUndoRedoManager.untrackCommitType(revision);
-					// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
-					if (s === sequenceNumber) {
-						assert(
-							revision === newTrunkBase.revision,
-							0x729 /* Expected last evicted commit to be new trunk base */,
-						);
-					} else {
-						return { delete: true };
+				(s, commitsWithSameSeqNumber) => {
+					const commits = commitsWithSameSeqNumber.valuesArray();
+					for (let i = 0; i < commits.length; i++) {
+						const { revision } = commits[i];
+						// Cleanup look-aside data for each evicted commit
+						this.trunkMetadata.delete(revision);
+						this.localBranchUndoRedoManager.untrackCommitType(revision);
+						// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
+						if (s === sequenceNumber) {
+							if (i === commits.length - 1) {
+								assert(
+									revision === newTrunkBase.revision,
+									0x729 /* Expected last evicted commit to be new trunk base */,
+								);
+							}
+						} else {
+							return { delete: true };
+						}
 					}
 				},
 			);
@@ -326,6 +349,7 @@ export class EditManager<
 				change: c.change,
 				revision: c.revision,
 				sequenceNumber: metadata.sequenceNumber,
+				clientSequenceNumber: metadata.clientSequenceNumber,
 				sessionId: metadata.sessionId,
 			};
 			return commit;
@@ -370,9 +394,10 @@ export class EditManager<
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
 				const commit = mintCommit(base, c);
-				this.sequenceMap.set(c.sequenceNumber, commit);
+				this.setCommitInSequenceMap(c.sequenceNumber, c.clientSequenceNumber, commit);
 				this.trunkMetadata.set(c.revision, {
 					sequenceNumber: c.sequenceNumber,
+					clientSequenceNumber: c.clientSequenceNumber,
 					sessionId: c.sessionId,
 				});
 				trunkRevisionCache.set(c.revision, commit);
@@ -443,6 +468,7 @@ export class EditManager<
 	public addSequencedChange(
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
+		clientSequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): void {
 		assert(
@@ -462,6 +488,7 @@ export class EditManager<
 			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
 			this.pushToTrunk(
 				sequenceNumber,
+				clientSequenceNumber,
 				{ ...firstLocalCommit, sessionId: this.localSessionId },
 				true,
 			);
@@ -482,7 +509,7 @@ export class EditManager<
 
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
-			this.pushToTrunk(sequenceNumber, newCommit);
+			this.pushToTrunk(sequenceNumber, clientSequenceNumber, newCommit);
 			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
 			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
@@ -494,7 +521,7 @@ export class EditManager<
 			);
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);
-			this.pushToTrunk(sequenceNumber, {
+			this.pushToTrunk(sequenceNumber, clientSequenceNumber, {
 				...newCommit,
 				change: newChangeFullyRebased,
 			});
@@ -517,6 +544,7 @@ export class EditManager<
 
 	private pushToTrunk(
 		sequenceNumber: SeqNumber,
+		clientSequenceNumber: SeqNumber,
 		commit: Commit<TChangeset>,
 		local = false,
 	): void {
@@ -530,8 +558,12 @@ export class EditManager<
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
 		this.trunk.repairDataStoreProvider?.applyChange(commit.change);
-		this.sequenceMap.set(sequenceNumber, trunkHead);
-		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
+		this.setCommitInSequenceMap(sequenceNumber, clientSequenceNumber, trunkHead);
+		this.trunkMetadata.set(trunkHead.revision, {
+			sequenceNumber,
+			clientSequenceNumber,
+			sessionId: commit.sessionId,
+		});
 		this.events.emit("newTrunkHead", trunkHead);
 	}
 
@@ -542,9 +574,13 @@ export class EditManager<
 	 * @returns the closest commit and its sequence number
 	 */
 	private getClosestTrunkCommit(sequenceNumber: SeqNumber): [SeqNumber, GraphCommit<TChangeset>] {
-		const commit = this.sequenceMap.getPairOrNextLower(sequenceNumber);
-		assert(commit !== undefined, 0x72a /* Sequence number has been evicted */);
-		return commit;
+		const keyValue = this.sequenceMap.getPairOrNextLower(sequenceNumber);
+		assert(keyValue !== undefined, 0x72a /* Sequence number has been evicted */);
+		const [commitSequenceNumber, commits] = keyValue;
+		assert(commits.length > 0, 0x72a /* Sequence number has been evicted */);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const lastCommit = commits.get(commits.maxKey()!)!;
+		return [commitSequenceNumber, lastCommit];
 	}
 }
 
