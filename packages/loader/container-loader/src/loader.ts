@@ -357,8 +357,19 @@ export class Loader implements IHostLoader {
 		return this;
 	}
 
-	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(this.services, codeDetails);
+	public async createDetachedContainer(
+		codeDetails: IFluidCodeDetails,
+		containerCreateHeaders?: IRequestHeader,
+	): Promise<IContainer> {
+		// "this.services" doesn't contain property for clientDetailsOverride
+		const container = await Container.createDetached(
+			{
+				canReconnect: containerCreateHeaders?.[LoaderHeader.reconnect],
+				clientDetailsOverride: containerCreateHeaders?.[LoaderHeader.clientDetails],
+				...this.services,
+			},
+			codeDetails,
+		);
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
@@ -373,8 +384,18 @@ export class Loader implements IHostLoader {
 		return container;
 	}
 
-	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(this.services, snapshot);
+	public async rehydrateDetachedContainerFromSnapshot(
+		snapshot: string,
+		containerCreateHeaders?: IRequestHeader,
+	): Promise<IContainer> {
+		return Container.rehydrateDetachedFromSnapshot(
+			{
+				canReconnect: containerCreateHeaders?.[LoaderHeader.reconnect],
+				clientDetailsOverride: containerCreateHeaders?.[LoaderHeader.clientDetails],
+				...this.services,
+			},
+			snapshot,
+		);
 	}
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
