@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -15,6 +15,7 @@
 		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "fluid-build . --task compile",
+		"build:test": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
 		"clean": "rimraf --glob \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
 		"eslint": "eslint src",
@@ -73,7 +74,6 @@
 	},
 	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/devtools": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.0",
@@ -83,7 +83,6 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",

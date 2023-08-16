@@ -10829,7 +10829,6 @@ importers:
     specifiers:
       '@fluentui/react': ^8.109.4
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
@@ -10842,7 +10841,6 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/fluid-static': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -10905,7 +10903,6 @@ importers:
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
-      '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/build-common': 2.0.0
@@ -10915,7 +10912,6 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
@@ -11065,17 +11061,20 @@ importers:
     specifiers:
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-icons': ^2.0.201
+      '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/devtools-view': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-experimental/tree2': workspace:~
+      '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/cell': workspace:~
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
@@ -11085,10 +11084,10 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/tinylicious-client': workspace:~
       '@microsoft/api-extractor': ^7.34.4
       '@testing-library/dom': ^8.2.0
       '@testing-library/jest-dom': ^5.16.5
@@ -11114,7 +11113,6 @@ importers:
       rimraf: ^4.4.0
       scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
-      tinylicious: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -11125,15 +11123,18 @@ importers:
     dependencies:
       '@fluentui/react-components': 9.19.1_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-icons': 2.0.201_react@17.0.2
+      '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/devtools-core': link:../devtools-core
       '@fluid-experimental/devtools-view': link:../devtools-view
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-experimental/tree2': link:../../../../experimental/dds/tree2
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
@@ -11142,10 +11143,10 @@ importers:
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/protocol-definitions': 1.2.0
+      '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
-      '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
       re-resizable: 6.9.9_sfoxds7t5ydpegc3knd667wn6m
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -11175,7 +11176,6 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
-      tinylicious: 1.0.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
