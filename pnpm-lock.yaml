@@ -10663,9 +10663,9 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
+      '@microsoft/1ds-core-js': ^3.2.13
+      '@microsoft/1ds-post-js': ^3.2.13
       '@microsoft/api-extractor': ^7.34.4
-      '@microsoft/oteljs': ^4.13.14
-      '@microsoft/oteljs-1ds': ^4.13.14
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/expect-puppeteer': 2.2.1
@@ -10711,6 +10711,7 @@ importers:
       start-server-and-test: ^1.11.7
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tslib: ^1.10.0
       typescript: ~4.5.5
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -10720,10 +10721,12 @@ importers:
       '@fluid-experimental/devtools-view': link:../devtools-view
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@microsoft/oteljs': 4.14.0
-      '@microsoft/oteljs-1ds': 4.14.0
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@microsoft/1ds-core-js': 3.2.13_tslib@1.14.1
+      '@microsoft/1ds-post-js': 3.2.13_tslib@1.14.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
     devDependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
@@ -10733,7 +10736,6 @@ importers:
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
@@ -16000,7 +16002,7 @@ packages:
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      tslib: 2.5.0
+      tslib: 2.6.0
     dev: false
 
   /@fluentui/set-version/8.2.11:
@@ -19115,20 +19117,20 @@ packages:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
 
-  /@microsoft/1ds-core-js/3.2.12_tslib@1.14.1:
-    resolution: {integrity: sha1-gJ0hoS1IXwuzYdQGZUGxv2S8HXA=}
+  /@microsoft/1ds-core-js/3.2.13_tslib@1.14.1:
+    resolution: {integrity: sha512-CluYTRWcEk0ObG5EWFNWhs87e2qchJUn0p2D21ZUa3PWojPZfPSBs4//WIE0MYV8Qg1Hdif2ZTwlM7TbYUjfAg==}
     dependencies:
-      '@microsoft/applicationinsights-core-js': 2.8.14_tslib@1.14.1
+      '@microsoft/applicationinsights-core-js': 2.8.15_tslib@1.14.1
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
     transitivePeerDependencies:
       - tslib
     dev: false
 
-  /@microsoft/1ds-post-js/3.2.12_tslib@1.14.1:
-    resolution: {integrity: sha1-t1SJfh+82+m13OxU1v9qdho5DoM=}
+  /@microsoft/1ds-post-js/3.2.13_tslib@1.14.1:
+    resolution: {integrity: sha512-HgS574fdD19Bo2vPguyznL4eDw7Pcm1cVNpvbvBLWiW3x4e1FCQ3VMXChWnAxCae8Hb0XqlA2sz332ZobBavTA==}
     dependencies:
-      '@microsoft/1ds-core-js': 3.2.12_tslib@1.14.1
+      '@microsoft/1ds-core-js': 3.2.13_tslib@1.14.1
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
     transitivePeerDependencies:
@@ -19285,8 +19287,8 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@microsoft/applicationinsights-core-js/2.8.14_tslib@1.14.1:
-    resolution: {integrity: sha1-gOPZ1CEC50FJRybXiskjCYutcTI=}
+  /@microsoft/applicationinsights-core-js/2.8.15_tslib@1.14.1:
+    resolution: {integrity: sha512-yYAs9MyjGr2YijQdUSN9mVgT1ijI1FPMgcffpaPmYbHAVbQmF7bXudrBWHxmLzJlwl5rfep+Zgjli2e67lwUqQ==}
     peerDependencies:
       tslib: '*'
     dependencies:
@@ -19320,7 +19322,7 @@ packages:
     dev: false
 
   /@microsoft/applicationinsights-shims/2.0.2:
-    resolution: {integrity: sha1-krNqCTdeLZyytCAzg7BXcr6DcIU=}
+    resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
     dev: false
 
   /@microsoft/applicationinsights-web-snippet/1.0.1:
@@ -19344,26 +19346,11 @@ packages:
     dev: false
 
   /@microsoft/dynamicproto-js/1.1.9:
-    resolution: {integrity: sha1-dDfbeqBhFi7pTkExtppiuNrV3qY=}
+    resolution: {integrity: sha512-n1VPsljTSkthsAFYdiWfC+DKzK2WwcRp83Y1YAqdX552BstvsDjft9YXppjUzp11BPsapDoO1LDgrDB0XVsfNQ==}
     dev: false
 
   /@microsoft/load-themed-styles/1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
-    dev: false
-
-  /@microsoft/oteljs-1ds/4.14.0:
-    resolution: {integrity: sha1-y75Tex1hxxEyDJ61v5HhFSo7cVk=}
-    dependencies:
-      '@microsoft/1ds-core-js': 3.2.12_tslib@1.14.1
-      '@microsoft/1ds-post-js': 3.2.12_tslib@1.14.1
-      '@microsoft/oteljs': 4.14.0
-      tslib: 1.14.1
-    dev: false
-
-  /@microsoft/oteljs/4.14.0:
-    resolution: {integrity: sha1-NCNgxtfIUpBc0U4xRmc2kw1kuJk=}
-    dependencies:
-      tslib: 1.14.1
     dev: false
 
   /@microsoft/tsdoc-config/0.16.2:

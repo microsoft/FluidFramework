@@ -10,7 +10,7 @@ import { DevtoolsPanel } from "@fluid-experimental/devtools-view";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
-import { DevtoolsOtelLogger } from "./TelemetryLogging";
+import { OneDSLogger } from "./TelemetryLogging";
 
 /**
  * Renders the Fluid Devtools view into the provided target element.
@@ -20,13 +20,13 @@ import { DevtoolsOtelLogger } from "./TelemetryLogging";
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize();
 
-	const logger = new DevtoolsOtelLogger();
+	const logger = new OneDSLogger();
 	ReactDOM.render(
 		React.createElement(DevtoolsPanel, {
 			messageRelay: connection,
 			usageTelemetryLogger: logger,
 			unloadCallback: () => {
-				logger.shutdown(); // This also flushes outstanding events in the queue, if any
+				logger.flush(); // This also flushes outstanding events in the queue, if any
 			},
 		}),
 		target,

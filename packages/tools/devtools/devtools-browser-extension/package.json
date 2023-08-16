@@ -70,10 +70,12 @@
 		"@fluid-experimental/devtools-view": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@microsoft/oteljs": "^4.13.14",
-		"@microsoft/oteljs-1ds": "^4.13.14",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@microsoft/1ds-core-js": "^3.2.13",
+		"@microsoft/1ds-post-js": "^3.2.13",
 		"react": "^17.0.1",
-		"react-dom": "^17.0.1"
+		"react-dom": "^17.0.1",
+		"tslib": "^1.10.0"
 	},
 	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
@@ -84,7 +86,6 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
