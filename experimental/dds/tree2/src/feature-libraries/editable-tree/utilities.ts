@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { FieldKey, TreeStoredSchema, UpPath, rootFieldKey } from "../../core";
+import { DetachedField, FieldKey, TreeStoredSchema, UpPath, keyAsDetachedField } from "../../core";
 import { brand } from "../../util";
 import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
@@ -103,19 +103,16 @@ export function getStableNodeKey(
 /**
  * Checks whether or not a given path is parented under the root field.
  * @param path - the path you want to check.
- * @returns a boolean on whether or not the provided path is parented under the root field.
+ * @returns the {@link DetachedField} which contains the path.
  */
-export function isParentedUnderRootField(path: UpPath): boolean {
+export function getDetachedFieldContainingPath(path: UpPath): DetachedField {
 	let currentPath = path;
-	while (currentPath.parentField !== undefined) {
-		if (currentPath.parentField === rootFieldKey) {
-			return true;
-		}
-		if (currentPath.parent !== undefined) {
-			currentPath = currentPath.parent;
+	while (currentPath !== undefined) {
+		if (currentPath.parent === undefined) {
+			return keyAsDetachedField(currentPath.parentField);
 		} else {
-			break;
+			currentPath = currentPath.parent;
 		}
 	}
-	return false;
+	return keyAsDetachedField(path.parentField);
 }

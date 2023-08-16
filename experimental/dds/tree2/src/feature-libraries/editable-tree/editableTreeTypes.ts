@@ -35,14 +35,22 @@ export const setField: unique symbol = Symbol("editable-tree:setField()");
 
 /**
  * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
- * InDocument - node is parented under the root field.
- * Removed - node is not parented under the root field, but can be added back to the original document tree.
- * Deleted - node is removed and cannot be added back to the original document tree.
  * @alpha
  */
 export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
 	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
 	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
 	Deleted = 2,
 }
 

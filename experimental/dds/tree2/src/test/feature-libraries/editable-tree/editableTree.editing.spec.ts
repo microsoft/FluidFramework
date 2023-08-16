@@ -527,7 +527,7 @@ describe("editable-tree: editing", () => {
 				field.setContent(undefined);
 			});
 
-			// delete method
+			// remove method
 			field.remove();
 			assert(!(localFieldKey in root));
 			assert.deepEqual([...field], []);
@@ -612,7 +612,7 @@ describe("editable-tree: editing", () => {
 			root[localFieldKey] = "bar";
 			assert.equal(root[localFieldKey], "bar");
 
-			// delete method
+			// remove method
 			field.remove();
 			assert(!(localFieldKey in root));
 			assert.equal(root[localFieldKey], undefined);
@@ -666,7 +666,7 @@ describe("editable-tree: editing", () => {
 				field.setContent(undefined);
 			});
 
-			// delete method
+			// remove method
 			assert.throws(() => {
 				field.remove();
 			});

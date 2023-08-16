@@ -20,6 +20,7 @@ import {
 	AnchorNode,
 	inCursorField,
 	rootFieldKey,
+	rootField,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
@@ -38,8 +39,8 @@ import {
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
+	getDetachedFieldContainingPath,
 	getStableNodeKey,
-	isParentedUnderRootField,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -249,11 +250,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		if (path === undefined) {
 			return TreeStatus.Deleted;
 		}
-		/**
-		 * TODO: This is a slow initial implementation which traverses the entire path up to the root of the tree.
-		 * This should eventually be optimized.
-		 */
-		return isParentedUnderRootField(path) ? TreeStatus.InDocument : TreeStatus.Removed;
+		// TODO: This is a slow initial implementation which traverses the entire path up to the root of the tree.
+		// This should eventually be optimized.
+		return getDetachedFieldContainingPath(path) === rootField
+			? TreeStatus.InDocument
+			: TreeStatus.Removed;
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
