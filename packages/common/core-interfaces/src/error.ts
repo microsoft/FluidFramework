@@ -72,7 +72,7 @@ export interface IErrorBase extends Partial<Error> {
 	readonly stack?: string;
 	/**
 	 * Returns all properties of this error object that are either safe to log
-	 * or explicitly tagged as containing privacy-sensitive data.
+	 * or not explicitly tagged as containing privacy-sensitive data.
 	 */
 	getTelemetryProperties?(): ITelemetryProperties;
 }
