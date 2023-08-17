@@ -145,14 +145,13 @@ EXAMPLES
 
 ## `flub generate manifest`
 
-Pass the right manifest file based on the type of release
+As all builds are published to build feed, this command picks the latest successful build against the provided branch name and generates dev manifest file.
 
 ```
 USAGE
-  $ flub generate manifest -o <value> -p <value> -t <value> -s <value> -b <value> [-v | --quiet]
+  $ flub generate manifest -o <value> -p <value> -t <value> -s <value> [-v | --quiet]
 
 FLAGS
-  -b, --bumpType=<value>      (required) Bump type: minor/dev
   -o, --organization=<value>  (required) Organization name
   -p, --project=<value>       (required) Project name
   -s, --sourceBranch=<value>  (required) Branch name across which the dev release manifest should be generated.
@@ -163,7 +162,8 @@ LOGGING FLAGS
   --quiet        Disable all logging.
 
 DESCRIPTION
-  Pass the right manifest file based on the type of release
+  As all builds are published to build feed, this command picks the latest successful build against the provided branch
+  name and generates dev manifest file.
 ```
 
 ## `flub generate upcoming`

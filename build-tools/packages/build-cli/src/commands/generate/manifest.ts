@@ -22,7 +22,7 @@ interface IBuildDetails {
 }
 
 export class GenerateManifestFile extends BaseCommand<typeof GenerateManifestFile> {
-	static description = "Pass the right manifest file based on the type of release";
+	static description = `As all builds are published to build feed, this command picks the latest successful build against the provided branch name and generates dev manifest file.`;
 
 	static flags = {
 		organization: Flags.string({
@@ -45,11 +45,6 @@ export class GenerateManifestFile extends BaseCommand<typeof GenerateManifestFil
 			char: "s",
 			required: true,
 		}),
-		bumpType: Flags.string({
-			description: "Bump type: minor/dev",
-			char: "b",
-			required: true,
-		}),
 		...BaseCommand.flags,
 	};
 
@@ -64,30 +59,29 @@ export class GenerateManifestFile extends BaseCommand<typeof GenerateManifestFil
 		}
 
 		try {
-			if (flags.bumpType === "dev") {
-				const buildNumber = await getFirstSuccessfulBuild(
+			const buildNumber = await getFirstSuccessfulBuild(
+				authHeader,
+				flags.organization,
+				flags.project,
+				flags.sourceBranch,
+				this.logger,
+			);
+			if (buildNumber !== undefined) {
+				this.log(
+					`Most successful build number for the last 24 hours for ${flags.sourceBranch} branch: ${buildNumber}`,
+				);
+				const devVersion = await fetchDevVersionNumber(
 					authHeader,
 					flags.organization,
 					flags.project,
-					flags.sourceBranch,
+					buildNumber,
 					this.logger,
 				);
-				if (buildNumber !== undefined) {
-					this.log(
-						`Most successful build number for the last 24 hours for ${flags.sourceBranch} branch: ${buildNumber}`,
-					);
-					const devVersion = await fetchDevVersionNumber(
-						authHeader,
-						flags.organization,
-						flags.project,
-						buildNumber,
-						this.logger,
-					);
-					if (devVersion !== undefined) {
-						this.log(`Fetched dev version: ${devVersion}`);
-						await generateManifestFile(devVersion, this.logger);
-					}
+				if (devVersion !== undefined) {
+					this.log(`Fetched dev version: ${devVersion}`);
+					await generateManifestFileForDevReleases(devVersion, this.logger);
 				}
+			} else if (buildNumber === undefined) {
 				this.log(
 					`No successful build found for ${flags.sourceBranch} branch in the last 24 hours`,
 				);
@@ -136,7 +130,7 @@ async function getFirstSuccessfulBuild(
 }
 
 /**
- * Fetches the dev version number released in the specified build.
+ * Fetches the dev version number released in the build feed.
  * @param buildNumber - The build number.
  * @returns The dev version number if found, otherwise undefined.
  */
@@ -169,9 +163,12 @@ async function fetchDevVersionNumber(
 
 /**
  * Generates a modified manifest file with the specified version number.
- * @param VERSION - The version number.
+ * @param version - The version number.
  */
-async function generateManifestFile(VERSION: string, log?: Logger): Promise<void> {
+async function generateManifestFileForDevReleases(
+	version: string,
+	log?: Logger,
+): Promise<string | undefined> {
 	try {
 		const releasesResponse = await fetch(GITHUB_RELEASE_URL);
 		const releases = await releasesResponse.json();
@@ -196,7 +193,7 @@ async function generateManifestFile(VERSION: string, log?: Logger): Promise<void
 				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				manifest_url_caret.lastIndexOf("/") + 1,
 			);
-			const new_manifest_filename = `fluid-framework-release-manifest.client.${VERSION}.caret.json`;
+			const new_manifest_filename = `fluid-framework-release-manifest.client.${version}.caret.json`;
 
 			await fsPromises.writeFile(manifest_filename, manifestData);
 			await fsPromises.rename(manifest_filename, new_manifest_filename);
@@ -207,7 +204,7 @@ async function generateManifestFile(VERSION: string, log?: Logger): Promise<void
 			for (const key of Object.keys(modifiedManifest)) {
 				const includesInternal: boolean = modifiedManifest[key].includes("internal");
 				if (includesInternal) {
-					modifiedManifest[key] = VERSION;
+					modifiedManifest[key] = version;
 				}
 			}
 
@@ -215,10 +212,14 @@ async function generateManifestFile(VERSION: string, log?: Logger): Promise<void
 				new_manifest_filename,
 				JSON.stringify(modifiedManifest, null, 2),
 			);
-			log?.log("Manifest modified successfully.");
-		} else {
-			log?.log("No matching internal manifest file found.");
+			log?.log("Manifest modified successfully.", new_manifest_filename);
+
+			// Return path of the final manifest file
+			return new_manifest_filename;
 		}
+
+		log?.log("No matching internal manifest file found.");
+		return undefined;
 	} catch (error) {
 		log?.errorLog("Error generating manifest file:", error);
 	}
