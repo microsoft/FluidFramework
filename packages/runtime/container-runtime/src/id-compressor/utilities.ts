@@ -144,8 +144,6 @@ const strippedMiddieBittiesMask = middieBittiesMask >> 2n;
 // Note: leading character should be 3 to mask at 0011
 // The more-significant half of the N nibble is used to denote the variant (10xx)
 const lowerMask = 0x3fffffffffffffffn;
-// Used to help with stringifying bigints which would otherwise drop trailing zeros
-const precisionMask = 0x1n << 128n;
 
 export function numericUuidFromStableId(stableId: StableId): NumericUuid {
 	const uuidU128 = BigInt(`0x${stableId.replace(/-/g, "")}`);
@@ -165,9 +163,9 @@ export function stableIdFromNumericUuid(numericUuid: NumericUuid): StableId {
 	const upperMasked = (numericUuid & strippedUpperMask) << 6n;
 	const middieBittiesMasked = (numericUuid & strippedMiddieBittiesMask) << 2n;
 	const lowerMasked = numericUuid & lowerMask;
-	const uuidU128 =
-		precisionMask | upperMasked | versionMask | middieBittiesMasked | variantMask | lowerMasked;
-	const uuidString = uuidU128.toString(16).substring(1);
+	const uuidU128 = upperMasked | versionMask | middieBittiesMasked | variantMask | lowerMasked;
+	// Pad to 32 characters, inserting leading zeroes if needed
+	const uuidString = uuidU128.toString(16).padStart(32, "0");
 	return `${uuidString.substring(0, 8)}-${uuidString.substring(8, 12)}-${uuidString.substring(
 		12,
 		16,
