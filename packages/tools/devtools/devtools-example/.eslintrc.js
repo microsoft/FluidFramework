@@ -21,6 +21,7 @@ module.exports = {
 
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
+		"import/no-extraneous-dependencies": "off",
 	},
 	overrides: [
 		{
@@ -31,6 +32,10 @@ module.exports = {
 			rules: {
 				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
+				"unicorn/prefer-query-selector": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"@typescript-eslint/no-unsafe-member-access": "off",
+				"@typescript-eslint/no-unsafe-return": "off",
 			},
 		},
 	],
