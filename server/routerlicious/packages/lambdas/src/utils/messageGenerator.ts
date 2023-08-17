@@ -49,13 +49,6 @@ export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
 	}),
 });
 
-export const IBroadcastSignalEventPayloadType = {
-	/**
-	 * Indicates that the data associated with an edit is or must be a `boolean`.
-	 */
-	RuntimeMessage: "RuntimeMessage",
-} as const;
-
 export const IRuntimeSignalMessageBody = {
 	/**
 	 * Indicates that the data associated with an edit is or must be a `boolean`.
@@ -63,20 +56,22 @@ export const IRuntimeSignalMessageBody = {
 	content: "RuntimeMessage",
 } as const;
 
-export interface IRuntimeSignalMessageBody {
-	/**
-	 * Mirrors ISignalEnvelope from runtime defitions. Contains the contents of the envelope
-	 */
+/**
+ * Mirrors ISignalEnvelope from runtime definitions, for signals that come from an external
+ * caller (not sent by a client (so no 'clientSignalSequenceNumber') and are always addressed
+ * to the Container (so no 'address').
+ */
+export interface IRuntimeSignalEnvelope {
 	contents: {
 		type: string;
 		content: any;
 	};
 }
 
-export const createRuntimeMessage = (signalContent: IRuntimeSignalMessageBody): ISignalMessage => ({
+export const createRuntimeMessage = (signalContent: IRuntimeSignalEnvelope): ISignalMessage => ({
 	clientId: null,
 	content: JSON.stringify({
-		type: IBroadcastSignalEventPayloadType.RuntimeMessage,
+		type: "RuntimeMessage",
 		contents: signalContent.contents,
 	}),
 });

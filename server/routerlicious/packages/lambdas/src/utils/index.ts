@@ -8,7 +8,7 @@ export {
 	createRoomJoinMessage,
 	createRoomLeaveMessage,
 	createRuntimeMessage,
-	IBroadcastSignalEventPayloadType,
+	IRuntimeSignalEnvelope,
 } from "./messageGenerator";
 export { NoOpLambda } from "./noOpLambda";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";

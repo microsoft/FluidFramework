@@ -6,7 +6,7 @@
 import { IEvent } from "@fluidframework/common-definitions";
 
 /**
- * Body of Collaboration Session Events
+ * Payload of the event emitted when the broadcastSignal endpoint is called.
  */
 export interface IBroadcastSignalEventPayload {
 	tenantId: string;

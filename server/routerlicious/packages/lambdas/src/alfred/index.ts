@@ -42,7 +42,7 @@ import {
 	createRoomLeaveMessage,
 	createRuntimeMessage,
 	generateClientId,
-	IRuntimeSignalMessageBody,
+	IRuntimeSignalEnvelope,
 } from "../utils";
 import { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 
@@ -624,48 +624,41 @@ export function configureWebSocketServices(
 				);
 			}
 
-			// Send signal to collaboration session from broadcast-signal endpoint
-			if (collborationSessionEventEmitter !== undefined) {
-				collborationSessionEventEmitter.on(
-					"broadcastSignal",
-					(broadcastSignal: IBroadcastSignalEventPayload) => {
-						const tenantId = broadcastSignal.tenantId;
-						const documentId = broadcastSignal.documentId;
-						const roomToBroadcastSignal: IRoom = { tenantId, documentId };
+			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called
+			collborationSessionEventEmitter?.on(
+				"broadcastSignal",
+				(broadcastSignal: IBroadcastSignalEventPayload) => {
+					const { tenantId, documentId } = broadcastSignal;
+					const roomToBroadcastSignal: IRoom = { tenantId, documentId };
 
-						// No-op if the room (collab session) that signal came in from is different
-						// than the current room. We reuse websockets so there could be multiple rooms
-						// that we are sending the signal to, and we don't want to do that.
-						if (
-							roomToBroadcastSignal.documentId === room.documentId &&
-							roomToBroadcastSignal.tenantId === room.tenantId
-						) {
-							const contents = JSON.parse(
-								broadcastSignal.signalContent,
-							) as IRuntimeSignalMessageBody;
-							const runtimeMessage = createRuntimeMessage(contents);
+					// No-op if the room (collab session) that signal came in from is different
+					// than the current room. We reuse websockets so there could be multiple rooms
+					// that we are sending the signal to, and we don't want to do that.
+					if (
+						roomToBroadcastSignal.documentId === room.documentId &&
+						roomToBroadcastSignal.tenantId === room.tenantId
+					) {
+						const contents = JSON.parse(
+							broadcastSignal.signalContent,
+						) as IRuntimeSignalEnvelope;
+						const runtimeMessage = createRuntimeMessage(contents);
 
-							socket
-								.emitToRoom(
-									getRoomId(roomToBroadcastSignal),
-									"signal",
-									runtimeMessage,
-								)
-								.catch((error) => {
-									const errorMsg = `Failed to broadcast signal from external API.`;
-									Lumberjack.error(
-										errorMsg,
-										getLumberBaseProperties(
-											roomToBroadcastSignal.documentId,
-											roomToBroadcastSignal.tenantId,
-										),
-										error,
-									);
-								});
-						}
-					},
-				);
-			}
+						socket
+							.emitToRoom(getRoomId(roomToBroadcastSignal), "signal", runtimeMessage)
+							.catch((error) => {
+								const errorMsg = `Failed to broadcast signal from external API.`;
+								Lumberjack.error(
+									errorMsg,
+									getLumberBaseProperties(
+										roomToBroadcastSignal.documentId,
+										roomToBroadcastSignal.tenantId,
+									),
+									error,
+								);
+							});
+					}
+				},
+			);
 
 			return {
 				connection: connectedMessage,
