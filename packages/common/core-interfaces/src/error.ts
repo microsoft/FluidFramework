@@ -49,6 +49,9 @@ export interface IErrorBase extends Partial<Error> {
 
 	/**
 	 * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error | Error.message}
+	 *
+	 * @remarks
+	 * 
 	 * Privacy Note - This is a freeform string that we may not control in all cases (e.g. a dependency throws an error)
 	 * If there are known cases where this contains privacy-sensitive data it will be tagged and included in the result
 	 * of getTelemetryProperties. When logging, consider fetching it that way rather than straight from this field.
