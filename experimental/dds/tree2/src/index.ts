@@ -46,8 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	TreeStoredSchema,
@@ -97,6 +95,7 @@ export {
 	BrandedKey,
 	BrandedMapSubset,
 	RangeEntry,
+	Named,
 } from "./util";
 
 export {
@@ -124,7 +123,6 @@ export {
 } from "./domains";
 
 export {
-	buildForest,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,
@@ -276,6 +274,8 @@ export {
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
 } from "./shared-tree";
 
 export type {

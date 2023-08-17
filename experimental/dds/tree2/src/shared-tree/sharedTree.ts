@@ -44,7 +44,7 @@ import {
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
 	SharedTreeView,
@@ -153,9 +153,9 @@ export class SharedTree
 	}
 
 	public schematize<TRoot extends FieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
+		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return schematizeView(this, config);
+		return this.view.schematize(config);
 	}
 
 	public get transaction(): SharedTreeView["transaction"] {
