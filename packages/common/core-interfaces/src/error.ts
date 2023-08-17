@@ -40,7 +40,10 @@ export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorType
  * Base interface for all errors and warnings emitted by the Fluid Framework.
  */
 export interface IErrorBase extends Partial<Error> {
-	/** errorType is a union of error types from
+	/**
+	 * A type tag differentiating kinds of errors emitted by the Fluid Framework.
+	 * 
+	 * @see See {@link FluidErrorTypes} for some common examples.
 	 * - container
 	 * - runtime
 	 * - drivers
