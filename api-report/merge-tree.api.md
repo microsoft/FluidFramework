@@ -145,7 +145,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
@@ -953,9 +953,9 @@ export interface ReferencePosition {
 
 // @public
 export enum ReferenceType {
-    // (undocumented)
+    // @deprecated (undocumented)
     NestBegin = 2,
-    // (undocumented)
+    // @deprecated (undocumented)
     NestEnd = 4,
     // (undocumented)
     RangeBegin = 16,

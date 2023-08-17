@@ -32,6 +32,7 @@
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-ordering-zookeeper": "workspace:~",
+		"@fluidframework/server-services-telemetry": "workspace:~",
 		"events": "^3.1.0",
 		"kafka-node": "^5.0.0",
 		"nconf": "^0.12.0",
