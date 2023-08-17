@@ -16,6 +16,7 @@ import {
 	assertIsRevisionTag,
 	UndoRedoManager,
 	LocalCommitSource,
+	schemaDataIsEmpty,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -44,7 +45,11 @@ import {
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import {
+	InitializeAndSchematizeConfiguration,
+	initializeContent,
+	schematize,
+} from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -470,9 +475,25 @@ export class SharedTreeView implements ISharedTreeView {
 	}
 
 	public schematize<TRoot extends FieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
+		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return schematizeView(this, config);
+		// TODO:
+		// When this becomes a more proper out of schema adapter, editing should be made lazy.
+		// This will improve support for readonly documents, cross version collaboration and attribution.
+
+		// Check for empty.
+		// TODO: Better detection of empty case
+		if (this.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
+			this.transaction.start();
+			initializeContent(this.storedSchema, config.schema, () =>
+				this.setContent(config.initialTree),
+			);
+			this.transaction.commit();
+		}
+
+		schematize(this.events, this.storedSchema, config);
+
+		return this;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
