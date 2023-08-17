@@ -4,13 +4,32 @@
  */
 
 import { IEvent } from "@fluidframework/common-definitions";
+import { IClient, IConnected } from "@fluidframework/protocol-definitions";
+
+/**
+ * Connection details of a client
+ */
+export interface IConnectedClient {
+	connection: IConnected;
+
+	details: IClient;
+
+	connectVersions: string[];
+}
+
+/**
+ * Address of socket message.
+ */
+export interface IRoom {
+	tenantId: string;
+	documentId: string;
+}
 
 /**
  * Payload of the event emitted when the broadcastSignal endpoint is called.
  */
 export interface IBroadcastSignalEventPayload {
-	tenantId: string;
-	documentId: string;
+	signalRoom: IRoom;
 	signalContent: string;
 }
 

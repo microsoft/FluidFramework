@@ -44,23 +44,14 @@ import {
 	generateClientId,
 	IRuntimeSignalEnvelope,
 } from "../utils";
-import { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
+import {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IConnectedClient,
+	IRoom,
+} from "./interfaces";
 
 const summarizerClientType = "summarizer";
-
-interface IRoom {
-	tenantId: string;
-
-	documentId: string;
-}
-
-interface IConnectedClient {
-	connection: IConnected;
-
-	details: IClient;
-
-	connectVersions: string[];
-}
 
 function getRoomId(room: IRoom) {
 	return `${room.tenantId}/${room.documentId}`;
@@ -629,41 +620,44 @@ export function configureWebSocketServices(
 				"broadcastSignal",
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				(broadcastSignal: IBroadcastSignalEventPayload) => {
-					const { tenantId, documentId } = broadcastSignal;
-					const roomToBroadcastSignal: IRoom = { tenantId, documentId };
+					const { signalRoom, signalContent } = broadcastSignal;
 
 					// No-op if the room (collab session) that signal came in from is different
 					// than the current room. We reuse websockets so there could be multiple rooms
 					// that we are sending the signal to, and we don't want to do that.
 					if (
-						roomToBroadcastSignal.documentId === room.documentId &&
-						roomToBroadcastSignal.tenantId === room.tenantId
+						signalRoom.documentId === room.documentId &&
+						signalRoom.tenantId === room.tenantId
 					) {
 						try {
-							const contents = JSON.parse(
-								broadcastSignal.signalContent,
-							) as IRuntimeSignalEnvelope;
+							const contents = JSON.parse(signalContent) as IRuntimeSignalEnvelope;
 							const runtimeMessage = createRuntimeMessage(contents);
 
 							socket
-								.emitToRoom(getRoomId(roomToBroadcastSignal), "signal", runtimeMessage)
+								.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
 								.catch((error: any) => {
 									const errorMsg = `Failed to broadcast signal from external API.`;
 									Lumberjack.error(
 										errorMsg,
 										getLumberBaseProperties(
-											roomToBroadcastSignal.documentId,
-											roomToBroadcastSignal.tenantId,
+											signalRoom.documentId,
+											signalRoom.tenantId,
 										),
 										error,
 									);
 								});
-						} catch(error) {
+						} catch (error) {
 							const errorMsg = `broadcast-signal conent body is malformed`;
-							return handleServerError(logger, errorMsg, claims.documentId, claims.tenantId);
+							return handleServerError(
+								logger,
+								errorMsg,
+								claims.documentId,
+								claims.tenantId,
+							);
 						}
 					}
-				});
+				},
+			);
 
 			return {
 				connection: connectedMessage,
