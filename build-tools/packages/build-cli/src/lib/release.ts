@@ -94,7 +94,7 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 		  };
 };
 
-interface PackageCaretRange {
+export interface PackageCaretRange {
 	[packageName: string]: string;
 }
 

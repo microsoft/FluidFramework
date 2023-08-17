@@ -7,8 +7,9 @@ import fetch from "node-fetch";
 import { promises as fsPromises } from "fs";
 import { Flags } from "@oclif/core";
 import { Logger } from "@fluidframework/build-tools";
-import { BaseCommand } from "../../base";
 import { isInternalVersionRange } from "@fluid-tools/version-tools";
+import { BaseCommand } from "../../base";
+import { PackageCaretRange } from "../../lib";
 
 interface IBuildDetails {
 	definition: { name: string };
@@ -19,7 +20,7 @@ interface IBuildDetails {
 	buildNumber: string;
 }
 
-export class GenerateManifestFile extends BaseCommand<typeof GenerateManifestFile> {
+export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static description = `Creates a release report for the most recent build published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report always uses the "caret" report format.`;
 
 	static flags = {
@@ -30,6 +31,7 @@ export class GenerateManifestFile extends BaseCommand<typeof GenerateManifestFil
 		ado_pat: Flags.string({
 			description: "ADO Personal Access Token",
 			required: true,
+			env: "ADO_PAT",
 		}),
 		sourceBranch: Flags.string({
 			description: "Branch name across which the dev release manifest should be generated.",
@@ -165,7 +167,7 @@ async function fetchDevVersionNumber(
 async function generateManifestObjectForDevReleases(
 	gitHubUrl: string,
 	log?: Logger,
-): Promise<object | undefined> {
+): Promise<PackageCaretRange | undefined> {
 	try {
 		const releasesResponse = await fetch(gitHubUrl);
 		const releases = await releasesResponse.json();
@@ -186,7 +188,7 @@ async function generateManifestObjectForDevReleases(
 			const manifestData = await manifestResponse.buffer();
 
 			const originalManifest = JSON.parse(manifestData.toString());
-			const modifiedManifest: { [key: string]: any } = { ...originalManifest };
+			const modifiedManifest: PackageCaretRange = { ...originalManifest };
 
 			return modifiedManifest;
 		}
@@ -200,7 +202,7 @@ async function generateManifestObjectForDevReleases(
 
 async function writeManifestToFile(
 	version: string,
-	modifiedManifest: { [key: string]: any }, // Add the type assertion here
+	modifiedManifest: PackageCaretRange,
 	log?: Logger,
 ): Promise<string | undefined> {
 	try {

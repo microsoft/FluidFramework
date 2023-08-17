@@ -39,4 +39,5 @@ export {
 	ReleaseReport,
 	ReportKind,
 	toReportKind,
+	PackageCaretRange,
 } from "./release";
