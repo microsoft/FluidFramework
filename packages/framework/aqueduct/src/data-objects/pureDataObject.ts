@@ -4,9 +4,10 @@
  */
 
 import type { EventEmitter } from "events";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
+	IEvent,
+	IEventProvider,
 	IFluidHandle,
 	IFluidLoadable,
 	IFluidRouter,
