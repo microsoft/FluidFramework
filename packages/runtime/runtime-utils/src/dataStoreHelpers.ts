@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -66,7 +66,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
 }
 
 export async function requestFluidObject<T = FluidObject>(
-	router: IFluidRouter,
+	router: { request(request: IRequest): Promise<IResponse> },
 	url: string | IRequest,
 ): Promise<T> {
 	const request = typeof url === "string" ? { url } : url;

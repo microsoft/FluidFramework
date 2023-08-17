@@ -843,16 +843,8 @@ export class ContainerRuntime
 
 		const initializeEntryPointFn =
 			initializeEntryPoint ??
-			(async (containerRuntime: IContainerRuntime) => {
-				return (await containerRuntime.request({ url: "/" })).value as FluidObject;
-			});
-
-		// let initializeEntryPointFn = initializeEntryPoint;
-		// if (requestHandler !== undefined) {
-		// 	initializeEntryPointFn = async (containerRuntime: IContainerRuntime) => {
-		// 		return (await requestHandler({ url: "/" }, containerRuntime)).value as FluidObject;
-		// 	};
-		// }
+			(async (containerRuntime: IContainerRuntime) =>
+				requestFluidObject(containerRuntime, "/"));
 
 		const runtime = new containerRuntimeCtor(
 			context,

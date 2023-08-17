@@ -11,7 +11,6 @@ import { IContainerRuntime } from '@fluidframework/container-runtime-definitions
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -122,7 +121,9 @@ export class ObjectStoragePartition implements IChannelStorageService {
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 // @public (undocumented)
-export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
+export function requestFluidObject<T = FluidObject>(router: {
+    request(request: IRequest): Promise<IResponse>;
+}, url: string | IRequest): Promise<T>;
 
 // @public
 export class RequestParser implements IRequest {
