@@ -84,6 +84,7 @@ Dependencies between packages in various layers of the system are enforced via a
 Install the required tools:
 
 -   [Git](https://git-scm.com/downloads).
+    -   \+ [Git LFS](https://git-lfs.github.com/)
 -   [Node.js](https://nodejs.org/): install the version noted in in the [.nvmrc file](./.nvmrc).
     See [NodeJs Installation](#NodeJs-Installation) for details.
 
