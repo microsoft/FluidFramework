@@ -5,7 +5,7 @@
 
 import { AppendOnlySortedMap } from "./appendOnlySortedMap";
 import { LocalCompressedId } from "./identifiers";
-import { compareFiniteNumbersReversed } from "./utilities";
+import { compareFiniteNumbers, genCountFromLocalId } from "./utilities";
 
 /**
  * The `SessionSpaceNormalizer` tracks the form of the IDs created by the local session.
@@ -40,34 +40,34 @@ import { compareFiniteNumbersReversed } from "./utilities";
  * The form (local or final) of a given ID index (for example, the 5th ID made by the local session) can be deduced from this information.
  */
 export class SessionSpaceNormalizer {
-	private readonly leadingLocals = new AppendOnlySortedMap<LocalCompressedId, number>(
-		compareFiniteNumbersReversed,
-	);
+	// Run-length encoding of IDs that were generated as local IDs. They are stored as a list of tuples (genCount, count)
+	// that are sorted on the genCount so that contains checks can use a binary search.
+	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(compareFiniteNumbers);
 
-	public get contents(): Pick<
-		AppendOnlySortedMap<LocalCompressedId, number>,
-		"size" | "entries"
-	> {
-		return this.leadingLocals;
+	public get idRanges(): Pick<AppendOnlySortedMap<number, number>, "size" | "entries"> {
+		return this.localIdRanges;
 	}
 
-	public addLocalRange(baseLocal: LocalCompressedId, count: number): void {
-		const last = this.leadingLocals.last();
+	public addLocalRange(baseGenCount: number, count: number): void {
+		const last = this.localIdRanges.last();
 		if (last !== undefined) {
-			const [lastLocal, lastCount] = last;
-			if (lastLocal - lastCount === baseLocal) {
-				this.leadingLocals.replaceLast(lastLocal, lastCount + count);
+			const [lastGenCount, lastCount] = last;
+			// Check to see if the added run of local IDs is contiguous with the last range added.
+			// If it is, simply merge them (this is the common case).
+			if (lastGenCount + lastCount === baseGenCount) {
+				this.localIdRanges.replaceLast(lastGenCount, lastCount + count);
 				return;
 			}
 		}
-		this.leadingLocals.append(baseLocal, count);
+		this.localIdRanges.append(baseGenCount, count);
 	}
 
 	public contains(query: LocalCompressedId): boolean {
-		const containingBlock = this.leadingLocals.getPairOrNextLower(query);
+		const genCount = genCountFromLocalId(query);
+		const containingBlock = this.localIdRanges.getPairOrNextLower(genCount);
 		if (containingBlock !== undefined) {
-			const [startingLocal, count] = containingBlock;
-			if (query >= startingLocal - (count - 1)) {
+			const [baseGenCount, count] = containingBlock;
+			if (genCount <= baseGenCount + (count - 1)) {
 				return true;
 			}
 		}
@@ -75,21 +75,9 @@ export class SessionSpaceNormalizer {
 	}
 
 	public equals(other: SessionSpaceNormalizer): boolean {
-		if (this.leadingLocals.size !== other.leadingLocals.size) {
-			return false;
-		}
-		for (let i = 0; i < this.leadingLocals.size; i++) {
-			const pairThis = this.leadingLocals.getAtIndex(i);
-			const pairOther = other.leadingLocals.getAtIndex(i);
-			if (
-				pairThis === undefined ||
-				pairOther === undefined ||
-				pairThis[0] !== pairOther[0] ||
-				pairThis[1] !== pairOther[1]
-			) {
-				return false;
-			}
-		}
-		return true;
+		return this.localIdRanges.equals(
+			other.localIdRanges,
+			(countA, countB) => countA === countB,
+		);
 	}
 }

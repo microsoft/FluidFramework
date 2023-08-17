@@ -19,16 +19,16 @@ export class FinalSpace {
 		return this.clusterList;
 	}
 
-	public getTailCluster(): IdCluster | undefined {
+	public getLastCluster(): IdCluster | undefined {
 		return this.clusterList[this.clusterList.length - 1];
 	}
 
 	public addCluster(newCluster: IdCluster) {
-		const tailCluster = this.getTailCluster();
+		const lastCluster = this.getLastCluster();
 		assert(
-			tailCluster === undefined ||
+			lastCluster === undefined ||
 				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-				newCluster.baseFinalId === tailCluster.baseFinalId + tailCluster.capacity,
+				newCluster.baseFinalId === lastCluster.baseFinalId + lastCluster.capacity,
 			"Cluster insert to final_space is out of order.",
 		);
 		this.clusterList.push(newCluster);

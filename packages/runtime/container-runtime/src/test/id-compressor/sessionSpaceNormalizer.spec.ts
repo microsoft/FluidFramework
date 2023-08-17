@@ -15,16 +15,16 @@ describe("SessionSpaceNormalizer", () => {
 
 	it("can answer queries with a single range", () => {
 		const normalizer = new SessionSpaceNormalizer();
-		normalizer.addLocalRange(makeLocalId(-1), 5);
+		normalizer.addLocalRange(1, 5);
 		assert.equal(normalizer.contains(makeLocalId(-1)), true);
 		assert.equal(normalizer.contains(makeLocalId(-2)), true);
 	});
 
 	it("can answer queries with discontiguous ranges", () => {
 		const normalizer = new SessionSpaceNormalizer();
-		normalizer.addLocalRange(makeLocalId(-1), 2);
-		normalizer.addLocalRange(makeLocalId(-6), 4);
-		normalizer.addLocalRange(makeLocalId(-15), 1);
+		normalizer.addLocalRange(1, 2);
+		normalizer.addLocalRange(6, 4);
+		normalizer.addLocalRange(15, 1);
 		assert.equal(normalizer.contains(makeLocalId(-11)), false);
 		assert.equal(normalizer.contains(makeLocalId(-3)), false);
 		assert.equal(normalizer.contains(makeLocalId(-7)), true);
@@ -32,10 +32,10 @@ describe("SessionSpaceNormalizer", () => {
 
 	it("can answer queries with contiguous ranges", () => {
 		const normalizer = new SessionSpaceNormalizer();
-		normalizer.addLocalRange(makeLocalId(-1), 2);
-		normalizer.addLocalRange(makeLocalId(-3), 4);
-		normalizer.addLocalRange(makeLocalId(-15), 1);
-		normalizer.addLocalRange(makeLocalId(-16), 2);
+		normalizer.addLocalRange(1, 2);
+		normalizer.addLocalRange(3, 4);
+		normalizer.addLocalRange(15, 1);
+		normalizer.addLocalRange(16, 2);
 		assert.equal(normalizer.contains(makeLocalId(-1)), true);
 		assert.equal(normalizer.contains(makeLocalId(-4)), true);
 		assert.equal(normalizer.contains(makeLocalId(-6)), true);

@@ -111,7 +111,7 @@ export class Sessions {
 
 		const [_, session] = closestMatch;
 		assert(session !== owningSession, "Failed to attempt to detect collisions.");
-		const lastCluster = session.getTailCluster();
+		const lastCluster = session.getLastCluster();
 		if (lastCluster === undefined) {
 			return false;
 		}
@@ -186,7 +186,7 @@ export class Session {
 	/**
 	 * Returns the last cluster in this session's cluster chain, if any.
 	 */
-	public getTailCluster(): IdCluster | undefined {
+	public getLastCluster(): IdCluster | undefined {
 		return this.isEmpty() ? undefined : this.clusterChain[this.clusterChain.length - 1];
 	}
 

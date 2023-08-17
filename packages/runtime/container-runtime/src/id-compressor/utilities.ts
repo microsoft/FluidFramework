@@ -102,15 +102,6 @@ export function isStableId(str: string): str is StableId {
 }
 
 /**
- * A numeric comparator used for sorting in descending order.
- *
- * Handles +/-0 like Map: -0 is equal to +0.
- */
-export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
-	return b - a;
-}
-
-/**
  * A numeric comparator used for sorting in ascending order.
  *
  * Handles +/-0 like Map: -0 is equal to +0.
