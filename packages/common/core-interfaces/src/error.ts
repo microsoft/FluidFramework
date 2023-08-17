@@ -6,7 +6,7 @@
 import { ITelemetryProperties } from "./index";
 
 /**
- * Different error types the Container may report out to the Host
+ * Error types the Fluid Framework may report.
  */
 export const FluidErrorTypes = {
 	/**
