@@ -74,7 +74,6 @@
 	},
 	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/devtools": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.0",
@@ -84,7 +83,6 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
