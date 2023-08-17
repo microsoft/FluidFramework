@@ -7,6 +7,7 @@ Release commands are used to manage the Fluid release process.
 * [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
 * [`flub release report`](#flub-release-report)
+* [`flub release report-unreleased`](#flub-release-report-unreleased)
 
 ## `flub release`
 
@@ -196,4 +197,26 @@ EXAMPLES
   Generate a release report for each package and release group in the repo interactively.
 
     $ flub release report -i
+```
+
+## `flub release report-unreleased`
+
+As all builds are published to build feed, this command picks the latest successful build against the provided branch name and generates dev manifest file.
+
+```
+USAGE
+  $ flub release report-unreleased --repoName <value> --ado_pat <value> --sourceBranch <value> [-v | --quiet]
+
+FLAGS
+  --ado_pat=<value>       (required) ADO Personal Access Token
+  --repoName=<value>      (required) Organization name
+  --sourceBranch=<value>  (required) Branch name across which the dev release manifest should be generated.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+DESCRIPTION
+  As all builds are published to build feed, this command picks the latest successful build against the provided branch
+  name and generates dev manifest file.
 ```
