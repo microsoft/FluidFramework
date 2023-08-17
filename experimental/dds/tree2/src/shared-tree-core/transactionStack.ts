@@ -12,6 +12,7 @@ import { fail } from "../util";
 export class TransactionStack<TChange> {
 	private readonly stack: {
 		startRevision: RevisionTag;
+		dispose: () => void;
 		repairStore?: RepairDataStore<TChange>;
 	}[] = [];
 
@@ -33,9 +34,14 @@ export class TransactionStack<TChange> {
 	 * Pushes a new transaction onto the stack. That transaction becomes the current transaction.
 	 * @param startRevision - the revision of the latest commit when this transaction begins
 	 * @param repairStore - an optional repair data store for helping with undo or rollback operations
+	 * @param disposables - an optional collection of disposable data to release after finishing a transaction
 	 */
-	public push(startRevision: RevisionTag, repairStore?: RepairDataStore<TChange>): void {
-		this.stack.push({ startRevision, repairStore });
+	public push(
+		startRevision: RevisionTag,
+		dispose: () => void,
+		repairStore?: RepairDataStore<TChange>,
+	): void {
+		this.stack.push({ startRevision, dispose, repairStore });
 	}
 
 	/**
@@ -46,6 +52,8 @@ export class TransactionStack<TChange> {
 		startRevision: RevisionTag;
 		repairStore?: RepairDataStore<TChange>;
 	} {
-		return this.stack.pop() ?? fail("No transaction is currently in progress");
+		const transaction = this.stack.pop() ?? fail("No transaction is currently in progress");
+		transaction.dispose();
+		return transaction;
 	}
 }

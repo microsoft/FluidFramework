@@ -15,6 +15,7 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IModelLoader } from "./interfaces";
 import { ModelLoader } from "./modelLoader";
 
@@ -32,7 +33,10 @@ const getDocumentServiceFactory = (documentId: string) => {
 };
 
 export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelType> {
-	public constructor(private readonly codeLoader: ICodeDetailsLoader) {}
+	public constructor(
+		private readonly codeLoader: ICodeDetailsLoader,
+		private readonly logger?: ITelemetryBaseLogger,
+	) {}
 
 	public async supportsVersion(version: string): Promise<boolean> {
 		return true;
@@ -44,6 +48,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
+			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
 		});
 		return modelLoader.createDetached(version);
@@ -54,6 +59,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
+			logger: this.logger,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);

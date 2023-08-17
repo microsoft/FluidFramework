@@ -218,7 +218,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// state of the branch at the start of the transaction.
 			this.repairDataStoreProvider.freeze();
 		}
-		this.transactions.push(this.head.revision, repairStore);
+		const forks = new Set<SharedTreeBranch<TEditor, TChange>>();
+		const onDisposeUnSubscribes: (() => void)[] = [];
+		const onForkUnSubscribe = onForkTransitive(this, (fork) => {
+			forks.add(fork);
+			onDisposeUnSubscribes.push(fork.on("dispose", () => forks.delete(fork)));
+		});
+		this.transactions.push(
+			this.head.revision,
+			() => {
+				forks.forEach((fork) => fork.dispose());
+				onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+				onForkUnSubscribe();
+			},
+			repairStore,
+		);
 		this.editor.enterTransaction();
 	}
 
@@ -294,6 +308,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
+
 		if (commits.length === 0) {
 			return [undefined, []];
 		}
@@ -388,6 +403,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
 	 * provided, then it will be cloned from this branch.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
+	 *
+	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
 	 */
 	public fork(
 		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,

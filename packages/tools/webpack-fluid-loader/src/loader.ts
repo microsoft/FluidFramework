@@ -22,7 +22,6 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -30,6 +29,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -287,7 +287,7 @@ export async function start(
 				async () => options.odspAccessToken ?? null,
 				odspPersistantCache,
 				false /** forceAccessTokenViaAuthorizationHeader */,
-				new BaseTelemetryNullLogger(),
+				createChildLogger(),
 				undefined,
 			);
 			assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);

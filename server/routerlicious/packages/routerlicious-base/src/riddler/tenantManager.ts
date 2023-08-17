@@ -13,16 +13,13 @@ import {
 	ITenantOrderer,
 	ITenantStorage,
 	KeyName,
-	MongoManager,
 	ISecretManager,
 	ICache,
+	ICollection,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import {
-	BaseTelemetryProperties,
-	LumberEventName,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IApiCounters, InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -58,18 +55,70 @@ export interface ITenantDocument {
 	scheduledDeletionTime?: string;
 }
 
+enum FetchTenantKeyMetric {
+	RetrieveFromCacheSucess = "retrieveFromCacheSuccess",
+	NotFoundInCache = "notFoundInCache",
+	RetrieveFromCacheError = "retrieveFromCacheError",
+	SetKeyInCacheSuccess = "settingKeyInCacheSucceeded",
+	SetKeyInCacheFailure = "settingKeyInCacheFailed",
+}
+
+enum StorageRequestMetric {
+	// Cache requests
+	CacheRequestStarted = "cacheRequestStarted",
+	CacheRequestCompleted = "cacheRequestCompleted",
+	// Database requests
+	DatabaseRequestStarted = "databaseRequestStarted",
+	DatabaseRequestCompleted = "databaseRequestCompleted",
+	// errors
+	CacheError = "cacheError",
+	DatabaseError = "databaseError",
+}
+
 export class TenantManager {
 	private readonly isCacheEnabled;
+	private readonly fetchTenantKeyApiCounter: IApiCounters = new InMemoryApiCounters(
+		Object.values(FetchTenantKeyMetric),
+	);
+	private readonly storageRequestApiCounter: IApiCounters = new InMemoryApiCounters(
+		Object.values(StorageRequestMetric),
+	);
 	constructor(
-		private readonly mongoManager: MongoManager,
-		private readonly collectionName: string,
+		private readonly tenantsCollection: ICollection<ITenantDocument>,
 		private readonly baseOrdererUrl: string,
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
 		private readonly secretManager: ISecretManager,
+		private readonly fetchTenantKeyMetricInterval: number,
+		private readonly riddlerStorageRequestMetricInterval: number,
 		private readonly cache?: ICache,
 	) {
 		this.isCacheEnabled = this.cache ? true : false;
+		if (fetchTenantKeyMetricInterval) {
+			setInterval(() => {
+				if (!this.fetchTenantKeyApiCounter.countersAreActive) {
+					return;
+				}
+				Lumberjack.info(
+					"Fetch tenant key api counters",
+					this.fetchTenantKeyApiCounter.getCounters(),
+				);
+				this.fetchTenantKeyApiCounter.resetAllCounters();
+			}, this.fetchTenantKeyMetricInterval);
+		}
+
+		if (riddlerStorageRequestMetricInterval) {
+			setInterval(() => {
+				if (!this.storageRequestApiCounter.countersAreActive) {
+					return;
+				}
+				Lumberjack.info(
+					"Riddler storage request api counters",
+					this.storageRequestApiCounter.getCounters(),
+				);
+				this.storageRequestApiCounter.resetAllCounters();
+			}, this.riddlerStorageRequestMetricInterval);
+		}
 	}
 
 	/**
@@ -238,8 +287,6 @@ export class TenantManager {
 		orderer: ITenantOrderer,
 		customData: ITenantCustomData,
 	): Promise<ITenantConfig & { key: string }> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 
 		const tenantKey1 = this.generateTenantKey();
@@ -267,15 +314,17 @@ export class TenantManager {
 			customData.encryptionKeyVersion = latestKeyVersion;
 		}
 
-		const id = await collection.insertOne({
-			_id: tenantId,
-			key: encryptedTenantKey1,
-			secondaryKey: encryptedTenantKey2,
-			orderer,
-			storage,
-			customData,
-			disabled: false,
-		});
+		const id = await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantsCollection.insertOne({
+				_id: tenantId,
+				key: encryptedTenantKey1,
+				secondaryKey: encryptedTenantKey2,
+				orderer,
+				storage,
+				customData,
+				disabled: false,
+			}),
+		);
 
 		const tenant = await this.getTenant(id);
 		return _.extend(tenant, { key: tenantKey1, secondaryKey: tenantKey2 });
@@ -285,10 +334,9 @@ export class TenantManager {
 	 * Updates the tenant configured storage provider
 	 */
 	public async updateStorage(tenantId: string, storage: ITenantStorage): Promise<ITenantStorage> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
-
-		await collection.update({ _id: tenantId }, { storage }, null);
+		await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantsCollection.update({ _id: tenantId }, { storage }, null),
+		);
 
 		return (await this.getTenantDocument(tenantId)).storage;
 	}
@@ -297,10 +345,7 @@ export class TenantManager {
 	 * Updates the tenant configured orderer
 	 */
 	public async updateOrderer(tenantId: string, orderer: ITenantOrderer): Promise<ITenantOrderer> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
-
-		await collection.update({ _id: tenantId }, { orderer }, null);
+		await this.tenantsCollection.update({ _id: tenantId }, { orderer }, null);
 
 		return (await this.getTenantDocument(tenantId)).orderer;
 	}
@@ -312,13 +357,13 @@ export class TenantManager {
 		tenantId: string,
 		customData: ITenantCustomData,
 	): Promise<ITenantCustomData> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
 		const accessInfo = customData.externalStorageData?.accessInfo;
 		if (accessInfo) {
 			customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
 		}
-		await collection.update({ _id: tenantId }, { customData }, null);
+		await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantsCollection.update({ _id: tenantId }, { customData }, null),
+		);
 		const tenantDocument = await this.getTenantDocument(tenantId, true);
 		if (tenantDocument.disabled) {
 			Lumberjack.info("Updated custom data of a disabled tenant", {
@@ -341,29 +386,31 @@ export class TenantManager {
 			includeDisabledTenant,
 			bypassCache,
 		};
-		const fetchTenantKeyMetric = Lumberjack.newLumberMetric(
-			LumberEventName.RiddlerFetchTenantKey,
-		);
-		let uncaughtException;
-		let retrievedFromCache = false;
 
 		try {
 			if (!bypassCache && this.isCacheEnabled) {
 				// Read from cache first
-				const cachedKey = await this.getKeyFromCache(tenantId);
-
-				if (cachedKey) {
-					retrievedFromCache = true;
-					const tenantKeys = this.decryptCachedKeys(cachedKey);
-					// This is an edge case where the used encryption key is not valid.
-					// If both decrypted tenant keys are null, it means it hits this case,
-					// then we should read from database and set new values in cache.
-					if (tenantKeys.key1 || tenantKeys.key2) {
-						return tenantKeys;
+				try {
+					const cachedKey = await this.getKeyFromCache(tenantId);
+					if (cachedKey) {
+						const tenantKeys = this.decryptCachedKeys(cachedKey);
+						// This is an edge case where the used encryption key is not valid.
+						// If both decrypted tenant keys are null, it means it hits this case,
+						// then we should read from database and set new values in cache.
+						if (tenantKeys.key1 || tenantKeys.key2) {
+							return tenantKeys;
+						}
+						Lumberjack.info(
+							"Retrieved from cache but both decrypted tenant keys are null.",
+							lumberProperties,
+						);
 					}
-					Lumberjack.info(
-						"Retrieved from cache but both decrypted tenant keys are null.",
-						lumberProperties,
+				} catch (error) {
+					// Catch if there is an error reading from redis so we can continue to use the database
+					Lumberjack.error(
+						`Error getting tenant keys from cache. Falling back to database.`,
+						{ [BaseTelemetryProperties.tenantId]: tenantId },
+						error,
 					);
 				}
 			}
@@ -418,11 +465,7 @@ export class TenantManager {
 				if (encryptionKeyVersion) {
 					cacheKeys.encryptionKeyVersion = encryptionKeyVersion;
 				}
-				const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
-				fetchTenantKeyMetric.setProperty(
-					"settingKeyInCacheSucceeded",
-					setKeyInCacheSucceeded,
-				);
+				await this.setKeyInCache(tenantId, cacheKeys);
 			}
 
 			return {
@@ -430,18 +473,8 @@ export class TenantManager {
 				key2: tenantKey2,
 			};
 		} catch (error) {
-			uncaughtException = error;
+			Lumberjack.error(`Error getting tenant keys.`, error);
 			throw error;
-		} finally {
-			fetchTenantKeyMetric.setProperty("retrievedFromCache", retrievedFromCache);
-			if (!uncaughtException) {
-				fetchTenantKeyMetric.success(`Successfully retrieved tenant keys.`);
-			} else {
-				fetchTenantKeyMetric.error(
-					`Error trying to retrieve tenant keys.`,
-					uncaughtException,
-				);
-			}
 		}
 	}
 
@@ -490,9 +523,9 @@ export class TenantManager {
 			keyName === KeyName.key2
 				? { secondaryKey: encryptedNewTenantKey }
 				: { key: encryptedNewTenantKey };
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
-		await collection.update({ _id: tenantId }, updateKey, null);
+		await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantsCollection.update({ _id: tenantId }, updateKey, null),
+		);
 
 		return tenantKeys;
 	}
@@ -616,10 +649,9 @@ export class TenantManager {
 		tenantId: string,
 		includeDisabledTenant = false,
 	): Promise<ITenantDocument> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
-
-		const found = await collection.findOne({ _id: tenantId });
+		const found = await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantsCollection.findOne({ _id: tenantId }),
+		);
 		if (!found || (found.disabled && !includeDisabledTenant)) {
 			return null;
 		}
@@ -633,10 +665,9 @@ export class TenantManager {
 	 * Retrieves all the raw database tenant documents
 	 */
 	private async getAllTenantDocuments(includeDisabledTenant = false): Promise<ITenantDocument[]> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
-
-		const allFound = await collection.findAll();
+		const allFound = await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantsCollection.findAll(),
+		);
 
 		allFound.forEach((found) => {
 			this.attachDefaultsToTenantDocument(found);
@@ -652,24 +683,27 @@ export class TenantManager {
 	 * If no scheduledDeletionTime is provided the tenant is only soft-deleted.
 	 */
 	public async deleteTenant(tenantId: string, scheduledDeletionTime?: Date): Promise<void> {
-		const db = await this.mongoManager.getDatabase();
-		const collection = db.collection<ITenantDocument>(this.collectionName);
 		const softDelete = !scheduledDeletionTime || scheduledDeletionTime.getTime() > Date.now();
 		if (softDelete) {
 			const query = {
 				_id: tenantId,
 				disabled: false,
 			};
-			await collection.update(
-				query,
-				{
-					disabled: true,
-					scheduledDeletionTime: scheduledDeletionTime?.toJSON(),
-				},
-				null,
+
+			await this.runWithDatabaseRequestCounter(async () =>
+				this.tenantsCollection.update(
+					query,
+					{
+						disabled: true,
+						scheduledDeletionTime: scheduledDeletionTime?.toJSON(),
+					},
+					null,
+				),
 			);
 		} else {
-			await collection.deleteOne({ _id: tenantId });
+			await this.runWithDatabaseRequestCounter(async () =>
+				this.tenantsCollection.deleteOne({ _id: tenantId }),
+			);
 		}
 		// invalidate cache
 		await this.deleteKeyFromCache(tenantId);
@@ -699,22 +733,80 @@ export class TenantManager {
 			  };
 	}
 
+	private async runWithCacheRequestCounter<T>(api: () => Promise<T>) {
+		this.storageRequestApiCounter.incrementCounter(StorageRequestMetric.CacheRequestStarted);
+		try {
+			const result = await api();
+			this.storageRequestApiCounter.incrementCounter(
+				StorageRequestMetric.CacheRequestCompleted,
+			);
+			return result;
+		} catch (error) {
+			this.storageRequestApiCounter.incrementCounter(StorageRequestMetric.CacheError);
+			throw error;
+		}
+	}
+
+	private async runWithDatabaseRequestCounter<T>(api: () => Promise<T>) {
+		this.storageRequestApiCounter.incrementCounter(StorageRequestMetric.DatabaseRequestStarted);
+		try {
+			const result = await api();
+			this.storageRequestApiCounter.incrementCounter(
+				StorageRequestMetric.DatabaseRequestCompleted,
+			);
+			return result;
+		} catch (error) {
+			this.storageRequestApiCounter.incrementCounter(StorageRequestMetric.DatabaseError);
+			throw error;
+		}
+	}
+
 	private async getKeyFromCache(tenantId: string): Promise<string> {
-		return this.cache?.get(`tenantKeys:${tenantId}`);
+		try {
+			const cachedKey = await this.runWithCacheRequestCounter(async () =>
+				this.cache?.get(`tenantKeys:${tenantId}`),
+			);
+
+			if (cachedKey == null) {
+				this.fetchTenantKeyApiCounter.incrementCounter(
+					FetchTenantKeyMetric.NotFoundInCache,
+				);
+			} else {
+				this.fetchTenantKeyApiCounter.incrementCounter(
+					FetchTenantKeyMetric.RetrieveFromCacheSucess,
+				);
+			}
+			return cachedKey;
+		} catch (error) {
+			Lumberjack.error(`Error trying to retreive tenant keys from the cache.`, error);
+			this.fetchTenantKeyApiCounter.incrementCounter(
+				FetchTenantKeyMetric.RetrieveFromCacheError,
+			);
+			throw error;
+		}
 	}
 
 	private async deleteKeyFromCache(tenantId: string): Promise<boolean> {
-		return this.cache?.delete(`tenantKeys:${tenantId}`);
+		return this.runWithCacheRequestCounter(async () =>
+			this.cache?.delete(`tenantKeys:${tenantId}`),
+		);
 	}
 
 	private async setKeyInCache(tenantId: string, value: IEncryptedTenantKeys): Promise<boolean> {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		try {
-			await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value));
-			Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
+			await this.runWithCacheRequestCounter(async () =>
+				this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value)),
+			);
+			this.fetchTenantKeyApiCounter.incrementCounter(
+				FetchTenantKeyMetric.SetKeyInCacheSuccess,
+			);
 			return true;
 		} catch (error) {
 			Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);
+			this.fetchTenantKeyApiCounter.incrementCounter(
+				FetchTenantKeyMetric.SetKeyInCacheFailure,
+			);
 			return false;
 		}
 	}

@@ -68,7 +68,7 @@ function packageMayChooseToPublishToNPM(name: string): boolean {
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
 function packageMayChooseToPublishToInternalFeedOnly(name: string): boolean {
-	return name.startsWith("@fluid-internal/") || name.startsWith("@fluid-msinternal/");
+	return name.startsWith("@fluid-internal/");
 }
 
 /**
@@ -100,7 +100,6 @@ function packageIsFluidPackage(name: string): boolean {
 		name.startsWith("@fluid-example/") ||
 		name.startsWith("@fluid-experimental/") ||
 		name.startsWith("@fluid-internal/") ||
-		name.startsWith("@fluid-msinternal/") ||
 		name.startsWith("@fluid-tools/") ||
 		name === "fluid-framework" ||
 		name === "fluidframework-docs" ||

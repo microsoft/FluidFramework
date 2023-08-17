@@ -16,7 +16,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
@@ -110,11 +110,11 @@ describe("Data Store Creation Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: globalRegistry,
 				on: (event, listener) => {},
-				logger: new TelemetryNullLogger(),
+				logger: createChildLogger(),
 				clientDetails: {},
 			} as ContainerRuntime;
 			const summarizerNode = createRootSummarizerNodeWithGC(
-				new TelemetryNullLogger(),
+				createChildLogger(),
 				(() => {}) as unknown as SummarizeInternalFn,
 				0,
 				0,

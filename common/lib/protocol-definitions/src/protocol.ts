@@ -287,15 +287,19 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 	additionalContent: string;
 }
 
-export interface ISignalMessage {
+/**
+ * Common interface between incoming and outgoing signals
+ */
+export interface ISignalMessageBase {
 	/**
-	 * The client ID that submitted the message.
-	 * For server generated messages the clientId will be null.
+	 * Signal content
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	clientId: string | null;
-
 	content: unknown;
+
+	/**
+	 * Signal type
+	 */
+	type?: string;
 
 	/**
 	 * Counts the number of signals sent by the client
@@ -306,6 +310,28 @@ export interface ISignalMessage {
 	 * Sequence number that indicates when the signal was created in relation to the delta stream
 	 */
 	referenceSequenceNumber?: number;
+}
+
+/**
+ * Interface for signals sent by the server to clients
+ */
+export interface ISignalMessage extends ISignalMessageBase {
+	/**
+	 * The client ID that submitted the message.
+	 * For server generated messages the clientId will be null.
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	clientId: string | null;
+}
+
+/**
+ * Interface for signals sent by clients to the server when submit_signals_v2 is enabled
+ */
+export interface ISentSignalMessage extends ISignalMessageBase {
+	/**
+	 * When specified, the signal is only sent to the provided client id
+	 */
+	targetClientId?: string;
 }
 
 export interface IUploadedSummaryDetails {

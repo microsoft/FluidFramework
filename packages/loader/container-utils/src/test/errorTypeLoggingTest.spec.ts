@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ChildLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { GenericError, DataCorruptionError } from "../error";
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
@@ -19,7 +19,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 	describe("Send and receive GenericError instances", () => {
 		it("Send and receive a GenericError with no attached error.", () => {
 			const testError = new GenericError("genericError");
-			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -36,7 +36,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 		// Dangling error objects of any type will be ignored (see constructor):
 		it("Send and receive a GenericError with a dangling error of any type.", () => {
 			const testError = new GenericError("genericError", "placeholder");
-			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -52,7 +52,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 		it("Send and receive a GenericError with a dangling error of object type.", () => {
 			const testErrorObj = new Error("some error");
 			const testError = new GenericError("genericError", testErrorObj);
-			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -76,7 +76,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 				message2: "message2",
 				exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
 			});
-			mockLogger.sendErrorEvent({ eventName: "A" }, testError);
+			mockLogger.toTelemetryLogger().sendErrorEvent({ eventName: "A" }, testError);
 			assert(
 				mockLogger.matchEvents([
 					{
@@ -97,9 +97,12 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 		});
 	});
 
-	describe("Send errors using a ChildLogger", () => {
+	describe("Send errors using a logger from createChildLogger", () => {
 		it("Send and receive a GenericError.", () => {
-			const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
+			const childLogger = createChildLogger({
+				logger: mockLogger,
+				namespace: "errorTypeTestNamespace",
+			});
 			const testError = new GenericError("genericError");
 			childLogger.sendErrorEvent({ eventName: "A" }, testError);
 			assert(

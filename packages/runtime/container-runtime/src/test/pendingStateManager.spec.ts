@@ -7,8 +7,15 @@ import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { PendingStateManager } from "../pendingStateManager";
+import Deque from "double-ended-queue";
+import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
+import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { SequencedContainerRuntimeMessage } from "../containerRuntime";
+
+type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
+	initialMessages: Deque<IPendingMessageNew>;
+};
 
 describe("Pending State Manager", () => {
 	describe("Rollback", () => {
@@ -279,7 +286,8 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Local state processing", () => {
-		function createPendingStateManager(pendingStates): any {
+		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -292,11 +300,32 @@ describe("Pending State Manager", () => {
 				},
 				{ pendingStates },
 				undefined /* logger */,
-			);
+			) as any;
 		}
 
+		describe("Future op compat behavior", () => {
+			it("pending op roundtrip", async () => {
+				const pendingStateManager = createPendingStateManager([]);
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
+				};
+
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(futureRuntimeMessage),
+					0,
+					undefined,
+					undefined,
+				);
+				pendingStateManager.processPendingLocalMessage(
+					futureRuntimeMessage as SequencedContainerRuntimeMessage,
+				);
+			});
+		});
+
 		describe("Constructor conversion", () => {
-			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor
+			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor (AB#4763)
 			describe("deserialized content", () => {
 				it("Empty local state", () => {
 					{
@@ -371,90 +400,8 @@ describe("Pending State Manager", () => {
 			});
 		});
 
-		it("getLocalState writes new flush format", async () => {
-			const pendingStateManager = createPendingStateManager([
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: true },
-					content: '{"type":"component"}',
-				},
-				{ type: "message", referenceSequenceNumber: 0, content: '{"type":"component"}' },
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: false },
-					content: '{"type":"component"}',
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: true },
-					content: '{"type":"component"}',
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					opMetadata: { batch: false },
-					content: '{"type":"component"}',
-				},
-				{ type: "message", referenceSequenceNumber: 0, content: '{"type":"component"}' },
-			]);
-
-			await pendingStateManager.applyStashedOpsAt(0);
-
-			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: true },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: { batch: false },
-					content: undefined,
-					messageType: "component",
-				},
-				{
-					type: "message",
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					content: undefined,
-					messageType: "component",
-				},
-			]);
-		});
-
-		// TODO: change to new format in "2.0.0-internal.6.0.0" (AB#3826)
-		it("getLocalState writes old message format", async () => {
+		// TODO: remove when we only read new format in "2.0.0-internal.7.0.0" (AB#4763)
+		it("getLocalState writes new message format", async () => {
 			const pendingStateManager = createPendingStateManager([
 				{ type: "message", messageType: "component" },
 				{ type: "message", content: '{"type":"component"}' },
@@ -467,30 +414,28 @@ describe("Pending State Manager", () => {
 
 			await pendingStateManager.applyStashedOpsAt(0);
 
-			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
+			assert.deepStrictEqual(pendingStateManager.getLocalState()?.pendingStates, [
 				{
 					type: "message",
-					messageType: "component",
-					content: undefined,
+					content: '{"type":"component"}',
+					localOpMetadata: undefined,
+					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
+				},
+				{
+					type: "message",
+					content: '{"type":"component"}',
 					localOpMetadata: undefined,
 				},
 				{
 					type: "message",
-					messageType: "component",
-					content: undefined,
+					content: '{"type": "component", "contents": {"prop1": "value"}}',
 					localOpMetadata: undefined,
 				},
 				{
 					type: "message",
-					messageType: "component",
-					content: { prop1: "value" },
+					content: '{"type":"component","contents":{"prop1":"value"}}',
 					localOpMetadata: undefined,
-				},
-				{
-					type: "message",
-					messageType: "component",
-					content: { prop1: "value" },
-					localOpMetadata: undefined,
+					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
 				},
 			]);
 		});

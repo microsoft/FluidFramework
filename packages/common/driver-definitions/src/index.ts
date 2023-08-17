@@ -37,7 +37,6 @@ export {
 	DriverHeader,
 	IContainerPackageInfo,
 	IDriverHeader,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 	IUrlResolver,
 } from "./urlResolver";

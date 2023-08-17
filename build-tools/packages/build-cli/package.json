@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.22.0",
+	"version": "0.23.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,8 +32,8 @@
 		"build:readme": "fluid-readme generate readme --multi",
 		"build:test": "tsc --project ./test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
-		"clean:manifest": "rimraf oclif.manifest.json",
+		"clean": "rimraf --glob \"dist\" \"lib\" \"oclif.manifest.json\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean:manifest": "rimraf --glob \"oclif.manifest.json\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -93,6 +93,7 @@
 		"inquirer": "^8.2.5",
 		"jssm": "^5.89.2",
 		"jssm-viz-cli": "^5.89.2",
+		"latest-version": "^5.1.0",
 		"minimatch": "^7.4.6",
 		"npm-check-updates": "^16.10.15",
 		"oclif": "^3.9.1",
@@ -120,6 +121,7 @@
 		"@types/inquirer": "^8.2.6",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.53",
+		"@types/prettier": "^2.7.3",
 		"@types/prompts": "^2.4.4",
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",
@@ -183,6 +185,7 @@
 	"pnpm": {
 		"updateConfig": {
 			"ignoreDependencies": [
+				"latest-version",
 				"read-pkg-up",
 				"type-fest",
 				"typescript"

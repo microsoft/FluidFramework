@@ -7,7 +7,8 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { IntervalType, SequenceInterval } from "../intervals";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).

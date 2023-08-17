@@ -22,12 +22,13 @@ export class DeltaManager implements IDeltaService {
 		documentId: string,
 		from: number,
 		to: number,
+		caller?: string,
 	): Promise<ISequencedDocumentMessage[]> {
 		const baseUrl = `${this.internalAlfredUrl}`;
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
 		const resultP = restWrapper.get<ISequencedDocumentMessage[]>(
 			`/deltas/${tenantId}/${documentId}`,
-			{ from, to },
+			{ from, to, caller },
 		);
 		return resultP;
 	}

@@ -13,7 +13,6 @@ export {
 export {
 	TreeSchema,
 	FieldSchema,
-	GlobalFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
