@@ -80,6 +80,9 @@ export interface IGenericError extends IErrorBase {
  * Error indicating an API is being used improperly resulting in an invalid operation.
  */
 export interface IUsageError extends IErrorBase {
+	/**
+	 * {@inheritDoc IErrorBase.errorType}
+	 */
 	readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
