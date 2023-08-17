@@ -1,3 +1,6 @@
+#!/bin/bash
+set -eux -o pipefail
+
 # This script is used in the "npm pack" step in our CI build pipelines.
 # It runs (p)npm pack for all packages and sorts them into scoped/unscoped folders.
 # It also outputs a packagePublishOrder.txt file that contains the order that the packages should be published in.
@@ -16,10 +19,8 @@ if [[ "$PUBLISH_NON_SCOPED" == "True" ]]; then
 fi
 
 if [ -f ".releaseGroup" ]; then
-  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack"
-
-  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/scoped/ ./*.tgz"
-
+  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack" && \
+  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/scoped/ ./*.tgz" && \
   flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $STAGING_PATH/test-files/ ./*test-files.tar)"
 
   # This saves a list of the packages in the working directory in topological order to a temporary file.
