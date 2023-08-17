@@ -108,7 +108,7 @@ async function checkScreenshotDiff(screenshotFilePath: string): Promise<boolean>
 }
 
 /**
- * Dynamically generates a test suite covering all stories.
+ * Dynamically and asynchronously generates a test suite covering all stories.
  *
  * Generated structure is hierarchical, and results in 1 test per screenshot scenario (story + theme + viewport), such
  * that we can succeed or fail on a per screenshot basis.
