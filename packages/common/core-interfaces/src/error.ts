@@ -54,7 +54,10 @@ export interface IErrorBase extends Partial<Error> {
 	 * of getTelemetryProperties. When logging, consider fetching it that way rather than straight from this field.
 	 */
 	readonly message: string;
-	/** See Error.name */
+
+	/**
+	 * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/name | Error.name}
+	 */
 	readonly name?: string;
 
 	/**
