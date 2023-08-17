@@ -21,6 +21,7 @@ import {
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	ChangesetLocalId,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -47,7 +48,6 @@ import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./g
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
-	ChangesetLocalId,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
 import { fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { CrossFieldManager } from "./crossFieldQueries";
-import { ChangesetLocalId, NodeChangeset, RevisionInfo } from "./modularChangeTypes";
+import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
