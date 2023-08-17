@@ -322,9 +322,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("modify and delete => delete", () => {
-		const changeset: TestChangeset = [
-			{ type: "Delete", id: brand(0), count: 1, changes: childChange1 },
-		];
+		const changeset = [Mark.delete(1, brand(0), { changes: childChange1 })];
 		const mark: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
