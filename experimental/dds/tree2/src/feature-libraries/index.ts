@@ -99,7 +99,6 @@ import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
 export {
-	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
 	ModularEditBuilder,
@@ -139,7 +138,6 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	BrandedFieldKind,
-	ChangeAtomId,
 } from "./modular-schema";
 
 export {

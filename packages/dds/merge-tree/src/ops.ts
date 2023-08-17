@@ -12,7 +12,13 @@ export enum ReferenceType {
 	 * Allows this reference to be located using the `findTile` API on merge-tree.
 	 */
 	Tile = 0x1,
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	NestBegin = 0x2,
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	NestEnd = 0x4,
 	RangeBegin = 0x10,
 	RangeEnd = 0x20,
