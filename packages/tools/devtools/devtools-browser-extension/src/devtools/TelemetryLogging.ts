@@ -10,7 +10,6 @@ import { ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 
 const fetchHttpXHROverride: IXHROverride = {
 	sendPOST: (payload, oncomplete, sync) => {
-		console.log("Original payload data:\n", payload.data);
 		const telemetryRequestData =
 			typeof payload.data === "string"
 				? payload.data
