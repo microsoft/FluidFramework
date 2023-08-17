@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -79,7 +79,7 @@
 		"events": "^3.1.0",
 		"lz4js": "^0.2.0",
 		"sorted-btree": "^1.8.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
@@ -96,7 +96,7 @@
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/sinon": "^7.0.13",
-		"@types/uuid": "^8.3.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

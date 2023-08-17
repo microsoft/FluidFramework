@@ -33,6 +33,20 @@ export interface ICancellationToken<T> {
 /* Similar to AbortSignal, but using promise instead of events */
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
+/**
+ * Data required to update internal tracking state after receiving a Summary Ack.
+ */
+export interface IRefreshSummaryAckOptions {
+	/** Handle from the ack's summary op. */
+	readonly proposalHandle: string | undefined;
+	/** Handle from the summary ack just received */
+	readonly ackHandle: string;
+	/** Reference sequence number from the ack's summary op */
+	readonly summaryRefSeq: number;
+	/** Telemetry logger to which telemetry events will be forwarded. */
+	readonly summaryLogger: ITelemetryLoggerExt;
+}
+
 export interface ISummarizerInternalsProvider {
 	/** Encapsulates the work to walk the internals of the running container to generate a summary */
 	submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
@@ -87,22 +101,12 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 export interface ISummarizeOptions {
 	/** True to generate the full tree with no handle reuse optimizations; defaults to false */
 	readonly fullTree?: boolean;
-	/** True to ask the server what the latest summary is first; defaults to false */
+	/**
+	 * True to ask the server what the latest summary is first; defaults to false
+	 *
+	 * @deprecated - Summarize will not refresh latest snapshot state anymore.
+	 */
 	readonly refreshLatestAck?: boolean;
-}
-
-/**
- * Data required to update internal tracking state after receiving a Summary Ack.
- */
-export interface IRefreshSummaryAckOptions {
-	/** Handle from the ack's summary op. */
-	readonly proposalHandle: string | undefined;
-	/** Handle from the summary ack just received */
-	readonly ackHandle: string;
-	/** Reference sequence number from the ack's summary op */
-	readonly summaryRefSeq: number;
-	/** Telemetry logger to which telemetry events will be forwarded. */
-	readonly summaryLogger: ITelemetryLoggerExt;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {

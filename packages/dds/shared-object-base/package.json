@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-object-base",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Fluid base class for shared distributed data structures",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -73,7 +73,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",

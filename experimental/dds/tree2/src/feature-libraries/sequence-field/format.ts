@@ -4,14 +4,15 @@
  */
 
 import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import { ITreeCursorSynchronous, JsonableTree, RevisionTag, RevisionTagSchema } from "../../core";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
-	NodeChangeset,
-} from "../modular-schema";
+	ITreeCursorSynchronous,
+	JsonableTree,
+	RevisionTag,
+	RevisionTagSchema,
+} from "../../core";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../modular-schema";
 
 // TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
 // Currently, types in this file are largely used for both.
@@ -96,12 +97,32 @@ export interface HasLineage {
 
 export const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
 
+export interface IdRange {
+	id: ChangesetLocalId;
+	count: CellCount;
+}
+
+export const IdRange = Type.Object({
+	id: ChangesetLocalIdSchema,
+	count: CellCount,
+});
+
 /**
  * @alpha
  */
-export interface CellId extends ChangeAtomId, HasLineage {}
+export interface CellId extends ChangeAtomId, HasLineage {
+	/**
+	 * List of all cell local IDs (including this one) which were adjacent and emptied in the same revision as this one.
+	 * The IDs are ordered in sequence order, and are used for determining the relative position of cells.
+	 * `CellId` objects may share an array, so this should not be mutated.
+	 */
+	adjacentCells?: IdRange[];
+}
 
-export const CellId = Type.Composite([EncodedChangeAtomId, HasLineage]);
+export const CellId = Type.Composite(
+	[EncodedChangeAtomId, HasLineage, Type.Object({ adjacentCells: Type.Optional(IdRange) })],
+	noAdditionalProps,
+);
 
 /**
  * Mark which targets a range of existing cells instead of creating new cells.
@@ -215,9 +236,18 @@ export const MoveIn = Type.Composite(
 	noAdditionalProps,
 );
 
+export interface InverseAttachFields {
+	detachIdOverride?: ChangeAtomId;
+}
+
+export const InverseAttachFields = Type.Object({
+	detachIdOverride: Type.Optional(EncodedChangeAtomId),
+});
+
 export interface Delete<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
-		HasMarkFields<TNodeChange> {
+		HasMarkFields<TNodeChange>,
+		InverseAttachFields {
 	type: "Delete";
 	id: ChangesetLocalId;
 }
@@ -227,6 +257,7 @@ export const Delete = <Schema extends TSchema>(tNodeChange: Schema) =>
 		[
 			HasRevisionTag,
 			HasMarkFields(tNodeChange),
+			InverseAttachFields,
 			Type.Object({
 				type: Type.Literal("Delete"),
 				id: ChangesetLocalIdSchema,
@@ -300,7 +331,8 @@ export const ReturnTo = Type.Composite(
 export interface ReturnFrom<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
-		HasMarkFields<TNodeChange> {
+		HasMarkFields<TNodeChange>,
+		InverseAttachFields {
 	type: "ReturnFrom";
 
 	/**
@@ -315,6 +347,7 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 			HasRevisionTag,
 			HasMoveId,
 			HasMarkFields(tNodeChange),
+			InverseAttachFields,
 			Type.Object({
 				type: Type.Literal("ReturnFrom"),
 				isDstConflicted: OptionalTrue,

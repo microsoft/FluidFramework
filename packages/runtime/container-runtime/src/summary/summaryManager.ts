@@ -18,7 +18,14 @@ import {
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IThrottler } from "../throttler";
 import { ISummarizerClientElection } from "./summarizerClientElection";
-import { ISummarizer, SummarizerStopReason } from "./summarizerTypes";
+import {
+	EnqueueSummarizeResult,
+	IEnqueueSummarizeOptions,
+	IOnDemandSummarizeOptions,
+	ISummarizeResults,
+	ISummarizer,
+	SummarizerStopReason,
+} from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 import { Summarizer } from "./summarizer";
 
@@ -408,21 +415,21 @@ export class SummaryManager implements IDisposable {
 		return startWithInitialDelay;
 	}
 
-	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.summarizer === undefined) {
 			throw Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
-		return this.summarizer.summarizeOnDemand(...args);
-	};
+		return this.summarizer.summarizeOnDemand(options);
+	}
 
-	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.summarizer === undefined) {
 			throw Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
-		return this.summarizer.enqueueSummarize(...args);
-	};
+		return this.summarizer.enqueueSummarize(options);
+	}
 
 	public dispose() {
 		this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
