@@ -41,7 +41,7 @@
 		"test": "npm run test:mocha",
 		"test:bail": "npm run test:mocha:bail",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
-		"test:coverage": "c8 npm run test",
+		"test:coverage": "c8 npm run test:mocha:report",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
 		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:multireport -- --timeout 4s",
