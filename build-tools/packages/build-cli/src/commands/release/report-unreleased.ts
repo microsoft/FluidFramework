@@ -20,7 +20,7 @@ interface IBuildDetails {
 }
 
 export class GenerateManifestFile extends BaseCommand<typeof GenerateManifestFile> {
-	static description = `As all builds are published to build feed, this command picks the latest successful build against the provided branch name and generates dev manifest file.`;
+	static description = `Creates a release report for the most recent build published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report always uses the "caret" report format.`;
 
 	static flags = {
 		repoName: Flags.string({
@@ -193,7 +193,7 @@ async function generateManifestObjectForDevReleases(
 
 		return undefined;
 	} catch (error) {
-		console.error("Error generating manifest object:", error);
+		log?.errorLog("Error generating manifest object:", error);
 		return undefined;
 	}
 }
@@ -221,7 +221,7 @@ async function writeManifestToFile(
 
 		return new_manifest_filename;
 	} catch (error) {
-		console.error("Error writing manifest to file:", error);
+		log?.errorLog("Error writing manifest to file:", error);
 		return undefined;
 	}
 }

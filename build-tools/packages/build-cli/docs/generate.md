@@ -7,7 +7,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
-* [`flub generate manifest`](#flub-generate-manifest)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate buildVersion`
@@ -141,29 +140,6 @@ EXAMPLES
   By default example and private packages are excluded, but they can be included with --all.
 
     $ flub generate changeset --all
-```
-
-## `flub generate manifest`
-
-As all builds are published to build feed, this command picks the latest successful build against the provided branch name and generates dev manifest file.
-
-```
-USAGE
-  $ flub generate manifest -o <value> -p <value> -t <value> -s <value> [-v | --quiet]
-
-FLAGS
-  -o, --organization=<value>  (required) Organization name
-  -p, --project=<value>       (required) Project name
-  -s, --sourceBranch=<value>  (required) Branch name across which the dev release manifest should be generated.
-  -t, --ado_pat=<value>       (required) ADO Personal Access Token
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
-
-DESCRIPTION
-  As all builds are published to build feed, this command picks the latest successful build against the provided branch
-  name and generates dev manifest file.
 ```
 
 ## `flub generate upcoming`

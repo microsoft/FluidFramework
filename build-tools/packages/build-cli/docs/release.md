@@ -201,7 +201,7 @@ EXAMPLES
 
 ## `flub release report-unreleased`
 
-As all builds are published to build feed, this command picks the latest successful build against the provided branch name and generates dev manifest file.
+Creates a release report for the most recent build published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report always uses the "caret" report format.
 
 ```
 USAGE
@@ -209,7 +209,7 @@ USAGE
 
 FLAGS
   --ado_pat=<value>       (required) ADO Personal Access Token
-  --repoName=<value>      (required) Organization name
+  --repoName=<value>      (required) Repository name
   --sourceBranch=<value>  (required) Branch name across which the dev release manifest should be generated.
 
 LOGGING FLAGS
@@ -217,6 +217,7 @@ LOGGING FLAGS
   --quiet        Disable all logging.
 
 DESCRIPTION
-  As all builds are published to build feed, this command picks the latest successful build against the provided branch
-  name and generates dev manifest file.
+  Creates a release report for the most recent build published to an internal ADO feed. It does this by finding the most
+  recent build in ADO produced from a provided branch, and creates a report using that version. The report always uses
+  the "caret" report format.
 ```
