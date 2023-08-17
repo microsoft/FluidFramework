@@ -454,7 +454,7 @@ export class RunningSummarizer implements IDisposable {
 			if (this.summarizingLock === undefined) {
 				this.trySummarizeOnce(
 					// summarizeProps
-					{ reason: "lastSummary" },
+					{ summarizeReason: "lastSummary" },
 					// ISummarizeOptions, using defaults: { refreshLatestAck: false, fullTree: false }
 					{},
 				);
@@ -596,10 +596,9 @@ export class RunningSummarizer implements IDisposable {
 				this.beforeSummaryAction();
 			},
 			async () => {
-				await (this.mc.config.getBoolean("Fluid.Summarizer.TryDynamicRetries")
+				return this.mc.config.getBoolean("Fluid.Summarizer.TryDynamicRetries")
 					? this.trySummarizeWithRetries(reason, cancellationToken)
-					: this.trySummarizeWithStaticAttempts(reason, cancellationToken));
-				this.stopSummarizerCallback("failToSummarize");
+					: this.trySummarizeWithStaticAttempts(reason, cancellationToken);
 			},
 			() => {
 				this.afterSummaryAction();
@@ -638,7 +637,7 @@ export class RunningSummarizer implements IDisposable {
 
 			const summarizeOptions = attempts[summaryAttemptPhase];
 			const summarizeProps: ISummarizeTelemetryProperties = {
-				reason,
+				summarizeReason: reason,
 				summaryAttempts,
 				summaryAttemptsPerPhase,
 				summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
@@ -678,6 +677,7 @@ export class RunningSummarizer implements IDisposable {
 				await delay(delaySeconds * 1000);
 			}
 		}
+		this.stopSummarizerCallback("failToSummarize");
 	}
 
 	/**
@@ -697,10 +697,13 @@ export class RunningSummarizer implements IDisposable {
 		// such scenarios are very unlikely and even if it happens, it would resolve when a new summarizer starts over.
 		let maxAttempts = defaultMaxAttempts;
 		let currentAttempt = 0;
-		const done = true;
+		let success = false;
+		let done = false;
 		do {
 			if (this.cancellationToken.cancelled) {
-				return;
+				success = true;
+				done = true;
+				break;
 			}
 
 			currentAttempt++;
@@ -709,7 +712,7 @@ export class RunningSummarizer implements IDisposable {
 				fullTree: false,
 			};
 			const summarizeProps: ISummarizeTelemetryProperties = {
-				reason,
+				summarizeReason: reason,
 				summaryAttempts: currentAttempt,
 				...summarizeOptions,
 			};
@@ -722,7 +725,9 @@ export class RunningSummarizer implements IDisposable {
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			if (ackNackResult.success) {
-				return;
+				success = true;
+				done = true;
+				break;
 			}
 
 			const submitSummaryResult = await summarizeResult.summarySubmitted;
@@ -742,7 +747,9 @@ export class RunningSummarizer implements IDisposable {
 
 			// If the failure doesn't have "retryAfterSeconds" or the max number of attempts have been done, we're done.
 			if (retryAfterSeconds === undefined || currentAttempt >= maxAttempts) {
-				return;
+				success = false;
+				done = true;
+				break;
 			}
 
 			this.mc.logger.sendPerformanceEvent({
@@ -754,7 +761,12 @@ export class RunningSummarizer implements IDisposable {
 				...summarizeProps,
 			});
 			await delay(retryAfterSeconds * 1000);
-		} while (done);
+		} while (!done);
+
+		// If summarization isn't successful, stop the summarizer.
+		if (!success) {
+			this.stopSummarizerCallback("failToSummarize");
+		}
 	}
 
 	/** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
@@ -774,7 +786,7 @@ export class RunningSummarizer implements IDisposable {
 		}
 
 		const result = this.trySummarizeOnce(
-			{ reason: `onDemand/${reason}` },
+			{ summarizeReason: `onDemand/${reason}` },
 			options,
 			this.cancellationToken,
 			resultsBuilder,
@@ -837,7 +849,7 @@ export class RunningSummarizer implements IDisposable {
 		// Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
 		this.enqueuedSummary = undefined;
 		this.trySummarizeOnce(
-			{ reason: `enqueuedSummary/${reason}` },
+			{ summarizeReason: `enqueuedSummary/${reason}` },
 			options,
 			this.cancellationToken,
 			resultsBuilder,

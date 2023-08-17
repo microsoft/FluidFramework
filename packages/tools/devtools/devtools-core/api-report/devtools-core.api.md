@@ -190,6 +190,7 @@ export namespace DevtoolsDisposed {
 
 // @internal
 export interface DevtoolsFeatureFlags {
+    opLatencyTelemetry?: boolean;
     telemetry?: boolean;
 }
 

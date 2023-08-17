@@ -24,6 +24,10 @@ export interface DevtoolsFeatureFlags {
 	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid telemetry events.
 	 */
 	telemetry?: boolean;
+	/**
+	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid Op Latency telemetry events
+	 */
+	opLatencyTelemetry?: boolean;
 }
 
 /**

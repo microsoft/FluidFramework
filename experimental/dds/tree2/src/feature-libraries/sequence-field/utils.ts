@@ -4,12 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import { brand, fail, getFirstFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
 import {
 	addCrossFieldQuery,
-	ChangeAtomId,
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -72,9 +70,7 @@ export function isActiveReattach<TNodeChange>(
 }
 
 // TODO: Name is misleading
-export function isConflictedReattach<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> {
+export function isConflictedReattach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
 	return isReattach(mark) && isReattachConflicted(mark);
 }
 
@@ -105,7 +101,7 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	);
 }
 
-export function getCellId(
+export function getInputCellId(
 	mark: Mark<unknown>,
 	revision: RevisionTag | undefined,
 ): CellId | undefined {
@@ -113,10 +109,37 @@ export function getCellId(
 	if (cellId === undefined) {
 		return undefined;
 	}
-	if (cellId.revision === undefined && revision !== undefined) {
-		return { ...cellId, revision };
+	return inlineCellIdRevision(cellId, revision);
+}
+
+export function getOutputCellId(
+	mark: Mark<unknown>,
+	revision: RevisionTag | undefined,
+): CellId | undefined {
+	if (markEmptiesCells(mark)) {
+		assert(isDetachMark(mark), "Only detaches can empty cells");
+		return getDetachCellId(mark, revision);
+	} else if (markFillsCells(mark)) {
+		return undefined;
 	}
-	return cellId;
+
+	return getInputCellId(mark, revision);
+}
+
+export function getDetachCellId(mark: Detach<unknown>, revision: RevisionTag | undefined): CellId {
+	return getOverrideCellId(mark) ?? { revision, localId: mark.id };
+}
+
+function getOverrideCellId(mark: Detach<unknown>): CellId | undefined {
+	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
+		? mark.detachIdOverride
+		: undefined;
+}
+
+function inlineCellIdRevision(cellId: CellId, revision: RevisionTag | undefined): CellId {
+	return cellId.revision === undefined && revision !== undefined
+		? { ...cellId, revision }
+		: cellId;
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -125,12 +148,17 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 		clone.content = [...clone.content];
 	}
 	if (clone.cellId !== undefined) {
-		clone.cellId = { ...clone.cellId };
-		if (clone.cellId.lineage !== undefined) {
-			clone.cellId.lineage = [...clone.cellId.lineage];
-		}
+		clone.cellId = cloneCellId(clone.cellId);
 	}
 	return clone;
+}
+
+export function cloneCellId(id: CellId): CellId {
+	const cloned = { ...id };
+	if (cloned.lineage !== undefined) {
+		cloned.lineage = [...cloned.lineage];
+	}
+	return cloned;
 }
 
 function areSameLineage(
@@ -352,6 +380,14 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 	}
 
 	if (!areMergeableCellIds(lhs.cellId, lhs.count, rhs.cellId)) {
+		return false;
+	}
+
+	if (
+		isDetachMark(lhs) &&
+		isDetachMark(rhs) &&
+		!areMergeableCellIds(getOverrideCellId(lhs), lhs.count, getOverrideCellId(rhs))
+	) {
 		return false;
 	}
 
@@ -859,25 +895,22 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 		case "Delete": {
 			const mark1 = { ...mark, count: length };
 			const id2: ChangesetLocalId = brand((mark.id as number) + length);
-			const mark2 =
-				mark.cellId !== undefined
-					? {
-							...mark,
-							id: id2,
-							count: remainder,
-							cellId: splitDetachEvent(mark.cellId, length),
-					  }
-					: {
-							...mark,
-							id: id2,
-							count: remainder,
-					  };
+			const mark2 = { ...mark, id: id2, count: remainder };
+			const mark2Delete = mark2 as Delete<T>;
+			if (mark2Delete.cellId !== undefined) {
+				mark2Delete.cellId = splitDetachEvent(mark2Delete.cellId, length);
+			}
 
+			if (mark2Delete.detachIdOverride !== undefined) {
+				mark2Delete.detachIdOverride = splitDetachEvent(
+					mark2Delete.detachIdOverride,
+					length,
+				);
+			}
 			return [mark1, mark2];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			// TODO: Handle detach index for ReturnFrom
 			const mark1 = { ...mark, count: length };
 			const mark2 = {
 				...mark,
@@ -886,6 +919,16 @@ export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number)
 			};
 			if (mark.cellId !== undefined) {
 				(mark2 as Detach).cellId = splitDetachEvent(mark.cellId, length);
+			}
+
+			if (mark2.type === "ReturnFrom") {
+				const mark2Return = mark2 as ReturnFrom<T>;
+				if (mark2Return.detachIdOverride !== undefined) {
+					mark2Return.detachIdOverride = splitDetachEvent(
+						mark2Return.detachIdOverride,
+						length,
+					);
+				}
 			}
 			return [mark1, mark2];
 		}
