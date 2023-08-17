@@ -4,8 +4,6 @@
 
 ```ts
 
-// Warning: (ae-incompatible-release-tags) The symbol "FluidObject" is marked as @public, but its signature references "FluidObjectProviderKeys" which is marked as @internal
-//
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
@@ -14,8 +12,14 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
-// @internal
+// @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @public
+export interface IDisposable {
+    dispose(error?: Error): void;
+    readonly disposed: boolean;
+}
 
 // @public @deprecated
 export interface IFluidCodeDetails {
@@ -112,6 +116,11 @@ export interface IFluidRunnable {
     stop(reason?: string): void;
 }
 
+// @public
+export interface ILoggingError extends Error {
+    getTelemetryProperties(): ITelemetryProperties;
+}
+
 // @public @deprecated (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
@@ -183,6 +192,68 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public @deprecated
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ITaggedTelemetryPropertyType {
+    // (undocumented)
+    tag: string;
+    // (undocumented)
+    value: TelemetryEventPropertyType;
+}
+
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryGenericEvent extends ITelemetryProperties {
+    // (undocumented)
+    category?: TelemetryEventCategory;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryLogger extends ITelemetryBaseLogger {
+    send(event: ITelemetryBaseEvent): void;
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+}
+
+// @public
+export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
+    // (undocumented)
+    duration?: number;
+}
+
+// @public
+export interface ITelemetryProperties {
+    // (undocumented)
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+}
+
+// @public
+export type TelemetryEventCategory = "generic" | "error" | "performance";
+
+// @public
+export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // (No @packageDocumentation comment for this package)
 

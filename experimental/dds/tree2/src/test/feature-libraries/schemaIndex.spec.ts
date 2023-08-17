@@ -33,7 +33,7 @@ describe("SchemaIndex", () => {
 
 	it("accepts valid data", () => {
 		// TODO: should test way more cases, and check results are correct.
-		const cases = ['{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": []}'];
+		const cases = ['{"version": "1.0.0", "treeSchema": [], "rootFieldSchema": {"kind": "x" }}'];
 		for (const data of cases) {
 			codec.decode(data);
 		}
@@ -48,8 +48,8 @@ describe("SchemaIndex", () => {
 			'{"version": "2.0.0"}',
 			'{"version": "1.0.0"}',
 			'{"version": "2.0.0"}',
-			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [{}]}',
-			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [], "extraField": 0}',
+			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": []}',
+			'{"version": "1.0.0", "treeSchema": [], "extraField": 0}',
 		];
 		for (const data of badCases) {
 			assert.throws(() => codec.decode(data));

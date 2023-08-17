@@ -55,10 +55,7 @@ jobs:
           steps:
           - download: current
             artifact: pack
-          - task: UseNode@1
-            displayName: Use Node 16.x
-            inputs:
-              version: 16.x
+          - template: include-use-node-version.yml
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}

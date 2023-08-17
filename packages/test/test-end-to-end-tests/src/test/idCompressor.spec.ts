@@ -13,7 +13,6 @@ import {
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-	createSummarizerWithTestConfig,
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
@@ -682,11 +681,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 	it("Summary includes IdCompressor when enabled", async () => {
 		const container = await createContainer(enabledConfig);
-		const { summarizer } = await createSummarizerWithTestConfig(
-			provider,
-			container,
-			enabledConfig,
-		);
+		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
 		const { summaryTree } = await summarizeNow(summarizer);
 
 		assert(
@@ -711,11 +706,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer } = await createSummarizerWithTestConfig(
-			provider,
-			container,
-			enabledConfig,
-		);
+		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
 		idCompressor.generateCompressedId();
@@ -742,11 +733,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer } = await createSummarizerWithTestConfig(
-			provider,
-			container,
-			enabledConfig,
-		);
+		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
 
@@ -775,7 +762,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer: summarizer1 } = await createSummarizerWithTestConfig(
+		const { summarizer: summarizer1 } = await createSummarizer(
 			provider,
 			container,
 			enabledConfig,

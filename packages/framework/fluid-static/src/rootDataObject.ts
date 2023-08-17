@@ -139,7 +139,7 @@ export class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
- * Container code that provides a single {@link RootDataObject}.
+ * Container code that provides a single {@link IRootDataObject}.
  *
  * @remarks
  *

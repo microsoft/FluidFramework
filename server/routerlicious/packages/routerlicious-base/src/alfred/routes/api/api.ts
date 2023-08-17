@@ -21,6 +21,7 @@ import {
 	verifyToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
@@ -122,14 +123,13 @@ export function create(
 				content: blobData.content,
 				encoding: "base64",
 			};
-			uploadBlob(uri, requestBody).then(
-				(data: git.ICreateBlobResponse) => {
+			uploadBlob(uri, requestBody)
+				.then((data: git.ICreateBlobResponse) => {
 					response.status(200).json(data);
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					response.status(400).end(err.toString());
-				},
-			);
+				});
 		},
 	);
 
@@ -167,8 +167,12 @@ function sendJoin(
 	};
 
 	const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	producer.send([joinMessage], tenantId, documentId);
+	producer.send([joinMessage], tenantId, documentId).catch((err) => {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+		};
+		Lumberjack.error("Error sending join message to producer", lumberjackProperties, err);
+	});
 }
 
 function sendLeave(
@@ -178,8 +182,12 @@ function sendLeave(
 	producer: core.IProducer,
 ) {
 	const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	producer.send([leaveMessage], tenantId, documentId);
+	producer.send([leaveMessage], tenantId, documentId).catch((err) => {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+		};
+		Lumberjack.error("Error sending leave message to producer", lumberjackProperties, err);
+	});
 }
 
 function sendOp(
@@ -200,8 +208,12 @@ function sendOp(
 			JSON.stringify(content),
 			clientSequenceNumber++,
 		);
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		producer.send([opMessage], tenantId, documentId);
+		producer.send([opMessage], tenantId, documentId).catch((err) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(documentId, tenantId),
+			};
+			Lumberjack.error("Error sending op to producer", lumberjackProperties, err);
+		});
 	}
 }
 
@@ -239,15 +251,15 @@ async function verifyTokenWrapper(
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
-		return Promise.reject(new Error("Missing access token in request header."));
+		throw new Error("Missing access token in request header.");
 	}
 	const tenantId = getParam(request.params, "tenantId");
 	if (!tenantId) {
-		return Promise.reject(new Error("Missing tenantId in request."));
+		throw new Error("Missing tenantId in request.");
 	}
 	const documentId = getParam(request.params, "id");
 	if (!documentId) {
-		return Promise.reject(new Error("Missing documentId in request."));
+		throw new Error("Missing documentId in request.");
 	}
 	const claims = validateTokenClaims(token, documentId, tenantId);
 	if (isTokenExpiryEnabled) {
@@ -261,7 +273,7 @@ async function verifyTokenWrapper(
 			claims.jti,
 		);
 		if (tokenRevoked) {
-			return Promise.reject(new Error("Permission denied. Token is revoked."));
+			throw new Error("Permission denied. Token is revoked.");
 		}
 	}
 
@@ -289,11 +301,11 @@ async function checkDocumentExistence(
 	const tenantId = getParam(request.params, "tenantId");
 	const documentId = getParam(request.params, "id");
 	if (!tenantId || !documentId) {
-		return Promise.reject(new Error("Invalid tenant or document id"));
+		throw new Error("Invalid tenant or document id");
 	}
 	const document = await storage.getDocument(tenantId, documentId);
 	if (!document || document.scheduledDeletionTime) {
-		return Promise.reject(new Error("Cannot access document marked for deletion"));
+		throw new Error("Cannot access document marked for deletion");
 	}
 }
 

@@ -22,15 +22,15 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 		summary: api.ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public get repositoryUrl(): string {

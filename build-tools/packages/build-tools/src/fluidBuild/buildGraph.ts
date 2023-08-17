@@ -280,6 +280,14 @@ export class BuildPackage {
 		}
 		return this.buildP;
 	}
+
+	public async getLockFileHash() {
+		const lockfile = this.pkg.getLockFilePath();
+		if (lockfile) {
+			return this.buildContext.fileHashCache.getFileHash(lockfile);
+		}
+		throw new Error("Lock file not found");
+	}
 }
 
 export class BuildGraph {

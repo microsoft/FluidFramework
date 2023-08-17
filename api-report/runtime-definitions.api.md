@@ -9,7 +9,7 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -25,11 +25,11 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @public
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -140,7 +140,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     request(request: IRequest): Promise<IResponse>;
     submitSignal(type: string, content: any): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public (undocumented)
@@ -156,8 +156,16 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
     readonly entryPoint?: IFluidHandle<FluidObject>;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
+    request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -209,7 +217,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     // @deprecated
@@ -220,9 +228,13 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;
@@ -280,7 +292,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public (undocumented)

@@ -10,10 +10,10 @@ import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { ConfigTypes, IConfigProviderBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import {
 	excludeChannelContentDdsFactories,
@@ -104,7 +104,7 @@ export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: TelemetryLogger,
+	logger?: ITelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IResolvedUrl = {

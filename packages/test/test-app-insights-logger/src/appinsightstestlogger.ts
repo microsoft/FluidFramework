@@ -5,7 +5,7 @@
 
 import * as appinsights from "applicationinsights";
 
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
 export class AppInsightsTestLogger implements ITelemetryBufferedLogger {

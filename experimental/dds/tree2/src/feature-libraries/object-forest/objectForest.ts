@@ -17,7 +17,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Value,
 	Delta,
 	UpPath,
 	Anchor,
@@ -160,14 +159,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				moves.delete(id);
 				const countMoved = moveIn(index, toAttach);
 				assert(countMoved === count, 0x369 /* counts must match */);
-			},
-			onSetValue: (value: Value): void => {
-				const node = cursor.getNode();
-				if (value !== undefined) {
-					node.value = value;
-				} else {
-					delete node.value;
-				}
 			},
 			enterNode: (index: number): void => cursor.enterNode(index),
 			exitNode: (index: number): void => cursor.exitNode(),

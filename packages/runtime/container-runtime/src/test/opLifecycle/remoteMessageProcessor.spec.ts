@@ -21,9 +21,8 @@ describe("RemoteMessageProcessor", () => {
 	): ISequencedDocumentMessage => {
 		const newMessage = { ...message };
 		newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
-		newMessage.metadata.history =
-			message.metadata.history === undefined ? [] : message.metadata.history;
-		newMessage.metadata.history.push(value);
+		(newMessage.metadata as { history?: string[] }).history ??= [];
+		(newMessage.metadata as { history: string[] }).history.push(value);
 		return newMessage;
 	};
 
@@ -99,7 +98,10 @@ describe("RemoteMessageProcessor", () => {
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
 
-		assert.deepStrictEqual(result.metadata.history, ["decompress", "reconstruct"]);
+		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
+			"decompress",
+			"reconstruct",
+		]);
 		assert.deepStrictEqual(result.contents, message.contents.contents);
 	});
 
@@ -145,7 +147,7 @@ describe("RemoteMessageProcessor", () => {
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
 
-		assert.deepStrictEqual(result.metadata.history, [
+		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
 			"decompress",
 			"reconstruct",
 			"decompress",

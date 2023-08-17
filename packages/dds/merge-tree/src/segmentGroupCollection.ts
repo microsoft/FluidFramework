@@ -34,15 +34,6 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.pop ? this.segmentGroups.pop()?.data : undefined;
 	}
 
-	/**
-	 * @deprecated - method is unused and will be removed.
-	 */
-	public clear() {
-		while (!this.segmentGroups.empty) {
-			this.segmentGroups.remove(this.segmentGroups.first);
-		}
-	}
-
 	public copyTo(segment: ISegment) {
 		walkList(this.segmentGroups, (sg) =>
 			segment.segmentGroups.enqueueOnCopy(sg.data, this.segment),

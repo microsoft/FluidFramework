@@ -129,7 +129,6 @@ module.exports = {
 				"@types/url-parse",
 				"fake-indexeddb",
 				"json-stringify-safe",
-				"tinylicious",
 				"yargs",
 			],
 			packages: ["**"],

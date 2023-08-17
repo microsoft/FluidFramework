@@ -23,10 +23,9 @@ import {
 	IFluidDevtools as IDevtoolsBase,
 	initializeDevtools as initializeDevtoolsBase,
 	DevtoolsLogger,
-	VisualizeSharedObject,
 	HasContainerKey,
 } from "@fluid-experimental/devtools-core";
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
@@ -54,20 +53,7 @@ export interface DevtoolsProps {
 	 */
 	initialContainers?: ContainerDevtoolsProps[];
 
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under each Container's
-	 * {@link @fluidframework/fluid-static#IFluidContainer.initialObjects}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * Any visualizer configurations specified here will take precedence over system defaults.
-	 * They can also be overridden on a per-Container basis when registering individual Containers.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
 
 /**
@@ -81,20 +67,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 */
 	container: IFluidContainer;
 
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under each Container's
-	 * {@link @fluidframework/fluid-static#IFluidContainer.initialObjects}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * Any visualizer configurations specified here will take precedence over system defaults, as well as any
-	 * provided when initializing the Devtools.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
 
 /**
@@ -202,7 +175,7 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
 ): ContainerDevtoolsPropsBase | undefined {
-	const { container, containerKey, dataVisualizers } = containerProps;
+	const { container, containerKey } = containerProps;
 	const fluidContainer = container as FluidContainer;
 
 	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
@@ -215,18 +188,11 @@ function mapContainerProps(
 		container: innerContainer,
 		containerKey,
 		containerData: container.initialObjects,
-		dataVisualizers,
 	};
 }
 
 // Convenience re-exports. Need to cover the things we export form this package,
 // so consumers don't need to import from this one *and* devtools-core.
 // DevtoolsLogger is necessary for consumers to set up Devtools.
-// DevtoolsProps and ContainerDevtoolsProps both use VisualizeSharedObject.
 // ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
-export {
-	DevtoolsLogger,
-	VisualizeSharedObject,
-	ContainerKey,
-	HasContainerKey,
-} from "@fluid-experimental/devtools-core";
+export { DevtoolsLogger, ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";

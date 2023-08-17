@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 
 /**
  * Property types that can be logged.

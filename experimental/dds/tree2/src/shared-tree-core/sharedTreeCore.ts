@@ -196,7 +196,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		});
 
 		this.summarizables = [
-			new EditManagerSummarizer(runtime, this.editManager, options),
+			new EditManagerSummarizer(this.editManager, options),
 			...summarizables,
 		];
 		assert(
@@ -284,7 +284,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const commit = parseCommit(message.contents, this.changeCodec);
+		const commit = parseCommit(message.contents as JsonCompatibleReadOnly, this.changeCodec);
 
 		this.editManager.addSequencedChange(
 			commit,
@@ -345,7 +345,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
-		const gcNodes: IGarbageCollectionData["gcNodes"] = {};
+		const gcNodes: IGarbageCollectionData["gcNodes"] = super.getGCData(fullGC).gcNodes;
 		for (const s of this.summarizables) {
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];

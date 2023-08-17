@@ -43,7 +43,7 @@ export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): 
 		generateLocalNodeKey: () => {
 			assert(
 				idCompressor !== undefined,
-				"Runtime IdCompressor must be available to generate local node keys",
+				0x6e4 /* Runtime IdCompressor must be available to generate local node keys */,
 			);
 			return brand(idCompressor.generateCompressedId());
 		},
@@ -51,7 +51,7 @@ export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): 
 		localizeNodeKey: (key: StableNodeKey) => {
 			assert(
 				idCompressor !== undefined,
-				"Runtime IdCompressor must be available to convert node keys",
+				0x6e5 /* Runtime IdCompressor must be available to convert node keys */,
 			);
 			return brand(idCompressor.recompress(key));
 		},
@@ -59,7 +59,7 @@ export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): 
 		stabilizeNodeKey: (key: LocalNodeKey) => {
 			assert(
 				idCompressor !== undefined,
-				"Runtime IdCompressor must be available to convert node keys",
+				0x6e6 /* Runtime IdCompressor must be available to convert node keys */,
 			);
 			return brand(
 				// TODO: The assert below is required for type safety but is maybe slow
@@ -98,8 +98,8 @@ class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	private createMockStableId(offset: number): StableId {
-		assert(offset >= 0, "UUID offset may not be negative");
-		assert(offset < 281_474_976_710_656, "UUID offset must be at most 16^12");
+		assert(offset >= 0, 0x6e7 /* UUID offset may not be negative */);
+		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
 		return assertIsStableId(
 			`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
 		);

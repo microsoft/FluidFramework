@@ -15,6 +15,7 @@ import prompts from "prompts";
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
 import GenerateUpcomingCommand from "./upcoming";
+import { ReleaseGroup } from "../../releaseGroups";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
@@ -284,9 +285,6 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			`${response.summary.trim()}\n\n${response.description}`,
 		);
 		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
-
-		// Update the UPCOMING.md file
-		await GenerateUpcomingCommand.run(["--releaseGroup", "client", "--releaseType", bumpType]);
 
 		this.logHr();
 		this.log(`Created new changeset: ${chalk.green(changesetPath)}`);

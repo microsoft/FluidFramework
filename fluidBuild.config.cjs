@@ -77,9 +77,18 @@ module.exports = {
 			directory: "build-tools",
 			defaultInterdependencyRange: "workspace:*",
 		},
-		"server": "server/routerlicious",
-		"gitrest": "server/gitrest",
-		"historian": "server/historian",
+		"server": {
+			directory: "server/routerlicious",
+			defaultInterdependencyRange: "workspace:~",
+		},
+		"gitrest": {
+			directory: "server/gitrest",
+			defaultInterdependencyRange: "^",
+		},
+		"historian": {
+			directory: "server/historian",
+			defaultInterdependencyRange: "^",
+		},
 
 		// Independent packages
 		"build": "common/build",
@@ -139,6 +148,7 @@ module.exports = {
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
+				["fluid-build", "@fluidframework/build-tools"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work

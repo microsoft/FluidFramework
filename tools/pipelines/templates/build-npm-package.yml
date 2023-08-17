@@ -241,11 +241,7 @@ stages:
                 fi
               fi
 
-        # Install
-        - task: UseNode@1
-          displayName: Use Node 16.x
-          inputs:
-            version: 16.x
+        - template: include-use-node-version.yml
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml
@@ -451,6 +447,7 @@ stages:
           - task: Npm@1
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
@@ -489,12 +486,6 @@ stages:
               displayName: 'npm authenticate (internal feed)'
               inputs:
                 workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
-
-            - task: npmAuthenticate@0
-              displayName: 'npm authenticate (office feed)'
-              inputs:
-                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
-                customEndpoint: 'Office Packages - Readonly'
 
             - task: Bash@3
               displayName: 'List report.json and .npmrc'

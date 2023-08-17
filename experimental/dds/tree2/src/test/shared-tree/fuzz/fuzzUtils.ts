@@ -7,11 +7,13 @@ import {
 	fieldSchema,
 	SchemaData,
 	rootFieldKey,
-	rootFieldKeySymbol,
+	moveToDetachedField,
+	Anchor,
 } from "../../../core";
-import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
+import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree } from "../../../shared-tree";
+import { namedTreeSchema } from "../../utils";
 
 export const initialTreeState: JsonableTree = {
 	type: brand("Node"),
@@ -31,17 +33,31 @@ export const initialTreeState: JsonableTree = {
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
+	name: "TestValue",
+	mapFields: fieldSchema(FieldKinds.sequence),
 });
 
 export const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+	rootFieldSchema,
 };
 
 export const onCreate = (tree: ISharedTree) => {
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor(initialTreeState));
 };
+
+export function getFirstAnchor(tree: ISharedTree): Anchor {
+	// building the anchor for anchor stability test
+	const cursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, cursor);
+	cursor.enterNode(0);
+	cursor.getPath();
+	cursor.firstField();
+	cursor.getFieldKey();
+	cursor.enterNode(1);
+	const anchor = cursor.buildAnchor();
+	cursor.free();
+	return anchor;
+}

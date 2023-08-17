@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 
 import { ContainerDevtoolsProps } from "./ContainerDevtools";
 import { ContainerKey } from "./CommonInterfaces";

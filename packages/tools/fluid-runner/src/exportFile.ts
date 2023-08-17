@@ -122,9 +122,11 @@ export async function createContainerAndExecute(
 		});
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-			const result = await fluidFileConverter.execute(container, options);
-			container.close();
-			return result;
+			try {
+				return await fluidFileConverter.execute(container, options);
+			} finally {
+				container.dispose();
+			}
 		});
 	};
 

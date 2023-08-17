@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -23,10 +23,12 @@ import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLogger } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export interface IChannel extends IFluidLoadable {
@@ -37,8 +39,6 @@ export interface IChannel extends IFluidLoadable {
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly id: string;
     isAttached(): boolean;
-    // @deprecated (undocumented)
-    readonly owner?: string;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
@@ -92,7 +92,7 @@ export interface IDeltaHandler {
 }
 
 // @public
-export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable, Partial<IProvideFluidDataStoreRegistry> {
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)
@@ -115,16 +115,20 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     readonly idCompressor?: IIdCompressor;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal(type: string, content: any): void;
-    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }
 

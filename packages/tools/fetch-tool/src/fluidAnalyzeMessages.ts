@@ -6,6 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	ISequencedDocumentMessage,
+	ISummaryAck,
+	ISummaryNack,
 	ISummaryProposal,
 	MessageType,
 	TreeEntry,
@@ -425,7 +427,8 @@ class SummaryAnalyzer implements IMessageAnalyzer {
 			this.lastSummaryOp = message.sequenceNumber;
 		}
 		if (message.type === MessageType.SummaryAck || message.type === MessageType.SummaryNack) {
-			const contents: ISummaryProposal = message.contents.summaryProposal;
+			const contents: ISummaryProposal = (message.contents as ISummaryAck | ISummaryNack)
+				.summaryProposal;
 			const distance = message.sequenceNumber - contents.summarySequenceNumber;
 			if (distance > this.maxResponse) {
 				this.maxResponse = distance;
@@ -550,13 +553,17 @@ function processOp(
 			}
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
-				if (!chunkMap.has(runtimeMessage.clientId)) {
-					chunkMap.set(runtimeMessage.clientId, {
+				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+				if (!chunkMap.has(runtimeMessage.clientId as string)) {
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+					chunkMap.set(runtimeMessage.clientId as string, {
 						chunks: new Array<string>(chunk.totalChunks),
 						totalSize: 0,
 					});
 				}
-				const value = chunkMap.get(runtimeMessage.clientId);
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+				const value = chunkMap.get(runtimeMessage.clientId as string);
 				assert(value !== undefined, 0x2b8 /* "Chunk should be set in map" */);
 				const chunks = value.chunks;
 				const chunkIndex = chunk.chunkId - 1;
@@ -778,7 +785,9 @@ function processQuorumMessages(
 		}
 	} else {
 		// message.clientId can be null
-		session = sessionsInProgress.get(message.clientId);
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		session = sessionsInProgress.get(message.clientId as string);
 		if (session === undefined) {
 			session = sessionsInProgress.get(noClientName);
 			assert(!!session, 0x1b8 /* "Bad session state for processing quorum messages" */);

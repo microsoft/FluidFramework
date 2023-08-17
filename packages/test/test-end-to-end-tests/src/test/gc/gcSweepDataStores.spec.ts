@@ -27,7 +27,7 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { delay } from "@fluidframework/common-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -85,9 +85,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		return createSummarizer(
 			provider,
 			container,
+			{
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 			summaryVersion,
-			gcOptions,
-			mockConfigProvider(settings),
 		);
 	};
 	const summarize = async (summarizer: ISummarizer) => {
@@ -189,7 +191,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				// Sending an op from a datastore substantiated from the request pattern should fail!
 				assert.throws(
 					() => summarizerDataObject._root.set("send", "op"),
-					(error) => {
+					(error: IErrorBase) => {
 						const correctErrorType = error.errorType === "dataCorruptionError";
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is deleted`) === true;
@@ -218,7 +220,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				// Sending a signal from a testDataObject substantiated from the request pattern should fail!
 				assert.throws(
 					() => summarizerDataObject._runtime.submitSignal("send", "signal"),
-					(error) => {
+					(error: IErrorBase) => {
 						const correctErrorType = error.errorType === "dataCorruptionError";
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is deleted`) === true;
