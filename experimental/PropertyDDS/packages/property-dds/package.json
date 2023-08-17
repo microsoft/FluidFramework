@@ -32,7 +32,7 @@
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/**/*.spec.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
 		"test:mocha-ts": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=\"./src/test/tsconfig.json\" mocha --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --timeout 1500000",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
