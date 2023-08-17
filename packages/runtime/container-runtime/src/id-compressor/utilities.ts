@@ -194,5 +194,5 @@ export function addNumericUuids(a: NumericUuid, b: NumericUuid): NumericUuid {
  * @param message - Message to be printed if assertion fails.
  */
 export function fail(message: string): never {
-	throw new Error(message);
+	assert(false, message);
 }
