@@ -5,14 +5,13 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	ChangesetLocalId,
 	IdAllocator,
 	idAllocatorFromMaxId,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertMarkListEqual,

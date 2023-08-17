@@ -79,7 +79,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/synthesize": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
