@@ -18,6 +18,7 @@ import {
 	SharedTreeFactory,
 	valueSymbol,
 } from "@fluid-experimental/tree2";
+import { TaskManager } from "@fluidframework/task-manager";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -44,6 +45,13 @@ export class AppData extends DataObject {
 	private readonly sharedTreeKey = "shared-tree";
 
 	/**
+	 * Key in the app's `rootMap` under which the TaskManager object is stored.
+	 *
+	 * TaskManager is not suppored in the visualizer, and this WILL break the visualizer.
+	 */
+	private readonly taskManagerKey = "task-manager";
+
+	/**
 	 * Key in the app's `rootMap` under which the SharedDirectory object is stored.
 	 */
 	private readonly initialObjectsDirKey = "rootMap";
@@ -54,6 +62,10 @@ export class AppData extends DataObject {
 	private _text: SharedString | undefined;
 	private _counter: SharedCounter | undefined;
 	private _emojiMatrix: SharedMatrix | undefined;
+	/**
+	 * TODO: Remove once the bug is fixed.
+	 */
+	private _taskManager: TaskManager | undefined;
 
 	public get text(): SharedString {
 		if (this._text === undefined) {
@@ -83,6 +95,16 @@ export class AppData extends DataObject {
 		return this._sharedTree;
 	}
 
+	/**
+	 * TODO: Remove once the bug is fixed.
+	 */
+	public get taskManager(): TaskManager {
+		if (this._taskManager === undefined) {
+			throw new Error("The SharedMatrix was not initialized correctly");
+		}
+		return this._taskManager;
+	}
+
 	public getRootObject(): Record<string, IFluidLoadable> {
 		return this._initialObjects;
 	}
@@ -99,6 +121,10 @@ export class AppData extends DataObject {
 			SharedCounter.getFactory(),
 			SharedMatrix.getFactory(),
 			SharedCell.getFactory(),
+			/**
+			 * TODO: Remove once the bug is fixed.
+			 */
+			TaskManager.getFactory(),
 			new SharedTreeFactory(),
 		],
 		{},
@@ -112,6 +138,10 @@ export class AppData extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 		const counter = SharedCounter.create(this.runtime, this.sharedCounterKey);
+		/**
+		 * TODO: Remove once the bug is fixed.
+		 */
+		const taskManager = TaskManager.create(this.runtime, this.taskManagerKey);
 		const sharedTree = this.generateSharedTree(this.runtime);
 
 		const emojiMatrix = SharedMatrix.create(this.runtime, this.emojiMatrixKey);
@@ -130,6 +160,11 @@ export class AppData extends DataObject {
 		this.root.set(this.sharedCounterKey, counter.handle);
 		this.root.set(this.emojiMatrixKey, emojiMatrix.handle);
 		this.root.set(this.sharedTreeKey, sharedTree.handle);
+		/**
+		 * TODO: Remove once the bug is fixed.
+		 */
+
+		this.root.set(this.taskManagerKey, taskManager.handle);
 
 		// Also set a couple of primitives for testing the debug view
 		this.root.set("numeric-value", 42);
@@ -154,6 +189,12 @@ export class AppData extends DataObject {
 			?.get();
 		this._emojiMatrix = await this.root
 			.get<IFluidHandle<SharedMatrix>>(this.emojiMatrixKey)
+			?.get();
+		/**
+		 * TODO: Remove once the bug is fixed.
+		 */
+		this._taskManager = await this.root
+			.get<IFluidHandle<TaskManager>>(this.taskManagerKey)
 			?.get();
 		const sharedTree = await this.root
 			.get<IFluidHandle<ISharedTree>>(this.sharedTreeKey)
