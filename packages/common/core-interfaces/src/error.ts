@@ -37,11 +37,17 @@ export const FluidErrorTypes = {
 export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
 
 /**
- * Base interface for all errors and warnings emitted by the Fluid Framework.
+ * Base interface for all errors and warnings emitted the container.
+ *
+ * @remarks
+ *
+ * We are migrating these errors from container-definitions to core-interfaces. Once fully migrated,
+ * this will be a base interface for all errors and warnings emitted by the Fluid Framework. Currently
+ * only the container layer is using IErrorBase. Runtime and others will follow soon.
  */
 export interface IErrorBase extends Partial<Error> {
 	/**
-	 * A type tag differentiating kinds of errors emitted by the Fluid Framework.
+	 * A type tag differentiating kinds of errors emitted by the container.
 	 *
 	 * @see See {@link FluidErrorTypes#genericError} for some common examples.
 	 * - container
