@@ -87,6 +87,9 @@ export interface IUsageError extends IErrorBase {
  * Warning emitted when requests to storage are being throttled
  */
 export interface IThrottlingWarning extends IErrorBase {
+	/**
+	 * {@inheritDoc IErrorBase.errorType}
+	 */
 	readonly errorType: typeof FluidErrorTypes.throttlingError;
 	readonly retryAfterSeconds: number;
 }
