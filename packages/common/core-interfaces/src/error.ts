@@ -56,7 +56,10 @@ export interface IErrorBase extends Partial<Error> {
 	readonly message: string;
 	/** See Error.name */
 	readonly name?: string;
-	/** See Error.stack */
+
+	/**
+	 * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/stack | Error.stack}
+	 */
 	readonly stack?: string;
 	/**
 	 * Returns all properties of this error object that are either safe to log
