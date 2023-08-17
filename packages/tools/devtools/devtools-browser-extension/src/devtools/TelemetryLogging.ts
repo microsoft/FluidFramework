@@ -142,7 +142,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	}
 
 	/**
-	 * Shut down the underlying sink, which includes flushing any pending events in the queue.
+	 * Flush the underlying sink, forcing any events that haven't been sent to the remote endpoint to be sent immediately.
 	 */
 	public flush(): void {
 		if (this.enabled) {
