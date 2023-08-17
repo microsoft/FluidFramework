@@ -1,3 +1,6 @@
+#!/bin/bash
+set -eux -o pipefail
+
 # This script is used in the "npm pack" step in our CI build pipelines.
 # It runs (p)npm pack for all packages and sorts them into scoped/unscoped folders.
 # It also outputs a packagePublishOrder.txt file that contains the order that the packages should be published in.
