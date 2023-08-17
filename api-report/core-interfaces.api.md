@@ -141,7 +141,6 @@ export interface IFluidRunnable {
 export interface IGenericError extends IErrorBase {
     // (undocumented)
     error?: any;
-    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
@@ -280,7 +279,6 @@ export interface ITelemetryProperties {
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
-    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
@@ -288,7 +286,6 @@ export interface IThrottlingWarning extends IErrorBase {
 
 // @public
 export interface IUsageError extends IErrorBase {
-    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
