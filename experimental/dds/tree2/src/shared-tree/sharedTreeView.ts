@@ -386,7 +386,7 @@ export class SharedTreeView implements ISharedTreeView {
 				const newRepairData = new Map<ChangeAtomId, FieldKey>();
 				const delta = this.changeFamily.intoDelta(change, (changeId: ChangeAtomId) => {
 					const fieldKey = this.repairDataIndex.getFieldKey(
-						`${this.repairDataCounter++}`,
+						brand(`${this.repairDataCounter++}`),
 					);
 					newRepairData.set(changeId, fieldKey);
 					return fieldKey;

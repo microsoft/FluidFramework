@@ -4,7 +4,13 @@
  */
 
 import { ChangeAtomId, ChangesetLocalId, FieldKey, RevisionTag } from "../core";
-import { SizedNestedMap, brand } from "../util";
+import { Brand, SizedNestedMap, brand } from "../util";
+
+/**
+ * ID used to create a detached field key for a removed subtree.
+ * @alpha
+ */
+export type RemovedTreeId = Brand<string, "tree.RemovedTreeId">;
 
 /**
  * The tree index records detached field ids and associates them with a change atom ID.
@@ -22,7 +28,7 @@ export class TreeIndex {
 	 * Returns a field key for the given ID. Should be unique for this index.
 	 * This does not save the field key on the index. To do so, call {@link setFieldKey}.
 	 */
-	public getFieldKey(id: string): FieldKey {
+	public getFieldKey(id: RemovedTreeId): FieldKey {
 		return brand(`${this.name}-${id}`);
 	}
 
