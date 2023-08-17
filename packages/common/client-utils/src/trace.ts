@@ -8,6 +8,8 @@ import { performance } from "./indexNode";
 /**
  * Helper class for tracing performance of events
  * Time measurements are in milliseconds as a floating point with a decimal
+ *
+ * @internal
  */
 export class Trace {
 	public static start(): Trace {
@@ -34,6 +36,8 @@ export class Trace {
 
 /**
  * Event in a performance trace including time elapsed.
+ *
+ * @internal
  */
 export interface ITraceEvent {
 	/**

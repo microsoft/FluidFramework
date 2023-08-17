@@ -11,7 +11,7 @@ import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventTransformer } from '@fluidframework/common-definitions';
 import { TransformedEvent } from '@fluidframework/common-definitions';
 
-// @public
+// @internal
 export class Buffer extends Uint8Array {
     // (undocumented)
     static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
@@ -21,15 +21,15 @@ export class Buffer extends Uint8Array {
     toString(encoding?: string): string;
 }
 
-// @public
+// @internal
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
-// @public
+// @internal
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
 
-// @public
+// @internal
 export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
     constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
     // (undocumented)
@@ -44,45 +44,45 @@ export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> i
     protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
 }
 
-// @public
+// @internal
 export const fromBase64ToUtf8: (input: string) => string;
 
-// @public
+// @internal
 export const fromUtf8ToBase64: (input: string) => string;
 
-// @public
+// @internal
 export function gitHashFile(file: IsoBuffer): Promise<string>;
 
-// @public
+// @internal
 export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const IsoBuffer: typeof Buffer;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type IsoBuffer = Buffer;
 
-// @public
+// @internal
 export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
 
-// @public
+// @internal
 export interface ITraceEvent {
     readonly duration: number;
     readonly tick: number;
     readonly totalTimeElapsed: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
-// @public
+// @internal
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
 
-// @public
+// @internal
 export const toUtf8: (input: string, encoding: string) => string;
 
-// @public
+// @internal
 export class Trace {
     protected constructor(startTick: number);
     // (undocumented)
@@ -95,7 +95,7 @@ export class Trace {
     trace(): ITraceEvent;
 }
 
-// @public
+// @internal
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor();
     // (undocumented)
@@ -114,13 +114,13 @@ export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventPro
     readonly removeListener: TypedEventTransform<this, TEvent>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> & IEventTransformer<TThis, TEvent & IEvent> & TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
-// @public
+// @internal
 export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer;
 
-// @public
+// @internal
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
 
 // (No @packageDocumentation comment for this package)

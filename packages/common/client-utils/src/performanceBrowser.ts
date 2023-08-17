@@ -5,4 +5,7 @@
 
 import { IsomorphicPerformance } from "./performanceIsomorphic";
 
+/**
+ * @internal
+ */
 export const performance: IsomorphicPerformance = globalThis.performance;

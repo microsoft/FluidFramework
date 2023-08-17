@@ -7,4 +7,7 @@
 import { performance as nodePerformance } from "perf_hooks";
 import { IsomorphicPerformance } from "./performanceIsomorphic";
 
+/**
+ * @internal
+ */
 export const performance: IsomorphicPerformance = nodePerformance;

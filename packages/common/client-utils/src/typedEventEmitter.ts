@@ -16,11 +16,16 @@ import {
  * string | symbol vs. string | number
  *
  * This type allow us to correctly handle either type
+ *
+ * @internal
  */
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
 	? E
 	: never;
 
+/**
+ * @internal
+ */
 export type TypedEventTransform<TThis, TEvent> =
 	// Event emitter supports some special events for the emitter itself to use
 	// this exposes those events for the TypedEventEmitter.
@@ -38,6 +43,8 @@ export type TypedEventTransform<TThis, TEvent> =
 
 /**
  * Event Emitter helper class the supports emitting typed events
+ *
+ * @internal
  */
 export class TypedEventEmitter<TEvent>
 	extends EventEmitter
