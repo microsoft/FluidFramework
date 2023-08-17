@@ -836,17 +836,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
 		let metadata: SegmentGroup | SegmentGroup[] | undefined;
+		const stashed = true;
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
-				this.applyInsertOp({ op });
+				this.applyInsertOp({ op, stashed });
 				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.REMOVE:
-				this.applyRemoveRangeOp({ op });
+				this.applyRemoveRangeOp({ op, stashed });
 				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.ANNOTATE:
-				this.applyAnnotateRangeOp({ op });
+				this.applyAnnotateRangeOp({ op, stashed });
 				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.GROUP:
@@ -1040,6 +1041,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(
 			startPos,

@@ -113,13 +113,6 @@ jobs:
       inputs:
         workingFile: ${{ parameters.testWorkspace }}/.npmrc
 
-    # Auth to Office feed
-    - task: npmAuthenticate@0
-      displayName: 'npm authenticate (office feed)'
-      inputs:
-        workingFile: ${{ parameters.testWorkspace }}/.npmrc
-        customEndpoint: 'Office Packages - Readonly'
-
     # Install test and logger package
     - task: Npm@1
       displayName: 'npm install aria logger'

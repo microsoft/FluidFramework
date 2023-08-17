@@ -12,7 +12,9 @@ import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
@@ -336,6 +338,18 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+
+// @public @deprecated
+export class TelemetryNullLogger implements ITelemetryLoggerExt {
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+    // (undocumented)
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+    // (undocumented)
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    // (undocumented)
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+}
 
 // @public
 export class ThresholdCounter {

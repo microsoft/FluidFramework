@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-core",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -185,6 +185,9 @@
 				"backCompat": false
 			},
 			"TypeAliasDeclaration_RootHandleNode": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_Edit": {
 				"backCompat": false
 			}
 		}
