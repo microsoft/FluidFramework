@@ -122,24 +122,6 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		return containerRuntime;
 	}
 
-	/**
-	 * {@inheritdoc MockContainerRuntimeFactory.getMinSeq}
-	 */
-	override getMinSeq(): number {
-		// In a reconnection case the minimum sequence number is not incremented
-		// by the server while the client is not connected.
-		let minimumSequenceNumber: number | undefined;
-		for (const [client, clientSequenceNumber] of this.minSeq) {
-			if (this.quorum.getMember(client) !== undefined) {
-				minimumSequenceNumber =
-					minimumSequenceNumber === undefined
-						? clientSequenceNumber
-						: Math.min(minimumSequenceNumber, clientSequenceNumber);
-			}
-		}
-		return minimumSequenceNumber ?? 0;
-	}
-
 	public clearOutstandingClientMessages(clientId: string) {
 		// Delete all the messages for client with the given clientId.
 		this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
