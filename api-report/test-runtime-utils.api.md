@@ -163,8 +163,6 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
     }): MockContainerRuntimeForReconnection;
-    // (undocumented)
-    getMinSeq(): number;
 }
 
 // @public
