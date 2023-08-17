@@ -60,6 +60,11 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	private readonly appInsightsCore = new AppInsightsCore();
 	private readonly postChannel: PostChannel = new PostChannel();
 
+	/**
+	 * Controls whether this class initializes and uses any necessary underlying objects that send logs to a remote
+	 * endpoint. It's only set to true when an instrumentation key is provided, so no attempts are made to issue any
+	 * requests during local development or other scenarios where a key is not passed in.
+	 */
 	private readonly enabled: boolean = false;
 
 	public constructor() {
@@ -70,12 +75,16 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 
 		// Configure App insights core to send to collector
 		const coreConfig: IExtendedConfiguration = {
-			instrumentationKey: "<KEY-GOES-HERE>",
+			// A non-empty instrumentation key needs to provided for the logger to do anything.
+			// AB#5167 tracks how to inject one at build time to keep it out of source control.
+			instrumentationKey: "",
 			endpointUrl: "https://mobile.events.data.microsoft.com/OneCollector/1.0",
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
 			extensions: [
-				this.postChannel, // Removing this as part of telemetry opt-in would be ideal
+				// Passing no channels here when the user opts out of telemetry would be ideal, completely ensuring telemetry
+				// could not be sent out at all. Could be a later improvement.
+				this.postChannel,
 			],
 			extensionConfig: {
 				[this.postChannel.identifier]: channelConfig,
@@ -88,15 +97,20 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		}
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
+	 */
 	public send(event: ITelemetryBaseEvent): void {
 		if (!this.enabled) {
 			return;
 		}
 
-		// Note: some APIs might fail if the last part of the eventName is not uppercase
+		// Note: the calls that the 1DS SDK makes to external endpoints might fail if the last part of the eventName is not uppercase
 		const category = event.category
 			? `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`
 			: "Generic";
+		// Note: "Office.Fluid" here has a connection to the Aria tenant(s) we're targetting, and the full string
+		// impacts the way the data is structured once ingested. Don't change this without proper consideration.
 		const eventType = `Office.Fluid.Devtools.${category}`;
 
 		const telemetryEvent = {
