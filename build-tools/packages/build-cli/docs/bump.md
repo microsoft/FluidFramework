@@ -5,6 +5,7 @@ Bump the version of packages, release groups, and their dependencies.
 
 * [`flub bump PACKAGE_OR_RELEASE_GROUP`](#flub-bump-package_or_release_group)
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
+* [`flub bump version`](#flub-bump-version)
 
 ## `flub bump PACKAGE_OR_RELEASE_GROUP`
 
@@ -143,4 +144,26 @@ EXAMPLES
   release ranges.
 
     $ flub bump deps server -t latest
+```
+
+## `flub bump version`
+
+Pass the right manifest file based on the type of release
+
+```
+USAGE
+  $ flub bump version -o <value> -p <value> [-v | --quiet] [-t <value>] [--bumpType <value>]
+
+FLAGS
+  -o, --organization=<value>  (required) Organization name
+  -p, --project=<value>       (required) Project name
+  -t, --ado_pat=<value>       ADO Personal Access Token
+  --bumpType=<value>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+DESCRIPTION
+  Pass the right manifest file based on the type of release
 ```
