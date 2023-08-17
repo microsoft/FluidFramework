@@ -398,7 +398,7 @@ export interface SchemaLibraryData {
  *
  * @alpha
  */
-export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
+export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
 	readonly rootFieldSchema: T;
 }
 
