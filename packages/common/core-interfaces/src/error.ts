@@ -43,7 +43,7 @@ export interface IErrorBase extends Partial<Error> {
 	/**
 	 * A type tag differentiating kinds of errors emitted by the Fluid Framework.
 	 *
-	 * @see See {@link FluidErrorTypes} for some common examples.
+	 * @see See {@link FluidErrorTypes#genericError} for some common examples.
 	 * - container
 	 * - runtime
 	 * - drivers
