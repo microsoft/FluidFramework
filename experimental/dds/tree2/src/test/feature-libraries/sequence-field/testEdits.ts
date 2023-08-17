@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangesetLocalId,
-	SequenceField as SF,
-	singleTextCursor,
-} from "../../../feature-libraries";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import {
+	ChangeAtomId,
+	ChangesetLocalId,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mintRevisionTag,
@@ -18,8 +16,6 @@ import {
 	TreeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-// eslint-disable-next-line import/no-internal-modules
-import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
