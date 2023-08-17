@@ -14,7 +14,6 @@ import {
 	TabValue,
 } from "@fluentui/react-components";
 import {
-	ContainerDevtoolsFeature,
 	ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
@@ -156,7 +155,9 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
-		supportedFeatures[ContainerDevtoolsFeature.ContainerData] === true
+		supportedFeatures.containerDataVisualization === true ||
+			// Backwards compatibility check, needed until we require at least devtools-core/devtools v2.0.0-internal.6.1.0
+			supportedFeatures["container-data"] === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);

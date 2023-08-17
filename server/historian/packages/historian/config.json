@@ -81,7 +81,8 @@
 		}
 	},
 	"restGitService": {
-		"disableGitCache": false
+		"disableGitCache": false,
+		"maxCacheableSummarySize": 100000000
 	},
 	"storageUrl": "",
 	"tokenRevocation": {

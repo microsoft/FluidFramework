@@ -64,6 +64,7 @@ export class RestGitService {
 		private readonly storageName?: string,
 		private readonly storageUrl?: string,
 		private readonly isEphemeralContainer?: boolean,
+		private readonly maxCacheableSummarySize?: number,
 	) {
 		const defaultHeaders: AxiosRequestHeaders =
 			storageName !== undefined
@@ -236,9 +237,12 @@ export class RestGitService {
 			summaryParams,
 			initial !== undefined ? { initial } : undefined,
 		);
+		// JSON.stringify is not ideal for performance here, but it is better than crashing the cache service.
+		const summarySize = JSON.stringify(summaryResponse).length;
 		if (
 			summaryParams.type === "container" &&
-			(summaryResponse as IWholeFlatSummary).trees !== undefined
+			(summaryResponse as IWholeFlatSummary).trees !== undefined &&
+			summarySize <= this.maxCacheableSummarySize
 		) {
 			// Cache the written summary for future retrieval. If this fails, next summary retrieval
 			// will receive an older version, but that is OK. Client will catch up with ops.

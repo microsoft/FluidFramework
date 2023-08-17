@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { serializeError } from "serialize-error";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
@@ -26,9 +25,10 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
-import { IAlfredTenant, promiseTimeout } from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { runnerHttpServerStop } from "../utils";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
@@ -157,39 +157,17 @@ export class AlfredRunner implements IRunner {
 		this.stopped = true;
 		Lumberjack.info("AlfredRunner.stop starting.");
 
-		try {
-			const runnerServerCloseTimeoutMs =
-				this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
-			// Close the underlying server and then resolve the runner once closed
-			await promiseTimeout(runnerServerCloseTimeoutMs, this.server.close());
-			if (caller === "uncaughtException") {
-				this.runningDeferred?.reject({
-					uncaughtException: serializeError(uncaughtException),
-				}); // reject the promise so that the runService exits the process with exit(1)
-			} else {
-				this.runningDeferred?.resolve();
-			}
-			this.runningDeferred = undefined;
-			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.success("Alfred runner stopped");
-			}
-		} catch (error) {
-			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
-			}
-			if (caller === "sigterm") {
-				this.runningDeferred?.resolve();
-			} else {
-				// uncaughtException
-				this.runningDeferred?.reject({
-					forceKill: true,
-					uncaughtException: serializeError(uncaughtException),
-					runnerStopException: serializeError(error),
-				});
-			}
-			this.runningDeferred = undefined;
-			throw error;
-		}
+		const runnerServerCloseTimeoutMs =
+			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
+
+		await runnerHttpServerStop(
+			this.server,
+			this.runningDeferred,
+			runnerServerCloseTimeoutMs,
+			this.runnerMetric,
+			caller,
+			uncaughtException,
+		);
 	}
 
 	/**
@@ -197,7 +175,10 @@ export class AlfredRunner implements IRunner {
 	 */
 	private onError(error) {
 		if (!this.runnerMetric.isCompleted()) {
-			this.runnerMetric.error("Alfred runner encountered an error in http server", error);
+			this.runnerMetric.error(
+				`${this.runnerMetric.eventName} encountered an error in http server`,
+				error,
+			);
 		}
 		if (error.syscall !== "listen") {
 			throw error;

@@ -44,7 +44,7 @@ import {
 	RootDataVisualizations,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
-import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
+import { ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
@@ -534,11 +534,14 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 */
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
-			[ContainerDevtoolsFeature.ContainerData]: this.containerData !== undefined,
-			/**
-			 * Todo: When ready to enable feature set it to this.containerData !== undefined
-			 */
-			[ContainerDevtoolsFeature.ContainerDataEditing]: false,
+			// If no container data was provided to the devtools, we cannot support data visualization.
+			"containerDataVisualization": this.containerData !== undefined,
+
+			// Required for backwards compatibility with the extension through v0.0.3
+			"container-data": this.containerData !== undefined,
+
+			// TODO: When ready to enable feature set it to this.containerData !== undefined
+			"containerDataEditing": false,
 		};
 	}
 

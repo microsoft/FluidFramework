@@ -116,11 +116,7 @@
 			"args": [
 				"bump",
 				"deps",
-				"server",
-				"-t",
-				"minor",
-				"-g",
-				"client",
+				"build-tools",
 				"--updateChecker",
 				"homegrown",
 				"--prerelease",

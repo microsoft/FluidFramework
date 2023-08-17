@@ -23,7 +23,7 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, ITenantService } from "../services";
+import { ICache, IDenyList, ITenantService } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
@@ -36,6 +36,7 @@ export function create(
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
@@ -98,6 +99,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -123,6 +125,7 @@ export function create(
 			storageName,
 			isEphemeralContainer,
 			ignoreEphemeralFlag,
+			denyList,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -141,6 +144,7 @@ export function create(
 			cache,
 			asyncLocalStorage,
 			allowDisabledTenant: true,
+			denyList,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {

@@ -44,8 +44,6 @@ import {
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
-const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
-
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -573,31 +571,15 @@ export class RunningSummarizer implements IDisposable {
 				this.beforeSummaryAction();
 			},
 			async () => {
-				const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
+				const attempts: ISummarizeOptions[] = [
 					{ refreshLatestAck: false, fullTree: false },
 					{ refreshLatestAck: true, fullTree: false },
-					{ refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
-					{ refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
 				];
 				let overrideDelaySeconds: number | undefined;
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
-				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-				let totalAttempts =
-					this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
-					defaultNumberSummarizationAttempts;
-
-				if (totalAttempts > attempts.length) {
-					this.mc.logger.sendTelemetryEvent({
-						eventName: "InvalidSummarizerAttempts",
-						attempts: totalAttempts,
-					});
-					totalAttempts = defaultNumberSummarizationAttempts;
-				} else if (totalAttempts < 1) {
-					throw new UsageError("Invalid number of attempts.");
-				}
-
-				for (let summaryAttemptPhase = 0; summaryAttemptPhase < totalAttempts; ) {
+				let summaryAttemptPhase = 0;
+				while (summaryAttemptPhase < attempts.length) {
 					if (this.cancellationToken.cancelled) {
 						return;
 					}
@@ -609,22 +591,20 @@ export class RunningSummarizer implements IDisposable {
 
 					summaryAttemptsPerPhase++;
 
-					const { delaySeconds: regularDelaySeconds = 0, ...options } =
-						attempts[summaryAttemptPhase];
-
+					const summarizeOptions = attempts[summaryAttemptPhase];
 					const summarizeProps: ISummarizeTelemetryProperties = {
 						reason,
 						summaryAttempts,
 						summaryAttemptsPerPhase,
 						summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
-						...options,
+						...summarizeOptions,
 					};
 
 					// Note: no need to account for cancellationToken.waitCancelled here, as
 					// this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
 					const resultSummarize = this.generator.summarize(
 						summarizeProps,
-						options,
+						summarizeOptions,
 						cancellationToken,
 					);
 					const result = await resultSummarize.receivedSummaryAckOrNack;
@@ -635,15 +615,13 @@ export class RunningSummarizer implements IDisposable {
 
 					// Check for retryDelay that can come from summaryNack or upload summary flow.
 					// Retry the same step only once per retryAfter response.
-					overrideDelaySeconds = result.retryAfterSeconds;
-					if (overrideDelaySeconds === undefined || summaryAttemptsPerPhase > 1) {
+					const delaySeconds = result.retryAfterSeconds;
+					if (delaySeconds === undefined || summaryAttemptsPerPhase > 1) {
 						summaryAttemptPhase++;
 						summaryAttemptsPerPhase = 0;
 					}
 
-					const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
-
-					if (delaySeconds > 0) {
+					if (delaySeconds !== undefined) {
 						this.mc.logger.sendPerformanceEvent({
 							eventName: "SummarizeAttemptDelay",
 							duration: delaySeconds,

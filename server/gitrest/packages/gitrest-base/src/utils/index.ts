@@ -18,6 +18,7 @@ export {
 	IStorageDirectoryConfig,
 	IStorageRoutingId,
 } from "./definitions";
+export { SystemErrors } from "./fileSystemHelper";
 export { MemFsManagerFactory, NodeFsManagerFactory, RedisFsManagerFactory } from "./filesystems";
 export {
 	BaseGitRestTelemetryProperties,
