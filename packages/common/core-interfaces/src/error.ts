@@ -41,9 +41,10 @@ export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorType
  *
  * @remarks
  *
- * We are migrating these errors from container-definitions to core-interfaces. Once fully migrated,
- * this will be a base interface for all errors and warnings emitted by the Fluid Framework. Currently
- * only the container layer is using IErrorBase. Runtime and others will follow soon.
+ * We are in the process of unifying error types across layers of the Framework. For now we have only migrated
+ * those from container-definitions. Once fully migrated, this will be a base interface for all errors and
+ * warnings emitted by the Fluid Framework. Currently only the container layer is using IErrorBase.
+ * Runtime and others will follow soon.
  */
 export interface IErrorBase extends Partial<Error> {
 	/**
