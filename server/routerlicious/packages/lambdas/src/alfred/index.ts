@@ -235,7 +235,7 @@ export function configureWebSocketServices(
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -625,8 +625,9 @@ export function configureWebSocketServices(
 			}
 
 			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called
-			collborationSessionEventEmitter?.on(
+			collaborationSessionEventEmitter?.on(
 				"broadcastSignal",
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				(broadcastSignal: IBroadcastSignalEventPayload) => {
 					const { tenantId, documentId } = broadcastSignal;
 					const roomToBroadcastSignal: IRoom = { tenantId, documentId };
@@ -638,27 +639,31 @@ export function configureWebSocketServices(
 						roomToBroadcastSignal.documentId === room.documentId &&
 						roomToBroadcastSignal.tenantId === room.tenantId
 					) {
-						const contents = JSON.parse(
-							broadcastSignal.signalContent,
-						) as IRuntimeSignalEnvelope;
-						const runtimeMessage = createRuntimeMessage(contents);
+						try {
+							const contents = JSON.parse(
+								broadcastSignal.signalContent,
+							) as IRuntimeSignalEnvelope;
+							const runtimeMessage = createRuntimeMessage(contents);
 
-						socket
-							.emitToRoom(getRoomId(roomToBroadcastSignal), "signal", runtimeMessage)
-							.catch((error) => {
-								const errorMsg = `Failed to broadcast signal from external API.`;
-								Lumberjack.error(
-									errorMsg,
-									getLumberBaseProperties(
-										roomToBroadcastSignal.documentId,
-										roomToBroadcastSignal.tenantId,
-									),
-									error,
-								);
-							});
+							socket
+								.emitToRoom(getRoomId(roomToBroadcastSignal), "signal", runtimeMessage)
+								.catch((error: any) => {
+									const errorMsg = `Failed to broadcast signal from external API.`;
+									Lumberjack.error(
+										errorMsg,
+										getLumberBaseProperties(
+											roomToBroadcastSignal.documentId,
+											roomToBroadcastSignal.tenantId,
+										),
+										error,
+									);
+								});
+						} catch(error) {
+							const errorMsg = `broadcast-signal conent body is malformed`;
+							return handleServerError(logger, errorMsg, claims.documentId, claims.tenantId);
+						}
 					}
-				},
-			);
+				});
 
 			return {
 				connection: connectedMessage,
