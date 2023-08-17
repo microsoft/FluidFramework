@@ -84,6 +84,22 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("delete => revive (with override ID)", () => {
+		const cellId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const input: TestChangeset = [
+			{
+				type: "Delete",
+				count: 2,
+				id: brand(5),
+				detachIdOverride: cellId,
+			},
+		];
+
+		const expected = Change.revive(0, 2, cellId);
+		const actual = invert(input);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("revert-only active revive => delete", () => {
 		const revive = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
 		const modify = Change.modify(0, childChange1);

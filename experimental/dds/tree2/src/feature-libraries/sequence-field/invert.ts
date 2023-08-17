@@ -151,17 +151,19 @@ function invertMark<TNodeChange>(
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
+			const markRevision = mark.revision ?? revision;
+			const inverseRevision = mark.detachIdOverride?.revision ?? markRevision;
 			if (mark.cellId === undefined) {
 				const inverse = withNodeChange(
 					{
 						type: "Revive",
 						cellId: mark.detachIdOverride ?? {
-							revision: mark.revision ?? revision,
+							revision: markRevision,
 							localId: mark.id,
 						},
-						content: reviver(revision, inputIndex, mark.count),
+						content: reviver(inverseRevision, inputIndex, mark.count),
 						count: mark.count,
-						inverseOf: mark.revision ?? revision,
+						inverseOf: inverseRevision,
 					},
 					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
