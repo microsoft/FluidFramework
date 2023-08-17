@@ -69,6 +69,9 @@ export interface IErrorBase extends Partial<Error> {
  * Generic wrapper for an unrecognized/uncategorized error object
  */
 export interface IGenericError extends IErrorBase {
+	/**
+	 * {@inheritDoc IErrorBase.errorType}
+	 */
 	readonly errorType: typeof FluidErrorTypes.genericError;
 	error?: any;
 }
