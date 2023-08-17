@@ -37,7 +37,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  * Whether the package is known to be a publicly published package for general use.
  */
 function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
-	const mustPublish = config.mustPublishToNpm;
+	const mustPublish = config.mustPublish.npm;
 
 	if (mustPublish === undefined) {
 		return false;
@@ -64,7 +64,7 @@ function packageMustPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
-	const mustPublish = config.mustPublishInternalFeedOnly;
+	const mustPublish = config.mustPublish.internalFeed;
 
 	if (mustPublish === undefined) {
 		return false;
@@ -87,7 +87,7 @@ function packageMustPublishToInternalFeedOnly(
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
 function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
-	const mayPublish = config.mayPublishToNpm;
+	const mayPublish = config.mayPublish.npm;
 
 	if (mayPublish === undefined) {
 		return false;
@@ -112,7 +112,7 @@ function packageMayChooseToPublishToInternalFeedOnly(
 	name: string,
 	config: PackageNamePolicyConfig,
 ): boolean {
-	const mayPublish = config.mayPublishInternalFeed;
+	const mayPublish = config.mayPublish.internalFeed;
 
 	if (mayPublish === undefined) {
 		return false;

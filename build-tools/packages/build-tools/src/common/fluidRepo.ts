@@ -161,40 +161,50 @@ export interface PolicyConfig {
 }
 
 /**
- * Configuration for the package name and scope policy.
+ * Configuration for package naming and publication policies.
  */
 export interface PackageNamePolicyConfig {
 	/**
 	 * A list of package scopes that are permitted in the repo.
 	 */
 	allowedScopes?: string[];
-
 	/**
 	 * A list of packages that have no scope.
 	 */
 	unscopedPackages?: string[];
+	/**
+	 * Packages that must be published.
+	 */
+	mustPublish: {
+		/**
+		 * A list of package names or scopes that must publish to npm, and thus should never be marked private.
+		 */
+		npm?: string[];
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus should always be marked
+		 * private.
+		 */
+		internalFeed?: string[];
+	};
 
 	/**
-	 * A list of package names or scopes that MUST publish to npm, and thus should never be marked private.
+	 * Packages that may or may not be published.
 	 */
-	mustPublishToNpm?: string[];
+	mayPublish: {
+		/**
+		 * A list of package names or scopes that may publish to npm, and thus might or might not be marked private.
+		 */
+		npm?: string[];
 
-	/**
-	 * A list of package names or scopes that MAY publish to npm, and thus might or might not be marked private.
-	 */
-	mayPublishToNpm?: string[];
-
-	/**
-	 * A list of package names or scopes that must publish to an internal feed, and thus should always be marked
-	 * private.
-	 */
-	mustPublishInternalFeedOnly?: string[];
-
-	/**
-	 * A list of package names or scopes that must publish to npm, and thus should never be marked private.
-	 */
-	mayPublishInternalFeed?: string[];
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus might or might not be marked
+		 * private.
+		 */
+		internalFeed?: string[];
+	};
 }
+
 /**
  * Metadata about known-broken types.
  */
