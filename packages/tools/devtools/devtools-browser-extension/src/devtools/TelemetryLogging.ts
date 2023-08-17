@@ -60,6 +60,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	private readonly appInsightsCore = new AppInsightsCore();
 	private readonly postChannel: PostChannel = new PostChannel();
 
+	private readonly enabled: boolean = false;
+
 	public constructor() {
 		const channelConfig: IChannelConfiguration = {
 			alwaysUseXhrOverride: true,
@@ -80,13 +82,22 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			},
 		};
 
-		this.appInsightsCore.initialize(coreConfig, []);
+		if ((coreConfig.instrumentationKey ?? "") !== "") {
+			this.enabled = true;
+			this.appInsightsCore.initialize(coreConfig, []);
+		}
 	}
 
 	public send(event: ITelemetryBaseEvent): void {
+		if (!this.enabled) {
+			return;
+		}
+
 		// Note: some APIs might fail if the last part of the eventName is not uppercase
-		const category = event.category ? `${event.category.charAt(0).toUpperCase()}${event.category.substring(1)}` : "Generic";
-		const eventType = `Office.Fluid.Devtools.${category}`
+		const category = event.category
+			? `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`
+			: "Generic";
+		const eventType = `Office.Fluid.Devtools.${category}`;
 
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
@@ -120,6 +131,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * Shut down the underlying sink, which includes flushing any pending events in the queue.
 	 */
 	public flush(): void {
-		this.appInsightsCore.flush();
+		if (this.enabled) {
+			this.appInsightsCore.flush();
+		}
 	}
 }
