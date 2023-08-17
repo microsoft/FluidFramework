@@ -507,6 +507,17 @@ describe("editable-tree: data binder", () => {
 						index: 0,
 					},
 					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
 						field: "zip",
 						index: 0,
 					},
@@ -638,6 +649,17 @@ describe("editable-tree: data binder", () => {
 					},
 					"1": {
 						field: "phones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
 						index: 0,
 					},
 					"type": "delete",
@@ -835,6 +857,17 @@ describe("editable-tree: data binder", () => {
 							index: 0,
 						},
 						"1": {
+							field: "sequencePhones",
+							index: 0,
+						},
+						"type": "delete",
+					},
+					{
+						"0": {
+							field: "address",
+							index: 0,
+						},
+						"1": {
 							field: "zip",
 							index: 0,
 						},
@@ -998,7 +1031,7 @@ describe("editable-tree: data binder", () => {
 			];
 			assert.deepEqual(batchLog, expectedBatchLog);
 			// the incremental log should contain all other changes except the zip modifications
-			assert.equal(incrLog.length, 6);
+			assert.equal(incrLog.length, 7);
 			const expectedIncrLog = [
 				{
 					"0": {
@@ -1007,6 +1040,17 @@ describe("editable-tree: data binder", () => {
 					},
 					"1": {
 						field: "phones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
 						index: 0,
 					},
 					"type": "delete",

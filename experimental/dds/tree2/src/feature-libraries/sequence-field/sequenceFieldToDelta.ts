@@ -37,14 +37,19 @@ export function sequenceFieldToDelta<TNodeChange>(
 			repairDataBuilder,
 			idAllocator,
 		);
-		const fullDelta = withChildModificationsIfAny(
-			changes,
-			cellDelta,
-			deltaFromChild,
-			repairDataBuilder,
-			idAllocator,
-		);
-		out.push(fullDelta);
+
+		if (!Array.isArray(cellDelta)) {
+			const fullDelta = withChildModificationsIfAny(
+				changes,
+				cellDelta,
+				deltaFromChild,
+				repairDataBuilder,
+				idAllocator,
+			);
+			out.push(fullDelta);
+		} else {
+			cellDelta.forEach((delta) => out.push(delta));
+		}
 	}
 	return out.list;
 }
@@ -54,7 +59,7 @@ function cellDeltaFromMark<TNodeChange>(
 	ignoreTransient: boolean,
 	repairDataBuilder: RepairDataBuilder,
 	idAllocator: IdAllocator,
-): Mutable<Delta.Mark> {
+): Mutable<Delta.Mark> | Delta.Mark[] {
 	if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 		// Since each cell is associated with exactly one node,
 		// the cell starting end ending populated means the cell content has not changed.
@@ -98,21 +103,25 @@ function cellDeltaFromMark<TNodeChange>(
 					revision: mark.revision,
 					localId: mark.id,
 				});
-				const moveId = brandOpaque<Delta.MoveId>(idAllocator());
-				repairDataBuilder.accumulator(detachedField, [
-					{
+				const moveOutMarks: Mutable<Delta.MoveOut>[] = [];
+				const moveInMarks: Delta.MoveIn[] = [];
+				for (let i = 0; i < mark.count; i++) {
+					const moveId = brandOpaque<Delta.MoveId>(idAllocator());
+					moveOutMarks.push({
+						type: Delta.MarkType.MoveOut,
+						moveId,
+						count: 1,
+						isRemoval: true,
+					});
+					moveInMarks.push({
 						type: Delta.MarkType.MoveIn,
-						count: mark.count,
+						count: 1,
 						moveId,
 						isRemoval: true,
-					},
-				]);
-				return {
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: mark.count,
-					isRemoval: true,
-				};
+					});
+				}
+				repairDataBuilder.accumulator(detachedField, moveInMarks);
+				return moveOutMarks.length === 1 ? moveOutMarks[0] : moveOutMarks;
 			}
 			case "MoveOut":
 			case "ReturnFrom": {
