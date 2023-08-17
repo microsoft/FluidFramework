@@ -44,9 +44,9 @@ const reservedIntervalIdKey = "intervalId";
  * As such, when content is inserted into the middle of the interval, the interval expands to
  * include that content.
  *
- * @remarks - The endpoint's position should be treated exclusively to get reasonable behavior--i.e.
- * an interval referring to "hello" in "hello world" should have a start position of 0 and an end
- * position of 5.
+ * @remarks - The endpoints' positions should be treated exclusively to get
+ * reasonable behavior--i.e. an interval referring to "hello" in "hello world"
+ * should have a start position of 0 and an end position of 5.
  *
  * To see why, consider what happens if "llo wor" is removed from the string to make "held".
  * The interval's startpoint remains on the "h" (it isn't altered), but the interval's endpoint
@@ -56,14 +56,14 @@ const reservedIntervalIdKey = "intervalId";
  * If the interval endpoint was treated inclusively, the interval would now refer to "hel", which
  * is undesirable.
  *
- * Since the end of an interval is treated exclusively but cannot be greater than or equal to the
- * length of the associated sequence, there exist special endpoint segments, "start" and "end",
- * which represent the position immediately before or immediately after the string respectively.
+ * Since the endpoints of an interval are treated exclusively but cannot be greater
+ * than or equal to the length of the associated sequence, there exist special
+ * endpoint segments, "start" and "end", which represent the position immediately
+ * before or immediately after the string respectively.
  *
  * If a `SequenceInterval` is created with `canSlideToEndpoint` set to true, the
- * endpoints of the interval that are sticky will be automatically created as
- * exclusive and will have the ability to slide to these special endpoint
- * segments.
+ * endpoints of the interval that are exclusive will have the ability to slide
+ * to these special endpoint segments.
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**
@@ -244,7 +244,6 @@ export class SequenceInterval implements ISerializableInterval {
 	 * {@inheritDoc IInterval.overlaps}
 	 */
 	public overlaps(b: SequenceInterval) {
-		// todo: account for side
 		const result =
 			compareReferencePositions(this.start, b.end) <= 0 &&
 			compareReferencePositions(this.end, b.start) >= 0;

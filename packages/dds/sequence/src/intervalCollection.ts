@@ -713,26 +713,32 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	getIntervalById(id: string): TInterval | undefined;
 	/**
 	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position (inclusive)
-	 * @param end - interval end position (exclusive)
+	 * @param start - interval start position
+	 * @param end - interval end position
 	 * @param intervalType - type of the interval. All intervals are SlideOnRemove.
 	 * Intervals may not be Transient.
 	 * @param props - properties of the interval
-	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
-	 * @param canSlideToEndpoint - Whether the endpoints of the interval can
-	 * slide to the special endpoint segments denoting the positions immediately
-	 * before and after the string. This is primarily useful in the case of
-	 * intervals containing exclusive endpoints.
 	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
-	 * with how the current half-open behavior is represented.
+	 * @remarks - See documentation on {@link SequenceInterval} for comments on
+	 * interval endpoint semantics: there are subtleties with how the current
+	 * half-open behavior is represented.
+	 *
+	 * Note that intervals may behave unexpectedly if the entire contents
+	 * of the string are deleted. In this case, it is possible for one endpoint
+	 * of the interval to become detached, while the other remains on the string.
+	 *
+	 * By adjusting the `side` value of the `start` and `end` parameters, it is
+	 * possible to better model endpoint exclusivity and stickiness. An interval
+	 * having its start endpoint `After` would have start stickiness, and likewise
+	 * an interval having its end endpoint `Before` would have end stickiness. In
+	 * both of these cases, the sticky endpoint would be exclusive. See
+	 * {@link (IntervalStickiness:type)} for additional context.
 	 */
 	add(
 		start: number | "start" | "end" | { pos: number; side: Side },
 		end: number | "start" | "end" | { pos: number; side: Side },
 		intervalType: IntervalType,
 		props?: PropertySet,
-		stickiness?: IntervalStickiness,
 	): TInterval;
 	/**
 	 * Removes an interval from the collection.

@@ -246,7 +246,7 @@ describe("SharedString interval collections", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "Xabc");
 				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add("start", 3, IntervalType.SlideOnRemove, undefined);
+				const interval1 = collection.add("start", 3, IntervalType.SlideOnRemove);
 				assert.equal(interval1.stickiness, IntervalStickiness.START);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 				assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
@@ -268,7 +268,7 @@ describe("SharedString interval collections", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "Xabc");
 				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add("start", 3, IntervalType.SlideOnRemove, undefined);
+				const interval1 = collection.add("start", 3, IntervalType.SlideOnRemove);
 				assert.equal(interval1.stickiness, IntervalStickiness.START);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -321,7 +321,7 @@ describe("SharedString interval collections", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
 				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add("start", 2, IntervalType.SlideOnRemove, undefined);
+				const interval1 = collection.add("start", 2, IntervalType.SlideOnRemove);
 				assert.equal(interval1.stickiness, IntervalStickiness.START);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -373,7 +373,7 @@ describe("SharedString interval collections", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
 				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(0, "end", IntervalType.SlideOnRemove, undefined);
+				const interval1 = collection.add(0, "end", IntervalType.SlideOnRemove);
 				assert.equal(interval1.stickiness, IntervalStickiness.END);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
