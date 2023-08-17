@@ -432,7 +432,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 }
 
 // @public (undocumented)
-export interface INackSummaryResult {
+export interface INackSummaryResult extends IRetriableFailureResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
@@ -450,6 +450,12 @@ export interface IRefreshSummaryAckOptions {
     readonly proposalHandle: string | undefined;
     readonly summaryLogger: ITelemetryLoggerExt;
     readonly summaryRefSeq: number;
+}
+
+// @public
+export interface IRetriableFailureResult {
+    // (undocumented)
+    readonly retryAfterSeconds?: number;
 }
 
 // @public @deprecated (undocumented)
@@ -664,7 +670,7 @@ export enum RuntimeMessage {
 }
 
 // @public
-export interface SubmitSummaryFailureData {
+export interface SubmitSummaryFailureData extends IRetriableFailureResult {
     // (undocumented)
     stage: SummaryStage;
 }
@@ -706,7 +712,6 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     data: TFailure | undefined;
     message: string;
     error: any;
-    retryAfterSeconds?: number;
 };
 
 // @public (undocumented)
