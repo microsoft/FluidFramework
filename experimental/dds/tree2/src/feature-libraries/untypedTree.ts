@@ -9,12 +9,13 @@ import {
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	ForestEvents,
-	NamedTreeSchema,
 	SchemaData,
 	UpPath,
 	PathVisitor,
+	TreeStoredSchema,
 } from "../core";
 import { ISubscribable } from "../events";
+import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
 
 /**
@@ -105,8 +106,8 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
-	readonly [typeSymbol]: NamedTreeSchema;
+	// TODO: update implementation to use view schema is used in typed views.
+	readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.

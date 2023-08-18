@@ -672,7 +672,7 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> implements IFieldSchema {
+export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
     constructor(kind: Kind, allowedTypes: Types);
     // (undocumented)
     readonly allowedTypes: Types;
@@ -854,17 +854,11 @@ export interface IEncoder<TDecoded, TEncoded> {
 }
 
 // @alpha
-export interface IFieldSchema {
-    // (undocumented)
-    readonly kind: FieldKind;
-    readonly types: TreeTypeSet;
-}
-
-// @alpha
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
+    readonly isEmpty: boolean;
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
@@ -1113,14 +1107,6 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
     readonly pending: false;
 }
 
-// @alpha (undocumented)
-export interface ITreeSchema extends NamedTreeSchema, Sourced {
-    // (undocumented)
-    readonly mapFields?: IFieldSchema;
-    // (undocumented)
-    readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
-}
-
 // @alpha
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
@@ -1339,7 +1325,7 @@ export enum Multiplicity {
     Value = 0
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface Named<TName> {
     // (undocumented)
     readonly name: TName;
@@ -1351,9 +1337,6 @@ export interface NamedComputation {
     listDependees?(): Iterable<Dependee>;
     listDependents?(): Iterable<Dependent>;
 }
-
-// @alpha (undocumented)
-export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
 
 // @alpha
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
@@ -1630,7 +1613,7 @@ export { SchemaAware }
 
 // @alpha @sealed
 export class SchemaBuilder {
-    constructor(name: string, ...libraries: SchemaLibrary[]);
+    constructor(name: string, lint?: Partial<SchemaLintConfiguration>, ...libraries: SchemaLibrary[]);
     addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
@@ -1669,18 +1652,6 @@ export class SchemaBuilder {
 }
 
 // @alpha
-export interface SchemaCollection extends SchemaData {
-    // (undocumented)
-    readonly adapters: Adapters;
-    // (undocumented)
-    readonly policy: FullSchemaPolicy;
-    // (undocumented)
-    readonly rootFieldSchema: IFieldSchema;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
-}
-
-// @alpha
 export interface SchemaData {
     // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;
@@ -1695,7 +1666,7 @@ export interface SchemaEvents {
 }
 
 // @alpha
-export interface SchemaLibrary extends SchemaCollection {
+export interface SchemaLibrary extends TypedSchemaCollection {
     readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
 
@@ -1709,6 +1680,14 @@ export interface SchemaLibraryData {
     readonly rootFieldSchema?: FieldSchema;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+// @alpha
+export interface SchemaLintConfiguration {
+    // (undocumented)
+    readonly rejectEmpty: boolean;
+    // (undocumented)
+    readonly rejectForbidden: boolean;
 }
 
 // @alpha
@@ -1821,12 +1800,6 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 type Skip = number;
 
 // @alpha
-export interface Sourced {
-    // (undocumented)
-    readonly builder: Named<string>;
-}
-
-// @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
@@ -1890,8 +1863,8 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha
-export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> implements ITreeSchema {
+// @alpha @sealed
+export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
     readonly builder: Named<string>;
@@ -1965,9 +1938,15 @@ TFields extends {
 type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
 // @alpha
-export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
+export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+    // (undocumented)
+    readonly adapters: Adapters;
+    // (undocumented)
+    readonly policy: FullSchemaPolicy;
     // (undocumented)
     readonly rootFieldSchema: T;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 // @alpha
@@ -2066,7 +2045,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
         readonly parent: TField;
         readonly index: number;
     };
-    readonly [typeSymbol]: NamedTreeSchema;
+    readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
 }
 
 // @alpha

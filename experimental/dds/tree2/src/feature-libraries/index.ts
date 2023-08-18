@@ -128,11 +128,6 @@ export {
 	RevisionInfo,
 	HasFieldChanges,
 	revisionMetadataSourceFromInfo,
-	ViewSchema,
-	SchemaCollection,
-	IFieldSchema,
-	ITreeSchema,
-	Sourced,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	BrandedFieldKind,
@@ -149,6 +144,8 @@ export {
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
+	ViewSchema,
+	SchemaLintConfiguration,
 } from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

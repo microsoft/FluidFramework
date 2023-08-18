@@ -46,8 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	TreeStoredSchema,
@@ -97,6 +95,7 @@ export {
 	BrandedKey,
 	BrandedMapSubset,
 	RangeEntry,
+	Named,
 } from "./util";
 
 export {
@@ -195,10 +194,7 @@ export {
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
-	SchemaCollection,
 	ContextuallyTypedFieldData,
-	ITreeSchema,
-	IFieldSchema,
 	cursorFromContextualData,
 	UntypedField,
 	UntypedTree,
@@ -222,7 +218,6 @@ export {
 	SchemaLibraryData,
 	FieldSchema,
 	Any,
-	Sourced,
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
@@ -265,6 +260,7 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	nodeKeyFieldKey,
+	SchemaLintConfiguration,
 } from "./feature-libraries";
 
 export {

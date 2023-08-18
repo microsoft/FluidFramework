@@ -5,10 +5,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Adapters, TreeSchemaIdentifier } from "../../core";
-import { FullSchemaPolicy, SchemaCollection } from "../modular-schema";
+import { FullSchemaPolicy } from "../modular-schema";
 import { fail } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
-import { SchemaBuilder, SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
+import {
+	SchemaBuilder,
+	SchemaLibraryData,
+	SchemaLintConfiguration,
+	SourcedAdapters,
+	TypedSchemaCollection,
+} from "./schemaBuilder";
 import { FieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 
@@ -22,8 +28,9 @@ import { normalizeFlexListEager } from "./flexList";
  * (like libraries with the same name, nodes which are impossible to create etc).
  */
 export function buildViewSchemaCollection(
+	lintConfiguration: SchemaLintConfiguration,
 	libraries: Iterable<SchemaLibraryData>,
-): SchemaCollection {
+): TypedSchemaCollection {
 	let rootFieldSchema: FieldSchema | undefined;
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
@@ -76,7 +83,7 @@ export function buildViewSchemaCollection(
 	}
 
 	const result = { rootFieldSchema, treeSchema, adapters, policy: defaultSchemaPolicy };
-	const errors2 = validateViewSchemaCollection(result);
+	const errors2 = validateViewSchemaCollection(lintConfiguration, result);
 	if (errors2.length !== 0) {
 		fail(errors2.join("\n"));
 	}
@@ -96,7 +103,7 @@ export function buildViewSchemaCollection(
 	};
 }
 
-export interface ViewSchemaCollection2 {
+export interface ViewSchemaCollection {
 	readonly rootFieldSchema?: FieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly policy: FullSchemaPolicy;
@@ -109,11 +116,14 @@ export interface ViewSchemaCollection2 {
  * As much as possible tries to detect anything that might be a mistake made by the schema author.
  * This will error on some valid but probably never intended to be used patterns (like never nodes).
  */
-export function validateViewSchemaCollection(collection: ViewSchemaCollection2): string[] {
+export function validateViewSchemaCollection(
+	lintConfiguration: SchemaLintConfiguration,
+	collection: ViewSchemaCollection,
+): string[] {
 	const errors: string[] = [];
 
 	// TODO: make this check specific to document schema. Replace check here for no tre or field schema (empty library).
-	if (collection.treeSchema.size === 0) {
+	if (collection.treeSchema.size === 0 && lintConfiguration.rejectEmpty) {
 		errors.push("No tree schema are included, meaning no data can possibly be stored.");
 	}
 
@@ -123,11 +133,12 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 
 	// Validate that all schema referenced are included, and none are "never".
 	if (collection.rootFieldSchema !== undefined) {
-		validateRootField(collection, collection.rootFieldSchema, errors);
+		validateRootField(lintConfiguration, collection, collection.rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
 		for (const [key, field] of tree.structFields) {
 			validateField(
+				lintConfiguration,
 				collection,
 				field,
 				() =>
@@ -137,6 +148,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 		}
 		if (tree.mapFields !== undefined) {
 			validateField(
+				lintConfiguration,
 				collection,
 				tree.mapFields,
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
@@ -155,16 +167,18 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 }
 
 export function validateRootField(
-	collection: ViewSchemaCollection2,
+	lintConfiguration: SchemaLintConfiguration,
+	collection: ViewSchemaCollection,
 	field: FieldSchema,
 	errors: string[],
 ): void {
 	const describeField = () => `Root field schema`;
-	validateField(collection, field, describeField, errors);
+	validateField(lintConfiguration, collection, field, describeField, errors);
 }
 
 export function validateField(
-	collection: ViewSchemaCollection2,
+	lintConfiguration: SchemaLintConfiguration,
+	collection: ViewSchemaCollection,
 	field: FieldSchema,
 	describeField: () => string,
 	errors: string[],
@@ -182,7 +196,7 @@ export function validateField(
 				);
 			}
 		}
-		if (types.length === 0) {
+		if (types.length === 0 && lintConfiguration.rejectEmpty) {
 			errors.push(
 				`${describeField()} requires children to have a type from a set of zero types. This means the field must always be empty.`,
 			);
@@ -200,9 +214,11 @@ export function validateField(
 			}" which isn't a reference to the default kind with that identifier.`,
 		);
 	} else if (kind === FieldKinds.forbidden) {
-		errors.push(
-			`${describeField()} explicitly uses "forbidden" kind, which is not recommended.`,
-		);
+		if (lintConfiguration.rejectForbidden) {
+			errors.push(
+				`${describeField()} explicitly uses "forbidden" kind, which is not recommended.`,
+			);
+		}
 	} // else if (kind !== counter) {
 	// 	errors.push(
 	// 		`${describeField()} explicitly uses "counter" kind, which is finished.`,
