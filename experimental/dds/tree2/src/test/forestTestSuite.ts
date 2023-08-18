@@ -172,7 +172,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				content: [singleJsonCursor([])],
 			};
 			forest.applyDelta(new Map([[brand("different root"), [insert]]]));
-			initializeForest(forest, [singleJsonCursor([])]);
 			assert(!forest.isEmpty);
 		});
 
