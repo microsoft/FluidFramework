@@ -867,7 +867,7 @@ export async function runTestForSeed<
 	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
 		model.factory,
-		startDetached ? makeFriendlyClientId(random, 0) : "summarizer", // TODO: make attach generate summarizer id.
+		startDetached ? makeFriendlyClientId(random, 0) : "summarizer",
 		options,
 	);
 	if (!startDetached) {
