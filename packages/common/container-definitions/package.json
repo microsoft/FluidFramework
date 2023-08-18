@@ -70,9 +70,6 @@
 			},
 			"InterfaceDeclaration_IUsageError": {
 				"backCompat": false
-			},
-			"InterfaceDeclaration_IContainerContext": {
-				"forwardCompat": false
 			}
 		}
 	}
