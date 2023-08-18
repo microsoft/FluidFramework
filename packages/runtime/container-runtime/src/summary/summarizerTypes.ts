@@ -114,6 +114,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	readonly summaryLogger: ITelemetryLoggerExt;
 	/** Tells when summary process should be cancelled */
 	readonly cancellationToken: ISummaryCancellationToken;
+	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt. */
+	readonly finalAttempt?: boolean;
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
