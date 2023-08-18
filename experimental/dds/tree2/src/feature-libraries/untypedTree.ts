@@ -106,7 +106,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	// TODO: update implementation to use view schema is used in typed views.
+	// TODO: update implementation to use view schema in typed views.
 	readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
 
 	/**
