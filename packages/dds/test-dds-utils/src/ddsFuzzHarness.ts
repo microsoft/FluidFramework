@@ -263,7 +263,7 @@ export interface DDSFuzzSuiteOptions {
 	 *
 	 * This setup simulates application code initializing state in a data store before attaching it, e.g. running code to edit a DDS from
 	 * `DataObject.initializingFirstTime`.
-	 * @default - Tests are run with this setting enabled, and each op during the warmup phase has a 20% chance to be
+	 * Default: tests are run with this setting enabled, and each op during the warmup phase has a 20% chance to be
 	 * an attach op.
 	 */
 	detachedStartOptions: {
@@ -408,11 +408,11 @@ export function mixinNewClient<
 		const baseGenerator = model.generatorFactory();
 		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
 			const baseOp = baseGenerator(state);
-			const { clients, random } = state;
+			const { clients, random, isDetached } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
 				clients.length < options.clientJoinOptions.maxNumberOfClients &&
-				!state.isDetached &&
+				!isDetached &&
 				random.bool(options.clientJoinOptions.clientAddProbability)
 			) {
 				return {
@@ -779,7 +779,7 @@ function makeUnreachableCodepathProxy<T extends object>(name: string): T {
 	});
 }
 
-function createClient<TChannelFactory extends IChannelFactory>(
+function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
 	clientId: string,
@@ -793,12 +793,6 @@ function createClient<TChannelFactory extends IChannelFactory>(
 	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, clientId);
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	// const services: IChannelServices = {
-	// 	deltaConnection: containerRuntime.createDeltaConnection(),
-	// 	objectStorage: new MockStorage(),
-	// };
-
-	// channel.connect(services);
 	// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
 	// than IChannel here.
 	const newClient: Client<TChannelFactory> = {
@@ -870,16 +864,24 @@ export async function runTestForSeed<
 	);
 
 	const startDetached = options.detachedStartOptions.enabled;
-	const initialClient = createClient(
+	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
 		model.factory,
 		startDetached ? makeFriendlyClientId(random, 0) : "summarizer", // TODO: make attach generate summarizer id.
 		options,
 	);
+	if (!startDetached) {
+		const services: IChannelServices = {
+			deltaConnection: initialClient.containerRuntime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+		initialClient.channel.connect(services);
+	}
+
 	const clients = startDetached
 		? [initialClient]
 		: await Promise.all(
-				Array.from({ length: options.numberOfClients }, (_, i) =>
+				Array.from({ length: options.numberOfClients }, async (_, i) =>
 					loadClient(
 						containerRuntimeFactory,
 						initialClient,
