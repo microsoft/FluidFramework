@@ -375,6 +375,7 @@ module.exports = {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
+        "import/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
 			},
 		},
 		{
