@@ -36,7 +36,7 @@
 		"test:coverage": "npm run test:mocha:coverage",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
 		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -64,7 +64,6 @@
 	"dependencies": {
 		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",

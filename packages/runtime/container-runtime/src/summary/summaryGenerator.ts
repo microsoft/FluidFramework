@@ -241,11 +241,10 @@ export class SummaryGenerator {
 
 	private async summarizeCore(
 		summarizeProps: ISummarizeTelemetryProperties,
-		options: ISummarizeOptions,
+		summarizeOptions: ISummarizeOptions,
 		resultsBuilder: SummarizeResultBuilder,
 		cancellationToken: ISummaryCancellationToken,
 	): Promise<void> {
-		const { refreshLatestAck, fullTree } = options;
 		const logger = createChildLogger({
 			logger: this.logger,
 			properties: { all: summarizeProps },
@@ -257,7 +256,8 @@ export class SummaryGenerator {
 		const timeSinceLastSummary =
 			Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
 		let summarizeTelemetryProps: SummaryGeneratorTelemetry = {
-			fullTree,
+			...summarizeOptions,
+			fullTree: summarizeOptions.fullTree ?? false,
 			timeSinceLastAttempt,
 			timeSinceLastSummary,
 		};
@@ -266,7 +266,6 @@ export class SummaryGenerator {
 			logger,
 			{
 				eventName: "Summarize",
-				refreshLatestAck,
 				...summarizeTelemetryProps,
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -317,8 +316,7 @@ export class SummaryGenerator {
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
 
 			summaryData = await this.submitSummaryCallback({
-				fullTree,
-				refreshLatestAck,
+				...summarizeOptions,
 				summaryLogger: logger,
 				cancellationToken,
 			});
@@ -357,7 +355,7 @@ export class SummaryGenerator {
 			 * state change of multiple data stores. So, the total number of data stores that are summarized should not
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
-			if (!fullTree && !summaryData.forcedFullTree) {
+			if (!summarizeOptions.fullTree && !summaryData.forcedFullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (

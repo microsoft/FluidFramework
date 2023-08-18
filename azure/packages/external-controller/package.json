@@ -43,7 +43,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/azure-client": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"assert": "^2.0.0",

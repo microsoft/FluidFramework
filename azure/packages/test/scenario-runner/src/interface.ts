@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 import { AzureClient } from "@fluidframework/azure-client";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { CommanderStatic } from "commander";
 
 export enum RunnerStatus {
