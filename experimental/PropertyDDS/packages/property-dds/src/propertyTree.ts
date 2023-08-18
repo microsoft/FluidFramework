@@ -801,6 +801,7 @@ export class SharedPropertyTree extends SharedObject {
 	getRebasedChanges(startGuid: string, endGuid?: string) {
 		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
 		if (startIndex === -1 && startGuid !== "") {
+			// TODO: Consider throwing an error once clients have picked up PR #16277.
 			console.error("Unknown start GUID specified.");
 		}
 		if (endGuid !== undefined) {
@@ -825,7 +826,6 @@ export class SharedPropertyTree extends SharedObject {
 			// assert(JSON.stringify(this.localChanges[0].changeSet) === JSON.stringify(change.changeSet),
 			//        "Local change different than rebased remote change.");
 
-			//
 			if (isEqual(this.localChanges[0].changeSet, change.changeSet)) {
 				// If we got a confirmation of the commit on the tip of the localChanges array,
 				// there will be no update of the tip view at all. We just move it from local changes
