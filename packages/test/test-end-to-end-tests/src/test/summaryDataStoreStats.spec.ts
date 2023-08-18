@@ -98,7 +98,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 			if (
 				event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate" &&
 				event.referenceSequenceNumber
-					? event.referenceSequenceNumber >= sequenceNumber
+					? (event.referenceSequenceNumber as number) >= sequenceNumber
 					: false
 			) {
 				return event;

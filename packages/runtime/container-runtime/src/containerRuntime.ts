@@ -1530,8 +1530,7 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			this.attachState !== AttachState.Attached ||
-			this.pendingStateManager.hasPendingMessages();
+			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (this.summariesDisabled) {
@@ -1930,7 +1929,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "ReconnectsWithNoProgress",
 				attempts: this.consecutiveReconnects,
-				pendingMessages: this.pendingStateManager.pendingMessagesCount,
+				pendingMessages: this.pendingMessagesCount,
 			});
 		}
 
@@ -2133,7 +2132,7 @@ export class ContainerRuntime
 						{
 							dataLoss: 1,
 							attempts: this.consecutiveReconnects,
-							pendingMessages: this.pendingStateManager.pendingMessagesCount,
+							pendingMessages: this.pendingMessagesCount,
 						},
 					),
 				);
@@ -3208,8 +3207,12 @@ export class ContainerRuntime
 		}
 	}
 
+	private get pendingMessagesCount(): number {
+		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
+	}
+
 	private hasPendingMessages() {
-		return this.pendingStateManager.hasPendingMessages() || !this.outbox.isEmpty;
+		return this.pendingMessagesCount !== 0;
 	}
 
 	private updateDocumentDirtyState(dirty: boolean) {
