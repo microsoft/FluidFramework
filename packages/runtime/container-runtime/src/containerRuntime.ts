@@ -151,6 +151,10 @@ import {
 	RunWhileConnectedCoordinator,
 	IGenerateSummaryTreeResult,
 	RetriableSummaryError,
+	IOnDemandSummarizeOptions,
+	ISummarizeResults,
+	IEnqueueSummarizeOptions,
+	EnqueueSummarizeResult,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -1526,8 +1530,7 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			this.attachState !== AttachState.Attached ||
-			this.pendingStateManager.hasPendingMessages();
+			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (this.summariesDisabled) {
@@ -1926,7 +1929,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "ReconnectsWithNoProgress",
 				attempts: this.consecutiveReconnects,
-				pendingMessages: this.pendingStateManager.pendingMessagesCount,
+				pendingMessages: this.pendingMessagesCount,
 			});
 		}
 
@@ -2129,7 +2132,7 @@ export class ContainerRuntime
 						{
 							dataLoss: 1,
 							attempts: this.consecutiveReconnects,
-							pendingMessages: this.pendingStateManager.pendingMessagesCount,
+							pendingMessages: this.pendingMessagesCount,
 						},
 					),
 				);
@@ -3204,8 +3207,12 @@ export class ContainerRuntime
 		}
 	}
 
+	private get pendingMessagesCount(): number {
+		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
+	}
+
 	private hasPendingMessages() {
-		return this.pendingStateManager.hasPendingMessages() || !this.outbox.isEmpty;
+		return this.pendingMessagesCount !== 0;
 	}
 
 	private updateDocumentDirtyState(dirty: boolean) {
@@ -3836,31 +3843,31 @@ export class ContainerRuntime
 		};
 	}
 
-	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.isSummarizerClient) {
-			return this.summarizer.summarizeOnDemand(...args);
+			return this.summarizer.summarizeOnDemand(options);
 		} else if (this.summaryManager !== undefined) {
-			return this.summaryManager.summarizeOnDemand(...args);
+			return this.summaryManager.summarizeOnDemand(options);
 		} else {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// disableSummaries is turned on. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		}
-	};
+	}
 
-	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.isSummarizerClient) {
-			return this.summarizer.enqueueSummarize(...args);
+			return this.summarizer.enqueueSummarize(options);
 		} else if (this.summaryManager !== undefined) {
-			return this.summaryManager.enqueueSummarize(...args);
+			return this.summaryManager.enqueueSummarize(options);
 		} else {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// generateSummaries is turned off. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		}
-	};
+	}
 
 	/**
 	 * * Forms a function that will request a Summarizer.

@@ -13,6 +13,17 @@ export {
 	IThrottlingWarning,
 } from "./error";
 
+export type {
+	ExtendEventProvider,
+	IErrorEvent,
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+	IEventTransformer,
+	ReplaceIEventThisPlaceHolder,
+	TransformedEvent,
+} from "./events";
+
 export {
 	IFluidLoadable,
 	IProvideFluidLoadable,

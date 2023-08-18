@@ -4,11 +4,18 @@
  */
 
 import { v4 as uuid } from "uuid";
+<<<<<<< HEAD
 import { IEventProvider } from "@fluidframework/common-definitions";
 import {
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
 	IThrottlingWarning,
+=======
+import {
+	IEventProvider,
+	ITelemetryProperties,
+	ITelemetryErrorEvent,
+>>>>>>> upstream/main
 } from "@fluidframework/core-interfaces";
 import {
 	ICriticalContainerError,
