@@ -295,120 +295,29 @@ describe("Pending State Manager", () => {
 			);
 		}
 
-		describe("Constructor conversion", () => {
-			// TODO: Remove in 2.0.0-internal.7.0.0 once only new format is read in constructor (AB#4763)
-			describe("deserialized content", () => {
-				it("Empty local state", () => {
-					{
-						const pendingStateManager = createPendingStateManager(undefined);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-					}
-					{
-						const pendingStateManager = createPendingStateManager([]);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
-					}
-				});
-
-				it("Old format", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", messageType: "component" },
-						{ type: "message", messageType: "component", content: { prop1: "value" } },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component"}',
-						},
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component","contents":{"prop1":"value"}}',
-						},
-					]);
-				});
-
-				it("New format", () => {
-					const messages = [
-						{ type: "message", content: '{"type":"component"}' },
-						{
-							type: "message",
-							content: '{"type": "component", "contents": {"prop1": "value"}}',
-						},
-					];
-					const pendingStateManager = createPendingStateManager(messages);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
-				});
-
-				it("Mix of new and old formats", () => {
-					const pendingStateManager = createPendingStateManager([
-						{ type: "message", messageType: "component" },
-						{ type: "message", content: '{"type":"component"}' },
-						{
-							type: "message",
-							content: '{"type": "component", "contents": {"prop1": "value"}}',
-						},
-						{ type: "message", messageType: "component", content: { prop1: "value" } },
-					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component"}',
-						},
-						{ type: "message", content: '{"type":"component"}' },
-						{
-							type: "message",
-							content: '{"type": "component", "contents": {"prop1": "value"}}',
-						},
-						{
-							type: "message",
-							messageType: "component",
-							content: '{"type":"component","contents":{"prop1":"value"}}',
-						},
-					]);
-				});
+		describe("Constructor pendingStates", () => {
+			it("Empty local state", () => {
+				{
+					const pendingStateManager = createPendingStateManager(undefined);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+				}
+				{
+					const pendingStateManager = createPendingStateManager([]);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+				}
 			});
-		});
 
-		// TODO: remove when we only read new format in "2.0.0-internal.7.0.0" (AB#4763)
-		it("getLocalState writes new message format", async () => {
-			const pendingStateManager = createPendingStateManager([
-				{ type: "message", messageType: "component" },
-				{ type: "message", content: '{"type":"component"}' },
-				{
-					type: "message",
-					content: '{"type": "component", "contents": {"prop1": "value"}}',
-				},
-				{ type: "message", messageType: "component", content: { prop1: "value" } },
-			]);
-
-			await pendingStateManager.applyStashedOpsAt(0);
-
-			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
-				{
-					type: "message",
-					content: '{"type":"component"}',
-					localOpMetadata: undefined,
-					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
-				},
-				{
-					type: "message",
-					content: '{"type":"component"}',
-					localOpMetadata: undefined,
-				},
-				{
-					type: "message",
-					content: '{"type": "component", "contents": {"prop1": "value"}}',
-					localOpMetadata: undefined,
-				},
-				{
-					type: "message",
-					content: '{"type":"component","contents":{"prop1":"value"}}',
-					localOpMetadata: undefined,
-					messageType: "component", // This prop is still there, but it is not on the IPendingMessageNew interface
-				},
-			]);
+			it("New format", () => {
+				const messages = [
+					{ type: "message", content: '{"type":"component"}' },
+					{
+						type: "message",
+						content: '{"type": "component", "contents": {"prop1": "value"}}',
+					},
+				];
+				const pendingStateManager = createPendingStateManager(messages);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
+			});
 		});
 	});
 });
