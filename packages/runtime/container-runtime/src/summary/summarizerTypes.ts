@@ -104,7 +104,7 @@ export interface ISummarizeOptions {
 	/**
 	 * True to ask the server what the latest summary is first; defaults to false
 	 *
-	 * @deprecated - Summarize will not refresh latest snapshot state anymore.
+	 * @deprecated Summarize will not refresh latest snapshot state anymore.
 	 */
 	readonly refreshLatestAck?: boolean;
 }

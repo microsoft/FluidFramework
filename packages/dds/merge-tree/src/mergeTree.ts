@@ -1235,7 +1235,7 @@ export class MergeTree {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {

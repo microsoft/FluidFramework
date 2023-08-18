@@ -66,7 +66,7 @@ export class RelativeLoader implements ILoader {
 	) {}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
@@ -100,7 +100,7 @@ export class RelativeLoader implements ILoader {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		if (request.url.startsWith("/")) {
@@ -352,7 +352,7 @@ export class Loader implements IHostLoader {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
@@ -414,7 +414,7 @@ export class Loader implements IHostLoader {
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(

@@ -588,7 +588,7 @@ const defaultChunkSizeInBytes = 204800;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated - use ContainerRuntimeMessage instead
+ * @deprecated use ContainerRuntimeMessage instead
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -601,7 +601,7 @@ export enum RuntimeMessage {
 }
 
 /**
- * @deprecated - please use version in driver-utils
+ * @deprecated please use version in driver-utils
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -660,14 +660,14 @@ export class ContainerRuntime
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
 	}
 
 	/**
-	 * @deprecated - use loadRuntime instead.
+	 * @deprecated use loadRuntime instead.
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param context - Context of the container.
 	 * @param registryEntries - Mapping to the stores.
@@ -892,7 +892,7 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
-	/** @deprecated - The functionality is no longer exposed publicly */
+	/** @deprecated The functionality is no longer exposed publicly */
 	public get reSubmitFn() {
 		return (
 			type: ContainerMessageType,
@@ -1729,7 +1729,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -2361,7 +2361,7 @@ export class ContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
-	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
+	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
@@ -2795,7 +2795,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @deprecated - Replaced by deleteSweepReadyNodes.
+	 * @deprecated Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
 		throw new Error("deleteUnusedRoutes should not be called");

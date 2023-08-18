@@ -101,7 +101,7 @@ export class FluidDataStoreRuntime
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated - Instantiate the class using its constructor instead.
+	 * @deprecated Instantiate the class using its constructor instead.
 	 *
 	 * Loads the data store runtime
 	 * @param context - The data store context
@@ -127,7 +127,7 @@ export class FluidDataStoreRuntime
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -384,7 +384,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -528,7 +528,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
+	 * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
 	 * Binds this runtime to the container
 	 * This includes the following:
 	 * 1. Sending an Attach op that includes all existing state

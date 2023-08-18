@@ -65,7 +65,7 @@ export interface IContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
-	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
+	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 

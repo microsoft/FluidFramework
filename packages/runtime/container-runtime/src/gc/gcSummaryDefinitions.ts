@@ -41,7 +41,7 @@ export interface IGarbageCollectionSnapshotData {
 }
 
 /**
- * @deprecated - IGarbageCollectionState is written in the root of the summary now.
+ * @deprecated IGarbageCollectionState is written in the root of the summary now.
  * Legacy GC details from when the GC details were written at the data store's summary tree.
  */
 export interface IGarbageCollectionSummaryDetailsLegacy {

@@ -1041,7 +1041,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(

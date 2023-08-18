@@ -120,7 +120,7 @@ export interface IGCMetadata {
 	 */
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
-	 * @deprecated - @see GCFeatureMatrix.sweepGeneration
+	 * @deprecated @see GCFeatureMatrix.sweepGeneration
 	 *
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
@@ -279,7 +279,7 @@ export interface IGCRuntimeOptions {
 	gcAllowed?: boolean;
 
 	/**
-	 * @deprecated -  @see gcSweepGenerationOptionName and @see GCFeatureMatrix.sweepGeneration
+	 * @deprecated  @see gcSweepGenerationOptionName and @see GCFeatureMatrix.sweepGeneration
 	 *
 	 * Flag that if true, enables GC's sweep phase for a new container.
 	 *

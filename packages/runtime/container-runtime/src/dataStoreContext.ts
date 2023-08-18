@@ -741,7 +741,7 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
+	/** @deprecated To be replaced by calling makeLocallyVisible directly  */
 	public bindToContext() {
 		this.makeLocallyVisibleFn();
 	}
@@ -821,7 +821,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		return {};
