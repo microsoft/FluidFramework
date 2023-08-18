@@ -86,10 +86,6 @@ export class PendingStateManager implements IDisposable {
 		this.pendingMessages.clear();
 	});
 
-	public get pendingMessagesCount(): number {
-		return this.pendingMessages.length;
-	}
-
 	// Indicates whether we are processing a batch.
 	private isProcessingBatch: boolean = false;
 
@@ -100,11 +96,19 @@ export class PendingStateManager implements IDisposable {
 	private clientId: string | undefined;
 
 	/**
+	 * The pending messages count. Includes `pendingMessages` and `initialMessages` to keep in sync with
+	 * 'hasPendingMessages'.
+	 */
+	public get pendingMessagesCount(): number {
+		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
 	 * Called to check if there are any pending messages in the pending message queue.
 	 * @returns A boolean indicating whether there are messages or not.
 	 */
 	public hasPendingMessages(): boolean {
-		return !this.pendingMessages.isEmpty() || !this.initialMessages.isEmpty();
+		return this.pendingMessagesCount !== 0;
 	}
 
 	public getLocalState(): IPendingLocalState | undefined {
