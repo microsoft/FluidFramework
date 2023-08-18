@@ -38,6 +38,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/container-utils";
+import { IClientDetails } from "@fluidframework/protocol-definitions";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -64,6 +65,9 @@ export class RelativeLoader implements ILoader {
 		private readonly loader: ILoader | undefined,
 	) {}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -95,6 +99,9 @@ export class RelativeLoader implements ILoader {
 		return this.loader.resolve(request);
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		if (request.url.startsWith("/")) {
 			const container = await this.resolve(request);
@@ -344,12 +351,27 @@ export class Loader implements IHostLoader {
 		});
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
 
-	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(this.services, codeDetails);
+	public async createDetachedContainer(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> {
+		const container = await Container.createDetached(
+			{
+				...createDetachedProps,
+				...this.services,
+			},
+			codeDetails,
+		);
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
@@ -364,8 +386,20 @@ export class Loader implements IHostLoader {
 		return container;
 	}
 
-	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(this.services, snapshot);
+	public async rehydrateDetachedContainerFromSnapshot(
+		snapshot: string,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> {
+		return Container.rehydrateDetachedFromSnapshot(
+			{
+				...createDetachedProps,
+				...this.services,
+			},
+			snapshot,
+		);
 	}
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -379,6 +413,9 @@ export class Loader implements IHostLoader {
 		});
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,

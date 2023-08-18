@@ -13,9 +13,9 @@ import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -128,9 +128,16 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     serialize(): string;
@@ -160,6 +167,8 @@ export interface IContainerContext {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    // @deprecated
+    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -372,7 +381,11 @@ export interface IHostLoader extends ILoader {
 }
 
 // @public
-export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
+export interface ILoader extends Partial<IProvideLoader> {
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 

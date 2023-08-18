@@ -27,23 +27,17 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import {
-	assert,
-	delay,
-	Trace,
-	TypedEventEmitter,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, delay, Trace, TypedEventEmitter } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
+	createChildMonitoringContext,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -157,6 +151,10 @@ import {
 	RunWhileConnectedCoordinator,
 	IGenerateSummaryTreeResult,
 	RetriableSummaryError,
+	IOnDemandSummarizeOptions,
+	ISummarizeResults,
+	IEnqueueSummarizeOptions,
+	EnqueueSummarizeResult,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -214,10 +212,63 @@ export enum ContainerMessageType {
 	IdAllocation = "idAllocation",
 }
 
-export interface ContainerRuntimeMessage {
-	contents: any;
-	type: ContainerMessageType;
+/**
+ * How should an older client handle an unrecognized remote op type?
+ *
+ * @internal
+ */
+export type CompatModeBehavior =
+	/** Ignore the op. It won't be persisted if this client summarizes */
+	| "Ignore"
+	/** Fail processing immediately. (The container will close) */
+	| "FailToProcess";
+
+/**
+ * All the info an older client would need to know how to handle an unrecognized remote op type
+ *
+ * @internal
+ */
+export interface IContainerRuntimeMessageCompatDetails {
+	/** How should an older client handle an unrecognized remote op type? */
+	behavior: CompatModeBehavior;
 }
+
+/**
+ * Utility to implement compat behaviors given an unknown message type
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param _unknownContainerRuntimeMessageType - Typed as never, to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
+ */
+function compatBehaviorAllowsMessageType(
+	_unknownContainerRuntimeMessageType: never,
+	compatBehavior: "Ignore" | "FailToProcess" | undefined,
+): boolean {
+	// undefined defaults to same behavior as "FailToProcess"
+	return compatBehavior === "Ignore";
+}
+
+/**
+ * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime
+ *
+ * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
+ * This way stringified values can be compared.
+ */
+export interface ContainerRuntimeMessage {
+	/** Type of the op, within the ContainerRuntime's domain */
+	type: ContainerMessageType;
+	/** Domain-specific contents, interpreted according to the type */
+	contents: any;
+	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
+	compatDetails?: IContainerRuntimeMessageCompatDetails;
+}
+
+/**
+ * An unpacked ISequencedDocumentMessage with the inner ContainerRuntimeMessage type/contents/etc
+ * promoted up to the outer object
+ */
+export type SequencedContainerRuntimeMessage = ISequencedDocumentMessage & ContainerRuntimeMessage;
 
 export interface ISummaryBaseConfiguration {
 	/**
@@ -850,6 +901,7 @@ export class ContainerRuntime
 			localOpMetadata: unknown,
 			opMetadata: Record<string, unknown> | undefined,
 		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
+		// Note: compatDetails is not included in this deprecated API
 	}
 
 	private readonly submitFn: (
@@ -1479,8 +1531,7 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			this.attachState !== AttachState.Attached ||
-			this.pendingStateManager.hasPendingMessages();
+			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (this.summariesDisabled) {
@@ -1529,12 +1580,14 @@ export class ContainerRuntime
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = () => {
 					if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-						this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
 						// unregister default to no log on every op after falling behind
 						// and register summary ack handler to re-register this handler
 						// after successful summary
 						this.summaryCollection.once(MessageType.SummaryAck, () => {
-							this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
+							this.mc.logger.sendTelemetryEvent({
+								eventName: "SummaryStatus:CaughtUp",
+							});
 							// we've caught up, so re-register the default action to monitor for
 							// falling behind, and unregister ourself
 							this.summaryCollection.on("default", defaultAction);
@@ -1602,7 +1655,7 @@ export class ContainerRuntime
 			...getDeviceSpec(),
 		});
 
-		this.logger.sendTelemetryEvent({
+		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
 			...this.dataStores.containerLoadStats,
@@ -1653,7 +1706,7 @@ export class ContainerRuntime
 		}
 		this._disposed = true;
 
-		this.logger.sendTelemetryEvent(
+		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
@@ -1877,7 +1930,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "ReconnectsWithNoProgress",
 				attempts: this.consecutiveReconnects,
-				pendingMessages: this.pendingStateManager.pendingMessagesCount,
+				pendingMessages: this.pendingMessagesCount,
 			});
 		}
 
@@ -1946,14 +1999,15 @@ export class ContainerRuntime
 	 */
 	private parseOpContent(serializedContent?: string): ContainerRuntimeMessage {
 		assert(serializedContent !== undefined, 0x6d5 /* content must be defined */);
-		const { type, contents } = JSON.parse(serializedContent);
+		const { type, contents, compatDetails }: ContainerRuntimeMessage =
+			JSON.parse(serializedContent);
 		assert(type !== undefined, 0x6d6 /* incorrect op content format */);
-		return { type, contents };
+		return { type, contents, compatDetails };
 	}
 
 	private async applyStashedOp(op: string): Promise<unknown> {
 		// Need to parse from string for back-compat
-		const { type, contents } = this.parseOpContent(op);
+		const { type, contents, compatDetails } = this.parseOpContent(op);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.dataStores.applyStashedOp(contents as IEnvelope);
@@ -1972,8 +2026,27 @@ export class ContainerRuntime
 				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
-			default:
-				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+			default: {
+				// This should be extremely rare for stashed ops.
+				// It would require a newer runtime stashing ops and then an older one applying them,
+				// e.g. if an app rolled back its container version
+				const compatBehavior = compatDetails?.behavior;
+				if (!compatBehaviorAllowsMessageType(type, compatBehavior)) {
+					const error = DataProcessingError.create(
+						"Stashed runtime message of unknown type",
+						"applyStashedOp",
+						undefined /* sequencedMessage */,
+						{
+							messageDetails: JSON.stringify({
+								type,
+								compatBehavior,
+							}),
+						},
+					);
+					this.closeFn(error);
+					throw error;
+				}
+			}
 		}
 	}
 
@@ -2034,7 +2107,7 @@ export class ContainerRuntime
 						{
 							dataLoss: 1,
 							attempts: this.consecutiveReconnects,
-							pendingMessages: this.pendingStateManager.pendingMessagesCount,
+							pendingMessages: this.pendingMessagesCount,
 						},
 					),
 				);
@@ -2059,15 +2132,15 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
-		// Whether or not the message is actually a runtime message.
+		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
-		const runtimeMessage = messageArg.type === MessageType.Operation;
+		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local, runtimeMessage);
+			this.processCore(message, local, modernRuntimeMessage);
 		}
 	}
 
@@ -2077,12 +2150,12 @@ export class ContainerRuntime
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 * @param message - The unpacked message. Likely a ContainerRuntimeMessage, but could also be a system op
 	 * @param local - Did this client send the op?
-	 * @param runtimeMessage - Does this appear like a current ContainerRuntimeMessage?  If true, certain validation will occur.
+	 * @param modernRuntimeMessage - Does this appear like a current ContainerRuntimeMessage?
 	 */
 	private processCore(
-		message: ISequencedDocumentMessage,
+		message: ISequencedDocumentMessage | SequencedContainerRuntimeMessage,
 		local: boolean,
-		runtimeMessage: boolean,
+		modernRuntimeMessage: boolean,
 	) {
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
@@ -2093,8 +2166,10 @@ export class ContainerRuntime
 
 		try {
 			let localOpMetadata: unknown;
-			if (local && runtimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
+			if (local && modernRuntimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
+				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
+					message as SequencedContainerRuntimeMessage,
+				);
 			}
 
 			// If there are no more pending messages after processing a local message,
@@ -2103,51 +2178,14 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			const type = message.type as ContainerMessageType;
-			switch (type) {
-				case ContainerMessageType.Attach:
-					this.dataStores.processAttachMessage(message, local);
-					break;
-				case ContainerMessageType.Alias:
-					this.processAliasMessage(message, localOpMetadata, local);
-					break;
-				case ContainerMessageType.FluidDataStoreOp:
-					this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
-					break;
-				case ContainerMessageType.BlobAttach:
-					this.blobManager.processBlobAttachOp(message, local);
-					break;
-				case ContainerMessageType.IdAllocation:
-					assert(
-						this.idCompressor !== undefined,
-						0x67c /* IdCompressor should be defined if enabled */,
-					);
-					this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
-					break;
-				case ContainerMessageType.ChunkedOp:
-				case ContainerMessageType.Rejoin:
-					break;
-				default:
-					if (runtimeMessage) {
-						const error = DataProcessingError.create(
-							// Former assert 0x3ce
-							"Runtime message of unknown type",
-							"OpProcessing",
-							message,
-							{
-								local,
-								type: message.type,
-								contentType: typeof message.contents,
-								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
-								compression: message.compression,
-							},
-						);
-						this.closeFn(error);
-						throw error;
-					}
-			}
+			this.validateAndProcessRuntimeMessage(
+				message,
+				localOpMetadata,
+				local,
+				modernRuntimeMessage,
+			);
 
-			this.emit("op", message, runtimeMessage);
+			this.emit("op", message, modernRuntimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
@@ -2162,13 +2200,74 @@ export class ContainerRuntime
 			throw e;
 		}
 	}
-
-	private processAliasMessage(
+	/**
+	 * Assuming the given message is also a ContainerRuntimeMessage,
+	 * checks its type and dispatches the message to the appropriate handler in the runtime.
+	 * Throws a DataProcessingError if the message doesn't conform to the ContainerRuntimeMessage type.
+	 */
+	private validateAndProcessRuntimeMessage(
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 		local: boolean,
-	) {
-		this.dataStores.processAliasMessage(message, localOpMetadata, local);
+		expectRuntimeMessageType: boolean,
+	): asserts message is SequencedContainerRuntimeMessage {
+		// Optimistically extract ContainerRuntimeMessage-specific props from the message
+		const { type: maybeContainerMessageType, compatDetails } =
+			message as ContainerRuntimeMessage;
+
+		switch (maybeContainerMessageType) {
+			case ContainerMessageType.Attach:
+				this.dataStores.processAttachMessage(message, local);
+				break;
+			case ContainerMessageType.Alias:
+				this.dataStores.processAliasMessage(message, localOpMetadata, local);
+				break;
+			case ContainerMessageType.FluidDataStoreOp:
+				this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
+				break;
+			case ContainerMessageType.BlobAttach:
+				this.blobManager.processBlobAttachOp(message, local);
+				break;
+			case ContainerMessageType.IdAllocation:
+				assert(
+					this.idCompressor !== undefined,
+					0x67c /* IdCompressor should be defined if enabled */,
+				);
+				this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
+				break;
+			case ContainerMessageType.ChunkedOp:
+			case ContainerMessageType.Rejoin:
+				break;
+			default: {
+				// If we didn't necessarily expect a runtime message type, then no worries - just return
+				// e.g. this case applies to system ops, or legacy ops that would have fallen into the above cases anyway.
+				if (!expectRuntimeMessageType) {
+					return;
+				}
+
+				const compatBehavior = compatDetails?.behavior;
+				if (!compatBehaviorAllowsMessageType(maybeContainerMessageType, compatBehavior)) {
+					const error = DataProcessingError.create(
+						// Former assert 0x3ce
+						"Runtime message of unknown type",
+						"OpProcessing",
+						message,
+						{
+							local,
+							messageDetails: JSON.stringify({
+								type: message.type,
+								contentType: typeof message.contents,
+								compatBehavior,
+								batch: (message.metadata as IBatchMetadata | undefined)?.batch,
+								compression: message.compression,
+							}),
+						},
+					);
+					this.closeFn(error);
+					throw error;
+				}
+			}
+		}
 	}
 
 	/**
@@ -2177,7 +2276,7 @@ export class ContainerRuntime
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._perfSignalData.signalTimestamp;
-		this.logger.sendPerformanceEvent({
+		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
 			signalsLost: this._perfSignalData.signalsLost,
@@ -2205,7 +2304,7 @@ export class ContainerRuntime
 			) {
 				this._perfSignalData.signalsLost++;
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.logger.sendErrorEvent({
+				this.mc.logger.sendErrorEvent({
 					eventName: "SignalLost",
 					type: envelope.contents.type,
 					signalsLost: this._perfSignalData.signalsLost,
@@ -2233,6 +2332,12 @@ export class ContainerRuntime
 		this.dataStores.processSignal(envelope.address, transformed, local);
 	}
 
+	/**
+	 * Returns the runtime of the data store.
+	 * @param id - Id supplied during creating the data store.
+	 * @param wait - True if you want to wait for it.
+	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
+	 */
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
@@ -2306,6 +2411,32 @@ export class ContainerRuntime
 			this.flush();
 		}
 		return result;
+	}
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
+	 * data store has been assigned the given alias.
+	 */
+	public async getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined> {
+		await this.dataStores.waitIfPendingAlias(alias);
+		const internalId = this.internalId(alias);
+		const context = await this.dataStores.getDataStoreIfAvailable(internalId, { wait: false });
+		// If the data store is not available or not an alias, return undefined.
+		if (context === undefined || !(await context.isRoot())) {
+			return undefined;
+		}
+
+		const channel = await context.realize();
+		if (channel.entryPoint === undefined) {
+			throw new UsageError(
+				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
+			);
+		}
+		return channel.entryPoint;
 	}
 
 	public createDetachedRootDataStore(
@@ -2576,7 +2707,7 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
@@ -2793,7 +2924,6 @@ export class ContainerRuntime
 			const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
 				createChildLogger({
 					logger: summaryNumberLogger,
-					namespace: undefined,
 					properties: { all: { safeSummary: true } },
 				}),
 			);
@@ -2893,6 +3023,27 @@ export class ContainerRuntime
 					error,
 				};
 			}
+
+			// If validateSummaryBeforeUpload is true, validate that the summary generated by the summarizer nodes is
+			// correct before this summary is uploaded.
+			if (this.validateSummaryBeforeUpload) {
+				const validateResult = this.summarizerNode.validateSummary();
+				if (!validateResult.success) {
+					const { success, ...loggingProps } = validateResult;
+					const error = new RetriableSummaryError(
+						validateResult.reason,
+						validateResult.retryAfterSeconds,
+						{ ...loggingProps },
+					);
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error,
+					};
+				}
+			}
+
 			const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
 			// Now that we have generated the summary, update the message at last summary to the last message processed.
@@ -2928,21 +3079,6 @@ export class ContainerRuntime
 				generateDuration: trace.trace().duration,
 				forcedFullTree,
 			} as const;
-
-			// If validateSummaryBeforeUpload is true, validate that the summary generated by the summarizer nodes is
-			// correct before this summary is uploaded.
-			if (this.validateSummaryBeforeUpload) {
-				const validateResult = this.summarizerNode.validateSummary();
-				if (!validateResult.success) {
-					const { success, ...loggingProps } = validateResult;
-					const error = new RetriableSummaryError(
-						validateResult.reason,
-						validateResult.retryAfterSeconds,
-						{ ...loggingProps },
-					);
-					return { stage: "base", ...generateSummaryData, error };
-				}
-			}
 
 			continueResult = checkContinue();
 			if (!continueResult.continue) {
@@ -3046,8 +3182,12 @@ export class ContainerRuntime
 		}
 	}
 
+	private get pendingMessagesCount(): number {
+		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
+	}
+
 	private hasPendingMessages() {
-		return this.pendingStateManager.hasPendingMessages() || !this.outbox.isEmpty;
+		return this.pendingMessagesCount !== 0;
 	}
 
 	private updateDocumentDirtyState(dirty: boolean) {
@@ -3156,7 +3296,7 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
 			});
@@ -3375,11 +3515,31 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				this.submit(message);
 				break;
-			default:
-				unreachableCase(
-					message.type,
-					`Unknown ContainerMessageType [type: ${message.type}]`,
-				);
+			default: {
+				// This case should be very rare - it would imply an op was stashed from a
+				// future version of runtime code and now is being applied on an older version
+				const compatBehavior = message.compatDetails?.behavior;
+				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
+					this.logger.sendTelemetryEvent({
+						eventName: "resubmitUnrecognizedMessageTypeAllowed",
+						messageDetails: { type: message.type, compatBehavior },
+					});
+				} else {
+					const error = DataProcessingError.create(
+						"Resubmitting runtime message of unknown type",
+						"reSubmitCore",
+						undefined /* sequencedMessage */,
+						{
+							messageDetails: JSON.stringify({
+								type: message.type,
+								compatBehavior,
+							}),
+						},
+					);
+					this.closeFn(error);
+					throw error;
+				}
+			}
 		}
 	}
 
@@ -3393,6 +3553,7 @@ export class ContainerRuntime
 				this.dataStores.rollbackDataStoreOp(contents as IEnvelope, localOpMetadata);
 				break;
 			default:
+				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
 				throw new Error(`Can't rollback ${type}`);
 		}
 	}
@@ -3657,31 +3818,31 @@ export class ContainerRuntime
 		};
 	}
 
-	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.isSummarizerClient) {
-			return this.summarizer.summarizeOnDemand(...args);
+			return this.summarizer.summarizeOnDemand(options);
 		} else if (this.summaryManager !== undefined) {
-			return this.summaryManager.summarizeOnDemand(...args);
+			return this.summaryManager.summarizeOnDemand(options);
 		} else {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// disableSummaries is turned on. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		}
-	};
+	}
 
-	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.isSummarizerClient) {
-			return this.summarizer.enqueueSummarize(...args);
+			return this.summarizer.enqueueSummarize(options);
 		} else if (this.summaryManager !== undefined) {
-			return this.summaryManager.enqueueSummarize(...args);
+			return this.summaryManager.enqueueSummarize(options);
 		} else {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// generateSummaries is turned off. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		}
-	};
+	}
 
 	/**
 	 * * Forms a function that will request a Summarizer.

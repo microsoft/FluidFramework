@@ -2,12 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { AzureClient } from "@fluidframework/azure-client";
+import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { CommanderStatic } from "commander";
 
-export type RunnnerStatus = "notStarted" | "running" | "success" | "error";
+export enum RunnerStatus {
+	NotStarted = "notStarted",
+	Running = "running",
+	Success = "success",
+	Error = "error",
+}
 export interface IRunnerStatus {
-	status: RunnnerStatus;
+	status: RunnerStatus;
 	description?: string;
 	details: unknown;
 }
@@ -16,10 +22,22 @@ export interface IRunnerEvents extends IEvent {
 	(event: "status", listener: (s: IRunnerStatus) => void): void;
 }
 
+export interface IScenarioConfig {
+	schema: ContainerFactorySchema;
+	clientStartDelayMs?: number;
+	numClients?: number;
+	numRunsPerClient?: number;
+	client?: AzureClient;
+}
+
 export interface IRunConfig {
 	runId: string;
 	scenarioName: string;
 	logger?: ITelemetryLogger;
+}
+
+export interface IScenarioRunConfig extends IRunConfig, IScenarioConfig {
+	childId: number;
 }
 
 export interface IRunner extends IEventProvider<IRunnerEvents> {
@@ -55,3 +73,7 @@ export interface AzureClientConnectionConfig {
 	useSecureTokenProvider?: boolean;
 	region?: string;
 }
+
+export type ChildRunner = (
+	program: CommanderStatic,
+) => (opts: { [key: string]: any }) => Promise<void>;

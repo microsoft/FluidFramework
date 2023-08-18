@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ITreeCursor } from "../../core";
-import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
+import { ChangesetLocalId, ITreeCursor } from "../../core";
+import { FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	CellId,
@@ -57,7 +57,7 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, { count: 1, changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],
@@ -65,8 +65,9 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		const mark: Insert<never> = {
 			type: "Insert",
+			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
-			id,
+			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);
 	},
@@ -80,7 +81,7 @@ export const sequenceFieldEditor = {
 		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		assert(detachEvent.revision !== undefined, "Detach event must have a revision");
+		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: Reattach<never> = {
 			type: "Revive",
 			content: reviver(detachEvent.revision, detachEvent.localId, count),
@@ -109,6 +110,7 @@ export const sequenceFieldEditor = {
 			type: "MoveIn",
 			id,
 			count,
+			cellId: { localId: id },
 		};
 
 		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];

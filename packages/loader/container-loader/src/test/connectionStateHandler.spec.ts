@@ -106,7 +106,7 @@ describe("ConnectionStateHandler Tests", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
-			reason: "test",
+			reason: { text: "test" },
 		};
 		connectionDetails2 = {
 			clientId: pendingClientId2,
@@ -118,7 +118,7 @@ describe("ConnectionStateHandler Tests", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
-			reason: "test",
+			reason: { text: "test" },
 		};
 		connectionDetails3 = {
 			clientId: pendingClientId3,
@@ -130,7 +130,7 @@ describe("ConnectionStateHandler Tests", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			serviceConfiguration: {} as IClientConfiguration,
 			checkpointSequenceNumber: undefined,
-			reason: "test",
+			reason: { text: "test" },
 		};
 
 		protocolHandler = new ProtocolHandler(
@@ -138,6 +138,7 @@ describe("ConnectionStateHandler Tests", () => {
 			{ members: [], proposals: [], values: [] }, // quorumSnapshot
 			(key, value) => 0, // sendProposal
 			new Audience(),
+			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
 		handlerInputs = {
@@ -177,7 +178,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 	afterEach(() => {
 		// Get rid of timers
-		connectionStateHandler.receivedDisconnectEvent("the end of test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "the end of test" });
 		connectionStateHandler.dispose();
 	});
 
@@ -206,7 +207,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.Disconnected,
 			"Client should be in Disconnected state",
 		);
-		connectionStateHandler.establishingConnection("read");
+		connectionStateHandler.establishingConnection({ text: "read" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -233,7 +234,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
-		connectionStateHandler.establishingConnection("read");
+		connectionStateHandler.establishingConnection({ text: "read" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -267,7 +268,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
-		connectionStateHandler.establishingConnection("read");
+		connectionStateHandler.establishingConnection({ text: "read" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -322,7 +323,7 @@ describe("ConnectionStateHandler Tests", () => {
 			true,
 		); // readClientsWaitForJoinSignal
 
-		connectionStateHandler.establishingConnection("write");
+		connectionStateHandler.establishingConnection({ text: "write" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -390,7 +391,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in Disconnected state",
 		);
 
-		connectionStateHandler.establishingConnection("write");
+		connectionStateHandler.establishingConnection({ text: "write" });
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -508,7 +509,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -545,7 +546,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -584,7 +585,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		// Disconnect the first client, indicating all pending ops were ack'd
 		shouldClientJoinWrite = false;
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -613,7 +614,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -657,7 +658,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -698,7 +699,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"pendingClientId should be set after receiving 'connect' event",
 		);
 
-		connectionStateHandler.receivedDisconnectEvent("test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "test" });
 		assert(
 			connectionStateHandler.pendingClientId === undefined,
 			"pendingClientId should not be set after receiving 'disconnect' event",
@@ -717,7 +718,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -731,7 +732,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.CatchingUp,
 			"Client 2 should be in connecting state",
 		);
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -786,7 +787,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -800,7 +801,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.CatchingUp,
 			"Client 2 should be in connecting state",
 		);
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -856,7 +857,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		shouldClientJoinWrite = true;
 		// Disconnect the client
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -870,7 +871,7 @@ describe("ConnectionStateHandler Tests", () => {
 			ConnectionState.CatchingUp,
 			"Client 2 should be in connecting state",
 		);
-		connectionStateHandler.receivedDisconnectEvent("Test");
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Disconnected,
@@ -929,7 +930,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 			shouldClientJoinWrite = true;
 			// Disconnect the client
-			connectionStateHandler.receivedDisconnectEvent("Test");
+			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.Disconnected,
@@ -944,7 +945,7 @@ describe("ConnectionStateHandler Tests", () => {
 				ConnectionState.CatchingUp,
 				"Client 2 should still be in connecting state",
 			);
-			connectionStateHandler.receivedDisconnectEvent("Test");
+			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.Disconnected,
@@ -996,7 +997,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 			shouldClientJoinWrite = true;
 			// Disconnect the client
-			connectionStateHandler.receivedDisconnectEvent("Test");
+			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.Disconnected,
@@ -1011,7 +1012,7 @@ describe("ConnectionStateHandler Tests", () => {
 				ConnectionState.CatchingUp,
 				"Client 2 should still be in connecting state",
 			);
-			connectionStateHandler.receivedDisconnectEvent("Test");
+			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.Disconnected,
@@ -1071,7 +1072,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 			shouldClientJoinWrite = true;
 			// Disconnect the client
-			connectionStateHandler.receivedDisconnectEvent("Test");
+			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.Disconnected,
@@ -1096,7 +1097,7 @@ describe("ConnectionStateHandler Tests", () => {
 			);
 
 			// Client 2 leaves without sending any ops.
-			connectionStateHandler.receivedDisconnectEvent("Test");
+			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.Disconnected,

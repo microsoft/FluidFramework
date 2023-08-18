@@ -107,7 +107,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -665,18 +664,6 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummaryTreeWithStats": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISubmitSummaryOpResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISubmitSummaryOpResult():
@@ -864,7 +851,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*

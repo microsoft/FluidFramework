@@ -8,6 +8,7 @@ import {
 	IConnectionDetails,
 	ICriticalContainerError,
 	IDeltaQueue,
+	IErrorBase,
 	IFluidCodeDetails,
 	isFluidPackage,
 	ReadOnlyInfo,
@@ -21,12 +22,17 @@ import {
 	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { IAnyDriverError, IContainerPackageInfo } from "@fluidframework/driver-definitions";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",
 	Disabled = "Disabled",
 	Enabled = "Enabled",
+}
+
+export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
+	text: string;
+	error?: T;
 }
 
 /**
@@ -36,7 +42,7 @@ export interface IConnectionDetailsInternal extends IConnectionDetails {
 	mode: ConnectionMode;
 	version: string;
 	initialClients: ISignalClient[];
-	reason: string;
+	reason: IConnectionStateChangeReason;
 }
 
 /**
@@ -106,7 +112,7 @@ export interface IConnectionManager {
 	/**
 	 * Initiates connection to relay service (noop if already connected).
 	 */
-	connect(reason: string, connectionMode?: ConnectionMode): void;
+	connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode): void;
 
 	/**
 	 * Disposed connection manager
@@ -150,7 +156,7 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever connection to relay service is lost.
 	 */
-	readonly disconnectHandler: (reason: string, error?: IAnyDriverError) => void;
+	readonly disconnectHandler: (reason: IConnectionStateChangeReason) => void;
 
 	/**
 	 * Called whenever new connection to rely service is established
@@ -180,12 +186,12 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever we try to start establishing a new connection.
 	 */
-	readonly establishConnectionHandler: (reason: string) => void;
+	readonly establishConnectionHandler: (reason: IConnectionStateChangeReason) => void;
 
 	/**
 	 * Called whenever we cancel the connection in progress.
 	 */
-	readonly cancelConnectionHandler: (reason: string) => void;
+	readonly cancelConnectionHandler: (reason: IConnectionStateChangeReason) => void;
 }
 
 /**

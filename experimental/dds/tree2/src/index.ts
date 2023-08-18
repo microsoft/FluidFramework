@@ -46,7 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
 	FieldStoredSchema,
@@ -58,6 +57,7 @@ export {
 	SchemaData,
 	FieldAnchor,
 	RevisionTag,
+	ChangesetLocalId,
 	TaggedChange,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
@@ -124,9 +124,6 @@ export {
 } from "./domains";
 
 export {
-	buildForest,
-	ChangesetLocalId,
-	emptyField,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,

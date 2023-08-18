@@ -14,6 +14,7 @@ import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 import { ReleaseReport, getDisplayDate, getDisplayDateRelative, sortVersions } from "../../lib";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
+import { findPackageOrReleaseGroup } from "../../args";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 
@@ -65,20 +66,29 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 	static enableJsonFlag = true;
 
 	defaultMode: ReleaseSelectionMode = "date";
-	releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
+	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<{ reports: ReleaseReport[] }> {
-		this.releaseGroupOrPackage = this.flags.releaseGroup ?? this.flags.package;
-
 		const context = await this.getContext();
+		const flags = this.flags;
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const releaseGroup = flags.releaseGroup ?? flags.package!;
+		this.releaseGroupName = findPackageOrReleaseGroup(releaseGroup, context)?.name;
+		if (this.releaseGroupName === undefined) {
+			this.error(`Can't find release group or package with name: ${releaseGroup}`, {
+				exit: 1,
+			});
+		}
+
 		this.releaseData = await this.collectReleaseData(
 			context,
 			this.defaultMode,
-			this.releaseGroupOrPackage,
+			this.releaseGroupName,
 			false,
 		);
 		if (this.releaseData === undefined) {
-			this.error(`No releases found for ${this.releaseGroupOrPackage}`);
+			this.error(`No releases found for ${this.releaseGroupName}`);
 		}
 
 		const reports: ReleaseReport[] = [];

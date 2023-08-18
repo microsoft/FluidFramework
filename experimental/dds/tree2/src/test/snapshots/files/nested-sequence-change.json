@@ -9,7 +9,7 @@
                     "tree": {
                         "String": {
                             "type": 2,
-                            "content": "{\"trunk\":[{\"change\":{\"maxId\":1,\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"content\":[{\"type\":\"SeqMap\"}],\"id\":0,\"changes\":{\"fieldChanges\":[{\"fieldKey\":\"foo\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"content\":[{\"type\":\"SeqMap\"}],\"id\":1}]}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000004\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
+                            "content": "{\"trunk\":[{\"change\":{\"maxId\":1,\"changes\":[{\"fieldKey\":\"rootFieldKey\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":0},\"changes\":{\"fieldChanges\":[{\"fieldKey\":\"foo\",\"fieldKind\":\"Sequence\",\"change\":[{\"type\":\"Insert\",\"count\":1,\"content\":[{\"type\":\"SeqMap\"}],\"cellId\":{\"localId\":1}}]}]}}]}]},\"revision\":\"beefbeef-beef-4000-8000-000000000004\",\"sequenceNumber\":-9007199254740990,\"sessionId\":\"beefbeef-beef-4000-8000-000000000001\"}],\"branches\":[]}"
                         }
                     }
                 },
@@ -18,7 +18,7 @@
                     "tree": {
                         "SchemaString": {
                             "type": 2,
-                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]},\"structFields\":[],\"value\":0}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]}}"
+                            "content": "{\"version\":\"1.0.0\",\"treeSchema\":[{\"name\":\"SeqMap\",\"mapFields\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]},\"structFields\":[]}],\"rootFieldSchema\":{\"kind\":\"Sequence\",\"types\":[\"SeqMap\"]}}"
                         }
                     }
                 },
@@ -27,7 +27,7 @@
                     "tree": {
                         "ForestTree": {
                             "type": 2,
-                            "content": "\"[{\\\"type\\\":\\\"SeqMap\\\",\\\"fields\\\":{\\\"foo\\\":[{\\\"type\\\":\\\"SeqMap\\\"}]}}]\""
+                            "content": "[{\"type\":\"SeqMap\",\"fields\":{\"foo\":[{\"type\":\"SeqMap\"}]}}]"
                         }
                     }
                 }

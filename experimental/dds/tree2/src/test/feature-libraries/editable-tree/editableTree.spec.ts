@@ -590,7 +590,7 @@ describe("editable-tree: read-only", () => {
 		// assert its schema follows the primary field schema and get the primary key from it
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
-		assert.deepEqual(simplePhonesSchema.mapFields.types, new Set());
+		assert.equal(simplePhonesSchema.mapFields, undefined);
 		assert.equal(simplePhonesSchema.structFields.size, 1);
 		const simplePhonesPrimaryKey = [...simplePhonesSchema.structFields.keys()][0];
 		// primary key must be the same across the schema

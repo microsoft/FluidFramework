@@ -12,8 +12,8 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -156,8 +156,16 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
     readonly entryPoint?: IFluidHandle<FluidObject>;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
+    request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
