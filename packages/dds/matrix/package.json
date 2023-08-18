@@ -39,7 +39,7 @@
 		"test:memory": "mocha --config src/test/memory/.mocharc.js",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.js",
 		"test:mocha": "mocha --recursive 'dist/test/**/*.spec.js' --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
