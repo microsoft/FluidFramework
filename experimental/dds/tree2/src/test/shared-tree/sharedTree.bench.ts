@@ -21,15 +21,9 @@ import { brand, requireAssignableTo } from "../../util";
 import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { typeboxValidator } from "../../external-utilities";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
-import {
-	AllowedUpdateType,
-	LocalFieldKey,
-	moveToDetachedField,
-	rootFieldKeySymbol,
-	UpPath,
-} from "../../core";
+import { AllowedUpdateType, FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../../core";
 
-const localFieldKey: LocalFieldKey = brand("foo");
+const localFieldKey: FieldKey = brand("foo");
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -321,8 +315,8 @@ describe("SharedTree benchmarks", () => {
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
 							cursorForTypedData(
-								tree.storedSchema,
-								deepSchema.root.schema.allowedTypes,
+								{ schema: tree.storedSchema },
+								deepSchema.rootFieldSchema.allowedTypes,
 								makeJsDeepTree(numberOfNodes, setCount),
 							),
 						);
@@ -360,7 +354,7 @@ describe("SharedTree benchmarks", () => {
 
 						const rootPath = {
 							parent: undefined,
-							parentField: rootFieldKeySymbol,
+							parentField: rootFieldKey,
 							parentIndex: 0,
 						};
 						const nodeIndex = numberOfNodes - 1;
@@ -538,7 +532,7 @@ function deepPath(depth: number): UpPath {
 	assert(depth > 0);
 	let path: UpPath = {
 		parent: undefined,
-		parentField: rootFieldKeySymbol,
+		parentField: rootFieldKey,
 		parentIndex: 0,
 	};
 	for (let i = 0; i < depth - 1; i++) {
@@ -559,7 +553,7 @@ function wideLeafPath(index: number): UpPath {
 	const path = {
 		parent: {
 			parent: undefined,
-			parentField: rootFieldKeySymbol,
+			parentField: rootFieldKey,
 			parentIndex: 0,
 		},
 		parentField: localFieldKey,
@@ -573,7 +567,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 	let nodesCount = 0;
 	const root = tree.root;
 	assert(isEditableTree(root));
-	const field = root.foo as UnwrappedEditableField;
+	const field = root.foo;
 	assert(isEditableField(field));
 	assert(field.length !== 0);
 	for (const currentNode of field) {
@@ -587,7 +581,7 @@ function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: nu
 	let depth = 0;
 	let currentNode: UnwrappedEditableField = tree.root;
 	while (isEditableTree(currentNode)) {
-		currentNode = currentNode.foo as UnwrappedEditableField;
+		currentNode = currentNode.foo;
 		depth++;
 	}
 	assert(typeof currentNode === "number");

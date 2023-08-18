@@ -17,13 +17,11 @@ export {
 } from "./browserPackage";
 export {
 	IConnectionDetails,
-	IConnectionDetailsInternal,
-	IDeltaHandlerStrategy,
 	IDeltaManager,
 	IDeltaManagerEvents,
-	IDeltaSender,
 	IDeltaQueue,
 	IDeltaQueueEvents,
+	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas";
 export {
@@ -37,7 +35,6 @@ export {
 } from "./error";
 export {
 	ConnectionState,
-	ICodeAllowList,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,

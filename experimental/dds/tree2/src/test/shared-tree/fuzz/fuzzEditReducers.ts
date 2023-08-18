@@ -7,7 +7,7 @@ import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
-import { toJsonableTree } from "../../utils";
+import { toJsonableTree, validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { FieldUpPath } from "../../../core";
 import {
@@ -15,6 +15,7 @@ import {
 	FuzzDelete,
 	FuzzFieldChange,
 	FuzzTransactionType,
+	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
 
@@ -38,6 +39,16 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		applyTransactionEdit(tree, contents);
 		return state;
 	},
+	undoRedo: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyUndoRedoEdit(tree, contents);
+		return state;
+	},
+	synchronizeTrees: async (state) => {
+		applySynchronizationOp(state);
+		return state;
+	},
 });
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
@@ -47,6 +58,17 @@ export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 		// Uncomment to get a merged view of the trees
 		// const mergedView = merge(actual, lastTree);
 		assert.deepEqual(actual, lastTree);
+	}
+}
+
+export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory>) {
+	state.containerRuntimeFactory.processAllMessages();
+	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
+	if (connectedClients.length > 0) {
+		const readonlyChannel = state.summarizerClient.channel;
+		for (const { channel } of connectedClients) {
+			validateTreeConsistency(channel, readonlyChannel);
+		}
 	}
 }
 
@@ -135,6 +157,21 @@ export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransa
 		}
 		case "transactionAbort": {
 			tree.transaction.abort();
+			break;
+		}
+		default:
+			fail("Invalid edit.");
+	}
+}
+
+export function applyUndoRedoEdit(tree: ISharedTreeView, contents: FuzzUndoRedoType): void {
+	switch (contents.type) {
+		case "undo": {
+			tree.undo();
+			break;
+		}
+		case "redo": {
+			tree.redo();
 			break;
 		}
 		default:

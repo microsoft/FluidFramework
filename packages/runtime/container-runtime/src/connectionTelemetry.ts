@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	formatTick,
+} from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
@@ -75,7 +79,7 @@ class OpPerfTelemetry {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		this.logger = ChildLogger.create(logger, "OpPerf");
+		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
@@ -179,7 +183,7 @@ class OpPerfTelemetry {
 			ops: this.gap,
 			// track time to connect only for first connection.
 			timeToConnect: this.firstConnection
-				? TelemetryLogger.formatTick(this.connectionStartTime - this.bootTime)
+				? formatTick(this.connectionStartTime - this.bootTime)
 				: undefined,
 			firstConnection: this.firstConnection,
 		});

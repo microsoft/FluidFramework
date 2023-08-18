@@ -4,7 +4,7 @@
  */
 
 import {
-	GlobalFieldSchema,
+	FieldSchema,
 	ISharedTreeView,
 	SchemaAware,
 	SchematizeConfiguration,
@@ -20,10 +20,10 @@ import React from "react";
  *
  * Not currently compatible with 'React.memo'.
  */
-export function useTree<TRoot extends GlobalFieldSchema>(
+export function useTree<TRoot extends FieldSchema>(
 	tree: ISharedTreeView,
 	config: SchematizeConfiguration<TRoot>,
-): SchemaAware.TypedField<TRoot["schema"]> {
+): SchemaAware.TypedField<TRoot> {
 	// TODO: reconsider where this belongs. Consider error handling from schema changes.
 	const typedTree = React.useMemo<ISharedTreeView>(() => tree.schematize(config), [tree]);
 
@@ -39,5 +39,5 @@ export function useTree<TRoot extends GlobalFieldSchema>(
 		});
 	});
 
-	return typedTree.context.root as unknown as SchemaAware.TypedField<TRoot["schema"]>;
+	return typedTree.context.root as unknown as SchemaAware.TypedField<TRoot>;
 }

@@ -88,11 +88,7 @@ jobs:
             TestCoverage=$(testCoverage)
           "
 
-    # Install
-    - task: UseNode@1
-      displayName: Use Node 16.x
-      inputs:
-        version: 16.x
+    - template: include-use-node-version.yml
 
     - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: include-install-pnpm.yml

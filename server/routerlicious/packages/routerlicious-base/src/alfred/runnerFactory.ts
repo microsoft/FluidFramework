@@ -540,7 +540,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
-		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+		const deltaService = new DeltaService(opsCollection, tenantManager);
 		const documentDeleteService =
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 

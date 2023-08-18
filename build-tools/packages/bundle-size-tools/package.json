@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/bundle-size-tools",
-	"version": "0.22.0",
+	"version": "0.23.0",
 	"description": "Utility for analyzing bundle size regressions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,7 +19,7 @@
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf dist *.tsbuildinfo",
+		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run prettier:fix",

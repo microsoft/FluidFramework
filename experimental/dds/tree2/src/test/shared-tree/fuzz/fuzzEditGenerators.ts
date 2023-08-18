@@ -27,14 +27,18 @@ import {
 	FuzzDelete,
 	FuzzInsert,
 	FuzzTransactionType,
+	FuzzUndoRedoType,
 	Operation,
 	OptionalFieldEdit,
+	RedoOp,
 	SequenceFieldEdit,
 	TransactionAbortOp,
 	TransactionBoundary,
 	TransactionCommitOp,
 	TransactionStartOp,
 	TreeEdit,
+	UndoOp,
+	UndoRedo,
 	ValueFieldEdit,
 } from "./operationTypes";
 
@@ -46,6 +50,9 @@ export interface EditGeneratorOpWeights {
 	start: number;
 	commit: number;
 	abort: number;
+	undo: number;
+	redo: number;
+	synchronizeTrees: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
@@ -53,6 +60,9 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	start: 0,
 	commit: 0,
 	abort: 0,
+	undo: 0,
+	redo: 0,
+	synchronizeTrees: 0,
 };
 
 export const makeFieldEditGenerator = (
@@ -242,6 +252,33 @@ export const makeTransactionEditGenerator = (
 	};
 };
 
+export const makeUndoRedoEditGenerator = (
+	opWeights: Partial<EditGeneratorOpWeights>,
+): Generator<UndoRedo, FuzzTestState> => {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
+	const undo: UndoOp = { type: "undo" };
+	const redo: RedoOp = { type: "redo" };
+
+	const undoRedoType = createWeightedGenerator<FuzzUndoRedoType, FuzzTestState>([
+		[undo, passedOpWeights.undo],
+		[redo, passedOpWeights.redo],
+	]);
+
+	return (state) => {
+		const contents = undoRedoType(state);
+
+		return contents === done
+			? done
+			: {
+					type: "undoRedo",
+					contents,
+			  };
+	};
+};
+
 export function makeOpGenerator(
 	opWeights: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
@@ -249,17 +286,28 @@ export function makeOpGenerator(
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	const generatorWeights: Weights<Operation, FuzzTestState> = [
-		[
+	const generatorWeights: Weights<Operation, FuzzTestState> = [];
+	if (sumWeights([passedOpWeights.delete, passedOpWeights.insert]) > 0) {
+		generatorWeights.push([
 			makeEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-		],
-		[
+		]);
+	}
+	if (sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]) > 0) {
+		generatorWeights.push([
 			makeTransactionEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
-		],
-	];
-
+		]);
+	}
+	if (sumWeights([passedOpWeights.undo, passedOpWeights.redo]) > 0) {
+		generatorWeights.push([
+			makeUndoRedoEditGenerator(passedOpWeights),
+			sumWeights([passedOpWeights.undo, passedOpWeights.redo]),
+		]);
+	}
+	if (passedOpWeights.synchronizeTrees > 0) {
+		generatorWeights.push([{ type: "synchronizeTrees" }, passedOpWeights.synchronizeTrees]);
+	}
 	const generatorAssumingTreeIsSelected = createWeightedGenerator<Operation, FuzzTestState>(
 		generatorWeights,
 	);

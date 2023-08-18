@@ -16,7 +16,7 @@ import {
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
-	rootFieldKeySymbol,
+	rootFieldKey,
 	TaggedChange,
 	UpPath,
 } from "../../../core";
@@ -39,7 +39,7 @@ const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidat
 const defaultIntoDelta = (change: ModularChangeset) => defaultChangeFamily.intoDelta(change);
 const family = defaultChangeFamily;
 
-const rootKey = rootFieldKeySymbol;
+const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
 const barKey = brand<FieldKey>("bar");
 

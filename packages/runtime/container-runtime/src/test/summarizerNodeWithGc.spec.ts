@@ -16,7 +16,7 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { IFetchSnapshotResult, ValidateSummaryResult } from "../summary/summarizerNode";
 import {
@@ -58,7 +58,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			undefined,
 			getRootBaseGCDetails,
 		);
-		rootSummarizerNode.startSummary(0, new TelemetryNullLogger());
+		rootSummarizerNode.startSummary(0, createChildLogger());
 
 		summarizerNode = rootSummarizerNode.createChild(
 			summarizeInternal,
@@ -244,7 +244,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		let midNode: ISummarizerNodeWithGC | undefined;
 		let leafNode: ISummarizerNodeWithGC | undefined;
 
-		const logger = new TelemetryNullLogger();
+		const logger = createChildLogger();
 		const getSummarizeInternalFn = (depth: 0 | 1 | 2) => async (fullTree: boolean) => {
 			return {
 				id: ids[depth],

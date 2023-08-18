@@ -11,7 +11,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
-	createSummarizerWithTestConfig,
 	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
@@ -50,6 +49,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				message: "Stopping fetch from storage",
 			},
 			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 			{
@@ -63,9 +66,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				undefined,
-				undefined,
-				mockConfigProvider(settings),
+				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			);
 
 			const summarizeResults = summarizer.summarizeOnDemand({
@@ -87,6 +88,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				message: "Stopping fetch from storage",
 			},
 			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 		],
@@ -95,19 +100,13 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				undefined,
-				undefined,
-				mockConfigProvider(settings),
+				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			);
 
 			const { container: summarizingContainer2, summarizer: summarizer2 } =
-				await createSummarizer(
-					provider,
-					container,
-					undefined,
-					undefined,
-					mockConfigProvider(settings),
-				);
+				await createSummarizer(provider, container, {
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				});
 
 			await summarizeNow(summarizer);
 			await provider.ensureSynchronized();
@@ -131,6 +130,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				message: "Stopping fetch from storage",
 			},
 			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 		],
@@ -139,9 +142,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				undefined,
-				undefined,
-				mockConfigProvider(settings),
+				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			);
 
 			// summary1
@@ -157,9 +158,8 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				await createSummarizer(
 					provider,
 					container,
+					{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 					summaryVersion1,
-					undefined,
-					mockConfigProvider(settings),
 				);
 
 			await provider.ensureSynchronized();
@@ -183,6 +183,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
 			},
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
@@ -217,12 +221,11 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				registry: [], // omit the sharedCounter factory from the registry to cause a summarization error
 			};
 
-			const { container: summarizingContainer, summarizer } =
-				await createSummarizerWithTestConfig(
-					provider,
-					container,
-					configWithMissingChannelFactory,
-				);
+			const { container: summarizingContainer, summarizer } = await createSummarizer(
+				provider,
+				container,
+				configWithMissingChannelFactory,
+			);
 
 			await provider.ensureSynchronized();
 

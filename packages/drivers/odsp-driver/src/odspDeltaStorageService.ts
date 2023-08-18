@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { validateMessages } from "@fluidframework/driver-base";
@@ -164,13 +163,10 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		// Better implementation would be to return only what we have in cache, but that also breaks API
 		assert(!cachedOnly || toTotal === undefined, 0x1e3);
 
-		const isFirstSnapshotFromNetwork = this.storageManagerGetter()?.isFirstSnapshotFromNetwork;
-		assert(
-			isFirstSnapshotFromNetwork !== undefined,
-			"snapshot should have been fetched by now!",
-		);
-		// Don't use cache for ops is snapshot is fetched from network.
-		this.useCacheForOps = !isFirstSnapshotFromNetwork;
+		// Don't use cache for ops is snapshot is fetched from network or if it was not fetched at all.
+		this.useCacheForOps =
+			this.useCacheForOps &&
+			this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;

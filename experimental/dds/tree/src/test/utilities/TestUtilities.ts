@@ -29,7 +29,7 @@ import type { IContainer, IHostLoader } from '@fluidframework/container-definiti
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { ConfigTypes, IConfigProviderBase, TelemetryNullLogger } from '@fluidframework/telemetry-utils';
+import { ConfigTypes, IConfigProviderBase, createChildLogger } from '@fluidframework/telemetry-utils';
 import { ITelemetryBaseLogger, IRequest } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
@@ -667,7 +667,7 @@ export function spyOnSubmittedOps<Op extends SharedTreeOp | SharedTreeOp_0_0_2>(
  */
 export async function waitForSummary(mainContainer: IContainer): Promise<string> {
 	const { deltaManager } = mainContainer;
-	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
+	const summaryCollection = new SummaryCollection(deltaManager, createChildLogger());
 	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
 	return ackedSummary.summaryAck.contents.handle;
 }
@@ -683,6 +683,7 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = container.closeAndGetPendingLocalState();
+	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
+	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

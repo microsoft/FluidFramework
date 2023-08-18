@@ -1730,6 +1730,7 @@ declare function get_old_InterfaceDeclaration_IScribe():
 declare function use_current_InterfaceDeclaration_IScribe(
     use: TypeOnly<current.IScribe>);
 use_current_InterfaceDeclaration_IScribe(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IScribe());
 
 /*
@@ -1815,6 +1816,7 @@ declare function get_current_InterfaceDeclaration_ISequencedOperationMessage():
 declare function use_old_InterfaceDeclaration_ISequencedOperationMessage(
     use: TypeOnly<old.ISequencedOperationMessage>);
 use_old_InterfaceDeclaration_ISequencedOperationMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedOperationMessage());
 
 /*

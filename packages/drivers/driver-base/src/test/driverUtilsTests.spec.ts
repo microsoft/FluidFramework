@@ -27,7 +27,7 @@ describe("driver utils tests", () => {
 
 		it("from not equal to start", () => {
 			const ops = generateOps(1, 5);
-			validateMessages("test1", ops, 0, mockLogger, true);
+			validateMessages("test1", ops, 0, mockLogger.toTelemetryLogger(), true);
 			assert(ops.length === 0, "no ops should be returned");
 			assert(
 				mockLogger.matchEventStrict([
@@ -51,7 +51,7 @@ describe("driver utils tests", () => {
 
 		it("contiguous ops", () => {
 			const ops = generateOps(1, 5);
-			validateMessages("test2", ops, 1, mockLogger, true);
+			validateMessages("test2", ops, 1, mockLogger.toTelemetryLogger(), true);
 			assert(ops.length === 5, "ops should be returned");
 			assert(mockLogger.events.length === 0, "no events should be there");
 		});
@@ -60,7 +60,7 @@ describe("driver utils tests", () => {
 			const ops = generateOps(1, 5);
 			// Change seq number of last op
 			ops[4].sequenceNumber = 7;
-			validateMessages("test", ops, 1, mockLogger, true);
+			validateMessages("test", ops, 1, mockLogger.toTelemetryLogger(), true);
 			assert(ops.length === 0, "no ops should be returned as strict == true");
 			assert(
 				mockLogger.matchEventStrict([
@@ -86,7 +86,7 @@ describe("driver utils tests", () => {
 			const ops = generateOps(1, 5);
 			// Change seq number of last op
 			ops[4].sequenceNumber = 7;
-			validateMessages("test", ops, 1, mockLogger, false);
+			validateMessages("test", ops, 1, mockLogger.toTelemetryLogger(), false);
 			assert(ops.length === 4, "some should be returned as strict == false");
 			assert(
 				mockLogger.matchEventStrict([
@@ -110,7 +110,7 @@ describe("driver utils tests", () => {
 
 		it("only 1 op: strict = false", () => {
 			const ops = generateOps(1, 1);
-			validateMessages("test", ops, 1, mockLogger, false);
+			validateMessages("test", ops, 1, mockLogger.toTelemetryLogger(), false);
 			assert(ops.length === 1, "some should be returned as strict == false");
 			assert(mockLogger.events.length === 0, "no events should be there");
 		});

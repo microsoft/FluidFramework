@@ -4,7 +4,7 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DocumentType,
 	BenchmarkType,
@@ -18,6 +18,7 @@ import {
 	benchmarkMemory,
 	BenchmarkTimer,
 	IMemoryTestObject,
+	Phase,
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap.js";
@@ -48,7 +49,11 @@ export interface IDocumentLoader {
 	loadDocument(): Promise<IContainer>;
 }
 export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
-	summarize(summaryVersion?: string): Promise<ISummarizeResult>;
+	summarize(
+		_container: IContainer | undefined,
+		summaryVersion?: string,
+		closeContainer?: boolean,
+	): Promise<ISummarizeResult>;
 }
 
 /**
@@ -56,14 +61,17 @@ export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
  * @param props - Properties for initializing the Document Creator.
  */
 export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
-	const logger = ChildLogger.create(getTestLogger?.(), undefined, {
-		all: {
-			driverType: props.provider.driver.type,
-			driverEndpointName: props.provider.driver.endpointName,
-			benchmarkType: props.benchmarkType,
-			testDocument: props.testName,
-			testDocumentType: props.documentType,
-			details: JSON.stringify(props.documentTypeInfo),
+	const logger = createChildLogger({
+		logger: getTestLogger?.(),
+		properties: {
+			all: {
+				driverType: props.provider.driver.type,
+				driverEndpointName: props.provider.driver.endpointName,
+				benchmarkType: props.benchmarkType,
+				testDocument: props.testName,
+				testDocumentType: props.documentType,
+				details: JSON.stringify(props.documentTypeInfo),
+			},
 		},
 	});
 	const documentProps: IDocumentProps = { ...props, logger };
@@ -85,8 +93,8 @@ export interface IBenchmarkParameters {
 	readonly run: () => Promise<void>;
 	readonly beforeIteration?: () => void;
 	readonly afterIteration?: () => void;
-	readonly before?: () => void;
-	readonly after?: () => void;
+	readonly before?: () => Promise<void>;
+	readonly after?: () => Promise<void>;
 	readonly beforeEachBatch?: () => void;
 }
 /**
@@ -110,16 +118,20 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 		benchmarkMemory(t);
 	} else {
 		const runMethod = obj.run.bind(obj);
+		const beforeMethod = obj.before?.bind(obj);
+		const afterMethod = obj.after?.bind(obj);
 		const t1: BenchmarkArguments = {
 			title,
 			...obj,
 			benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
 				let duration: number;
 				do {
+					await beforeMethod?.();
 					const before = state.timer.now();
 					await runMethod();
 					const after = state.timer.now();
 					duration = state.timer.toSeconds(before, after);
+					await afterMethod?.();
 					// Collect data
 				} while (state.recordBatch(duration));
 			},
@@ -132,6 +144,8 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 		if (obj.minSampleCount !== undefined) {
 			t1.minBatchCount = obj.minSampleCount;
 		}
+		// No need to warm up
+		t1.startPhase = Phase.CollectData;
 		benchmark(t1);
 	}
 }
