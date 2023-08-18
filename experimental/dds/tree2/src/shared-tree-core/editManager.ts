@@ -256,7 +256,7 @@ export class EditManager<
 		/** The sequence id of the oldest commit on the trunk that will be retained */
 		let trunkTailSequenceId: SequenceId = {
 			sequenceNumber: this.minimumSequenceNumber,
-			indexInBatch: Number.MAX_SAFE_INTEGER,
+			indexInBatch: Number.POSITIVE_INFINITY,
 		};
 		// If there are any outstanding registered branches, get the one that is the oldest (has the "most behind" trunk base)
 		const minimumBranchBaseSequenceId = this.trunkBranches.minKey();
@@ -395,15 +395,15 @@ export class EditManager<
 		trunkRevisionCache.set(this.trunkBase.revision, this.trunkBase);
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
-				let sequenceId: SequenceId = {
-					sequenceNumber: c.sequenceNumber,
-				};
-				if (c.indexInBatch !== undefined) {
-					sequenceId = {
-						sequenceNumber: c.sequenceNumber,
-						indexInBatch: c.indexInBatch,
-					};
-				}
+				const sequenceId: SequenceId =
+					c.indexInBatch === undefined
+						? {
+								sequenceNumber: c.sequenceNumber,
+						  }
+						: {
+								sequenceNumber: c.sequenceNumber,
+								indexInBatch: c.indexInBatch,
+						  };
 				const commit = mintCommit(base, c);
 				this.sequenceMap.set(sequenceId, commit);
 				this.trunkMetadata.set(c.revision, {
@@ -482,19 +482,19 @@ export class EditManager<
 	): void {
 		assert(
 			sequenceNumber >= this.minimumSequenceNumber,
-			"Expected change sequence number to be greater or equals to the last known minimum sequence number",
+			"Expected change sequence number to be greater than or equal to the last known minimum sequence number",
 		);
 
-		let sequenceId: SequenceId = {
-			sequenceNumber,
-		};
-		const commitsSequenceNumber = this.getCommitsBySequenceNumber(sequenceNumber);
-		if (commitsSequenceNumber.length > 0) {
-			sequenceId = {
-				sequenceNumber,
-				indexInBatch: commitsSequenceNumber.length,
-			};
-		}
+		const commitsSequenceNumber = this.getBatch(sequenceNumber);
+		const sequenceId: SequenceId =
+			commitsSequenceNumber.length === 0
+				? {
+						sequenceNumber,
+				  }
+				: {
+						sequenceNumber,
+						indexInBatch: commitsSequenceNumber.length,
+				  };
 
 		if (newCommit.sessionId === this.localSessionId) {
 			const [firstLocalCommit] = getPathFromBase(
@@ -579,7 +579,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Finds the most recent trunk commit that was sequenced at or before the given sequence number. If the commit was part of a batch an index can be pass.
+	 * Finds the most recent trunk commit that was sequenced at or before the given point.
 	 * @param sequenceNumber - the sequence number to search for
 	 * @param indexInBatch - the commit index inside the batch to search for in conjunction with the sequence number
 	 * @remarks Fails if there is no eligible commit.
@@ -599,8 +599,8 @@ export class EditManager<
 						// This is to make sure that if the commit index in the batch is not passed the correct commit is selected in this 2 scenarios:
 						// 1) The commit is unique for that sequence number
 						// 2) There are more than one commit for the same sequence number, in this case we need to select the last one.
-						sequenceNumber: brand((sequenceNumber as number) + 1),
-						indexInBatch: Number.MIN_SAFE_INTEGER,
+						sequenceNumber,
+						indexInBatch: Number.POSITIVE_INFINITY,
 				  };
 
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceId);
@@ -608,18 +608,15 @@ export class EditManager<
 		return commit;
 	}
 
-	private getCommitsBySequenceNumber(
-		sequenceNumber: SeqNumber,
-	): [SequenceId, GraphCommit<TChangeset>][] {
+	private getBatch(sequenceNumber: SeqNumber): [SequenceId, GraphCommit<TChangeset>][] {
 		const startSequenceId: SequenceId = {
 			sequenceNumber,
 		};
 		const endSequenceId: SequenceId = {
-			sequenceNumber,
-			indexInBatch: Number.MAX_SAFE_INTEGER,
+			sequenceNumber: brand((sequenceNumber as number) + 1),
 		};
 
-		return this.sequenceMap.getRange(startSequenceId, endSequenceId);
+		return this.sequenceMap.getRange(startSequenceId, endSequenceId, false);
 	}
 }
 
