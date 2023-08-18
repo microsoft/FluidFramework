@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IGenericError,
-	IErrorBase,
-	IThrottlingWarning,
-	IUsageError,
-} from "@fluidframework/core-interfaces";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import {
 	LoggingError,
@@ -20,7 +14,13 @@ import {
 	NORMALIZED_ERROR_TYPE,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IGenericError,
+	IThrottlingWarning,
+	IUsageError,
+	ITelemetryProperties,
+} from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
