@@ -5,6 +5,9 @@
 ```ts
 
 // @public
+export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
+
+// @public
 export const FluidErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
@@ -15,7 +18,6 @@ export const FluidErrorTypes: {
 
 // @public (undocumented)
 export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
-export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -43,6 +45,7 @@ export interface IErrorBase extends Partial<Error> {
     readonly stack?: string;
 }
 
+// @public
 export interface IErrorEvent extends IEvent {
     // @eventProperty
     (event: "error", listener: (message: any) => void): any;
@@ -465,6 +468,8 @@ export interface IThrottlingWarning extends IErrorBase {
 export interface IUsageError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.usageError;
 }
+
+// @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;

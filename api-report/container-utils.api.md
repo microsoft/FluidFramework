@@ -18,7 +18,7 @@ import { IGenericError } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';

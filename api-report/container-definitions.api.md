@@ -13,6 +13,7 @@ import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
