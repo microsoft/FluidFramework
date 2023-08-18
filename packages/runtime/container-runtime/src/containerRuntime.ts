@@ -718,16 +718,30 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		runtimeOptions?: IContainerRuntimeOptions;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		} & (
+			| {
+					requestHandler?: (
+						request: IRequest,
+						runtime: IContainerRuntime,
+					) => Promise<IResponse>;
+					initializeEntryPoint?: undefined;
+			  }
+			| {
+					requestHandler?: undefined;
+					initializeEntryPoint: (
+						containerRuntime: IContainerRuntime,
+					) => Promise<FluidObject>;
+			  }
+		),
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -736,8 +750,12 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
 		} = params;
+
+		const initializeEntryPoint =
+			params.initializeEntryPoint ??
+			(async (containerRuntime: IContainerRuntime) =>
+				requestFluidObject(containerRuntime, "/"));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -841,11 +859,6 @@ export class ContainerRuntime
 					: IdCompressor.create(logger);
 		}
 
-		const initializeEntryPointFn =
-			initializeEntryPoint ??
-			(async (containerRuntime: IContainerRuntime) =>
-				requestFluidObject(containerRuntime, "/"));
-
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -873,7 +886,7 @@ export class ContainerRuntime
 			idCompressor,
 			requestHandler,
 			undefined, // summaryConfiguration
-			initializeEntryPointFn,
+			initializeEntryPoint,
 		);
 
 		await runtime.blobManager.processStashedChanges();
@@ -1756,6 +1769,11 @@ export class ContainerRuntime
 			}
 			if (this.requestHandler !== undefined) {
 				return this.requestHandler(parser, this);
+			} else {
+				const router: FluidObject<IFluidRouter> | undefined = await this.getEntryPoint?.();
+				if (router?.IFluidRouter !== undefined) {
+					return router.IFluidRouter.request(request);
+				}
 			}
 
 			return create404Response(request);
@@ -1795,7 +1813,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.IFluidRouter.request(subRequest);
+				return dataStore.request(subRequest);
 			}
 
 			return create404Response(request);
