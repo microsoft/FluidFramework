@@ -5,11 +5,11 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
-import { IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-services-core";
+import { IRunner, IWebServer, IWebServerFactory } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as app from "./app";
-import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
+import { IFileSystemManagerFactories, IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
 	private server: IWebServer;
@@ -19,7 +19,7 @@ export class GitrestRunner implements IRunner {
 		private readonly serverFactory: IWebServerFactory,
 		private readonly config: Provider,
 		private readonly port: string | number,
-		private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 	) {}
@@ -29,7 +29,7 @@ export class GitrestRunner implements IRunner {
 		// Create the gitrest app
 		const gitrest = app.create(
 			this.config,
-			this.fileSystemManagerFactory,
+			this.fileSystemManagerFactories,
 			this.repositoryManagerFactory,
 			this.asyncLocalStorage,
 		);
@@ -48,14 +48,14 @@ export class GitrestRunner implements IRunner {
 
 	public async stop(): Promise<void> {
 		// Close the underlying server and then resolve the runner once closed
-		this.server.close().then(
-			() => {
+		this.server
+			.close()
+			.then(() => {
 				this.runningDeferred.resolve();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				this.runningDeferred.reject(error);
-			},
-		);
+			});
 
 		return this.runningDeferred.promise;
 	}

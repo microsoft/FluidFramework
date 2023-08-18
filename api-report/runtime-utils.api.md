@@ -25,12 +25,11 @@ import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @public (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
@@ -118,9 +117,6 @@ export class ObjectStoragePartition implements IChannelStorageService {
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
-
-// @public
-export function packagePathToTelemetryProperty(packagePath: readonly string[] | undefined): ITaggedTelemetryPropertyType | undefined;
 
 // @public
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;

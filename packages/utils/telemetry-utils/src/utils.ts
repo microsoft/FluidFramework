@@ -6,7 +6,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryGenericEvent,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 
 /**
  * Like assert, but logs only if the condition is false, rather than throwing

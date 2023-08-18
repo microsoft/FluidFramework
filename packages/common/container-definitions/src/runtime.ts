@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	IDisposable,
+	FluidObject,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
 	IClientDetails,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -54,6 +59,7 @@ export enum AttachState {
 export interface IRuntime extends IDisposable {
 	/**
 	 * Executes a request against the runtime
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
@@ -92,7 +98,7 @@ export interface IRuntime extends IDisposable {
 	 * @experimental
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(): unknown;
+	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state
@@ -134,9 +140,7 @@ export interface IBatchMessage {
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
  */
-export interface IContainerContext extends IDisposable {
-	/** @deprecated Please pass in existing directly in instantiateRuntime */
-	readonly existing: boolean | undefined;
+export interface IContainerContext {
 	readonly options: ILoaderOptions;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
@@ -168,7 +172,6 @@ export interface IContainerContext extends IDisposable {
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
-	readonly serviceConfiguration: IClientConfiguration | undefined;
 	pendingLocalState?: unknown;
 
 	/**
@@ -199,6 +202,10 @@ export interface IContainerContext extends IDisposable {
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
 	 * and scenarios which can change in the future.
+	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
+	 * telemetry purposes, so this is generally unnecessary for telemetry.
+	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
+	 * This member will be removed in the 2.0.0-internal.7.0.0 release.
 	 */
 	readonly id: string;
 }

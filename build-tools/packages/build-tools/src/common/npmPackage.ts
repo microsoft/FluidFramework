@@ -8,7 +8,6 @@ import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
@@ -34,7 +33,7 @@ const { log, verbose, errorLog: error } = defaultLogger;
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
-type FluidPackageJson = {
+export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
@@ -55,12 +54,11 @@ type FluidPackageJson = {
 /**
  * A type representing all known fields in package.json, including fluid-build-specific config.
  *
- * By default all fields are optional, but we require that the name, dependencies, devDependencies, scripts, and version
- * all be defined.
+ * By default all fields are optional, but we require that the name, scripts, and version all be defined.
  */
 export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
-	"name" | "dependencies" | "devDependencies" | "scripts" | "version"
+	"name" | "scripts" | "version"
 >;
 
 export class Package {
@@ -165,6 +163,13 @@ export class Package {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
 	}
 
+	/**
+	 * Returns true if the package is a release group root package based on its directory path.
+	 */
+	public get isReleaseGroupRoot(): boolean {
+		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
+	}
+
 	public get matched() {
 		return this._matched;
 	}
@@ -200,6 +205,22 @@ export class Package {
 
 	public get directory(): string {
 		return path.dirname(this.packageJsonFileName);
+	}
+
+	/**
+	 * Get the full path for the lock file.
+	 * @returns full path for the lock file, or undefined if one doesn't exist
+	 */
+	public getLockFilePath() {
+		const directory = this.monoRepo ? this.monoRepo.repoPath : this.directory;
+		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
+		for (const lockFileName of lockFileNames) {
+			const full = path.join(directory, lockFileName);
+			if (fs.existsSync(full)) {
+				return full;
+			}
+		}
+		return undefined;
 	}
 
 	public get installCommand(): string {

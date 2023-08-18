@@ -77,9 +77,18 @@ module.exports = {
 			directory: "build-tools",
 			defaultInterdependencyRange: "workspace:*",
 		},
-		"server": "server/routerlicious",
-		"gitrest": "server/gitrest",
-		"historian": "server/historian",
+		"server": {
+			directory: "server/routerlicious",
+			defaultInterdependencyRange: "workspace:~",
+		},
+		"gitrest": {
+			directory: "server/gitrest",
+			defaultInterdependencyRange: "^",
+		},
+		"historian": {
+			directory: "server/historian",
+			defaultInterdependencyRange: "^",
+		},
 
 		// Independent packages
 		"build": "common/build",
@@ -124,6 +133,39 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 		},
+		packageNames: {
+			// The allowed package scopes for the repo.
+			allowedScopes: [
+				"@fluidframework",
+				"@fluid-example",
+				"@fluid-experimental",
+				"@fluid-internal",
+				"@fluid-tools",
+			],
+			// These packages are known unscoped packages.
+			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
+
+			mustPublish: {
+				// These packages will always be published to npm.
+				npm: ["@fluidframework", "fluid-framework", "tinylicious"],
+				// A list of packages known to be an internally published package but not to npm. Note that packages published
+				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
+				// internal partners or internal CI requirements.
+				internalFeed: [
+					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
+					"@fluid-internal/test-app-insights-logger",
+					"@fluid-internal/test-service-load",
+					// Most examples should be private, but table-document needs to publish internally for legacy compat
+					"@fluid-example/table-document",
+				],
+			},
+			mayPublish: {
+				// These packages may be published to npm in some cases. Policy doesn't enforce this.
+				npm: ["@fluid-experimental", "@fluid-tools"],
+				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
+				internalFeed: ["@fluid-internal"],
+			},
+		},
 		dependencies: {
 			// use by npm-package-json-script-dep policy
 			// A list of script commands and the package that contains the command
@@ -139,6 +181,7 @@ module.exports = {
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
+				["fluid-build", "@fluidframework/build-tools"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work

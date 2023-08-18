@@ -20,6 +20,11 @@ export type MenuSectionProps = React.PropsWithChildren<{
 	 * The icon to display in the header of the menu section.
 	 */
 	icon?: React.ReactElement;
+
+	/**
+	 * Callback function that runs when the header is clicked.
+	 */
+	onHeaderClick?(): void;
 }>;
 
 const useMenuSectionStyles = makeStyles({
@@ -32,7 +37,7 @@ const useMenuSectionStyles = makeStyles({
 		display: "flex",
 		flexDirection: "row",
 		fontWeight: "bold",
-		paddingLeft: "5px",
+		cursor: "pointer",
 	},
 });
 
@@ -40,13 +45,13 @@ const useMenuSectionStyles = makeStyles({
  * Generic component for a section of the menu.
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
-	const { header, icon, children } = props;
+	const { header, icon, children, onHeaderClick } = props;
 
 	const styles = useMenuSectionStyles();
 
 	return (
 		<div className={styles.root}>
-			<div className={styles.header}>
+			<div className={styles.header} onClick={onHeaderClick}>
 				{header}
 				{icon}
 			</div>
@@ -70,7 +75,7 @@ const useMenuItemStyles = makeStyles({
 		"cursor": "pointer",
 		"display": "flex",
 		"flexDirection": "row",
-		"paddingLeft": "20px",
+		"paddingLeft": "15px",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,

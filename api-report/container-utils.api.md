@@ -18,7 +18,7 @@ import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IUsageError } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
@@ -49,10 +49,10 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage): IFluidErrorBase;
+    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
-// @public
+// @public @deprecated
 export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>);
     // (undocumented)
@@ -98,13 +98,13 @@ export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> i
 }
 
 // @public (undocumented)
-export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessage) => {
-    messageClientId: string;
-    messageSequenceNumber: number;
-    messageClientSequenceNumber: number;
-    messageReferenceSequenceNumber: number;
-    messageMinimumSequenceNumber: number;
-    messageTimestamp: number;
+export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
+    messageClientId: string | undefined;
+    messageSequenceNumber: number | undefined;
+    messageClientSequenceNumber: number | undefined;
+    messageReferenceSequenceNumber: number | undefined;
+    messageMinimumSequenceNumber: number | undefined;
+    messageTimestamp: number | undefined;
 };
 
 // @public

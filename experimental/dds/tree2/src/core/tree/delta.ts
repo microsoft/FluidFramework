@@ -4,8 +4,8 @@
  */
 
 import { Brand, Opaque } from "../../util";
+import { FieldKey } from "../schema-stored";
 import { ITreeCursorSynchronous } from "./cursor";
-import { FieldKey, Value } from "./types";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -188,13 +188,6 @@ export type Skip = number;
  */
 export interface HasModifications<TTree = ProtoNode> {
 	readonly fields?: FieldMarks<TTree>;
-	/**
-	 * When set, indicates the new value that should be assigned to the node.
-	 * Can be set to `undefined` to convey that the node's value should be cleared.
-	 * Readers of this field should use the following check to distinguish the above cases:
-	 * `Object.prototype.hasOwnProperty.call(mark, "setValue")`
-	 */
-	readonly setValue?: Value;
 }
 
 /**
@@ -212,7 +205,7 @@ export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
 export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Delete;
 	/**
-	 * Must be 1 when either `setValue` or `fields` is populated.
+	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
 }
@@ -224,7 +217,7 @@ export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.MoveOut;
 	/**
-	 * Must be 1 when either `setValue` or `fields` is populated.
+	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
 	/**
@@ -254,7 +247,7 @@ export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Insert;
 	// TODO: use a single cursor with multiple nodes instead of array of cursors.
 	/**
-	 * Must be of length 1 when either `setValue` or `fields` is populated.
+	 * Must be of length 1 when `fields` is populated.
 	 */
 	readonly content: readonly TTree[];
 

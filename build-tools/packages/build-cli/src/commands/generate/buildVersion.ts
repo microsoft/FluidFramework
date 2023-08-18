@@ -6,7 +6,7 @@ import { Flags } from "@oclif/core";
 import * as childProcess from "child_process";
 import * as fs from "fs";
 
-import { getIsLatest, getSimpleVersion } from "@fluidframework/build-tools";
+import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
 import { BaseCommand } from "../../base";
 
@@ -128,7 +128,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				version,
 				tags,
 				shouldIncludeInternalVersions,
-				this.logger,
+				true,
 			);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {

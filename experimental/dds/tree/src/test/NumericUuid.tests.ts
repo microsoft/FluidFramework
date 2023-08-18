@@ -30,7 +30,7 @@ describe('NumericUuid', () => {
 		expect(isStableId('8e8fec9a10ea4d158308ed35bc7f1e66')).to.be.false;
 		expect(isStableId('8e8fec9a-10ea-4d15-8308-ed35bc7f1e66')).to.be.true;
 		[...new Array(16).keys()]
-			.map((n) => [n, n.toString(16)])
+			.map<[number, string]>((n) => [n, n.toString(16)])
 			.forEach(([n, char]) => {
 				const expectUuidVersion = expect(isStableId(`00000000-0000-${char}000-b000-000000000000`));
 				if (char === '4') {
@@ -54,27 +54,27 @@ describe('NumericUuid', () => {
 		const uuid = numericUuidFromStableId(maxStableId);
 		assert.throws(
 			() => stableIdFromNumericUuid(uuid, 1),
-			(e) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
+			(e: Error) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
 		);
 		assert.throws(
 			() => stableIdFromNumericUuid(incrementUuid(uuid, 1)),
-			(e) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
+			(e: Error) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
 		);
 		assert.throws(
 			() => stableIdFromNumericUuid(uuid, 256),
-			(e) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
+			(e: Error) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
 		);
 		assert.throws(
 			() => stableIdFromNumericUuid(incrementUuid(uuid, 256)),
-			(e) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
+			(e: Error) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
 		);
 		assert.throws(
 			() => stableIdFromNumericUuid(uuid, Number.MAX_SAFE_INTEGER),
-			(e) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
+			(e: Error) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
 		);
 		assert.throws(
 			() => stableIdFromNumericUuid(incrementUuid(uuid, Number.MAX_SAFE_INTEGER)),
-			(e) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
+			(e: Error) => validateAssertionError(e, 'Exceeded maximum numeric UUID')
 		);
 	});
 

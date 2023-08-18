@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { StableId, UuidString } from "@fluidframework/runtime-definitions";
-import { v4, NIL } from "uuid";
+import { v4 } from "uuid";
 
 const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
 	zero: number,
@@ -23,9 +23,6 @@ function isHexadecimalCharacter(charCode: number): boolean {
 		(charCode >= hexadecimalCharCodes[4] && charCode <= hexadecimalCharCodes[5])
 	);
 }
-
-/** The null (lowest/all-zeros) UUID */
-export const nilUuid = assertIsUuidString(NIL);
 
 /**
  * Asserts that the given string is a UUID

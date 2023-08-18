@@ -50,7 +50,7 @@ export class Deferred<T> {
 // @public
 export const delay: (timeMs: number) => Promise<void>;
 
-// @public
+// @public @deprecated
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
 
 // @public
@@ -166,14 +166,14 @@ export interface ITraceEvent {
     readonly totalTimeElapsed: number;
 }
 
-// @public
+// @public @deprecated
 export class Lazy<T> {
     constructor(valueGenerator: () => T);
     get evaluated(): boolean;
     get value(): T;
 }
 
-// @public
+// @public @deprecated
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -193,7 +193,7 @@ export const NumberComparer: IComparer<number>;
 const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
-// @public
+// @public @deprecated
 export class PromiseCache<TKey, TResult> {
     constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
@@ -205,7 +205,7 @@ export class PromiseCache<TKey, TResult> {
     remove(key: TKey): boolean;
 }
 
-// @public
+// @public @deprecated
 export type PromiseCacheExpiry = {
     policy: "indefinite";
 } | {
@@ -213,7 +213,7 @@ export type PromiseCacheExpiry = {
     durationMs: number;
 };
 
-// @public
+// @public @deprecated
 export interface PromiseCacheOptions {
     expiry?: PromiseCacheExpiry;
     removeOnError?: (e: any) => boolean;
@@ -244,7 +244,7 @@ export class RangeTracker {
     updateBase(primary: number): void;
 }
 
-// @public
+// @public @deprecated
 export class RateLimiter {
     constructor(windowMSec: number);
     filter(clientId: string, messages: string[]): string[];

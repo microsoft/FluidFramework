@@ -62,7 +62,6 @@ export function createDeliCheckpointManagerFromCollection(
 			);
 		},
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return checkpointService.clearCheckpoint(documentId, tenantId, "deli", isLocal);
 		},
 	};

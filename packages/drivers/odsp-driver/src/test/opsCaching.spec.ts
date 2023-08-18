@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
 import { delay } from "@fluidframework/common-utils";
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 
 export type MyDataInput = IMessage & { data: string };
 
@@ -104,10 +105,10 @@ async function runTestNoTimer(
 	initialWritesExpected: number,
 ) {
 	const mockCache = new MockCache();
-
+	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		new TelemetryUTLogger(),
+		logger.toTelemetryLogger(),
 		mockCache,
 		batchSize,
 		-1, // timerGranularity
@@ -133,6 +134,7 @@ async function runTestNoTimer(
 	cache.addOps(mockData);
 	cache.flushOps();
 	assert.equal(mockCache.opsWritten, mockData.length);
+	logger.assertMatchNone([{ category: "error" }]);
 }
 
 export async function runTestWithTimer(
@@ -144,10 +146,10 @@ export async function runTestWithTimer(
 	totalWritesExpected: number,
 ) {
 	const mockCache = new MockCache();
-
+	const logger = new MockLogger();
 	const cache = new OpsCache(
 		initialSeq,
-		new TelemetryUTLogger(),
+		logger.toTelemetryLogger(),
 		mockCache,
 		batchSize,
 		1, // timerGranularity
@@ -163,6 +165,7 @@ export async function runTestWithTimer(
 	}
 	assert.equal(mockCache.writeCount, totalWritesExpected);
 	assert.equal(mockCache.opsWritten, mockData.length);
+	logger.assertMatchNone([{ category: "error" }]);
 }
 
 export async function runTest(
@@ -307,10 +310,10 @@ describe("OpsCache", () => {
 			{ sequenceNumber: 110, data: "110" },
 			{ sequenceNumber: 111, data: "111" },
 		];
-
+		const logger = new MockLogger();
 		const cache = new OpsCache(
 			initialSeq,
-			new TelemetryUTLogger(),
+			logger.toTelemetryLogger(),
 			mockCache,
 			5 /* batchSize */,
 			-1, // timerGranularity
@@ -329,6 +332,7 @@ describe("OpsCache", () => {
 			{ sequenceNumber: 105, data: "105" },
 			{ sequenceNumber: 106, data: "106" },
 		]);
+		logger.assertMatchNone([{ category: "error" }]);
 	});
 });
 
@@ -393,10 +397,10 @@ describe("OdspDeltaStorageWithCache", () => {
 		totalOps = Math.min(totalOps, askingOps);
 
 		let opsToCache: ISequencedDocumentMessage[] = [];
-
+		const logger = new MockLogger();
 		const storage = new OdspDeltaStorageWithCache(
 			snapshotOps,
-			new TelemetryUTLogger(),
+			logger.toTelemetryLogger(),
 			batchSize,
 			concurrency,
 			// getFromStorage
@@ -409,6 +413,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
+			() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
 		);
 
 		const stream = storage.fetchMessages(
@@ -431,6 +436,7 @@ describe("OdspDeltaStorageWithCache", () => {
 				fromTotal + totalOps,
 			);
 		}
+		logger.assertMatchNone([{ category: "error" }]);
 	}
 
 	it("basic permutations", async () => {

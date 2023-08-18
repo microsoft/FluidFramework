@@ -54,7 +54,6 @@ api-report/                                                               @micro
 # These packages represent the primary public API of the framework.
 api-report/azure-client.api.md                                            @microsoft/fluid-cr-api
 api-report/azure-service-utils.api.md                                     @microsoft/fluid-cr-api
-api-report/test-client-utils.api.md                                       @microsoft/fluid-cr-api
 api-report/fluid-framework.api.md                                         @microsoft/fluid-cr-api
 api-report/tinylicious-client.api.md                                      @microsoft/fluid-cr-api
 

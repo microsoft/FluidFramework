@@ -7,6 +7,7 @@
 
 import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
+// eslint-disable-next-line import/no-unresolved
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 

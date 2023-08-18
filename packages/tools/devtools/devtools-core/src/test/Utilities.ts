@@ -91,10 +91,6 @@ class MockContainer
 		this.emit("connected");
 	}
 
-	public contextChanged(): void {
-		this.emit("contextChanged");
-	}
-
 	public disconnect(): void {
 		this.emit("disconnected");
 	}

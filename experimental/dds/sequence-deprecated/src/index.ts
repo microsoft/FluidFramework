@@ -20,3 +20,4 @@ export {
 	SparseMatrixFactory,
 	SparseMatrixItem,
 } from "./sparsematrix";
+export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence";

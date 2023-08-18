@@ -4,8 +4,8 @@
  */
 
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { SharedSequence } from "@fluidframework/sequence";
 import { SharedNumberSequenceFactory } from "./sequenceFactory";
+import { SharedSequence } from "./sharedSequence";
 
 /**
  * The SharedNumberSequence holds a sequence of numbers. Each number will be stored

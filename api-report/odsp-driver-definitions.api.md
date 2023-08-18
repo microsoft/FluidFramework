@@ -6,7 +6,7 @@
 
 import { DriverError } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
 export type CacheContentType = "snapshot" | "ops";
@@ -61,7 +61,7 @@ export interface IEntry {
 // @public (undocumented)
 export interface IFileEntry {
     docId: string;
-    resolvedUrl: IFluidResolvedUrl;
+    resolvedUrl: IResolvedUrl;
 }
 
 // @public (undocumented)
@@ -81,7 +81,7 @@ export interface IOdspErrorAugmentations {
 }
 
 // @public (undocumented)
-export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
+export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     // (undocumented)
     codeHint?: {
         containerPackageName?: string;
@@ -141,6 +141,18 @@ export interface IPersistedCache {
 }
 
 // @public
+export interface IProvideSessionAwareDriverFactory {
+    // (undocumented)
+    readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
+}
+
+// @public
+export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
+    // (undocumented)
+    getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+}
+
+// @public
 export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
@@ -166,6 +178,23 @@ export interface ISnapshotOptions {
     mds?: number;
     // (undocumented)
     timeout?: number;
+}
+
+// @public
+export interface ISocketStorageDiscovery {
+    // (undocumented)
+    deltaStorageUrl: string;
+    deltaStreamSocketUrl: string;
+    // (undocumented)
+    id: string;
+    refreshSessionDurationSeconds?: number;
+    // (undocumented)
+    runtimeTenantId?: string;
+    // (undocumented)
+    snapshotStorageUrl: string;
+    socketToken?: string;
+    // (undocumented)
+    tenantId: string;
 }
 
 // @public

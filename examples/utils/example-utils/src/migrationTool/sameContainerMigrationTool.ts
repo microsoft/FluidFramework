@@ -47,6 +47,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 */
 	private _acceptedP: Promise<void> | undefined;
 	/**
+	 * The sequence number that the proposal was accepted at, or undefined if it was not yet accepted.
+	 */
+	private _acceptedSeqNum: number | undefined;
+	/**
 	 * A promise that will resolve when we know the final v1 summary was successfully submitted.
 	 * Note that even when loading from that summary, we should expect to see the summaryAck as part of the logTail
 	 */
@@ -316,8 +320,13 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._acceptedP = new Promise<void>((resolve) => {
-			if (this.pactMap.get(newVersionKey) !== undefined) {
-				console.log("Resolving this._acceptedP: Acceptance already exists at load time");
+			const pactWithDetails = this.pactMap.getWithDetails(newVersionKey);
+			if (pactWithDetails !== undefined) {
+				this._acceptedSeqNum = pactWithDetails.acceptedSequenceNumber;
+				console.log(
+					"Resolving this._acceptedP: Acceptance already exists at load time at sequence number:",
+					this._acceptedSeqNum,
+				);
 				resolve();
 				return;
 			}
@@ -325,7 +334,15 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			const watchForAccepted = (key: string) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("accepted", watchForAccepted);
-					console.log("Resolving this._acceptedP: Saw acceptance during run time");
+					this._acceptedSeqNum =
+						this.pactMap.getWithDetails(newVersionKey)?.acceptedSequenceNumber;
+					if (this._acceptedSeqNum === undefined) {
+						throw new Error("Could not retrieve accepted sequence number");
+					}
+					console.log(
+						"Resolving this._acceptedP: Saw acceptance during run time at sequence number:",
+						this._acceptedSeqNum,
+					);
 					resolve();
 				}
 			};
@@ -365,7 +382,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
 			// TODO: Consider if there is any better way to watch this happen
 			const watchForQuorumProposal = (op: ISequencedDocumentMessage) => {
-				if (op.type === MessageType.Propose && op.contents.key === "code") {
+				if (
+					op.type === MessageType.Propose &&
+					(op.contents as { key?: unknown }).key === "code"
+				) {
 					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
 					// Or maybe set that up in ensureQuorumCodeDetails().
 					this.context.deltaManager.off("op", watchForQuorumProposal);
@@ -385,7 +405,10 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// TODO: Consider if there is any better way to watch this happen
 			const proposalSequenceNumbers: number[] = [];
 			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage) => {
-				if (op.type === MessageType.Propose && op.contents.key === "code") {
+				if (
+					op.type === MessageType.Propose &&
+					(op.contents as { key?: unknown }).key === "code"
+				) {
 					proposalSequenceNumbers.push(op.sequenceNumber);
 				}
 				if (

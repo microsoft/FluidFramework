@@ -678,6 +678,7 @@ export class SharedPropertyTree extends SharedObject {
 				const lastDelta = commitMetadata.sequenceNumber;
 
 				const dm = (this.runtime.deltaManager as any).deltaManager;
+				// TODO: This is accessing a private member of the delta manager, and should not be.
 				await dm.getDeltas(
 					"DocumentOpen",
 					firstDelta,
@@ -690,8 +691,11 @@ export class SharedPropertyTree extends SharedObject {
 				// eslint-disable-next-line @typescript-eslint/prefer-for-of
 				for (let i = 0; i < missingDeltas.length; i++) {
 					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
+						// TODO: Don't spy on the DeltaManager's private internals.
+						// This is trying to mimic what DeltaManager does in processInboundMessage, but there's no guarantee that
+						// private implementation won't change.
 						const remoteChange: IPropertyTreeMessage = JSON.parse(
-							missingDeltas[i].contents,
+							missingDeltas[i].contents as string,
 						).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(

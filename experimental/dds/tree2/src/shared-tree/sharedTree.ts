@@ -34,16 +34,16 @@ import {
 	DefaultChangeset,
 	buildForest,
 	ForestRepairDataStoreProvider,
-	GlobalFieldSchema,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	NewFieldContent,
 	ModularChangeset,
+	nodeKeyFieldKey,
+	FieldSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
-import { nodeKeyFieldKey } from "../domains";
+import { JsonCompatibleReadOnly, brand } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import {
 	ISharedTreeView,
@@ -75,7 +75,7 @@ export class SharedTree
 		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>;
+	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
@@ -88,7 +88,7 @@ export class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(runtime, forest);
+		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
@@ -107,7 +107,7 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this.nodeKeyIndex = new NodeKeyIndex(nodeKeyFieldKey);
+		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
@@ -140,8 +140,8 @@ export class SharedTree
 		return this.view.root;
 	}
 
-	public set root(data: NewFieldContent) {
-		this.view.root = data;
+	public setContent(data: NewFieldContent): void {
+		this.view.setContent(data);
 	}
 
 	public get context(): EditableTreeContext {
@@ -152,7 +152,7 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
+	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
@@ -170,8 +170,10 @@ export class SharedTree
 		return this.view.fork();
 	}
 
-	public merge(fork: SharedTreeView): void {
-		this.view.merge(fork);
+	public merge(view: SharedTreeView): void;
+	public merge(view: SharedTreeView, disposeView: boolean): void;
+	public merge(view: SharedTreeView, disposeView = true): void {
+		this.view.merge(view, disposeView);
 	}
 
 	public rebase(fork: SharedTreeView): void {

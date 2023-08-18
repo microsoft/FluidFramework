@@ -393,10 +393,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						eventName: "fluid:telemetry:Container:ContainerClose",
 						error: "BatchTooLarge",
 					},
-					{
-						eventName: "fluid:telemetry:Container:ContainerDispose",
-						error: "BatchTooLarge",
-					},
 				],
 				async function () {
 					const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
@@ -580,7 +576,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
-					(op) => op.contents?.type === ContainerMessageType.ChunkedOp,
+					(op) =>
+						(op.contents as { type?: unknown } | undefined)?.type ===
+						ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -643,7 +641,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents)?.type === ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 

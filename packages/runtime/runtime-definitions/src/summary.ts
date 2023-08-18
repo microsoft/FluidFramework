@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
+import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	SummaryTree,
 	ISummaryTree,

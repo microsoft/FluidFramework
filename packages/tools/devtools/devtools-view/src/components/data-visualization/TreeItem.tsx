@@ -35,6 +35,7 @@ export function TreeItem(props: TreeItemProps): React.ReactElement {
 	return (
 		<FluentTreeItem leaf={isLeaf} data-testid="tree-button">
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
+
 			<FluentTree>{children}</FluentTree>
 		</FluentTreeItem>
 	);

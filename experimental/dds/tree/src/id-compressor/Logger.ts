@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryNullLogger } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 
 /**
  * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -18,5 +18,5 @@ export function createThrottledIdCompressorLogger(
 	percentage: number
 ): ITelemetryLoggerExt {
 	const sendEvents = Math.random() < percentage;
-	return sendEvents ? logger : new TelemetryNullLogger();
+	return sendEvents ? logger : createChildLogger();
 }

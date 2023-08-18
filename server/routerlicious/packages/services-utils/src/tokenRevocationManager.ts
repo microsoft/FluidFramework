@@ -9,7 +9,6 @@ import {
 	IRevokedTokenChecker,
 	ITokenRevocationResponse,
 } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 
 export class WebSocketTracker implements IWebSocketTracker {
@@ -86,22 +85,22 @@ export class DummyRevokedTokenChecker implements IRevokedTokenChecker {
 		documentId: string,
 		jwtId: string,
 	): Promise<boolean> {
-		Lumberjack.info(`DummyRevokedTokenChecker isTokenRevoked called`);
+		// Lumberjack.debug(`DummyRevokedTokenChecker isTokenRevoked called`);
 		return false;
 	}
 }
 
 export class DummyTokenRevocationManager implements ITokenRevocationManager {
 	public async start() {
-		Lumberjack.info(`DummyTokenRevocationManager started`);
+		// Lumberjack.debug(`DummyTokenRevocationManager started`);
 	}
 
 	public async initialize(): Promise<void> {
-		Lumberjack.info(`DummyTokenRevocationManager initialize called`);
+		// Lumberjack.debug(`DummyTokenRevocationManager initialize called`);
 	}
 
 	public async close(): Promise<void> {
-		Lumberjack.info(`DummyTokenRevocationManager closed`);
+		// Lumberjack.debug(`DummyTokenRevocationManager closed`);
 	}
 
 	// Revoke the access of a token given its jwtId
@@ -110,7 +109,7 @@ export class DummyTokenRevocationManager implements ITokenRevocationManager {
 		documentId: string,
 		jwtId: string,
 	): Promise<ITokenRevocationResponse> {
-		Lumberjack.info(`DummyTokenRevocationManager revokeToken called`);
+		// Lumberjack.debug(`DummyTokenRevocationManager revokeToken called`);
 		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
 	}
 }

@@ -51,7 +51,7 @@ describe('MutableStringInterner', () => {
 
 		assert.throws(
 			() => interner.getString(0),
-			(e) => validateAssertionError(e, 'No string associated with 0.')
+			(e: Error) => validateAssertionError(e, 'No string associated with 0.')
 		);
 	});
 

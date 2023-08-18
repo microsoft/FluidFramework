@@ -29,7 +29,8 @@ describe("SessionIdNormalizer", () => {
 		const normalizer = makeTestNormalizer();
 		assert.throws(
 			() => normalizer.addFinalIds(final(0), final(1), dummy),
-			(e) => validateAssertionError(e, "Final IDs must be added to an existing local range."),
+			(e: Error) =>
+				validateAssertionError(e, "Final IDs must be added to an existing local range."),
 		);
 	});
 
@@ -38,7 +39,7 @@ describe("SessionIdNormalizer", () => {
 		normalizer.addLocalId();
 		assert.throws(
 			() => normalizer.addFinalIds(final(1), final(0), dummy),
-			(e) => validateAssertionError(e, "Malformed normalization range."),
+			(e: Error) => validateAssertionError(e, "Malformed normalization range."),
 		);
 	});
 
@@ -48,7 +49,7 @@ describe("SessionIdNormalizer", () => {
 			() => {
 				normalizer.registerFinalIdBlock(final(0), 5, dummy);
 			},
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Final ID block should not be registered before any locals.",
@@ -60,7 +61,7 @@ describe("SessionIdNormalizer", () => {
 			() => {
 				normalizer.registerFinalIdBlock(final(1), 5, dummy);
 			},
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Final ID block should not be registered without an existing local range.",
@@ -75,13 +76,13 @@ describe("SessionIdNormalizer", () => {
 			() => {
 				normalizer.registerFinalIdBlock(final(1), 0, dummy);
 			},
-			(e) => validateAssertionError(e, "Malformed normalization block."),
+			(e: Error) => validateAssertionError(e, "Malformed normalization block."),
 		);
 		assert.throws(
 			() => {
 				normalizer.registerFinalIdBlock(final(1), -1, dummy);
 			},
-			(e) => validateAssertionError(e, "Malformed normalization block."),
+			(e: Error) => validateAssertionError(e, "Malformed normalization block."),
 		);
 	});
 
@@ -103,7 +104,7 @@ describe("SessionIdNormalizer", () => {
 		addFinalIds(normalizer, final(5), final(5));
 		assert.throws(
 			() => addFinalIds(normalizer, final(9), final(9)),
-			(e) => validateAssertionError(e, "Gaps in final space must align to a local."),
+			(e: Error) => validateAssertionError(e, "Gaps in final space must align to a local."),
 		);
 	});
 
@@ -154,7 +155,7 @@ describe("SessionIdNormalizer", () => {
 			() => {
 				normalizer.registerFinalIdBlock(final(5), 10, dummy);
 			},
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Final ID block should not be registered without an existing local range.",
@@ -166,18 +167,21 @@ describe("SessionIdNormalizer", () => {
 		const normalizer = makeTestNormalizer();
 		assert.throws(
 			() => normalizer.getFinalId(-1 as LocalCompressedId),
-			(e) => validateAssertionError(e, "Local ID was never recorded with this normalizer."),
+			(e: Error) =>
+				validateAssertionError(e, "Local ID was never recorded with this normalizer."),
 		);
 		const local = normalizer.addLocalId();
 		const secondLocal = (local - 1) as LocalCompressedId;
 		assert.throws(
 			() => normalizer.getFinalId(secondLocal),
-			(e) => validateAssertionError(e, "Local ID was never recorded with this normalizer."),
+			(e: Error) =>
+				validateAssertionError(e, "Local ID was never recorded with this normalizer."),
 		);
 		addFinalIds(normalizer, final(0), final(5));
 		assert.throws(
 			() => normalizer.getFinalId(secondLocal),
-			(e) => validateAssertionError(e, "Local ID was never recorded with this normalizer."),
+			(e: Error) =>
+				validateAssertionError(e, "Local ID was never recorded with this normalizer."),
 		);
 	});
 

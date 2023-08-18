@@ -10,14 +10,14 @@ echo INTERDEPENDENCY_RANGE="'$INTERDEPENDENCY_RANGE'"
 if [ -f "lerna.json" ]; then
   if [ "$VERSION_RELEASE" = "release" ]; then
       echo "release group with '$INTERDEPENDENCY_RANGE' deps"
-      echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"$INTERDEPENDENCY_RANGE\" -xv"
-      flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="$INTERDEPENDENCY_RANGE" -xv
+      echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --interdependencyRange=\"$INTERDEPENDENCY_RANGE\" -xv"
+      flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --interdependencyRange="$INTERDEPENDENCY_RANGE" -xv
   else
     # this is a non-release build of a release group, so always use exact interdependencies, otherwise
     # dev/test builds may accidentally bring in different versions.
     echo "release group non-release build"
-    echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
-    flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="" -xv
+    echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --interdependencyRange=\"\" -xv"
+    flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --interdependencyRange="" -xv
   fi
 else
   echo "independent package"

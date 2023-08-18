@@ -8,7 +8,7 @@ import {
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,

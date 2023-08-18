@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from 'assert';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { LoaderHeader } from '@fluidframework/container-definitions';
 import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
@@ -124,7 +124,8 @@ export function runSharedTreeVersioningTests(
 			applyNoop(newerTree);
 			assert.throws(
 				() => containerRuntimeFactory.processAllMessages(),
-				(e) => validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
+				(e: Error) =>
+					validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
 			);
 		});
 
@@ -566,7 +567,7 @@ export function runSharedTreeVersioningTests(
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(false);
 				assert.throws(
 					() => containerRuntimeFactory.processAllMessages(),
-					(e) => validateAssertionError(e, /Simulated issue in update/)
+					(e: Error) => validateAssertionError(e, /Simulated issue in update/)
 				);
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(true);
 			});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
 import BTree from 'sorted-btree';
 
 const defaultFailMessage = 'Assertion failed';
@@ -141,17 +141,6 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
 	assertWithMessage(array.length === 1, message);
 	return array[0];
-}
-
-/**
- * Assign a property and value to a given object.
- * @param object - The object to add the property to
- * @param property - The property key
- * @param value - The value of the property
- * @returns `object` after assigning `value` to the property `property`.
- */
-export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
-	return Object.assign(object, { [property]: value }) as With<T, K, V>;
 }
 
 /**

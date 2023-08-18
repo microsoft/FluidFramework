@@ -11,40 +11,31 @@ import {
 	createMockNodeKeyManager,
 	StableNodeKey,
 	LocalNodeKey,
+	nodeKeyFieldKey,
 } from "../../../feature-libraries";
-import { nodeKeySchema } from "../../../domains";
+import { nodeKeyField, nodeKeySchema } from "../../../domains";
 import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
-import { AllowedUpdateType, GlobalFieldKeySymbol, ValueSchema, symbolFromKey } from "../../../core";
+import { AllowedUpdateType, ValueSchema } from "../../../core";
 import { brand } from "../../../util";
 
-const { field: nodeKeyField, schema: nodeKeyLibrary } = nodeKeySchema();
-const stableNodeKeySymbol = symbolFromKey(nodeKeyField.key);
-
-const builder = new SchemaBuilder("EditableTree Node Keys", nodeKeyLibrary);
-const stringSchema = builder.primitive("string", ValueSchema.String);
-const childNodeSchema = builder.object("ChildNode", {
-	local: {
-		name: SchemaBuilder.fieldValue(stringSchema),
-	},
-	global: [nodeKeyField],
+const builder = new SchemaBuilder("EditableTree Node Keys", nodeKeySchema);
+const stringSchema = builder.leaf("string", ValueSchema.String);
+const childNodeSchema = builder.struct("ChildNode", {
+	...nodeKeyField,
+	name: SchemaBuilder.fieldValue(stringSchema),
 });
 
-const parentNodeSchema = builder.object("ParentNode", {
-	local: {
-		children: SchemaBuilder.fieldSequence(childNodeSchema),
-	},
-	global: [nodeKeyField],
+const parentNodeSchema = builder.struct("ParentNode", {
+	...nodeKeyField,
+	children: SchemaBuilder.fieldSequence(childNodeSchema),
 });
 const rootField = SchemaBuilder.fieldValue(parentNodeSchema);
 const schema = builder.intoDocumentSchema(rootField);
 
 // TODO: this can probably be removed once daesun's stuff goes in
-function addKey(
-	view: ISharedTreeView,
-	key: LocalNodeKey,
-): { [keySymbol: GlobalFieldKeySymbol]: StableNodeKey } {
+function addKey(view: ISharedTreeView, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
 	return {
-		[symbolFromKey(nodeKeyField.key)]: view.nodeKey.stabilize(key),
+		[nodeKeyFieldKey]: view.nodeKey.stabilize(key),
 	};
 }
 
@@ -100,12 +91,9 @@ describe("editable-tree: node keys", () => {
 		const parentNode = typedRootField.getNode(0);
 		const childA = parentNode[getField](brand("children")).getNode(0);
 		const childB = parentNode[getField](brand("children")).getNode(1);
-		assert.equal(
-			parentNode[symbolFromKey(nodeKeyField.key)],
-			view.nodeKey.stabilize(parentKey),
-		);
-		assert.equal(childA[symbolFromKey(nodeKeyField.key)], view.nodeKey.stabilize(childAKey));
-		assert.equal(childB[symbolFromKey(nodeKeyField.key)], view.nodeKey.stabilize(childBKey));
+		assert.equal(parentNode[nodeKeyFieldKey], view.nodeKey.stabilize(parentKey));
+		assert.equal(childA[nodeKeyFieldKey], view.nodeKey.stabilize(childAKey));
+		assert.equal(childB[nodeKeyFieldKey], view.nodeKey.stabilize(childBKey));
 	});
 
 	it("cannot set node keys", () => {
@@ -113,8 +101,7 @@ describe("editable-tree: node keys", () => {
 		const typedRootField = view.context.root;
 		const parentNode = typedRootField.getNode(0);
 		assert.throws(
-			() =>
-				(parentNode[stableNodeKeySymbol] = view.nodeKey.stabilize(view.nodeKey.generate())),
+			() => (parentNode[nodeKeyFieldKey] = view.nodeKey.stabilize(view.nodeKey.generate())),
 		);
 	});
 });

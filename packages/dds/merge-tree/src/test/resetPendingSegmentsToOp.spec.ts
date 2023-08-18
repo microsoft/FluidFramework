@@ -81,8 +81,9 @@ describe("resetPendingSegmentsToOp", () => {
 				},
 			);
 			const oldops = opList;
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
 			}));
 			applyOpList(client);
@@ -91,8 +92,9 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment", async () => {
 			const oldops = opList;
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
 			}));
 			// we expect a nack op per segment since our original ops split segments
@@ -144,8 +146,9 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
 			}));
 
@@ -197,8 +200,9 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
-				op: client.regeneratePendingOp(op.op, client.mergeTree.pendingSegments.first!.data),
+				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
 			}));
 			// we expect a nack op per segment since our original ops split segments
