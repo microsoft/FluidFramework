@@ -448,12 +448,9 @@ class FilteredLogger implements ITelemetryBaseLogger {
 
 	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
 		const eventLogLevel = logLevel ?? LogLevel.default;
-		const configLogLevel = this.baseLogger.eventsConfig?.logLevel ?? LogLevel.default;
+		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
 		// Filter out in case event log level is below what is wanted in config.
-		if (eventLogLevel >= configLogLevel) {
-			return false;
-		}
-		return true;
+		return eventLogLevel < configLogLevel;
 	}
 
 	public send(

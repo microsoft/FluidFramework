@@ -117,12 +117,6 @@ export interface IFluidRunnable {
 }
 
 // @public
-export interface ILoggerEventsFilterConfig {
-    // (undocumented)
-    logLevel?: LogLevel;
-}
-
-// @public
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryProperties;
 }
@@ -218,7 +212,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 // @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
-    eventsConfig?: ILoggerEventsFilterConfig;
+    minLogLevel?: LogLevel;
     // (undocumented)
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
@@ -258,15 +252,15 @@ export interface ITelemetryProperties {
 }
 
 // @public
-export enum LogLevel {
+export const enum LogLevel {
     // (undocumented)
-    default = 1,
+    default = 10,
     // (undocumented)
-    error = 3,
+    error = 30,
     // (undocumented)
     verbose = 0,
     // (undocumented)
-    warning = 2
+    warning = 20
 }
 
 // @public

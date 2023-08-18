@@ -42,7 +42,6 @@ export {
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
 export type { IDisposable } from "./disposable";
 export type {
-	ILoggerEventsFilterConfig,
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
 	ITelemetryBaseEvent,
