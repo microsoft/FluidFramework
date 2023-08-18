@@ -1046,7 +1046,7 @@ export class ContainerRuntime
 	private readonly validateSummaryBeforeUpload: boolean;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private _perfSignalData: IPerfSignalReport = {
+	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,

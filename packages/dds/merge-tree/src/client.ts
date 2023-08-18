@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable import/no-deprecated */
 
 import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";

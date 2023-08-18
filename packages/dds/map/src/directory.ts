@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-deprecated */
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
