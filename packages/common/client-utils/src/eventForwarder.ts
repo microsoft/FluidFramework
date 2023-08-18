@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "./typedEventEmitter";
 
 /**
@@ -29,7 +29,7 @@ export class EventForwarder<TEvent = IEvent>
 	private static readonly removeListenerEvent = "removeListener";
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this.isDisposed;
@@ -56,7 +56,7 @@ export class EventForwarder<TEvent = IEvent>
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
 	 */
 	public dispose(): void {
 		this.isDisposed = true;
