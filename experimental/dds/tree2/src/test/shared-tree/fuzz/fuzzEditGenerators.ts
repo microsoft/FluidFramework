@@ -77,35 +77,17 @@ export const makeFieldEditGenerator = (
 		// generate edit for that specific tree
 		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
 		assert(fieldPath.parent !== undefined);
-
+		const opWeightRatio =
+			passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
+		const opType = count === 0 || state.random.bool(opWeightRatio) ? "insert" : "delete";
 		switch (fieldKey) {
 			case sequenceFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
-				const opType =
-					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
-				switch (opType) {
-					case "insert":
-						return generateSequenceFieldInsertOp(
-							fieldPath,
-							fieldKey,
-							state.random.integer(0, count),
-							state.random,
-						);
-					case "delete":
-						return generateSequenceFieldDeleteOp(fieldPath, state.random, count);
-					default:
-						break;
-				}
+				return generateSequenceFieldEditOp(state, count, fieldPath, fieldKey, opType);
 			}
 			case valueFieldKey: {
 				return generateValueFieldDeleteOp(fieldPath);
 			}
 			case optionalFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.insert / (passedOpWeights.delete + passedOpWeights.insert);
-				const opType =
-					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {
 					case "insert":
 						return generateSequenceFieldInsertOp(
@@ -122,12 +104,7 @@ export const makeFieldEditGenerator = (
 			}
 			default:
 				// default case returns a sequence field edit for now.
-				return generateSequenceFieldInsertOp(
-					fieldPath,
-					fieldKey,
-					state.random.integer(0, count),
-					state.random,
-				);
+				return generateSequenceFieldEditOp(state, count, fieldPath, fieldKey, opType);
 		}
 	}
 
@@ -186,6 +163,28 @@ export const makeFieldEditGenerator = (
 			type: "sequence",
 			edit: contents,
 		};
+	}
+
+	function generateSequenceFieldEditOp(
+		state: FuzzTestState,
+		count: number,
+		fieldPath: FieldUpPath,
+		fieldKey: FieldKey,
+		opType: "insert" | "delete",
+	): SequenceFieldEdit {
+		switch (opType) {
+			case "insert":
+				return generateSequenceFieldInsertOp(
+					fieldPath,
+					fieldKey,
+					state.random.integer(0, count),
+					state.random,
+				);
+			case "delete":
+				return generateSequenceFieldDeleteOp(fieldPath, state.random, count);
+			default:
+				fail("invalid op type");
+		}
 	}
 
 	return (state) => ({

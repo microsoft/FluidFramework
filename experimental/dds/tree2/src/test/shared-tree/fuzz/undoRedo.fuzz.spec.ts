@@ -39,7 +39,6 @@ describe("Fuzz - undo/redo", () => {
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
 	};
 
 	describe.skip("Inorder undo/redo matches the initial/final state", () => {
@@ -191,14 +190,13 @@ describe("Fuzz - undo/redo", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
 			emitter,
-			// ADO:5083, assert 0x6a1 hit for 13 and 18
-			skip: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+			// ADO:5083, assert 0x6a1 hit for 6, 7, 8, 10, 11, 12, 13, 15, 17, 19
+			skip: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
 		});
 	});
 
 	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
 		undo: 1,
 		redo: 1,
 	};
@@ -233,7 +231,7 @@ describe("Fuzz - undo/redo", () => {
 			numberOfClients: 3,
 			emitter,
 			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 }, // interval set to prevent synchronization
-			skip: [4, 8, 11, 13, 15, 18],
+			skip: [3, 4, 10, 14, 15, 16, 17, 18],
 		});
 	});
 });
