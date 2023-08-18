@@ -58,6 +58,8 @@ export interface GraphCommit<TChange> {
 	readonly repairData?: ReadonlyRepairDataStore;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
+	/** The inverse of this commit */
+	inverse?: TChange;
 }
 
 /**

@@ -17,6 +17,7 @@ import {
 	packageSelectorFlag,
 	releaseGroupFlag,
 	skipCheckFlag,
+	testModeFlag,
 } from "../../flags";
 import {
 	generateBumpDepsBranchName,
@@ -77,6 +78,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			helpGroup: "EXPERIMENTAL",
 			options: ["ncu", "homegrown"],
 		}),
+		testMode: testModeFlag,
 		...BaseCommand.flags,
 	};
 
@@ -125,6 +127,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error("No dependency provided.");
 		}
 
+		if (flags.testMode) {
+			this.log(chalk.yellowBright(`Running in test mode. No changes will be made.`));
+		}
+
 		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
 			this.error(`Package not found: ${args.package_or_release_group}`);
@@ -160,8 +166,15 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const depsToUpdate: string[] = [];
 
 		if (rgOrPackage instanceof MonoRepo) {
-			depsToUpdate.push(...rgOrPackage.packages.map((pkg) => pkg.name));
+			depsToUpdate.push(
+				...rgOrPackage.packages
+					.filter((pkg) => pkg.packageJson.private !== true)
+					.map((pkg) => pkg.name),
+			);
 		} else {
+			if (rgOrPackage.packageJson.private === true) {
+				this.error(`${rgOrPackage.name} is a private package; ignoring.`, { exit: 1 });
+			}
 			depsToUpdate.push(rgOrPackage.name);
 
 			// Check that the package can be found in the context.
@@ -204,6 +217,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						depsToUpdate,
 						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
 						/* prerelease */ flags.prerelease,
+						/* writeChanges */ !flags.testMode,
 						this.logger,
 				  )
 				: await npmCheckUpdates(
@@ -213,7 +227,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						rgOrPackage instanceof MonoRepo ? rgOrPackage.name : undefined,
 						flags.updateType,
 						/* prerelease */ flags.prerelease,
-						/* writeChanges */ true,
+						/* writeChanges */ !flags.testMode,
 						this.logger,
 				  );
 
@@ -287,7 +301,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				`${changedVersionMessage}`,
 			);
 		} else {
-			this.log(chalk.red("No dependencies need to be updated."));
+			this.log(chalk.green("No dependencies need to be updated."));
 		}
 
 		if (this.finalMessages.length > 0) {

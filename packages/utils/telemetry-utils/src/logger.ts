@@ -13,6 +13,7 @@ import {
 	TelemetryEventPropertyType,
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
@@ -28,6 +29,7 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -57,6 +59,29 @@ export interface ITelemetryLoggerPropertyBag {
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
 	error?: ITelemetryLoggerPropertyBag;
+}
+
+/**
+ * Decides the log level based on the category of the event
+ * @param category - category of the event
+ * @param currentLogLevel - log level as specified by the caller
+ * @returns - final log level
+ */
+function decideLogLevel(category: TelemetryEventCategory, currentLogLevel?: LogLevel): LogLevel {
+	switch (category) {
+		case "error":
+			return LogLevel.error;
+		case "generic":
+			// If it is a generic event, then max log level should be warning.
+			return currentLogLevel === LogLevel.error
+				? LogLevel.warning
+				: currentLogLevel ?? LogLevel.default;
+		case "performance":
+			// For perf category, log level could either be verbose or default.
+			return currentLogLevel === LogLevel.verbose ? LogLevel.verbose : LogLevel.default;
+		default:
+			return LogLevel.default;
+	}
 }
 
 /**
@@ -137,16 +162,25 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent): void;
+	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send a telemetry event with the logger
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
-	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any) {
-		this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
+	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel) {
+		const genericEvent = {
+			...event,
+			category: event.category ?? "generic",
+		};
+		this.sendTelemetryEventCore(
+			genericEvent,
+			error,
+			decideLogLevel(genericEvent.category, logLevel),
+		);
 	}
 
 	/**
@@ -154,10 +188,12 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
 	protected sendTelemetryEventCore(
 		event: ITelemetryGenericEventExt & { category: TelemetryEventCategory },
 		error?: any,
+		logLevel?: LogLevel,
 	) {
 		const newEvent = convertToBaseEvent(event);
 		if (error !== undefined) {
@@ -169,7 +205,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			newEvent.duration = formatTick(newEvent.duration);
 		}
 
-		this.send(newEvent);
+		this.send(newEvent, logLevel);
 	}
 
 	/**
@@ -188,6 +224,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				category: "error",
 			},
 			error,
+			LogLevel.error,
 		);
 	}
 
@@ -196,14 +233,19 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - Event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
-	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void {
+	public sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: any,
+		logLevel?: LogLevel.verbose | LogLevel.default,
+	): void {
 		const perfEvent = {
 			...event,
 			category: event.category ?? "performance",
 		};
 
-		this.sendTelemetryEventCore(perfEvent, error);
+		this.sendTelemetryEventCore(perfEvent, error, decideLogLevel(perfEvent.category, logLevel));
 	}
 
 	protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
@@ -368,11 +410,15 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(baseLogger ? baseLogger : { send() {} }, namespace, properties);
+		return new ChildLogger(
+			new FilteredLogger(baseLogger ? baseLogger : { send() {} }),
+			namespace,
+			properties,
+		);
 	}
 
 	private constructor(
-		protected readonly baseLogger: ITelemetryBaseLogger,
+		protected readonly baseLogger: FilteredLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
 	) {
@@ -389,8 +435,36 @@ export class ChildLogger extends TelemetryLogger {
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent): void {
-		this.baseLogger.send(this.prepareEvent(event));
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		this.baseLogger.send(event, logLevel, (ev: ITelemetryBaseEvent) => this.prepareEvent(ev));
+	}
+}
+
+/**
+ * Logger to help filter out events based on the spcecified config.
+ */
+class FilteredLogger implements ITelemetryBaseLogger {
+	public constructor(protected readonly baseLogger: ITelemetryBaseLogger) {}
+
+	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
+		const eventLogLevel = logLevel ?? LogLevel.default;
+		const configLogLevel = this.baseLogger.eventsConfig?.logLevel ?? LogLevel.default;
+		// Filter out in case event log level is below what is wanted in config.
+		if (eventLogLevel >= configLogLevel) {
+			return false;
+		}
+		return true;
+	}
+
+	public send(
+		event: ITelemetryBaseEvent,
+		logLevel?: LogLevel,
+		enrichEvent?: (ev: ITelemetryBaseEvent) => ITelemetryBaseEvent,
+	): void {
+		if (this.shouldFilterOutEvent(event, logLevel)) {
+			return;
+		}
+		this.baseLogger.send(enrichEvent ? enrichEvent(event) : event);
 	}
 }
 
@@ -626,6 +700,20 @@ export class PerformanceEvent {
 
 		this.logger.sendPerformanceEvent(event, error);
 	}
+}
+
+/**
+ * Null logger that no-ops for all telemetry events passed to it.
+ * @deprecated - This will be removed in a future release.
+ * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
+ * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
+ * where the send() method does nothing and using that.
+ */
+export class TelemetryNullLogger implements ITelemetryLoggerExt {
+	public send(event: ITelemetryBaseEvent): void {}
+	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
+	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
 }
 
 /**

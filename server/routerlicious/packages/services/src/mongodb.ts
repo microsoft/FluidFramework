@@ -541,13 +541,13 @@ const DefaultMongoDbMonitoringEvents = [
 ];
 const DefaultHeartbeatFrequencyMS = 30000;
 const DefaultKeepAliveInitialDelay = 60000;
-const DefaultSocketTimeoutMS = 100000;
+const DefaultSocketTimeoutMS = 0;
 const DefaultConnectionTimeoutMS = 120000;
 const DefaultMinHeartbeatFrequencyMS = 10000;
 const DefaultApiCounterIntervalMS = 60000;
 // 1 means 100%, using 2 just for safety for incorrect calculations and meaning this feature disabled
 const DefaultApiFailureRateTerminationThreshold = 2;
-const DefaultApiMinimumCountToEnableTermination = 100;
+const DefaultApiMinimumCountToEnableTermination = 30;
 const DefaultServerSelectionTimeoutMS = 30000;
 
 interface IMongoDBConfig {

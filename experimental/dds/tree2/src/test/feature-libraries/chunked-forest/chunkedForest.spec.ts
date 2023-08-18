@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// This lint is broken in intellisense, causing needless errors.
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:

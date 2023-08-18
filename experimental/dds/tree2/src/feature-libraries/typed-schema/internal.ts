@@ -14,6 +14,9 @@ export {
 	NormalizeStructFields,
 	NormalizeField,
 	Fields,
+	StructSchemaSpecification,
+	MapSchemaSpecification,
+	LeafSchemaSpecification,
 } from "./typedTreeSchema";
 
 export {

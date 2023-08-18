@@ -4,9 +4,9 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/build-cli': ^0.21.0
+      '@fluid-tools/build-cli': ^0.22.0
       '@fluidframework/build-common': ^2.0.0
-      '@fluidframework/build-tools': ^0.21.0
+      '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@1.1.0
@@ -23,9 +23,9 @@ importers:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.21.0_puanequxoljewgvvt3knzftsly
+      '@fluid-tools/build-cli': 0.22.0_puanequxoljewgvvt3knzftsly
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.21.0_puanequxoljewgvvt3knzftsly
+      '@fluidframework/build-tools': 0.22.0_puanequxoljewgvvt3knzftsly
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/1.1.0
       '@microsoft/api-extractor': 7.34.8_@types+node@15.14.9
@@ -164,14 +164,14 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli/0.21.0_puanequxoljewgvvt3knzftsly:
-    resolution: {integrity: sha512-uHJ+9VV8zK2sYE3G2MLEhNDKIYfj3xeUaXXyz7nsn86DAi+Bs0JwQL/rm206YEtzOvUBiNPiXyg3GwD9UCvgUw==}
+  /@fluid-tools/build-cli/0.22.0_puanequxoljewgvvt3knzftsly:
+    resolution: {integrity: sha512-WK7EXIHl4/VVsrdGAUZL5DCK5BSin2PqzA/W5ehDD2JKW4jX+Ys1jxT+8/6g/ptwNws83B3orDU2oUb8VWfu2g==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.21.0_puanequxoljewgvvt3knzftsly
-      '@fluidframework/build-tools': 0.21.0_puanequxoljewgvvt3knzftsly
-      '@fluidframework/bundle-size-tools': 0.21.0
+      '@fluid-tools/version-tools': 0.22.0_puanequxoljewgvvt3knzftsly
+      '@fluidframework/build-tools': 0.22.0_puanequxoljewgvvt3knzftsly
+      '@fluidframework/bundle-size-tools': 0.22.0
       '@oclif/core': 2.9.3_puanequxoljewgvvt3knzftsly
       '@oclif/plugin-autocomplete': 2.3.2_puanequxoljewgvvt3knzftsly
       '@oclif/plugin-commands': 2.2.18_puanequxoljewgvvt3knzftsly
@@ -221,8 +221,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.21.0_puanequxoljewgvvt3knzftsly:
-    resolution: {integrity: sha512-oUV/+PretFcSSlINzsS5DFnBMygDcnznJb1FfyflvWpZuuO9OtrGxJZOzAqR0tDqIA669NbqGwNqigVyGccSOQ==}
+  /@fluid-tools/version-tools/0.22.0_puanequxoljewgvvt3knzftsly:
+    resolution: {integrity: sha512-XA8OC0OQ06EUiYoP12XmuP2u/7xVx6R2dQq0TRUK3XUhv9q1AY6vcvPZzdG8U4wS9tHiCO/ThDf8dTICJf2NOw==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -248,13 +248,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.21.0_puanequxoljewgvvt3knzftsly:
-    resolution: {integrity: sha512-NZsCGlkVNmgZnY6+UnzddLcUUnZdBgoRRkuxEsKaFYd0wijaMNY0NKF4fIQyYICDKor2UJml0JygVIfIHOApgA==}
+  /@fluidframework/build-tools/0.22.0_puanequxoljewgvvt3knzftsly:
+    resolution: {integrity: sha512-KqQ6v0ut8dEPpA9x9jGD/MjOzMx9JtMtrLf08vxUQCcQNZqQVELOVeM2wjf1n2NV9Oj8ejlcsL8pkT24oWIETA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.21.0_puanequxoljewgvvt3knzftsly
-      '@fluidframework/bundle-size-tools': 0.21.0
+      '@fluid-tools/version-tools': 0.22.0_puanequxoljewgvvt3knzftsly
+      '@fluidframework/bundle-size-tools': 0.22.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.5_@types+node@15.14.9
@@ -296,8 +296,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.21.0:
-    resolution: {integrity: sha512-Vj4Ks/FupeaF4p730qHpLDgw0Bf3UViQE2OBu6h/DP/JKb4nI5N85WkVmCp53vOqUg+w3ZMZJTMq94b0Jn7img==}
+  /@fluidframework/bundle-size-tools/0.22.0:
+    resolution: {integrity: sha512-mbwI23lw3AjbfS9TdYMMl2V8VdolDgHJQPR2rPpDrKVyuF7Iny1tHuAX3Y8lAzCGgpgZlL3LxGIMbw/OhmtLmg==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -766,17 +766,6 @@ packages:
       - supports-color
     dev: true
 
-  /@oclif/color/1.0.4:
-    resolution: {integrity: sha512-HEcVnSzpQkjskqWJyVN3tGgR0H0F8GrBmDjgQ1N0ZwwktYa4y9kfV07P/5vt5BjPXNyslXHc4KAO8Bt7gmErCA==}
-    engines: {node: '>=12.0.0'}
-    dependencies:
-      ansi-styles: 4.3.0
-      chalk: 4.1.2
-      strip-ansi: 6.0.1
-      supports-color: 8.1.1
-      tslib: 2.6.0
-    dev: true
-
   /@oclif/color/1.0.8:
     resolution: {integrity: sha512-XD1MLzkVsPzlkTN6OV0DeN/5iK/bv/MpGRnAZ+lCc20LO0Tyjyph6DUdoRNTJ4iMqliJt32uE3FrFK+Qms2Kjg==}
     engines: {node: '>=12.0.0'}
@@ -818,7 +807,7 @@ packages:
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
       ts-node: 10.9.1_puanequxoljewgvvt3knzftsly
-      tslib: 2.5.0
+      tslib: 2.6.0
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -888,7 +877,7 @@ packages:
     resolution: {integrity: sha512-bri3GHqUs2d9mMoqm0/CIef+u+nJrNDzno5xpnB0cg7x3mAhXM/miuzdNz7D8opupuJeiJMv+A/WSMG2nY2IEw==}
     engines: {node: '>=16'}
     dependencies:
-      '@oclif/color': 1.0.4
+      '@oclif/color': 1.0.8
       '@oclif/core': 2.9.3_puanequxoljewgvvt3knzftsly
       chalk: 4.1.2
       debug: 4.3.4
@@ -4596,7 +4585,7 @@ packages:
       fs.realpath: 1.0.0
       minimatch: 8.0.4
       minipass: 4.2.8
-      path-scurry: 1.7.0
+      path-scurry: 1.10.1
     dev: true
 
   /global-dirs/3.0.1:
@@ -7141,14 +7130,6 @@ packages:
       minipass: 5.0.0
     dev: true
 
-  /path-scurry/1.7.0:
-    resolution: {integrity: sha512-UkZUeDjczjYRE495+9thsgcVgsaCPkaw80slmfVFgllxY+IO8ubTsOpFVjDPROBqJdHfVPUFRHPBV/WciOVfWg==}
-    engines: {node: '>=16 || 14 >=14.17'}
-    dependencies:
-      lru-cache: 9.1.1
-      minipass: 5.0.0
-    dev: true
-
   /path-type/4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
@@ -8570,10 +8551,6 @@ packages:
 
   /tslib/1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-    dev: true
-
-  /tslib/2.5.0:
-    resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
     dev: true
 
   /tslib/2.6.0:

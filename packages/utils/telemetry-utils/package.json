@@ -75,12 +75,12 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.21.0",
+		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.21.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.5.2.0",
+		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.6.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/debug": "^4.1.5",
 		"@types/events": "^3.0.0",
@@ -102,39 +102,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_BaseTelemetryNullLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_ChildLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_DebugLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_MultiSinkLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_TelemetryLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_TelemetryNullLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedClassDeclaration_TelemetryUTLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"ClassDeclaration_MockLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

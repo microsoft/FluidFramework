@@ -70,6 +70,7 @@
 		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
+		"ignoreEphemeralFlag": true,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -166,7 +167,8 @@
 		"signalUsageCountingEnabled": false
 	},
 	"shared": {
-		"transientTenants": []
+		"transientTenants": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",

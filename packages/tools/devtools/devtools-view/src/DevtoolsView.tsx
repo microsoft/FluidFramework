@@ -20,7 +20,6 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ContainerKey,
 	ContainerList,
-	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 	GetContainerList,
@@ -521,7 +520,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	);
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
-	if (supportedFeatures[DevtoolsFeature.Telemetry] === true) {
+	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
 			<MenuSection header="Telemetry" key="telemetry-menu-section">
 				<MenuItem

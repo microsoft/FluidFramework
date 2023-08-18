@@ -1,20 +1,20 @@
 {
 	"documents": [
 		{
-			"testTitle": "2Mb Map",
+			"testTitle": "1Mb Map",
 			"documentType": "DocumentMap",
 			"documentTypeInfo": {
-				"numberOfItems": "0.5",
-				"itemSizeMb": "4"
+				"numberOfItems": "1",
+				"itemSizeMb": "1"
 			},
 			"minSampleCount": "1"
 		},
 		{
-			"testTitle": "5Mb Map",
+			"testTitle": "2Mb Map",
 			"documentType": "DocumentMap",
 			"documentTypeInfo": {
 				"numberOfItems": "2",
-				"itemSizeMb": "2.5"
+				"itemSizeMb": "1"
 			},
 			"minSampleCount": "1"
 		},

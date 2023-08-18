@@ -23,9 +23,10 @@ import {
 	InvalidationBinderEvents,
 	InvalidationBindingContext,
 	OperationBinderEvents,
+	setField,
 } from "../../../feature-libraries";
 import { ViewEvents } from "../../../shared-tree";
-import { retrieveNodes } from "./editableTree.binder.spec";
+import { fieldPhones, retrieveNodes } from "./editableTree.binder.spec";
 
 describe("Data binder benchmarks", () => {
 	describe("Direct data binder", () => {
@@ -223,13 +224,13 @@ async function computeTime<T>(
 	dataBinder: DataBinder<OperationBinderEvents>,
 ) {
 	const before1 = state.timer.now();
-	address.phones = [111, 112];
+	address[setField](fieldPhones, [111, 112]);
 	await promise;
 	const after1 = state.timer.now();
 	const duration1 = state.timer.toSeconds(before1, after1);
 	dataBinder.unregisterAll();
 	const before2 = state.timer.now();
-	address.phones = [111, 112];
+	address[setField](fieldPhones, [111, 112]);
 	const after2 = state.timer.now();
 	const duration2 = state.timer.toSeconds(before2, after2);
 	return duration1 - duration2;

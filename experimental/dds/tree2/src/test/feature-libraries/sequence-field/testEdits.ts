@@ -187,7 +187,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 	detachEvent: SF.CellId,
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.Modify;
+	const modify = changeset[changeset.length - 1] as SF.NoopMark<TNodeChange>;
 	modify.cellId = detachEvent;
 	return changeset;
 }
@@ -211,13 +211,11 @@ function createInsertMark<TChange = never>(
 	const mark: SF.Insert<TChange> = {
 		type: "Insert",
 		content,
-		id: cellIdObject.localId,
+		count: content.length,
+		cellId: cellIdObject,
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	if (cellIdObject.lineage !== undefined) {
-		mark.lineage = cellIdObject.lineage;
 	}
 	return { ...mark, ...overrides };
 }
@@ -310,13 +308,11 @@ function createMoveInMark(
 	const mark: SF.MoveIn = {
 		type: "MoveIn",
 		id: cellIdObject.localId,
+		cellId: cellIdObject,
 		count,
 	};
 	if (cellIdObject.revision !== undefined) {
 		mark.revision = cellIdObject.revision;
-	}
-	if (cellIdObject.lineage !== undefined) {
-		mark.lineage = cellIdObject.lineage;
 	}
 	return { ...mark, ...overrides };
 }
@@ -376,9 +372,9 @@ function createReturnToMark(
  * @param changes - The changes to apply to the node.
  * @param cellId - Describes the cell that the target node used to reside in. Used when the target node is removed.
  */
-function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Modify<TChange> {
-	const mark: SF.Modify<TChange> = {
-		type: "Modify",
+function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.NoopMark<TChange> {
+	const mark: SF.NoopMark<TChange> = {
+		count: 1,
 		changes,
 	};
 	if (cellId !== undefined) {
@@ -387,7 +383,10 @@ function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Mod
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.CellTargetingMark>(cellId: SF.CellId, mark: TMark): TMark {
+function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(
+	cellId: SF.CellId,
+	mark: TMark,
+): TMark {
 	mark.cellId = cellId;
 	return mark;
 }

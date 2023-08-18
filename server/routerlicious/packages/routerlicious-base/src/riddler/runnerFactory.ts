@@ -179,6 +179,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.fetchTenantKeyMetricIntervalMs,
 			resources.riddlerStorageRequestMetricIntervalMs,
 			resources.cache,
+			resources.config,
 		);
 	}
 }

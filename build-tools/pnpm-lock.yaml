@@ -80,6 +80,7 @@ importers:
       '@types/inquirer': ^8.2.6
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.53
+      '@types/prettier': ^2.7.3
       '@types/prompts': ^2.4.4
       '@types/semver': ^7.5.0
       '@types/semver-utils': ^1.1.1
@@ -181,6 +182,7 @@ importers:
       '@types/inquirer': 8.2.6
       '@types/mocha': 9.1.1
       '@types/node': 14.18.53
+      '@types/prettier': 2.7.3
       '@types/prompts': 2.4.4
       '@types/semver': 7.5.0
       '@types/semver-utils': 1.1.1
@@ -3376,6 +3378,10 @@ packages:
 
   /@types/parse-json/4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
+    dev: true
+
+  /@types/prettier/2.7.3:
+    resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
     dev: true
 
   /@types/prompts/2.4.4:

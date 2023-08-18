@@ -12,9 +12,12 @@ import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
+import { LogLevel } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -176,8 +179,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 // @public
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any, logLevel?: LogLevel): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel): void;
 }
 
 // @public (undocumented)
@@ -336,6 +339,18 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+
+// @public @deprecated
+export class TelemetryNullLogger implements ITelemetryLoggerExt {
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+    // (undocumented)
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+    // (undocumented)
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    // (undocumented)
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+}
 
 // @public
 export class ThresholdCounter {

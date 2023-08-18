@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { ContainerKey, DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
-import { FluidContainer, IFluidContainer, RootDataObject } from "@fluidframework/fluid-static";
+import { FluidContainer, IFluidContainer, IRootDataObject } from "@fluidframework/fluid-static";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
@@ -72,9 +72,11 @@ async function createContainerAndRenderInElement(): Promise<IFluidContainer> {
 	window["fluidStarted"] = true;
 
 	const container = model.container;
+	// using unknown cast to unblock a build of the test project, since this file is changing significantly soon and
+	// won't use these APIs.
 	const rootDataObject = (await model.runtime.getRootDataStore(
 		"collaborative-text",
-	)) as RootDataObject;
+	)) as unknown as IRootDataObject;
 	const fluidContainer = new FluidContainer(container, rootDataObject);
 	return fluidContainer;
 }
@@ -89,6 +91,5 @@ function registerContainerWithDevtools(
 	devtools.registerContainerDevtools({
 		container,
 		containerKey,
-		dataVisualizers: undefined, // Use defaults
 	});
 }

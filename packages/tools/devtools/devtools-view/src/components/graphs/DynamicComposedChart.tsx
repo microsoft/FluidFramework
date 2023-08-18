@@ -23,7 +23,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { ThemeContext } from "../../ThemeHelper";
+import { useThemeContext } from "../../ThemeHelper";
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -144,10 +144,12 @@ const createGraphColorPalette = (
 /**
  * This component is a wrapper over Recharts ComposedChart component that provides
  * an easy way to create composed charts from disparate sets of data.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
-	const { themeInfo } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo } = useThemeContext();
 
 	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 

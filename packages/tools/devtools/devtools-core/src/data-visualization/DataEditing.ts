@@ -17,12 +17,12 @@ import { EditType, HasFluidObjectId } from "../CommonInterfaces";
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
 
 /**
- * Interface to contain information necesary for an edit
+ * Interface to contain information necessary for an edit
  * @internal
  */
 export interface Edit {
 	/**
-	 * Type contains the {@link EditType} of the edit being preformed.
+	 * Type contains the {@link (EditType:type)} of the edit being preformed.
 	 *
 	 * @remarks This is generally expected to be of type `EditType`. `string` is supported strictly for forward / backward compatibility. If "type" is undefined then it assumes the type of data.
 	 */
@@ -31,8 +31,16 @@ export interface Edit {
 	/**
 	 * Data contains the new data that will be edited into the DDS
 	 */
-	data: Serializable<unknown>;
+	data: EditData;
 }
+
+/**
+ * This combines all the types data might be when using EditingUI
+ *
+ * @internal
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type EditData = Serializable<unknown> | null | undefined;
 
 /**
  * Interface to contain information necesary for an edit of a SharedObject
