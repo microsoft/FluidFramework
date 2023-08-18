@@ -103,6 +103,10 @@ export function buildViewSchemaCollection(
 	};
 }
 
+/**
+ * View Schema information collected from a SchemaBuilder.
+ * Internal type for unifying document schema and libraries for use in validation and conversion.
+ */
 export interface ViewSchemaCollection {
 	readonly rootFieldSchema?: FieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
