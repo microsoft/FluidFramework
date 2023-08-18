@@ -46,7 +46,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * FluidObjectNode with primitive value.
 		 */
 		case VisualNodeKind.FluidValueNode:
-			return <FluidValueView label={label} node={node} />;
+			return <FluidValueView containerKey={containerKey} label={label} node={node} />;
 		/**
 		 * Unknown data type.
 		 */

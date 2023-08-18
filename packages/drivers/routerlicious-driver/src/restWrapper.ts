@@ -7,19 +7,20 @@ import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
-	TelemetryLogger,
+	numberFromString,
 } from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
-import { RateLimiter } from "@fluidframework/driver-utils";
+import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
+	CorrelationIdHeaderName,
+	DriverVersionHeaderName,
 	getAuthorizationTokenFromCredentials,
 	RestLessClient,
 } from "@fluidframework/server-services-client";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { v4 as uuid } from "uuid";
-import { throwR11sNetworkError } from "./errorUtils";
+import { RouterliciousErrorType, throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
@@ -84,12 +85,12 @@ export function getPropsToLogFromResponse(headers: {
 	// We rename headers so that otel doesn't scrub them away. Otel doesn't allow
 	// certain characters in headers including '-'
 	const headersToLog: LoggingHeader[] = [
-		{ headerName: "x-correlation-id", logName: "requestCorrelationId" },
+		{ headerName: CorrelationIdHeaderName, logName: "requestCorrelationId" },
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
 	const additionalProps: ITelemetryProperties = {
-		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
 		const headerValue = headers.get(header.headerName);
@@ -136,9 +137,24 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			const result = await fetch(...fetchRequestConfig).catch(async (error) => {
 				// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
 				const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
-				throwR11sNetworkError(
-					isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error),
-				);
+				const errorMessage = isNetworkError
+					? `NetworkError: ${error.message}`
+					: safeStringify(error);
+				// If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
+				// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
+				// the error message will start with NetworkError as defined in restWrapper.ts
+				// If there exists a self-signed SSL certificates error, throw a NonRetryableError
+				// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
+				const err = errorMessage.includes("failed, reason: self signed certificate")
+					? new NonRetryableError(errorMessage, RouterliciousErrorType.sslCertError, {
+							driverVersion,
+					  })
+					: new GenericNetworkError(
+							errorMessage,
+							errorMessage.startsWith("NetworkError"),
+							{ driverVersion },
+					  );
+				throw err;
 			});
 			return {
 				response: result,
@@ -209,17 +225,13 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	): Promise<Record<string, string>> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
-
-		return {
+		const headers: Record<string, string> = {
 			...requestHeaders,
-			// TODO: replace header names with CorrelationIdHeaderName and DriverVersionHeaderName from services-client
-			// NOTE: Can correlationId actually be number | true?
-			"x-correlation-id": correlationId as string,
-			"x-driver-version": driverVersion,
+			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
-			"Authorization": this.getAuthorizationHeader(token),
+			Authorization: this.getAuthorizationHeader(token),
 		};
+		return headers;
 	}
 
 	public async getToken(): Promise<ITokenResponse> {

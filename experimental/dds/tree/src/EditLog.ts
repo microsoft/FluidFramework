@@ -5,7 +5,7 @@
 
 import BTree from 'sorted-btree';
 import { TypedEventEmitter, assert } from '@fluidframework/common-utils';
-import type { IEvent } from '@fluidframework/common-definitions';
+import type { IEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { compareArrays } from '@fluidframework/core-utils';
 import { fail } from './Common';

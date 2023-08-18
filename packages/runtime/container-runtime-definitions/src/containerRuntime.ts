@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IEventProvider,
+	IRequest,
+	IResponse,
+	IFluidRouter,
+	FluidObject,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -59,8 +65,17 @@ export interface IContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
+	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
 	getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
+	 * data store has been assigned the given alias.
+	 */
+	getAliasedDataStoreEntryPoint?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete

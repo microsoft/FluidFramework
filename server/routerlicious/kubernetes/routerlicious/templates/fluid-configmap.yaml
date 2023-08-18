@@ -73,6 +73,10 @@ data:
             "checkpointsTTLInSeconds": {{ .Values.checkpoints.checkpointsTTLInSeconds }},
             "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }}
         },
+        "apiCounters": {
+            "fetchTenantKeyMetricMs": 60000,
+            "riddlerStorageRequestMetricMs": 60000
+        },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
@@ -80,6 +84,7 @@ data:
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
+            "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
             "throttling": {
                 "restCallsPerTenant": {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
@@ -114,7 +119,8 @@ data:
             "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
             "socketIo" : {
                 "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
-            }
+            },
+            "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }}
         },
         "client": {
             "type": "browser",
@@ -148,7 +154,8 @@ data:
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
             "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
-            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }}
+            "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }},
+            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }}
         },
         "system": {
             "httpServer": {
@@ -163,7 +170,8 @@ data:
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
         },
         "shared": {
-            "transientTenants": {{ toJson .Values.shared.transientTenants }}
+            "transientTenants": {{ toJson .Values.shared.transientTenants }},
+            "runnerServerCloseTimeoutMs": {{ .Values.shared.runnerServerCloseTimeoutMs }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",

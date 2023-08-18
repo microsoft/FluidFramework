@@ -19,7 +19,10 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itSkipsOnFailure } from "@fluid-internal/test-version-utils";
+import {
+	describeNoCompat,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-internal/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
@@ -112,7 +115,7 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
 	 * the skipping or take actions accordingly if it is.
 	 */
-	itSkipsOnFailure(
+	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
 		["tinylicious", "t9s"],
 		async () => {

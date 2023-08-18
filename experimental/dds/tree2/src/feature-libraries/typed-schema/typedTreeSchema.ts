@@ -5,19 +5,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFieldSchema, ITreeSchema } from "../modular-schema";
+import { FieldKey, Named, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
 import {
-	GlobalFieldKey,
-	GlobalFieldKeySymbol,
-	LocalFieldKey,
-	Named,
-	TreeSchemaIdentifier,
-	TreeTypeSet,
-	ValueSchema,
-	symbolFromKey,
-} from "../../core";
-import { MakeNominal, Assume, RestrictiveReadonlyRecord } from "../../util";
+	MakeNominal,
+	Assume,
+	RestrictiveReadonlyRecord,
+	_InlineTrick,
+	FlattenKeys,
+} from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
-import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
+import { LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 
@@ -26,21 +23,21 @@ import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 /**
  * @alpha
  */
-export interface LocalFields {
+export interface Fields {
 	readonly [key: string]: FieldSchema;
 }
 
 /**
  * @alpha
  */
-export type NormalizeLocalFieldsInner<T extends LocalFields> = {
+export type NormalizeStructFieldsInner<T extends Fields> = {
 	[Property in keyof T]: NormalizeField<T[Property]>;
 };
 
 /**
  * @alpha
  */
-export type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFieldsInner<
+export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<
 	WithDefault<T, Record<string, never>>
 >;
 
@@ -55,21 +52,22 @@ export class TreeSchema<
 	T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification,
 > implements ITreeSchema
 {
-	// Allows reading localFields through the normal map, but without losing type information.
-	public readonly localFields: ObjectToMap<
-		NormalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>,
-		LocalFieldKey,
+	// Allows reading fields through the normal map, but without losing type information.
+	public readonly structFields: ObjectToMap<
+		NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
+		FieldKey,
 		FieldSchema
 	>;
 
-	public readonly localFieldsObject: NormalizeLocalFields<
-		Assume<T, TreeSchemaSpecification>["local"]
+	public readonly structFieldsObject: NormalizeStructFields<
+		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
-	public readonly extraLocalFields: FieldSchema;
-	public readonly value: WithDefault<
-		Assume<T, TreeSchemaSpecification>["value"],
-		ValueSchema.Nothing
+	public readonly mapFields?: FieldSchema;
+	// WithDefault is needed to convert unknown to undefined here (missing properties show up as unknown in types).
+	public readonly leafValue: WithDefault<
+		Assume<T, TreeSchemaSpecification>["leafValue"],
+		undefined
 	>;
 
 	public readonly name: Name & TreeSchemaIdentifier;
@@ -79,26 +77,15 @@ export class TreeSchema<
 	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
-		this.localFieldsObject = normalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>(
-			this.info.local,
-		);
-		this.localFields = objectToMapTyped(this.localFieldsObject);
-		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
-		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
-			Assume<T, TreeSchemaSpecification>["value"],
-			ValueSchema.Nothing
+		this.structFieldsObject = normalizeStructFields<
+			Assume<T, TreeSchemaSpecification>["structFields"]
+		>(this.info.structFields);
+		this.structFields = objectToMapTyped(this.structFieldsObject);
+		this.mapFields = this.info.mapFields;
+		this.leafValue = this.info.leafValue as WithDefault<
+			Assume<T, TreeSchemaSpecification>["leafValue"],
+			undefined
 		>;
-	}
-
-	// TODO: determine if this needs to be lazy. If not, remove flex list and initialize in constructor.
-	// If this does need to be lazy, maybe cache result?
-	public get globalFields(): ReadonlySet<GlobalFieldKey> {
-		if (this.info.global === undefined) {
-			return new Set();
-		}
-		const normalized = normalizeFlexList(this.info.global);
-		const mapped = normalized.map((f) => f().key);
-		return new Set(mapped);
 	}
 }
 
@@ -110,11 +97,9 @@ export type NormalizeField<T extends FieldSchema | undefined> = T extends FieldS
 	? T
 	: FieldSchema<typeof FieldKinds.forbidden, []>;
 
-function normalizeLocalFields<T extends LocalFields | undefined>(
-	fields: T,
-): NormalizeLocalFields<T> {
+function normalizeStructFields<T extends Fields | undefined>(fields: T): NormalizeStructFields<T> {
 	if (fields === undefined) {
-		return {} as unknown as NormalizeLocalFields<T>;
+		return {} as unknown as NormalizeStructFields<T>;
 	}
 	const out: Record<string, FieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
@@ -124,7 +109,7 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 			out[key] = normalizeField(element);
 		}
 	}
-	return out as NormalizeLocalFields<T>;
+	return out as NormalizeStructFields<T>;
 }
 
 function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField<T> {
@@ -171,15 +156,39 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 }
 
 /**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
+ * @alpha
+ */
+export interface StructSchemaSpecification {
+	readonly structFields: RestrictiveReadonlyRecord<string, FieldSchema>;
+}
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
+ * @alpha
+ */
+export interface MapSchemaSpecification {
+	readonly mapFields: FieldSchema;
+}
+
+/**
+ * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
+ * @alpha
+ */
+export interface LeafSchemaSpecification {
+	readonly leafValue: ValueSchema;
+}
+
+/**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
  * @alpha
  */
-export interface TreeSchemaSpecification {
-	readonly local?: RestrictiveReadonlyRecord<string, FieldSchema>;
-	readonly global?: FlexList<GlobalFieldSchema>;
-	readonly extraLocalFields?: FieldSchema;
-	readonly value?: ValueSchema;
-}
+export type TreeSchemaSpecification = [
+	FlattenKeys<
+		(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
+			Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>
+	>,
+][_InlineTrick];
 
 /**
  * All policy for a specific field,
@@ -216,35 +225,4 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
 	const names = list.map((f) => f().name);
 	return new Set(names);
-}
-
-/**
- * All policy for a specific field,
- * including functionality that does not have to be kept consistent across versions or deterministic.
- *
- * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @sealed @alpha
- */
-export class GlobalFieldSchema<
-	Kind extends FieldKindTypes = FieldKindTypes,
-	Types extends AllowedTypes = AllowedTypes,
-> implements IFieldSchema
-{
-	public readonly symbol: GlobalFieldKeySymbol;
-	protected _typeCheck?: MakeNominal;
-	public constructor(
-		public readonly builder: Named<string>,
-		public readonly key: GlobalFieldKey,
-		public readonly schema: FieldSchema<Kind, Types>,
-	) {
-		this.symbol = symbolFromKey(key);
-	}
-
-	public get kind(): Kind {
-		return this.schema.kind;
-	}
-
-	public get types(): TreeTypeSet {
-		return this.schema.types;
-	}
 }

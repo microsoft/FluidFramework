@@ -100,7 +100,16 @@ export class DocumentPartition {
 			return;
 		}
 
-		void this.q.push(message);
+		this.q.push(message).catch((error) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			};
+			Lumberjack.error(
+				"Error pushing raw message to queue in document partition",
+				lumberjackProperties,
+				error,
+			);
+		});
 		this.updateActivityTime();
 	}
 
@@ -164,6 +173,7 @@ export class DocumentPartition {
 	}
 
 	private updateActivityTime() {
-		this.activityTimeoutTime = Date.now() + this.activityTimeout;
+		this.activityTimeoutTime =
+			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 	}
 }

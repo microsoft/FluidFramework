@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { IErrorBase } from "@fluidframework/container-definitions";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -346,7 +347,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
 				if (!driverSupportsBlobs(provider.driver)) {
-					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+					return assert.rejects(
+						attachP,
+						(err: IErrorBase) => err.message === usageErrorMessage,
+					);
 				}
 				await attachP;
 
@@ -437,7 +441,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
 			}
 			await attachP;
 			detachedBlobStorage.blobs.clear();
@@ -484,7 +491,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			return assert.rejects(attachP, (err: IErrorBase) => err.message === usageErrorMessage);
 		}
 		await attachP;
 
@@ -532,7 +539,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
 			}
 			await attachP;
 

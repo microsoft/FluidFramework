@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	LocalFieldKey,
 	ITreeCursor,
 	EmptyKey,
 	FieldKey,
@@ -58,7 +57,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 					return node.length === 0 ? [] : [EmptyKey];
 				} else {
 					return (Object.keys(node) as FieldKey[]).filter((key) => {
-						const value = node[key as LocalFieldKey];
+						const value = node[key];
 						return !Array.isArray(value) || value.length !== 0;
 					});
 				}
@@ -82,7 +81,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 		}
 
 		if (Object.prototype.hasOwnProperty.call(node, key)) {
-			const field = node[key as LocalFieldKey];
+			const field = node[key];
 			assert(
 				field !== undefined,
 				0x41e /* explicit undefined fields should not be preserved in JSON */,
@@ -127,7 +126,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 		case jsonObject.name: {
 			const result: JsonCompatible = {};
 			mapCursorFields(reader, (cursor) => {
-				const key = cursor.getFieldKey() as LocalFieldKey;
+				const key = cursor.getFieldKey();
 				assert(cursor.firstNode(), 0x420 /* expected non-empty field */);
 				// like `result[key] = cursorToJsonObject(reader);` except safe when keyString == "__proto__".
 				Object.defineProperty(result, key, {

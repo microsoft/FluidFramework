@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ScheduleManager } from "../scheduleManager";
 
 describe("ScheduleManager", () => {
@@ -32,7 +32,7 @@ describe("ScheduleManager", () => {
 				deltaManager,
 				emitter,
 				() => testClientId,
-				DebugLogger.create("fluid:testScheduleManager"),
+				createChildLogger({ namespace: "fluid:testScheduleManager" }),
 			);
 
 			emitter.on("batchBegin", () => {

@@ -393,10 +393,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						eventName: "fluid:telemetry:Container:ContainerClose",
 						error: "BatchTooLarge",
 					},
-					{
-						eventName: "fluid:telemetry:Container:ContainerDispose",
-						error: "BatchTooLarge",
-					},
 				],
 				async function () {
 					const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB

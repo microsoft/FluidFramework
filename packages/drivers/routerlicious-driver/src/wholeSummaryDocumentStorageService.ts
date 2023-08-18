@@ -23,7 +23,6 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IWholeFlatSummary } from "@fluidframework/server-services-client";
 import { ICache, InMemoryCache } from "./cache";
 import { IRouterliciousDriverPolicies } from "./policies";
 import {
@@ -35,8 +34,8 @@ import { GitManager } from "./gitManager";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
 import { ISummaryUploadManager } from "./storageContracts";
 import { IR11sResponse } from "./restWrapper";
-import { INormalizedWholeSummary } from "./contracts";
-import { convertWholeFlatSummaryToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
+import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
 
 const latestSnapshotId: string = "latest";
 
@@ -59,7 +58,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		public readonly policies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies?: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
-		private readonly snapshotTreeCache: ICache<INormalizedWholeSummary> = new InMemoryCache(),
+		private readonly snapshotTreeCache: ICache<INormalizedWholeSnapshot> = new InMemoryCache(),
 		private readonly noCacheGitManager?: GitManager,
 		private readonly getStorageManager: (
 			disableCache?: boolean,
@@ -243,7 +242,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	}
 
 	public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
-		const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+		const wholeFlatSnapshot = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
 				eventName: "getWholeFlatSummary",
@@ -251,7 +250,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = await manager.getSummary(summaryHandle.handle);
+				const response = await manager.getSnapshot(summaryHandle.handle);
 				event.end({
 					size: response.content.trees[0]?.entries.length,
 				});
@@ -259,8 +258,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 		);
 
-		const { blobs, snapshotTree } = convertWholeFlatSummaryToSnapshotTreeAndBlobs(
-			wholeFlatSummary,
+		const { blobs, snapshotTree } = convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
+			wholeFlatSnapshot,
 			"",
 		);
 		return convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
@@ -291,7 +290,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		versionId: string,
 		disableCache?: boolean,
 		scenarioName?: string,
-	): Promise<INormalizedWholeSummary> {
+	): Promise<INormalizedWholeSnapshot> {
 		const normalizedWholeSummary = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
@@ -301,12 +300,12 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async (event) => {
 				const manager = await this.getStorageManager(disableCache);
-				const response: IR11sResponse<IWholeFlatSummary> = await manager.getSummary(
+				const response: IR11sResponse<IWholeFlatSnapshot> = await manager.getSnapshot(
 					versionId,
 				);
 				const start = performance.now();
-				const snapshot: INormalizedWholeSummary =
-					convertWholeFlatSummaryToSnapshotTreeAndBlobs(response.content);
+				const snapshot: INormalizedWholeSnapshot =
+					convertWholeFlatSnapshotToSnapshotTreeAndBlobs(response.content);
 				const snapshotConversionTime = performance.now() - start;
 				validateBlobsAndTrees(snapshot.snapshotTree);
 				const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
@@ -333,7 +332,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	}
 
 	private async initializeFromSnapshot(
-		normalizedWholeSummary: INormalizedWholeSummary,
+		normalizedWholeSummary: INormalizedWholeSnapshot,
 	): Promise<string> {
 		const snapshotId = normalizedWholeSummary.id;
 		assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);

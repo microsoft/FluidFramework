@@ -30,9 +30,6 @@ stages:
     displayName: Run checks
     steps:
     - template: include-use-node-version.yml
-      parameters:
-        buildDirectory: $(Build.SourcesDirectory)
-        version: '16.16.0'
 
     - template: include-install-pnpm.yml
       parameters:

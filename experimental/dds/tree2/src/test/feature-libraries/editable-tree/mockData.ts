@@ -22,19 +22,18 @@ import {
 	FieldSchema,
 	SchemaBuilder,
 	Any,
-	GlobalFieldSchema,
 	TypedSchemaCollection,
 	createMockNodeKeyManager,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
-	LocalFieldKey,
+	FieldKey,
 	EmptyKey,
 	JsonableTree,
 	IEditableForest,
-	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
+	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
@@ -142,8 +141,7 @@ export type Address = EditableTree &
 		},
 		"editable-tree.Test:Address-1.0.0"
 	>;
-export type Friends = EditableTree &
-	Brand<Record<LocalFieldKey, string>, "editable-tree.Map<String>">;
+export type Friends = EditableTree & Brand<Record<FieldKey, string>, "editable-tree.Map<String>">;
 
 export type Person = EditableTree &
 	Brand<
@@ -250,7 +248,7 @@ export function getReadonlyEditableTreeContext(forest: IEditableForest): Editabl
 	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
 }
 
-export function setupForest<T extends GlobalFieldSchema>(
+export function setupForest<T extends FieldSchema>(
 	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
@@ -260,7 +258,7 @@ export function setupForest<T extends GlobalFieldSchema>(
 		{
 			schema: schemaRepo,
 		},
-		schema.root.schema,
+		schema.rootFieldSchema,
 		data,
 	);
 	initializeForest(forest, root);
@@ -277,7 +275,7 @@ export function buildTestTree(
 	return context;
 }
 
-export function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
+export function buildTestPerson(): readonly [SchemaData, Person] {
 	const context = buildTestTree(personData);
 	return [context.schema, context.unwrappedRoot as Person];
 }

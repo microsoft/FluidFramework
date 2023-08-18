@@ -15,8 +15,9 @@ import {
 	BrandedMapSubset,
 	brandedSlot,
 } from "../../util";
+import { FieldKey } from "../schema-stored";
 import { UpPath } from "./pathTree";
-import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
+import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
 import { visitDelta, DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";

@@ -10,7 +10,7 @@ import {
 	DataObjectFactory,
 	PureDataObject,
 } from "@fluidframework/aqueduct";
-import { ITelemetryLoggerExt, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -93,6 +93,9 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
+		[LoaderHeader.loadMode]: {
+			opsBeforeReturn: "sequenceNumber",
+		},
 		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
@@ -106,7 +109,7 @@ async function loadSummarizer(
 	// Fail fast if we receive a nack as something must have gone wrong.
 	const summaryCollection = new SummaryCollection(
 		summarizerContainer.deltaManager,
-		new TelemetryNullLogger(),
+		createChildLogger(),
 	);
 	summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
 		throw new Error(
@@ -263,7 +266,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		[innerRequestHandler],
 		runtimeOptions,
 	);
-	const logger = new TelemetryNullLogger();
+	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.
 	let latestUploadedSummary: ISummaryTree | undefined;

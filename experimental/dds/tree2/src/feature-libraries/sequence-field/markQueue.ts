@@ -8,7 +8,7 @@ import { RevisionTag } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import { Mark } from "./format";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
-import { getMarkLength, splitMark } from "./utils";
+import { splitMark } from "./utils";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
@@ -71,7 +71,7 @@ export class MarkQueue<T> {
 	 */
 	public dequeueUpTo(length: number): Mark<T> {
 		const mark = this.dequeue();
-		if (getMarkLength(mark) <= length) {
+		if (mark.count <= length) {
 			return mark;
 		}
 

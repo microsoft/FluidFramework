@@ -4,9 +4,10 @@
  */
 
 import type { EventEmitter } from "events";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
+	IEvent,
+	IEventProvider,
 	IFluidHandle,
 	IFluidLoadable,
 	IFluidRouter,
@@ -57,7 +58,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	protected initializeP: Promise<void> | undefined;
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not provide a functioning built-in disposed flow.
+	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not provide a functioning built-in disposed flow.
 	 * This member will be removed in an upcoming release.
 	 */
 	public get disposed() {
@@ -195,14 +196,14 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	/**
 	 * Called when the host container closes and disposes itself
-	 * @deprecated - 2.0.0-internal.5.2.0 - Dispose does nothing and will be removed in an upcoming release.
+	 * @deprecated 2.0.0-internal.5.2.0 - Dispose does nothing and will be removed in an upcoming release.
 	 */
 	public dispose(): void {
 		super.dispose();
 	}
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
 	 * in a future release.
 	 */
 	protected static isEmitterEvent(event: string): boolean {
@@ -210,7 +211,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
 	 * in a future release.
 	 */
 	protected forwardEvent(
@@ -221,7 +222,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	/**
-	 * @deprecated - 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
+	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
 	 * in a future release.
 	 */
 	protected unforwardEvent(

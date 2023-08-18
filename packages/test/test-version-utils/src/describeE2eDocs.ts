@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
@@ -276,7 +276,10 @@ function createE2EDocCompatSuite(
 								config.dataRuntime,
 							);
 						} catch (error) {
-							const logger = ChildLogger.create(getTestLogger?.(), "DescribeE2EDocs");
+							const logger = createChildLogger({
+								logger: getTestLogger?.(),
+								namespace: "DescribeE2EDocs",
+							});
 							logger.sendErrorEvent(
 								{
 									eventName: "TestObjectProviderLoadFailed",

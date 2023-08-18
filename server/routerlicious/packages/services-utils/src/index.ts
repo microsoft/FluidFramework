@@ -46,3 +46,4 @@ export {
 	DummyRevokedTokenChecker,
 } from "./tokenRevocationManager";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
+export { IApiCounters, InMemoryApiCounters } from "./apiCounters";

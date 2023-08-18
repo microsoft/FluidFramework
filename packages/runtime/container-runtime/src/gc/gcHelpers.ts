@@ -307,6 +307,7 @@ export function trimLeadingAndTrailingSlashes(str: string) {
 
 /**
  * Tags the passed value as a CodeArtifact and returns the tagged value.
+ * @deprecated - Use telemetry-utils tagCodeArtifacts instead
  */
 export function tagAsCodeArtifact(value: string) {
 	return {

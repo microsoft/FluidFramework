@@ -34,7 +34,7 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 	},
 ];
 
-const testCases: EncodingTestData<SummaryData<TestChange>, string> = {
+const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 	successes: [
 		["empty", { trunk: [], branches: new Map() }],
 		[
@@ -120,25 +120,25 @@ const testCases: EncodingTestData<SummaryData<TestChange>, string> = {
 		0: [
 			[
 				"missing revision",
-				JSON.stringify({
+				{
 					base: tags[0],
 					commits: [{ sessionId: "4", change: TestChange.mint([0], 1) }],
-				}),
+				},
 			],
 			[
 				"missing sessionId",
-				JSON.stringify({
+				{
 					base: tags[0],
 					commits: [{ change: TestChange.mint([0], 1), revision: mintRevisionTag() }],
-				}),
+				},
 			],
 			["non-object", ""],
 			[
 				"commit with parent field",
-				JSON.stringify({
+				{
 					trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
 					branches: [],
-				}),
+				},
 			],
 		],
 	},

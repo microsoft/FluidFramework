@@ -5,8 +5,7 @@
 
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
-	loggerToMonitoringContext,
+	createChildMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
@@ -130,15 +129,16 @@ export class OdspDocumentService implements IDocumentService {
 			summarizeProtocolTree: true,
 		};
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(logger, undefined, {
+		this.mc = createChildMonitoringContext({
+			logger,
+			properties: {
 				all: {
 					odc: isOdcOrigin(
 						new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin,
 					),
 				},
-			}),
-		);
+			},
+		});
 
 		this.hostPolicy = hostPolicy;
 		if (this.clientIsSummarizer) {

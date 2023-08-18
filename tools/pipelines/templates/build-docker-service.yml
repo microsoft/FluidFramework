@@ -228,9 +228,6 @@ stages:
 
     # for npm ci in component detection and set version
     - template: include-use-node-version.yml
-      parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        version: '16.16.0'
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
@@ -290,7 +287,7 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) npx lerna@5.6.2 exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
