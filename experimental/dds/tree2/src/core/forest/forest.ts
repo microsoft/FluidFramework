@@ -98,6 +98,9 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 
 	/**
 	 * True if there are no nodes in the forest at all.
+	 *
+	 * @remarks
+	 * This means no nodes under any detached field, not just the special document root one.
 	 */
 	readonly isEmpty: boolean;
 }
