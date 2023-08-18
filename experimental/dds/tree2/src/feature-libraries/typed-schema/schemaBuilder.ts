@@ -56,6 +56,7 @@ export class SchemaBuilder {
 
 	/**
 	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema.
+	 * @param lint - Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
 	 * @param libraries - Libraries to include in this one. See `addLibraries` for details.
 	 */
 	public constructor(
