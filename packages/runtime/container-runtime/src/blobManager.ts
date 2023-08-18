@@ -122,19 +122,12 @@ export type IBlobManagerRuntime = Pick<
 	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
-// Note that while shutdown we "submit" an op before uploading the blob, but we always
-// expect blobs to be uploaded before we actually see the op round-trip
-export enum PendingBlobStatus {
-	Uploading,
-	SendingOp,
-	Stashed,
-}
-
 type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
 
 interface PendingBlob {
 	blob: ArrayBufferLike;
-	status: PendingBlobStatus;
+	uploading?: boolean;
+	opsent?: boolean;
 	storageId?: string;
 	handleP: Deferred<BlobHandle>;
 	uploadP?: Promise<ICreateBlobResponse | void>;
@@ -143,7 +136,6 @@ interface PendingBlob {
 	attached?: boolean;
 	acked?: boolean;
 	abortSignal?: AbortSignal;
-	opsent?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -256,7 +248,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
 					this.pendingBlobs.set(localId, {
 						blob,
-						status: PendingBlobStatus.SendingOp,
+						uploading: false,
+						opsent: true,
 						handleP: new Deferred(),
 						storageId,
 						uploadP: undefined,
@@ -264,14 +257,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						minTTLInSeconds: entry.minTTLInSeconds,
 						attached,
 						acked,
-						opsent: true,
 					});
 					return;
 				}
 			}
 			this.pendingBlobs.set(localId, {
 				blob,
-				status: PendingBlobStatus.Stashed,
+				uploading: true,
 				handleP: new Deferred(),
 				uploadP: this.uploadBlob(localId, blob),
 				attached,
@@ -283,13 +275,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(pendingEntry !== undefined, "Must have pending blob entry for upcoming op");
-			pendingEntry.opsent = true;
 			if (pendingEntry?.uploadTime && pendingEntry?.minTTLInSeconds) {
 				const secondsSinceUpload = (Date.now() - pendingEntry.uploadTime) / 1000;
 				const expired = pendingEntry.minTTLInSeconds - secondsSinceUpload < 0;
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "sendBlobAttach",
-					entryStatus: pendingEntry.status,
 					secondsSinceUpload,
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
@@ -303,13 +293,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							{
 								localId,
 								blobId,
-								entryStatus: pendingEntry.status,
 								secondsSinceUpload,
 							},
 						),
 					);
 				}
 			}
+			pendingEntry.opsent = true;
 			return sendBlobAttachOp(localId, blobId);
 		};
 	}
@@ -333,7 +323,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private createAbortError(pending?: PendingBlob) {
 		return new LoggingError("uploadBlob aborted", {
 			acked: pending?.acked,
-			status: pending?.status,
 			uploadTime: pending?.uploadTime,
 		});
 	}
@@ -343,7 +332,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public async processStashedChanges() {
 		this.retryThrottler.cancel();
 		const pendingUploads = Array.from(this.pendingBlobs.values())
-			.filter((e) => e.status === PendingBlobStatus.Stashed)
+			.filter((e) => e.uploading === true)
 			.map(async (e) => e.uploadP);
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -358,16 +347,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private async stashPendingBlobs(): Promise<void> {
 		for (const [localId, entry] of this.pendingBlobs) {
-			switch (entry.status) {
-				case PendingBlobStatus.Uploading:
-					entry.status = PendingBlobStatus.Stashed;
-					this.sendBlobAttachOp(localId, entry.storageId);
-				case PendingBlobStatus.SendingOp:
-					entry.handleP.resolve(this.getBlobHandle(localId));
-					break;
-				default:
-				// nothing to do
+			if (!entry.opsent) {
+				this.sendBlobAttachOp(localId, entry.storageId);
 			}
+			entry.handleP.resolve(this.getBlobHandle(localId));
 		}
 		return new Promise<void>((resolve) => {
 			if (this.allBlobsAttached) {
@@ -495,7 +478,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const localId = uuid();
 		const pendingEntry: PendingBlob = {
 			blob,
-			status: PendingBlobStatus.Uploading,
+			uploading: true,
 			handleP: new Deferred(),
 			uploadP: this.uploadBlob(localId, blob),
 			attached: false,
@@ -563,8 +546,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return;
 		}
 		assert(
-			entry.status === PendingBlobStatus.Uploading ||
-				entry.status === PendingBlobStatus.Stashed,
+			entry.uploading === true,
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
 		entry.storageId = response.id;
@@ -593,7 +575,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				response.id,
 				(this.opsInFlight.get(response.id) ?? []).concat(localId),
 			);
-			entry.status = PendingBlobStatus.SendingOp;
 		}
 
 		return response;
@@ -632,7 +613,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
 			assert(
-				pendingEntry?.status === PendingBlobStatus.SendingOp && !!pendingEntry?.storageId,
+				pendingEntry?.opsent === true && !!pendingEntry?.storageId,
 				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
 			);
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);

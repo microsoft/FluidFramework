@@ -1174,8 +1174,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("close while uploading blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		// force write mode
-		dataStore.root.set("forceWrite", true);
 		await provider.ensureSynchronized();
 
 		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
@@ -1202,8 +1200,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("close while uploading multiple blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		// force write mode
-		dataStore.root.set("forceWrite", true);
 		await provider.ensureSynchronized();
 
 		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
@@ -1232,12 +1228,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
-		// TODO:AB#4746: Resolve flakiness of this test on CI.
-		if (provider.driver.type === "local") {
-			// TODO:AB#4746: Resolve flakiness of this test on localserver CI.
-			this.skip();
-		}
-
 		// upload blob offline so an entry is added to redirect table
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(

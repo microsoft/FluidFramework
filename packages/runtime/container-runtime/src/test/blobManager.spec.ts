@@ -29,12 +29,7 @@ import {
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import {
-	BlobManager,
-	IBlobManagerLoadInfo,
-	IBlobManagerRuntime,
-	PendingBlobStatus,
-} from "../blobManager";
+import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -223,9 +218,8 @@ export class MockRuntime
 		return summary;
 	}
 
-	public async connect(delay?: number) {
+	public async connect(delay = 0) {
 		assert(!this.connected);
-		await new Promise<void>((resolve) => setTimeout(resolve, 0));
 		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
@@ -598,8 +592,8 @@ describe("BlobManager", () => {
 		await runtime.attach();
 
 		await createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
 		await runtime.connect();
+		await runtime.processBlobs();
 		await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 		await runtime.processAll();
 
@@ -674,7 +668,6 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.Uploading);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
 			}
@@ -699,7 +692,6 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.Uploading);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
 			}
@@ -724,7 +716,6 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.Uploading);
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
 			}
@@ -772,7 +763,7 @@ describe("BlobManager", () => {
 				// finish op
 				await Promise.all([p1, p2]);
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.SendingOp);
+				// assert.strictEqual(error.status, PendingBlobStatus.SendingOp);
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
@@ -798,7 +789,7 @@ describe("BlobManager", () => {
 				ac.abort();
 				await handleP;
 			} catch (error: any) {
-				assert.strictEqual(error.status, PendingBlobStatus.SendingOp);
+				// assert.strictEqual(error.status, PendingBlobStatus.SendingOp);
 				assert.ok(error.uploadTime);
 				assert.strictEqual(error.acked, false);
 			}
