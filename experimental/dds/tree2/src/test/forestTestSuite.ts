@@ -152,6 +152,15 @@ export function testForest(config: ForestTestConfiguration): void {
 			reader2.free();
 		});
 
+		it("isEmpty", () => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
+			);
+			assert(forest.isEmpty);
+			initializeForest(forest, [singleJsonCursor([])]);
+			assert(!forest.isEmpty);
+		});
+
 		it("moving a cursor to the root of an empty forest fails", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 			const cursor = forest.allocateCursor();
