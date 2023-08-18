@@ -7,7 +7,6 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
 	TypedEventEmitter,
 	assert,
@@ -15,6 +14,7 @@ import {
 	unreachableCase,
 } from "@fluidframework/common-utils";
 import {
+	IEvent,
 	ITelemetryProperties,
 	TelemetryEventCategory,
 	IRequest,
@@ -2408,6 +2408,7 @@ export class Container
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
+			() => this.resolvedUrl?.id,
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,

@@ -14,10 +14,16 @@ import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;
 
+/**
+ * @deprecated - IJSONRunSegment will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ */
 export interface IJSONRunSegment<T> extends IJSONSegment {
 	items: Serializable<T>[];
 }
 
+/**
+ * @deprecated - SubSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ */
 export class SubSequence<T> extends BaseSegment {
 	public static readonly typeString: string = "SubSequence";
 	public static is(segment: ISegment): segment is SubSequence<any> {
@@ -98,6 +104,9 @@ export class SubSequence<T> extends BaseSegment {
 	}
 }
 
+/**
+ * @deprecated - SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ */
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	constructor(
 		document: IFluidDataStoreRuntime,
