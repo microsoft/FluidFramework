@@ -4,15 +4,12 @@
 		"layers": {
 			"Common-Definitions": {
 				"dotSameRank": true,
-				"packages": [
-					"@fluidframework/common-definitions",
-					"@fluidframework/gitresources"
-				]
+				"packages": ["@fluidframework/common-definitions", "@fluidframework/gitresources"]
 			},
-      "Core-Interfaces": {
-        "packages": ["@fluidframework/core-interfaces"],
-        "deps": []
-      },
+			"Core-Interfaces": {
+				"packages": ["@fluidframework/core-interfaces"],
+				"deps": []
+			},
 			"Protocol-Definitions": {
 				"packages": ["@fluidframework/protocol-definitions"],
 				"deps": ["@fluidframework/common-definitions"]

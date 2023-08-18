@@ -5,11 +5,11 @@
 ```ts
 
 import { EventEmitter } from 'events';
-import { IDisposable } from '@fluidframework/common-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
-import { IEventTransformer } from '@fluidframework/common-definitions';
-import { TransformedEvent } from '@fluidframework/common-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
+import { IEventTransformer } from '@fluidframework/core-interfaces';
+import { TransformedEvent } from '@fluidframework/core-interfaces';
 
 // @internal
 export class Buffer extends Uint8Array {
