@@ -36,7 +36,6 @@
 		"@fluid-experimental/attributable-map": "workspace:~",
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",

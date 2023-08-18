@@ -154,6 +154,29 @@ export function testForest(config: ForestTestConfiguration): void {
 			reader2.free();
 		});
 
+		it("isEmpty: rootFieldKey", () => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
+			);
+			assert(forest.isEmpty);
+			initializeForest(forest, [singleJsonCursor([])]);
+			assert(!forest.isEmpty);
+		});
+
+		it("isEmpty: other root", () => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
+			);
+			assert(forest.isEmpty);
+
+			const insert: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: [singleJsonCursor([])],
+			};
+			forest.applyDelta(new Map([[brand("different root"), [insert]]]));
+			assert(!forest.isEmpty);
+		});
+
 		it("moving a cursor to the root of an empty forest fails", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 			const cursor = forest.allocateCursor();
