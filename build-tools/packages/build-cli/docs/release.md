@@ -205,11 +205,13 @@ Creates a release report for the most recent build published to an internal ADO 
 
 ```
 USAGE
-  $ flub release report-unreleased --repoName <value> --ado_pat <value> --sourceBranch <value> [-v | --quiet]
+  $ flub release report-unreleased --repo <value> --ado_pat <value> --sourceBranch <value> --output <value> [-v |
+  --quiet]
 
 FLAGS
   --ado_pat=<value>       (required) ADO Personal Access Token
-  --repoName=<value>      (required) Repository name
+  --output=<value>        (required) Output manifest file path
+  --repo=<value>          (required) Repository name
   --sourceBranch=<value>  (required) Branch name across which the dev release manifest should be generated.
 
 LOGGING FLAGS

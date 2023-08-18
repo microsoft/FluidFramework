@@ -7,10 +7,11 @@ import fetch from "node-fetch";
 import { promises as fsPromises } from "fs";
 import { Flags } from "@oclif/core";
 import { Logger } from "@fluidframework/build-tools";
-import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import { BaseCommand } from "../../base";
-import { PackageCaretRange } from "../../lib";
+import { PackageVersionList } from "../../lib";
+import { isInternalVersionRange } from "@fluid-tools/version-tools";
 
+// Define the interface for build details
 interface IBuildDetails {
 	definition: { name: string };
 	status: string;
@@ -24,7 +25,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	static description = `Creates a release report for the most recent build published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report always uses the "caret" report format.`;
 
 	static flags = {
-		repoName: Flags.string({
+		repo: Flags.string({
 			description: "Repository name",
 			required: true,
 		}),
@@ -37,25 +38,33 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			description: "Branch name across which the dev release manifest should be generated.",
 			required: true,
 		}),
+		output: Flags.string({
+			description: "Output manifest file path",
+			required: true,
+		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
+		const repoName: string[] = flags.repo.split("/");
+
 		const PACKAGE_NAME = "@fluidframework/container-runtime";
-		const GITHUB_RELEASE_URL = `https://api.github.com/repos/microsoft/${flags.repoName}/releases`;
-		const ADO_BASE_URL = `https://dev.azure.com/${flags.repoName.toLowerCase()}/internal/_apis/build/builds?api-version=7.0`;
-		const REGISTRY_URL = `https://pkgs.dev.azure.com/${flags.repoName.toLowerCase()}/internal/_packaging/build/npm/registry/`;
+		const GITHUB_RELEASE_URL = `https://api.github.com/repos/${flags.repo}/releases`;
+		const ADO_BASE_URL = `https://dev.azure.com/${repoName[1].toLowerCase()}/internal/_apis/build/builds?api-version=7.0`;
+		const REGISTRY_URL = `https://pkgs.dev.azure.com/${repoName[1].toLowerCase()}/internal/_packaging/build/npm/registry/`;
 
 		// Authorization header for Azure DevOps
 		const authHeader = `Basic ${Buffer.from(`:${flags.ado_pat}`).toString("base64")}`;
 
+		// Check if the authorization header is valid
 		if (authHeader === undefined || authHeader === null) {
 			this.error("Check your ADO Personal Access Token. It maybe incorrect or expired.");
 		}
 
 		try {
+			// Get the most recent successful build number
 			const buildNumber = await getFirstSuccessfulBuild(
 				authHeader,
 				ADO_BASE_URL,
@@ -64,8 +73,9 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			);
 			if (buildNumber !== undefined) {
 				this.log(
-					`Most successful build number for the last 24 hours for ${flags.sourceBranch} branch: ${buildNumber}`,
+					`Most recent successful build number within the last 24 hours for ${flags.sourceBranch} branch: ${buildNumber}`,
 				);
+				// Fetch the dev version number
 				const devVersion = await fetchDevVersionNumber(
 					authHeader,
 					REGISTRY_URL,
@@ -75,12 +85,14 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 				);
 				if (devVersion !== undefined) {
 					this.log(`Fetched dev version: ${devVersion}`);
-					const manifest = await generateManifestObjectForDevReleases(
+					// Generate and write the modified manifest
+					const manifestFile = await generateReleaseReportForUnreleasedVersions(
 						GITHUB_RELEASE_URL,
+						devVersion,
 						this.logger,
 					);
-					if (manifest !== undefined) {
-						await writeManifestToFile(devVersion, manifest, this.logger);
+					if (manifestFile !== undefined) {
+						await writeManifestToFile(manifestFile, flags.output, this.logger);
 					}
 				}
 			} else if (buildNumber === undefined) {
@@ -96,6 +108,9 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 
 /**
  * Fetches the first successful build number in the last 24 hours.
+ * @param authHeader - Auth Header
+ * @param adoUrl - Azure DevOps API URL
+ * @param sourceBranch - Source branch name
  * @returns The build number if successful, otherwise undefined.
  */
 async function getFirstSuccessfulBuild(
@@ -111,13 +126,21 @@ async function getFirstSuccessfulBuild(
 		const twentyFourHoursAgo = new Date();
 		twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-		const successfulBuilds = data.value.filter(
+		// Filter builds by date first
+		const recentBuilds = data.value.filter(
+			(build: IBuildDetails) => new Date(build.finishTime) >= twentyFourHoursAgo,
+		);
+
+		if (recentBuilds === undefined || recentBuilds.length === 0) {
+			log?.errorLog(`No successful builds found in the last 24 hours`);
+		}
+
+		const successfulBuilds = recentBuilds.filter(
 			(build: IBuildDetails) =>
 				build.definition.name === "Build - client packages" &&
 				build.status === "completed" &&
 				build.result === "succeeded" &&
-				build.sourceBranch === `refs/heads/${sourceBranch}` &&
-				new Date(build.finishTime) >= twentyFourHoursAgo,
+				build.sourceBranch === `refs/heads/${sourceBranch}`,
 		);
 
 		return successfulBuilds.length > 0
@@ -131,7 +154,10 @@ async function getFirstSuccessfulBuild(
 
 /**
  * Fetches the dev version number released in the build feed.
- * @param buildNumber - The build number.
+ * @param authHeader - Authorization header for Azure DevOps
+ * @param registryUrl - ADO Registry URL
+ * @param packageName - Name of the package
+ * @param buildNumber - The build number
  * @returns The dev version number if found, otherwise undefined.
  */
 async function fetchDevVersionNumber(
@@ -146,7 +172,9 @@ async function fetchDevVersionNumber(
 			headers: { Authorization: authHeader },
 		});
 		const data = await response.json();
-		const buildVersionKey = Object.keys(data.time).find((key) => key.includes(buildNumber));
+		const buildVersionKey: string | undefined = Object.keys(data.time).find((key) =>
+			key.includes(buildNumber),
+		);
 
 		if (buildVersionKey !== undefined) {
 			return buildVersionKey;
@@ -162,12 +190,14 @@ async function fetchDevVersionNumber(
 
 /**
  * Generates a modified manifest file with the specified version number.
+ * @param gitHubUrl - GitHub Release API URL.
  * @param version - The version number.
  */
-async function generateManifestObjectForDevReleases(
+async function generateReleaseReportForUnreleasedVersions(
 	gitHubUrl: string,
+	version: string,
 	log?: Logger,
-): Promise<PackageCaretRange | undefined> {
+): Promise<PackageVersionList | undefined> {
 	try {
 		const releasesResponse = await fetch(gitHubUrl);
 		const releases = await releasesResponse.json();
@@ -175,6 +205,27 @@ async function generateManifestObjectForDevReleases(
 		let manifestAsset;
 
 		for (const asset of releases[0].assets) {
+			/**
+			 * Only `caret` manifest file is required by partner repository.
+			 * dev/prerelease versions are mapped to a single version instead of ranges but other packages such as common-utils and common-definitions
+			 * required caret versions which simple manifest files do not provide.
+			 * Example of simple manifest file:
+			 * ```json
+			 * {
+			 * 	"@fluidframework/cell": "2.0.0-internal.6.1.1",
+			 *	"@fluidframework/common-definitions": "0.20.1",
+			 *	"@fluidframework/common-utils": "1.1.1",
+			 * }
+			 * ```
+			 * Example of caret manifest file:
+			 * ```json
+			 * {
+			 * 	"@fluidframework/cell": ">=2.0.0-internal.6.1.1 <2.0.0-internal.7.0.0",
+			 *	"@fluidframework/common-definitions": "^0.20.1",
+			 *	"@fluidframework/common-utils": "^1.1.1",
+			 * }
+			 * ```
+			 */
 			const includesCaretJson: boolean = asset.name.includes(".caret.json");
 			if (includesCaretJson) {
 				manifestAsset = asset;
@@ -187,10 +238,15 @@ async function generateManifestObjectForDevReleases(
 			const manifestResponse = await fetch(manifest_url_caret);
 			const manifestData = await manifestResponse.buffer();
 
-			const originalManifest = JSON.parse(manifestData.toString());
-			const modifiedManifest: PackageCaretRange = { ...originalManifest };
+			const manifestFile: PackageVersionList = JSON.parse(manifestData.toString());
 
-			return modifiedManifest;
+			for (const key of Object.keys(manifestFile)) {
+				if (isInternalVersionRange(manifestFile[key])) {
+					manifestFile[key] = version;
+				}
+			}
+
+			return manifestFile;
 		}
 
 		return undefined;
@@ -200,28 +256,23 @@ async function generateManifestObjectForDevReleases(
 	}
 }
 
+/**
+ * Writes a modified manifest to a file.
+ * @param manifestFile - The modified manifest file
+ * @param output - The path and name of the final manifest file
+ * @returns The path to the final manifest file if successful, otherwise undefined
+ */
 async function writeManifestToFile(
-	version: string,
-	modifiedManifest: PackageCaretRange,
+	manifestFile: PackageVersionList,
+	output: string,
 	log?: Logger,
 ): Promise<string | undefined> {
 	try {
-		for (const key of Object.keys(modifiedManifest)) {
-			if (isInternalVersionRange(modifiedManifest[key])) {
-				modifiedManifest[key] = version;
-			}
-		}
+		await fsPromises.writeFile(output, JSON.stringify(manifestFile, null, 2));
 
-		const new_manifest_filename = `fluid-framework-release-manifest.client.${version}.caret.json`;
+		log?.log("Manifest modified successfully.", output);
 
-		await fsPromises.writeFile(
-			new_manifest_filename,
-			JSON.stringify(modifiedManifest, null, 2),
-		);
-
-		log?.log("Manifest modified successfully.", new_manifest_filename);
-
-		return new_manifest_filename;
+		return output;
 	} catch (error) {
 		log?.errorLog("Error writing manifest to file:", error);
 		return undefined;
