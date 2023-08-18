@@ -137,6 +137,8 @@ export {
 	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	ChangesetLocalId,
+	ChangeAtomId,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,

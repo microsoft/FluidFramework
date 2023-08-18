@@ -11,9 +11,9 @@ import {
 	ITreeCursorSynchronous,
 	TreeSchemaIdentifier,
 	mintRevisionTag,
+	ChangesetLocalId,
 } from "../../../core";
 import {
-	ChangesetLocalId,
 	FieldChange,
 	FieldKinds,
 	NodeChangeset,

@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -17,7 +17,6 @@ import {
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,

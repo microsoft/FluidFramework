@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/common-definitions";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import { fail, getOrCreate } from "../util";
 
@@ -41,7 +41,7 @@ export type Events<E> = {
 
 /**
  * Converts an `Events` type (i.e. the event registry for an {@link ISubscribable}) into a type consumable
- * by an IEventProvider from `@fluidframework/common-definitions`.
+ * by an IEventProvider from `@fluidframework/core-interfaces`.
  * @param E - the `Events` type to transform
  * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
  * @example
