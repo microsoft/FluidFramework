@@ -124,7 +124,6 @@ export {
 } from "./domains";
 
 export {
-	buildForest,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,
