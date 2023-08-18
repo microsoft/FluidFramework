@@ -39,7 +39,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluentui/react-components": "^9.29.3",
+		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-example/clicker": "workspace:~",
 		"@fluid-example/codemirror": "workspace:~",
