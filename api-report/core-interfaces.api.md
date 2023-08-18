@@ -432,9 +432,6 @@ export interface ITelemetryProperties {
 }
 
 // @public
-export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
-    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
-} : L;
 export const enum LogLevel {
     // (undocumented)
     default = 10,
@@ -445,6 +442,11 @@ export const enum LogLevel {
     // (undocumented)
     warning = 20
 }
+
+// @public
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
+    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
+} : L;
 
 // @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
