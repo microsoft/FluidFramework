@@ -37,7 +37,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1"
+		"@fluidframework/common-definitions": "^1.0.0-0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
