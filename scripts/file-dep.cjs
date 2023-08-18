@@ -5,8 +5,8 @@
 
 /**
  * This script sets the eslint dep to a file dep. This can be used with flub exec to update the dependency on our shared
- * eslint config. For exanple:
- * 
+ * eslint config. For example:
+ *
  * flub exec -g client -- "node /code/FluidFramework/scripts/file-dep.cjs"
  */
 
