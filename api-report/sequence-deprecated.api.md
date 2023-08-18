@@ -10,6 +10,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IJSONRunSegment } from '@fluidframework/sequence';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -19,6 +20,8 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
 import { SharedSequence } from '@fluidframework/sequence';
 import { SubSequence } from '@fluidframework/sequence';
+
+export { IJSONRunSegment }
 
 // @public @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;
@@ -136,6 +139,8 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     id: string;
 }
 
+export { SharedSequence }
+
 // @public @deprecated (undocumented)
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
@@ -188,6 +193,8 @@ export class SparseMatrixFactory implements IChannelFactory {
 
 // @public @deprecated (undocumented)
 export type SparseMatrixItem = Serializable;
+
+export { SubSequence }
 
 // (No @packageDocumentation comment for this package)
 

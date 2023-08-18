@@ -54,9 +54,9 @@ describeNoCompat("PAS Test", () => {
 					}
 				}
 			}
-			before(): void {}
+			async before(): Promise<void> {}
 			beforeIteration(): void {}
-			after(): void {}
+			async after(): Promise<void> {}
 		})(),
 	);
 });

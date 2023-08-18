@@ -56,7 +56,11 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	}
 
 	public get cursor(): ITreeSubscriptionCursor {
-		if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
+		if (this.lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
+			assert(
+				this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
+				"Unset cursor should be in cleared state",
+			);
 			assert(
 				this.anchor !== undefined,
 				0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,

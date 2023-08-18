@@ -12,14 +12,14 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "npm run build:genver && npm run build:compile && npm run lint",
-		"build:compile": "lerna run build:compile --stream",
-		"build:genver": "lerna run build:genver --stream --parallel",
-		"ci:eslint": "lerna run eslint --no-sort --stream",
+		"build:compile": "pnpm run -r --stream build:compile",
+		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
+		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"clean": "rimraf --glob \"dist\" \"*.tsbuildinfo\" \"*.build.log\"",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"lint": "npm run prettier && npm run ci:eslint",
-		"lint:fix": "npm run prettier:fix && lerna run lint:fix --no-sort --stream",
+		"lint:fix": "npm run prettier:fix && pnpm run -r --stream --no-sort lint:fix",
 		"policy-check": "cd ../.. && npm run policy-check",
 		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
 		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
@@ -28,9 +28,8 @@
 		"start": "node packages/historian/dist/www.js",
 		"start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
 		"start:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-		"test": "lerna run test --stream --no-bail --no-sort",
-		"tsc": "tsc",
-		"tslint": "tslint 'src/**/*.ts'"
+		"test": "pnpm run -r --stream --no-bail --no-sort test",
+		"tsc": "pnpm run -r --stream tsc"
 	},
 	"nyc": {
 		"all": true,
@@ -70,7 +69,7 @@
 		"eslint-plugin-react": "~7.28.0",
 		"eslint-plugin-unicorn": "~40.0.0",
 		"eslint-plugin-unused-imports": "~2.0.0",
-		"lerna": "^5.1.8",
+		"lerna": "5.6.2",
 		"mocha": "^10.1.0",
 		"nyc": "^15.1.0",
 		"rimraf": "^3.0.2",
@@ -81,8 +80,12 @@
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"pnpm": {
+		"commentsOverrides": [
+			"@yarnpkg/parsers is a transitive dependency of lerna via nx, but versions >3.0.0-rc.48.1 require node 18, while we use 16."
+		],
 		"overrides": {
 			"@types/node": "^16.18.16",
+			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.1"
 		}

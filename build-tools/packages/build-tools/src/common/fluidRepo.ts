@@ -156,6 +156,53 @@ export interface PolicyConfig {
 	 * exclude that rule from being checked.
 	 */
 	handlerExclusions?: { [rule: string]: string[] };
+
+	packageNames?: PackageNamePolicyConfig;
+}
+
+/**
+ * Configuration for package naming and publication policies.
+ */
+export interface PackageNamePolicyConfig {
+	/**
+	 * A list of package scopes that are permitted in the repo.
+	 */
+	allowedScopes?: string[];
+	/**
+	 * A list of packages that have no scope.
+	 */
+	unscopedPackages?: string[];
+	/**
+	 * Packages that must be published.
+	 */
+	mustPublish: {
+		/**
+		 * A list of package names or scopes that must publish to npm, and thus should never be marked private.
+		 */
+		npm?: string[];
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus should always be marked
+		 * private.
+		 */
+		internalFeed?: string[];
+	};
+
+	/**
+	 * Packages that may or may not be published.
+	 */
+	mayPublish: {
+		/**
+		 * A list of package names or scopes that may publish to npm, and thus might or might not be marked private.
+		 */
+		npm?: string[];
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus might or might not be marked
+		 * private.
+		 */
+		internalFeed?: string[];
+	};
 }
 
 /**

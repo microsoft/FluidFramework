@@ -118,10 +118,7 @@ export class SharedString
 		}
 
 		const pos = this.posFromRelativePos(relativePos1);
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -137,11 +134,7 @@ export class SharedString
 			segment.addProperties(props);
 		}
 
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
-		return insertOp;
+		return this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -157,10 +150,7 @@ export class SharedString
 		}
 
 		const pos = this.posFromRelativePos(relativePos1);
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -172,10 +162,7 @@ export class SharedString
 			segment.addProperties(props);
 		}
 
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -210,10 +197,9 @@ export class SharedString
 		props: PropertySet,
 		callback: (m: Marker) => void,
 	) {
-		const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
-		if (annotateOp) {
-			this.submitSequenceMessage(annotateOp);
-		}
+		this.guardReentrancy(() =>
+			this.client.annotateMarkerNotifyConsensus(marker, props, callback),
+		);
 	}
 
 	/**
@@ -223,10 +209,7 @@ export class SharedString
 	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
-		const annotateOp = this.client.annotateMarker(marker, props, combiningOp);
-		if (annotateOp) {
-			this.submitSequenceMessage(annotateOp);
-		}
+		this.guardReentrancy(() => this.client.annotateMarker(marker, props, combiningOp));
 	}
 
 	/**

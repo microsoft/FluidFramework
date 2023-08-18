@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/stochastic-test-utils",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Utilities for stochastic tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,7 +31,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha --recursive dist/test --unhandled-rejections=strict -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test",
 		"tsc": "tsc"

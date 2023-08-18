@@ -72,7 +72,7 @@
 		"socket.io": "^4.5.3",
 		"socket.io-adapter": "^2.4.0",
 		"socket.io-parser": "^4.2.1",
-		"uuid": "^8.3.1",
+		"uuid": "^9.0.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {

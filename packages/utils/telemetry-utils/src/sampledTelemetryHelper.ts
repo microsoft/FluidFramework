@@ -45,7 +45,7 @@ interface Measurements {
 
 /**
  * Helper class that executes a specified code block and writes an
- * {@link @fluidframework/common-definitions#ITelemetryPerformanceEvent} to a specified logger every time a specified
+ * {@link @fluidframework/core-interfaces#ITelemetryPerformanceEvent} to a specified logger every time a specified
  * number of executions is reached (or when the class is disposed). The `duration` field in the telemetry event is
  * the duration of the latest execution (sample) of the specified function. See the documentation of the
  * `includeAggregateMetrics` parameter for additional details that can be included.

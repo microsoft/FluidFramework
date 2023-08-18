@@ -12,7 +12,19 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedCell } from "@fluidframework/cell";
 import { Edit, EditSharedObject } from "./DataEditing";
+
+/**
+ * Default {@link EditSharedObject} for {@link SharedCell}.
+ */
+export const editSharedCell: EditSharedObject = async (
+	sharedObject: ISharedObject,
+	edit: Edit,
+): Promise<void> => {
+	const sharedCell = sharedObject as SharedCell;
+	sharedCell.set(edit.data);
+};
 
 /**
  * Default {@link EditSharedObject} for {@link SharedCounter}.
@@ -21,10 +33,16 @@ export const editSharedCounter: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	console.log("testing editSharedCounter");
-	if (typeof edit.data !== "number") return;
+	if (typeof edit.data !== "number") {
+		console.error("Devtools recieved a non-number edit for SharedCounter");
+		return;
+	}
+
+	if (Number.isInteger(edit.data)) {
+		console.error("Devtools recieved a non-integer edit for SharedCounter");
+	}
 	const sharedCounter = sharedObject as SharedCounter;
-	sharedCounter.increment(Math.floor(edit.data) - sharedCounter.value);
+	sharedCounter.increment(edit.data - sharedCounter.value);
 };
 
 /**
@@ -34,7 +52,10 @@ export const editSharedString: EditSharedObject = async (
 	sharedObject: ISharedObject,
 	edit: Edit,
 ): Promise<void> => {
-	if (typeof edit.data !== "string") return;
+	if (typeof edit.data !== "string") {
+		console.error("Devtools recieved a non-string edit for SharedString");
+		return;
+	}
 	const sharedString = sharedObject as SharedString;
 	if (edit.data === "") {
 		sharedString.removeText(0, sharedString.getLength());
@@ -47,6 +68,7 @@ export const editSharedString: EditSharedObject = async (
  * List of default editors included in the library.
  */
 export const defaultEditors: Record<string, EditSharedObject> = {
+	[SharedCell.getFactory().type]: editSharedCell,
 	[SharedCounter.getFactory().type]: editSharedCounter,
 	[SharedString.getFactory().type]: editSharedString,
 

@@ -13,6 +13,7 @@ import sortPackageJson from "sort-package-json";
 import { updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
+import { PackageNamePolicyConfig } from "../../common/fluidRepo";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -35,10 +36,23 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-function packageMustPublishToNPM(name: string): boolean {
-	return (
-		name.startsWith("@fluidframework/") || name === "fluid-framework" || name === "tinylicious"
-	);
+function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+	const mustPublish = config.mustPublish.npm;
+
+	if (mustPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mustPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -46,65 +60,164 @@ function packageMustPublishToNPM(name: string): boolean {
  * Note that packages published to NPM will also be published internally, however.
  * This should be a minimal set required for legacy compat of internal partners or internal CI requirements.
  */
-function packageMustPublishToInternalFeedOnly(name: string): boolean {
-	return (
-		// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
-		name === "@fluid-internal/test-app-insights-logger" ||
-		name === "@fluid-internal/test-service-load" ||
-		// Most examples should be private, but table-document needs to publish internally for legacy compat
-		name === "@fluid-example/table-document"
-	);
+function packageMustPublishToInternalFeedOnly(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
+	const mustPublish = config.mustPublish.internalFeed;
+
+	if (mustPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mustPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
  * Whether the package has the option to publicly publish if it chooses.
  * For example, an experimental package may choose to remain unpublished until it's ready for customers to try it out.
  */
-function packageMayChooseToPublishToNPM(name: string): boolean {
-	return name.startsWith("@fluid-experimental/") || name.startsWith("@fluid-tools/");
+function packageMayChooseToPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+	const mayPublish = config.mayPublish.npm;
+
+	if (mayPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mayPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
  * Whether the package has the option to publish to an internal feed if it chooses.
  */
-function packageMayChooseToPublishToInternalFeedOnly(name: string): boolean {
-	return name.startsWith("@fluid-internal/");
+function packageMayChooseToPublishToInternalFeedOnly(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
+	const mayPublish = config.mayPublish.internalFeed;
+
+	if (mayPublish === undefined) {
+		return false;
+	}
+
+	for (const pkgOrScope of mayPublish) {
+		if (
+			(pkgOrScope.startsWith("@") && name.startsWith(`${pkgOrScope}/`)) ||
+			name === pkgOrScope
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
  * If we haven't explicitly OK'd the package scope to publish in one of the categories above, it must be marked
  * private to prevent publishing.
  */
-function packageMustBePrivate(name: string): boolean {
+function packageMustBePrivate(name: string, root: string): boolean {
+	const config = getFluidBuildConfig(root).policy?.packageNames;
+
+	if (config === undefined) {
+		// Unless configured, all packages must be private
+		return true;
+	}
+
 	return !(
-		packageMustPublishToNPM(name) ||
-		packageMayChooseToPublishToNPM(name) ||
-		packageMustPublishToInternalFeedOnly(name) ||
-		packageMayChooseToPublishToInternalFeedOnly(name)
+		packageMustPublishToNPM(name, config) ||
+		packageMayChooseToPublishToNPM(name, config) ||
+		packageMustPublishToInternalFeedOnly(name, config) ||
+		packageMayChooseToPublishToInternalFeedOnly(name, config)
 	);
 }
 
 /**
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
-function packageMustNotBePrivate(name: string): boolean {
-	return packageMustPublishToNPM(name) || packageMustPublishToInternalFeedOnly(name);
+function packageMustNotBePrivate(name: string, root: string): boolean {
+	const config = getFluidBuildConfig(root).policy?.packageNames;
+
+	if (config === undefined) {
+		// Unless configured, all packages must be private
+		return false;
+	}
+
+	return (
+		packageMustPublishToNPM(name, config) || packageMustPublishToInternalFeedOnly(name, config)
+	);
 }
 
 /**
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
-function packageIsFluidPackage(name: string): boolean {
-	return (
-		name.startsWith("@fluidframework/") ||
-		name.startsWith("@fluid-example/") ||
-		name.startsWith("@fluid-experimental/") ||
-		name.startsWith("@fluid-internal/") ||
-		name.startsWith("@fluid-tools/") ||
-		name === "fluid-framework" ||
-		name === "fluidframework-docs" ||
-		name === "tinylicious"
-	);
+function packageIsFluidPackage(name: string, root: string): boolean {
+	const config = getFluidBuildConfig(root).policy?.packageNames;
+
+	if (config === undefined) {
+		// Unless configured, all packages are considered Fluid packages
+		return true;
+	}
+
+	return packageScopeIsAllowed(name, config) || packageIsKnownUnscoped(name, config);
+}
+
+/**
+ * Returns true if the package scope matches the .
+ */
+function packageScopeIsAllowed(name: string, config: PackageNamePolicyConfig): boolean {
+	const allowedScopes = config?.allowedScopes;
+
+	if (allowedScopes === undefined) {
+		// No config, so all scopes are invalid.
+		return false;
+	}
+
+	for (const allowedScope of allowedScopes) {
+		if (name.startsWith(`${allowedScope}/`)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Returns true if the name matches one of the configured known unscoped package names.
+ */
+function packageIsKnownUnscoped(name: string, config: PackageNamePolicyConfig): boolean {
+	const unscopedPackages = config?.unscopedPackages;
+
+	if (unscopedPackages === undefined) {
+		// No config, return false for all values
+		return false;
+	}
+
+	for (const allowedPackage of unscopedPackages) {
+		if (name === allowedPackage) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 type IReadmeInfo =
@@ -250,7 +363,7 @@ export const handlers: Handler[] = [
 		// If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
 		name: "npm-strange-package-name",
 		match,
-		handler: (file) => {
+		handler: (file, root) => {
 			let json: { name: string };
 			try {
 				json = JSON.parse(readFile(file));
@@ -259,7 +372,7 @@ export const handlers: Handler[] = [
 			}
 
 			// "root" is the package name for monorepo roots, so ignore them
-			if (!packageIsFluidPackage(json.name) && json.name !== "root") {
+			if (!packageIsFluidPackage(json.name, root) && json.name !== "root") {
 				const matched = json.name.match(/^(@.+)\//);
 				if (matched !== null) {
 					return `Scope ${matched[1]} is an unexpected Fluid scope`;
@@ -274,7 +387,7 @@ export const handlers: Handler[] = [
 		// Also verify that non-private packages don't take dependencies on private packages.
 		name: "npm-private-packages",
 		match,
-		handler: (file) => {
+		handler: (file, root) => {
 			let json: { name: string; private?: boolean; dependencies: Record<string, string> };
 			try {
 				json = JSON.parse(readFile(file));
@@ -285,12 +398,12 @@ export const handlers: Handler[] = [
 			ensurePrivatePackagesComputed();
 			const errors: string[] = [];
 
-			if (json.private && packageMustNotBePrivate(json.name)) {
+			if (json.private && packageMustNotBePrivate(json.name, root)) {
 				errors.push(`Package ${json.name} must not be marked private`);
 			}
 
 			// Packages publish by default, so we need an explicit true flag to suppress publishing.
-			if (json.private !== true && packageMustBePrivate(json.name)) {
+			if (json.private !== true && packageMustBePrivate(json.name, root)) {
 				errors.push(`Package ${json.name} must be marked private`);
 			}
 

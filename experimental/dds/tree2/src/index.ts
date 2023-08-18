@@ -57,6 +57,7 @@ export {
 	SchemaData,
 	FieldAnchor,
 	RevisionTag,
+	ChangesetLocalId,
 	TaggedChange,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
@@ -124,7 +125,6 @@ export {
 
 export {
 	buildForest,
-	ChangesetLocalId,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,

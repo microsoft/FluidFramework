@@ -4,7 +4,7 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 /**
  * Type of "valueChanged" event parameter.

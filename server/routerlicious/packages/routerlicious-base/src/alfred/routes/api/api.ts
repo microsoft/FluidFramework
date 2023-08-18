@@ -21,6 +21,7 @@ import {
 	verifyToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
@@ -166,8 +167,12 @@ function sendJoin(
 	};
 
 	const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	producer.send([joinMessage], tenantId, documentId);
+	producer.send([joinMessage], tenantId, documentId).catch((err) => {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+		};
+		Lumberjack.error("Error sending join message to producer", lumberjackProperties, err);
+	});
 }
 
 function sendLeave(
@@ -177,8 +182,12 @@ function sendLeave(
 	producer: core.IProducer,
 ) {
 	const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	producer.send([leaveMessage], tenantId, documentId);
+	producer.send([leaveMessage], tenantId, documentId).catch((err) => {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+		};
+		Lumberjack.error("Error sending leave message to producer", lumberjackProperties, err);
+	});
 }
 
 function sendOp(
@@ -199,8 +208,12 @@ function sendOp(
 			JSON.stringify(content),
 			clientSequenceNumber++,
 		);
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		producer.send([opMessage], tenantId, documentId);
+		producer.send([opMessage], tenantId, documentId).catch((err) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(documentId, tenantId),
+			};
+			Lumberjack.error("Error sending op to producer", lumberjackProperties, err);
+		});
 	}
 }
 

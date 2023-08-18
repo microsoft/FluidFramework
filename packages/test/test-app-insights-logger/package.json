@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-app-insights-logger",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Azure Application Insights logger for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -51,7 +51,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"applicationinsights": "^2.1.9"

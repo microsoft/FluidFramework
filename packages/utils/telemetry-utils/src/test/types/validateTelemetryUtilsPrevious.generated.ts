@@ -640,6 +640,30 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TelemetryNullLogger():
+    TypeOnly<old.TelemetryNullLogger>;
+declare function use_current_ClassDeclaration_TelemetryNullLogger(
+    use: TypeOnly<current.TelemetryNullLogger>);
+use_current_ClassDeclaration_TelemetryNullLogger(
+    get_old_ClassDeclaration_TelemetryNullLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TelemetryNullLogger": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TelemetryNullLogger():
+    TypeOnly<current.TelemetryNullLogger>;
+declare function use_old_ClassDeclaration_TelemetryNullLogger(
+    use: TypeOnly<old.TelemetryNullLogger>);
+use_old_ClassDeclaration_TelemetryNullLogger(
+    get_current_ClassDeclaration_TelemetryNullLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ThresholdCounter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ThresholdCounter():

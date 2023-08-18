@@ -70,27 +70,6 @@ If it exists, the default configuration will also include this:
 }
 ```
 
-### FLUID_TEST_REPORT
-
-If set to "1" (`FLUID_TEST_REPORT=1`), XUnit will be configured as the reporter for the test run, and the default
-configuration will also include this:
-
-```json
-{
-	"reporter": "xunit",
-	"reporter-options": [
-		"output=${packageDir}/nyc/junit-report.xml",
-		"suiteName=${packageJson.name}"
-	]
-}
-```
-
-Where `${packageDir}` is the location of the package being tested, and `${packageJson.name}` is the `name` field in its
-`package.json` file.
-
-If a value for `testReportPrefix` is passed to `getFluidTestMochaConfig()`, `${testReportPrefix}-` will be prepended to
-the output file name, and ` - ${testReportPrefix}` will be appended to the suiteName.
-
 ### FLUID_LOGGER_PROPS
 
 In case there is a need to override telemetry metrics, one can make use of an environment variable `FLUID_LOGGER_PROPS`,

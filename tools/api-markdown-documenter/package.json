@@ -34,7 +34,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha dist/**/test/**/*.test.js --unhandled-rejections=strict --reporter-option maxDiffSize=100000",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc"
 	},
 	"nyc": {

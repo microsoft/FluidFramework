@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IQueuedMessage } from "@fluidframework/server-services-core";
 import * as Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
@@ -67,7 +68,7 @@ export class LocalKafkaSubscription extends EventEmitter {
 
 			this.retryTimer = setTimeout(() => {
 				this.retryTimer = undefined;
-				void this.process();
+				this.process().catch((e) => this.handleProcessError(e));
 			}, 500);
 
 			return;
@@ -76,6 +77,10 @@ export class LocalKafkaSubscription extends EventEmitter {
 		}
 
 		// Process the next one
-		void this.process();
+		this.process().catch((e) => this.handleProcessError(e));
+	}
+
+	private handleProcessError(error: unknown) {
+		Lumberjack.error("Error in LocalKafkaSubscription.process()", undefined, error);
 	}
 }

@@ -1,5 +1,5 @@
 {
-	"reporterEnabled": "xunit,mocha-json-output-reporter",
+	"reporterEnabled": "xunit,mocha-json-output-reporter,spec",
 	"xunitReporterOptions": {
 		"output": "nyc/{id}junit-report.xml",
 		"suiteName": "{id}"

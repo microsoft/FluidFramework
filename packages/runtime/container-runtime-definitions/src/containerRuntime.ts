@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
 import {
+	IEventProvider,
 	IRequest,
 	IResponse,
 	IFluidRouter,

@@ -2,7 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
+import {
+	JsonableTree,
+	fieldSchema,
+	SchemaData,
+	rootFieldKey,
+	moveToDetachedField,
+	Anchor,
+} from "../../../core";
 import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree } from "../../../shared-tree";
@@ -40,3 +47,17 @@ export const onCreate = (tree: ISharedTree) => {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor(initialTreeState));
 };
+
+export function getFirstAnchor(tree: ISharedTree): Anchor {
+	// building the anchor for anchor stability test
+	const cursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, cursor);
+	cursor.enterNode(0);
+	cursor.getPath();
+	cursor.firstField();
+	cursor.getFieldKey();
+	cursor.enterNode(1);
+	const anchor = cursor.buildAnchor();
+	cursor.free();
+	return anchor;
+}

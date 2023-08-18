@@ -4,7 +4,11 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	SequencedContainerRuntimeMessage,
+} from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -98,14 +102,23 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 };
 
 /**
- * For a given message, it moves the nested contents and type on level up.
+ * For a given message, it moves the nested ContainerRuntimeMessage props one level up.
  *
+ * The return type illustrates the assumption that the message param
+ * becomes a ContainerRuntimeMessage by the time the function returns
+ * (but there is no runtime validation of the 'type' or 'compatDetails' values)
  */
-const unpack = (message: ISequencedDocumentMessage) => {
+function unpack(
+	message: ISequencedDocumentMessage,
+): asserts message is SequencedContainerRuntimeMessage {
 	const innerContents = message.contents as ContainerRuntimeMessage;
-	message.type = innerContents.type;
-	message.contents = innerContents.contents;
-};
+
+	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
+	const sequencedContainerRuntimeMessage = message as SequencedContainerRuntimeMessage;
+	sequencedContainerRuntimeMessage.type = innerContents.type;
+	sequencedContainerRuntimeMessage.contents = innerContents.contents;
+	sequencedContainerRuntimeMessage.compatDetails = innerContents.compatDetails;
+}
 
 /**
  * Unpacks runtime messages.

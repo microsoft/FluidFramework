@@ -44,6 +44,7 @@ type RecurArrayHelper<T> = RecurArray<T> | T;
 type RecurArray<T> = RecurArrayHelper<T>[];
 
 /** Undo JSON serialization's coercion of 'undefined' to null. */
+// eslint-disable-next-line @rushstack/no-new-null -- Private use of 'null' to preserve 'undefined'
 const nullToUndefined = <T>(array: RecurArray<T | null>): RecurArray<T | undefined> =>
 	array.map((value) => {
 		return value === null ? undefined : Array.isArray(value) ? nullToUndefined(value) : value;

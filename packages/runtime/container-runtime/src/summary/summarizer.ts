@@ -30,6 +30,10 @@ import {
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	SummarizerStopReason,
+	IOnDemandSummarizeOptions,
+	ISummarizeResults,
+	IEnqueueSummarizeOptions,
+	EnqueueSummarizeResult,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
@@ -299,7 +303,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 	}
 
-	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		try {
 			if (this._disposed || this.runningSummarizer?.disposed) {
 				throw new UsageError("Summarizer is already disposed.");
@@ -318,7 +322,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			const builder = new SummarizeResultBuilder();
 			if (this.runningSummarizer) {
 				// Summarizer is already running. Go ahead and start.
-				return this.runningSummarizer.summarizeOnDemand(builder, ...args);
+				return this.runningSummarizer.summarizeOnDemand(options, builder);
 			}
 
 			// Summarizer isn't running, so we need to start it, which is an async operation.
@@ -335,7 +339,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 					startP
 						.then(async (runningSummarizer) => {
 							// Successfully started the summarizer. Run it.
-							runningSummarizer.summarizeOnDemand(builder, ...args);
+							runningSummarizer.summarizeOnDemand(options, builder);
 							// Wait for a command to stop or loss of connectivity before tearing down the summarizer and client.
 							const stopReason = await Promise.race([
 								this.stopDeferred.promise,
@@ -357,9 +361,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		} catch (error) {
 			throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
 		}
-	};
+	}
 
-	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (
 			this._disposed ||
 			this.runningSummarizer === undefined ||
@@ -367,8 +371,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		) {
 			throw new UsageError("Summarizer is not running or already disposed.");
 		}
-		return this.runningSummarizer.enqueueSummarize(...args);
-	};
+		return this.runningSummarizer.enqueueSummarize(options);
+	}
 
 	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);

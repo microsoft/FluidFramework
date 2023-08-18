@@ -5,14 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	BaseSegment,
-	createGroupOp,
-	IJSONSegment,
-	IMergeTreeDeltaOp,
-	ISegment,
-	PropertySet,
-} from "@fluidframework/merge-tree";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -21,9 +14,10 @@ import {
 	Serializable,
 	Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence, SubSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedSegmentSequence } from "@fluidframework/sequence";
 import { pkgVersion } from "./packageVersion";
+import { SubSequence } from "./sharedSequence";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.
@@ -319,10 +313,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 		const size = maxCols * numRows;
 		const segment = new PaddingSegment(size);
 
-		const insertOp = this.client.insertSegmentLocal(pos, segment);
-		if (insertOp) {
-			this.submitSequenceMessage(insertOp);
-		}
+		this.client.insertSegmentLocal(pos, segment);
 	}
 
 	public removeRows(row: number, numRows: number) {
@@ -354,25 +345,13 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 	private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
 		const removeColStart = srcCol;
 		const removeColEnd = srcCol + numCols;
-		const ops: IMergeTreeDeltaOp[] = [];
 
 		for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
-			const removeMsg = this.client.removeRangeLocal(
-				rowStart + removeColStart,
-				rowStart + removeColEnd,
-			);
-			if (removeMsg) {
-				ops.push(removeMsg);
-			}
+			this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd);
 			const insertPos = rowStart + destCol;
 			const segment = new PaddingSegment(numCols);
-			const insertMsg = this.client.insertSegmentLocal(insertPos, segment);
-			if (insertMsg) {
-				ops.push(insertMsg);
-			}
+			this.client.insertSegmentLocal(insertPos, segment);
 		}
-
-		this.submitSequenceMessage(createGroupOp(...ops));
 	}
 
 	private getSegment(row: number, col: number) {

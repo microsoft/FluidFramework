@@ -8,25 +8,63 @@ const { BundleComparisonPlugin } = require("@mixer/webpack-bundle-compare/dist/p
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const DuplicatePackageCheckerPlugin = require("@cerner/duplicate-package-checker-webpack-plugin");
 const { BannedModulesPlugin } = require("@fluidframework/bundle-size-tools");
-const { fromInternalScheme, toInternalScheme } = require("@fluid-tools/version-tools");
+const {
+	isInternalVersionScheme,
+	fromInternalScheme,
+	toInternalScheme,
+} = require("@fluid-tools/version-tools");
 
 // We need to replace the version string in the bundled code (in the packageVersion.ts files); otherwise the bundle we build in CI for PRs will have the
 // updated version string, which will not match the one in the main bundle. This will cause the bundle comparison to be
 // incorrect.
 const pkg = require("./package.json");
 
+// An array of webpack module rules. We build the list of rules dynamically depending on the version scheme used by the
+// package.
+const webpackModuleRules = [];
+
 // Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
 const verString = process.env.SETVERSION_VERSION ?? pkg.version;
-console.warn(`verString: ${verString}`);
 
-const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
-const versionToReplace = new RegExp(verString, "g");
-const internalVersionNoPrerelease = [major, minor, patch].join(".");
-const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
+// If the version is a Fluid internal version, then we want to replace the version string in the bundled code. Otherwise
+// we leave the versions as-is.
+if (isInternalVersionScheme(verString, true, true)) {
+	const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
+	const versionToReplace = new RegExp(verString, "g");
+	const internalVersionNoPrerelease = [major, minor, patch].join(".");
+	const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
 
-console.warn(`versionToReplace: ${versionToReplace}`);
-console.warn(`public: ${publicVer}, internal: ${internalVersionNoPrerelease}`);
-console.warn(`newVersion: ${newVersion}`);
+	// This rule replaces the version string in the bundled code.
+	webpackModuleRules.push({
+		test: /packageVersion\.js$/,
+		loader: "string-replace-loader",
+		options: {
+			search: versionToReplace,
+			replace: newVersion,
+			// If true, webpack will fail if the search string is not found in the file. Since we have some files that
+			// don't have the version numbers, we need to set this to false.
+			strict: false,
+		},
+	});
+} else {
+	console.warn(
+		`The version string ${verString} is not a Fluid internal version string. The version string in the bundled code will not be replaced.`,
+	);
+}
+
+// Always use these module rules
+webpackModuleRules.push(
+	{
+		test: /\.tsx?$/,
+		use: "ts-loader",
+		exclude: /node_modules/,
+	},
+	{
+		test: /\.js$/,
+		use: [require.resolve("source-map-loader")],
+		enforce: "pre",
+	},
+);
 
 module.exports = {
 	entry: {
@@ -43,29 +81,7 @@ module.exports = {
 	},
 	mode: "production",
 	module: {
-		rules: [
-			{
-				test: /packageVersion\.js$/,
-				loader: "string-replace-loader",
-				options: {
-					search: versionToReplace,
-					replace: newVersion,
-					// If true, webpack will fail if the search string is not found in the file. Since we have some files that
-					// don't have the version numbers, we need to set this to false.
-					strict: false,
-				},
-			},
-			{
-				test: /\.tsx?$/,
-				use: "ts-loader",
-				exclude: /node_modules/,
-			},
-			{
-				test: /\.js$/,
-				use: [require.resolve("source-map-loader")],
-				enforce: "pre",
-			},
-		],
+		rules: webpackModuleRules,
 	},
 	resolve: {
 		extensions: [".tsx", ".ts", ".js"],

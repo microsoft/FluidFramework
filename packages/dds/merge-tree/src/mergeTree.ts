@@ -1234,6 +1234,9 @@ export class MergeTree {
 		return DetachedReferencePosition;
 	}
 
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {
 			mergeTree: this,

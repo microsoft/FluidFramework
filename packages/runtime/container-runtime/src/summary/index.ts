@@ -64,6 +64,7 @@ export {
 	SummarizeResultPart,
 	SubmitSummaryFailureData,
 	SummaryStage,
+	IRetriableFailureResult,
 } from "./summarizerTypes";
 export {
 	IAckedSummary,

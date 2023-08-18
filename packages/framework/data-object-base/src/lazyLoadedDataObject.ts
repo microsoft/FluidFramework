@@ -4,6 +4,7 @@
  */
 
 import {
+	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
 	IFluidRouter,
@@ -16,7 +17,6 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
 
 export abstract class LazyLoadedDataObject<

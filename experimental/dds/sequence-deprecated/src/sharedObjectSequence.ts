@@ -8,8 +8,8 @@ import {
 	IChannelAttributes,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedSequence } from "@fluidframework/sequence";
 import { SharedObjectSequenceFactory } from "./sequenceFactory";
+import { SharedSequence } from "./sharedSequence";
 
 /**
  * The SharedObjectSequence holds a sequence of serializable objects. Each object will be stored

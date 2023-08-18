@@ -4,10 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
+import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { asMutable, brand, fail } from "../../util";
 import {
-	ChangeAtomId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
@@ -35,7 +34,6 @@ import {
 	isDeleteMark,
 	areOutputCellsEmpty,
 	areInputCellsEmpty,
-	getCellId,
 	compareLineages,
 	isNewAttach,
 	isDetachMark,
@@ -48,6 +46,8 @@ import {
 	markIsTransient,
 	isGenerativeMark,
 	areOverlappingIdRanges,
+	getDetachCellId,
+	getInputCellId,
 } from "./utils";
 import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
 
@@ -214,7 +214,7 @@ function composeMarks<TNodeChange>(
 		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
-		return createNoopMark(newMark.count, nodeChange, getCellId(baseMark, undefined));
+		return createNoopMark(newMark.count, nodeChange, getInputCellId(baseMark, undefined));
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
@@ -565,10 +565,7 @@ export class ComposeQueue<T> {
 					);
 					return this.dequeueNew();
 				}
-				baseCellId = {
-					revision: baseIntention,
-					localId: baseMark.id,
-				};
+				baseCellId = getDetachCellId(baseMark, baseIntention);
 			} else if (baseMark.type === "MoveIn") {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
@@ -826,7 +823,7 @@ function compareCellPositions(
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
 ): number {
-	const newCellId = getCellId(newMark, newIntention);
+	const newCellId = getInputCellId(newMark, newIntention);
 	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
 	if (baseCellId.revision === newCellId.revision) {
 		if (isNewAttach(newMark)) {

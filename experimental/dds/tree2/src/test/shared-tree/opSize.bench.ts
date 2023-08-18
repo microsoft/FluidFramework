@@ -6,56 +6,37 @@ import { strict as assert } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { FieldKinds, singleTextCursor } from "../../feature-libraries";
-import { ISharedTree } from "../../shared-tree";
-import { brand, getOrAddEmptyToMap } from "../../util";
-import { TestTreeProviderLite, namedTreeSchema } from "../utils";
+import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { ISharedTree, ISharedTreeView } from "../../shared-tree";
+import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
+import { TestTreeProviderLite } from "../utils";
 import {
+	AllowedUpdateType,
 	FieldKey,
-	fieldSchema,
+	forEachNode,
 	JsonableTree,
 	moveToDetachedField,
 	rootFieldKey,
-	SchemaData,
 	Value,
 	ValueSchema,
 } from "../../core";
 
-const stringSchema = namedTreeSchema({
-	name: "String",
-	leafValue: ValueSchema.String,
+const builder = new SchemaBuilder("opSize");
+
+const stringSchema = builder.leaf("String", ValueSchema.String);
+const childSchema = builder.struct("Test:Opsize-Bench-Child", {
+	data: SchemaBuilder.fieldValue(stringSchema),
+});
+const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
+	children: SchemaBuilder.fieldSequence(childSchema),
 });
 
-export const childSchema = namedTreeSchema({
-	name: "Test:Opsize-Bench-Child",
-	structFields: {
-		data: fieldSchema(FieldKinds.value, [stringSchema.name]),
-	},
-});
+const rootSchema = SchemaBuilder.fieldValue(parentSchema);
 
-export const parentSchema = namedTreeSchema({
-	name: "Test:Opsize-Bench-Root",
-	structFields: {
-		children: fieldSchema(FieldKinds.sequence, [childSchema.name]),
-	},
-});
-
-export const rootSchema = fieldSchema(FieldKinds.value, [parentSchema.name]);
-
-export const fullSchemaData: SchemaData = {
-	treeSchema: new Map([
-		[stringSchema.name, stringSchema],
-		[childSchema.name, childSchema],
-		[parentSchema.name, parentSchema],
-	]),
-	rootFieldSchema: rootSchema,
-};
+const fullSchemaData = builder.intoDocumentSchema(rootSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,
-	fields: {
-		children: [],
-	},
 };
 
 const childrenFieldKey: FieldKey = brand("children");
@@ -64,14 +45,22 @@ const childrenFieldKey: FieldKey = brand("children");
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(tree: ISharedTree, state: JsonableTree = initialTestJsonTree) {
-	tree.storedSchema.update(fullSchemaData);
-	// inserts a node with the initial AppState as the root of the tree
 	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, writeCursor);
+	tree.schematize({
+		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+		initialTree: [writeCursor],
+		schema: fullSchemaData,
+	});
 }
 
-const getJsonNode = (desiredByteSize: number): JsonableTree => {
+function utf8Length(data: JsonCompatibleReadOnly): number {
+	return new TextEncoder().encode(JSON.stringify(data)).length;
+}
+
+/**
+ * Creates a {@link JsonableTree} that matches the `parentSchema` and when run through `JSON.stringify` has the requested length in bytes when encoded as utf8.
+ */
+function createTreeWithSize(desiredByteSize: number): JsonableTree {
 	const node = {
 		type: childSchema.name,
 		fields: {
@@ -79,14 +68,13 @@ const getJsonNode = (desiredByteSize: number): JsonableTree => {
 		},
 	};
 
-	const initialNodeByteSize = new TextEncoder().encode(JSON.stringify(node)).length;
-	const sizeIncrementor = "a"; // 1 byte
-	const remainingByteSizeToAdd = desiredByteSize - initialNodeByteSize;
-	node.fields.data[0].value = sizeIncrementor.repeat(remainingByteSizeToAdd);
+	const initialNodeByteSize = utf8Length(node);
+	node.fields.data[0].value = createStringFromLength(desiredByteSize - initialNodeByteSize);
+	assert(utf8Length(node) === desiredByteSize);
 	return node;
-};
+}
 
-const getChildrenlength = (tree: ISharedTree) => {
+function getChildrenLength(tree: ISharedTree): number {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -94,58 +82,54 @@ const getChildrenlength = (tree: ISharedTree) => {
 	const length = cursor.getFieldLength();
 	cursor.free();
 	return length;
-};
+}
 
-const assertChildNodeCount = (tree: ISharedTree, nodeCount: number) => {
+function assertChildNodeCount(tree: ISharedTree, nodeCount: number): void {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
 	cursor.enterField(childrenFieldKey);
 	assert.equal(cursor.getFieldLength(), nodeCount);
 	cursor.free();
-};
+}
 
-const assertChildValuesEqualExpected = (
-	tree: ISharedTree,
-	editPayload: Value,
-	childCount: number,
-) => {
+/**
+ * Checks that the first `childCount` values under "children" have the provided value.
+ */
+function expectChildrenValues(tree: ISharedTree, expected: Value, childCount: number): void {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
 	cursor.enterField(childrenFieldKey);
-	cursor.enterNode(0);
-	assert.equal(cursor.value, editPayload);
-
-	let currChildCount = 1;
-	while (cursor.nextNode() && currChildCount < childCount) {
-		assert.equal(cursor.value, editPayload);
-		currChildCount++;
-	}
+	assert(cursor.getFieldLength() >= childCount);
+	forEachNode(cursor, () => {
+		if (cursor.fieldIndex < childCount) {
+			assert.equal(cursor.value, expected);
+		}
+	});
 	cursor.free();
-};
+}
 
-// Creates a json tree with the desired number of children and the size of each child in bytes.
-const getInitialJsonTreeWithChildren = (numChildNodes: number, childNodeByteSize: number) => {
-	const childNode = getJsonNode(childNodeByteSize);
+/**
+ * Creates a jsonable tree with the desired number of children and the size of each child in bytes.
+ */
+function createInitialTree(childNodes: number, childNodeByteSize: number): JsonableTree {
+	const childNode = createTreeWithSize(childNodeByteSize);
 	const jsonTree: JsonableTree = {
 		type: parentSchema.name,
 		fields: {
-			children: [],
+			children: new Array(childNodes).fill(childNode),
 		},
 	};
-	for (let i = 0; i < numChildNodes; i++) {
-		jsonTree.fields?.children?.push({ ...childNode });
-	}
 	return jsonTree;
-};
+}
 
-const insertNodesWithIndividualTransactions = (
-	tree: ISharedTree,
+function insertNodesWithIndividualTransactions(
+	tree: ISharedTreeView,
 	provider: TestTreeProviderLite,
 	jsonNode: JsonableTree,
 	count: number,
-) => {
+): void {
 	for (let i = 0; i < count; i++) {
 		tree.transaction.start();
 		const path = {
@@ -159,14 +143,14 @@ const insertNodesWithIndividualTransactions = (
 		tree.transaction.commit();
 	}
 	provider.processMessages();
-};
+}
 
-const insertNodesWithSingleTransaction = (
-	tree: ISharedTree,
+function insertNodesWithSingleTransaction(
+	tree: ISharedTreeView,
 	provider: TestTreeProviderLite,
 	jsonNode: JsonableTree,
 	count: number,
-) => {
+): void {
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
@@ -179,14 +163,14 @@ const insertNodesWithSingleTransaction = (
 	}
 	tree.transaction.commit();
 	provider.processMessages();
-};
+}
 
-const deleteNodesWithIndividualTransactions = (
+function deleteNodesWithIndividualTransactions(
 	tree: ISharedTree,
 	provider: TestTreeProviderLite,
 	numDeletes: number,
 	deletesPerTransaction: number,
-) => {
+): void {
 	for (let i = 0; i < numDeletes; i++) {
 		tree.transaction.start();
 		const path = {
@@ -195,17 +179,17 @@ const deleteNodesWithIndividualTransactions = (
 			parentIndex: 0,
 		};
 		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-		field.delete(getChildrenlength(tree) - 1, deletesPerTransaction);
+		field.delete(getChildrenLength(tree) - 1, deletesPerTransaction);
 		tree.transaction.commit();
 		provider.processMessages();
 	}
-};
+}
 
-const deleteNodesWithSingleTransaction = (
+function deleteNodesWithSingleTransaction(
 	tree: ISharedTree,
 	provider: TestTreeProviderLite,
 	numDeletes: number,
-) => {
+): void {
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
@@ -216,22 +200,18 @@ const deleteNodesWithSingleTransaction = (
 	field.delete(0, numDeletes);
 	tree.transaction.commit();
 	provider.processMessages();
-};
+}
 
-const getEditPayloadInBytes = (numBytes: number) => {
-	let payload = "";
-	while (payload.length < numBytes) {
-		payload += "a";
-	}
-	return payload;
-};
+function createStringFromLength(numberOfBytes: number): string {
+	return "a".repeat(numberOfBytes);
+}
 
-const editNodesWithIndividualTransactions = (
+function editNodesWithIndividualTransactions(
 	tree: ISharedTree,
 	provider: TestTreeProviderLite,
 	numChildrenToEdit: number,
 	editPayload: Value,
-) => {
+): void {
 	const rootPath = {
 		parent: undefined,
 		parentField: rootFieldKey,
@@ -254,14 +234,14 @@ const editNodesWithIndividualTransactions = (
 		tree.transaction.commit();
 		provider.processMessages();
 	}
-};
+}
 
-const editNodesWithSingleTransaction = (
+function editNodesWithSingleTransaction(
 	tree: ISharedTree,
 	provider: TestTreeProviderLite,
 	numChildrenToEdit: number,
 	editPayload: Value,
-) => {
+): void {
 	const rootPath = {
 		parent: undefined,
 		parentField: rootFieldKey,
@@ -284,7 +264,7 @@ const editNodesWithSingleTransaction = (
 	}
 	tree.transaction.commit();
 	provider.processMessages();
-};
+}
 
 /**
  * The following byte sizes in utf-8 encoded bytes of JsonableTree were found to be the maximum size that could be successfully
@@ -449,15 +429,16 @@ describe("SharedTree Op Size Benchmarks", () => {
 
 	describe("1. Insert Nodes", () => {
 		describe("1a. With Individual transactions", () => {
-			const benchmarkInsertNodesWithIndividualTxs = (
+			function benchmarkInsertNodesWithIndividualTxs(
 				percentile: number,
 				testName: string,
-			) => {
+			): void {
 				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				initializeTestTree(provider.trees[0]);
+				provider.processMessages();
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-				const jsonNode = getJsonNode(
+				const jsonNode = createTreeWithSize(
 					getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
 				);
 				insertNodesWithIndividualTransactions(
@@ -467,7 +448,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 					BENCHMARK_NODE_COUNT,
 				);
 				assertChildNodeCount(provider.trees[0], BENCHMARK_NODE_COUNT);
-			};
+			}
 
 			it(`1a.a. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} transactions`, () => {
 				benchmarkInsertNodesWithIndividualTxs(
@@ -497,7 +478,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				initializeOpDataCollection(provider, testName);
 				initializeTestTree(provider.trees[0]);
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-				const jsonNode = getJsonNode(
+				const jsonNode = createTreeWithSize(
 					getSuccessfulOpByteSize("INSERT", "SINGLE", percentile),
 				);
 				insertNodesWithSingleTransaction(
@@ -541,10 +522,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
-				initializeTestTree(
-					provider.trees[0],
-					getInitialJsonTreeWithChildren(100, childByteSize),
-				);
+				initializeTestTree(provider.trees[0], createInitialTree(100, childByteSize));
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 				deleteNodesWithIndividualTransactions(provider.trees[0], provider, 100, 1);
 				assertChildNodeCount(provider.trees[0], 0);
@@ -577,10 +555,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				const childByteSize = getSuccessfulOpByteSize("DELETE", "SINGLE", percentile);
-				initializeTestTree(
-					provider.trees[0],
-					getInitialJsonTreeWithChildren(100, childByteSize),
-				);
+				initializeTestTree(provider.trees[0], createInitialTree(100, childByteSize));
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 				deleteNodesWithSingleTransaction(provider.trees[0], provider, 100);
 				assertChildNodeCount(provider.trees[0], 0);
@@ -617,10 +592,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 				// Note that the child node byte size for the intial tree here should be arbitrary
 				initializeTestTree(
 					provider.trees[0],
-					getInitialJsonTreeWithChildren(BENCHMARK_NODE_COUNT, 1000),
+					createInitialTree(BENCHMARK_NODE_COUNT, 1000),
 				);
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-				const editPayload = getEditPayloadInBytes(
+				const editPayload = createStringFromLength(
 					getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
 				);
 				editNodesWithIndividualTransactions(
@@ -629,11 +604,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 					BENCHMARK_NODE_COUNT,
 					editPayload,
 				);
-				assertChildValuesEqualExpected(
-					provider.trees[0],
-					editPayload,
-					BENCHMARK_NODE_COUNT,
-				);
+				expectChildrenValues(provider.trees[0], editPayload, BENCHMARK_NODE_COUNT);
 			};
 
 			it(`3a.a. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} small changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, () => {
@@ -665,10 +636,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 				// Note that the child node byte size for the intial tree here should be arbitrary
 				initializeTestTree(
 					provider.trees[0],
-					getInitialJsonTreeWithChildren(BENCHMARK_NODE_COUNT, 1000),
+					createInitialTree(BENCHMARK_NODE_COUNT, 1000),
 				);
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-				const editPayload = getEditPayloadInBytes(
+				const editPayload = createStringFromLength(
 					getSuccessfulOpByteSize("EDIT", "SINGLE", percentile),
 				);
 				editNodesWithSingleTransaction(
@@ -677,11 +648,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 					BENCHMARK_NODE_COUNT,
 					editPayload,
 				);
-				assertChildValuesEqualExpected(
-					provider.trees[0],
-					editPayload,
-					BENCHMARK_NODE_COUNT,
-				);
+				expectChildrenValues(provider.trees[0], editPayload, BENCHMARK_NODE_COUNT);
 			};
 
 			it(`3b.a. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, () => {
@@ -723,7 +690,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
 				initializeTestTree(
 					provider.trees[0],
-					getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
+					createInitialTree(deleteNodeCount, childByteSize),
 				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
 				deleteNodesWithIndividualTransactions(
@@ -735,7 +702,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				assertChildNodeCount(provider.trees[0], 0);
 
 				// insert
-				const insertChildNode = getJsonNode(
+				const insertChildNode = createTreeWithSize(
 					getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
 				);
 				insertNodesWithIndividualTransactions(
@@ -754,12 +721,12 @@ describe("SharedTree Op Size Benchmarks", () => {
 					insertNodesWithIndividualTransactions(
 						provider.trees[0],
 						provider,
-						getJsonNode(childByteSize),
+						createTreeWithSize(childByteSize),
 						remainder,
 					);
 					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
 				}
-				const editPayload = getEditPayloadInBytes(
+				const editPayload = createStringFromLength(
 					getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
 				);
 				editNodesWithIndividualTransactions(
@@ -768,7 +735,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 					editNodeCount,
 					editPayload,
 				);
-				assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
+				expectChildrenValues(provider.trees[0], editPayload, editNodeCount);
 			};
 
 			describe("4a.a. [Combination] [Individual Txs] With individual transactions and an equal distribution of operation type", () => {
@@ -926,14 +893,14 @@ describe("SharedTree Op Size Benchmarks", () => {
 				const childByteSize = getSuccessfulOpByteSize("DELETE", "SINGLE", percentile);
 				initializeTestTree(
 					provider.trees[0],
-					getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
+					createInitialTree(deleteNodeCount, childByteSize),
 				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
 				deleteNodesWithSingleTransaction(provider.trees[0], provider, deleteNodeCount);
 				assertChildNodeCount(provider.trees[0], 0);
 
 				// insert
-				const insertChildNode = getJsonNode(
+				const insertChildNode = createTreeWithSize(
 					getSuccessfulOpByteSize("INSERT", "SINGLE", percentile),
 				);
 				insertNodesWithSingleTransaction(
@@ -952,12 +919,12 @@ describe("SharedTree Op Size Benchmarks", () => {
 					insertNodesWithIndividualTransactions(
 						provider.trees[0],
 						provider,
-						getJsonNode(childByteSize),
+						createTreeWithSize(childByteSize),
 						remainder,
 					);
 					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
 				}
-				const editPayload = getEditPayloadInBytes(
+				const editPayload = createStringFromLength(
 					getSuccessfulOpByteSize("EDIT", "SINGLE", percentile),
 				);
 				editNodesWithSingleTransaction(
@@ -966,7 +933,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 					editNodeCount,
 					editPayload,
 				);
-				assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
+				expectChildrenValues(provider.trees[0], editPayload, editNodeCount);
 			};
 
 			describe("4b.a. [Combination] [Single Tx] With single transactions and an equal distribution of operation type", () => {

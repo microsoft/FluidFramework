@@ -4,105 +4,71 @@
  */
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import {
-	ITelemetryBaseLogger,
-	TinyliciousClient,
-	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import { IContainer } from "@fluidframework/container-definitions";
+import { DevtoolsLogger } from "@fluid-experimental/devtools-core";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+import { AppData } from "./FluidObject";
+import { RuntimeFactory, IAppModel } from "./Container";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
  */
 
 /**
- * Type returned from when creating / loading the Container.
- */
-export interface ContainerLoadResult {
-	container: IFluidContainer;
-	services: TinyliciousContainerServices;
-}
-
-/**
  * Basic information about the container, as well as the associated audience.
  */
 export interface ContainerInfo {
 	/**
-	 * The initialized Fluid Container.
+	 * The initialized Container.
 	 */
-	container: IFluidContainer;
+	container: IContainer;
 
 	/**
 	 * The Container's unique ID. Also referred to as the "Document ID".
 	 */
 	containerId: string;
+
+	/**
+	 * App objects for the Container.
+	 */
+	appData: AppData;
 }
 
-function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): TinyliciousClient {
-	console.log(`Initializing Tinylicious client...`);
-	return new TinyliciousClient({
-		logger,
-	});
+/**
+ * Creates a new Container from the provided client and container schema.
+ */
+export function createLoader(logger?: DevtoolsLogger): SessionStorageModelLoader<IAppModel> {
+	const codeLoader = new StaticCodeLoader(new RuntimeFactory());
+	const loader = new SessionStorageModelLoader<IAppModel>(codeLoader, logger);
+
+	return loader;
 }
 
 /**
  * Creates a new Fluid Container from the provided client and container schema.
  *
- * @param containerSchema - Schema with which to create the container.
- * @param setContentsPreAttach - (optional) Callback for setting initial content state on the
- * container *before* it is attached.
- * @param logger - (optional) Telemetry logger to provide to client initialization.
+ * @param loader - The Loader to use for loading an existing Container or creating a new one.
  *
  * @throws If container creation or attaching fails for any reason.
  */
-export async function createFluidContainer(
-	containerSchema: ContainerSchema,
-	logger?: ITelemetryBaseLogger,
-	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
+export async function createContainer(
+	loader: SessionStorageModelLoader<IAppModel>,
 ): Promise<ContainerInfo> {
-	// Initialize Tinylicious client
-	const client = initializeTinyliciousClient(logger);
-	// Create the container
+	// Create the container and attach it
 	console.log("Creating new container...");
-	let createContainerResult: ContainerLoadResult;
+	let model: IAppModel;
+	let containerId: string;
 	try {
-		createContainerResult = await client.createContainer(containerSchema);
+		const createResponse = await loader.createDetached("1.0");
+		containerId = await createResponse.attach();
+		model = createResponse.model;
 	} catch (error) {
 		console.error("Encountered error creating Fluid container:", error);
 		throw error;
 	}
 	console.log("Container created!");
 
-	const { container } = createContainerResult;
-
-	// Populate the container with initial app contents (*before* attaching)
-	if (setContentsPreAttach !== undefined) {
-		console.log("Populating initial app data...");
-		try {
-			await setContentsPreAttach(container);
-		} catch (error) {
-			console.error("Encountered an error while setting Container contents:", error);
-			throw error;
-		}
-		console.log("Initial data populated!");
-	}
-
-	// Attach container
-	console.log("Awaiting container attach...");
-	let containerId: string;
-	try {
-		containerId = await container.attach();
-	} catch (error) {
-		console.error(`Encountered error attaching Fluid container: "${error}".`);
-		throw error;
-	}
-
-	console.log("Fluid container attached!");
-
-	return {
-		container,
-		containerId,
-	};
+	return { container: model.container, containerId, appData: model.appData };
 }
 
 /**
@@ -114,25 +80,20 @@ export async function createFluidContainer(
  *
  * @throws If no container exists with the specified ID, or if loading / connecting fails for any reason.
  */
-export async function loadExistingFluidContainer(
+export async function loadExistingContainer(
 	containerId: string,
-	containerSchema: ContainerSchema,
-	logger?: ITelemetryBaseLogger,
+	loader: SessionStorageModelLoader<IAppModel>,
 ): Promise<ContainerInfo> {
-	// Initialize Tinylicious client
-	const client = initializeTinyliciousClient(logger);
-
 	console.log("Loading existing container...");
-	let loadContainerResult: ContainerLoadResult;
+	let model: IAppModel;
 	try {
-		loadContainerResult = await client.getContainer(containerId, containerSchema);
+		model = await loader.loadExisting(containerId);
 	} catch (error) {
 		console.error(`Encountered error loading Fluid container: "${error}".`);
 		throw error;
 	}
 	console.log("Container loaded!");
-
-	const { container } = loadContainerResult;
+	const container = model.container;
 
 	if (container.connectionState !== ConnectionState.Connected) {
 		console.log("Connecting to container...");
@@ -144,8 +105,5 @@ export async function loadExistingFluidContainer(
 		console.log("Connected!");
 	}
 
-	return {
-		container,
-		containerId,
-	};
+	return { container, containerId, appData: model.appData };
 }

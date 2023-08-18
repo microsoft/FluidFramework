@@ -66,7 +66,7 @@ async function createSummarizerCore(
 const defaultSummaryOptions: ISummaryRuntimeOptions = {
 	summaryConfigOverrides: {
 		state: "disableHeuristics",
-		maxAckWaitTime: 10000,
+		maxAckWaitTime: 20000, // Some of the AFR tests take a long time to ack.
 		maxOpsSinceLastSummary: 7000,
 		initialSummarizerDelayMs: 0,
 	},
@@ -142,7 +142,9 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
 
 	const submitResult = await timeoutAwait(result.summarySubmitted);
 	if (!submitResult.success) {
-		submitResult.error.data = submitResult.data;
+		if (typeof submitResult.error !== "string") {
+			submitResult.error.data = submitResult.data;
+		}
 		throw submitResult.error;
 	}
 	assert(

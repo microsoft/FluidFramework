@@ -6,6 +6,7 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
+import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
@@ -101,11 +102,17 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
     // @deprecated (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
     // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)

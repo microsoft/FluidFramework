@@ -813,68 +813,27 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
-			if (runtimeMessage === false) {
-				return;
-			}
-			assert.strictEqual(
-				(
-					((message.contents as { contents: unknown }).contents as { content: unknown })
-						.content as { address?: unknown }
-				).address,
-				sparseMatrixId,
-				"Address should be sparse matrix",
-			);
-			if (
-				(
-					(
-						(
-							(
-								(message.contents as { contents: unknown }).contents as {
-									content: unknown;
-								}
-							).content as { contents: unknown }
-						).contents as { ops: unknown[] }
-					).ops[0] as { type?: unknown }
-				).type === MergeTreeDeltaType.INSERT
-			) {
+			try {
+				if (runtimeMessage === false) {
+					return;
+				}
+				const envelope = message.contents.contents.content;
 				assert.strictEqual(
-					JSON.stringify(
-						(
-							(
-								(
-									(
-										(message.contents as { contents: unknown }).contents as {
-											content: unknown;
-										}
-									).content as { contents: unknown }
-								).contents as { ops: unknown[] }
-							).ops[0] as { seg?: unknown }
-						).seg,
-					),
-					JSON.stringify(seg),
-					"Seg should be same",
+					envelope.address,
+					sparseMatrixId,
+					"Address should be sparse matrix",
 				);
-			} else {
-				assert.strictEqual(
-					JSON.stringify(
-						(
-							(
-								(
-									(
-										(message.contents as { contents: unknown }).contents as {
-											content: unknown;
-										}
-									).content as { contents: unknown }
-								).contents as { ops: unknown[] }
-							).ops[1] as { seg?: unknown }
-						).seg,
-					),
-					JSON.stringify(seg),
-					"Seg should be same",
-				);
+				if (envelope.contents.type === MergeTreeDeltaType.INSERT) {
+					assert.strictEqual(
+						JSON.stringify(envelope.contents.seg),
+						JSON.stringify(seg),
+						"Seg should be same",
+					);
+				}
+				defPromise.resolve();
+			} catch (e) {
+				defPromise.reject(e);
 			}
-			defPromise.resolve();
-			return 0;
 		});
 
 		// Fire op before attaching the container

@@ -235,7 +235,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 										return policies;
 									}
 
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Reflection
 									return Reflect.get(target, prop, r);
 								},
 							},

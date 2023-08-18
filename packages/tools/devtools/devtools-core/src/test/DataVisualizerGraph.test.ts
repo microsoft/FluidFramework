@@ -194,17 +194,14 @@ describe("DataVisualizerGraph unit tests", () => {
 		expect(childCounterTree).to.deep.equal(expectedChildCounterTree);
 
 		const childCellTree = await visualizer.render(sharedCell.id);
-		const expectedChildCellTree: FluidObjectTreeNode = {
+		const expectedChildCellTree: FluidObjectValueNode = {
 			fluidObjectId: sharedCell.id,
-			children: {
-				data: {
-					value: "Hello world",
-					typeMetadata: "string",
-					nodeKind: VisualNodeKind.ValueNode,
-				},
-			},
+			value: "Hello world",
 			typeMetadata: "SharedCell",
-			nodeKind: VisualNodeKind.FluidTreeNode,
+			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: {
+				editTypes: undefined,
+			},
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
 	});

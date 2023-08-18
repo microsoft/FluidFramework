@@ -5,7 +5,7 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 
 /**
  * Type of "valueChanged" event parameter.

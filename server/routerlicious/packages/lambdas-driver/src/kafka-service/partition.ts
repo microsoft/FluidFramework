@@ -96,7 +96,9 @@ export class Partition extends EventEmitter {
 			return;
 		}
 
-		void this.q.push(rawMessage);
+		this.q.push(rawMessage).catch((error) => {
+			Lumberjack.error("Error pushing raw message to queue in partition", undefined, error);
+		});
 	}
 
 	public close(closeType: LambdaCloseType): void {

@@ -56,7 +56,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	// Here we specifically pick just the loader props we know we need to keep API exposure low.  Fine to add more
 	// here if we determine they're needed, but they should be picked explicitly (e.g. avoid "scope").
 	public constructor(
-		props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader"> & {
+		props: Pick<
+			ILoaderProps,
+			"urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"
+		> & {
 			generateCreateNewRequest: () => IRequest;
 		},
 	) {
@@ -64,6 +67,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			urlResolver: props.urlResolver,
 			documentServiceFactory: props.documentServiceFactory,
 			codeLoader: props.codeLoader,
+			logger: props.logger,
 		});
 		this.generateCreateNewRequest = props.generateCreateNewRequest;
 	}

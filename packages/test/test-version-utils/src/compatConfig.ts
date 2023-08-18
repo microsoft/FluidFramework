@@ -273,7 +273,7 @@ export async function mochaGlobalSetup() {
 		ensurePackageInstalled(baseVersion, value, reinstall),
 	);
 
-	let error: unknown | undefined;
+	let error: unknown;
 	for (const p of installP) {
 		try {
 			await p;
@@ -282,6 +282,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- Rethrows caught value
 		throw error;
 	}
 }

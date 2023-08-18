@@ -550,10 +550,20 @@ export class MockFluidDataStoreRuntime
 	extends EventEmitter
 	implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext
 {
-	constructor(overrides?: { clientId?: string; entryPoint?: IFluidHandle<FluidObject> }) {
+	constructor(overrides?: {
+		clientId?: string;
+		entryPoint?: IFluidHandle<FluidObject>;
+		id?: string;
+		logger?: ITelemetryLoggerExt;
+	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
+		this.id = overrides?.id ?? uuid();
+		this.logger = createChildLogger({
+			logger: overrides?.logger,
+			namespace: "fluid:MockFluidDataStoreRuntime",
+		});
 	}
 
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
@@ -579,7 +589,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public readonly documentId: string = undefined as any;
-	public readonly id: string = uuid();
+	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
 	public options: ILoaderOptions = {};
 	public clientId: string;
@@ -587,9 +597,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt = createChildLogger({
-		namespace: "fluid:MockFluidDataStoreRuntime",
-	});
+	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	private readonly deltaConnections: MockDeltaConnection[] = [];

@@ -406,11 +406,11 @@ export class DocumentStorage implements IDocumentStorage {
 		const document = await this.documentRepository.readOne({ documentId, tenantId });
 		if (document === null) {
 			// Guard against storage failure. Returns false if storage is unresponsive.
-			const foundInSummaryP = this.readFromSummary(tenantId, documentId).then(
-				(result) => {
+			const foundInSummaryP = this.readFromSummary(tenantId, documentId)
+				.then((result) => {
 					return result;
-				},
-				(err) => {
+				})
+				.catch((err) => {
 					winston.error(`Error while fetching summary for ${tenantId}/${documentId}`);
 					winston.error(err);
 					const lumberjackProperties = {
@@ -419,8 +419,7 @@ export class DocumentStorage implements IDocumentStorage {
 					};
 					Lumberjack.error(`Error while fetching summary`, lumberjackProperties);
 					return false;
-				},
-			);
+				});
 
 			const inSummary = await foundInSummaryP;
 			Lumberjack.warning("Backfilling document from summary!", {

@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IContextErrorData } from "@fluidframework/server-services-core";
 import type * as kafkaTypes from "node-rdkafka";
 import { tryImportNodeRdkafka } from "./tryImport";
@@ -102,8 +103,9 @@ export abstract class RdkafkaBase extends EventEmitter {
 		} catch (ex) {
 			this.error(ex);
 
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.initialize();
+			this.initialize().catch((error) => {
+				Lumberjack.error("Error initializing rdkafka", undefined, error);
+			});
 
 			return;
 		}

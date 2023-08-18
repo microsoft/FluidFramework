@@ -11,13 +11,13 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 	tagRollbackInverse,
+	ChangesetLocalId,
+	ChangeAtomId,
 } from "../../../core";
-import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
+import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
 import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 import { compose, composeNoVerify, shallowCompose } from "./utils";
 

@@ -30,7 +30,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/test/**/*.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},

@@ -18,7 +18,7 @@ import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IUsageError } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
@@ -52,7 +52,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
-// @public
+// @public @deprecated
 export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>);
     // (undocumented)

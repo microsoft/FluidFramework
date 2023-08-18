@@ -289,36 +289,40 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		});
 	});
 
-	it("Should throw when submitting an op while handling an event - offline", async () => {
-		await setupContainers({
-			...testContainerConfig,
-			runtimeOptions: {
-				enableOpReentryCheck: true,
-			},
-		});
+	itSkipsFailureOnSpecificDrivers(
+		"Should throw when submitting an op while handling an event - offline",
+		["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+		async () => {
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					enableOpReentryCheck: true,
+				},
+			});
 
-		await container1.deltaManager.inbound.pause();
-		await container1.deltaManager.outbound.pause();
+			await container1.deltaManager.inbound.pause();
+			await container1.deltaManager.outbound.pause();
 
-		sharedMap1.on("valueChanged", (changed) => {
-			if (changed.key !== "key2") {
-				sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-			}
-		});
+			sharedMap1.on("valueChanged", (changed) => {
+				if (changed.key !== "key2") {
+					sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
+				}
+			});
 
-		assert.throws(() => {
-			sharedMap1.set("key1", "1");
-		});
+			assert.throws(() => {
+				sharedMap1.set("key1", "1");
+			});
 
-		container1.deltaManager.inbound.resume();
-		container1.deltaManager.outbound.resume();
+			container1.deltaManager.inbound.resume();
+			container1.deltaManager.outbound.resume();
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// The offending container is not closed
-		assert.ok(!container1.closed);
-		assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
-	});
+			// The offending container is not closed
+			assert.ok(!container1.closed);
+			assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
+		},
+	);
 
 	describe("Allow reentry", () =>
 		[
