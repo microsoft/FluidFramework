@@ -6,8 +6,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { ContainerKey, DevtoolsLogger, initializeDevtools } from "@fluid-experimental/devtools";
-import { FluidContainer, IFluidContainer, IRootDataObject } from "@fluidframework/fluid-static";
+import {
+	ContainerKey,
+	DevtoolsLogger,
+	initializeDevtools,
+} from "@fluid-experimental/devtools-core";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
@@ -28,9 +31,10 @@ createContainerAndRenderInElement().then((fluidContainer) => {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(): Promise<IFluidContainer> {
+async function createContainerAndRenderInElement(): Promise<ICollaborativeTextAppModel> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<ICollaborativeTextAppModel>(
 		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
+		logger,
 	);
 
 	let id: string;
@@ -71,25 +75,19 @@ async function createContainerAndRenderInElement(): Promise<IFluidContainer> {
 	// eslint-disable-next-line @typescript-eslint/dot-notation
 	window["fluidStarted"] = true;
 
-	const container = model.container;
-	// using unknown cast to unblock a build of the test project, since this file is changing significantly soon and
-	// won't use these APIs.
-	const rootDataObject = (await model.runtime.getRootDataStore(
-		"collaborative-text",
-	)) as unknown as IRootDataObject;
-	const fluidContainer = new FluidContainer(container, rootDataObject);
-	return fluidContainer;
+	return model;
 }
 
 /**
  * Registers the provided {@link IFluidContainer} with the devtools.
  */
 function registerContainerWithDevtools(
-	container: IFluidContainer,
+	model: ICollaborativeTextAppModel,
 	containerKey: ContainerKey,
 ): void {
 	devtools.registerContainerDevtools({
-		container,
+		container: model.container,
 		containerKey,
+		containerData: model.collaborativeText.initialObjects,
 	});
 }

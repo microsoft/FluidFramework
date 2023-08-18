@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/attributable-map",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"test:memory": "mocha --config ./src/test/memory/.mocharc.js",
 		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.js",
 		"test:mocha": "mocha --unhandled-rejections=strict --recursive 'dist/test/mocha/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --exit",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -62,7 +62,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -75,7 +74,7 @@
 		"path-browserify": "^1.0.1"
 	},
 	"devDependencies": {
-		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-internal.6.0.0",
+		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-internal.6.1.1",
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-core",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -36,7 +36,7 @@
 		"test:coverage": "npm run test:mocha:coverage",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
 		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -64,7 +64,6 @@
 	"dependencies": {
 		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -79,7 +78,7 @@
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.6.0.0",
+		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.6.1.1",
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
@@ -118,78 +117,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"EnumDeclaration_ContainerDevtoolsFeature": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"EnumDeclaration_DevtoolsFeature": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"EnumDeclaration_EditType": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_FluidHandleNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_FluidObjectNodeBase": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_FluidObjectTreeNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_FluidObjectValueNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_FluidUnknownObjectNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_TreeNodeBase": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_UnknownObjectNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ValueNodeBase": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_VisualChildNode": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_VisualNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_VisualNodeBase": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_VisualTreeNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_VisualValueNode": {
-				"backCompat": false
-			},
-			"RemovedEnumDeclaration_DevtoolsFeature": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedEnumDeclaration_EditType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedEnumDeclaration_ContainerDevtoolsFeature": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_FluidObjectNode": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_RootHandleNode": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_Edit": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
