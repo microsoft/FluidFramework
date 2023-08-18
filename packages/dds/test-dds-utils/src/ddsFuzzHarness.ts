@@ -212,11 +212,12 @@ export interface DDSFuzzSuiteOptions {
 	defaultTestCount: number;
 
 	/**
-	 * Number of clients to perform operations on at the start of the test.
+	 * Number of clients to perform operations on following the attach phase.
 	 * This does not include the read-only client created for consistency validation
 	 * and summarization--see {@link DDSFuzzTestState.summarizerClient}.
 	 *
-	 * If {@link DDSFuzzSuiteOptions.}
+	 * See {@link DDSFuzzSuiteOptions.detachedStartOptions} for more details on the detached start phase.
+	 * See {@link DDSFuzzSuiteOptions.clientJoinOptions} for more details on clients joining after those in the initial attach.
 	 */
 	numberOfClients: number;
 
@@ -244,6 +245,25 @@ export interface DDSFuzzSuiteOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
+	};
+
+	/**
+	 * Dictates simulation of edits made to a DDS while that DDS is detached.
+	 * Whether the collaboration process should start from a detached state.
+	 *
+	 * When enabled, the fuzz test starts with a single client generating edits. At some point in time (dictated by `attachProbability`),
+	 * an attach op will be generated, at which point:
+	 * - getAttachSummary will be invoked on this client
+	 * - The remaining clients (as dictated by {@link DDSFuzzSuiteOptions.numberOfClients}) will load from this summary and join the session
+	 *
+	 * This setup simulates application code initializing state in a data store before attaching it, e.g. running code to edit a DDS from
+	 * `DataObject.initializingFirstTime`.
+	 * @default - Tests are run with this setting enabled, and each op during the warmup phase has a 20% chance to be
+	 * an attach op.
+	 */
+	detachedStartOptions: {
+		attachProbability: number;
+		enabled: boolean;
 	};
 
 	/**
@@ -331,19 +351,14 @@ export interface DDSFuzzSuiteOptions {
 	 * Turning on this feature is encouraged for quick minimization.
 	 */
 	saveFailures: false | { directory: string };
-
-	/**
-	 * Whether the collaboration process should start from a detached state.
-	 *
-	 * When true, coerces {@link DDSFuzzSuiteOptions.numberOfClients} (the number of initialized clients) to 1.
-	 *
-	 * Typically this option should be paired with {@link DDSFuzzSuiteOptions.clientJoinOptions}, as otherwise
-	 */
-	startDetached: boolean;
 }
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
+	detachedStartOptions: {
+		attachProbability: 0.2,
+		enabled: true,
+	},
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
@@ -352,7 +367,6 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	reconnectProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
-	startDetached: true,
 };
 
 /**
@@ -463,7 +477,9 @@ export function mixinReconnect<
 }
 
 /**
- * TODO
+ * Mixes in functionality to generate an 'attach' op, which
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinAttach<
 	TChannelFactory extends IChannelFactory,
@@ -473,10 +489,16 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
+	const { enabled, attachProbability } = options.detachedStartOptions;
+	if (!enabled) {
+		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
+		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
+	}
+
 	const generatorFactory: () => Generator<TOperation | Attach, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | Attach | typeof done> => {
-			if (state.isDetached && state.random.bool(0.1)) {
+			if (state.isDetached && state.random.bool(attachProbability)) {
 				return {
 					type: "attach",
 				};
@@ -507,6 +529,12 @@ export function mixinAttach<
 					),
 				),
 			);
+
+			// While detached, the initial state was set up so that the 'summarizer client' was the same as the detached client.
+			// This is actually a pretty reasonable representation of what really happens.
+			// However, now that we're transitioning to an attached state, the summarizer client should never have any edits.
+			// Thus we use one of the clients we just loaded as the summarizer client, and keep the client around that we generated the
+			// attach summary from.
 			const summarizerClient = clients[0];
 			clients[0] = state.clients[0];
 
@@ -765,9 +793,24 @@ export async function runTestForSeed<
 		makeFriendlyClientId(random, 0),
 		options,
 	);
+	const startDetached = options.detachedStartOptions.enabled;
+	const clients = startDetached
+		? [initialClient]
+		: await Promise.all(
+				Array.from({ length: options.numberOfClients }, (_, i) =>
+					loadClient(
+						containerRuntimeFactory,
+						initialClient,
+						model.factory,
+						makeFriendlyClientId(random, i),
+						options,
+					),
+				),
+		  );
+	const summarizerClient = initialClient;
 	const initialState: DDSFuzzTestState<TChannelFactory> = {
-		clients: [initialClient],
-		summarizerClient: initialClient,
+		clients,
+		summarizerClient,
 		containerRuntimeFactory,
 		random,
 		// These properties should always be injected into the state by the mixed in reducer/generator
@@ -775,7 +818,7 @@ export async function runTestForSeed<
 		// to catch bugs in that setup.
 		channel: makeUnreachableCodepathProxy("channel"),
 		client: makeUnreachableCodepathProxy("client"),
-		isDetached: true,
+		isDetached: startDetached,
 	};
 
 	options.emitter.emit("testStart", initialState);
@@ -943,7 +986,7 @@ createDDSFuzzSuite.only =
  * @example
  * ```typescript
  * // Skips seed 42 for the given model.
- * createDDSFuzzSuite(model, { skip: [42] });
+ * createDDSFuzzSuite.skip(42)(model);
  * ```
  */
 createDDSFuzzSuite.skip =
