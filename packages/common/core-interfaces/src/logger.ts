@@ -46,11 +46,23 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 }
 
 /**
+ * Enum to specify a level to the log to filter out logs based on the level.
+ */
+export const enum LogLevel {
+	verbose = 0, // To log any verbose event for example when you are debugging something.
+	default = 10, // Default log level
+	warning = 20, // For events which are not errors but are also not ideal situations in the flow.
+	error = 30, // To log errors.
+}
+
+/**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
-	send(event: ITelemetryBaseEvent): void;
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+
+	minLogLevel?: LogLevel;
 }
 
 /**
@@ -98,20 +110,23 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * Actual implementation that sends telemetry event
 	 * Implemented by derived classes
 	 * @param event - Telemetry event to send over
+	 * @param logLevel - optional level of the log.
 	 */
-	send(event: ITelemetryBaseEvent): void;
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send information telemetry event
 	 * @param event - Event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel): void;
 
 	/**
 	 * Send error telemetry event
 	 * @param event - Event to send
+	 * @param error - optional error object to log
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
@@ -119,7 +134,9 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**
 	 * Send performance telemetry event
 	 * @param event - Event to send
+	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel): void;
 }

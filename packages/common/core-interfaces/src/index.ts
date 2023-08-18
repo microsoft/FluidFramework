@@ -65,3 +65,4 @@ export type {
 	TelemetryEventCategory,
 	TelemetryEventPropertyType,
 } from "./logger";
+export { LogLevel } from "./logger";
