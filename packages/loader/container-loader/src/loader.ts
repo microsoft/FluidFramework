@@ -38,6 +38,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/container-utils";
+import { IClientDetails } from "@fluidframework/protocol-definitions";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -357,8 +358,20 @@ export class Loader implements IHostLoader {
 		return this;
 	}
 
-	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(this.services, codeDetails);
+	public async createDetachedContainer(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> {
+		const container = await Container.createDetached(
+			{
+				...createDetachedProps,
+				...this.services,
+			},
+			codeDetails,
+		);
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
@@ -373,8 +386,20 @@ export class Loader implements IHostLoader {
 		return container;
 	}
 
-	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(this.services, snapshot);
+	public async rehydrateDetachedContainerFromSnapshot(
+		snapshot: string,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> {
+		return Container.rehydrateDetachedFromSnapshot(
+			{
+				...createDetachedProps,
+				...this.services,
+			},
+			snapshot,
+		);
 	}
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
