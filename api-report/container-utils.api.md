@@ -4,14 +4,14 @@
 
 ```ts
 
-import { IErrorBase } from '@fluidframework/container-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { IGenericError } from '@fluidframework/container-definitions';
+import { IGenericError } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { IUsageError } from '@fluidframework/container-definitions';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces';
+import { IUsageError } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public

@@ -111,12 +111,12 @@ export class Outbox {
 		this.blobAttachBatch = new BatchManager({ hardLimit });
 	}
 
+	public get messageCount(): number {
+		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+	}
+
 	public get isEmpty(): boolean {
-		return (
-			this.attachFlowBatch.length === 0 &&
-			this.mainBatch.length === 0 &&
-			this.blobAttachBatch.length === 0
-		);
+		return this.messageCount === 0;
 	}
 
 	/**
