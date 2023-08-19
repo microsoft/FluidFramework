@@ -423,16 +423,11 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
 	) {
-		// Keep _nodeKeyIndex up to date with forest content.
-		// Note that just running this in the "change" code-path below is insufficient for handling summary load.
-		this.forest.on("afterDelta", () => {
-			this._nodeKeyIndex.scanKeys(this.context);
-		});
-
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
 				this._forest.applyDelta(delta);
+				this._nodeKeyIndex.scanKeys(this.context);
 				this._events.emit("afterBatch");
 			}
 		});
