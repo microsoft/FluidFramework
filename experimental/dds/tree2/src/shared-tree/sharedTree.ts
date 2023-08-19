@@ -44,12 +44,11 @@ import {
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { SchematizeConfiguration } from "./schematizedTree";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import {
 	ISharedTreeBranchView,
 	ISharedTreeView,
 	ITransaction,
-	SharedTreeView,
 	ViewEvents,
 	createSharedTreeView,
 } from "./sharedTreeView";
@@ -113,6 +112,9 @@ export class SharedTree
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
+			// TODO:
+			// This passes in a version of schema thats not wrapped with the editor.
+			// This allows editing schema on the vide without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			repairProvider,
@@ -131,6 +133,11 @@ export class SharedTree
 	}
 
 	public get storedSchema(): StoredSchemaRepository {
+		// TODO:
+		// Schema editing on the view should be the same as editing it here.
+		// However, currently editing schema on views doesn't send ops because schema editing is a hack and not properly implemented.
+		// When this is fixes, this assert should start passing:
+		// assert(this.schema === this.view.storedSchema, "mismatched schema");
 		return this.schema;
 	}
 
@@ -157,14 +164,18 @@ export class SharedTree
 	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return this.view.schematize(config);
+		// TODO:
+		// This should work, but schema editing on views doesn't send ops.
+		// return this.view.schematize(config);
+		// For now, use this as a workaround:
+		return schematizeView(this, config);
 	}
 
 	public get transaction(): ITransaction {
 		return this.view.transaction;
 	}
 
-	public get nodeKey(): SharedTreeView["nodeKey"] {
+	public get nodeKey(): ISharedTreeView["nodeKey"] {
 		return this.view.nodeKey;
 	}
 
