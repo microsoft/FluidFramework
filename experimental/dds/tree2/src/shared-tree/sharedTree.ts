@@ -44,9 +44,11 @@ import {
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import { SchematizeConfiguration } from "./schematizedTree";
 import {
+	ISharedTreeBranchView,
 	ISharedTreeView,
+	ITransaction,
 	SharedTreeView,
 	ViewEvents,
 	createSharedTreeView,
@@ -155,10 +157,10 @@ export class SharedTree
 	public schematize<TRoot extends FieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return schematizeView(this, config);
+		return this.view.schematize(config);
 	}
 
-	public get transaction(): SharedTreeView["transaction"] {
+	public get transaction(): ITransaction {
 		return this.view.transaction;
 	}
 
@@ -166,17 +168,17 @@ export class SharedTree
 		return this.view.nodeKey;
 	}
 
-	public fork(): SharedTreeView {
+	public fork(): ISharedTreeBranchView {
 		return this.view.fork();
 	}
 
-	public merge(view: SharedTreeView): void;
-	public merge(view: SharedTreeView, disposeView: boolean): void;
-	public merge(view: SharedTreeView, disposeView = true): void {
+	public merge(view: ISharedTreeBranchView): void;
+	public merge(view: ISharedTreeBranchView, disposeView: boolean): void;
+	public merge(view: ISharedTreeBranchView, disposeView = true): void {
 		this.view.merge(view, disposeView);
 	}
 
-	public rebase(fork: SharedTreeView): void {
+	public rebase(fork: ISharedTreeBranchView): void {
 		fork.rebaseOnto(this.view);
 	}
 

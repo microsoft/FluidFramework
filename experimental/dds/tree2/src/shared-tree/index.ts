@@ -11,6 +11,8 @@ export {
 	runSynchronous,
 	SharedTreeView,
 	ViewEvents,
+	ITransaction,
+	ISharedTreeBranchView,
 } from "./sharedTreeView";
 
 export { SchematizeConfiguration } from "./schematizedTree";
