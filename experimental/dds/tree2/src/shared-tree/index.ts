@@ -9,7 +9,6 @@ export {
 	createSharedTreeView,
 	ISharedTreeView,
 	runSynchronous,
-	SharedTreeView,
 	ViewEvents,
 	ITransaction,
 	ISharedTreeBranchView,

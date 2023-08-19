@@ -414,42 +414,30 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		private readonly changeFamily: DefaultChangeFamily,
-		private readonly _storedSchema: InMemoryStoredSchemaRepository,
-		private readonly _forest: IEditableForest,
+		public readonly storedSchema: InMemoryStoredSchemaRepository,
+		public readonly forest: IEditableForest,
 		public readonly context: EditableTreeContext,
-		private readonly _nodeKeyManager: NodeKeyManager,
-		private readonly _nodeKeyIndex: NodeKeyIndex,
-		private readonly _events: ISubscribable<ViewEvents> &
+		private readonly nodeKeyManager: NodeKeyManager,
+		private readonly nodeKeyIndex: NodeKeyIndex,
+		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
 	) {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
-				this._forest.applyDelta(delta);
-				this._nodeKeyIndex.scanKeys(this.context);
-				this._events.emit("afterBatch");
+				this.forest.applyDelta(delta);
+				this.nodeKeyIndex.scanKeys(this.context);
+				this.events.emit("afterBatch");
 			}
 		});
 		branch.on("revertible", (type) => {
-			this._events.emit("revertible", type);
+			this.events.emit("revertible", type);
 		});
 	}
 
-	public get events(): ISubscribable<ViewEvents> {
-		return this._events;
-	}
-
-	public get storedSchema(): StoredSchemaRepository {
-		return this._storedSchema;
-	}
-
-	public get forest(): IForestSubscription {
-		return this._forest;
-	}
-
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
-		return this._forest.anchors;
+		return this.forest.anchors;
 	}
 
 	public get editor(): IDefaultEditBuilder {
@@ -457,10 +445,10 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 
 	public readonly nodeKey: ISharedTreeView["nodeKey"] = {
-		generate: () => this._nodeKeyManager.generateLocalNodeKey(),
-		stabilize: (key) => this._nodeKeyManager.stabilizeNodeKey(key),
-		localize: (key) => this._nodeKeyManager.localizeNodeKey(key),
-		map: this._nodeKeyIndex,
+		generate: () => this.nodeKeyManager.generateLocalNodeKey(),
+		stabilize: (key) => this.nodeKeyManager.stabilizeNodeKey(key),
+		localize: (key) => this.nodeKeyManager.localizeNodeKey(key),
+		map: this.nodeKeyIndex,
 	};
 
 	public undo() {
@@ -478,13 +466,13 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
-		return this._forest.anchors.locate(anchor);
+		return this.forest.anchors.locate(anchor);
 	}
 
 	public fork(): SharedTreeView {
 		const anchors = new AnchorSet();
-		const storedSchema = this._storedSchema.clone();
-		const forest = this._forest.clone(storedSchema, anchors);
+		const storedSchema = this.storedSchema.clone();
+		const forest = this.forest.clone(storedSchema, anchors);
 		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
 			forest,
 			storedSchema,
@@ -494,8 +482,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		const context = getEditableTreeContext(
 			forest,
 			branch.editor,
-			this._nodeKeyManager,
-			this._nodeKeyIndex.fieldKey,
+			this.nodeKeyManager,
+			this.nodeKeyIndex.fieldKey,
 		);
 		const transaction = new Transaction(branch, this.changeFamily, forest);
 		return new SharedTreeView(
@@ -505,8 +493,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			storedSchema,
 			forest,
 			context,
-			this._nodeKeyManager,
-			this._nodeKeyIndex.clone(context),
+			this.nodeKeyManager,
+			this.nodeKeyIndex.clone(context),
 			createEmitter(),
 		);
 	}
