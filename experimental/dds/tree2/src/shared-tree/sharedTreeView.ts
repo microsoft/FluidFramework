@@ -407,7 +407,7 @@ export interface ISharedTreeBranchView extends ISharedTreeView {
 }
 
 /**
- * An implementation of {@link ISharedTreeView}.
+ * An implementation of {@link ISharedTreeBranchView}.
  */
 export class SharedTreeView implements ISharedTreeBranchView {
 	public constructor(
