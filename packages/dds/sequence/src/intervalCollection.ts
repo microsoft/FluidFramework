@@ -1019,6 +1019,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
+			if (!this.isCollaborating && interval instanceof SequenceInterval) {
+				setSlideOnRemove(interval.start);
+				setSlideOnRemove(interval.end);
+			}
 			const serializedInterval = {
 				end,
 				intervalType,
@@ -1139,6 +1143,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (!newInterval) {
 				return undefined;
 			}
+			if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+				setSlideOnRemove(newInterval.start);
+				setSlideOnRemove(newInterval.end);
+			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
 			serializedInterval.start = start;
 			serializedInterval.end = end;
@@ -1157,7 +1165,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return undefined;
 	}
 
+	private get isCollaborating(): boolean {
+		return this.client?.getCollabWindow().collaborating ?? false;
+	}
+
 	private addPendingChange(id: string, serializedInterval: SerializedIntervalDelta) {
+		if (!this.isCollaborating) {
+			return;
+		}
 		if (serializedInterval.start !== undefined) {
 			this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
 		}
@@ -1407,13 +1422,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return value;
 	}
 
-	private setSlideOnRemove(lref: LocalReferencePosition) {
-		let refType = lref.refType;
-		refType = refType & ~ReferenceType.StayOnRemove;
-		refType = refType | ReferenceType.SlideOnRemove;
-		lref.refType = refType;
-	}
-
 	private ackInterval(interval: TInterval, op: ISequencedDocumentMessage) {
 		// Only SequenceIntervals need potential sliding
 		if (!(interval instanceof SequenceInterval)) {
@@ -1435,11 +1443,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const hasPendingEndChange = this.hasPendingChangeEnd(id);
 
 		if (!hasPendingStartChange) {
-			this.setSlideOnRemove(interval.start);
+			setSlideOnRemove(interval.start);
 		}
 
 		if (!hasPendingEndChange) {
-			this.setSlideOnRemove(interval.end);
+			setSlideOnRemove(interval.end);
 		}
 
 		const needsStartUpdate = newStart !== undefined && !hasPendingStartChange;
@@ -1729,6 +1737,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		return this.localCollection.endIntervalIndex.nextInterval(pos);
 	}
+}
+
+function setSlideOnRemove(lref: LocalReferencePosition) {
+	let refType = lref.refType;
+	refType = refType & ~ReferenceType.StayOnRemove;
+	refType = refType | ReferenceType.SlideOnRemove;
+	lref.refType = refType;
 }
 
 /**
