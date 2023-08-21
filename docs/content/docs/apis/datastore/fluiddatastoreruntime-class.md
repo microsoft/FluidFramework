@@ -1,0 +1,2360 @@
+{
+  "title": "FluidDataStoreRuntime Class",
+  "summary": "Base data store class",
+  "kind": "Class",
+  "members": {
+    "Constructor": {
+      "(constructor)": "/docs/apis/datastore/fluiddatastoreruntime-class#_constructor_-constructor"
+    },
+    "Property": {
+      "absolutePath": "/docs/apis/datastore/fluiddatastoreruntime-class#absolutepath-property",
+      "attachState": "/docs/apis/datastore/fluiddatastoreruntime-class#attachstate-property",
+      "channelsRoutingContext": "/docs/apis/datastore/fluiddatastoreruntime-class#channelsroutingcontext-property",
+      "clientDetails": "/docs/apis/datastore/fluiddatastoreruntime-class#clientdetails-property",
+      "clientId": "/docs/apis/datastore/fluiddatastoreruntime-class#clientid-property",
+      "connected": "/docs/apis/datastore/fluiddatastoreruntime-class#connected-property",
+      "deltaManager": "/docs/apis/datastore/fluiddatastoreruntime-class#deltamanager-property",
+      "disposed": "/docs/apis/datastore/fluiddatastoreruntime-class#disposed-property",
+      "entryPoint": "/docs/apis/datastore/fluiddatastoreruntime-class#entrypoint-property",
+      "id": "/docs/apis/datastore/fluiddatastoreruntime-class#id-property",
+      "idCompressor": "/docs/apis/datastore/fluiddatastoreruntime-class#idcompressor-property",
+      "IFluidHandleContext": "/docs/apis/datastore/fluiddatastoreruntime-class#ifluidhandlecontext-property",
+      "IFluidRouter": "/docs/apis/datastore/fluiddatastoreruntime-class#ifluidrouter-property",
+      "isAttached": "/docs/apis/datastore/fluiddatastoreruntime-class#isattached-property",
+      "logger": "/docs/apis/datastore/fluiddatastoreruntime-class#logger-property",
+      "objectsRoutingContext": "/docs/apis/datastore/fluiddatastoreruntime-class#objectsroutingcontext-property",
+      "options": "/docs/apis/datastore/fluiddatastoreruntime-class#options-property",
+      "rootRoutingContext": "/docs/apis/datastore/fluiddatastoreruntime-class#rootroutingcontext-property",
+      "routeContext": "/docs/apis/datastore/fluiddatastoreruntime-class#routecontext-property",
+      "visibilityState": "/docs/apis/datastore/fluiddatastoreruntime-class#visibilitystate-property"
+    },
+    "Method": {
+      "applyStashedOp": "/docs/apis/datastore/fluiddatastoreruntime-class#applystashedop-method",
+      "attachGraph": "/docs/apis/datastore/fluiddatastoreruntime-class#attachgraph-method",
+      "bind": "/docs/apis/datastore/fluiddatastoreruntime-class#bind-method",
+      "bindChannel": "/docs/apis/datastore/fluiddatastoreruntime-class#bindchannel-method",
+      "bindToContext": "/docs/apis/datastore/fluiddatastoreruntime-class#bindtocontext-method",
+      "createChannel": "/docs/apis/datastore/fluiddatastoreruntime-class#createchannel-method",
+      "dispose": "/docs/apis/datastore/fluiddatastoreruntime-class#dispose-method",
+      "ensureNoDataModelChanges": "/docs/apis/datastore/fluiddatastoreruntime-class#ensurenodatamodelchanges-method",
+      "getAttachSummary": "/docs/apis/datastore/fluiddatastoreruntime-class#getattachsummary-method",
+      "getAudience": "/docs/apis/datastore/fluiddatastoreruntime-class#getaudience-method",
+      "getChannel": "/docs/apis/datastore/fluiddatastoreruntime-class#getchannel-method",
+      "getGCData": "/docs/apis/datastore/fluiddatastoreruntime-class#getgcdata-method",
+      "getQuorum": "/docs/apis/datastore/fluiddatastoreruntime-class#getquorum-method",
+      "load": "/docs/apis/datastore/fluiddatastoreruntime-class#load-method",
+      "makeVisibleAndAttachGraph": "/docs/apis/datastore/fluiddatastoreruntime-class#makevisibleandattachgraph-method",
+      "process": "/docs/apis/datastore/fluiddatastoreruntime-class#process-method",
+      "processSignal": "/docs/apis/datastore/fluiddatastoreruntime-class#processsignal-method",
+      "request": "/docs/apis/datastore/fluiddatastoreruntime-class#request-method",
+      "resolveHandle": "/docs/apis/datastore/fluiddatastoreruntime-class#resolvehandle-method",
+      "reSubmit": "/docs/apis/datastore/fluiddatastoreruntime-class#resubmit-method",
+      "rollback": "/docs/apis/datastore/fluiddatastoreruntime-class#rollback-method",
+      "setConnectionState": "/docs/apis/datastore/fluiddatastoreruntime-class#setconnectionstate-method",
+      "submitMessage": "/docs/apis/datastore/fluiddatastoreruntime-class#submitmessage-method",
+      "submitSignal": "/docs/apis/datastore/fluiddatastoreruntime-class#submitsignal-method",
+      "summarize": "/docs/apis/datastore/fluiddatastoreruntime-class#summarize-method",
+      "updateUsedRoutes": "/docs/apis/datastore/fluiddatastoreruntime-class#updateusedroutes-method",
+      "uploadBlob": "/docs/apis/datastore/fluiddatastoreruntime-class#uploadblob-method",
+      "waitAttached": "/docs/apis/datastore/fluiddatastoreruntime-class#waitattached-method"
+    }
+  },
+  "package": "@fluidframework/datastore",
+  "unscopedPackageName": "datastore"
+}
+
+[//]: # (Do not edit this file. It is automatically generated by @fluidtools/api-markdown-documenter.)
+
+[Packages](/docs/apis/) &gt; [@fluidframework/datastore](/docs/apis/datastore) &gt; [FluidDataStoreRuntime](/docs/apis/datastore/fluiddatastoreruntime-class)
+
+Base data store class
+
+## Signature {#fluiddatastoreruntime-signature}
+
+```typescript
+export declare class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
+```
+
+**Extends:** [TypedEventEmitter](/docs/apis/common-utils/typedeventemitter-class)&lt;[IFluidDataStoreRuntimeEvents](/docs/apis/datastore-definitions/ifluiddatastoreruntimeevents-interface)&gt;
+
+**Implements:** [IFluidDataStoreChannel](/docs/apis/runtime-definitions/ifluiddatastorechannel-interface), [IFluidDataStoreRuntime](/docs/apis/datastore-definitions/ifluiddatastoreruntime-interface), [IFluidHandleContext](/docs/apis/core-interfaces/ifluidhandlecontext-interface)
+
+## Constructors
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Constructor
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#_constructor_-constructor'>(constructor)</a>
+      </td>
+      <td>
+        Create an instance of a DataStore runtime.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Static Methods
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Method
+      </th>
+      <th>
+        Alerts
+      </th>
+      <th>
+        Return Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#load-method'>load</a>
+      </td>
+      <td>
+        <code>DEPRECATED</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore/fluiddatastoreruntime-class'>FluidDataStoreRuntime</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Properties
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Property
+      </th>
+      <th>
+        Alerts
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#absolutepath-property'>absolutePath</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>string</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#attachstate-property'>attachState</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/container-definitions#attachstate-enum'>AttachState</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#channelsroutingcontext-property'>channelsRoutingContext</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>this</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#clientdetails-property'>clientDetails</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/protocol-definitions/iclientdetails-interface'>IClientDetails</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#clientid-property'>clientId</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>string &#124; undefined</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#connected-property'>connected</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#deltamanager-property'>deltaManager</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>IDeltaManager&lt;<a href='/docs/apis/protocol-definitions/isequenceddocumentmessage-interface'>ISequencedDocumentMessage</a>, <a href='/docs/apis/protocol-definitions/idocumentmessage-interface'>IDocumentMessage</a>&gt;</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#disposed-property'>disposed</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#entrypoint-property'>entryPoint</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>optional</code>, <code>readonly</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/core-interfaces/ifluidhandle-interface'>IFluidHandle</a>&lt;<a href='/docs/apis/core-interfaces#fluidobject-typealias'>FluidObject</a>&gt;</span>
+      </td>
+      <td>
+        Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a particular scenario) fall back to the current approach of requesting the root object through the request pattern.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#id-property'>id</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>string</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#idcompressor-property'>idCompressor</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/iidcompressor-interface'>IIdCompressor</a> &#124; undefined</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#ifluidhandlecontext-property'>IFluidHandleContext</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>this</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#ifluidrouter-property'>IFluidRouter</a>
+      </td>
+      <td>
+        <code>DEPRECATED</code>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>this</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#isattached-property'>isAttached</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#logger-property'>logger</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/telemetry-utils/itelemetryloggerext-interface'>ITelemetryLoggerExt</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#objectsroutingcontext-property'>objectsRoutingContext</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>this</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#options-property'>options</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>ILoaderOptions</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#rootroutingcontext-property'>rootRoutingContext</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span>this</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#routecontext-property'>routeContext</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>readonly</code>
+      </td>
+      <td>
+        <span><a href='/docs/apis/core-interfaces/ifluidhandlecontext-interface'>IFluidHandleContext</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#visibilitystate-property'>visibilityState</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>VisibilityState</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Methods
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Method
+      </th>
+      <th>
+        Alerts
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Return Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#applystashedop-method'>applyStashedOp</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;unknown&gt;</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#attachgraph-method'>attachGraph</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+        This function is called when a handle to this data store is added to a visible DDS.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#bind-method'>bind</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#bindchannel-method'>bindChannel</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+        Binds a channel with the runtime. If the runtime is attached we will attach the channel right away. If the runtime is not attached we will defer the attach until the runtime attaches.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#bindtocontext-method'>bindToContext</a>
+      </td>
+      <td>
+        <code>DEPRECATED</code>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#createchannel-method'>createChannel</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore-definitions/ichannel-interface'>IChannel</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#dispose-method'>dispose</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#ensurenodatamodelchanges-method'>ensureNoDataModelChanges</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>T</span>
+      </td>
+      <td>
+        <p>
+          Invokes the given callback and expects that no ops are submitted until execution finishes. If an op is submitted, an error will be raised.
+        </p>
+        <p>
+          Can be disabled by feature gate <code>Fluid.ContainerRuntime.DisableOpReentryCheck</code>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#getattachsummary-method'>getAttachSummary</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/isummarytreewithstats-interface'>ISummaryTreeWithStats</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#getaudience-method'>getAudience</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>IAudience</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#getchannel-method'>getChannel</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;<a href='/docs/apis/datastore-definitions/ichannel-interface'>IChannel</a>&gt;</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#getgcdata-method'>getGCData</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;<a href='/docs/apis/runtime-definitions/igarbagecollectiondata-interface'>IGarbageCollectionData</a>&gt;</span>
+      </td>
+      <td>
+        <p>
+          Generates data used for garbage collection. This includes a list of GC nodes that represent this channel including any of its child channel contexts. Each node has a set of outbound routes to other GC nodes in the document. It does the following:
+        </p>
+        <p>
+          1. Calls into each child context to get its GC data.
+        </p>
+        <p>
+          2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be identified as belonging to the child.
+        </p>
+        <p>
+          3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent the GC data of this channel.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#getquorum-method'>getQuorum</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span><a href='/docs/apis/protocol-definitions/iquorumclients-interface'>IQuorumClients</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#makevisibleandattachgraph-method'>makeVisibleAndAttachGraph</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+        <p>
+          This function is called when a data store becomes root. It does the following:
+        </p>
+        <p>
+          1. Marks the data store locally visible in the container.
+        </p>
+        <p>
+          2. Attaches the graph of all the handles bound to it.
+        </p>
+        <p>
+          3. Calls into the data store context to mark it visible in the container too. If the container is globally visible, it will mark us globally visible. Otherwise, it will mark us globally visible when it becomes globally visible.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#process-method'>process</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#processsignal-method'>processSignal</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#request-method'>request</a>
+      </td>
+      <td>
+        <code>DEPRECATED</code>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;<a href='/docs/apis/core-interfaces/iresponse-interface'>IResponse</a>&gt;</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#resolvehandle-method'>resolveHandle</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;<a href='/docs/apis/core-interfaces/iresponse-interface'>IResponse</a>&gt;</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#resubmit-method'>reSubmit</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+        For messages of type MessageType.Operation, finds the right channel and asks it to resubmit the message. For all other messages, just submit it again. This typically happens when we reconnect and there are unacked messages.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#rollback-method'>rollback</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <code>optional</code>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+        Revert a local op.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#setconnectionstate-method'>setConnectionState</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#submitmessage-method'>submitMessage</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#submitsignal-method'>submitSignal</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#summarize-method'>summarize</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;<a href='/docs/apis/runtime-definitions/isummarytreewithstats-interface'>ISummaryTreeWithStats</a>&gt;</span>
+      </td>
+      <td>
+        Returns a summary at the current sequence number.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#updateusedroutes-method'>updateUsedRoutes</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>void</span>
+      </td>
+      <td>
+        After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to update their used routes.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#uploadblob-method'>uploadBlob</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;<a href='/docs/apis/core-interfaces/ifluidhandle-interface'>IFluidHandle</a>&lt;ArrayBufferLike&gt;&gt;</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/datastore/fluiddatastoreruntime-class#waitattached-method'>waitAttached</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>Promise&lt;void&gt;</span>
+      </td>
+      <td>
+        Will return when the data store is attached.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Constructor Details
+
+### (constructor) {#_constructor_-constructor}
+
+Create an instance of a DataStore runtime.
+
+#### Signature {#_constructor_-signature}
+
+```typescript
+constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
+```
+
+#### Parameters {#_constructor_-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        dataStoreContext
+      </td>
+      <td>
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/ifluiddatastorecontext-interface'>IFluidDataStoreContext</a></span>
+      </td>
+      <td>
+        Context object for the runtime.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        sharedObjectRegistry
+      </td>
+      <td>
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore/isharedobjectregistry-interface'>ISharedObjectRegistry</a></span>
+      </td>
+      <td>
+        The registry of shared objects that this data store will be able to instantiate.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        existing
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+        Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        initializeEntryPoint
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span>(runtime: <a href='/docs/apis/datastore-definitions/ifluiddatastoreruntime-interface'>IFluidDataStoreRuntime</a>) =&gt; Promise&lt;<a href='/docs/apis/core-interfaces#fluidobject-typealias'>FluidObject</a>&gt;</span>
+      </td>
+      <td>
+        Function to initialize the entryPoint object for the data store runtime. The handle to this data store runtime will point to the object returned by this function. If this function is not provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen and the primary way of interacting with some Fluid objects, and should be used if possible.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Property Details
+
+### absolutePath {#absolutepath-property}
+
+#### Signature {#absolutepath-signature}
+
+```typescript
+get absolutePath(): string;
+```
+
+### attachState {#attachstate-property}
+
+#### Signature {#attachstate-signature}
+
+```typescript
+get attachState(): AttachState;
+```
+
+### channelsRoutingContext {#channelsroutingcontext-property}
+
+#### Signature {#channelsroutingcontext-signature}
+
+```typescript
+get channelsRoutingContext(): this;
+```
+
+### clientDetails {#clientdetails-property}
+
+#### Signature {#clientdetails-signature}
+
+```typescript
+get clientDetails(): IClientDetails;
+```
+
+### clientId {#clientid-property}
+
+#### Signature {#clientid-signature}
+
+```typescript
+get clientId(): string | undefined;
+```
+
+### connected {#connected-property}
+
+#### Signature {#connected-signature}
+
+```typescript
+get connected(): boolean;
+```
+
+### deltaManager {#deltamanager-property}
+
+#### Signature {#deltamanager-signature}
+
+```typescript
+readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+```
+
+### disposed {#disposed-property}
+
+#### Signature {#disposed-signature}
+
+```typescript
+get disposed(): boolean;
+```
+
+### entryPoint {#entrypoint-property}
+
+Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a particular scenario) fall back to the current approach of requesting the root object through the request pattern.
+
+#### Signature {#entrypoint-signature}
+
+```typescript
+readonly entryPoint?: IFluidHandle<FluidObject>;
+```
+
+#### Remarks {#entrypoint-remarks}
+
+The plan is that eventually the data store will stop providing IFluidRouter functionality, this property will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access the data store's entryPoint.
+
+### id {#id-property}
+
+#### Signature {#id-signature}
+
+```typescript
+readonly id: string;
+```
+
+### idCompressor {#idcompressor-property}
+
+#### Signature {#idcompressor-signature}
+
+```typescript
+get idCompressor(): IIdCompressor | undefined;
+```
+
+### IFluidHandleContext {#ifluidhandlecontext-property}
+
+#### Signature {#ifluidhandlecontext-signature}
+
+```typescript
+get IFluidHandleContext(): this;
+```
+
+### IFluidRouter {#ifluidrouter-property}
+
+{{% callout warning Deprecated %}}
+- Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+
+{{% /callout %}}
+
+#### Signature {#ifluidrouter-signature}
+
+```typescript
+get IFluidRouter(): this;
+```
+
+### isAttached {#isattached-property}
+
+#### Signature {#isattached-signature}
+
+```typescript
+get isAttached(): boolean;
+```
+
+### logger {#logger-property}
+
+#### Signature {#logger-signature}
+
+```typescript
+get logger(): ITelemetryLoggerExt;
+```
+
+### objectsRoutingContext {#objectsroutingcontext-property}
+
+#### Signature {#objectsroutingcontext-signature}
+
+```typescript
+get objectsRoutingContext(): this;
+```
+
+### options {#options-property}
+
+#### Signature {#options-signature}
+
+```typescript
+readonly options: ILoaderOptions;
+```
+
+### rootRoutingContext {#rootroutingcontext-property}
+
+#### Signature {#rootroutingcontext-signature}
+
+```typescript
+get rootRoutingContext(): this;
+```
+
+### routeContext {#routecontext-property}
+
+#### Signature {#routecontext-signature}
+
+```typescript
+get routeContext(): IFluidHandleContext;
+```
+
+### visibilityState {#visibilitystate-property}
+
+#### Signature {#visibilitystate-signature}
+
+```typescript
+visibilityState: VisibilityState;
+```
+
+## Method Details
+
+### applyStashedOp {#applystashedop-method}
+
+#### Signature {#applystashedop-signature}
+
+```typescript
+applyStashedOp(content: any): Promise<unknown>;
+```
+
+#### Parameters {#applystashedop-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        <span>any</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#applystashedop-returns}
+
+**Return type:** Promise&lt;unknown&gt;
+
+### attachGraph {#attachgraph-method}
+
+This function is called when a handle to this data store is added to a visible DDS.
+
+#### Signature {#attachgraph-signature}
+
+```typescript
+attachGraph(): void;
+```
+
+### bind {#bind-method}
+
+#### Signature {#bind-signature}
+
+```typescript
+bind(handle: IFluidHandle): void;
+```
+
+#### Parameters {#bind-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        handle
+      </td>
+      <td>
+        <span><a href='/docs/apis/core-interfaces/ifluidhandle-interface'>IFluidHandle</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### bindChannel {#bindchannel-method}
+
+Binds a channel with the runtime. If the runtime is attached we will attach the channel right away. If the runtime is not attached we will defer the attach until the runtime attaches.
+
+#### Signature {#bindchannel-signature}
+
+```typescript
+bindChannel(channel: IChannel): void;
+```
+
+#### Parameters {#bindchannel-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        channel
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore-definitions/ichannel-interface'>IChannel</a></span>
+      </td>
+      <td>
+        channel to be registered.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### bindToContext {#bindtocontext-method}
+
+{{% callout warning Deprecated %}}
+- Not necessary if consumers add a new dataStore to the container by storing its handle. Binds this runtime to the container This includes the following: 1. Sending an Attach op that includes all existing state 2. Attaching the graph if the data store becomes attached.
+
+{{% /callout %}}
+
+#### Signature {#bindtocontext-signature}
+
+```typescript
+bindToContext(): void;
+```
+
+### createChannel {#createchannel-method}
+
+#### Signature {#createchannel-signature}
+
+```typescript
+createChannel(id: string | undefined, type: string): IChannel;
+```
+
+#### Parameters {#createchannel-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        id
+      </td>
+      <td>
+        <span>string &#124; undefined</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        type
+      </td>
+      <td>
+        <span>string</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#createchannel-returns}
+
+**Return type:** [IChannel](/docs/apis/datastore-definitions/ichannel-interface)
+
+### dispose {#dispose-method}
+
+#### Signature {#dispose-signature}
+
+```typescript
+dispose(): void;
+```
+
+### ensureNoDataModelChanges {#ensurenodatamodelchanges-method}
+
+Invokes the given callback and expects that no ops are submitted until execution finishes. If an op is submitted, an error will be raised.
+
+Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+
+#### Signature {#ensurenodatamodelchanges-signature}
+
+```typescript
+ensureNoDataModelChanges<T>(callback: () => T): T;
+```
+
+#### Parameters {#ensurenodatamodelchanges-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        callback
+      </td>
+      <td>
+        <span>() =&gt; T</span>
+      </td>
+      <td>
+        the callback to be invoked
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#ensurenodatamodelchanges-returns}
+
+**Return type:** T
+
+### getAttachSummary {#getattachsummary-method}
+
+#### Signature {#getattachsummary-signature}
+
+```typescript
+getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+```
+
+#### Parameters {#getattachsummary-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        telemetryContext
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/itelemetrycontext-interface'>ITelemetryContext</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getattachsummary-returns}
+
+**Return type:** [ISummaryTreeWithStats](/docs/apis/runtime-definitions/isummarytreewithstats-interface)
+
+### getAudience {#getaudience-method}
+
+#### Signature {#getaudience-signature}
+
+```typescript
+getAudience(): IAudience;
+```
+
+#### Returns {#getaudience-returns}
+
+**Return type:** IAudience
+
+### getChannel {#getchannel-method}
+
+#### Signature {#getchannel-signature}
+
+```typescript
+getChannel(id: string): Promise<IChannel>;
+```
+
+#### Parameters {#getchannel-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        id
+      </td>
+      <td>
+        <span>string</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getchannel-returns}
+
+**Return type:** Promise&lt;[IChannel](/docs/apis/datastore-definitions/ichannel-interface)&gt;
+
+### getGCData {#getgcdata-method}
+
+Generates data used for garbage collection. This includes a list of GC nodes that represent this channel including any of its child channel contexts. Each node has a set of outbound routes to other GC nodes in the document. It does the following:
+
+1. Calls into each child context to get its GC data.
+
+2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be identified as belonging to the child.
+
+3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent the GC data of this channel.
+
+#### Signature {#getgcdata-signature}
+
+```typescript
+getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+```
+
+#### Parameters {#getgcdata-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        fullGC
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+        true to bypass optimizations and force full generation of GC data.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getgcdata-returns}
+
+**Return type:** Promise&lt;[IGarbageCollectionData](/docs/apis/runtime-definitions/igarbagecollectiondata-interface)&gt;
+
+### getQuorum {#getquorum-method}
+
+#### Signature {#getquorum-signature}
+
+```typescript
+getQuorum(): IQuorumClients;
+```
+
+#### Returns {#getquorum-returns}
+
+**Return type:** [IQuorumClients](/docs/apis/protocol-definitions/iquorumclients-interface)
+
+### load {#load-method}
+
+{{% callout warning Deprecated %}}
+- Instantiate the class using its constructor instead.
+
+Loads the data store runtime
+
+{{% /callout %}}
+
+#### Signature {#load-signature}
+
+```typescript
+static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
+```
+
+#### Parameters {#load-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        context
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/ifluiddatastorecontext-interface'>IFluidDataStoreContext</a></span>
+      </td>
+      <td>
+        The data store context
+      </td>
+    </tr>
+    <tr>
+      <td>
+        sharedObjectRegistry
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore/isharedobjectregistry-interface'>ISharedObjectRegistry</a></span>
+      </td>
+      <td>
+        The registry of shared objects used by this data store
+      </td>
+    </tr>
+    <tr>
+      <td>
+        existing
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+        If loading from an existing file.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#load-returns}
+
+**Return type:** [FluidDataStoreRuntime](/docs/apis/datastore/fluiddatastoreruntime-class)
+
+### makeVisibleAndAttachGraph {#makevisibleandattachgraph-method}
+
+This function is called when a data store becomes root. It does the following:
+
+1. Marks the data store locally visible in the container.
+
+2. Attaches the graph of all the handles bound to it.
+
+3. Calls into the data store context to mark it visible in the container too. If the container is globally visible, it will mark us globally visible. Otherwise, it will mark us globally visible when it becomes globally visible.
+
+#### Signature {#makevisibleandattachgraph-signature}
+
+```typescript
+makeVisibleAndAttachGraph(): void;
+```
+
+### process {#process-method}
+
+#### Signature {#process-signature}
+
+```typescript
+process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+```
+
+#### Parameters {#process-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        message
+      </td>
+      <td>
+        <span><a href='/docs/apis/protocol-definitions/isequenceddocumentmessage-interface'>ISequencedDocumentMessage</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        local
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        localOpMetadata
+      </td>
+      <td>
+        <span>unknown</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### processSignal {#processsignal-method}
+
+#### Signature {#processsignal-signature}
+
+```typescript
+processSignal(message: IInboundSignalMessage, local: boolean): void;
+```
+
+#### Parameters {#processsignal-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        message
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/iinboundsignalmessage-interface'>IInboundSignalMessage</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        local
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### request {#request-method}
+
+{{% callout warning Deprecated %}}
+- Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+
+{{% /callout %}}
+
+#### Signature {#request-signature}
+
+```typescript
+request(request: IRequest): Promise<IResponse>;
+```
+
+#### Parameters {#request-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        request
+      </td>
+      <td>
+        <span><a href='/docs/apis/core-interfaces/irequest-interface'>IRequest</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#request-returns}
+
+**Return type:** Promise&lt;[IResponse](/docs/apis/core-interfaces/iresponse-interface)&gt;
+
+### resolveHandle {#resolvehandle-method}
+
+#### Signature {#resolvehandle-signature}
+
+```typescript
+resolveHandle(request: IRequest): Promise<IResponse>;
+```
+
+#### Parameters {#resolvehandle-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        request
+      </td>
+      <td>
+        <span><a href='/docs/apis/core-interfaces/irequest-interface'>IRequest</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#resolvehandle-returns}
+
+**Return type:** Promise&lt;[IResponse](/docs/apis/core-interfaces/iresponse-interface)&gt;
+
+### reSubmit {#resubmit-method}
+
+For messages of type MessageType.Operation, finds the right channel and asks it to resubmit the message. For all other messages, just submit it again. This typically happens when we reconnect and there are unacked messages.
+
+#### Signature {#resubmit-signature}
+
+```typescript
+reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+```
+
+#### Parameters {#resubmit-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        type
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore#datastoremessagetype-enum'>DataStoreMessageType</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        <span>any</span>
+      </td>
+      <td>
+        The content of the original message.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        localOpMetadata
+      </td>
+      <td>
+        <span>unknown</span>
+      </td>
+      <td>
+        The local metadata associated with the original message.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### rollback {#rollback-method}
+
+Revert a local op.
+
+#### Signature {#rollback-signature}
+
+```typescript
+rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+```
+
+#### Parameters {#rollback-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        type
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore#datastoremessagetype-enum'>DataStoreMessageType</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        <span>any</span>
+      </td>
+      <td>
+        The content of the original message.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        localOpMetadata
+      </td>
+      <td>
+        <span>unknown</span>
+      </td>
+      <td>
+        The local metadata associated with the original message.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### setConnectionState {#setconnectionstate-method}
+
+#### Signature {#setconnectionstate-signature}
+
+```typescript
+setConnectionState(connected: boolean, clientId?: string): void;
+```
+
+#### Parameters {#setconnectionstate-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        connected
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        clientId
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span>string</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### submitMessage {#submitmessage-method}
+
+#### Signature {#submitmessage-signature}
+
+```typescript
+submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+```
+
+#### Parameters {#submitmessage-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        type
+      </td>
+      <td>
+        <span><a href='/docs/apis/datastore#datastoremessagetype-enum'>DataStoreMessageType</a></span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        <span>any</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        localOpMetadata
+      </td>
+      <td>
+        <span>unknown</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### submitSignal {#submitsignal-method}
+
+#### Signature {#submitsignal-signature}
+
+```typescript
+submitSignal(type: string, content: any): void;
+```
+
+#### Parameters {#submitsignal-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        type
+      </td>
+      <td>
+        <span>string</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        <span>any</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### summarize {#summarize-method}
+
+Returns a summary at the current sequence number.
+
+#### Signature {#summarize-signature}
+
+```typescript
+summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+```
+
+#### Parameters {#summarize-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        fullTree
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+        true to bypass optimizations and force a full summary tree
+      </td>
+    </tr>
+    <tr>
+      <td>
+        trackState
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span>boolean</span>
+      </td>
+      <td>
+        This tells whether we should track state from this summary.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        telemetryContext
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span><a href='/docs/apis/runtime-definitions/itelemetrycontext-interface'>ITelemetryContext</a></span>
+      </td>
+      <td>
+        summary data passed through the layers for telemetry purposes
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#summarize-returns}
+
+**Return type:** Promise&lt;[ISummaryTreeWithStats](/docs/apis/runtime-definitions/isummarytreewithstats-interface)&gt;
+
+### updateUsedRoutes {#updateusedroutes-method}
+
+After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to update their used routes.
+
+#### Signature {#updateusedroutes-signature}
+
+```typescript
+updateUsedRoutes(usedRoutes: string[]): void;
+```
+
+#### Parameters {#updateusedroutes-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        usedRoutes
+      </td>
+      <td>
+        <span>string[]</span>
+      </td>
+      <td>
+        The routes that are used in all contexts in this channel.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### uploadBlob {#uploadblob-method}
+
+#### Signature {#uploadblob-signature}
+
+```typescript
+uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+```
+
+#### Parameters {#uploadblob-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th>
+        Parameter
+      </th>
+      <th>
+        Modifiers
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        blob
+      </td>
+      <td>
+      </td>
+      <td>
+        <span>ArrayBufferLike</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        signal
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <span>AbortSignal</span>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#uploadblob-returns}
+
+**Return type:** Promise&lt;[IFluidHandle](/docs/apis/core-interfaces/ifluidhandle-interface)&lt;ArrayBufferLike&gt;&gt;
+
+### waitAttached {#waitattached-method}
+
+Will return when the data store is attached.
+
+#### Signature {#waitattached-signature}
+
+```typescript
+waitAttached(): Promise<void>;
+```
+
+#### Returns {#waitattached-returns}
+
+**Return type:** Promise&lt;void&gt;

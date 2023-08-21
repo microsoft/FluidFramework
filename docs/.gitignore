@@ -1,7 +1,6 @@
 .hugo_build.lock
 assets/doc-models/*.json
 bin/
-content/docs/apis/
 node_modules/
 public/
 scripts/api-documenter/temp
