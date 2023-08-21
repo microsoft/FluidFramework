@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { ContainerErrorType, IErrorBase } from "@fluidframework/container-definitions";
+import { IErrorBase, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidErrorBase,
@@ -16,13 +16,24 @@ import {
 } from "@fluidframework/telemetry-utils";
 
 /**
+ * Error indicating that a client's session has reached its time limit and is closed.
+ */
+export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
+	readonly errorType = ContainerErrorTypes.clientSessionExpiredError;
+
+	constructor(message: string, readonly expiryMs: number) {
+		super(message, { timeoutMs: expiryMs });
+	}
+}
+
+/**
  * DataProcessingError indicates we hit a fatal error while processing incoming data from the Fluid Service.
  * The error will often originate in the dataStore or DDS implementation that is responding to incoming changes.
  * This differs from DataCorruptionError in that this may be a transient error that will not repro in another
  * client or session.
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.dataProcessingError;
+	readonly errorType = ContainerErrorTypes.dataProcessingError;
 	readonly canRetry = false;
 
 	private constructor(errorMessage: string) {

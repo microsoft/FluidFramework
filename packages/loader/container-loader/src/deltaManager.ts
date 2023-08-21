@@ -5,6 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import {
+	IThrottlingWarning,
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
@@ -14,7 +15,6 @@ import {
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	IThrottlingWarning,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {

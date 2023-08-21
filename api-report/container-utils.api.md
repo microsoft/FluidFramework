@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ClientSessionExpiredError } from '@fluidframework/telemetry-utils';
 import { DataCorruptionError } from '@fluidframework/telemetry-utils';
 import { EventForwarder } from '@fluidframework/common-utils';
 import { GenericError } from '@fluidframework/telemetry-utils';
@@ -15,20 +14,24 @@ import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDeltaSender } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorBase } from '@fluidframework/container-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { IUsageError } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ThrottlingWarning } from '@fluidframework/telemetry-utils';
 import { UsageError } from '@fluidframework/telemetry-utils';
 
-export { ClientSessionExpiredError }
+// @public
+export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
+    constructor(message: string, expiryMs: number);
+    // (undocumented)
+    readonly errorType: "clientSessionExpiredError";
+    // (undocumented)
+    readonly expiryMs: number;
+}
 
 export { DataCorruptionError }
 
@@ -38,7 +41,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly canRetry = false;
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     // (undocumented)
-    readonly errorType = ContainerErrorType.dataProcessingError;
+    readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 

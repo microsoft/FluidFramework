@@ -4,14 +4,14 @@
  */
 
 export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
-export { DataProcessingError, extractSafePropertiesFromMessage } from "./error";
+export {
+	ClientSessionExpiredError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+} from "./error";
 
 // Deprecated exports for backwards compatibility
 export {
-	/**
-	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
-	 */
-	ClientSessionExpiredError,
 	/**
 	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
 	 */

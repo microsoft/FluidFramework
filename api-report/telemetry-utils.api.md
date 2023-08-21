@@ -7,7 +7,9 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDisposable } from '@fluidframework/core-interfaces';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -16,22 +18,12 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties as ITelemetryProperties_2 } from '@fluidframework/common-definitions';
-import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { IUsageError } from '@fluidframework/container-definitions';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces';
+import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public
-export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
-    constructor(message: string, expiryMs: number);
-    // (undocumented)
-    readonly errorType = ContainerErrorType.clientSessionExpiredError;
-    // (undocumented)
-    readonly expiryMs: number;
-}
 
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -59,11 +51,11 @@ export function createMultiSinkLogger(props: {
 
 // @public
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(message: string, props: ITelemetryProperties_2);
+    constructor(message: string, props: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    readonly errorType = ContainerErrorType.dataCorruptionError;
+    readonly errorType: "dataCorruptionError";
 }
 
 // @public (undocumented)
@@ -97,11 +89,11 @@ export function generateStack(): string | undefined;
 
 // @public
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-    constructor(message: string, error?: any, props?: ITelemetryProperties_2);
+    constructor(message: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
-    readonly errorType = ContainerErrorType.genericError;
+    readonly errorType: "genericError";
 }
 
 // @public
@@ -391,7 +383,7 @@ export class ThresholdCounter {
 // @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     // (undocumented)
-    readonly errorType = ContainerErrorType.throttlingError;
+    readonly errorType: "throttlingError";
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
@@ -399,9 +391,9 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 
 // @public
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-    constructor(message: string, props?: ITelemetryProperties_2);
+    constructor(message: string, props?: ITelemetryProperties);
     // (undocumented)
-    readonly errorType = ContainerErrorType.usageError;
+    readonly errorType: "usageError";
 }
 
 // @public

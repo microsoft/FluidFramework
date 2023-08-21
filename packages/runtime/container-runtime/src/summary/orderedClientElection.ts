@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable @rushstack/no-new-null */
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,

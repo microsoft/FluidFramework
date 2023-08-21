@@ -12,13 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
-export {
-	ClientSessionExpiredError,
-	DataCorruptionError,
-	GenericError,
-	ThrottlingWarning,
-	UsageError,
-} from "./error";
+export { DataCorruptionError, GenericError, ThrottlingWarning, UsageError } from "./error";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,

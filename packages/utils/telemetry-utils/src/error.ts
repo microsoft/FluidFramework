@@ -4,13 +4,13 @@
  */
 
 import {
-	ContainerErrorType,
+	FluidErrorTypes,
 	IGenericError,
 	IErrorBase,
+	ITelemetryProperties,
 	IThrottlingWarning,
 	IUsageError,
 } from "@fluidframework/core-interfaces";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 import { LoggingError, wrapErrorAndLog } from "./errorLogging";
 import { IFluidErrorBase } from "./fluidErrorBase";
@@ -20,7 +20,7 @@ import { ITelemetryLoggerExt } from "./telemetryTypes";
  * Generic wrapper for an unrecognized/uncategorized error object
  */
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.genericError;
+	readonly errorType = FluidErrorTypes.genericError;
 
 	/**
 	 * Create a new GenericError
@@ -38,7 +38,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
  * Warning emitted when requests to storage are being throttled.
  */
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.throttlingError;
+	readonly errorType = FluidErrorTypes.throttlingError;
 
 	private constructor(
 		message: string,
@@ -64,19 +64,10 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 
 /** Error indicating an API is being used improperly resulting in an invalid operation. */
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.usageError;
+	readonly errorType = FluidErrorTypes.usageError;
 
 	constructor(message: string, props?: ITelemetryProperties) {
 		super(message, { ...props, usageError: true });
-	}
-}
-
-/** Error indicating that a client's session has reached its time limit and is closed. */
-export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
-	readonly errorType = ContainerErrorType.clientSessionExpiredError;
-
-	constructor(message: string, readonly expiryMs: number) {
-		super(message, { timeoutMs: expiryMs });
 	}
 }
 
@@ -85,7 +76,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
  * backing this container is corrupted, and this container would never be expected to load properly again
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.dataCorruptionError;
+	readonly errorType = FluidErrorTypes.dataCorruptionError;
 	readonly canRetry = false;
 
 	constructor(message: string, props: ITelemetryProperties) {
