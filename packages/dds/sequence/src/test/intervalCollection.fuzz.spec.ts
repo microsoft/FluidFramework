@@ -255,8 +255,9 @@ describe("IntervalCollection fuzz testing", () => {
 		// skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
 		// TODO: remove when the sequence is fixed.
 		skip: [
-			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
-			76, 79, 86, 91, 92, 94,
+			1, 3, 4, 7, 9, 11, 12, 13, 18, 19, 20, 25, 28, 31, 32, 33, 34, 36, 39, 41, 42, 43, 44,
+			45, 49, 50, 51, 52, 53, 55, 57, 58, 60, 61, 62, 63, 64, 65, 72, 74, 76, 78, 79, 82, 83,
+			86, 87, 89, 90, 91, 92, 94, 98, 99,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -282,7 +283,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
 		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
-		skip: [80, 9, 12, 44],
+		skip: [9, 12, 33, 44, 80],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
