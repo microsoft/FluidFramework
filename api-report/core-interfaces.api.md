@@ -460,15 +460,6 @@ export interface ITelemetryProperties {
 }
 
 // @public
-export const enum LogLevel {
-    // (undocumented)
-    default = 10,
-    // (undocumented)
-    error = 20,
-    // (undocumented)
-    verbose = 0
-}
-
 export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
@@ -478,6 +469,16 @@ export interface IThrottlingWarning extends IErrorBase {
 // @public
 export interface IUsageError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.usageError;
+}
+
+// @public
+export const enum LogLevel {
+    // (undocumented)
+    default = 10,
+    // (undocumented)
+    error = 20,
+    // (undocumented)
+    verbose = 0
 }
 
 // @public
