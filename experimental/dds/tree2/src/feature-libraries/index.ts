@@ -145,6 +145,7 @@ export {
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
 	ViewSchema,
+	SchemaLintConfiguration,
 } from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

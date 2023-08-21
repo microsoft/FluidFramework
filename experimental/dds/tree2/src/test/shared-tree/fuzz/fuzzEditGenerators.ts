@@ -286,22 +286,28 @@ export function makeOpGenerator(
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	const generatorWeights: Weights<Operation, FuzzTestState> = [
-		[
+	const generatorWeights: Weights<Operation, FuzzTestState> = [];
+	if (sumWeights([passedOpWeights.delete, passedOpWeights.insert]) > 0) {
+		generatorWeights.push([
 			makeEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-		],
-		[
+		]);
+	}
+	if (sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]) > 0) {
+		generatorWeights.push([
 			makeTransactionEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
-		],
-		[
+		]);
+	}
+	if (sumWeights([passedOpWeights.undo, passedOpWeights.redo]) > 0) {
+		generatorWeights.push([
 			makeUndoRedoEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.undo, passedOpWeights.redo]),
-		],
-		[{ type: "synchronizeTrees" }, passedOpWeights.synchronizeTrees],
-	];
-
+		]);
+	}
+	if (passedOpWeights.synchronizeTrees > 0) {
+		generatorWeights.push([{ type: "synchronizeTrees" }, passedOpWeights.synchronizeTrees]);
+	}
 	const generatorAssumingTreeIsSelected = createWeightedGenerator<Operation, FuzzTestState>(
 		generatorWeights,
 	);

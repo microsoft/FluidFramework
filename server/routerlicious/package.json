@@ -11,20 +11,19 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-		"build:compile": "lerna run build:compile --stream",
-		"build:docs": "lerna run build:docs --stream --parallel",
-		"build:fast": "fluid-build --root ../.. -g server",
+		"build": "npm run policy-check && npm run layer-check && fluid-build -g server --task build",
+		"build:compile": "fluid-build -g server --task compile",
+		"build:docs": "fluid-build -g server --task build:docs",
+		"build:fast": "fluid-build -g server --task build --worker",
 		"build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
-		"build:genver": "lerna run build:genver --stream --parallel",
-		"bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver",
+		"build:genver": "pnpm run -r --no-sort --stream build:genver",
 		"check:versions": "flub check buildVersion -g server --path .",
-		"ci:build": "npm run build:genver && lerna run build:compile --stream",
-		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
-		"ci:eslint": "lerna run eslint --no-sort --stream",
+		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
+		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
+		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
 		"ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
-		"clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
+		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"docker-build": "docker-compose build",
@@ -32,7 +31,7 @@
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"lint": "npm run prettier && npm run ci:eslint",
-		"lint:fix": "npm run prettier:fix && lerna run eslint:fix --no-sort --stream",
+		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
 		"policy-check": "cd ../.. && npm run policy-check",
 		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
 		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
@@ -46,17 +45,17 @@
 		"start:service": "docker-compose -f docker-compose.service.yml -f docker-compose.dev.yml up -V",
 		"stop": "docker-compose down",
 		"stop:full": "docker-compose down -v",
-		"test": "lerna run test --stream --no-bail --no-sort",
+		"test": "pnpm run -r --no-sort --stream --no-bail test",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "nyc npm run test:report",
 		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
-		"test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"tsc": "lerna run tsc --stream",
+		"test:report": "pnpm run -r --no-sort --stream --no-bail test -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"tsc": "pnpm run -r --stream tsc",
 		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub typetests -g server --reset --normalize",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
-		"watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
-		"watch:tsc": "lerna run --parallel tsc -- -- --watch"
+		"watch:esnext": "pnpm run -r --no-sort --stream build:esnext -- -- --watch",
+		"watch:tsc": "pnpm run -r --no-sort --stream tsc -- -- --watch"
 	},
 	"nyc": {
 		"all": true,
@@ -79,7 +78,7 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
-		"lerna": "^5.1.8",
+		"lerna": "5.6.2",
 		"mocha": "^10.2.0",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
@@ -92,8 +91,12 @@
 		"node": ">=14.17.0"
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"@yarnpkg/parsers is a transitive dependency of lerna via nx, but versions >3.0.0-rc.48.1 require node 18, while we use 16."
+		],
 		"overrides": {
 			"@types/node": "^16.18.16",
+			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.1"
 		}

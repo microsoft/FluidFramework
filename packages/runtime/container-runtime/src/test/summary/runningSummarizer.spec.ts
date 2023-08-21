@@ -1215,7 +1215,7 @@ describe("Runtime", () => {
 
 				it("Should create an on-demand summary", async () => {
 					await emitNextOp(2); // set ref seq to 2
-					const result = summarizer.summarizeOnDemand(undefined, { reason });
+					const result = summarizer.summarizeOnDemand({ reason });
 
 					const submitResult = await result.summarySubmitted;
 					assertRunCounts(1, 0, 0, "on-demand should run");
@@ -1290,7 +1290,7 @@ describe("Runtime", () => {
 
 					let resolved = false;
 					try {
-						summarizer.summarizeOnDemand(undefined, { reason });
+						summarizer.summarizeOnDemand({ reason });
 						resolved = true;
 					} catch {}
 
@@ -1300,7 +1300,7 @@ describe("Runtime", () => {
 
 				it("On-demand summary should fail on nack", async () => {
 					await emitNextOp(2); // set ref seq to 2
-					const result = summarizer.summarizeOnDemand(undefined, { reason });
+					const result = summarizer.summarizeOnDemand({ reason });
 
 					const submitResult = await result.summarySubmitted;
 					assertRunCounts(1, 0, 0, "on-demand should run");
@@ -1372,16 +1372,16 @@ describe("Runtime", () => {
 				it("Should fail an on-demand summary if stopping", async () => {
 					summarizer.waitStop(true).catch(() => {});
 					const [refreshLatestAck, fullTree] = [true, true];
-					const result1 = summarizer.summarizeOnDemand(undefined, { reason: "test1" });
-					const result2 = summarizer.summarizeOnDemand(undefined, {
+					const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
+					const result2 = summarizer.summarizeOnDemand({
 						reason: "test2",
 						refreshLatestAck,
 					});
-					const result3 = summarizer.summarizeOnDemand(undefined, {
+					const result3 = summarizer.summarizeOnDemand({
 						reason: "test3",
 						fullTree,
 					});
-					const result4 = summarizer.summarizeOnDemand(undefined, {
+					const result4 = summarizer.summarizeOnDemand({
 						reason: "test4",
 						refreshLatestAck,
 						fullTree,
@@ -1414,16 +1414,16 @@ describe("Runtime", () => {
 				it("Should fail an on-demand summary if disposed", async () => {
 					summarizer.dispose();
 					const [refreshLatestAck, fullTree] = [true, true];
-					const result1 = summarizer.summarizeOnDemand(undefined, { reason: "test1" });
-					const result2 = summarizer.summarizeOnDemand(undefined, {
+					const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
+					const result2 = summarizer.summarizeOnDemand({
 						reason: "test2",
 						refreshLatestAck,
 					});
-					const result3 = summarizer.summarizeOnDemand(undefined, {
+					const result3 = summarizer.summarizeOnDemand({
 						reason: "test3",
 						fullTree,
 					});
-					const result4 = summarizer.summarizeOnDemand(undefined, {
+					const result4 = summarizer.summarizeOnDemand({
 						reason: "test4",
 						refreshLatestAck,
 						fullTree,

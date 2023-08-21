@@ -45,8 +45,13 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
-		cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		if (weight > 0) {
+			cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		}
 		totalWeight = cumulativeWeight;
+	}
+	if (totalWeight === 0) {
+		throw new Error("createWeightedGenerator must have some positive weight");
 	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
@@ -282,8 +287,13 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	let totalWeight = 0;
 	for (const [tOrGenerator, weight, shouldAccept] of weights) {
 		const cumulativeWeight = totalWeight + weight;
-		cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		if (weight > 0) {
+			cumulativeSums.push([tOrGenerator, cumulativeWeight, shouldAccept]);
+		}
 		totalWeight = cumulativeWeight;
+	}
+	if (totalWeight === 0) {
+		throw new Error("createWeightedAsyncGenerator must have some positive weight");
 	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
