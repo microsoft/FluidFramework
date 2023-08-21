@@ -140,7 +140,7 @@ steps:
             else
               packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
               feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
-              promote_api_url="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/@fluidframework/tree2/versions/2.0.0-internal.5.4.1?api-version=7.1-preview.1"
+              promote_api_url="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/@fluidframework/tree2/versions/2.0.0-internal.6.2.1?api-version=7.1-preview.1"
               
               if [[ "$packageName" != @(tinylicious|fluid-framework) ]]; then
                 prefixes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
