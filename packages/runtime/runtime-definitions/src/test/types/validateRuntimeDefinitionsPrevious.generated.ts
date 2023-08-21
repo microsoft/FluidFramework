@@ -467,6 +467,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -491,6 +492,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -683,6 +685,7 @@ declare function get_current_InterfaceDeclaration_IIdCompressor():
 declare function use_old_InterfaceDeclaration_IIdCompressor(
     use: TypeOnly<old.IIdCompressor>);
 use_old_InterfaceDeclaration_IIdCompressor(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIdCompressor());
 
 /*
@@ -1409,6 +1412,7 @@ declare function get_current_TypeAliasDeclaration_SessionId():
 declare function use_old_TypeAliasDeclaration_SessionId(
     use: TypeOnly<old.SessionId>);
 use_old_TypeAliasDeclaration_SessionId(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SessionId());
 
 /*

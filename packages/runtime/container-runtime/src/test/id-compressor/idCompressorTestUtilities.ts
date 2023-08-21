@@ -25,7 +25,7 @@ import {
 	StableId,
 } from "@fluidframework/runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IdCompressor, createSessionId, fail, assertIsSessionId } from "../../id-compressor";
+import { IdCompressor, createSessionId, assertIsSessionId } from "../../id-compressor";
 import {
 	FinalCompressedId,
 	getOrCreate,
@@ -33,6 +33,7 @@ import {
 	isFinalId,
 	isLocalId,
 	ReadonlyIdCompressor,
+	fail,
 } from "./testCommon";
 
 /**

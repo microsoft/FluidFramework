@@ -28,18 +28,19 @@ export class Sessions {
 	// A fast lookup table from session ID to the session object, used to avoid accessing the slower btree
 	private readonly sessionCache = new Map<SessionId, Session>();
 
-	public constructor(sessions?: [NumericUuid, Session][]) {
+	public constructor(sessions?: [sessionBase: NumericUuid, session: Session][]) {
 		if (sessions !== undefined) {
 			// bulk load path
 			for (const [numeric, session] of sessions) {
 				this.sessionCache.set(stableIdFromNumericUuid(numeric) as SessionId, session);
 			}
 			this.uuidSpace = new BTree(sessions, compareBigints);
-			assert(
-				this.sessionCache.size === sessions.length &&
-					sessions.length === this.uuidSpace.size,
-				"Cannot resume existing session.",
-			);
+			if (
+				this.sessionCache.size !== sessions.length ||
+				sessions.length !== this.uuidSpace.size
+			) {
+				throw new Error("Cannot resume existing session.");
+			}
 		}
 	}
 
@@ -71,9 +72,11 @@ export class Sessions {
 			return undefined;
 		}
 		const [_, session] = possibleMatch;
-		const alignedLocal = localIdFromGenCount(
-			Number(subtractNumericUuids(numericStable, session.sessionUuid)) + 1,
-		);
+		const numericDelta = subtractNumericUuids(numericStable, session.sessionUuid);
+		if (numericDelta > Number.MAX_SAFE_INTEGER) {
+			return undefined;
+		}
+		const alignedLocal = localIdFromGenCount(Number(numericDelta) + 1);
 		const containingCluster = session.getClusterByLocal(alignedLocal, true);
 		if (containingCluster === undefined) {
 			return undefined;
@@ -81,15 +84,16 @@ export class Sessions {
 		return [containingCluster, alignedLocal];
 	}
 
-	public clusterCollides(owningSession: Session, cluster: IdCluster): boolean {
+	public clusterCollides(cluster: IdCluster): boolean {
+		const { session: owningSession, baseLocalId, capacity } = cluster;
 		const clusterBaseNumeric = offsetNumericUuid(
 			owningSession.sessionUuid,
-			genCountFromLocalId(cluster.baseLocalId) - 1,
+			genCountFromLocalId(baseLocalId) - 1,
 		);
-		const clusterMaxNumeric = offsetNumericUuid(clusterBaseNumeric, cluster.capacity - 1);
+		const clusterMaxNumeric = offsetNumericUuid(clusterBaseNumeric, capacity - 1);
 		let closestMatch: [NumericUuid, Session] | undefined =
 			this.uuidSpace.getPairOrNextLower(clusterMaxNumeric);
-		// Find the first non-empty session that is not the owner of this new cluster.
+		// Find the first session that is not the owner of this new cluster.
 		// Once we have that, check to see if its cluster chain overlaps with the new cluster.
 		// Consider the following diagram of UUID space:
 		// Cluster chain A:  |----------------------|
@@ -99,10 +103,7 @@ export class Sessions {
 		// the next lower session (which is B) and erroneously determine we do not collide
 		// with any other session, but this situation is impossible to get into as B would
 		// have detected that it collided with A (or the other way around, depending on ordering).
-		while (
-			closestMatch !== undefined &&
-			(closestMatch[1] === owningSession || closestMatch[1].isEmpty())
-		) {
+		while (closestMatch !== undefined && closestMatch[1] === owningSession) {
 			closestMatch = this.uuidSpace.nextLowerPair(closestMatch[0]);
 		}
 		if (closestMatch === undefined) {
@@ -113,6 +114,9 @@ export class Sessions {
 		assert(session !== owningSession, "Failed to attempt to detect collisions.");
 		const lastCluster = session.getLastCluster();
 		if (lastCluster === undefined) {
+			// If the closest session is empty (the local session), then it is guaranteed (probabilistically) that there are no
+			// non-empty sessions that have a cluster chain that starts prior to the empty session and collides with the cluster
+			// we are checking, so we can return false.
 			return false;
 		}
 		const lastAllocatedNumeric = offsetNumericUuid(
@@ -163,17 +167,20 @@ export class Session {
 	/**
 	 * Adds a new empty cluster to the cluster chain of this session.
 	 */
-	public addEmptyCluster(
+	public addNewCluster(
 		baseFinalId: FinalCompressedId,
-		baseLocalId: LocalCompressedId,
 		capacity: number,
+		count: number,
 	): IdCluster {
+		const lastCluster = this.getLastCluster();
 		const newCluster: IdCluster = {
 			session: this,
 			baseFinalId,
-			baseLocalId,
+			baseLocalId: (lastCluster === undefined
+				? -1
+				: lastAllocatedLocal(lastCluster) - 1) as LocalCompressedId,
 			capacity,
-			count: 0,
+			count,
 		};
 		this.clusterChain.push(newCluster);
 		return newCluster;
@@ -187,7 +194,7 @@ export class Session {
 	 * Returns the last cluster in this session's cluster chain, if any.
 	 */
 	public getLastCluster(): IdCluster | undefined {
-		return this.isEmpty() ? undefined : this.clusterChain[this.clusterChain.length - 1];
+		return this.clusterChain[this.clusterChain.length - 1];
 	}
 
 	/**
@@ -352,15 +359,16 @@ export function getAlignedFinal(
 
 /**
  * Returns the local ID that is aligned with the supplied final ID within a cluster.
- * Includes allocated IDs.
+ * Fails if the supplied ID does not fall within the cluster bounds.
  */
 export function getAlignedLocal(
 	cluster: IdCluster,
 	finalWithin: FinalCompressedId,
-): LocalCompressedId | undefined {
-	if (finalWithin < cluster.baseFinalId || finalWithin > lastAllocatedFinal(cluster)) {
-		return undefined;
-	}
+): LocalCompressedId {
+	assert(
+		finalWithin >= cluster.baseFinalId && finalWithin <= lastAllocatedFinal(cluster),
+		"Supplied ID is not within the cluster.",
+	);
 	const finalDelta = finalWithin - cluster.baseFinalId;
 	return (cluster.baseLocalId - finalDelta) as LocalCompressedId;
 }

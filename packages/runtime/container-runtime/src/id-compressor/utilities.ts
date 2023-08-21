@@ -185,12 +185,3 @@ export function addNumericUuids(a: NumericUuid, b: NumericUuid): NumericUuid {
 	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (a + b) as NumericUuid;
 }
-
-/**
- * Fails an assertion. Throws an Error that the assertion failed.
- * Use when violations are logic errors in the program.
- * @param message - Message to be printed if assertion fails.
- */
-export function fail(message: string): never {
-	assert(false, message);
-}

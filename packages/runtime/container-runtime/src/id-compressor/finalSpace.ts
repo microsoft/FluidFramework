@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IdCluster, clustersEqual } from "./sessions";
+import { IdCluster, clustersEqual, lastAllocatedFinal, lastFinalizedFinal } from "./sessions";
 import { FinalCompressedId } from "./identifiers";
 
 /**
@@ -35,14 +35,25 @@ export class FinalSpace {
 	}
 
 	/**
-	 * @returns the upper bound (exclusive) of final IDs in final space, i.e. one greater than the last final ID in the last cluster.
+	 * @returns the upper bound (exclusive) of finalized IDs in final space, i.e. one greater than the last final ID in the last cluster.
+	 * Note: this does not include allocated but unfinalized space in clusters.
 	 */
-	public getFinalIdLimit(): FinalCompressedId {
-		if (this.clusterList.length === 0) {
-			return 0 as FinalCompressedId;
-		}
-		const lastCluster = this.clusterList[this.clusterList.length - 1];
-		return ((lastCluster.baseFinalId as number) + lastCluster.count) as FinalCompressedId;
+	public getFinalizedIdLimit(): FinalCompressedId {
+		const lastCluster = this.getLastCluster();
+		return lastCluster === undefined
+			? (0 as FinalCompressedId)
+			: (((lastFinalizedFinal(lastCluster) as number) + 1) as FinalCompressedId);
+	}
+
+	/**
+	 * @returns the upper bound (exclusive) of allocated IDs in final space, i.e. one greater than the last final ID in the last cluster.
+	 * Note: this does includes all allocated IDs in clusters.
+	 */
+	public getAllocatedIdLimit(): FinalCompressedId {
+		const lastCluster = this.getLastCluster();
+		return lastCluster === undefined
+			? (0 as FinalCompressedId)
+			: (((lastAllocatedFinal(lastCluster) as number) + 1) as FinalCompressedId);
 	}
 
 	public equals(other: FinalSpace): boolean {

@@ -6,7 +6,6 @@
 /* eslint-disable tsdoc/syntax */
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/common-utils";
-import { fail } from "./utilities";
 
 /**
  * A map in which entries are always added in key-sorted order.
@@ -141,7 +140,7 @@ export class AppendOnlySortedMap<K, V> {
 		const { elements } = this;
 		const { length } = elements;
 		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
-			fail("Inserted key must be > all others in the map.");
+			throw new Error("Inserted key must be > all others in the map.");
 		}
 		elements.push(key);
 		elements.push(value);
@@ -160,7 +159,7 @@ export class AppendOnlySortedMap<K, V> {
 			elements.pop();
 			elements.pop();
 			if (comparator(key, this.maxKey() as K) <= 0) {
-				fail("Inserted key must be > all others in the map.");
+				throw new Error("Inserted key must be > all others in the map.");
 			}
 		}
 		elements.push(key);
@@ -355,7 +354,7 @@ export class AppendOnlySortedMap<K, V> {
 			} else if (c === 0) {
 				return keyIndex;
 			} else {
-				fail("Invalid comparator.");
+				throw new Error("Invalid comparator.");
 			}
 			mid = (low + high) >> 1;
 		}

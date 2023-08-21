@@ -11,7 +11,6 @@ export { IdCompressor } from "./idCompressor";
 export {
 	compareFiniteNumbers,
 	createSessionId,
-	fail,
 	assertIsSessionId,
 	numericUuidFromStableId,
 	offsetNumericUuid,

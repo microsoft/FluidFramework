@@ -319,7 +319,6 @@ export interface IIdCompressor {
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
     recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    tryDecompress(id: SessionSpaceCompressedId): StableId | undefined;
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 

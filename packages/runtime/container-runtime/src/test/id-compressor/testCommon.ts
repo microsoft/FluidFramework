@@ -139,3 +139,12 @@ export function assertNotUndefined<T>(
 	assert(value !== undefined, message);
 	return value;
 }
+
+/**
+ * Fails an assertion. Throws an Error that the assertion failed.
+ * Use when violations are logic errors in the program.
+ * @param message - Message to be printed if assertion fails.
+ */
+export function fail(message: string): never {
+	assert(false, message);
+}
