@@ -673,7 +673,7 @@ describe("editable-tree: editing", () => {
 
 	describe("treeStatus", () => {
 		describe("EditableTree", () => {
-			it("root node returns TreeStatus.InDocument", () => {
+			it("node returns TreeStatus.InDocument", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -686,7 +686,9 @@ describe("editable-tree: editing", () => {
 				assert.equal(rootNodeStatus, TreeStatus.InDocument);
 			});
 
-			it("removed node returns TreeStatus.Deleted", () => {
+			// Currently returns TreeStatus.Deleted.
+			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed.
+			it("removed node returns TreeStatus.Deleted on itself and its children", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -697,13 +699,22 @@ describe("editable-tree: editing", () => {
 				const field = root[localFieldKey];
 				assert(isEditableField(field));
 
-				const node = field.getNode(0);
-				const statusBeforeRemove = node[treeStatus]();
-				assert.equal(statusBeforeRemove, TreeStatus.InDocument);
+				// Check TreeStatus before remove.
+				const rootStatusBeforeRemove = root[treeStatus]();
+				assert.equal(rootStatusBeforeRemove, TreeStatus.InDocument);
 
-				field.remove();
-				const statusAfterRemove = node[treeStatus]();
-				assert.equal(statusAfterRemove, TreeStatus.Deleted);
+				const node = field.getNode(0);
+				const nodeStatusBeforeRemove = node[treeStatus]();
+				assert.equal(nodeStatusBeforeRemove, TreeStatus.InDocument);
+
+				const rootField = view.context.root;
+				rootField.remove();
+
+				// Check TreeStatus after remove.
+				const rootStatusAfterRemove = root[treeStatus]();
+				assert.equal(rootStatusAfterRemove, TreeStatus.Deleted);
+				const nodeStatusAfterRemove = node[treeStatus]();
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Deleted);
 			});
 		});
 
@@ -720,6 +731,21 @@ describe("editable-tree: editing", () => {
 				assert.equal(rootNodeStatus, TreeStatus.InDocument);
 			});
 
+			it("non-root field returns TreeStatus.InDocument", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { foo: ["foo"], foo2: [] },
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[localFieldKey];
+				assert(isEditableField(field));
+				assert.equal(field.treeStatus(), TreeStatus.InDocument);
+			});
+
+			// Currently returns TreeStatus.Deleted.
+			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed
 			it("removed field returns TreeStatus.Deleted", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
@@ -730,14 +756,24 @@ describe("editable-tree: editing", () => {
 				assert(isEditableTree(root));
 				const field = root[localFieldKey];
 				assert(isEditableField(field));
-				const statusBeforeRemove = field.treeStatus();
-				assert.equal(statusBeforeRemove, TreeStatus.InDocument);
+
+				// Check TreeStatus before remove.
+				const fieldStatusBeforeRemove = field.treeStatus();
+				assert.equal(fieldStatusBeforeRemove, TreeStatus.InDocument);
+
+				const node = field.getNode(0);
+				const nodeStatusBeforeRemove = node[treeStatus]();
+				assert.equal(nodeStatusBeforeRemove, TreeStatus.InDocument);
 
 				const rootField = view.context.root;
 				rootField.remove();
 
-				const statusAfterRemove = field.treeStatus();
-				assert.equal(statusAfterRemove, TreeStatus.Deleted);
+				// Check TreeStatus after remove.
+				const fieldStatusAfterRemove = field.treeStatus();
+				assert.equal(fieldStatusAfterRemove, TreeStatus.Deleted);
+
+				const nodeStatusAfterRemove = node[treeStatus]();
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Deleted);
 			});
 		});
 	});
