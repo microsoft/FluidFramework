@@ -13,4 +13,8 @@ export {
 	ViewEvents,
 } from "./sharedTreeView";
 
-export { SchematizeConfiguration } from "./schematizedTree";
+export {
+	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+} from "./schematizedTree";

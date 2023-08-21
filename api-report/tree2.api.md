@@ -881,6 +881,10 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
 export const indexSymbol: unique symbol;
 
 // @alpha
+export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends TreeContent<TRoot>, SchematizeConfiguration<TRoot> {
+}
+
+// @alpha
 type _InlineTrick = 0;
 
 // @alpha
@@ -1044,7 +1048,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
@@ -1688,10 +1692,8 @@ export interface SchemaLintConfiguration {
 }
 
 // @alpha
-export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
+export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursor[];
-    readonly schema: TypedSchemaCollection<TRoot>;
 }
 
 // @alpha
@@ -1759,7 +1761,7 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     get rootEvents(): ISubscribable<AnchorSetRootEvents>;
     // (undocumented)
-    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     // (undocumented)
     setContent(data: NewFieldContent): void;
     // (undocumented)
@@ -1837,6 +1839,11 @@ export interface TreeAdapter {
     readonly input: TreeSchemaIdentifier;
     // (undocumented)
     readonly output: TreeSchemaIdentifier;
+}
+
+// @alpha
+export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
 // @alpha
