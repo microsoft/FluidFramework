@@ -62,4 +62,3 @@ export {
 	EditDescription,
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
-export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
