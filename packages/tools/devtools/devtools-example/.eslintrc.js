@@ -33,8 +33,6 @@ module.exports = {
 				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
 				"unicorn/prefer-query-selector": "off",
-				"@typescript-eslint/no-unsafe-argument": "off",
-				"@typescript-eslint/no-unsafe-member-access": "off",
 				"@typescript-eslint/no-unsafe-return": "off",
 			},
 		},

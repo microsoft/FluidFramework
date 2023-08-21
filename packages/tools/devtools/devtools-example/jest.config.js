@@ -16,7 +16,7 @@ module.exports = {
 		PATH: `http://localhost:${mappedPort}`,
 	},
 	transform: {
-		"^.+\\.(ts|tsx)?$": "ts-jest",
+		"^.+\\.ts?$": "ts-jest",
 	},
 	testTimeout: 30_000,
 	testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.ts?$",
