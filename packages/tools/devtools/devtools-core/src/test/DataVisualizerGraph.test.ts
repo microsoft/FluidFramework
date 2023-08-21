@@ -223,7 +223,10 @@ describe("DataVisualizerGraph unit tests", () => {
 	});
 
 	it("Empty Container Data", async () => {
-		const visualizer = new DataVisualizerGraph({}, defaultVisualizers, defaultEditors);
+		// Pass in the empty containerData to the visualizer.
+		const emptyObject: Record<string, IFluidLoadable> = {};
+
+		const visualizer = new DataVisualizerGraph(emptyObject, defaultVisualizers, defaultEditors);
 
 		const childEmptyObject = await visualizer.render("empty-containerData");
 		expect(childEmptyObject).to.deep.equal(undefined);
