@@ -1310,22 +1310,27 @@ export class MergeTree {
 	 * Uses depthFirstNodeWalk in addition to block-accelerated functionality. The search position will be included in
 	 * the nodes to walk, so searching on all positions, including the endpoints, can be considered inclusive.
 	 * Any out of bound search positions will return undefined, so in order to search the whole string, a forward
-	 * search can begin at 0, or a bacward search can begin at length-1.
+	 * search can begin at 0, or a backward search can begin at length-1.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
-	 * @param tileLabel - Label of the tile to search for
-	 * @param backwards - Whether the desired tile comes before (true) or after (false) `startPos`
+	 * @param markerLabel - Label of the marker to search for
+	 * @param backwards - Whether the desired marker comes before (true) or after (false) `startPos`
 	 */
-	public searchForTile(startPos: number, clientId: number, tileLabel: string, forwards = true) {
+	public searchForMarker(
+		startPos: number,
+		clientId: number,
+		markerLabel: string,
+		forwards = true,
+	) {
 		const searchInfo: IReferenceSearchInfo = {
 			mergeTree: this,
 			forwards,
-			tileLabel,
+			tileLabel: markerLabel,
 		};
 
 		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
-		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+		const segWithParent: IMergeLeaf | undefined = segment;
 		if (segWithParent?.parent === undefined) {
 			return undefined;
 		}
@@ -1335,14 +1340,14 @@ export class MergeTree {
 			segWithParent,
 			(seg) => {
 				if (seg.isLeaf()) {
-					if (Marker.is(seg) && refHasTileLabel(seg, tileLabel)) {
+					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
 						searchInfo.tile = seg;
 					}
 				} else {
 					const block = <IHierBlock>seg;
 					const marker = searchInfo.forwards
-						? <Marker>block.leftmostTiles[tileLabel]
-						: <Marker>block.rightmostTiles[tileLabel];
+						? block.leftmostTiles[markerLabel]
+						: block.rightmostTiles[markerLabel];
 					if (marker !== undefined) {
 						searchInfo.tile = marker;
 					}
@@ -1354,7 +1359,7 @@ export class MergeTree {
 			forwards,
 		);
 
-		return searchInfo.tile ?? undefined;
+		return searchInfo.tile;
 	}
 
 	private search<TClientData>(

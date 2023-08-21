@@ -1169,15 +1169,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * Searches a string for the nearest tile in either direction to a given starrt position.
+	 * Searches a string for the nearest marker in either direction to a given start position.
 	 * Makes use of block-accelerated search functions for log(n) complexity.
 	 *
 	 * @param startPos - Position at which to start the search
-	 * @param tileLabel - Label of the tile to search for
-	 * @param forwards - Whether the desired tile comes before (false) or after (true) `startPos`
+	 * @param tileLabel - Label of the marker to search for
+	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
-	searchForTile(startPos: number, tileLabel: string, forwards = true) {
+	searchForMarker(startPos: number, tileLabel: string, forwards = true) {
 		const clientId = this.getClientId();
-		return this._mergeTree.searchForTile(startPos, clientId, tileLabel, forwards);
+		return this._mergeTree.searchForMarker(startPos, clientId, tileLabel, forwards);
 	}
 }

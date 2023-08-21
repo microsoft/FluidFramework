@@ -25,12 +25,13 @@ import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceTy
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
-import { getSlideToSegoff, MergeTree } from "../mergeTree";
+import { getSlideToSegoff, IReferenceSearchInfo, MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { DetachedReferencePosition } from "../referencePositions";
+import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
+import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
+import { ReferencePosition } from "..";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -514,6 +515,48 @@ export class TestClient extends Client {
 				this.maxWindowTime = elapsed;
 			}
 		}
+	}
+
+	slowSearchForMarker(
+		startPos: number,
+		tileLabel: string,
+		forwards = true,
+	): ReferencePosition | undefined {
+		const searchInfo: IReferenceSearchInfo = {
+			mergeTree: this.mergeTree,
+			forwards,
+			tileLabel,
+		};
+		const { segment } = this.getContainingSegment(startPos);
+		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+
+		if (Marker.is(segWithParent)) {
+			if (refHasTileLabel(segWithParent, tileLabel)) {
+				searchInfo.tile = segWithParent;
+			}
+		} else {
+			if (forwards) {
+				forwardExcursion(segWithParent, (seg) => {
+					if (Marker.is(seg)) {
+						if (refHasTileLabel(seg, tileLabel)) {
+							searchInfo.tile = seg;
+							return false;
+						}
+					}
+				});
+			} else {
+				backwardExcursion(segWithParent, (seg) => {
+					if (Marker.is(seg)) {
+						if (refHasTileLabel(seg, tileLabel)) {
+							searchInfo.tile = seg;
+							return false;
+						}
+					}
+				});
+			}
+		}
+
+		return searchInfo.tile;
 	}
 }
 

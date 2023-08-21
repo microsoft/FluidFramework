@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { UniversalSequenceNumber } from "../constants";
 import { Marker, MaxNodesInBlock, reservedMarkerIdKey } from "../mergeTreeNodes";
 import { ReferenceType } from "../ops";
@@ -207,7 +208,7 @@ describe("TestClient", () => {
 		});
 	});
 
-	describe(".searchForTile", () => {
+	describe(".searchForMarker", () => {
 		it("Should not return tile when searching past the end of a string length 1", () => {
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
 				markerId: "marker",
@@ -215,7 +216,7 @@ describe("TestClient", () => {
 			});
 
 			assert.equal(client.getLength(), 1);
-			const foundTile = client.searchForTile(client.getLength(), "Eop", true);
+			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -228,7 +229,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1);
 
-			const foundTile = client.searchForTile(-1, "Eop", false);
+			const foundTile = client.searchForMarker(-1, "Eop", false);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -242,7 +243,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4);
 
-			const foundTile = client.searchForTile(client.getLength(), "Eop", true);
+			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -256,7 +257,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4);
 
-			const foundTile = client.searchForTile(-1, "Eop", false);
+			const foundTile = client.searchForMarker(-1, "Eop", false);
 
 			assert.equal(typeof foundTile, "undefined", "Returned tile should be undefined.");
 		});
@@ -269,11 +270,11 @@ describe("TestClient", () => {
 			});
 			assert.equal(client.getLength(), 8);
 
-			const tile1 = client.searchForTile(4, "Eop", true);
+			const tile1 = client.searchForMarker(4, "Eop", true);
 
 			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 
-			const tile2 = client.searchForTile(4, "Eop", false);
+			const tile2 = client.searchForMarker(4, "Eop", false);
 
 			assert.equal(typeof tile2, "undefined", "Returned tile should be undefined.");
 		});
@@ -287,11 +288,11 @@ describe("TestClient", () => {
 			});
 			assert.equal(client.getLength(), 8);
 
-			const tile1 = client.searchForTile(4, "Eop", true);
+			const tile1 = client.searchForMarker(4, "Eop", true);
 
 			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 
-			const tile2 = client.searchForTile(4, "Eop", false);
+			const tile2 = client.searchForMarker(4, "Eop", false);
 
 			assert.equal(typeof tile2, "undefined", "Returned tile should be undefined.");
 		});
@@ -310,7 +311,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const tile = client.searchForTile(0, tileLabel, true);
+			const tile = client.searchForMarker(0, tileLabel, true);
 
 			assert(tile, "Returned tile undefined.");
 
@@ -335,7 +336,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 6, "length not expected");
 
-			const tile = client.searchForTile(0, tileLabel, true);
+			const tile = client.searchForMarker(0, tileLabel, true);
 
 			assert(tile, "Returned tile undefined.");
 
@@ -371,7 +372,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
-			const tile = client.searchForTile(5, tileLabel, false);
+			const tile = client.searchForMarker(5, tileLabel, false);
 
 			assert(tile, "Returned tile undefined.");
 
@@ -407,7 +408,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
-			const tile = client.searchForTile(5, tileLabel, true);
+			const tile = client.searchForMarker(5, tileLabel, true);
 
 			assert(tile, "Returned tile undefined.");
 
@@ -422,7 +423,7 @@ describe("TestClient", () => {
 
 		it("Should be able to find non preceding tile with multiple segments and tiles", () => {
 			const tileLabel = "EOP";
-			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
+			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
 			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
@@ -433,7 +434,7 @@ describe("TestClient", () => {
 				});
 			}
 			for (let index = 0; index < client.getLength(); index++) {
-				const tile = client.searchForTile(index, tileLabel, true);
+				const tile = client.searchForMarker(index, tileLabel, true);
 
 				assert(tile, `Returned tile undefined @ ${index}.`);
 
@@ -454,7 +455,7 @@ describe("TestClient", () => {
 
 		it("Should be able to find preceding tile with multiple segments and tiles", () => {
 			const tileLabel = "EOP";
-			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
+			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
 			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
@@ -465,7 +466,7 @@ describe("TestClient", () => {
 				});
 			}
 			for (let index = client.getLength() - 1; index >= 0; index--) {
-				const tile = client.searchForTile(index, tileLabel, false);
+				const tile = client.searchForMarker(index, tileLabel, false);
 
 				assert(tile, `Returned tile undefined @ ${index}.`);
 
@@ -483,6 +484,56 @@ describe("TestClient", () => {
 			}
 		});
 
+		it("Should match results from forwardExcursion for many segments", () => {
+			const tileLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			const random = makeRandom(0xdeadbeef, 0xfeedbed, client.getLength());
+			for (let i = 0; i <= client.getLength() / 6; i++) {
+				const pos = random.integer(0, client.getLength() - 1);
+				client.insertMarkerLocal(pos, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [tileLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+			for (let index = 0; index < client.getLength(); index++) {
+				const exp = client.slowSearchForMarker(index, tileLabel, true);
+				const actual = client.searchForMarker(index, tileLabel, true);
+
+				assert.equal(
+					exp,
+					actual,
+					`Tile with label not at expected position index ${index} exp ${exp} act ${actual}`,
+				);
+			}
+		});
+
+		it("Should match results from backwardExcursion for many segments", () => {
+			const tileLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			const random = makeRandom(0xdeadbeef, 0xfeedbed, client.getLength());
+			for (let i = 0; i <= client.getLength() / 6; i++) {
+				const pos = random.integer(0, client.getLength() - 1);
+				client.insertMarkerLocal(pos, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [tileLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+			for (let index = 0; index < client.getLength(); index++) {
+				const exp = client.slowSearchForMarker(index, tileLabel, false);
+				const actual = client.searchForMarker(index, tileLabel, false);
+
+				assert.equal(
+					exp,
+					actual,
+					`Tile with label not at expected position index ${index} exp ${exp} act ${actual}`,
+				);
+			}
+		});
+
 		it("Should be able to find tile from client with text length 1", () => {
 			const tileLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
@@ -494,7 +545,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1, "length not expected");
 
-			const tile = client.searchForTile(client.getLength() - 1, tileLabel, false);
+			const tile = client.searchForMarker(client.getLength() - 1, tileLabel, false);
 
 			assert(tile, "Returned tile undefined.");
 
@@ -506,7 +557,7 @@ describe("TestClient", () => {
 
 			assert.equal(exp, 0, "Tile with label not at expected position");
 
-			const tile1 = client.searchForTile(0, tileLabel, true);
+			const tile1 = client.searchForMarker(0, tileLabel, true);
 
 			assert(tile1, "Returned tile undefined.");
 
@@ -531,15 +582,15 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const tile = client.searchForTile(5, tileLabel, true);
+			const tile = client.searchForMarker(5, tileLabel, true);
 
 			assert.equal(typeof tile, "undefined", "Returned tile should be undefined.");
 
-			const tile1 = client.searchForTile(5, tileLabel, false);
+			const tile1 = client.searchForMarker(5, tileLabel, false);
 
 			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 
-			const tile2 = client.searchForTile(-1, tileLabel, false);
+			const tile2 = client.searchForMarker(-1, tileLabel, false);
 
 			assert.equal(typeof tile2, "undefined", "Returned tile should be undefined.");
 		});
@@ -551,11 +602,11 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 3, "length not expected");
 
-			const tile = client.searchForTile(1, tileLabel);
+			const tile = client.searchForMarker(1, tileLabel);
 
 			assert.equal(typeof tile, "undefined", "Returned tile should be undefined.");
 
-			const tile1 = client.searchForTile(1, tileLabel, false);
+			const tile1 = client.searchForMarker(1, tileLabel, false);
 
 			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 		});
@@ -563,11 +614,11 @@ describe("TestClient", () => {
 		it("Should return undefined when trying to find tile from null text", () => {
 			const tileLabel = "EOP";
 
-			const tile = client.searchForTile(1, tileLabel);
+			const tile = client.searchForMarker(1, tileLabel);
 
 			assert.equal(typeof tile, "undefined", "Returned tile should be undefined.");
 
-			const tile1 = client.searchForTile(1, tileLabel, false);
+			const tile1 = client.searchForMarker(1, tileLabel, false);
 
 			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 		});
