@@ -10929,7 +10929,6 @@ importers:
       jest: ^29.6.2
       jest-dev-server: ^4.3.0
       jest-environment-jsdom: ^29.6.2
-      jest-environment-puppeteer: ^4.3.0
       jest-junit: ^10.0.0
       pm2: ^5.3.0
       prettier: ~2.6.2
@@ -11011,7 +11010,6 @@ importers:
       jest: 29.6.2_@types+node@16.18.40
       jest-dev-server: 4.4.0
       jest-environment-jsdom: 29.6.2
-      jest-environment-puppeteer: 4.4.0
       jest-junit: 10.0.0
       pm2: 5.3.0
       prettier: 2.6.2
