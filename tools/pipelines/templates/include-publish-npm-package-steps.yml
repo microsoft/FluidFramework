@@ -39,12 +39,10 @@ steps:
           echo Generating .npmrc for ${{ parameters.feedName }}
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-msinternal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
-          echo "official=false" >> ./.npmrc
           cat .npmrc
       ${{ if eq(parameters.official, true) }}:
         script: |
@@ -53,12 +51,9 @@ steps:
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
-          echo "official=true" >> ./.npmrc
           cat .npmrc
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
-          echo Deleting @fluid-msinternal packages
-          rm -f fluid-msinternal-*
           echo Deleting @fluid-example packages
           rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
@@ -143,30 +138,53 @@ steps:
                   exit 1
                 fi
             else
+              packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              promote_api_url="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/@fluidframework/tree2/versions/2.0.0-internal.5.4.1?api-version=7.1-preview.1"
+              
+              if [[ "$packageName" != @(tinylicious|fluid-framework) ]]; then
+                prefixes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                for prefix in "${prefixes[@]}"; do
+                    if [[ "$packageName" == "$prefix"* ]]; then
+                        packageName="${packageName/$prefix-/$prefix/}"
+                    fi
+                done
+              fi
+              
+              # change condition to release and feedId is build in prod; $feedId == "build"
+              if [[ $release == "prerelease" ]]; then
+                response=$(curl -f -s -X PATCH \
+                  -H "Content-Type: application/json" \
+                  -H "Accept: application/json" \
+                  -u ":$(System.AccessToken)" \
+                  -d '{
+                        "views": {
+                          "op": "add",
+                          "path": "/views/-",
+                          "value": "Release"
+                        }
+                      }' \
+                      "$promote_api_url"
+                  )
+                
+                curl_exit_status=$?
+                
+                if echo "$response" | grep -q '"success":"false"'; then
+                  reason="${response#*\"reason\":\"}"
+                  reason="${reason%%\"*}"
+                  echo "Failed to promote package to Release view"
+                  echo "Error reason: $reason"
+                  exit 1
+                elif [ $curl_exit_status -ne 0 ]; then
+                  echo "Failed to promote package due to curl error"
+                  exit 1
+                fi
+              fi
+              
               rm publish_log
               break
             fi
             rm publish_log
-            packageVersion=$(grep -oP 'npm notice : \K.*' publish_log)
-            echo "publish_log"
-            echo cat publish_log
-            echo "packageVersion"
-            echo $packageVersion
-            echo "official"
-            official=$(npm config get official)
-            echo $official
-            rm publish_log
-            az rest --method patch --uri https://pkgs.dev.azure.com/fluidframework/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/$packageName/versions/$packageVersion?api-version=7.1-preview.1 --body '{
-              "views": {
-                "op": "add",
-                "path": "/views/-",
-                "value": "Release"
-              }
-            }'
-            if [ $? -ne 0 ]; then
-              echo "Failed to promote package to Release view"
-              exit 1
-            fi
           done
         fi
       done
