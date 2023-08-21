@@ -30,7 +30,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --unhandled-rejections=strict  --recursive dist/test/*.spec.js --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -61,7 +61,6 @@
 		"@fluid-tools/version-tools": "^0.22.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",

@@ -17,7 +17,8 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IErrorBase } from "@fluidframework/core-interfaces";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";

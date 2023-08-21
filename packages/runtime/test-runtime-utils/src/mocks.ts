@@ -353,12 +353,26 @@ export class MockContainerRuntimeFactory {
 		return this.messages.length;
 	}
 
+	/**
+	 * @returns a minimum sequence number for all connected clients.
+	 */
 	public getMinSeq(): number {
-		let minSeq: number | undefined;
-		for (const [, clientSeq] of this.minSeq) {
-			minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
+			// We have to make sure, a client is part of the quorum, when
+			// we compute the msn. We assume that the quoarum accurately
+			// represents the currently connected clients. In some tests
+			// for reconnects, we will remove clients from the quorum
+			// to indicate they are currently not connected. In that case,
+			// they must no longer contribute to the msn computation.
+			if (this.quorum.getMember(client) !== undefined) {
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
+			}
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public createContainerRuntime(
@@ -554,11 +568,16 @@ export class MockFluidDataStoreRuntime
 		clientId?: string;
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
+		logger?: ITelemetryLoggerExt;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
 		this.id = overrides?.id ?? uuid();
+		this.logger = createChildLogger({
+			logger: overrides?.logger,
+			namespace: "fluid:MockFluidDataStoreRuntime",
+		});
 	}
 
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
@@ -592,9 +611,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt = createChildLogger({
-		namespace: "fluid:MockFluidDataStoreRuntime",
-	});
+	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
