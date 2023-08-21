@@ -218,8 +218,6 @@ export class DataVisualizerGraph
 						fluidObjectId === undefined
 							? unknownObjectNode
 							: createHandleNode(fluidObjectId);
-				} else {
-					result[key] = unknownObjectNode;
 				}
 			}),
 		);
