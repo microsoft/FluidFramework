@@ -44,11 +44,15 @@ export function createSampledLoggerSend(
 		"Fluid.Telemetry.DisableSampling",
 	);
 
-	return (event: ITelemetryBaseEvent) => {
-		if (isSamplingEnabled && shouldSampleEventCallback() === true) {
-			logger.send(event);
+	const sampledLogger: ITelemetryBaseLogger = {
+		send: (event: ITelemetryBaseEvent) => {
+			if (isSamplingEnabled && shouldSampleEventCallback() === true) {
+				logger.send(event);
+			}
 		}
-	};
+	}
+
+	return sampledLogger;
 }
 
 /**
@@ -57,9 +61,14 @@ export function createSampledLoggerSend(
 export const createSystematicSamplingCallback = (samplingRate: number) => {
 	const state = {
 		eventsSinceLastSample: 0,
+		isFirstEvent: true
 	};
 	return () => {
 		state.eventsSinceLastSample++;
+		if (state.isFirstEvent) {
+			state.isFirstEvent = false;
+			return true;
+		}
 		const shouldSample = state.eventsSinceLastSample % samplingRate === 0;
 		if (shouldSample) {
 			state.eventsSinceLastSample = 0;
