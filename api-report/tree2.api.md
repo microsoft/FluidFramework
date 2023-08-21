@@ -228,9 +228,6 @@ abstract class BrandedType<ValueType, Name extends string> {
 // @alpha
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 
-// @alpha (undocumented)
-export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
-
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
@@ -865,6 +862,7 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
+    readonly isEmpty: boolean;
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;

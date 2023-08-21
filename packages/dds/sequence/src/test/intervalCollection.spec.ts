@@ -621,13 +621,7 @@ describe("SharedString interval collections", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abcXdef");
 				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					3,
-					IntervalType.SlideOnRemove,
-					undefined,
-					undefined,
-				);
+				const interval1 = collection.add(0, 3, IntervalType.SlideOnRemove);
 				assert.equal(interval1.stickiness, IntervalStickiness.END);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
 				assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);

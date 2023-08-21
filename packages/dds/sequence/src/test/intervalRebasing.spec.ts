@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -12,6 +13,7 @@ import {
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import { IntervalStickiness, IntervalType } from "../intervals";
+import { Side } from "../intervalCollection";
 import { assertConsistent, Client } from "./intervalUtils";
 
 function constructClients(
@@ -168,15 +170,10 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
-		collection_1.add(
-			0,
-			2,
-			IntervalType.SlideOnRemove,
-			{
-				intervalId: "2",
-			},
-			IntervalStickiness.FULL,
-		);
+		const interval1 = collection_1.add("start", "end", IntervalType.SlideOnRemove, {
+			intervalId: "2",
+		});
+		assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 		clients[0].sharedString.removeRange(0, 1);
 		clients[1].sharedString.removeRange(0, 3);
 		containerRuntimeFactory.processAllMessages();
@@ -187,28 +184,28 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "AB");
 		clients[0].sharedString.insertText(0, "C");
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_1.add(
-			1,
-			2,
+		const interval1 = collection_1.add(
+			{ pos: 0, side: Side.After },
+			"end",
 			IntervalType.SlideOnRemove,
 			{
 				intervalId: "1",
 			},
-			IntervalStickiness.FULL,
 		);
+		assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[2].sharedString.removeRange(1, 2);
 		const collection_2 = clients[1].sharedString.getIntervalCollection("comments");
-		collection_2.add(
-			0,
-			1,
+		const interval2 = collection_2.add(
+			"start",
+			{ pos: 2, side: Side.Before },
 			IntervalType.SlideOnRemove,
 			{
 				intervalId: "2",
 			},
-			IntervalStickiness.FULL,
 		);
+		assert.equal(interval2.stickiness, IntervalStickiness.FULL);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
@@ -220,15 +217,9 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.removeRange(0, 1);
 		clients[0].sharedString.insertText(0, "D");
 		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
-		collection_1.add(
-			0,
-			1,
-			IntervalType.SlideOnRemove,
-			{
-				intervalId: "1",
-			},
-			IntervalStickiness.START,
-		);
+		collection_1.add("start", 1, IntervalType.SlideOnRemove, {
+			intervalId: "1",
+		});
 		clients[2].sharedString.removeRange(1, 2);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
@@ -238,15 +229,9 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_1.add(
-			0,
-			0,
-			IntervalType.SlideOnRemove,
-			{
-				intervalId: "1",
-			},
-			IntervalStickiness.START,
-		);
+		collection_1.add("start", 0, IntervalType.SlideOnRemove, {
+			intervalId: "1",
+		});
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);

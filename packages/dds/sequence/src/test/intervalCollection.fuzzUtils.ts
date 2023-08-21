@@ -11,7 +11,7 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IntervalStickiness, IntervalType } from "../intervals";
+import { IntervalType } from "../intervals";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
@@ -52,7 +52,6 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	// what happened to an interval over the course of its lifetime based on the history
 	// file, which is useful for debugging test failures.
 	id: string;
-	stickiness: IntervalStickiness;
 }
 
 export interface ChangeInterval extends IntervalCollectionSpec, Partial<RangeSpec> {
@@ -204,9 +203,9 @@ export function makeReducer(
 		removeRange: async ({ channel }, { start, end }) => {
 			channel.removeRange(start, end);
 		},
-		addInterval: async ({ channel }, { start, end, collectionName, id, stickiness }) => {
+		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id }, stickiness);
+			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
 		},
 		deleteInterval: async ({ channel }, { id, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);

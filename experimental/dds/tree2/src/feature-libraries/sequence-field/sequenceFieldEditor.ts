@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ITreeCursor } from "../../core";
-import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
+import { ChangesetLocalId, ITreeCursor } from "../../core";
+import { FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	CellId,
