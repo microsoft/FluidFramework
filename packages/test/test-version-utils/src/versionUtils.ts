@@ -7,7 +7,6 @@
 
 import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
-// eslint-disable-next-line import/no-unresolved
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
@@ -327,7 +326,7 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 export function internalSchema(
 	publicVersion: string,
 	internalVersion: string,
-	requested: number | string,
+	requested: number,
 ): string {
 	if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) {
 		return `^1.0.0-0`;
@@ -347,7 +346,7 @@ export function internalSchema(
 	// if the version number is for the older version scheme before 1.0.0
 	if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
 		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
-		const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
+		const requestedMinorVersion = lastPrereleaseVersion.minor + requested + 2;
 		return `^0.${requestedMinorVersion}.0-0`;
 	}
 
@@ -357,9 +356,7 @@ export function internalSchema(
 	// applied for all the baseVersion passed as 2.0.0-internal-3.0.0 or greater in 2.0.0 internal series
 	if (internalVersion > publicVersion && requested <= -2) {
 		const version = internalVersion.split(".");
-		semverInternal = (parseInt(version[0], 10) + ((requested as number) + 1))
-			.toString()
-			.concat(".0.0");
+		semverInternal = (parseInt(version[0], 10) + requested + 1).toString().concat(".0.0");
 	}
 
 	try {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
