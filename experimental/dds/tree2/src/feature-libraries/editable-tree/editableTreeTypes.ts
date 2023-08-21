@@ -244,10 +244,10 @@ export interface EditableField
 	 * Sequence fields only.
 	 *
 	 * @param index - the index of the first node to be removed. It must be in a range of existing node indices.
-	 * @param count - the number of nodes to be removed. If not provided, removes all nodes
+	 * @param count - the number of nodes to be removed. If not provided, removes all nodes.
 	 * starting from the index and up to the length of the field.
-	 * Once removed, the removed node should return {@link TreeStatus.Deleted} when prompted for its {@link TreeStatus}
-	 * TODO: The remove apis should eventually be fixed such that it returns {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}
+	 * Once removed, the removed node should return {@link TreeStatus.Deleted} when prompted for its {@link TreeStatus}.
+	 * TODO: The remove apis should eventually be fixed such that it returns {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}.
 	 */
 	removeNodes(index: number, count?: number): void;
 
@@ -267,8 +267,8 @@ export interface EditableField
 	/**
 	 * Removes the content of this field.
 	 * Only supports field kinds which can be empty.
-	 * Once removed, the removed node should return {@link TreeStatus.Deleted} when prompted for its {@link TreeStatus}
-	 * TODO: The remove apis should eventually be fixed such that it returns {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}
+	 * Once removed, the removed node should return {@link TreeStatus.Deleted} when prompted for its {@link TreeStatus}.
+	 * TODO: The remove apis should eventually be fixed such that it returns {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}.
 	 */
 	remove(): void;
 

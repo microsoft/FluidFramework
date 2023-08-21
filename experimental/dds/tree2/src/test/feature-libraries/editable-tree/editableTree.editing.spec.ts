@@ -674,41 +674,75 @@ describe("editable-tree: editing", () => {
 			});
 		});
 	});
-	describe("TreeStatus", () => {
-		it("root node returns TreeStatus.InDocument", () => {
-			const view = createSharedTreeView().schematize({
-				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: { foo: [], foo2: [] },
-			});
-			const rootNode = view.root;
-			assert(isEditableTree(rootNode));
-			const rootNodeStatus = rootNode[treeStatus]();
 
-			assert.equal(rootNodeStatus, TreeStatus.InDocument);
+	describe("treeStatus", () => {
+		describe("EditableTree", () => {
+			it("root node returns TreeStatus.InDocument", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { foo: [], foo2: [] },
+				});
+				const rootNode = view.root;
+				assert(isEditableTree(rootNode));
+				const rootNodeStatus = rootNode[treeStatus]();
+
+				assert.equal(rootNodeStatus, TreeStatus.InDocument);
+			});
+
+			it("removed node returns TreeStatus.Deleted", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { foo: ["foo", "bar"], foo2: [] },
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[localFieldKey];
+				assert(isEditableField(field));
+
+				const node = field.getNode(0);
+				const statusBeforeRemove = node[treeStatus]();
+				assert.equal(statusBeforeRemove, TreeStatus.InDocument);
+
+				field.remove();
+				const statusAfterRemove = node[treeStatus]();
+				assert.equal(statusAfterRemove, TreeStatus.Deleted);
+			});
 		});
-		it("removed node returns TreeStatus.Deleted", () => {
-			const view = createSharedTreeView().schematize({
-				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: { foo: [], foo2: [] },
+
+		describe("EditableField", () => {
+			it("root field returns TreeStatus.InDocument", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { foo: [], foo2: [] },
+				});
+				const rootField = view.context.root;
+				const rootNodeStatus = rootField.treeStatus();
+
+				assert.equal(rootNodeStatus, TreeStatus.InDocument);
 			});
-			const root = view.root;
-			assert(isEditableTree(root));
-			const field = root[localFieldKey];
-			assert(isEditableField(field));
 
-			// create using `insertNodes`
-			field.insertNodes(0, ["foo", "bar"]);
-			assert.deepEqual([...field], ["foo", "bar"]);
+			it("removed field returns TreeStatus.Deleted", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { foo: ["foo"], foo2: [] },
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[localFieldKey];
+				assert(isEditableField(field));
+				const statusBeforeRemove = field.treeStatus();
+				assert.equal(statusBeforeRemove, TreeStatus.InDocument);
 
-			const node = field.getNode(0);
-			const statusBeforeRemove = node[treeStatus]();
-			assert.equal(statusBeforeRemove, TreeStatus.InDocument);
+				const rootField = view.context.root;
+				rootField.remove();
 
-			field.remove();
-			const statusAfterRemove = node[treeStatus]();
-			assert.equal(statusAfterRemove, TreeStatus.Deleted);
+				const statusAfterRemove = field.treeStatus();
+				assert.equal(statusAfterRemove, TreeStatus.Deleted);
+			});
 		});
 	});
 });

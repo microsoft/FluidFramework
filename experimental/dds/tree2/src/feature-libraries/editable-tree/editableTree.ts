@@ -248,8 +248,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.cursor.getPath();
-		assert(path !== undefined, "path must be defined.");
+		const path = this.anchorNode;
 		return treeStatusFromPath(path);
 	}
 

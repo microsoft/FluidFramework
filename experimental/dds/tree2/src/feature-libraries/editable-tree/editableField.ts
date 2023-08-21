@@ -18,6 +18,8 @@ import {
 	inCursorNode,
 	FieldUpPath,
 	ITreeCursor,
+	keyAsDetachedField,
+	rootField,
 } from "../../core";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -398,9 +400,18 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.cursor.getFieldPath().parent;
-		assert(path !== undefined, "path must be defined.");
-		return treeStatusFromPath(path);
+		const fieldAnchor = this.getAnchor();
+		const parentAnchor = fieldAnchor.parent;
+		// If the parentAnchor is undefined it is a detached field.
+		if (parentAnchor === undefined) {
+			return keyAsDetachedField(fieldAnchor.fieldKey) === rootField
+				? TreeStatus.InDocument
+				: TreeStatus.Removed;
+		}
+		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
+		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
+		assert(parentAnchorNode !== undefined, "parentAnchorNode must exist.");
+		return treeStatusFromPath(parentAnchorNode);
 	}
 
 	public getfieldPath(): FieldUpPath {
