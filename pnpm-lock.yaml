@@ -10907,17 +10907,11 @@ importers:
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^12.0.0
       '@testing-library/user-event': ^14.4.3
-      '@types/chrome': 0.0.232
-      '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
-      '@types/jsdom': ^21.1.1
-      '@types/jsdom-global': ^3.0.4
       '@types/node': ^16.18.38
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      '@types/sinon': ^7.0.13
-      '@types/sinon-chrome': ^2.2.11
       '@types/testing-library__jest-dom': ^5.14.5
       concurrently: ^7.6.0
       eslint: ~8.6.0
@@ -10938,8 +10932,6 @@ importers:
       react-dom: ^17.0.1
       rimraf: ^4.4.0
       scheduler: ^0.20.0
-      sinon: ^7.4.2
-      sinon-chrome: ^3.0.1
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -10988,17 +10980,11 @@ importers:
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/user-event': 14.4.3_yxlyej73nftwmh2fiao7paxmlm
-      '@types/chrome': 0.0.232
-      '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
-      '@types/jsdom': 21.1.1
-      '@types/jsdom-global': 3.0.4
       '@types/node': 16.18.40
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      '@types/sinon': 7.5.2
-      '@types/sinon-chrome': 2.2.11
       '@types/testing-library__jest-dom': 5.14.5
       concurrently: 7.6.0
       eslint: 8.6.0
@@ -11015,8 +11001,6 @@ importers:
       prettier: 2.6.2
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      sinon: 7.5.0
-      sinon-chrome: 3.0.1
       ts-jest: 29.1.1_dph2mes4elc76oozpus7ywlloi
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5

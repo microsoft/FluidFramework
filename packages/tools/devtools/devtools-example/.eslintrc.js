@@ -32,8 +32,6 @@ module.exports = {
 			rules: {
 				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
-				"unicorn/prefer-query-selector": "off",
-				"@typescript-eslint/no-unsafe-return": "off",
 			},
 		},
 	],

@@ -15,11 +15,12 @@ describe("End to end tests", () => {
 	 * @param expectedValue - The value we expect the value of the text area to be.
 	 */
 	async function getTextFormValue(expectedValue: string): Promise<string> {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return retryWithEventualValue(
 			/* callback: */ async () =>
 				page.evaluate(() => {
-					const divs = document.getElementsByClassName("example-app-text-area");
-					const textAreaElements = divs[0].getElementsByTagName("textarea");
+					const divs = document.querySelectorAll(".example-app-text-area");
+					const textAreaElements = divs[0].querySelectorAll("textarea");
 					const textarea = textAreaElements[0];
 					return textarea?.value;
 				}),
@@ -36,6 +37,7 @@ describe("End to end tests", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => globalThis.fluidStarted);
 		await page.waitForSelector("textarea");
 	});

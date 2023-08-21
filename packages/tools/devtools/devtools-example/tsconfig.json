@@ -6,7 +6,7 @@
 		"module": "ESNext",
 		"composite": true,
 		"jsx": "react",
-		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
