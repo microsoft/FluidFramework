@@ -233,7 +233,7 @@ describe("IntervalCollection fuzz testing", () => {
 		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
-		// TODO:AB#5338: re-enable these seeds.
+		// TODO:AB#5337: re-enable these seeds.
 		skip: [
 			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
 			76, 79, 86, 91, 92, 94,
