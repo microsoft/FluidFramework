@@ -62,7 +62,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"re-resizable": "^6.9.9",
 		"react": "^17.0.1",
