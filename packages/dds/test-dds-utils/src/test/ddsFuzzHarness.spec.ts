@@ -158,6 +158,10 @@ describe("DDS Fuzz Harness", () => {
 				...defaultOptions,
 				validationStrategy: { type: "fixedInterval", interval: 2 },
 				reconnectProbability: 0,
+				detachedStartOptions: {
+					enabled: false,
+					attachProbability: 1,
+				},
 			};
 
 			it("generates synchronize ops", async () => {
@@ -290,6 +294,10 @@ describe("DDS Fuzz Harness", () => {
 			const options: DDSFuzzSuiteOptions = {
 				...defaultDDSFuzzSuiteOptions,
 				validationStrategy: { type: "random", probability: 0.25 },
+				detachedStartOptions: {
+					enabled: false,
+					attachProbability: 1,
+				},
 			};
 			it("generates synchronize ops", async () => {
 				const { model, generatedOperations } = mixinSpying(
