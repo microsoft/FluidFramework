@@ -195,45 +195,55 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			},
 		);
 
-		it(`Eventual consistency for shared directories with op reentry - ${
-			enableGroupedBatching ? "Grouped" : "Regular"
-		} batches`, async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableGroupedBatching,
-				},
-			});
+		itSkipsFailureOnSpecificDrivers(
+			`Eventual consistency for shared directories with op reentry - ${
+				enableGroupedBatching ? "Grouped" : "Regular"
+			} batches`,
+			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+			async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
+					},
+				});
 
-			const concurrentValue = 10;
-			const topLevel = "root";
-			const innerLevel = "inner";
-			const key = "key";
-			sharedDirectory1
-				.createSubDirectory(topLevel)
-				.createSubDirectory(innerLevel)
-				.set(key, concurrentValue);
+				const concurrentValue = 10;
+				const topLevel = "root";
+				const innerLevel = "inner";
+				const key = "key";
+				sharedDirectory1
+					.createSubDirectory(topLevel)
+					.createSubDirectory(innerLevel)
+					.set(key, concurrentValue);
 
-			await provider.ensureSynchronized();
+				await provider.ensureSynchronized();
 
-			const concurrentValue1 = concurrentValue + 10;
-			const concurrentValue2 = concurrentValue + 20;
+				const concurrentValue1 = concurrentValue + 10;
+				const concurrentValue2 = concurrentValue + 20;
 
-			sharedDirectory1
-				.getSubDirectory(topLevel)
-				?.getSubDirectory(innerLevel)
-				?.set(key, concurrentValue1);
-			sharedDirectory2
-				.getSubDirectory(topLevel)
-				?.getSubDirectory(innerLevel)
-				?.set(key, concurrentValue2);
+				sharedDirectory1
+					.getSubDirectory(topLevel)
+					?.getSubDirectory(innerLevel)
+					?.set(key, concurrentValue1);
+				sharedDirectory2
+					.getSubDirectory(topLevel)
+					?.getSubDirectory(innerLevel)
+					?.set(key, concurrentValue2);
 
-			await provider.ensureSynchronized();
-			assert.strictEqual(
-				sharedDirectory1.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
-				sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
-			);
-		});
+				await provider.ensureSynchronized();
+				assert.strictEqual(
+					sharedDirectory1
+						.getSubDirectory(topLevel)
+						?.getSubDirectory(innerLevel)
+						?.get(key),
+					sharedDirectory2
+						.getSubDirectory(topLevel)
+						?.getSubDirectory(innerLevel)
+						?.get(key),
+				);
+			},
+		);
 	});
 
 	describe("Reentry safeguards", () => {
@@ -267,26 +277,30 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			},
 		);
 
-		it("Flushing is supported if it happens in the next batch", async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					flushMode: FlushMode.Immediate,
-				},
-			});
+		itSkipsFailureOnSpecificDrivers(
+			"Flushing is supported if it happens in the next batch",
+			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+			async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
+					},
+				});
 
-			sharedString1.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad") {
-					void Promise.resolve().then(() => {
-						sharedString1.insertText(0, "bc");
-					});
-				}
-			});
+				sharedString1.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad") {
+						void Promise.resolve().then(() => {
+							sharedString1.insertText(0, "bc");
+						});
+					}
+				});
 
-			sharedString1.insertText(0, "ad");
-			await provider.ensureSynchronized();
-			assert.strictEqual(sharedString1.getText(), "bcad");
-		});
+				sharedString1.insertText(0, "ad");
+				await provider.ensureSynchronized();
+				assert.strictEqual(sharedString1.getText(), "bcad");
+			},
+		);
 	});
 
 	itSkipsFailureOnSpecificDrivers(

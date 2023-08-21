@@ -749,9 +749,9 @@ export async function npmCheckUpdatesHomegrown(
 	updatedPackages: PackageWithKind[];
 	updatedDependencies: PackageVersionMap;
 }> {
-	if (releaseGroup === releaseGroupFilter) {
+	if (releaseGroupFilter !== undefined && releaseGroup === releaseGroupFilter) {
 		throw new Error(
-			`releaseGroup and releaseGroupFilter are the same. They must be different values.`,
+			`releaseGroup and releaseGroupFilter are the same (${releaseGroup}). They must be different values.`,
 		);
 	}
 	log?.info(`Calculating dependency updates...`);
