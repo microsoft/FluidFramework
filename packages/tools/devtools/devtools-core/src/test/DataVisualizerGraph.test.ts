@@ -224,13 +224,13 @@ describe("DataVisualizerGraph unit tests", () => {
 		);
 		sharedCell.set("Hello world");
 
-		const unknownFluidObject = {};
+		const unknownObject = {};
 
 		const visualizer = new DataVisualizerGraph(
 			{
 				counter: sharedCounter,
 				cell: sharedCell,
-				unknownObject: unknownFluidObject as IFluidLoadable,
+				unknownObject: unknownObject as IFluidLoadable,
 			},
 			defaultVisualizers,
 			defaultEditors,
@@ -265,5 +265,8 @@ describe("DataVisualizerGraph unit tests", () => {
 			},
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
+
+		const childUnknownObject = await visualizer.render("unknown-object");
+		expect(childUnknownObject).to.deep.equal(undefined);
 	});
 });

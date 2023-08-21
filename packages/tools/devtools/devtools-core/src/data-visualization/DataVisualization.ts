@@ -209,7 +209,6 @@ export class DataVisualizerGraph
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
 
-
 		const result: Record<string, RootHandleNode> = {};
 		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
@@ -219,6 +218,8 @@ export class DataVisualizerGraph
 						fluidObjectId === undefined
 							? unknownObjectNode
 							: createHandleNode(fluidObjectId);
+				} else {
+					result[key] = unknownObjectNode;
 				}
 			}),
 		);
