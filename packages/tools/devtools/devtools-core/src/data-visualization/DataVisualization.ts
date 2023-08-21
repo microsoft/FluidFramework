@@ -218,6 +218,9 @@ export class DataVisualizerGraph
 						fluidObjectId === undefined
 							? unknownObjectNode
 							: createHandleNode(fluidObjectId);
+				} else {
+					console.error("containerData contains unknown data object!");
+					result[key] = unknownObjectNode;
 				}
 			}),
 		);

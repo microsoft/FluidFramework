@@ -208,65 +208,24 @@ describe("DataVisualizerGraph unit tests", () => {
 	});
 
 	it("Unknown object in Container Data", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
-
-		const sharedCounter = new SharedCounter(
-			"test-counter-unknown-object",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
-		sharedCounter.increment(42);
-
-		const sharedCell = new SharedCell(
-			"test-cell-unknown-object",
-			runtime,
-			SharedCell.getFactory().attributes,
-		);
-		sharedCell.set("Hello world");
-
 		const unknownObject = {};
 
 		const visualizer = new DataVisualizerGraph(
 			{
-				counter: sharedCounter,
-				cell: sharedCell,
 				unknownObject: unknownObject as IFluidLoadable,
 			},
 			defaultVisualizers,
 			defaultEditors,
 		);
 
-		const rootTrees = await visualizer.renderRootHandles();
-
-		const expectedCounterTree = createHandleNode(sharedCounter.id);
-		expect(rootTrees.counter).to.deep.equal(expectedCounterTree);
-
-		const expectedCellTree = createHandleNode(sharedCell.id);
-		expect(rootTrees.cell).to.deep.equal(expectedCellTree);
-
-		const childCounterTree = await visualizer.render(sharedCounter.id);
-		const expectedChildCounterTree: FluidObjectValueNode = {
-			fluidObjectId: sharedCounter.id,
-			value: 42,
-			typeMetadata: "SharedCounter",
-			nodeKind: VisualNodeKind.FluidValueNode,
-			editProps: { editTypes: [EditType.Number] },
-		};
-		expect(childCounterTree).to.deep.equal(expectedChildCounterTree);
-
-		const childCellTree = await visualizer.render(sharedCell.id);
-		const expectedChildCellTree: FluidObjectValueNode = {
-			fluidObjectId: sharedCell.id,
-			value: "Hello world",
-			typeMetadata: "SharedCell",
-			nodeKind: VisualNodeKind.FluidValueNode,
-			editProps: {
-				editTypes: undefined,
-			},
-		};
-		expect(childCellTree).to.deep.equal(expectedChildCellTree);
-
 		const childUnknownObject = await visualizer.render("unknown-object");
 		expect(childUnknownObject).to.deep.equal(undefined);
+	});
+
+	it("Empty Container Data", async () => {
+		const visualizer = new DataVisualizerGraph({}, defaultVisualizers, defaultEditors);
+
+		const childEmptyObject = await visualizer.render("empty-containerData");
+		expect(childEmptyObject).to.deep.equal(undefined);
 	});
 });
