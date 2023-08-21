@@ -436,11 +436,9 @@ export const enum LogLevel {
     // (undocumented)
     default = 10,
     // (undocumented)
-    error = 30,
+    error = 20,
     // (undocumented)
-    verbose = 0,
-    // (undocumented)
-    warning = 20
+    verbose = 0
 }
 
 // @public

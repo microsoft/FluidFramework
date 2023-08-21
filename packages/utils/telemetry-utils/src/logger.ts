@@ -72,12 +72,8 @@ function decideLogLevel(category: TelemetryEventCategory, currentLogLevel?: LogL
 		case "error":
 			return LogLevel.error;
 		case "generic":
-			// If it is a generic event, then max log level should be warning.
-			return currentLogLevel === LogLevel.error
-				? LogLevel.warning
-				: currentLogLevel ?? LogLevel.default;
 		case "performance":
-			// For perf category, log level could either be verbose or default.
+			// For perf/generic category, log level could either be verbose or default.
 			return currentLogLevel === LogLevel.verbose ? LogLevel.verbose : LogLevel.default;
 		default:
 			return LogLevel.default;
@@ -172,14 +168,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param logLevel - optional level of the log.
 	 */
 	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel) {
-		const genericEvent = {
-			...event,
-			category: event.category ?? "generic",
-		};
 		this.sendTelemetryEventCore(
-			genericEvent,
+			{ ...event, category: event.category ?? "generic" },
 			error,
-			decideLogLevel(genericEvent.category, logLevel),
+			decideLogLevel(event.category ?? "generic", logLevel),
 		);
 	}
 
@@ -238,7 +230,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: any,
-		logLevel?: LogLevel.verbose | LogLevel.default,
+		logLevel?: LogLevel,
 	): void {
 		const perfEvent = {
 			...event,
@@ -410,15 +402,11 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(
-			new FilteredLogger(baseLogger ? baseLogger : { send() {} }),
-			namespace,
-			properties,
-		);
+		return new ChildLogger(baseLogger ? baseLogger : { send() {} }, namespace, properties);
 	}
 
 	private constructor(
-		protected readonly baseLogger: FilteredLogger,
+		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
 	) {
@@ -430,22 +418,6 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
-	/**
-	 * Send an event with the logger
-	 *
-	 * @param event - the event to send
-	 */
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-		this.baseLogger.send(event, logLevel, (ev: ITelemetryBaseEvent) => this.prepareEvent(ev));
-	}
-}
-
-/**
- * Logger to help filter out events based on the spcecified config.
- */
-class FilteredLogger implements ITelemetryBaseLogger {
-	public constructor(protected readonly baseLogger: ITelemetryBaseLogger) {}
-
 	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
 		const eventLogLevel = logLevel ?? LogLevel.default;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
@@ -453,15 +425,19 @@ class FilteredLogger implements ITelemetryBaseLogger {
 		return eventLogLevel < configLogLevel;
 	}
 
-	public send(
-		event: ITelemetryBaseEvent,
-		logLevel?: LogLevel,
-		enrichEvent?: (ev: ITelemetryBaseEvent) => ITelemetryBaseEvent,
-	): void {
-		if (this.shouldFilterOutEvent(event, logLevel)) {
+	/**
+	 * Send an event with the logger
+	 *
+	 * @param event - the event to send
+	 */
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (
+			this.baseLogger.minLogLevel !== undefined &&
+			this.shouldFilterOutEvent(event, logLevel)
+		) {
 			return;
 		}
-		this.baseLogger.send(enrichEvent ? enrichEvent(event) : event);
+		this.baseLogger.send(this.prepareEvent(event), logLevel);
 	}
 }
 

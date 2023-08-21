@@ -51,8 +51,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export const enum LogLevel {
 	verbose = 0, // To log any verbose event for example when you are debugging something.
 	default = 10, // Default log level
-	warning = 20, // For events which are not errors but are also not ideal situations in the flow.
-	error = 30, // To log errors.
+	error = 20, // To log errors.
 }
 
 /**
