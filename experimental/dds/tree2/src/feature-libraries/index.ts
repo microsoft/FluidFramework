@@ -98,7 +98,6 @@ import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
 export {
-	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
 	ModularEditBuilder,
@@ -130,15 +129,9 @@ export {
 	RevisionInfo,
 	HasFieldChanges,
 	revisionMetadataSourceFromInfo,
-	ViewSchema,
-	SchemaCollection,
-	IFieldSchema,
-	ITreeSchema,
-	Sourced,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	BrandedFieldKind,
-	ChangeAtomId,
 } from "./modular-schema";
 
 export {
@@ -152,6 +145,8 @@ export {
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
+	ViewSchema,
+	SchemaLintConfiguration,
 } from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -11,7 +11,7 @@ import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
-import { ContainerMessageType } from "./containerRuntime";
+import { ContainerMessageType, SequencedContainerRuntimeMessage } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";
 
@@ -86,10 +86,6 @@ export class PendingStateManager implements IDisposable {
 		this.pendingMessages.clear();
 	});
 
-	public get pendingMessagesCount(): number {
-		return this.pendingMessages.length;
-	}
-
 	// Indicates whether we are processing a batch.
 	private isProcessingBatch: boolean = false;
 
@@ -100,11 +96,19 @@ export class PendingStateManager implements IDisposable {
 	private clientId: string | undefined;
 
 	/**
+	 * The pending messages count. Includes `pendingMessages` and `initialMessages` to keep in sync with
+	 * 'hasPendingMessages'.
+	 */
+	public get pendingMessagesCount(): number {
+		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
 	 * Called to check if there are any pending messages in the pending message queue.
 	 * @returns A boolean indicating whether there are messages or not.
 	 */
 	public hasPendingMessages(): boolean {
-		return !this.pendingMessages.isEmpty() || !this.initialMessages.isEmpty();
+		return this.pendingMessagesCount !== 0;
 	}
 
 	public getLocalState(): IPendingLocalState | undefined {
@@ -230,7 +234,7 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
+	public processPendingLocalMessage(message: SequencedContainerRuntimeMessage): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 
@@ -242,8 +246,12 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
-		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
-		// Stringified content does not match
+		// IMPORTANT: Order matters here, this must match the order of the properties used
+		// when submitting the message.
+		const { type, contents, compatDetails } = message;
+		const messageContent = JSON.stringify({ type, contents, compatDetails });
+
+		// Stringified content should match
 		if (pendingMessage.content !== messageContent) {
 			this.stateHandler.close(
 				DataProcessingError.create(

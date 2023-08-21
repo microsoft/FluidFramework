@@ -19,6 +19,7 @@ export * from "./Menu";
 export * from "./NoDevtoolsErrorBar";
 export * from "./TelemetryView";
 export * from "./SettingsView";
+export * from "./OpLatencyView";
 export * from "./Waiting";
 
 /* eslint-enable no-restricted-syntax */
