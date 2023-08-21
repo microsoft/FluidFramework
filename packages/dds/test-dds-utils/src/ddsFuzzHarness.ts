@@ -19,7 +19,6 @@ import {
 	makeRandom,
 	performFuzzActionsAsync as performFuzzActions,
 	AsyncReducer as Reducer,
-	repeatAsync as repeat,
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
 import {
@@ -462,7 +461,7 @@ export function mixinReconnect<
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 			const baseOp = baseGenerator(state);
-			if (state.random.bool(options.reconnectProbability)) {
+			if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
 				const client = state.clients.find((c) => c.channel.id === state.channel.id);
 				assert(client !== undefined);
 				return {
@@ -651,7 +650,7 @@ export function mixinSynchronization<
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return async (state: TState): Promise<TOperation | Synchronize | typeof done> =>
-					state.random.bool(validationStrategy.probability)
+					!state.isDetached && state.random.bool(validationStrategy.probability)
 						? { type: "synchronize" }
 						: baseGenerator(state);
 			};
@@ -662,7 +661,10 @@ export function mixinSynchronization<
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
 					baseGenerator,
-					repeat({ type: "synchronize" } as const),
+					async (state) =>
+						state.isDetached
+							? baseGenerator(state)
+							: ({ type: "synchronize" } as const),
 					validationStrategy.interval,
 					1,
 					ExitBehavior.OnEitherExhausted,
