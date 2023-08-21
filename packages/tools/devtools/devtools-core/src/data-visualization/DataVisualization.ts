@@ -209,14 +209,17 @@ export class DataVisualizerGraph
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
 
+
 		const result: Record<string, RootHandleNode> = {};
 		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
-				const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
-				result[key] =
-					fluidObjectId === undefined
-						? unknownObjectNode
-						: createHandleNode(fluidObjectId);
+				if (value.handle !== undefined) {
+					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
+					result[key] =
+						fluidObjectId === undefined
+							? unknownObjectNode
+							: createHandleNode(fluidObjectId);
+				}
 			}),
 		);
 		return result;
@@ -493,7 +496,6 @@ export async function visualizeChildData(
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;
 		const fluidObjectId = await resolveHandle(handle);
-
 		// If no ID was found, then the data is not a SharedObject.
 		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
 		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);

@@ -461,6 +461,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 				? undefined
 				: new DataVisualizerGraph(props.containerData, defaultVisualizers, defaultEditors);
 
+		console.log("this.containerData:", this.containerData);
+
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
