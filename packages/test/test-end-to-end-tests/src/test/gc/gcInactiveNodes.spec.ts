@@ -48,20 +48,22 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
 	const inactiveTimeoutMs = 100;
 
-	// KEEP THESE CONFIGS IN SYNC ON ALL COMMON PROPERTIES
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-			gcOptions: { gcAllowed: true, inactiveTimeoutMs },
-		},
-	};
-	// KEEP THESE CONFIGS IN SYNC ON ALL COMMON PROPERTIES
-	const testContainerConfigWithThrowOption: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-			gcOptions: { gcAllowed: true, inactiveTimeoutMs, throwOnInactiveLoad: true },
-		},
-	};
+	function makeTestContainerConfig(
+		params: { throwOnInactiveLoad?: true } = {},
+	): ITestContainerConfig {
+		const { throwOnInactiveLoad } = params;
+		return {
+			runtimeOptions: {
+				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+				gcOptions: { inactiveTimeoutMs, throwOnInactiveLoad },
+			},
+		};
+	}
+
+	const testContainerConfig = makeTestContainerConfig();
+	const testContainerConfigWithThrowOption = makeTestContainerConfig({
+		throwOnInactiveLoad: true,
+	});
 
 	let provider: ITestObjectProvider;
 	let mockLogger: MockLogger;
@@ -121,6 +123,12 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 		let containerRuntime: IContainerRuntimeBase;
 		let mainContainer: IContainer;
 		let defaultDataStore: ITestDataObject;
+
+		const waitForSummary = async (summarizer: ISummarizer) => {
+			await provider.ensureSynchronized();
+			const summaryResult = await summarizeNow(summarizer);
+			return summaryResult.summaryVersion;
+		};
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
@@ -317,21 +325,15 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			 */
 			function manufactureHandle<T>(
 				handleContext: IFluidHandleContext,
-				unreferencedId: string,
+				url: string,
 			): IFluidHandle<T> {
 				const serializer = new FluidSerializer(handleContext, () => {});
 				const handle: IFluidHandle<T> = parseHandles(
-					{ type: "__fluid_handle__", url: unreferencedId },
+					{ type: "__fluid_handle__", url },
 					serializer,
 				);
 				return handle;
 			}
-
-			const waitForSummary = async (summarizer: ISummarizer) => {
-				await provider.ensureSynchronized();
-				const summaryResult = await summarizeNow(summarizer);
-				return summaryResult.summaryVersion;
-			};
 
 			/**
 			 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
@@ -345,23 +347,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				return container.request(request);
 			}
 
-			type InactiveLoadError =
-				| (Error & {
-						code: number;
-						underlyingResponseHeaders?: {
-							[InactiveResponseHeaderKey]: boolean;
-						};
-				  })
-				| undefined;
-
-			/**
-			 * 1. With option, handle.get, throws error with known flag
-			 * 2. With option, with header, ok
-			 * 3. Without option, handle.get, ok
-			 *
-			 * Bonus:
-			 * 1. Summarizer never throws
-			 */
+			/** Expected type of error thrown when loading an inactiveObject (if disallowed) */
+			type InactiveLoadError = Error & {
+				code: number;
+				underlyingResponseHeaders?: {
+					[InactiveResponseHeaderKey]: boolean;
+				};
+			};
 
 			itExpects(
 				"throwOnInactiveLoad: true; handle.get -- throws and logs",
@@ -389,7 +381,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						"",
 					);
 					const url = dataStore.handle.absolutePath;
-					const unreferencedId = dataStore._context.id;
 					defaultDataStore._root.set("dataStore", dataStore.handle);
 					defaultDataStore._root.delete("dataStore");
 
@@ -418,19 +409,16 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					// Load the inactive data store. This should result in a loaded event from the non-summarizer container.
 					const handle = manufactureHandle<ITestDataObject>(
 						defaultDataStoreContainer2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
-						unreferencedId,
+						url,
 					);
 					try {
 						// This throws because the DataStore is inactive and throwOnInactiveLoad is set
 						await handle.get();
 						assert.fail("Expected handle.get to throw");
 					} catch (error: any) {
-						const inactiveError: InactiveLoadError = error;
+						const inactiveError: InactiveLoadError | undefined = error;
 						assert.equal(inactiveError?.code ?? -1, 404, "Incorrect error status code");
-						assert.equal(
-							inactiveError?.message ?? "",
-							`Object is inactive: /${unreferencedId}`,
-						);
+						assert.equal(inactiveError?.message ?? "", `Object is inactive: ${url}`);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
@@ -614,12 +602,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
-				const waitForSummary = async (summarizer: ISummarizer) => {
-					await provider.ensureSynchronized();
-					const summaryResult = await summarizeNow(summarizer);
-					return summaryResult.summaryVersion;
-				};
-
 				const { summarizer: summarizer1 } = await createSummarizer(
 					provider,
 					mainContainer,

@@ -914,6 +914,11 @@ export class GarbageCollector implements IGarbageCollector {
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
 
+		// Unless this is a Loaded event, we're done after telemetry tracking
+		if (reason !== "Loaded") {
+			return;
+		}
+
 		// We may throw when loading an Inactive object, depending on these preconditions
 		const shouldThrowOnInactiveLoad =
 			!this.isSummarizerClient &&
@@ -921,7 +926,7 @@ export class GarbageCollector implements IGarbageCollector {
 			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
 		const state = this.unreferencedNodesState.get(nodePath)?.state;
 
-		if (shouldThrowOnInactiveLoad && reason === "Loaded" && state === "Inactive") {
+		if (shouldThrowOnInactiveLoad && state === "Inactive") {
 			const request: IRequest = { url: nodePath };
 			const error = responseToException(
 				createResponseError(404, "Object is inactive", request, {
