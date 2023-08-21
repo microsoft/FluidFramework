@@ -34,7 +34,8 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"tsc:watch": "tsc --watch"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",

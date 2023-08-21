@@ -65,9 +65,11 @@ export interface ForestTestConfiguration {
 	skipCursorErrorCheck?: true;
 }
 
-const jsonDocumentSchema = new SchemaBuilder("jsonDocumentSchema", jsonSchema).intoDocumentSchema(
-	SchemaBuilder.fieldSequence(...jsonRoot),
-);
+const jsonDocumentSchema = new SchemaBuilder(
+	"jsonDocumentSchema",
+	{},
+	jsonSchema,
+).intoDocumentSchema(SchemaBuilder.fieldSequence(...jsonRoot));
 
 /**
  * Generic forest test suite
