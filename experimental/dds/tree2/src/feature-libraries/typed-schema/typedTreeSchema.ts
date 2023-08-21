@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFieldSchema, ITreeSchema } from "../modular-schema";
-import { FieldKey, Named, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
+import { FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
 import {
 	MakeNominal,
 	Assume,
 	RestrictiveReadonlyRecord,
 	_InlineTrick,
 	FlattenKeys,
+	Named,
 } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { LazyItem, normalizeFlexList } from "./flexList";
@@ -45,13 +45,12 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @alpha
+ * @sealed @alpha
  */
 export class TreeSchema<
 	Name extends string = string,
 	T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification,
-> implements ITreeSchema
-{
+> {
 	// Allows reading fields through the normal map, but without losing type information.
 	public readonly structFields: ObjectToMap<
 		NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
@@ -64,9 +63,10 @@ export class TreeSchema<
 	>;
 
 	public readonly mapFields?: FieldSchema;
-	public readonly value: WithDefault<
+	// WithDefault is needed to convert unknown to undefined here (missing properties show up as unknown in types).
+	public readonly leafValue: WithDefault<
 		Assume<T, TreeSchemaSpecification>["leafValue"],
-		ValueSchema.Nothing
+		undefined
 	>;
 
 	public readonly name: Name & TreeSchemaIdentifier;
@@ -81,9 +81,9 @@ export class TreeSchema<
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
 		this.mapFields = this.info.mapFields;
-		this.value = (this.info.leafValue ?? ValueSchema.Nothing) as WithDefault<
+		this.leafValue = this.info.leafValue as WithDefault<
 			Assume<T, TreeSchemaSpecification>["leafValue"],
-			ValueSchema.Nothing
+			undefined
 		>;
 	}
 }
@@ -196,9 +196,7 @@ export type TreeSchemaSpecification = [
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes>
-	implements IFieldSchema
-{
+export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */

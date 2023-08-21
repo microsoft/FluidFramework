@@ -10,7 +10,6 @@ import {
 	ContainerErrorType,
 	IContainerContext,
 	ICriticalContainerError,
-	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -27,11 +26,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
+	ContainerRuntimeMessage,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
@@ -963,6 +963,83 @@ describe("Runtime", () => {
 					]);
 				},
 			);
+		});
+
+		describe("Future op type compatibility", () => {
+			let containerRuntime: ContainerRuntime;
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {},
+				});
+			});
+			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" },
+				};
+
+				const packedOp: Partial<ISequencedDocumentMessage> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
+			});
+
+			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+				};
+
+				const packedOp: Partial<ISequencedDocumentMessage> = {
+					type: MessageType.Operation,
+					contents: JSON.stringify(futureRuntimeMessage),
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							packedOp as ISequencedDocumentMessage,
+							false /* local */,
+						),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorType.dataProcessingError,
+					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
+				);
+			});
+
+			it("process remote op with unrecognized type and no compat behavior", async () => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
+				};
+
+				const packedOp: Partial<ISequencedDocumentMessage> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							packedOp as ISequencedDocumentMessage,
+							false /* local */,
+						),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorType.dataProcessingError,
+					"Ops with unrecognized type and no specified compat behavior should fail to process",
+				);
+			});
 		});
 
 		describe("User input validations", () => {

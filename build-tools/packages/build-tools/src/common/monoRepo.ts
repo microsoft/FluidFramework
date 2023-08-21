@@ -82,6 +82,13 @@ export class MonoRepo {
 		return this.kind;
 	}
 
+	/**
+	 * The directory of the root of the release group.
+	 */
+	public get directory(): string {
+		return this.repoPath;
+	}
+
 	private _packageJson: PackageJson;
 
 	static load(group: string, repoPackage: IFluidRepoPackage, log: Logger) {

@@ -25,6 +25,7 @@ import {
 	isRuntimeMessage,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
+import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
 	IOdspSnapshot,
 	ISnapshotCachedEntry,
@@ -309,7 +310,17 @@ async function fetchLatestSnapshotCore(
 					case "application/json": {
 						let text: string;
 						[text, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.text(),
+							odspResponse.content.text().catch((err) =>
+								// Parsing can fail and message could contain full request URI, including
+								// tokens, etc. So do not log error object itself.
+								throwOdspNetworkError(
+									"Error while parsing fetch response",
+									fetchIncorrectResponse,
+									odspResponse.content, // response
+									undefined, // response text
+									propsToLog,
+								),
+							),
 						);
 						propsToLog.bodySize = text.length;
 						let content: IOdspSnapshot;
@@ -329,7 +340,17 @@ async function fetchLatestSnapshotCore(
 					case "application/ms-fluid": {
 						let content: ArrayBuffer;
 						[content, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.arrayBuffer(),
+							odspResponse.content.arrayBuffer().catch((err) =>
+								// Parsing can fail and message could contain full request URI, including
+								// tokens, etc. So do not log error object itself.
+								throwOdspNetworkError(
+									"Error while parsing fetch response",
+									fetchIncorrectResponse,
+									odspResponse.content, // response
+									undefined, // response text
+									propsToLog,
+								),
+							),
 						);
 						propsToLog.bodySize = content.byteLength;
 						let snapshotContents: ISnapshotContentsWithProps;

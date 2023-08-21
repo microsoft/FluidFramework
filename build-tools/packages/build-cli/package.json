@@ -43,7 +43,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "nyc npm run test:mocha:report",
 		"tsc": "tsc"
@@ -121,6 +121,7 @@
 		"@types/inquirer": "^8.2.6",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.53",
+		"@types/prettier": "^2.7.3",
 		"@types/prompts": "^2.4.4",
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",

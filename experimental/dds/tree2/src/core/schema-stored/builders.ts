@@ -68,6 +68,6 @@ export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
 	return {
 		structFields,
 		mapFields: data.mapFields,
-		value: data.leafValue ?? ValueSchema.Nothing,
+		leafValue: data.leafValue,
 	};
 }

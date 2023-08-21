@@ -21,6 +21,7 @@ import {
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	ChangesetLocalId,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -47,7 +48,6 @@ import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./g
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
-	ChangesetLocalId,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
@@ -66,10 +66,6 @@ export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
 	public readonly codecs: ICodecFamily<ModularChangeset>;
-	private readonly inverseCache: Map<
-		TaggedChange<ModularChangeset>,
-		{ inverse: ModularChangeset; isRollback: boolean; repairStore?: ReadonlyRepairDataStore }
-	> = new Map();
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
@@ -286,26 +282,15 @@ export class ModularChangeFamily
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 * @param repairStore - The store to query for repair data.
-	 * @param cache - Whether the inverted change will be cached or not. Caching is based on the object identity of change, e.g. change must be === to get a cache hit.
 	 */
 	public invert(
 		change: TaggedChange<ModularChangeset>,
 		isRollback: boolean,
 		repairStore?: ReadonlyRepairDataStore,
-		cache?: boolean,
 	): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
 			return makeModularChangeset(new Map());
-		}
-
-		const inverseCached = this.inverseCache.get(change);
-		if (
-			inverseCached !== undefined &&
-			inverseCached.isRollback === isRollback &&
-			inverseCached.repairStore === repairStore
-		) {
-			return inverseCached.inverse;
 		}
 
 		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
@@ -346,7 +331,7 @@ export class ModularChangeFamily
 		);
 
 		const revInfo = change.change.revisions;
-		const inverse = makeModularChangeset(
+		return makeModularChangeset(
 			invertedFields,
 			idState.maxId,
 			revInfo === undefined
@@ -357,11 +342,6 @@ export class ModularChangeFamily
 				  ).reverse(),
 			change.change.constraintViolationCount,
 		);
-
-		if (cache === true) {
-			this.inverseCache.set(change, { inverse, isRollback, repairStore });
-		}
-		return inverse;
 	}
 
 	private invertFieldMap(

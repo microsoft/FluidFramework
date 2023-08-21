@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
 import {
 	ICreateBlobParams,
 	ICreateBlobResponse,
@@ -15,6 +14,7 @@ import {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
 } from "@fluidframework/server-services-client";
+import assert from "assert";
 import * as async from "async";
 import lorem from "lorem-ipsum";
 import sillyname from "sillyname";
@@ -222,7 +222,7 @@ testModes.forEach((mode) => {
 			// The other possibility is isomorphic-git.
 			return new IsomorphicGitManagerFactory(
 				testUtils.defaultProvider.get("storageDir"),
-				fileSystemManagerFactory,
+				{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
 				externalStorageManager,
 				testMode.repoPerDocEnabled,
 			);
@@ -237,7 +237,7 @@ testModes.forEach((mode) => {
 				testUtils.defaultProvider.set("git:repoPerDocEnabled", mode.repoPerDocEnabled);
 				const testApp = app.create(
 					testUtils.defaultProvider,
-					fileSystemManagerFactory,
+					{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
 					repoManagerFactory,
 				);
 				supertest = request(testApp);

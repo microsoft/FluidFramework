@@ -13,10 +13,12 @@ import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -28,8 +30,9 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { IUsageError } from '@fluidframework/core-interfaces';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
@@ -51,7 +54,7 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @public
+// @public @deprecated
 export enum ContainerErrorType {
     clientSessionExpiredError = "clientSessionExpiredError",
     dataCorruptionError = "dataCorruptionError",
@@ -60,6 +63,19 @@ export enum ContainerErrorType {
     throttlingError = "throttlingError",
     usageError = "usageError"
 }
+
+// @public
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type ContainerErrorTypes = typeof ContainerErrorTypes[keyof typeof ContainerErrorTypes];
 
 // @public
 export interface ContainerWarning extends IErrorBase {
@@ -167,6 +183,8 @@ export interface IContainerContext {
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
+    // @deprecated
+    readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
@@ -283,14 +301,7 @@ export interface IDeltaSender {
     flush(): void;
 }
 
-// @public
-export interface IErrorBase extends Partial<Error> {
-    readonly errorType: string;
-    getTelemetryProperties?(): ITelemetryProperties;
-    readonly message: string;
-    readonly name?: string;
-    readonly stack?: string;
-}
+export { IErrorBase }
 
 // @public
 export interface IFluidBrowserPackage extends IFluidPackage {
@@ -364,13 +375,7 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public
-export interface IGenericError extends IErrorBase {
-    // (undocumented)
-    error?: any;
-    // (undocumented)
-    readonly errorType: ContainerErrorType.genericError;
-}
+export { IGenericError }
 
 // @public
 export interface IHostLoader extends ILoader {
@@ -490,19 +495,9 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     };
 }
 
-// @public
-export interface IThrottlingWarning extends IErrorBase {
-    // (undocumented)
-    readonly errorType: ContainerErrorType.throttlingError;
-    // (undocumented)
-    readonly retryAfterSeconds: number;
-}
+export { IThrottlingWarning }
 
-// @public
-export interface IUsageError extends IErrorBase {
-    // (undocumented)
-    readonly errorType: ContainerErrorType.usageError;
-}
+export { IUsageError }
 
 // @public
 export enum LoaderHeader {

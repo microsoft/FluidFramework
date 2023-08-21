@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, ITreeCursor, forbiddenFieldKindIdentifier } from "../../core";
+import {
+	FieldKindIdentifier,
+	Delta,
+	ITreeCursor,
+	forbiddenFieldKindIdentifier,
+	ChangesetLocalId,
+} from "../../core";
 import { fail } from "../../util";
 import {
 	FieldKind,
@@ -13,7 +19,6 @@ import {
 	FieldChangeHandler,
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
-	ChangesetLocalId,
 	BrandedFieldKind,
 	brandedFieldKind,
 } from "../modular-schema";

@@ -4,7 +4,7 @@
  */
 
 import { Signaler } from "@fluid-experimental/data-objects";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IMember, IServiceAudience } from "fluid-framework";
 

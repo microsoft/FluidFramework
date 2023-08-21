@@ -23,7 +23,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { ThemeContext } from "../../ThemeHelper";
+import { ThemeOption, useThemeContext } from "../../ThemeHelper";
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -90,6 +90,17 @@ export interface DynamicComposedChartProps {
 	 * The unit that will be displayed on the y axis
 	 */
 	yAxisUnitDisplayName?: string;
+
+	/**
+	 * The amount of margin around the chart SVG.
+	 */
+	margin?: {
+		top: number;
+		right: number;
+		left: number;
+		bottom: number;
+	};
+	legendStyle?: React.CSSProperties;
 }
 
 /**
@@ -103,7 +114,7 @@ export interface DynamicComposedChartProps {
  * https://react.fluentui.dev/?path=/docs/theme-colors--page
  */
 const createGraphColorPalette = (
-	themeMode: string,
+	themeMode: ThemeOption,
 	theme: Theme,
 ): {
 	axisTick: string;
@@ -112,8 +123,8 @@ const createGraphColorPalette = (
 	graphColors: string[];
 } => {
 	switch (themeMode) {
-		case "light":
-		case "dark":
+		case ThemeOption.Light:
+		case ThemeOption.Dark:
 		default:
 			return {
 				axisTick: theme.colorNeutralForeground2,
@@ -126,7 +137,7 @@ const createGraphColorPalette = (
 					theme.colorPaletteLavenderForeground2,
 				],
 			};
-		case "highContrast":
+		case ThemeOption.HighContrast:
 			return {
 				axisTick: theme.colorNeutralForeground2,
 				toolTipBackround: theme.colorNeutralBackground1,
@@ -144,10 +155,12 @@ const createGraphColorPalette = (
 /**
  * This component is a wrapper over Recharts ComposedChart component that provides
  * an easy way to create composed charts from disparate sets of data.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
-	const { themeInfo } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo } = useThemeContext();
 
 	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
@@ -373,12 +386,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 		<ResponsiveContainer width="100%" height="100%">
 			<ComposedChart
 				data={mergeDataSets(props.dataSets)}
-				margin={{
-					top: 15,
-					right: 30,
-					left: 50,
-					bottom: 40,
-				}}
+				margin={props.margin}
+				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
 				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
@@ -390,7 +399,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					}}
 				/>
 				<Legend
-					wrapperStyle={{ bottom: "-10px", fontSize: "16px" }}
+					wrapperStyle={{ bottom: "-10px", fontSize: "14px", ...props.legendStyle }}
 					onClick={handleLegendClick}
 					content={renderLegend}
 				/>
