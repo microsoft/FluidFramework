@@ -193,6 +193,10 @@ describe("Fuzz - undo/redo", () => {
 			emitter,
 			// ADO:5083, assert 0x6a1 hit for 13 and 18
 			skip: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+			detachedStartOptions: {
+				enabled: false,
+				attachProbability: 0,
+			},
 		});
 	});
 
@@ -234,6 +238,13 @@ describe("Fuzz - undo/redo", () => {
 			emitter,
 			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 }, // interval set to prevent synchronization
 			skip: [4, 8, 11, 13, 15, 18],
+			// TODO: Enabling this causes the tree2 fuzz tests to infinite loop due to how edit generation is set up.
+			// This config can probably stay false (this test is targeted at long-running undo/redo scenarios, so having a single
+			// client start detached and later attach is not interesting), but it should still function even if enabled.
+			detachedStartOptions: {
+				enabled: false,
+				attachProbability: 1,
+			},
 		});
 	});
 });

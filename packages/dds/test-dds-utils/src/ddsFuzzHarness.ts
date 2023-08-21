@@ -254,7 +254,6 @@ export interface DDSFuzzSuiteOptions {
 
 	/**
 	 * Dictates simulation of edits made to a DDS while that DDS is detached.
-	 * Whether the collaboration process should start from a detached state.
 	 *
 	 * When enabled, the fuzz test starts with a single client generating edits. At some point in time (dictated by `attachProbability`),
 	 * an attach op will be generated, at which point:
