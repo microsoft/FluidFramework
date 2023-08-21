@@ -18,13 +18,18 @@ module.exports = {
 		},
 		{
 			name: "devtools-core",
-			script: "pnpm run tsc:watch",
+			script: "npm run tsc:watch",
 			cwd: "../devtools-core",
 		},
 		{
 			name: "devtools-view",
-			script: "pnpm run tsc:watch",
+			script: "npm run tsc:watch",
 			cwd: "../devtools-view",
+		},
+		{
+			name: "devtools",
+			script: "npm run tsc:watch",
+			cwd: "../devtools",
 		},
 		// Add more packages as needed
 	],
