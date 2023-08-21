@@ -1026,21 +1026,26 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
 // @alpha
+export interface ISharedTreeBranchView extends ISharedTreeView {
+    rebaseOnto(view: ISharedTreeView): void;
+}
+
+// @alpha
 export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
-    fork(): SharedTreeView;
-    merge(view: SharedTreeView): void;
-    merge(view: SharedTreeView, disposeView: boolean): void;
+    fork(): ISharedTreeBranchView;
+    merge(view: ISharedTreeBranchView): void;
+    merge(view: ISharedTreeBranchView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
         localize(key: StableNodeKey): LocalNodeKey;
         map: ReadonlyMap<LocalNodeKey, EditableTree>;
     };
-    rebase(view: SharedTreeView): void;
+    rebase(view: ISharedTreeBranchView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
@@ -1063,6 +1068,14 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 // @alpha
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+// @alpha
+export interface ITransaction {
+    abort(): TransactionResult.Abort;
+    commit(): TransactionResult.Commit;
+    inProgress(): boolean;
+    start(): void;
 }
 
 // @alpha
@@ -1337,7 +1350,7 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 // @alpha
-export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
+export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
@@ -1685,7 +1698,7 @@ export interface SchemaLintConfiguration {
 // @alpha
 export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursor[];
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[];
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
@@ -1721,50 +1734,6 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
-}
-
-// @alpha
-export class SharedTreeView implements ISharedTreeBranchView {
-    constructor(transaction: ITransaction, branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>, changeFamily: DefaultChangeFamily, _storedSchema: InMemoryStoredSchemaRepository, _forest: IEditableForest, context: EditableTreeContext, _nodeKeyManager: NodeKeyManager, _nodeKeyIndex: NodeKeyIndex, _events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>);
-    // (undocumented)
-    readonly context: EditableTreeContext;
-    dispose(): void;
-    // (undocumented)
-    get editor(): IDefaultEditBuilder;
-    // (undocumented)
-    get events(): ISubscribable<ViewEvents>;
-    // (undocumented)
-    get forest(): IForestSubscription;
-    // (undocumented)
-    fork(): SharedTreeView;
-    // (undocumented)
-    locate(anchor: Anchor): AnchorNode | undefined;
-    // (undocumented)
-    merge(view: SharedTreeView): void;
-    // (undocumented)
-    merge(view: SharedTreeView, disposeView: boolean): void;
-    // (undocumented)
-    readonly nodeKey: ISharedTreeView["nodeKey"];
-    // (undocumented)
-    rebase(view: SharedTreeView): void;
-    // (undocumented)
-    rebaseOnto(view: ISharedTreeView): void;
-    // (undocumented)
-    redo(): void;
-    // (undocumented)
-    get root(): UnwrappedEditableField;
-    // (undocumented)
-    get rootEvents(): ISubscribable<AnchorSetRootEvents>;
-    // (undocumented)
-    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
-    // (undocumented)
-    setContent(data: NewFieldContent): void;
-    // (undocumented)
-    get storedSchema(): StoredSchemaRepository;
-    // (undocumented)
-    readonly transaction: ITransaction;
-    // (undocumented)
-    undo(): void;
 }
 
 // @alpha
