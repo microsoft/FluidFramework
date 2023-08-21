@@ -36,7 +36,7 @@ This package uses 2 flavors of testing:
 2. Visual regression "tests"
 
 To run all of the tests, run `npm run test` from a terminal within this directory.
-Note: you will need to have [built the code](#build) before running the unit tests.
+Note: you will need to have [built the code](#build) before running the [unit tests](#unit-tests).
 
 #### Unit Tests
 
@@ -56,15 +56,60 @@ This is particularly important for ensuring we meet our visual accessibility req
 
 The test modules for these tests are written using [Storybook "stories"](https://storybook.js.org/docs/react/writing-stories/introduction)
 and live under `src/screenshot-tests`.
-The corresponding screenshot assets live under `src/test/__screenshots__`.
-
-Note: these tests don't do any direct validation.
-Instead, if underlying component logic has changed, then any corresponding screenshot artifacts will be updated.
-It is up to the developer and code reviewers to verify if the changes are expected and acceptable.
-Our pipelines verify that building and testing does not generate uncommitted changes to git, so out-of-date screenshots
-should be caught in pull requests.
+The corresponding screenshot assets live under `./__screenshots__`.
 
 To run only the visual regression tests, run `npm run test:screenshots` from a terminal within this directory.
+
+##### Adding a new test story
+
+To add a new test story, do the following:
+
+1. Add a new file under the `src/screenshot-tests/stories` using the following naming convention: `<name-of-the-component-being-tested>.stories.tsx`.
+    - The idea is to have a 1-1 mapping of stories modules to components.
+      Each stories module may contain any number of stories, where each story maps to a single test.
+2. Add the top-level story module boilerplate.
+   I.e.
+
+    ```typescript
+    // PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
+    import { COMPONENT_NAME } from "../../components/COMPONENT_NAME";
+    import { testContextDecorator } from "../ScreenshotTestUtilities";
+
+    export default {
+    	title: "COMPONENT_NAME",
+    	component: COMPONENT_NAME,
+    	decorators: [testContextDecorator],
+    };
+    ```
+
+3. Then, add the individual test stories required to test the component.
+   E.g.
+
+    ```typescript
+    /**
+     * <Description of the story>
+     */
+    export const STORY_NAME = {
+    	args: {
+    		// Component props describing the story
+    		foo: 42,
+    		bar: "baz",
+    	},
+    };
+    ```
+
+4. Run the tests via `npm run test:screenshots` (`npm run test` will also run the screenshot tests, alongside the others).
+5. Look at the generated screenshots, verify that the output looks correct, and check them in!
+
+##### What to do when a test fails?
+
+If you have made code changes, and 1 or more of the screenshot tests have started failing, compare the newly generated screenshot with the existing version checked into the repo.
+If the changes are expected / look correct, go ahead and check in the new versions(s).
+If not, make the necessary code changes and re-run.
+
+Note: Since we're using Git LFS to store the screenshot assets, performing the diff comparison locally can be a bit tricky.
+Fortunately, Github's LFS diffing works pretty well.
+If you are unsure of the screenshot changes you're seeing, you can always view the commit in Github to see a side-by-side comparison.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
