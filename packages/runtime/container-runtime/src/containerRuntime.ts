@@ -3611,7 +3611,7 @@ export class ContainerRuntime
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
 		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.fetchLatestSnapshotFromStorage(
+			let fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3619,6 +3619,7 @@ export class ContainerRuntime
 					targetSequenceNumber: summaryRefSeq,
 				},
 				readAndParseBlob,
+				null,
 			);
 
 			/**
@@ -3628,7 +3629,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorageAndClose(
+				fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3701,12 +3702,13 @@ export class ContainerRuntime
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const { snapshotTree, versionId, latestSnapshotRefSeq } =
-			await this.fetchLatestSnapshotFromStorage(
+			await this.fetchSnapshotFromStorageAndMaybeClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryFromServerFetch",
 				},
 				readAndParseBlob,
+				null,
 			);
 		const fetchLatestSnapshot: IFetchSnapshotResult = {
 			snapshotTree,
@@ -3730,20 +3732,12 @@ export class ContainerRuntime
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
 	}
 
-	private async fetchLatestSnapshotFromStorage(
-		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorageAndClose(
-			logger,
-			event,
-			readAndParseBlob,
-			null /* latest */,
-		);
-	}
-
-	private async fetchSnapshotFromStorageAndClose(
+	/**
+	 * Downloads snapshot from storage with the given versionId or latest if versionId is null.
+	 * By default, it also closes the container after downloading the snapshot. However, this may be
+	 * overridden via options.
+	 */
+	private async fetchSnapshotFromStorageAndMaybeClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
