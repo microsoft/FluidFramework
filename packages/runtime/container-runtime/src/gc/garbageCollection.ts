@@ -884,7 +884,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive, log an error.
-	 * @param nodePath - The id of the node that changed.
+	 * @param nodePath - The path of the node that changed.
 	 * @param reason - Whether the node was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
 	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.

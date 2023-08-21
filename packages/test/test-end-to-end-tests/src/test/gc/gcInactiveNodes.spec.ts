@@ -35,6 +35,7 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
+import { SharedMap } from "@fluidframework/map";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
@@ -181,7 +182,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				assert.equal(
 					response.status,
 					200,
-					"Loading the inactive object should succeed despite throwOnInactiveLoad option",
+					"Loading the inactive object should succeed on summarizer despite throwOnInactiveLoad option",
 				);
 				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
@@ -356,7 +357,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			};
 
 			itExpects(
-				"throwOnInactiveLoad: true; handle.get -- throws and logs",
+				"throwOnInactiveLoad: true; DataStore handle.get -- throws and logs",
 				[
 					{
 						eventName:
@@ -380,7 +381,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						await containerRuntime.createDataStore(TestDataObjectType),
 						"",
 					);
-					const url = dataStore.handle.absolutePath;
+					const dataStoreUrl = dataStore.handle.absolutePath;
 					defaultDataStore._root.set("dataStore", dataStore.handle);
 					defaultDataStore._root.delete("dataStore");
 
@@ -409,7 +410,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					// Load the inactive data store. This should result in a loaded event from the non-summarizer container.
 					const handle = manufactureHandle<ITestDataObject>(
 						defaultDataStoreContainer2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
-						url,
+						dataStoreUrl,
 					);
 					try {
 						// This throws because the DataStore is inactive and throwOnInactiveLoad is set
@@ -417,8 +418,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						assert.fail("Expected handle.get to throw");
 					} catch (error: any) {
 						const inactiveError: InactiveLoadError | undefined = error;
-						assert.equal(inactiveError?.code ?? -1, 404, "Incorrect error status code");
-						assert.equal(inactiveError?.message ?? "", `Object is inactive: ${url}`);
+						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
+						assert.equal(inactiveError?.message, `Object is inactive: ${dataStoreUrl}`);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
@@ -431,12 +432,106 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 								eventName:
 									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
 								timeout: inactiveTimeoutMs,
-								id: { value: url, tag: TelemetryDataTag.CodeArtifact },
+								id: { value: dataStoreUrl, tag: TelemetryDataTag.CodeArtifact },
 							},
 						],
 						"loaded event not generated as expected",
 						true /* inlineDetailsProp */,
 					);
+				},
+			);
+
+			itExpects(
+				"throwOnInactiveLoad: true; DDS handle.get -- throws but DOESN'T log",
+				[
+					// Bug: It SHOULD actually log
+					// {
+					// 	eventName:
+					// 		"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					// },
+				],
+				async () => {
+					// Create a summarizer client that will be used to summarize the container.
+					const { summarizer: summarizer1 } = await createSummarizer(
+						provider,
+						mainContainer,
+						{
+							runtimeOptions: {
+								gcOptions: { inactiveTimeoutMs },
+							},
+						},
+					);
+
+					// Create a data store, mark it as referenced and then unreferenced
+					const dataStore = await requestFluidObject<ITestDataObject>(
+						await containerRuntime.createDataStore(TestDataObjectType),
+						"",
+					);
+					const dds = dataStore._runtime.createChannel(
+						"dds1",
+						SharedMap.getFactory().type,
+					);
+					const ddsUrl = dds.handle.absolutePath;
+					defaultDataStore._root.set("dds1", dds.handle);
+					defaultDataStore._root.delete("dds1");
+
+					// Summarize the container while it's unreferenced. This summary will be used to load another container.
+					const summaryVersion1 = await waitForSummary(summarizer1);
+
+					// Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
+					await waitForInactiveTimeout();
+
+					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
+					// be in "write" mode for GC to initialize unreferenced nodes from summary.
+					const container2 = await provider.loadTestContainer(
+						{
+							...testContainerConfigWithThrowOption,
+							loaderProps: { logger: mockLogger },
+						},
+						{ [LoaderHeader.version]: summaryVersion1 },
+					);
+					const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
+						container2,
+						"/",
+					);
+					defaultDataStoreContainer2._root.set("mode", "write");
+					await waitForContainerWriteModeConnectionWrite(container2);
+
+					// Load the inactive data store. This should result in a loaded event from the non-summarizer container.
+					const handle = manufactureHandle<ITestDataObject>(
+						defaultDataStoreContainer2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+						ddsUrl,
+					);
+					try {
+						// This throws because the DataStore is inactive and throwOnInactiveLoad is set
+						await handle.get();
+						assert.fail("Expected handle.get to throw");
+					} catch (error: any) {
+						const inactiveError: InactiveLoadError | undefined = error;
+						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
+						assert.equal(inactiveError?.message, `Object is inactive: ${ddsUrl}`);
+						assert.equal(
+							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
+							true,
+							"Inactive error from handle.get should include the tombstone flag",
+						);
+					}
+					// Bug: It SHOULD actually log
+					// mockLogger.assertMatch(
+					// 	[
+					// 		{
+					// 			eventName:
+					// 				"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					// 			timeout: inactiveTimeoutMs,
+					// 			id: {
+					// 				value: `${dataStoreId}`,
+					// 				tag: TelemetryDataTag.CodeArtifact,
+					// 			},
+					// 		},
+					// 	],
+					// 	"loaded event not generated as expected",
+					// 	true /* inlineDetailsProp */,
+					// );
 				},
 			);
 
