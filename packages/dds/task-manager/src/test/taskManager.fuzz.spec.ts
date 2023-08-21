@@ -14,6 +14,7 @@ import {
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
 import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
 
@@ -237,6 +238,36 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
+		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
+		defaultTestCount: defaultOptions.testCount,
+		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		// Uncomment this line to replay a specific seed:
+		// replay: 0,
+		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
+	});
+});
+
+describe("TaskManager fuzz testing with rebasing", () => {
+	const model: DDSFuzzModel<TaskManagerFactory, Operation, FuzzTestState> = {
+		workloadName: "default configuration and rebasing",
+		generatorFactory: () => take(100, makeOperationGenerator()),
+		reducer:
+			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
+			makeReducer(),
+		validateConsistency: assertEqualTaskManagers,
+		factory: new TaskManagerFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
+		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
+		// ADO:5083, eventual consistency issue was detected
+		skip: [0, 2, 6],
+		rebaseProbability: 0.15,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
 		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },

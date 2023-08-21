@@ -63,11 +63,6 @@ describe("Rebasing", () => {
 			});
 
 			it("Rebasing ops maintains eventual consistency", () => {
-				assert(containerRuntime1.rebase !== undefined, "Unsupported test-utils version");
-				assert(containerRuntime1.flush !== undefined, "Unsupported test-utils version");
-				assert(containerRuntime2.rebase !== undefined, "Unsupported test-utils version");
-				assert(containerRuntime2.flush !== undefined, "Unsupported test-utils version");
-
 				const keyCount = 10;
 				for (let i = 0; i < keyCount; i++) {
 					map1.set(`${i}`, map1.size);
@@ -169,11 +164,6 @@ describe("Rebasing", () => {
 			};
 
 			it("Rebasing ops maintains eventual consistency", () => {
-				assert(containerRuntime1.rebase !== undefined, "Unsupported test-utils version");
-				assert(containerRuntime1.flush !== undefined, "Unsupported test-utils version");
-				assert(containerRuntime2.rebase !== undefined, "Unsupported test-utils version");
-				assert(containerRuntime2.flush !== undefined, "Unsupported test-utils version");
-
 				dir2.on("valueChanged", (changed) => {
 					if (changed.key === "key") {
 						dir2.set("valueChanged", "valueChanged");

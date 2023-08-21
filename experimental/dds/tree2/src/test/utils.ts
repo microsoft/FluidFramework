@@ -30,7 +30,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer, generateStableId } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ISharedTree,
@@ -43,12 +43,10 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
-	namedTreeSchema,
 	NodeReviver,
 	RevisionInfo,
 	RevisionMetadataSource,
@@ -64,7 +62,6 @@ import {
 	mapCursorField,
 	JsonableTree,
 	SchemaData,
-	fieldSchema,
 	rootFieldKey,
 	Value,
 	compareUpPaths,
@@ -79,8 +76,13 @@ import {
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
 	TaggedChange,
+	TreeSchemaBuilder,
+	treeSchema,
+	FieldUpPath,
+	TreeSchemaIdentifier,
+	TreeStoredSchema,
 } from "../core";
-import { JsonCompatible, Mutable, brand, makeArray } from "../util";
+import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
@@ -324,7 +326,7 @@ export class TestTreeProvider {
 }
 
 /**
- * A test helper class that creates one or more SharedTrees connected to a mock runtime.
+ * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
@@ -351,8 +353,10 @@ export class TestTreeProviderLite {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
-			const runtime = new MockFluidDataStoreRuntime({ clientId: generateStableId() });
-			(runtime as Mutable<MockFluidDataStoreRuntime>).id = "tree-provider-lite-data-store";
+			const runtime = new MockFluidDataStoreRuntime({
+				clientId: `test-client-${i}`,
+				id: "test",
+			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
@@ -632,26 +636,13 @@ export function expectJsonTree(
 	}
 }
 
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	structFields: {
-		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-	},
-	mapFields: fieldSchema(FieldKinds.sequence),
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	rootFieldSchema,
-};
-
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state?: JsonableTree,
-	schema: SchemaData = testSchema,
+	state: JsonableTree | undefined,
+	schema: SchemaData,
 ): void {
 	tree.storedSchema.update(schema);
 
@@ -670,6 +661,11 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
 	}
+}
+
+export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPath): void {
+	expectEqualPaths(path.parent, expectedPath.parent);
+	assert.equal(path.field, expectedPath.field);
 }
 
 export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
@@ -847,4 +843,16 @@ export function defaultRevisionMetadataFromChanges(
 		}
 	}
 	return revisionMetadataSourceFromInfo(revInfos);
+}
+
+/**
+ * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ */
+export function namedTreeSchema(
+	data: TreeSchemaBuilder & Named<string>,
+): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+	return {
+		name: brand(data.name),
+		...treeSchema({ ...data }),
+	};
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Package, supportedMonoRepoValues } from "@fluidframework/build-tools";
+import { Context, Logger, Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { filterFlags, selectionFlags } from "./flags";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
@@ -156,7 +156,7 @@ const selectPackagesFromContext = (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				Package.load(pkg.packageJsonFileName, pkg.group, undefined, {
 					kind: "independentPackage",
 				}),
 			);
@@ -180,9 +180,17 @@ const selectPackagesFromContext = (
 		if (packages.length === 0) {
 			continue;
 		}
-		const dir = packages[0].directory;
-		const pkg = Package.loadDir(dir, rg);
-		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
+		const { monoRepo } = packages[0];
+		if (monoRepo === undefined) {
+			throw new Error(
+				`Package is supposed to be a release group root but cannot find release group: ${rg}`,
+			);
+		}
+
+		const loadedPackage: PackageWithKind = Package.loadDir(monoRepo.repoPath, rg, monoRepo, {
+			kind: "releaseGroupRootPackage",
+		});
+		selected.push(loadedPackage);
 	}
 
 	return selected;

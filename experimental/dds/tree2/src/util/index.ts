@@ -48,6 +48,7 @@ export {
 } from "./typeCheck";
 export { StackyIterator } from "./stackyIterator";
 export {
+	asMutable,
 	clone,
 	compareSets,
 	fail,
@@ -71,6 +72,7 @@ export {
 	useDeterministicStableId,
 	objectToMap,
 	oneFromSet,
+	Named,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

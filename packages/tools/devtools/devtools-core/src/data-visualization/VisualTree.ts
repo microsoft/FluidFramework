@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObjectId } from "../CommonInterfaces";
+import { FluidObjectId, EditType } from "../CommonInterfaces";
 
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable
@@ -68,6 +68,12 @@ export interface VisualNodeBase {
 	 * Consumers of this value should attempt to handle unrecognized values gracefully.
 	 */
 	nodeKind: VisualNodeKind | string;
+
+	/**
+	 * (optional) If editProps is present it indicates the node is editable.
+	 * Inside of the porperty is an array of possible EditTypes to inform devtools-view to only show the corresponding edit options for the types allowed
+	 */
+	editProps?: { editTypes?: EditType[] };
 }
 
 /**

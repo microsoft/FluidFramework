@@ -8,7 +8,7 @@ import { Type } from "@sinclair/typebox";
 import { JsonCompatible, JsonCompatibleReadOnly, fail } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
-import { Changeset, Mark, NoopMarkType } from "./format";
+import { Changeset, Mark, NoopMarkType, Revive } from "./format";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([[0, makeV0Codec(childCodec)]]);
@@ -20,54 +20,32 @@ function makeV0Codec<TNodeChange>(
 		encode: (changeset) => {
 			const jsonMarks: JsonCompatible[] = [];
 			for (const mark of changeset) {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				const encodedMark = { ...mark } as Mark<JsonCompatibleReadOnly>;
+				if (mark.changes !== undefined) {
+					encodedMark.changes = childCodec.encode(mark.changes);
+				}
 				const type = mark.type;
 				switch (type) {
+					case NoopMarkType:
+					case "MoveIn":
+					case "ReturnTo":
 					case "Insert":
 					case "Delete":
 					case "MoveOut":
 					case "ReturnFrom":
-						if (mark.changes !== undefined) {
-							jsonMarks.push({
-								...mark,
-								changes: childCodec.encode(mark.changes),
-							} as unknown as JsonCompatible);
-						} else {
-							jsonMarks.push(mark as Mark<TNodeChange> & JsonCompatible);
-						}
-
 						break;
 					case "Revive": {
-						const content = mark.content.map(jsonableTreeFromCursor);
-						if (mark.changes !== undefined) {
-							jsonMarks.push({
-								...mark,
-								content,
-								changes: childCodec.encode(mark.changes),
-							} as unknown as JsonCompatible);
-						} else {
-							jsonMarks.push({
-								...mark,
-								content,
-							} as unknown as JsonCompatible);
-						}
+						(encodedMark as unknown as { content: JsonCompatible[] }).content =
+							mark.content.map(jsonableTreeFromCursor) as unknown as JsonCompatible[];
 						break;
 					}
-					case "Modify":
-						jsonMarks.push({
-							...mark,
-							changes: childCodec.encode(mark.changes),
-						} as unknown as JsonCompatible);
-						break;
-					case NoopMarkType:
-					case "MoveIn":
-					case "ReturnTo":
-						jsonMarks.push(mark as unknown as JsonCompatible);
-						break;
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
 					default:
 						unreachableCase(type);
 				}
+				jsonMarks.push(encodedMark as unknown as JsonCompatible);
 			}
 			return jsonMarks;
 		},
@@ -75,55 +53,32 @@ function makeV0Codec<TNodeChange>(
 			const marks: Changeset<TNodeChange> = [];
 			const array = changeset as unknown as Changeset<JsonCompatibleReadOnly>;
 			for (const mark of array) {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				const decodedMark = { ...mark } as Mark<TNodeChange>;
+				if (mark.changes !== undefined) {
+					decodedMark.changes = childCodec.decode(mark.changes);
+				}
 				const type = mark.type;
 				switch (type) {
-					case "Modify": {
-						marks.push({
-							...mark,
-							changes: childCodec.decode(mark.changes),
-						});
-						break;
-					}
-					case "Insert":
-					case "Delete":
-					case "MoveOut":
-					case "ReturnFrom": {
-						if (mark.changes !== undefined) {
-							marks.push({
-								...mark,
-								changes: childCodec.decode(mark.changes),
-							});
-						} else {
-							marks.push(mark as Mark<TNodeChange>);
-						}
-						break;
-					}
-					case "Revive": {
-						const content = mark.content.map(singleTextCursor);
-						if (mark.changes !== undefined) {
-							marks.push({
-								...mark,
-								content,
-								changes: childCodec.decode(mark.changes),
-							});
-						} else {
-							marks.push({
-								...mark,
-								content,
-							} as unknown as Mark<TNodeChange>);
-						}
-						break;
-					}
 					case NoopMarkType:
 					case "MoveIn":
 					case "ReturnTo":
-						marks.push(mark);
+					case "Insert":
+					case "Delete":
+					case "MoveOut":
+					case "ReturnFrom":
 						break;
+					case "Revive": {
+						(decodedMark as Revive<unknown>).content =
+							mark.content.map(singleTextCursor);
+						break;
+					}
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
 					default:
 						unreachableCase(type);
 				}
+				marks.push(decodedMark);
 			}
 			return marks;
 		},

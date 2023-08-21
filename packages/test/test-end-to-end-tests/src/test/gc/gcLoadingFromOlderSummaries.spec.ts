@@ -16,7 +16,9 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
+	ITestContainerConfig,
 	ITestObjectProvider,
+	mockConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -38,6 +40,14 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;
 	let dataStoreA: ITestDataObject;
+
+	const settings = {
+		"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2": "refreshFromSnapshot",
+	};
+	const testConfig: ITestContainerConfig = {
+		...defaultGCConfig,
+		loaderProps: { configProvider: mockConfigProvider(settings) },
+	};
 
 	/**
 	 * Returns the reference state for all the nodes in the given summary tree.
@@ -101,7 +111,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		mainContainer = await provider.makeTestContainer(defaultGCConfig);
+		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(
 			mainContainer,
 			"default",
@@ -147,7 +157,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			undefined,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			summaryResult1.summaryVersion,
 		);
 
@@ -224,7 +234,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			undefined,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			summaryResult1.summaryVersion,
 		);
 
@@ -311,7 +321,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			undefined,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			summaryResult1.summaryVersion,
 		);
 
@@ -391,7 +401,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			undefined,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			summaryResult1.summaryVersion,
 		);
 
@@ -466,7 +476,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
 		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
-			undefined,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 			summaryResult1.summaryVersion,
 		);
 

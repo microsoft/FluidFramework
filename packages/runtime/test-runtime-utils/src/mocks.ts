@@ -182,10 +182,6 @@ export class MockContainerRuntime {
 	}
 
 	public createDeltaConnection(): MockDeltaConnection {
-		assert(
-			this.dataStoreRuntime.createDeltaConnection !== undefined,
-			"Unsupported datastore runtime version",
-		);
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
@@ -223,7 +219,7 @@ export class MockContainerRuntime {
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
 	 * this method was called. Otherwise, calling the method does nothing.
 	 */
-	public flush?() {
+	public flush() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -240,7 +236,7 @@ export class MockContainerRuntime {
 	 *
 	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
 	 */
-	public rebase?() {
+	public rebase() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -357,12 +353,26 @@ export class MockContainerRuntimeFactory {
 		return this.messages.length;
 	}
 
+	/**
+	 * @returns a minimum sequence number for all connected clients.
+	 */
 	public getMinSeq(): number {
-		let minSeq: number | undefined;
-		for (const [, clientSeq] of this.minSeq) {
-			minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
+			// We have to make sure, a client is part of the quorum, when
+			// we compute the msn. We assume that the quoarum accurately
+			// represents the currently connected clients. In some tests
+			// for reconnects, we will remove clients from the quorum
+			// to indicate they are currently not connected. In that case,
+			// they must no longer contribute to the msn computation.
+			if (this.quorum.getMember(client) !== undefined) {
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
+			}
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public createContainerRuntime(
@@ -388,6 +398,7 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
+	private lastProcessedMessage?: ISequencedDocumentMessage;
 	private processFirstMessage() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
@@ -399,17 +410,17 @@ export class MockContainerRuntimeFactory {
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		this.advanceForFlushMode(FlushMode.Immediate);
+		if (
+			this.runtimeOptions.flushMode === FlushMode.Immediate ||
+			this.lastProcessedMessage?.clientId !== message.clientId
+		) {
+			this.sequenceNumber++;
+		}
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
+		this.lastProcessedMessage = message;
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
-		}
-	}
-
-	private advanceForFlushMode(flushMode: FlushMode) {
-		if (this.runtimeOptions.flushMode === flushMode) {
-			this.sequenceNumber++;
 		}
 	}
 
@@ -420,8 +431,8 @@ export class MockContainerRuntimeFactory {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
+		this.lastProcessedMessage = undefined;
 
-		this.advanceForFlushMode(FlushMode.TurnBased);
 		this.processFirstMessage();
 	}
 
@@ -434,7 +445,7 @@ export class MockContainerRuntimeFactory {
 			throw new Error("Tried to process more messages than exist");
 		}
 
-		this.advanceForFlushMode(FlushMode.TurnBased);
+		this.lastProcessedMessage = undefined;
 
 		for (let i = 0; i < count; i++) {
 			this.processFirstMessage();
@@ -445,8 +456,7 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		this.advanceForFlushMode(FlushMode.TurnBased);
-
+		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
 		}
@@ -554,10 +564,20 @@ export class MockFluidDataStoreRuntime
 	extends EventEmitter
 	implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext
 {
-	constructor(overrides?: { clientId?: string; entryPoint?: IFluidHandle<FluidObject> }) {
+	constructor(overrides?: {
+		clientId?: string;
+		entryPoint?: IFluidHandle<FluidObject>;
+		id?: string;
+		logger?: ITelemetryLoggerExt;
+	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
 		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
+		this.id = overrides?.id ?? uuid();
+		this.logger = createChildLogger({
+			logger: overrides?.logger,
+			namespace: "fluid:MockFluidDataStoreRuntime",
+		});
 	}
 
 	public readonly entryPoint?: IFluidHandle<FluidObject>;
@@ -575,12 +595,15 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
 
 	public readonly documentId: string = undefined as any;
-	public readonly id: string = uuid();
+	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
 	public options: ILoaderOptions = {};
 	public clientId: string;
@@ -588,13 +611,11 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt = createChildLogger({
-		namespace: "fluid:MockFluidDataStoreRuntime",
-	});
+	public readonly logger: ITelemetryLoggerExt;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
-	public createDeltaConnection?(): MockDeltaConnection {
+	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
 			(messageContent: any, localOpMetadata: unknown) =>
 				this.submitMessageInternal(messageContent, localOpMetadata),
@@ -737,6 +758,9 @@ export class MockFluidDataStoreRuntime
 		return this.request(request);
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}

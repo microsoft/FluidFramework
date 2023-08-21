@@ -5,7 +5,7 @@
 
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
-
+	plugins: ["deprecation"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/types/tsconfig.json"],
 	},

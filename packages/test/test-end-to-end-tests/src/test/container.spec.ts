@@ -8,8 +8,8 @@ import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IPendingLocalState,
 	ContainerErrorType,
+	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
 	LoaderHeader,
@@ -26,7 +26,7 @@ import {
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-	IFluidResolvedUrl,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	LocalCodeLoader,
@@ -335,12 +335,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
 			testContainerConfig,
 		);
-
-		const pendingLocalState: IPendingLocalState = JSON.parse(
-			container.closeAndGetPendingLocalState(),
-		);
+		const pendingString = await container.closeAndGetPendingLocalState?.();
+		assert.ok(pendingString);
+		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
+		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IResolvedUrl).url);
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {

@@ -45,11 +45,10 @@ export function fieldSchema(
 
 /**
  * See {@link TreeStoredSchema} for details.
- * @alpha
  */
 export interface TreeSchemaBuilder {
 	readonly structFields?: { [key: string]: FieldStoredSchema };
-	readonly mapFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 	readonly leafValue?: ValueSchema;
 }
 
@@ -69,6 +68,6 @@ export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
 	return {
 		structFields,
 		mapFields: data.mapFields,
-		value: data.leafValue ?? ValueSchema.Nothing,
+		leafValue: data.leafValue,
 	};
 }

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
+	IEvent,
+	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
 	IFluidRouter,
@@ -115,8 +116,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
- * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
- * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
+ * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
+ * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
@@ -128,7 +129,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Fluid router for the data store
  * - Can be assigned an alias
  */
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
 	/**
 	 * Attempt to assign an alias to the datastore.
 	 * If the operation succeeds, the datastore can be referenced
@@ -149,6 +150,37 @@ export interface IDataStore extends IFluidRouter {
 	 * the data store's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
+	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
+	 * Once that API is mandatory on IDataStore, this overload will be deprecated.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 *
+	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
+	 */
+	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
+
+	/**
+	 * Issue a request against the DataStore for a resource within it.
+	 * @param request - The request to be issued against the DataStore
+	 *
+	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
+	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
+	 *
+	 * NOTE: IDataStore.request(\{url: "/"\}) is not yet deprecated. If and only if the DataStore implementation supports it,
+	 * that overload may be used as a proxy for getting the entryPoint until {@link IDataStore.entryPoint} is mandatory.
+	 *
+	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
@@ -231,7 +263,7 @@ export interface IContainerRuntimeBase
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
  */
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
 	readonly id: string;
 
 	/**
@@ -331,6 +363,16 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
 	 * the component's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }
 
 export type CreateChildSummarizerNodeFn = (

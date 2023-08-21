@@ -117,7 +117,7 @@ describe("LlsSchemaConverter", () => {
 					});
 				}
 			});
-			if (treeSchema.mapFields.types) {
+			if (treeSchema.mapFields?.types) {
 				treeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
@@ -154,7 +154,7 @@ describe("LlsSchemaConverter", () => {
 		expect(uint64.types.has(brand("Uint64"))).toBeTruthy();
 		assert(uint64.types.has(brand("Uint64")));
 		const uint64Type = fullSchemaData.treeSchema.get(brand("Uint64"));
-		assert(uint64Type?.value === ValueSchema.Number);
+		assert(uint64Type?.leafValue === ValueSchema.Number);
 	});
 
 	it("Inheritance Translation", () => {
