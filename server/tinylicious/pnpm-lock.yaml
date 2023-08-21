@@ -36,7 +36,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/morgan': ^1.7.35
       '@types/nconf': ^0.10.0
-      '@types/node': ^16.18.16
+      '@types/node': ^18.17.1
       '@types/rimraf': ^3.0.0
       '@types/split': ^0.3.28
       '@types/uuid': ^9.0.2
@@ -111,7 +111,7 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': 1.2.3
-      '@microsoft/api-extractor': 7.34.4_@types+node@16.18.21
+      '@microsoft/api-extractor': 7.34.4_@types+node@18.17.6
       '@types/compression': 1.7.2
       '@types/cookie-parser': 1.4.3
       '@types/cors': 2.8.12
@@ -123,7 +123,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/morgan': 1.9.3
       '@types/nconf': 0.10.3
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
       '@types/rimraf': 3.0.2
       '@types/split': 0.3.28
       '@types/uuid': 9.0.2
@@ -576,24 +576,24 @@ packages:
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
     dev: false
 
-  /@microsoft/api-extractor-model/7.26.4_@types+node@16.18.21:
+  /@microsoft/api-extractor-model/7.26.4_@types+node@18.17.6:
     resolution: {integrity: sha512-PDCgCzXDo+SLY5bsfl4bS7hxaeEtnXj7XtuzEE+BtALp7B5mK/NrS2kHWU69pohgsRmEALycQdaQPXoyT2i5MQ==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.55.2_@types+node@16.18.21
+      '@rushstack/node-core-library': 3.55.2_@types+node@18.17.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.34.4_@types+node@16.18.21:
+  /@microsoft/api-extractor/7.34.4_@types+node@18.17.6:
     resolution: {integrity: sha512-HOdcci2nT40ejhwPC3Xja9G+WSJmWhCUKKryRfQYsmE9cD+pxmBaKBKCbuS9jUcl6bLLb4Gz+h7xEN5r0QiXnQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.26.4_@types+node@16.18.21
+      '@microsoft/api-extractor-model': 7.26.4_@types+node@18.17.6
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.55.2_@types+node@16.18.21
+      '@rushstack/node-core-library': 3.55.2_@types+node@18.17.6
       '@rushstack/rig-package': 0.3.18
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
@@ -683,7 +683,7 @@ packages:
       - typescript
     dev: true
 
-  /@rushstack/node-core-library/3.55.2_@types+node@16.18.21:
+  /@rushstack/node-core-library/3.55.2_@types+node@18.17.6:
     resolution: {integrity: sha512-SaLe/x/Q/uBVdNFK5V1xXvsVps0y7h1sN7aSJllQyFbugyOaxhNRF25bwEDnicARNEjJw0pk0lYnJQ9Kr6ev0A==}
     peerDependencies:
       '@types/node': '*'
@@ -691,7 +691,7 @@ packages:
       '@types/node':
         optional: true
     dependencies:
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -747,7 +747,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/compression/1.7.2:
@@ -759,7 +759,7 @@ packages:
   /@types/connect/3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/cookie-parser/1.4.3:
@@ -796,7 +796,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
     dev: true
@@ -814,7 +814,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 3.0.5
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/json-schema/7.0.11:
@@ -847,7 +847,7 @@ packages:
   /@types/morgan/1.9.3:
     resolution: {integrity: sha512-BiLcfVqGBZCyNCnCH3F4o2GmDLrpy0HeBVnNlyZG4fo88ZiE9SoiBe3C+2ezuwbjlEyT+PDZ17//TAlRxAn75Q==}
     dependencies:
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/ms/0.7.31:
@@ -859,6 +859,10 @@ packages:
 
   /@types/node/16.18.21:
     resolution: {integrity: sha512-TassPGd0AEZWA10qcNnXnSNwHlLfSth8XwUaWc3gTSDmBz/rKb613Qw5qRf6o2fdRBrLbsgeC9PMZshobkuUqg==}
+    dev: false
+
+  /@types/node/18.17.6:
+    resolution: {integrity: sha512-fGmT/P7z7ecA6bv/ia5DlaWCH4YeZvAQMNpUhrJjtAhOhZfoxS1VLUgU2pdk63efSjQaOJWdXMuAJsws+8I6dg==}
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -876,7 +880,7 @@ packages:
     resolution: {integrity: sha512-F3OznnSLAUxFrCEu/L5PY8+ny8DtcFRjx7fZZ9bycvXRi3KPTRS9HOitGZwvPg0juRhXFWIeKX58cnX5YqLohQ==}
     dependencies:
       '@types/glob': 7.2.0
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/semver/7.5.0:
@@ -887,13 +891,13 @@ packages:
     resolution: {integrity: sha512-z5xyF6uh8CbjAu9760KDKsH2FcDxZ2tFCsA4HIMWE6IkiYMXfVoa+4f9KX+FN0ZLsaMw1WNG2ETLA6N+/YA+cg==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/split/0.3.28:
     resolution: {integrity: sha512-t6JWsgzXTobVH6dgfYGedS8Y0ZRc20jtzHCWYx+Q/w9WfpwUkPY8FTa+5y8KPztQne3NmI4+/s0zbCMMkuk1tQ==}
     dependencies:
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: true
 
   /@types/uuid/9.0.2:
@@ -903,7 +907,7 @@ packages:
   /@types/ws/6.0.4:
     resolution: {integrity: sha1-d5dwfIrM6PdtjDSzcNRkW3BCH/E=}
     dependencies:
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
     dev: false
 
   /@typescript-eslint/eslint-plugin/5.20.0_i37r4pxnuonvhfobrnldva5ppi:
@@ -2290,7 +2294,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.12
-      '@types/node': 16.18.21
+      '@types/node': 18.17.6
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.4.2
