@@ -6,10 +6,10 @@
 const {
 	createDocumentWriter,
 	getLinkForApiItem,
+	getMarkdownRenderersWithDefaults,
 	getUnscopedPackageName,
 	renderNodeAsMarkdown,
 	transformDocNode,
-	getMarkdownRenderContextWithDefaults,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
@@ -28,6 +28,8 @@ const generatedContentNotice =
  * @returns The JSON-formatted Hugo front-matter as a `string`.
  */
 function createHugoFrontMatter(apiItem, config, customRenderers) {
+	const renderers = getMarkdownRenderersWithDefaults(customRenderers);
+	
 	function extractSummary() {
 		const summaryParagraph = transformDocNode(
 			apiItem.tsdocComment.summarySection,
@@ -43,9 +45,9 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		renderNodeAsMarkdown(
 			summaryParagraph,
 			documentWriter,
-			getMarkdownRenderContextWithDefaults({
-				renderers: customRenderers,
-			}),
+			{
+				renderers,
+			},
 		);
 		return documentWriter.getText().replace(/"/g, "'").trim();
 	}
