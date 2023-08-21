@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
 import { Waiting } from "../../components/Waiting";
 import { testContextDecorator } from "../ScreenshotTestUtilities";
 

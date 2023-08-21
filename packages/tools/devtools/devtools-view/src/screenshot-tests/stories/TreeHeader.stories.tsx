@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
 import { TreeHeader } from "../../components/data-visualization/TreeHeader";
 import { testContextDecorator } from "../ScreenshotTestUtilities";
 
