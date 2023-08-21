@@ -8,8 +8,8 @@ import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IPendingLocalState,
 	ContainerErrorType,
+	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
 	LoaderHeader,
