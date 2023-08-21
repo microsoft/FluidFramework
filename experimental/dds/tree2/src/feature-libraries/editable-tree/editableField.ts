@@ -409,8 +409,12 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				: TreeStatus.Removed;
 		}
 		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
-		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
-		assert(parentAnchorNode !== undefined, "parentAnchorNode must exist.");
+
+		// The parentAnchorNode can be undefined in the case that its corresponding PathNode !== Status.Alive.
+		// This means that the parentAnchor points to an invalid node.
+		if (parentAnchorNode === undefined) {
+			return TreeStatus.Deleted;
+		}
 		return treeStatusFromPath(parentAnchorNode);
 	}
 
@@ -475,8 +479,6 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		if (typeof key === "string") {
 			if (editableFieldPropertySet.has(key)) {
 				return Reflect.get(target, key);
-			} else if (keyIsValidIndex(key, target.length)) {
-				return target.unwrappedTree(Number(key));
 			}
 			// This maps the methods of the `EditableField` to their implementation in the `FieldProxyTarget`.
 			// Expected are only the methods declared in the `EditableField` interface,
@@ -487,6 +489,9 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				return function (...args: unknown[]): unknown {
 					return Reflect.apply(reflected, target, args);
 				};
+			}
+			if (keyIsValidIndex(key, target.length)) {
+				return target.unwrappedTree(Number(key));
 			}
 			return undefined;
 		}
