@@ -23,7 +23,13 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import {
+	getFieldKind,
+	NewFieldContent,
+	getFieldSchema,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
 import {
@@ -41,7 +47,6 @@ import {
 	EditableTree,
 	UnwrappedEditableField,
 	proxyTargetSymbol,
-	NewFieldContent,
 	localNodeKeySymbol,
 	setField,
 } from "./editableTreeTypes";
