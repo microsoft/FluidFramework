@@ -21,8 +21,8 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -60,6 +60,13 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @public
 export function assertIsStableId(stableId: string): StableId;
+
+// @internal
+export type CompatModeBehavior =
+/** Ignore the op. It won't be persisted if this client summarizes */
+"Ignore"
+/** Fail processing immediately. (The container will close) */
+| "FailToProcess";
 
 // @public
 export enum CompressionAlgorithms {
@@ -130,7 +137,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
@@ -221,7 +228,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runSweep?: boolean;
     }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
-    readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: string[]): void;
@@ -231,11 +238,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @public (undocumented)
+// @public
 export interface ContainerRuntimeMessage {
-    // (undocumented)
+    // Warning: (ae-incompatible-release-tags) The symbol "compatDetails" is marked as @public, but its signature references "IContainerRuntimeMessageCompatDetails" which is marked as @internal
+    compatDetails?: IContainerRuntimeMessageCompatDetails;
     contents: any;
-    // (undocumented)
     type: ContainerMessageType;
 }
 
@@ -353,6 +360,11 @@ export interface IConnectableRuntime {
     once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
+// @internal
+export interface IContainerRuntimeMessageCompatDetails {
+    behavior: CompatModeBehavior;
+}
+
 // @public
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
@@ -420,7 +432,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 }
 
 // @public (undocumented)
-export interface INackSummaryResult {
+export interface INackSummaryResult extends IRetriableFailureResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
@@ -438,6 +450,12 @@ export interface IRefreshSummaryAckOptions {
     readonly proposalHandle: string | undefined;
     readonly summaryLogger: ITelemetryLoggerExt;
     readonly summaryRefSeq: number;
+}
+
+// @public
+export interface IRetriableFailureResult {
+    // (undocumented)
+    readonly retryAfterSeconds?: number;
 }
 
 // @public @deprecated (undocumented)
@@ -463,6 +481,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 // @public
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
+    // @deprecated
     readonly refreshLatestAck?: boolean;
 }
 
@@ -652,7 +671,7 @@ export enum RuntimeMessage {
 }
 
 // @public
-export interface SubmitSummaryFailureData {
+export interface SubmitSummaryFailureData extends IRetriableFailureResult {
     // (undocumented)
     stage: SummaryStage;
 }
@@ -670,7 +689,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
-    readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
@@ -680,7 +699,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     stop(reason: SummarizerStopReason): void;
     static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
     // (undocumented)
-    readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     // (undocumented)
     readonly summaryCollection: SummaryCollection;
 }
@@ -694,7 +713,6 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     data: TFailure | undefined;
     message: string;
     error: any;
-    retryAfterSeconds?: number;
 };
 
 // @public (undocumented)

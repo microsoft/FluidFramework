@@ -70,7 +70,7 @@
 		"jwt-decode": "^3.0.0",
 		"querystring": "^0.2.0",
 		"sillyname": "^0.1.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",

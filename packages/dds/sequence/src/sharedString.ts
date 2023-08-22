@@ -118,7 +118,7 @@ export class SharedString
 		}
 
 		const pos = this.posFromRelativePos(relativePos1);
-		this.client.insertSegmentLocal(pos, segment);
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -134,7 +134,7 @@ export class SharedString
 			segment.addProperties(props);
 		}
 
-		return this.client.insertSegmentLocal(pos, segment);
+		return this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -150,7 +150,7 @@ export class SharedString
 		}
 
 		const pos = this.posFromRelativePos(relativePos1);
-		this.client.insertSegmentLocal(pos, segment);
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -162,7 +162,7 @@ export class SharedString
 			segment.addProperties(props);
 		}
 
-		this.client.insertSegmentLocal(pos, segment);
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -197,7 +197,9 @@ export class SharedString
 		props: PropertySet,
 		callback: (m: Marker) => void,
 	) {
-		this.client.annotateMarkerNotifyConsensus(marker, props, callback);
+		this.guardReentrancy(() =>
+			this.client.annotateMarkerNotifyConsensus(marker, props, callback),
+		);
 	}
 
 	/**
@@ -207,7 +209,7 @@ export class SharedString
 	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
-		this.client.annotateMarker(marker, props, combiningOp);
+		this.guardReentrancy(() => this.client.annotateMarker(marker, props, combiningOp));
 	}
 
 	/**

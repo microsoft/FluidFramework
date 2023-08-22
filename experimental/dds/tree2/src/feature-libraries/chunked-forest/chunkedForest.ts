@@ -68,6 +68,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		recordDependency(this.dependent, this.schema);
 	}
 
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
+	}
+
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}

@@ -7,8 +7,15 @@ import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { PendingStateManager } from "../pendingStateManager";
+import Deque from "double-ended-queue";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
+import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { SequencedContainerRuntimeMessage } from "../containerRuntime";
+
+type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
+	initialMessages: Deque<IPendingMessage>;
+};
 
 describe("Pending State Manager", () => {
 	describe("Rollback", () => {
@@ -279,7 +286,8 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Local state processing", () => {
-		function createPendingStateManager(pendingStates): any {
+		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -292,7 +300,7 @@ describe("Pending State Manager", () => {
 				},
 				{ pendingStates },
 				undefined /* logger */,
-			);
+			) as any;
 		}
 
 		describe("Constructor pendingStates", () => {
@@ -318,6 +326,126 @@ describe("Pending State Manager", () => {
 				const pendingStateManager = createPendingStateManager(messages);
 				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
 			});
+		});
+
+		describe("Future op compat behavior", () => {
+			it("pending op roundtrip", async () => {
+				const pendingStateManager = createPendingStateManager([]);
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
+				};
+
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(futureRuntimeMessage),
+					0,
+					undefined,
+					undefined,
+				);
+				pendingStateManager.processPendingLocalMessage(
+					futureRuntimeMessage as SequencedContainerRuntimeMessage,
+				);
+			});
+		});
+	});
+
+	describe("Pending messages state", () => {
+		const messages = [
+			{ type: "message", content: '{"type":"component"}' },
+			{
+				type: "message",
+				content: '{"type": "component", "contents": {"prop1": "value"}}',
+			},
+		];
+
+		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => undefined,
+					close: () => {},
+					connected: () => true,
+					reSubmit: () => {},
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+				},
+				{ pendingStates },
+				undefined /* logger */,
+			) as any;
+		}
+
+		it("no pending or initial messages", () => {
+			const pendingStateManager = createPendingStateManager(undefined);
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				false,
+				"There shouldn't be pending messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				0,
+				"Pending messages count should be 0",
+			);
+		});
+
+		it("has pending messages but no initial messages", () => {
+			const pendingStateManager = createPendingStateManager(undefined);
+			for (const message of messages) {
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(message.content),
+					0,
+					undefined /* localOpMetadata */,
+					undefined /* opMetadata */,
+				);
+			}
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				true,
+				"There should be pending messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				messages.length,
+				"Pending messages count should be same as pending messages",
+			);
+		});
+
+		it("has initial messages but no pending messages", () => {
+			const pendingStateManager = createPendingStateManager(messages);
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				true,
+				"There should be initial messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				messages.length,
+				"Pending messages count should be same as initial messages",
+			);
+		});
+
+		it("has both pending messages and initial messages", () => {
+			const pendingStateManager = createPendingStateManager(messages);
+			for (const message of messages) {
+				pendingStateManager.onSubmitMessage(
+					JSON.stringify(message.content),
+					0,
+					undefined /* localOpMetadata */,
+					undefined /* opMetadata */,
+				);
+			}
+			assert.strictEqual(
+				pendingStateManager.hasPendingMessages(),
+				true,
+				"There should be pending messages",
+			);
+			assert.strictEqual(
+				pendingStateManager.pendingMessagesCount,
+				messages.length * 2,
+				"Pending messages count should be same as pending + initial messages",
+			);
 		});
 	});
 });
