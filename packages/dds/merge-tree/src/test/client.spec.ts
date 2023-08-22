@@ -445,11 +445,7 @@ describe("TestClient", () => {
 				);
 
 				const offset = index % 3 === 0 ? index % 3 : 3 - (index % 3);
-				assert.equal(
-					exp,
-					index + offset,
-					`Tile with label not at expected position: index ${index}, tile.pos ${exp}`,
-				);
+				assert.equal(exp, index + offset, "Tile with label not at expected position");
 			}
 		});
 
@@ -476,11 +472,7 @@ describe("TestClient", () => {
 					client.getClientId(),
 				);
 
-				assert.equal(
-					exp,
-					index - (index % 3),
-					`Tile with label not at expected position: index ${index}, tile.pos ${exp}`,
-				);
+				assert.equal(exp, index - (index % 3), "Tile with label not at expected position");
 			}
 		});
 
@@ -501,11 +493,7 @@ describe("TestClient", () => {
 				const exp = client.slowSearchForMarker(index, tileLabel, true);
 				const actual = client.searchForMarker(index, tileLabel, true);
 
-				assert.equal(
-					exp,
-					actual,
-					`Tile with label not at expected position index ${index} exp ${exp} act ${actual}`,
-				);
+				assert.equal(exp, actual, "Tile with label not at expected position");
 			}
 		});
 
@@ -526,11 +514,7 @@ describe("TestClient", () => {
 				const exp = client.slowSearchForMarker(index, tileLabel, false);
 				const actual = client.searchForMarker(index, tileLabel, false);
 
-				assert.equal(
-					exp,
-					actual,
-					`Tile with label not at expected position index ${index} exp ${exp} act ${actual}`,
-				);
+				assert.equal(exp, actual, "Tile with label not at expected position");
 			}
 		});
 

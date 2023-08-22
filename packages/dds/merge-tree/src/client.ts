@@ -1173,11 +1173,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * Makes use of block-accelerated search functions for log(n) complexity.
 	 *
 	 * @param startPos - Position at which to start the search
-	 * @param tileLabel - Label of the marker to search for
+	 * @param markerLabel - Label of the marker to search for
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
-	searchForMarker(startPos: number, tileLabel: string, forwards = true) {
+	searchForMarker(startPos: number, markerLabel: string, forwards = true) {
 		const clientId = this.getClientId();
-		return this._mergeTree.searchForMarker(startPos, clientId, tileLabel, forwards);
+		return this._mergeTree.searchForMarker(startPos, clientId, markerLabel, forwards);
 	}
 }

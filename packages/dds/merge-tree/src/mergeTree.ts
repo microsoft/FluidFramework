@@ -1254,7 +1254,7 @@ export class MergeTree {
 	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * @deprecated - Use searchForTile instead.
+	 * @deprecated - Use searchForMarker instead.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
@@ -1322,12 +1322,8 @@ export class MergeTree {
 		clientId: number,
 		markerLabel: string,
 		forwards = true,
-	) {
-		const searchInfo: IReferenceSearchInfo = {
-			mergeTree: this,
-			forwards,
-			tileLabel: markerLabel,
-		};
+	): Marker | undefined {
+		let foundMarker: Marker | undefined;
 
 		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
 		const segWithParent: IMergeLeaf | undefined = segment;
@@ -1341,25 +1337,29 @@ export class MergeTree {
 			(seg) => {
 				if (seg.isLeaf()) {
 					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
-						searchInfo.tile = seg;
+						foundMarker = seg;
 					}
 				} else {
 					const block = <IHierBlock>seg;
-					const marker = searchInfo.forwards
+					const marker = forwards
 						? block.leftmostTiles[markerLabel]
 						: block.rightmostTiles[markerLabel];
 					if (marker !== undefined) {
-						searchInfo.tile = marker;
+						assert(
+							marker.isLeaf() && Marker.is(marker),
+							"Object returned is not a valid marker",
+						);
+						foundMarker = marker;
 					}
 				}
-				return searchInfo.tile !== undefined ? NodeAction.Exit : NodeAction.Skip;
+				return foundMarker !== undefined ? NodeAction.Exit : NodeAction.Skip;
 			},
 			undefined,
 			undefined,
 			forwards,
 		);
 
-		return searchInfo.tile;
+		return foundMarker;
 	}
 
 	private search<TClientData>(
