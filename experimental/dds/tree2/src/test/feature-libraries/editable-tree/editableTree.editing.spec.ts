@@ -673,17 +673,22 @@ describe("editable-tree: editing", () => {
 
 	describe("treeStatus", () => {
 		describe("EditableTree", () => {
-			it("node returns TreeStatus.InDocument", () => {
+			it("root node and non-root node returns TreeStatus.InDocument", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: { foo: [], foo2: [] },
+					initialTree: { foo: ["foo"], foo2: [] },
 				});
 				const rootNode = view.root;
 				assert(isEditableTree(rootNode));
 				const rootNodeStatus = rootNode[treeStatus]();
-
 				assert.equal(rootNodeStatus, TreeStatus.InDocument);
+
+				const field = rootNode[localFieldKey];
+				assert(isEditableField(field));
+				const node = field.getNode(0);
+				const nodeStatus = node[treeStatus]();
+				assert.equal(nodeStatus, TreeStatus.InDocument);
 			});
 
 			// Currently returns TreeStatus.Deleted.
@@ -692,7 +697,7 @@ describe("editable-tree: editing", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: { foo: ["foo", "bar"], foo2: [] },
+					initialTree: { foo: ["foo"], foo2: [] },
 				});
 				const root = view.root;
 				assert(isEditableTree(root));
@@ -719,27 +724,20 @@ describe("editable-tree: editing", () => {
 		});
 
 		describe("EditableField", () => {
-			it("root field returns TreeStatus.InDocument", () => {
-				const view = createSharedTreeView().schematize({
-					schema: getTestSchema(FieldKinds.sequence),
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: { foo: [], foo2: [] },
-				});
-				const rootField = view.context.root;
-				const rootNodeStatus = rootField.treeStatus();
-
-				assert.equal(rootNodeStatus, TreeStatus.InDocument);
-			});
-
-			it("non-root field returns TreeStatus.InDocument", () => {
+			it("root field and non-root field returns TreeStatus.InDocument", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { foo: ["foo"], foo2: [] },
 				});
-				const root = view.root;
-				assert(isEditableTree(root));
-				const field = root[localFieldKey];
+
+				const rootField = view.context.root;
+				const rootFieldStatus = rootField.treeStatus();
+				assert.equal(rootFieldStatus, TreeStatus.InDocument);
+
+				const rootNode = view.root;
+				assert(isEditableTree(rootNode));
+				const field = rootNode[localFieldKey];
 				assert(isEditableField(field));
 				assert.equal(field.treeStatus(), TreeStatus.InDocument);
 			});
@@ -752,9 +750,9 @@ describe("editable-tree: editing", () => {
 					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { foo: ["foo"], foo2: [] },
 				});
-				const root = view.root;
-				assert(isEditableTree(root));
-				const field = root[localFieldKey];
+				const rootNode = view.root;
+				assert(isEditableTree(rootNode));
+				const field = rootNode[localFieldKey];
 				assert(isEditableField(field));
 
 				// Check TreeStatus before remove.
