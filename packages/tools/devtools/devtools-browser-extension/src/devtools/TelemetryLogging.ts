@@ -78,7 +78,6 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			// A non-empty instrumentation key needs to provided for the logger to do anything.
 			// AB#5167 tracks how to inject one at build time to keep it out of source control.
 			instrumentationKey: "",
-			endpointUrl: "https://mobile.events.data.microsoft.com/OneCollector/1.0",
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
 			extensions: [
