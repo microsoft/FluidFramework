@@ -68,7 +68,6 @@
 		"@fluentui/react": "^8.109.4",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@microsoft/1ds-core-js": "^3.2.13",
