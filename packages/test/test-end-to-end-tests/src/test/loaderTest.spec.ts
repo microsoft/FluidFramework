@@ -292,6 +292,11 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	});
 
 	it("can handle requests with headers", async () => {
+		const containerUrl = await container.getAbsoluteUrl("");
+		assert(containerUrl, "url is undefined");
+		const container2 = await loader.resolve({ url: containerUrl });
+		container2.connect();
+
 		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
 			dataStore1._context.containerRuntime,
 		);
@@ -300,15 +305,12 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		// Flush all the ops
 		await provider.ensureSynchronized();
 
-		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
-		assert(url, "Container should return absolute url");
-
 		const headers = {
 			wait: false,
 			[RuntimeHeaders.viaHandle]: true,
 		};
 		// Request to the newly created data store with headers.
-		const response = await loader.request({ url, headers });
+		const response = await container2.request({ url: dataStoreWithRequestHeaders.id, headers });
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");
 		assert.strictEqual(
