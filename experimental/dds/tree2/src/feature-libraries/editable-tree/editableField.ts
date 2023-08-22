@@ -65,6 +65,8 @@ export function makeField(
 
 	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor, fieldAnchor);
 	const output = adaptWithProxy(targetSequence, fieldProxyHandler);
+	// Fields currently live as long as their parent does.
+	// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
 	if (fieldAnchor.parent !== undefined) {
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
