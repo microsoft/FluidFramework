@@ -7,7 +7,7 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.7.0
+      '@fluid-tools/api-markdown-documenter': ^0.7.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.0
       '@microsoft/api-extractor-model': ^7.27.3
@@ -38,7 +38,7 @@ importers:
       rimraf: ^5.0.1
       start-server-and-test: ^2.0.0
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.7.0
+      '@fluid-tools/api-markdown-documenter': 0.7.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
       '@microsoft/api-extractor-model': 7.27.3
@@ -148,8 +148,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.7.0:
-    resolution: {integrity: sha512-m4SNsk59CdR6tRrZLUedzL9RqKwuy7JCdzrAphncCt2bNrBht3XJmC0936lA05zj7foYC8CdhXbzcxu7LUSFfQ==}
+  /@fluid-tools/api-markdown-documenter/0.7.1:
+    resolution: {integrity: sha512-JxVe0ziI4/8sH3N6XkXU/Z+pg1wYwvenGjqUppgRN3ObLu56Y/HBZ826ChmpmDgh/HKFoCMHVHjWcgWuc2eE5A==}
     dependencies:
       '@microsoft/api-documenter': 7.21.7
       '@microsoft/api-extractor-model': 7.27.3
