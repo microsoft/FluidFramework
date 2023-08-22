@@ -3064,13 +3064,13 @@ export class ContainerRuntime
 							eventName: "SkipFailingIncorrectSummary",
 							referenceSequenceNumber: summaryRefSeqNum,
 							minimumSequenceNumber,
-							pendingMessages: this.pendingStateManager.pendingMessagesCount,
+							pendingMessages: this.pendingMessagesCount,
 						});
 					} else {
 						const error = new RetriableSummaryError(
 							"PendingMessagesInSummary",
 							1 /* retryAfterSeconds */,
-							{ count: this.pendingStateManager.pendingMessagesCount },
+							{ count: this.pendingMessagesCount },
 						);
 						return {
 							stage: "base",
