@@ -291,12 +291,15 @@ export class InlineArrayShape
 		outputBuffer: BufferFormat,
 	): void {
 		// Its possible individual items from this array encode multiple nodes, so don't assume === here.
-		assert(cursor.getFieldLength() >= this.length, "unexpected length for fixed length array");
+		assert(
+			cursor.getFieldLength() >= this.length,
+			0x73c /* unexpected length for fixed length array */,
+		);
 		cursor.firstNode();
 		this.encodeNodes(cursor, shapes, outputBuffer);
 		assert(
 			cursor.mode === CursorLocationType.Fields,
-			"should return to fields mode when finished encoding",
+			0x73d /* should return to fields mode when finished encoding */,
 		);
 	}
 
@@ -352,7 +355,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		} else {
 			assert(
 				allNonZeroSize,
-				"either all or none of the members of a nested array must be 0 sized, or there is no way the decoder could process the content correctly.",
+				0x73e /* either all or none of the members of a nested array must be 0 sized, or there is no way the decoder could process the content correctly. */,
 			);
 			outputBuffer.push(buffer);
 		}
@@ -394,9 +397,9 @@ export function encodeValue(
 		if (shape === true) {
 			outputBuffer.push(value);
 		} else if (shape === false) {
-			assert(value === undefined, "incompatible value shape: expected no value");
+			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
 		} else if (Array.isArray(shape)) {
-			assert(shape.length === 1, "expected a single constant for value");
+			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "Encoding values as deltas is not yet supported");

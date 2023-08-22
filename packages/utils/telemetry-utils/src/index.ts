@@ -55,6 +55,7 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
+	TelemetryNullLogger,
 } from "./logger";
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";

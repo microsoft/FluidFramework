@@ -46,8 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	TreeStoredSchema,
@@ -57,6 +55,7 @@ export {
 	SchemaData,
 	FieldAnchor,
 	RevisionTag,
+	ChangesetLocalId,
 	TaggedChange,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
@@ -96,6 +95,7 @@ export {
 	BrandedKey,
 	BrandedMapSubset,
 	RangeEntry,
+	Named,
 } from "./util";
 
 export {
@@ -123,8 +123,6 @@ export {
 } from "./domains";
 
 export {
-	buildForest,
-	ChangesetLocalId,
 	IdAllocator,
 	ModularChangeset,
 	EditDescription,
@@ -195,10 +193,7 @@ export {
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
-	SchemaCollection,
 	ContextuallyTypedFieldData,
-	ITreeSchema,
-	IFieldSchema,
 	cursorFromContextualData,
 	UntypedField,
 	UntypedTree,
@@ -222,7 +217,6 @@ export {
 	SchemaLibraryData,
 	FieldSchema,
 	Any,
-	Sourced,
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
@@ -265,6 +259,7 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	nodeKeyFieldKey,
+	SchemaLintConfiguration,
 } from "./feature-libraries";
 
 export {

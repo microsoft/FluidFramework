@@ -79,5 +79,5 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 
-// Conveinence re-exports of API model types
+// Convenience re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

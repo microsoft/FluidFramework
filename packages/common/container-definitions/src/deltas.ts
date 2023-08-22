@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IEvent, IErrorEvent } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, IEventProvider, IEvent, IErrorEvent } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,

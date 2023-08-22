@@ -23,6 +23,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 import {
+	FluidObjectNode,
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
@@ -37,18 +38,53 @@ import {
 export const visualizeSharedCell: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
+): Promise<FluidObjectNode> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
 
 	const renderedData = await visualizeChildData(data);
 
-	return {
-		fluidObjectId: sharedCell.id,
-		children: { data: renderedData },
-		typeMetadata: "SharedCell",
-		nodeKind: VisualNodeKind.FluidTreeNode,
+	const editProps = {
+		editTypes: undefined,
 	};
+
+	// By separating cases it lets us avoid unnecessary hierarchy by flattening the tree
+	switch (renderedData.nodeKind) {
+		case VisualNodeKind.FluidHandleNode:
+			return {
+				children: {
+					data: renderedData,
+				},
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidTreeNode,
+				editProps,
+			};
+		case VisualNodeKind.ValueNode:
+			return {
+				...renderedData,
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidValueNode,
+				editProps,
+			};
+		case VisualNodeKind.TreeNode:
+			return {
+				...renderedData,
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidTreeNode,
+				editProps,
+			};
+		case VisualNodeKind.UnknownObjectNode:
+			return {
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidUnknownObjectNode,
+			};
+		default:
+			throw new Error("Unrecognized node kind.");
+	}
 };
 
 /**

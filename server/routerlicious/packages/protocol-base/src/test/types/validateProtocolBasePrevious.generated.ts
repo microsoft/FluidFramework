@@ -71,6 +71,7 @@ declare function get_current_InterfaceDeclaration_IProtocolHandler():
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>);
 use_old_InterfaceDeclaration_IProtocolHandler(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProtocolHandler());
 
 /*

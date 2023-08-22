@@ -286,7 +286,7 @@ export class EditManager<
 					if (s === sequenceNumber) {
 						assert(
 							revision === newTrunkBase.revision,
-							"Expected last evicted commit to be new trunk base",
+							0x729 /* Expected last evicted commit to be new trunk base */,
 						);
 					} else {
 						return { delete: true };
@@ -543,7 +543,7 @@ export class EditManager<
 	 */
 	private getClosestTrunkCommit(sequenceNumber: SeqNumber): [SeqNumber, GraphCommit<TChangeset>] {
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceNumber);
-		assert(commit !== undefined, "Sequence number has been evicted");
+		assert(commit !== undefined, 0x72a /* Sequence number has been evicted */);
 		return commit;
 	}
 }
