@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../util";
+import { Named, fail } from "../../util";
 import {
 	FieldStoredSchema,
 	FieldKey,
@@ -13,12 +13,9 @@ import {
 	Adapters,
 	AdaptedViewSchema,
 	Compatibility,
-	Named,
-	NamedTreeSchema,
-	TreeTypeSet,
 } from "../../core";
-import { FieldKind, FullSchemaPolicy } from "./fieldKind";
-import { allowsRepoSuperset, isNeverTree } from "./comparison";
+import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema";
+import { TypedSchemaCollection } from "./schemaBuilder";
 
 /**
  * A collection of View information for schema, including policy.
@@ -27,7 +24,7 @@ export class ViewSchema {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly schema: SchemaCollection,
+		public readonly schema: TypedSchemaCollection,
 	) {}
 
 	/**
@@ -149,43 +146,6 @@ export class ViewSchema {
 			structFields,
 		};
 	}
-}
-
-// TODO: Separate this from TreeStoredSchema, adding more data.
-/**
- * @alpha
- */
-export interface ITreeSchema extends NamedTreeSchema, Sourced {
-	readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
-	readonly mapFields?: IFieldSchema;
-}
-
-/**
- * All policy for a specific field kind,
- * including functionality that does not have to be kept consistent across versions or deterministic.
- *
- * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * @alpha
- */
-export interface IFieldSchema {
-	readonly kind: FieldKind;
-	/**
-	 * Types allowed in this field.
-	 *
-	 * TODO: Put behind a function so it can be lazy and support cycles.
-	 */
-	readonly types: TreeTypeSet;
-}
-
-/**
- * Schema data that can be be used to view a document.
- * @alpha
- */
-export interface SchemaCollection extends SchemaData {
-	readonly rootFieldSchema: IFieldSchema;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
-	readonly policy: FullSchemaPolicy;
-	readonly adapters: Adapters;
 }
 
 /**
