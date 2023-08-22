@@ -18,7 +18,6 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
@@ -378,15 +377,6 @@ export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLoggerExt, thresholdMultiple?: number);
     send(eventName: string, value: number): void;
     sendIfMultiple(eventName: string, value: number): void;
-}
-
-// @public
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-    // (undocumented)
-    readonly errorType: "throttlingError";
-    // (undocumented)
-    readonly retryAfterSeconds: number;
-    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
 }
 
 // @public

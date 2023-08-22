@@ -18,10 +18,11 @@ import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
-import { ThrottlingWarning } from '@fluidframework/telemetry-utils';
 import { UsageError } from '@fluidframework/telemetry-utils';
 
 // @public
@@ -102,7 +103,14 @@ export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISeque
 
 export { GenericError }
 
-export { ThrottlingWarning }
+// @public @deprecated
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+    // (undocumented)
+    readonly errorType: "throttlingError";
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
+}
 
 export { UsageError }
 

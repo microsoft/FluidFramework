@@ -8,13 +8,11 @@ import {
 	IGenericError,
 	IErrorBase,
 	ITelemetryProperties,
-	IThrottlingWarning,
 	IUsageError,
 } from "@fluidframework/core-interfaces";
 
-import { LoggingError, wrapErrorAndLog } from "./errorLogging";
+import { LoggingError } from "./errorLogging";
 import { IFluidErrorBase } from "./fluidErrorBase";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
@@ -31,34 +29,6 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	constructor(message: string, readonly error?: any, props?: ITelemetryProperties) {
 		// Don't try to log the inner error
 		super(message, props, new Set(["error"]));
-	}
-}
-
-/**
- * Warning emitted when requests to storage are being throttled.
- */
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-	readonly errorType = FluidErrorTypes.throttlingError;
-
-	private constructor(
-		message: string,
-		readonly retryAfterSeconds: number,
-		props?: ITelemetryProperties,
-	) {
-		super(message, props);
-	}
-
-	/**
-	 * Wrap the given error as a ThrottlingWarning
-	 * Only preserves the error message, and applies the given retry after to the new warning object
-	 */
-	static wrap(
-		error: unknown,
-		retryAfterSeconds: number,
-		logger: ITelemetryLoggerExt,
-	): IThrottlingWarning {
-		const newErrorFn = (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
-		return wrapErrorAndLog(error, newErrorFn, logger);
 	}
 }
 

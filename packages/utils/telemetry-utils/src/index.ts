@@ -12,7 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
-export { DataCorruptionError, GenericError, ThrottlingWarning, UsageError } from "./error";
+export { DataCorruptionError, GenericError, UsageError } from "./error";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,

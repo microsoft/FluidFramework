@@ -27,7 +27,6 @@ import {
 	safeRaiseEvent,
 	isFluidError,
 	ITelemetryLoggerExt,
-	ThrottlingWarning,
 	DataCorruptionError,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
@@ -53,6 +52,7 @@ import {
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
+import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;

@@ -8,6 +8,7 @@ export {
 	ClientSessionExpiredError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
+	ThrottlingWarning,
 } from "./error";
 
 // Deprecated exports for backwards compatibility
@@ -20,10 +21,6 @@ export {
 	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
 	 */
 	GenericError,
-	/**
-	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
-	 */
-	ThrottlingWarning,
 	/**
 	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
 	 */
