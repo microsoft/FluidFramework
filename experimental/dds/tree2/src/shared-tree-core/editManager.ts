@@ -266,10 +266,7 @@ export class EditManager<
 			trunkTailSequenceId = minSequenceId(trunkTailSequenceId, minimumBranchBaseSequenceId);
 		}
 
-		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(
-			trunkTailSequenceId.sequenceNumber,
-			trunkTailSequenceId.indexInBatch,
-		);
+		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(trunkTailSequenceId);
 		// Don't do any work if the commit found by the search is already the tail of the trunk
 		if (latestEvicted !== this.trunkBase) {
 			// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
@@ -315,6 +312,16 @@ export class EditManager<
 						return { delete: true };
 					}
 				},
+			);
+
+			const trunkSize = getPathFromBase(this.trunk.getHead(), this.trunkBase).length;
+			assert(
+				this.sequenceMap.size === trunkSize + 1,
+				"The size of the sequenceMap must have one element more than the trunk",
+			);
+			assert(
+				this.trunkMetadata.size === trunkSize,
+				"The size of the trunkMetadata must be the same as teh trunk",
 			);
 		}
 	}
@@ -481,8 +488,8 @@ export class EditManager<
 		referenceSequenceNumber: SeqNumber,
 	): void {
 		assert(
-			sequenceNumber >= this.minimumSequenceNumber,
-			"Expected change sequence number to be greater than or equal to the last known minimum sequence number",
+			sequenceNumber > this.minimumSequenceNumber,
+			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
 		);
 
 		const commitsSequenceNumber = this.getBatch(sequenceNumber);
@@ -580,28 +587,25 @@ export class EditManager<
 
 	/**
 	 * Finds the most recent trunk commit that was sequenced at or before the given point.
-	 * @param sequenceNumber - the sequence number to search for
-	 * @param indexInBatch - the commit index inside the batch to search for in conjunction with the sequence number
+	 * @param searchBy - the sequence number or the sequence id to search for
 	 * @remarks Fails if there is no eligible commit.
 	 * @returns the closest commit and its sequence id
 	 */
+	private getClosestTrunkCommit(searchBy: SeqNumber): [SequenceId, GraphCommit<TChangeset>];
+	private getClosestTrunkCommit(searchBy: SequenceId): [SequenceId, GraphCommit<TChangeset>];
 	private getClosestTrunkCommit(
-		sequenceNumber: SeqNumber,
-		indexInBatch?: number,
+		searchBy: SeqNumber | SequenceId,
 	): [SequenceId, GraphCommit<TChangeset>] {
 		const sequenceId: SequenceId =
-			indexInBatch !== undefined
+			typeof searchBy === "number"
 				? {
-						sequenceNumber,
-						indexInBatch,
-				  }
-				: {
-						// This is to make sure that if the commit index in the batch is not passed the correct commit is selected in this 2 scenarios:
+						// This is to make sure that the correct commit is selected in this 2 scenarios:
 						// 1) The commit is unique for that sequence number
 						// 2) There are more than one commit for the same sequence number, in this case we need to select the last one.
-						sequenceNumber,
+						sequenceNumber: searchBy,
 						indexInBatch: Number.POSITIVE_INFINITY,
-				  };
+				  }
+				: searchBy;
 
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceId);
 		assert(commit !== undefined, "sequence id has been evicted");
