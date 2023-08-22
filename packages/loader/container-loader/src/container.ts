@@ -43,7 +43,6 @@ import {
 	ReadOnlyInfo,
 	isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -92,6 +91,8 @@ import {
 	wrapError,
 	ITelemetryLoggerExt,
 	formatTick,
+	GenericError,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
