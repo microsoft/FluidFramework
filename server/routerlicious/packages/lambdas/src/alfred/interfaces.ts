@@ -33,6 +33,9 @@ export interface IBroadcastSignalEventPayload {
 	signalContent: string;
 }
 
+/**
+ * Events emitted during Fluid clients collaboration session
+ */
 export interface ICollaborationSessionEvents extends IEvent {
 	/**
 	 * Emitted when the broadcastSignal endpoint is called by an external

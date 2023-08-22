@@ -49,13 +49,6 @@ export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
 	}),
 });
 
-export const IRuntimeSignalMessageBody = {
-	/**
-	 * Indicates that the data associated with an edit is or must be a `boolean`.
-	 */
-	content: "RuntimeMessage",
-} as const;
-
 /**
  * Mirrors ISignalEnvelope from runtime definitions, for signals that come from an external
  * caller (not sent by a client (so no 'clientSignalSequenceNumber') and are always addressed
@@ -68,6 +61,9 @@ export interface IRuntimeSignalEnvelope {
 	};
 }
 
+/**
+ * Template for runtime messages to be sent to an ongoing client collaboration session.
+ */
 export const createRuntimeMessage = (signalContent: IRuntimeSignalEnvelope): ISignalMessage => ({
 	clientId: null,
 	content: JSON.stringify({
