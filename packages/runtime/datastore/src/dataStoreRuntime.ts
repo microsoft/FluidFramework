@@ -4,6 +4,7 @@
  */
 
 import {
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	generateStack,
 	LoggingError,
@@ -13,7 +14,6 @@ import {
 	tagCodeArtifacts,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import {
 	FluidObject,
 	IFluidHandle,

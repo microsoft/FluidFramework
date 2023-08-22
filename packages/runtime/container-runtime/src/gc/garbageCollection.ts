@@ -5,7 +5,7 @@
 
 import { Timer } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
-import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
+import { ClientSessionExpiredError } from "@fluidframework/container-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -22,6 +22,7 @@ import {
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
