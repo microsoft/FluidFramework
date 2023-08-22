@@ -11,12 +11,12 @@ import { IClient, IConnected } from "@fluidframework/protocol-definitions";
  */
 export interface IConnectedClient {
 	/**
-	 * {@inheritDoc @fluidframework/protocol-definitions#IConnected}
+	 *
 	 */
 	connection: IConnected;
 
 	/**
-	 * {@inheritDoc @fluidframework/protocol-definitions#IClient}
+	 *
 	 */
 	details: IClient;
 
