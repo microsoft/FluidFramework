@@ -900,7 +900,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
 	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
 		const container = (await provider.loadTestContainer(

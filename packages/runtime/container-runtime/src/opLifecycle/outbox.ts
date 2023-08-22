@@ -147,25 +147,23 @@ export class Outbox {
 			return;
 		}
 
-		console.log(++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport);
-
-		// if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-		// 	this.mc.logger.sendTelemetryEvent(
-		// 		{
-		// 			category: this.params.config.disablePartialFlush ? "error" : "generic",
-		// 			eventName: "ReferenceSequenceNumberMismatch",
-		// 			mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
-		// 			mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
-		// 			attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
-		// 			attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
-		// 			blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
-		// 			blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
-		// 			currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
-		// 			currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
-		// 		},
-		// 		getLongStack(() => new UsageError("Submission of an out of order message")),
-		// 	);
-		// }
+		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
+			this.mc.logger.sendTelemetryEvent(
+				{
+					category: this.params.config.disablePartialFlush ? "error" : "generic",
+					eventName: "ReferenceSequenceNumberMismatch",
+					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
+					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
+					attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
+					attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
+					blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
+					blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
+					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
+					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
+				},
+				getLongStack(() => new UsageError("Submission of an out of order message")),
+			);
+		}
 
 		if (!this.params.config.disablePartialFlush) {
 			this.flushAll();

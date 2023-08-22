@@ -3853,9 +3853,8 @@ export class ContainerRuntime
 		// to close current batch.
 		this.flush();
 
-		const pendingOps = this.pendingStateManager.getLocalState();
 		const pendingState: IPendingRuntimeState = {
-			pending: pendingOps,
+			pending: this.pendingStateManager.getLocalState(),
 			pendingAttachmentBlobs,
 			clientId: this.clientId,
 		};

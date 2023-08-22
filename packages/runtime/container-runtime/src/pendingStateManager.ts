@@ -240,9 +240,9 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
+			// this.appliedStashedMessages.push(this.initialMessages.shift()!);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.appliedStashedMessages.push(this.initialMessages.shift()!);
-			// this.pendingMessages.push(this.initialMessages.shift()!);
+			this.pendingMessages.push(this.initialMessages.shift()!);
 		}
 	}
 
