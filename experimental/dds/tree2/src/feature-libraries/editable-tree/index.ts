@@ -10,7 +10,6 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	NewFieldContent,
 	areCursors,
 	localNodeKeySymbol,
 	setField,
