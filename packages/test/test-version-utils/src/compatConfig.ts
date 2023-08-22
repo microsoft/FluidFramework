@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Lazy, assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
@@ -272,7 +273,7 @@ export async function mochaGlobalSetup() {
 		ensurePackageInstalled(baseVersion, value, reinstall),
 	);
 
-	let error: unknown | undefined;
+	let error: unknown;
 	for (const p of installP) {
 		try {
 			await p;
@@ -281,6 +282,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- Rethrows caught value
 		throw error;
 	}
 }

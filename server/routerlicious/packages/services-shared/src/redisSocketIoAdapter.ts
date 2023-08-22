@@ -205,8 +205,13 @@ export class RedisSocketIoAdapter extends Adapter {
 			const shouldUnsubscribe = this.removeFromRoom(socketId, roomId);
 			if (shouldUnsubscribe) {
 				// don't delay socket removal due to the redis subscription
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.unsubscribeFromRooms([roomId]);
+				this.unsubscribeFromRooms([roomId]).catch((error) => {
+					Lumberjack.error(
+						"Error encountered when unsubscribing from rooms in del()",
+						undefined,
+						error,
+					);
+				});
 			}
 		}
 	}
@@ -229,8 +234,13 @@ export class RedisSocketIoAdapter extends Adapter {
 
 				if (unsubscribeRooms.length > 0) {
 					// don't delay socket removal due to the redis subscription
-					// eslint-disable-next-line @typescript-eslint/no-floating-promises
-					this.unsubscribeFromRooms(unsubscribeRooms);
+					this.unsubscribeFromRooms(unsubscribeRooms).catch((error) => {
+						Lumberjack.error(
+							"Error encountered when unsubscribing from rooms in delAll()",
+							undefined,
+							error,
+						);
+					});
 				}
 
 				this.sids.delete(socketId);
@@ -265,8 +275,13 @@ export class RedisSocketIoAdapter extends Adapter {
 		// don't provide any "opts"
 		const msg = msgpack.encode([this.uid, packet]);
 
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		RedisSocketIoAdapter.options.pubConnection.publish(channel, msg);
+		RedisSocketIoAdapter.options.pubConnection.publish(channel, msg).catch((error) => {
+			Lumberjack.error(
+				"Error encountered when publishing message to channel",
+				undefined,
+				error,
+			);
+		});
 	}
 
 	/**
@@ -482,7 +497,6 @@ export class RedisSocketIoAdapter extends Adapter {
 				this.pendingHealthChecks.set(healthCheckId, resolve);
 			});
 
-			// tslint:disable-next-line: no-floating-promises
 			await RedisSocketIoAdapter.options.pubConnection.publish(
 				`${this.channel}${room}#`,
 				msg,
@@ -502,8 +516,13 @@ export class RedisSocketIoAdapter extends Adapter {
 			}
 
 			if (RedisSocketIoAdapter.options.healthChecks.resubscribeOnFailure) {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.subscribeToRooms([room]);
+				this.subscribeToRooms([room]).catch((error) => {
+					Lumberjack.error(
+						"Error encountered when subscribing to rooms in runRoomHealthCheck()",
+						undefined,
+						error,
+					);
+				});
 			}
 		} finally {
 			this.pendingHealthChecks.delete(healthCheckId);

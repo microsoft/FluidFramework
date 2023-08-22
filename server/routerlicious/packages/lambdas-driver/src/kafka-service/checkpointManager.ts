@@ -44,7 +44,7 @@ export class CheckpointManager {
 
 		// No recovery once entering an error state
 		if (this.error) {
-			return Promise.reject(this.error);
+			throw this.error;
 		}
 
 		// Exit early if already caught up
@@ -68,8 +68,8 @@ export class CheckpointManager {
 		// Finally begin checkpointing the offsets.
 		this.checkpointing = true;
 		const commitP = this.consumer.commitCheckpoint(this.id, queuedMessage);
-		return commitP.then(
-			() => {
+		return commitP
+			.then(() => {
 				this.commitedCheckpoint = queuedMessage;
 				this.checkpointing = false;
 
@@ -87,9 +87,8 @@ export class CheckpointManager {
 					this.pendingCheckpoint.resolve();
 					this.pendingCheckpoint = undefined;
 				}
-			},
-			// eslint-disable-next-line @typescript-eslint/promise-function-async
-			(error) => {
+			})
+			.catch((error) => {
 				if (error.name === "PendingCommitError") {
 					Lumberjack.info(`Skipping checkpoint since ${error.message}`, {
 						queuedMessageOffset: queuedMessage.offset,
@@ -103,9 +102,8 @@ export class CheckpointManager {
 				if (this.pendingCheckpoint) {
 					this.pendingCheckpoint.reject(this.error);
 				}
-				return Promise.reject(error);
-			},
-		);
+				throw error;
+			});
 	}
 
 	/**

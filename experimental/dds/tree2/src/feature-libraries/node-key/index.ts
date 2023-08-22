@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { buildNodeKeySchema, compareLocalNodeKeys, LocalNodeKey, StableNodeKey } from "./nodeKey";
+export {
+	compareLocalNodeKeys,
+	LocalNodeKey,
+	StableNodeKey,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
+} from "./nodeKey";
 
 export { NodeKeyIndex } from "./nodeKeyIndex";
 

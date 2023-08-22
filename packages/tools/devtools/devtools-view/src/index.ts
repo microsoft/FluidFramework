@@ -21,4 +21,4 @@ export { WindowMessageRelay } from "./WindowMessageRelay";
 
 // Convenience re-exports
 export { IMessageRelay } from "@fluid-experimental/devtools-core";
-export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

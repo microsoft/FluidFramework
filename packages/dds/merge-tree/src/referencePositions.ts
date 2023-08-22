@@ -35,26 +35,12 @@ export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefin
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
-	if (tileLabels) {
-		for (const refLabel of tileLabels) {
-			if (label === refLabel) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return tileLabels?.includes(label) ?? false;
 }
 
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
 	const rangeLabels = refGetRangeLabels(refPos);
-	if (rangeLabels) {
-		for (const refLabel of rangeLabels) {
-			if (label === refLabel) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return rangeLabels?.includes(label) ?? false;
 }
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
 	return refGetTileLabels(refPos) !== undefined;

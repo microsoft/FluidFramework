@@ -43,15 +43,14 @@ export class NodeCodeLoader {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return entry;
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			Promise.reject(new Error("Invalid Package"));
+			throw new Error("Invalid Package");
 		}
 	}
 
 	private async installOrWaitForPackages(pkg: string): Promise<string> {
 		const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
 		if (!dataStores) {
-			return Promise.reject(new Error("Invalid package"));
+			throw new Error("Invalid package");
 		}
 		const [, scope, name] = dataStores;
 

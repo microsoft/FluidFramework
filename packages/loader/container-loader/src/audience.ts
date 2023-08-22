@@ -13,6 +13,12 @@ import { IClient } from "@fluidframework/protocol-definitions";
 export class Audience extends EventEmitter implements IAudienceOwner {
 	private readonly members = new Map<string, IClient>();
 
+	constructor() {
+		super();
+		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		super.setMaxListeners(0);
+	}
+
 	public on(
 		event: "addMember" | "removeMember",
 		listener: (clientId: string, client: IClient) => void,

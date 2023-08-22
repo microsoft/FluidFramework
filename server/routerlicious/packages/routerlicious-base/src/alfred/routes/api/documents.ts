@@ -24,10 +24,15 @@ import {
 	getBooleanFromConfig,
 	getCorrelationIdWithHttpFallback,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import {
+	getBooleanParam,
+	validateRequestParams,
+	handleResponse,
+} from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
 	ISession,
 	NetworkError,
@@ -61,6 +66,8 @@ export function create(
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
 	);
+
+	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
 	// Whether to enforce server-generated document ids in create doc flow
 	const enforceServerGeneratedDocumentId: boolean =
 		config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
@@ -116,17 +123,16 @@ export function create(
 				getParam(request.params, "tenantId") || appTenants[0].id,
 				getParam(request.params, "id"),
 			);
-			documentP.then(
-				(document) => {
+			documentP
+				.then((document) => {
 					if (!document || document.scheduledDeletionTime) {
 						response.status(404);
 					}
 					response.status(200).json(document);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(400).json(error);
-				},
-			);
+				});
 		},
 	);
 
@@ -163,12 +169,25 @@ export function create(
 				: (request.body.id as string) || uuid();
 
 			// Summary information
-			const summary = request.body.summary;
+			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+				: request.body.summary;
+
+			Lumberjack.info(
+				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
 
 			// Protocol state
-			const { sequenceNumber, values, generateToken = false } = request.body;
+			const {
+				sequenceNumber,
+				values,
+				generateToken = false,
+				isEphemeralContainer = false,
+			} = request.body;
 
 			const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
+			const isEphemeral: boolean =
+				getBooleanParam(isEphemeralContainer) && !ignoreEphemeralFlag;
 
 			const createP = storage.createDocument(
 				tenantId,
@@ -181,6 +200,7 @@ export function create(
 				externalDeltaStreamUrl,
 				values,
 				enableDiscovery,
+				isEphemeral,
 			);
 
 			// Handle backwards compatibility for older driver versions.

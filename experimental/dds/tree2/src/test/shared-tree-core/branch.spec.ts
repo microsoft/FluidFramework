@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
+import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core";
 import {
 	GraphCommit,
 	RevisionTag,
@@ -13,7 +13,7 @@ import {
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
-	rootFieldKeySymbol,
+	rootFieldKey,
 } from "../../core";
 import {
 	DefaultChangeset,
@@ -358,22 +358,19 @@ describe("Branches", () => {
 
 	it("cannot be mutated after disposal", () => {
 		const branch = create();
+		const fork = branch.fork();
 		branch.dispose();
-
-		function assertDisposed(fn: () => void): void {
-			assert.throws(fn, (e) => validateAssertionError(e, "Branch is disposed"));
-		}
 
 		// These methods are not valid to call after disposal
 		assertDisposed(() => branch.fork());
-		assertDisposed(() => branch.rebaseOnto(branch));
+		assertDisposed(() => branch.rebaseOnto(fork));
 		assertDisposed(() => branch.merge(branch.fork()));
 		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
 		assertDisposed(() => branch.commitTransaction());
 		assertDisposed(() => branch.abortTransaction());
 		assertDisposed(() => branch.abortTransaction());
-		assertDisposed(() => branch.dispose());
+		assertDisposed(() => fork.merge(branch));
 	});
 
 	it("correctly report whether they are in the middle of a transaction", () => {
@@ -438,11 +435,76 @@ describe("Branches", () => {
 		assert.equal(branch.getHead().revision, nullRevisionTag);
 	});
 
+	describe("all nested forks and transactions are disposed and aborted when transaction is", () => {
+		const setUpNestedForks = (rootBranch: DefaultBranch) => {
+			change(rootBranch);
+			rootBranch.startTransaction();
+			const fork1 = rootBranch.fork();
+			change(rootBranch);
+			rootBranch.startTransaction();
+			const fork2 = rootBranch.fork();
+			change(rootBranch);
+			const fork3 = rootBranch.fork();
+			change(fork3);
+			const fork4 = fork3.fork();
+			change(fork3);
+			fork3.startTransaction();
+			change(fork3);
+			const fork5 = fork3.fork();
+
+			return {
+				disposedForks: [fork2, fork3, fork4, fork5],
+				notDisposedForks: [fork1],
+			};
+		};
+
+		const assertNestedForks = (nestedForks: {
+			disposedForks: readonly DefaultBranch[];
+			notDisposedForks: readonly DefaultBranch[];
+		}) => {
+			nestedForks.disposedForks.forEach((fork) => {
+				assertDisposed(() => fork.fork());
+				assert.equal(fork.isTransacting(), false);
+			});
+			nestedForks.notDisposedForks.forEach((fork) => assertNotDisposed(() => fork.fork()));
+		};
+
+		it("commited", () => {
+			const rootBranch = create();
+			const nestedForks = setUpNestedForks(rootBranch);
+			rootBranch.commitTransaction();
+
+			assert.equal(rootBranch.isTransacting(), true);
+			assertNestedForks(nestedForks);
+
+			rootBranch.commitTransaction();
+			assertNestedForks({
+				disposedForks: nestedForks.notDisposedForks,
+				notDisposedForks: [],
+			});
+		});
+
+		it("aborted", () => {
+			const rootBranch = create();
+			const nestedForks = setUpNestedForks(rootBranch);
+			rootBranch.abortTransaction();
+
+			assert.equal(rootBranch.isTransacting(), true);
+			assertNestedForks(nestedForks);
+
+			rootBranch.abortTransaction();
+			assertNestedForks({
+				disposedForks: nestedForks.notDisposedForks,
+				notDisposedForks: [],
+			});
+		});
+	});
+
 	it("error if undo is called with no undo redo manager", () => {
 		const branch = create();
 		assert.throws(
 			() => branch.undo(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Must construct branch with an `UndoRedoManager` in order to undo.",
@@ -454,7 +516,7 @@ describe("Branches", () => {
 		const branch = create();
 		assert.throws(
 			() => branch.redo(),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Must construct branch with an `UndoRedoManager` in order to redo.",
@@ -476,7 +538,7 @@ describe("Branches", () => {
 		change(branch);
 		assert.throws(
 			() => revertibleBranch.rebaseOnto(branch),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Cannot rebase a revertible branch onto a non-revertible branch",
@@ -498,12 +560,54 @@ describe("Branches", () => {
 		change(branch);
 		assert.throws(
 			() => revertibleBranch.merge(branch),
-			(e) =>
+			(e: Error) =>
 				validateAssertionError(
 					e,
 					"Cannot merge a non-revertible branch into a revertible branch",
 				),
 		);
+	});
+
+	describe("transitive fork event", () => {
+		/** Creates forks at various "depths" and returns the number of forks created */
+		function forkTransitive<T extends { fork(): T }>(forkable: T): number {
+			forkable.fork();
+			const fork = forkable.fork();
+			fork.fork();
+			fork.fork().fork();
+			return 5;
+		}
+
+		it("registers listener on transitive forks", () => {
+			const branch = create();
+			const forks = new Set<DefaultBranch>();
+			onForkTransitive(branch, (fork) => forks.add(fork));
+			const expected = forkTransitive(branch);
+			assert.equal(forks.size, expected);
+		});
+
+		it("deregisters all listeners", () => {
+			const branch = create();
+			let forkCount = 0;
+			const deregister = onForkTransitive(branch, () => (forkCount += 1));
+			deregister();
+			forkTransitive(branch);
+			assert.equal(forkCount, 0);
+		});
+
+		it("registers listener on forks created inside of the listener", () => {
+			const branch = create();
+			let forkCount = 0;
+			onForkTransitive(branch, () => {
+				forkCount += 1;
+				assert(branch.hasListeners("fork"));
+				if (forkCount <= 1) {
+					branch.fork();
+				}
+			});
+			branch.fork();
+			assert.equal(forkCount, 2);
+		});
 	});
 
 	/** Creates a new root branch */
@@ -544,7 +648,7 @@ describe("Branches", () => {
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
 		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
-		branch.editor.valueField({ parent: undefined, field: rootFieldKeySymbol }).set(cursor);
+		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
 		return branch.getHead().revision;
 	}
 
@@ -567,5 +671,13 @@ describe("Branches", () => {
 	function assertBased(branch: DefaultBranch, on: DefaultBranch): void {
 		const ancestor = findCommonAncestor(branch.getHead(), on.getHead());
 		assert.equal(ancestor, on.getHead());
+	}
+
+	function assertDisposed(fn: () => void): void {
+		assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
+	}
+
+	function assertNotDisposed(fn: () => void): void {
+		assert.doesNotThrow(fn, (e: Error) => validateAssertionError(e, /\*/));
 	}
 });

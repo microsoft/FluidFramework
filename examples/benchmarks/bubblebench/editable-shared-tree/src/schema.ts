@@ -8,8 +8,8 @@ import { ValueSchema, SchemaAware, SchemaBuilder } from "@fluid-experimental/tre
 
 const builder = new SchemaBuilder("bubble-bench");
 
-export const stringSchema = builder.primitive("string", ValueSchema.String);
-export const numberSchema = builder.primitive("number", ValueSchema.Number);
+export const stringSchema = builder.leaf("string", ValueSchema.String);
+export const numberSchema = builder.leaf("number", ValueSchema.Number);
 
 export const bubbleSchema = builder.struct("BubbleBenchAppStateBubble-1.0.0", {
 	x: SchemaBuilder.fieldValue(numberSchema),

@@ -23,6 +23,8 @@ import {
 	ConfigTypes,
 	mixinMonitoringContext,
 	MonitoringContext,
+	tagCodeArtifacts,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -83,7 +85,7 @@ describe("Garbage Collection Tests", () => {
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
-	let mc: MonitoringContext;
+	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
 
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
@@ -147,7 +149,7 @@ describe("Garbage Collection Tests", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mc.logger,
+			baseLogger: createChildLogger({ logger: mc.logger }),
 			existing,
 			metadata,
 			createContainerMetadata: {
@@ -305,7 +307,7 @@ describe("Garbage Collection Tests", () => {
 					expectedEvents.push({
 						eventName: deleteEventName,
 						timeout,
-						id: tagAsCodeArtifact(JSON.stringify([nodes[2], nodes[3]])),
+						...tagCodeArtifacts({ id: JSON.stringify([nodes[2], nodes[3]]) }),
 					});
 				} else {
 					assert(
@@ -317,28 +319,28 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ id: nodes[2] }),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ id: nodes[2] }),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
@@ -357,9 +359,8 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
-							fromId: tagAsCodeArtifact(nodes[1]),
+							...tagCodeArtifacts({ id: nodes[3], fromId: nodes[1] }),
 						},
 					],
 					"revived event not generated as expected",
@@ -404,9 +405,8 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[2]),
 							pkg: eventPkg,
-							fromId: tagAsCodeArtifact(nodes[1]),
+							...tagCodeArtifacts({ id: nodes[2], fromId: nodes[1] }),
 						},
 					],
 					"revived event not logged as expected",
@@ -435,7 +435,7 @@ describe("Garbage Collection Tests", () => {
 					expectedEvents.push({
 						eventName: deleteEventName,
 						timeout,
-						id: tagAsCodeArtifact(JSON.stringify([nodes[3]])),
+						...tagCodeArtifacts({ id: JSON.stringify([nodes[3]]) }),
 					});
 				} else {
 					assert(
@@ -447,13 +447,13 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 						pkg: eventPkg,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 						pkg: eventPkg,
 					},
 				);
@@ -513,7 +513,7 @@ describe("Garbage Collection Tests", () => {
 							{
 								eventName: deleteEventName,
 								timeout,
-								id: tagAsCodeArtifact(JSON.stringify([nodes[3]])),
+								...tagCodeArtifacts({ id: JSON.stringify([nodes[3]]) }),
 							},
 						],
 						"sweep ready event not generated as expected",
@@ -535,13 +535,13 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
+							...tagCodeArtifacts({ id: nodes[3] }),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
+							...tagCodeArtifacts({ id: nodes[3] }),
 							pkg: eventPkg,
 						},
 					],
@@ -557,9 +557,8 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
-							fromId: tagAsCodeArtifact(nodes[2]),
+							...tagCodeArtifacts({ id: nodes[3], fromId: nodes[2] }),
 						},
 					],
 					"revived event not generated as expected",
@@ -617,13 +616,13 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
+							...tagCodeArtifacts({ id: nodes[3] }),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
+							...tagCodeArtifacts({ id: nodes[3] }),
 							pkg: eventPkg,
 						},
 					],
@@ -639,9 +638,8 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
-							fromId: tagAsCodeArtifact(nodes[2]),
+							...tagCodeArtifacts({ id: nodes[3], fromId: nodes[2] }),
 						},
 					],
 					"revived event not generated as expected",
@@ -733,19 +731,19 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[3]),
+							...tagCodeArtifacts({ id: nodes[3] }),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[1]),
+							...tagCodeArtifacts({ id: nodes[1] }),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: tagAsCodeArtifact(nodes[2]),
+							...tagCodeArtifacts({ id: nodes[2] }),
 							pkg: eventPkg,
 						},
 					],
@@ -1034,22 +1032,22 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 				],
 				"inactive events not generated as expected",
@@ -1064,22 +1062,22 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: tagAsCodeArtifact(nodes[3]),
+						...tagCodeArtifacts({ id: nodes[3] }),
 					},
 				],
 				"sweep ready events not generated as expected",
@@ -1587,13 +1585,17 @@ describe("Garbage Collection Tests", () => {
 					[
 						{
 							eventName: unknownReferencesEvent,
-							id: tagAsCodeArtifact("/A"),
-							routes: tagAsCodeArtifact(JSON.stringify(["/B", "/C"])),
+							...tagCodeArtifacts({
+								id: "/A",
+								routes: JSON.stringify(["/B", "/C"]),
+							}),
 						},
 						{
 							eventName: unknownReferencesEvent,
-							id: tagAsCodeArtifact("/D"),
-							routes: tagAsCodeArtifact(JSON.stringify(["/C"])),
+							...tagCodeArtifacts({
+								id: "/D",
+								routes: JSON.stringify(["/C"]),
+							}),
 						},
 					],
 					true /* inlineDetailsProp */,

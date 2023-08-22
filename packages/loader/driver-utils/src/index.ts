@@ -40,9 +40,8 @@ export {
 export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 export { RateLimiter } from "./rateLimiter";
 export { readAndParse } from "./readAndParse";
-export { IProgress, runWithRetry } from "./runWithRetry";
+export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry";
 export {
-	combineAppAndProtocolSummary,
 	CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,

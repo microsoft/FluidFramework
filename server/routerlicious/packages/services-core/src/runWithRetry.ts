@@ -72,7 +72,7 @@ export async function runWithRetry<T>(
 						telemetryProperties,
 						error,
 					);
-					return Promise.reject(error);
+					throw error;
 				}
 				// if maxRetries is -1, we retry indefinitely
 				// unless shouldRetry returns false at some point.
@@ -83,7 +83,7 @@ export async function runWithRetry<T>(
 						error,
 					);
 					// Needs to be a full rejection here
-					return Promise.reject(error);
+					throw error;
 				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
@@ -177,7 +177,7 @@ export async function requestWithRetry<T>(
 						telemetryProperties,
 						error,
 					);
-					return Promise.reject(error);
+					throw error;
 				}
 				// if maxRetries is -1, we retry indefinitely
 				// unless shouldRetry returns false at some point.
@@ -188,7 +188,7 @@ export async function requestWithRetry<T>(
 						error,
 					);
 					// Needs to be a full rejection here
-					return Promise.reject(error);
+					throw error;
 				}
 
 				// TODO: if error is a NetworkError, we should respect NetworkError.retryAfter

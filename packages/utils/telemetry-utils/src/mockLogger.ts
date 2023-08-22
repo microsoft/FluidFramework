@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
-import { TelemetryLogger } from "./logger";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
+import { ITelemetryPropertiesExt } from "./telemetryTypes";
+import { createChildLogger } from "./logger";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
  */
-export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
+export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
-
-	constructor() {
-		super();
-	}
 
 	clear() {
 		this.events = [];
+	}
+
+	toTelemetryLogger() {
+		return createChildLogger({ logger: this });
 	}
 
 	send(event: ITelemetryBaseEvent): void {
@@ -185,7 +185,6 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean,
 	): boolean {
 		const { details, ...actualForMatching } = actual;
-		let detailsExpanded = { details };
 		// "details" is used in a lot of telemetry logs to group a bunch of properties together and stringify them.
 		// Some of the properties in the expected event may be inside "details". So, if inlineDetailsProp is true,
 		// extract the properties from "details" in the actual event and inline them in the actual event.
@@ -194,10 +193,35 @@ ${JSON.stringify(actualEvents)}`);
 				typeof details === "string",
 				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
-			detailsExpanded = JSON.parse(details);
+			const detailsExpanded = JSON.parse(details);
+			return matchObjects({ ...actualForMatching, ...detailsExpanded }, expected);
 		}
-		const actualExpanded: ITelemetryBaseEvent = { ...actualForMatching, ...detailsExpanded };
-		const masked = { ...actualExpanded, ...expected };
-		return JSON.stringify(masked) === JSON.stringify(actualExpanded);
+		return matchObjects(actual, expected);
 	}
+}
+
+function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt) {
+	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
+		const actualValue = actual[expectedKey];
+		if (
+			!Array.isArray(expectedValue) &&
+			expectedValue !== null &&
+			typeof expectedValue === "object"
+		) {
+			if (
+				Array.isArray(actualValue) ||
+				actualValue === null ||
+				typeof actualValue !== "object" ||
+				!matchObjects(
+					actualValue as ITelemetryPropertiesExt,
+					expectedValue as ITelemetryPropertiesExt,
+				)
+			) {
+				return false;
+			}
+		} else if (JSON.stringify(actualValue) !== JSON.stringify(expectedValue)) {
+			return false;
+		}
+	}
+	return true;
 }

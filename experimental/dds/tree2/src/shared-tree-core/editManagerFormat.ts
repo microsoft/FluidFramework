@@ -55,17 +55,23 @@ export interface SummarySessionBranch<TChangeset> {
 	readonly commits: Commit<TChangeset>[];
 }
 const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Object({
-		base: RevisionTagSchema,
-		commits: Type.Array(Commit(tChange)),
-	});
+	Type.Object(
+		{
+			base: RevisionTagSchema,
+			commits: Type.Array(Commit(tChange)),
+		},
+		noAdditionalProps,
+	);
 
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<SummarySessionBranch<TChangeset>>][];
 }
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Object({
-		trunk: Type.Array(SequencedCommit(tChange)),
-		branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
-	});
+	Type.Object(
+		{
+			trunk: Type.Array(SequencedCommit(tChange)),
+			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+		},
+		noAdditionalProps,
+	);

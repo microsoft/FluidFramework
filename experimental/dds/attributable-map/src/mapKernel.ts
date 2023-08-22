@@ -514,7 +514,7 @@ export class AttributableMapKernel {
 		local: boolean,
 		localOpMetadata: unknown,
 	): boolean {
-		const op: IMapOperation = message.contents;
+		const op = message.contents as IMapOperation;
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -675,7 +675,7 @@ export class AttributableMapKernel {
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
-		const op: IMapKeyOperation = message.contents;
+		const op = message.contents as IMapKeyOperation;
 		if (this.pendingClearMessageIds.length > 0) {
 			if (local) {
 				assert(
@@ -773,7 +773,7 @@ export class AttributableMapKernel {
 		});
 		messageHandlers.set("delete", {
 			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
-				const op: IMapDeleteOperation = message.contents;
+				const op = message.contents as IMapDeleteOperation;
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
@@ -792,7 +792,7 @@ export class AttributableMapKernel {
 		});
 		messageHandlers.set("set", {
 			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
-				const op: IMapSetOperation = message.contents;
+				const op = message.contents as IMapSetOperation;
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}

@@ -10,11 +10,7 @@
  */
 
 export { FluidContainer, IFluidContainer, IFluidContainerEvents } from "./fluidContainer";
-export {
-	DOProviderContainerRuntimeFactory,
-	RootDataObject,
-	RootDataObjectProps,
-} from "./rootDataObject";
+export { DOProviderContainerRuntimeFactory } from "./rootDataObject";
 export { ServiceAudience } from "./serviceAudience";
 export {
 	ContainerSchema,

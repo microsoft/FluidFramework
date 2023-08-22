@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
+import { delay } from "@fluidframework/common-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
 import {
@@ -13,7 +14,6 @@ import {
 	IDocumentLoaderAndSummarizer,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
-
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;
@@ -33,7 +33,12 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		});
 		await documentWrapper.initializeDocument();
 		// Summarize the first time.
-		await documentWrapper.summarize();
+		const lastSummarizeClient = await documentWrapper.summarize(
+			documentWrapper.mainContainer,
+			undefined,
+			/* close container */ true,
+		);
+		summaryVersion = lastSummarizeClient.summaryVersion;
 	});
 
 	beforeEach(async function () {
@@ -64,16 +69,28 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 				assert(this.container !== undefined, "container needs to be defined.");
 				await provider.ensureSynchronized();
 				assert(this.container.closed !== true, "container needs to be open.");
-				this.summarizerClient = await documentWrapper.summarize(summaryVersion);
-				assert(
-					this.summarizerClient.summaryVersion !== undefined,
-					"summaryVersion needs to be defined.",
-				);
-				summaryVersion = this.summarizerClient.summaryVersion;
+				try {
+					this.summarizerClient = await documentWrapper.summarize(
+						this.container,
+						summaryVersion,
+						/* close container */ false,
+					);
+
+					assert(
+						this.summarizerClient.summaryVersion !== undefined,
+						"summaryVersion needs to be defined.",
+					);
+					summaryVersion = this.summarizerClient.summaryVersion;
+					this.summarizerClient.summarizer.close();
+				} catch (error) {
+					throw new Error(`Error summarizing: ${error}`);
+				}
+				this.container.close();
 			}
-			beforeIteration(): void {
+			async before(): Promise<void> {
 				this.container = undefined;
 				this.summarizerClient = undefined;
+				await delay(2000);
 			}
 		})(),
 	);

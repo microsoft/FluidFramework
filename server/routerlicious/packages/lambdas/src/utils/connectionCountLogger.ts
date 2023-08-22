@@ -40,30 +40,30 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 		const totalConnectionCountMetric = Lumberjack.newLumberMetric(
 			LumberEventName.TotalConnectionCount,
 		);
-		this.cache.incr(this.perNodeKeyName).then(
-			(val) => {
+		this.cache
+			.incr(this.perNodeKeyName)
+			.then((val) => {
 				connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
 				connectionCountPerNodeMetric.success("Connection count incremented for node.");
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				connectionCountPerNodeMetric.error(
 					`Error while incrementing connection count for node.`,
 					error,
 				);
-			},
-		);
-		this.cache.incr(this.perClusterKeyName).then(
-			(val) => {
+			});
+		this.cache
+			.incr(this.perClusterKeyName)
+			.then((val) => {
 				totalConnectionCountMetric.setProperty("TotalConnectionCount", val);
 				totalConnectionCountMetric.success("Total connection count incremented.");
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				totalConnectionCountMetric.error(
 					`Error while incrementing total connection count for cluster.`,
 					error,
 				);
-			},
-		);
+			});
 	}
 
 	public decrementConnectionCount(): void {
@@ -76,29 +76,29 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 		const totalConnectionCountMetric = Lumberjack.newLumberMetric(
 			LumberEventName.TotalConnectionCount,
 		);
-		this.cache.decr(this.perNodeKeyName).then(
-			(val) => {
+		this.cache
+			.decr(this.perNodeKeyName)
+			.then((val) => {
 				connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
 				connectionCountPerNodeMetric.success("Connection count decremented for node.");
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				connectionCountPerNodeMetric.error(
 					`Error while decrementing connection count for node`,
 					error,
 				);
-			},
-		);
-		this.cache.decr(this.perClusterKeyName).then(
-			(val) => {
+			});
+		this.cache
+			.decr(this.perClusterKeyName)
+			.then((val) => {
 				totalConnectionCountMetric.setProperty("TotalConnectionCount", val);
 				totalConnectionCountMetric.success("Total connection count decremented.");
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				totalConnectionCountMetric.error(
 					`Error while decrementing total connection count for cluster.`,
 					error,
 				);
-			},
-		);
+			});
 	}
 }

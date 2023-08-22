@@ -19,4 +19,4 @@ jobs:
         with:
           only_create: true
           message: |
-            Please review this PR: @sonalideshpandemsft @tylerbutler @scottn12
+            This PR is ready to merge! Please review it and squash merge into `next`: @sonalideshpandemsft @tylerbutler @scottn12

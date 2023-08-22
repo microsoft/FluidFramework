@@ -17,10 +17,13 @@ import {
 	tagRollbackInverse,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { DefaultEditBuilder, FieldKind, singleTextCursor } from "../../feature-libraries";
+import {
+	DefaultEditBuilder,
+	FieldKind,
+	FieldKinds,
+	singleTextCursor,
+} from "../../feature-libraries";
 
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/defaultFieldKinds";
 import { brand, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -28,7 +31,7 @@ import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modu
 import { jsonNumber } from "../../domains";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[sequence].map((f) => [f.identifier, f]),
+	[FieldKinds.sequence].map((f) => [f.identifier, f]),
 );
 
 const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
@@ -161,8 +164,8 @@ describe("ModularChangeFamily integration", () => {
 				moveTagged.revision,
 			);
 
-			const moveAndSetValue = family.compose([tagChange(insert, tag2), moveTagged]);
-			const composed = family.compose([returnTagged, makeAnonChange(moveAndSetValue)]);
+			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
+			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = family.intoDelta(composed);
 			const expected: Delta.Root = new Map([
 				[fieldA, []],

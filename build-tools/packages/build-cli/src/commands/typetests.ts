@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import {
+	ITypeValidationConfig,
+	Package,
+	PackageJson,
+	updatePackageJsonFile,
+} from "@fluidframework/build-tools";
 
 import { PackageCommand } from "../BasePackageCommand";
 
@@ -90,7 +95,14 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				delete json.typeValidation.disabled;
 			}
 			// This uses the "disabled" state, so that is set above before this is run.
-			updateTypeTestConfiguration(json, { resetBroken: this.flags.reset, version });
+			if (version !== undefined) {
+				updateTypeTestDependency(json, version);
+			}
+
+			if (this.flags.reset) {
+				resetBrokenTests(json);
+			}
+
 			if (this.flags.normalize) {
 				json.typeValidation = {
 					disabled: json.typeValidation?.disabled === true ? true : undefined,
@@ -101,26 +113,10 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 	}
 }
 
-enum VersionOptions {
+export enum VersionOptions {
 	Clear,
 	Previous,
 	ClearIfDisabled,
-}
-
-/**
- * Actions that can be taken when configuring type tests.
- */
-interface TypeTestConfigActions {
-	/**
-	 * If set, update version to test against to this.
-	 * If empty string, remove previous version.
-	 */
-	version?: string | VersionOptions;
-
-	/**
-	 * If true delete "broken" entries (therefore enabling the tests for them again).
-	 */
-	resetBroken?: boolean;
 }
 
 /**
@@ -152,30 +148,42 @@ export function previousVersion(version: string): string {
 }
 
 /**
- * Updates configuration for type tests in package.json
+ * Adds or removes the devDependency on a previous version of a package thatis used for type testing. This function only
+ * affects the `devDependencies` nodes in package.json.
+ *
  */
-function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConfigActions): void {
-	if (options.version !== undefined) {
-		const oldDepName = `${pkgJson.name}-previous`;
+export function updateTypeTestDependency(
+	pkgJson: PackageJson,
+	versionOptions: string | VersionOptions,
+): void {
+	const oldDepName = `${pkgJson.name}-previous`;
 
-		// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
-		const enabled = pkgJson.typeValidation?.disabled !== true;
+	// Packages can explicitly opt out of type tests by setting typeValidation.disabled to true.
+	const enabled = pkgJson.typeValidation?.disabled !== true;
 
-		if (!enabled || options.version === VersionOptions.Clear) {
-			// There isn't a type safe alternative to delete here,
-			// and delete should be safe since the key can't collide with anything builtin since it has to end in `-previous` which makes it not a valid identifier.
+	if (!enabled || versionOptions === VersionOptions.Clear) {
+		// There isn't a type safe alternative to delete here,
+		// and delete should be safe since the key can't collide with anything builtin since it has to end in `-previous`
+		// which makes it not a valid identifier.
+		if (pkgJson.devDependencies?.[oldDepName] !== undefined) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete pkgJson.devDependencies[oldDepName];
-		} else if (options.version !== VersionOptions.ClearIfDisabled) {
-			const newVersion: string =
-				options.version === VersionOptions.Previous
-					? previousVersion(pkgJson.version)
-					: options.version;
-			pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
 		}
+	} else if (versionOptions !== VersionOptions.ClearIfDisabled) {
+		const newVersion: string =
+			versionOptions === VersionOptions.Previous
+				? previousVersion(pkgJson.version)
+				: versionOptions;
+		pkgJson.devDependencies ??= {};
+		pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
 	}
+}
 
-	if (options.resetBroken === true && pkgJson.typeValidation !== undefined) {
+/**
+ * Removes any `typeValidation.broken` entries from package.json.
+ */
+export function resetBrokenTests(pkgJson: { typeValidation?: ITypeValidationConfig }): void {
+	if (pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}
 }

@@ -14,8 +14,12 @@ import {
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	CommonProperties,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
 import { AxiosRequestHeaders } from "axios";
+import { IsEphemeralContainer } from ".";
 
 export class Tenant implements core.ITenant {
 	public get id(): string {
@@ -75,8 +79,12 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		documentId: string,
 		storageName?: string,
 		includeDisabledTenant = false,
+		isEphemeralContainer = false,
 	): Promise<IGitManager> {
-		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+		const lumberProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
+		};
 		const key = await core.requestWithRetry(
 			async () => this.getKey(tenantId, includeDisabledTenant),
 			"getTenantGitManager_getKey" /* callName */,
@@ -96,6 +104,12 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			};
 			if (storageName) {
 				headers.StorageName = storageName;
+			}
+
+			// IsEphemeralContainer header is set only for ephemeral containers
+			// It is not set if it is not ephemeral and when the driver did not send any info
+			if (isEphemeralContainer) {
+				headers[IsEphemeralContainer] = isEphemeralContainer;
 			}
 			return headers;
 		};

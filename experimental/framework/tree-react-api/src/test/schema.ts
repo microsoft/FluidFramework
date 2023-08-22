@@ -6,7 +6,7 @@
 import { FieldKinds, SchemaAware, SchemaBuilder, ValueSchema } from "@fluid-experimental/tree2";
 
 const builder = new SchemaBuilder("tree-react-api");
-export const float64 = builder.primitive("number", ValueSchema.Number);
+export const float64 = builder.leaf("number", ValueSchema.Number);
 
 export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
 	nuts: SchemaBuilder.field(FieldKinds.value, float64),

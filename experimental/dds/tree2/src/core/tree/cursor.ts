@@ -4,8 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { FieldKey } from "../schema-stored";
 import { FieldUpPath, UpPath } from "./pathTree";
-import { FieldKey, TreeType, Value } from "./types";
+import { TreeType, Value } from "./types";
 
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.
@@ -37,6 +38,7 @@ export interface ITreeCursor {
 	 * Marks this object as a cursor.
 	 */
 	readonly [CursorMarker]: true;
+
 	/**
 	 * What kind of place the cursor is at.
 	 * Determines which operations are allowed.
