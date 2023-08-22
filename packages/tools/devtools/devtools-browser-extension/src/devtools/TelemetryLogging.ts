@@ -116,7 +116,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
 			data: {
-				["Event.Time"]: new Date().toISOString(),
+				["Event.Time"]: new Date(),
 				["Event.Name"]: eventType, // Same as 'name' but is an actual column in Kusto; useful for cross-table queries
 			},
 		};
