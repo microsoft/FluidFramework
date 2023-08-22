@@ -1661,6 +1661,11 @@ export class SchemaBuilder {
 }
 
 // @alpha
+export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
+    readonly schema: TypedSchemaCollection<TRoot>;
+}
+
+// @alpha
 export interface SchemaData {
     // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;

@@ -18,4 +18,5 @@ export {
 	SchematizeConfiguration,
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
 } from "./schematizedTree";

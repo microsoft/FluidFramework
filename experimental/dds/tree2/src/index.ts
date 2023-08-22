@@ -274,6 +274,7 @@ export {
 	SchematizeConfiguration,
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
 } from "./shared-tree";
 
 export type {

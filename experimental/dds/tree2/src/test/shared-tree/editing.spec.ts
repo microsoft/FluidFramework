@@ -9,8 +9,8 @@ import { jsonObject, jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
-import { ISharedTreeView } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
+import { ISharedTreeView } from "../../shared-tree";
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
