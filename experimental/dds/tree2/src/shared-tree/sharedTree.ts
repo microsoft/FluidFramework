@@ -165,10 +165,11 @@ export class SharedTree
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		// TODO:
-		// This should work, but schema editing on views doesn't send ops.
-		// return this.view.schematize(config);
-		// For now, use this as a workaround:
-		return schematizeView(this, config);
+		// This should work update the schema, but schema editing on views doesn't send ops.
+		const out = this.view.schematize(config);
+		// For now, use this to send the ops as a workaround:
+		this.storedSchema.update(out.storedSchema);
+		return out;
 	}
 
 	public get transaction(): ITransaction {

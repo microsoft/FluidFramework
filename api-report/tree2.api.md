@@ -1702,8 +1702,6 @@ export interface SchemaLintConfiguration {
 // @alpha
 export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[];
-    readonly schema: TypedSchemaCollection<TRoot>;
 }
 
 // @alpha
