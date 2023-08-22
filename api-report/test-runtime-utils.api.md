@@ -381,6 +381,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
+        logger?: ITelemetryLoggerExt;
     });
     // (undocumented)
     get absolutePath(): string;

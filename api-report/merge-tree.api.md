@@ -6,7 +6,7 @@
 
 import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -145,7 +145,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     };
     // (undocumented)
     getShortClientId(longClientId: string): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
@@ -233,7 +233,7 @@ export function createAnnotateRangeOp(start: number, end: number, props: Propert
 // @public (undocumented)
 export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
@@ -464,9 +464,10 @@ export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
+    readonly stashed?: boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
     // (undocumented)
     ops: IMergeTreeDeltaOp[];
@@ -952,9 +953,9 @@ export interface ReferencePosition {
 
 // @public
 export enum ReferenceType {
-    // (undocumented)
+    // @deprecated (undocumented)
     NestBegin = 2,
-    // (undocumented)
+    // @deprecated (undocumented)
     NestEnd = 4,
     // (undocumented)
     RangeBegin = 16,
