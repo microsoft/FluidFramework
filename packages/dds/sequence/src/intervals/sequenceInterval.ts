@@ -105,7 +105,7 @@ export class SequenceInterval implements ISerializableInterval {
 		props?: PropertySet,
 		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
 		public readonly startSide: Side = Side.Before,
-		public readonly endSide: Side = Side.After,
+		public readonly endSide: Side = Side.Before,
 	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
@@ -501,7 +501,7 @@ export function createSequenceInterval(
 	fromSnapshot?: boolean,
 	stickiness: IntervalStickiness = IntervalStickiness.END,
 	startSide: Side = Side.Before,
-	endSide: Side = Side.After,
+	endSide: Side = Side.Before,
 ): SequenceInterval {
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;

@@ -123,7 +123,7 @@ function decompressInterval(
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
 		stickiness: interval[5],
 		startSide: interval[6] ?? Side.Before,
-		endSide: interval[7] ?? Side.After,
+		endSide: interval[7] ?? Side.Before,
 	};
 }
 
@@ -150,7 +150,7 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 			...base,
 			interval.stickiness,
 			interval.startSide ?? Side.Before,
-			interval.endSide ?? Side.After,
+			interval.endSide ?? Side.Before,
 		];
 	}
 
@@ -165,7 +165,7 @@ export function endpointPosAndSide(
 	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
 
 	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
-	const endSide = endIsPlainEndpoint ? Side.After : end?.side;
+	const endSide = endIsPlainEndpoint ? Side.Before : end?.side;
 
 	const startPos = startIsPlainEndpoint ? start : start?.pos;
 	const endPos = endIsPlainEndpoint ? end : end?.pos;
@@ -275,7 +275,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
 		startSide: Side = Side.Before,
-		endSide: Side = Side.After,
+		endSide: Side = Side.Before,
 	): TInterval {
 		return this.helpers.create(
 			this.label,
@@ -299,7 +299,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
 		startSide: Side = Side.Before,
-		endSide: Side = Side.After,
+		endSide: Side = Side.Before,
 	) {
 		const interval: TInterval = this.createInterval(
 			start,

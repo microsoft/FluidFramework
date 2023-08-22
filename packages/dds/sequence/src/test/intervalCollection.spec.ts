@@ -1585,7 +1585,11 @@ describe("SharedString interval collections", () => {
 			const collection = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "Xabc");
 			containerRuntimeFactory.processAllMessages();
-			const interval1 = collection.add("start", 3, IntervalType.SlideOnRemove);
+			const interval1 = collection.add(
+				"start",
+				{ pos: 3, side: Side.After },
+				IntervalType.SlideOnRemove,
+			);
 			assert.equal(interval1.stickiness, IntervalStickiness.START);
 			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
@@ -1607,7 +1611,11 @@ describe("SharedString interval collections", () => {
 			const collection = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "Xabc");
 			containerRuntimeFactory.processAllMessages();
-			const interval1 = collection.add("start", 3, IntervalType.SlideOnRemove);
+			const interval1 = collection.add(
+				"start",
+				{ pos: 3, side: Side.After },
+				IntervalType.SlideOnRemove,
+			);
 			assert.equal(interval1.stickiness, IntervalStickiness.START);
 			const intervalId = interval1.getIntervalId();
 			assert(intervalId);
@@ -1630,7 +1638,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const interval1 = collection.add(
 				{ pos: 3, side: Side.After },
-				6,
+				{ pos: 6, side: Side.After },
 				IntervalType.SlideOnRemove,
 				undefined,
 			);
@@ -1660,7 +1668,11 @@ describe("SharedString interval collections", () => {
 			const collection = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "abc");
 			containerRuntimeFactory.processAllMessages();
-			const interval1 = collection.add("start", 2, IntervalType.SlideOnRemove);
+			const interval1 = collection.add(
+				"start",
+				{ pos: 2, side: Side.After },
+				IntervalType.SlideOnRemove,
+			);
 			assert.equal(interval1.stickiness, IntervalStickiness.START);
 			const intervalId = interval1.getIntervalId();
 			assert(intervalId);
