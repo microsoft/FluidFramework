@@ -11,8 +11,6 @@ export {
 	TreeSchemaIdentifierSchema,
 	FieldKey,
 	FieldKeySchema,
-	NamedTreeSchema,
-	Named,
 	TreeTypeSet,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,

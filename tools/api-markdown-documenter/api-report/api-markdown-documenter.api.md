@@ -142,7 +142,7 @@ export const defaultConsoleLogger: Logger;
 export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
-    export function defaultGenerateFrontMatter(): undefined;
+    export function defaultFrontMatter(): undefined;
     export function defaultGetFileNameForItem(apiItem: ApiItem): string;
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
@@ -202,7 +202,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
-    generateFrontMatter?: (documentItem: ApiItem) => string | undefined;
+    frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
     getFileNameForItem?: (apiItem: ApiItem) => string;
     getHeadingTextForItem?: (apiItem: ApiItem) => string;
     getLinkTextForItem?: (apiItem: ApiItem) => string;

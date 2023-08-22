@@ -361,11 +361,16 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 							case RangeValidationResultKind.PlacesInDifferentTraits:
 								tally.updatedRangeHasPlacesInDifferentTraitsCount += 1;
 								break;
-							case RangeValidationResultKind.BadPlace:
-								tally.updatedRangeBadPlaceCount += 1;
-								break;
 							default:
-								break;
+								// 'rangeFailure' is either a RangeValidationResultKind (handled above), or an object
+								// with a nested 'kind' property containing the RangeValidationResultKind (handled below).
+								switch (outcome.failure.rangeFailure?.kind) {
+									case RangeValidationResultKind.BadPlace:
+										tally.updatedRangeBadPlaceCount += 1;
+										break;
+									default:
+										break;
+								}
 						}
 						break;
 					}

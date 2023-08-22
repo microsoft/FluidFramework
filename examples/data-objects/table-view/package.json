@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-view",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"private": true,
 	"description": "Chaincode component that provides a view for a table-document.",
 	"homepage": "https://fluidframework.com",
@@ -44,7 +44,6 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/table-document": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",

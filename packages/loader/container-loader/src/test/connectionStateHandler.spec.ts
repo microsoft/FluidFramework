@@ -138,6 +138,7 @@ describe("ConnectionStateHandler Tests", () => {
 			{ members: [], proposals: [], values: [] }, // quorumSnapshot
 			(key, value) => 0, // sendProposal
 			new Audience(),
+			(clientId: string) => false, // shouldClientHaveLeft
 		);
 		shouldClientJoinWrite = false;
 		handlerInputs = {

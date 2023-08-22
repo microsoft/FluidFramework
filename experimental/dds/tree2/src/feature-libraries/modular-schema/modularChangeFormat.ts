@@ -4,13 +4,17 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { FieldKindIdentifierSchema, FieldKeySchema, RevisionTagSchema } from "../../core";
+import {
+	FieldKindIdentifierSchema,
+	FieldKeySchema,
+	RevisionTagSchema,
+	ChangesetLocalId,
+} from "../../core";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 } from "../../util";
-import { ChangesetLocalId } from "./modularChangeTypes";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
