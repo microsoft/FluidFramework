@@ -410,11 +410,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		}
 		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
 
-		// The parentAnchorNode can be undefined in the case that its corresponding PathNode !== Status.Alive.
-		// This means that the parentAnchor points to an invalid node.
-		if (parentAnchorNode === undefined) {
-			return TreeStatus.Deleted;
-		}
+		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
+		assert(parentAnchorNode !== undefined, "parentAnchorNode must exist.");
 		return treeStatusFromPath(parentAnchorNode);
 	}
 
