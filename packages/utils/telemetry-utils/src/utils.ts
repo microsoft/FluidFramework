@@ -33,7 +33,7 @@ export function logIfFalse(
 }
 
 /**
- * sampletext
+ * Wraps around an existing logger and applies a provided callback to determine if an event should be sampled.
  */
 export function createSampledLogger(
 	logger: ITelemetryBaseLogger,
