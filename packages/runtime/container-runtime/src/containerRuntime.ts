@@ -32,13 +32,17 @@ import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataCorruptionError,
+	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import {
 	DriverHeader,
 	FetchSource,
@@ -46,12 +50,6 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	UsageError,
-} from "@fluidframework/container-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -508,9 +506,13 @@ export enum RuntimeHeaders {
 
 /** True if a tombstoned object should be returned without erroring */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+/** [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned";
+/** Inactive error responses will have this header set to true */
+export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
@@ -836,7 +838,7 @@ export class ContainerRuntime
 			idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), logger);
+					: IdCompressor.create(logger);
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -1835,6 +1837,7 @@ export class ContainerRuntime
 			dataStoreContext.packagePath,
 			request?.headers,
 		);
+
 		return dataStoreChannel;
 	}
 
@@ -3279,7 +3282,7 @@ export class ContainerRuntime
 				);
 				idRange = this.idCompressor.takeNextCreationRange();
 				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+				idRange = idRange?.ids !== undefined ? idRange : undefined;
 			}
 
 			if (idRange !== undefined) {

@@ -13,6 +13,7 @@ import {
 	TelemetryEventPropertyType,
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
@@ -28,6 +29,7 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -137,16 +139,26 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent): void;
+	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send a telemetry event with the logger
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log. It category of event is set as error,
+	 * then the logLevel will be upgraded to be an error.
 	 */
-	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any) {
-		this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
+	public sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: any,
+		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+	) {
+		this.sendTelemetryEventCore(
+			{ ...event, category: event.category ?? "generic" },
+			error,
+			event.category === "error" ? LogLevel.error : logLevel,
+		);
 	}
 
 	/**
@@ -154,10 +166,12 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
 	protected sendTelemetryEventCore(
 		event: ITelemetryGenericEventExt & { category: TelemetryEventCategory },
 		error?: any,
+		logLevel?: LogLevel,
 	) {
 		const newEvent = convertToBaseEvent(event);
 		if (error !== undefined) {
@@ -169,7 +183,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			newEvent.duration = formatTick(newEvent.duration);
 		}
 
-		this.send(newEvent);
+		this.send(newEvent, logLevel);
 	}
 
 	/**
@@ -188,6 +202,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				category: "error",
 			},
 			error,
+			LogLevel.error,
 		);
 	}
 
@@ -196,14 +211,24 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - Event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log. It category of event is set as error,
+	 * then the logLevel will be upgraded to be an error.
 	 */
-	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void {
+	public sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: any,
+		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+	): void {
 		const perfEvent = {
 			...event,
 			category: event.category ?? "performance",
 		};
 
-		this.sendTelemetryEventCore(perfEvent, error);
+		this.sendTelemetryEventCore(
+			perfEvent,
+			error,
+			perfEvent.category === "error" ? LogLevel.error : logLevel,
+		);
 	}
 
 	protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
@@ -384,13 +409,23 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
+	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
+		const eventLogLevel = logLevel ?? LogLevel.default;
+		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
+		// Filter out in case event log level is below what is wanted in config.
+		return eventLogLevel < configLogLevel;
+	}
+
 	/**
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent): void {
-		this.baseLogger.send(this.prepareEvent(event));
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (this.shouldFilterOutEvent(event, logLevel)) {
+			return;
+		}
+		this.baseLogger.send(this.prepareEvent(event), logLevel);
 	}
 }
 

@@ -15,7 +15,6 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
@@ -76,6 +75,8 @@ export {
 	cursorsForTypedFieldData,
 	FieldGenerator,
 	TreeDataContext,
+	normalizeNewFieldContent,
+	NewFieldContent,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";

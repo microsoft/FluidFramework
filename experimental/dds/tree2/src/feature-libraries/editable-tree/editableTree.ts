@@ -23,7 +23,13 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import {
+	getFieldKind,
+	NewFieldContent,
+	getFieldSchema,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
 import {
@@ -47,7 +53,6 @@ import {
 	EditableTree,
 	UnwrappedEditableField,
 	proxyTargetSymbol,
-	NewFieldContent,
 	localNodeKeySymbol,
 	setField,
 	TreeStatus,
@@ -108,10 +113,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
 			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
-	}
-
-	protected buildAnchor(): Anchor {
-		return this.context.forest.anchors.track(this.anchorNode);
 	}
 
 	protected tryMoveCursorToAnchor(

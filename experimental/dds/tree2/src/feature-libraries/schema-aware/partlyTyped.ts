@@ -4,9 +4,8 @@
  */
 
 import { FieldStoredSchema, ITreeCursor } from "../../core";
-import { ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { ContextuallyTypedNodeData, NewFieldContent } from "../contextuallyTyped";
 import { Optional, Sequence, ValueFieldKind } from "../default-field-kinds";
-import { NewFieldContent } from "../editable-tree";
 import {
 	UntypedField,
 	UntypedTree,
