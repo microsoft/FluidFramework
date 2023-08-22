@@ -65,6 +65,7 @@ export interface IRuntimeSignalEnvelope {
  * Template for runtime messages to be sent to an ongoing client collaboration session.
  */
 export const createRuntimeMessage = (signalContent: IRuntimeSignalEnvelope): ISignalMessage => ({
+	// clientId is null here as it is set by the server which doesn't have information about the sender
 	clientId: null,
 	content: JSON.stringify({
 		type: "RuntimeMessage",

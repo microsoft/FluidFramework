@@ -10,18 +10,34 @@ import { IClient, IConnected } from "@fluidframework/protocol-definitions";
  * Connection details of a client
  */
 export interface IConnectedClient {
+	/**
+	 * {@inheritDoc @fluidframework/protocol-definitions#IConnected}
+	 */
 	connection: IConnected;
 
+	/**
+	 * {@inheritDoc @fluidframework/protocol-definitions#IClient}
+	 */
 	details: IClient;
 
+	/**
+	 * Client protocol versions of standard semver types.
+	 */
 	connectVersions: string[];
 }
 
 /**
- * Address of socket message.
+ * Identifies a collaboration session for a particular document in a particular instance (tenant) of a Fluid Service.
  */
 export interface IRoom {
+	/**
+	 * ID of instance of an ordering service that the application will interact with
+	 */
 	tenantId: string;
+
+	/**
+	 * ID of the document (typically known as container ID within Fluid Framework)
+	 */
 	documentId: string;
 }
 
@@ -29,7 +45,13 @@ export interface IRoom {
  * Payload of the event emitted when the broadcastSignal endpoint is called.
  */
 export interface IBroadcastSignalEventPayload {
+	/**
+	 * The room the signal is sent to.
+	 */
 	signalRoom: IRoom;
+	/**
+	 * Content of the runtime signal introduced from the broadcast-signal endpoint.
+	 */
 	signalContent: string;
 }
 
