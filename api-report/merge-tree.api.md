@@ -503,6 +503,7 @@ export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
+    // @alpha
     mergeTreeReferencesCanSlideToEndpoint?: boolean;
     // (undocumented)
     mergeTreeSnapshotChunkSize?: number;

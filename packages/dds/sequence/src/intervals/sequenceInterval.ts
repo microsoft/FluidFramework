@@ -39,6 +39,18 @@ import {
 
 const reservedIntervalIdKey = "intervalId";
 
+function compareSides(sideA: Side, sideB: Side): number {
+	if (sideA === sideB) {
+		return 0;
+	}
+
+	if (sideA === Side.Before) {
+		return 1;
+	}
+
+	return -1;
+}
+
 /**
  * Interval implementation whose ends are associated with positions in a mutatable sequence.
  * As such, when content is inserted into the middle of the interval, the interval expands to
@@ -211,15 +223,12 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public compareStart(b: SequenceInterval) {
 		const dist = compareReferencePositions(this.start, b.start);
-		if (dist !== 0 || this.startSide === b.startSide) {
-			return dist;
+
+		if (dist === 0) {
+			return compareSides(this.startSide, b.startSide);
 		}
 
-		if (this.startSide === Side.Before) {
-			return 1;
-		}
-
-		return -1;
+		return dist;
 	}
 
 	/**
@@ -227,15 +236,12 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public compareEnd(b: SequenceInterval): number {
 		const dist = compareReferencePositions(this.end, b.end);
-		if (dist !== 0 || this.endSide === b.endSide) {
-			return dist;
+
+		if (dist === 0) {
+			return compareSides(b.endSide, this.endSide);
 		}
 
-		if (this.endSide === Side.Before) {
-			return 1;
-		}
-
-		return -1;
+		return dist;
 	}
 
 	/**

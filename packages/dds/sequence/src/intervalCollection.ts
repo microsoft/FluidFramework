@@ -157,9 +157,6 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	return base;
 }
 
-/**
- * @internal
- */
 export function endpointPosAndSide(
 	start: number | "start" | "end" | SequencePlace | undefined,
 	end: number | "start" | "end" | SequencePlace | undefined,
@@ -729,12 +726,31 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * of the string are deleted. In this case, it is possible for one endpoint
 	 * of the interval to become detached, while the other remains on the string.
 	 *
-	 * By adjusting the `side` value of the `start` and `end` parameters, it is
-	 * possible to better model endpoint exclusivity and stickiness. An interval
-	 * having its start endpoint `After` would have start stickiness, and likewise
-	 * an interval having its end endpoint `Before` would have end stickiness. In
-	 * both of these cases, the sticky endpoint would be exclusive. See
-	 * {@link (IntervalStickiness:type)} for additional context.
+	 * By adjusting the `side` and `pos` values of the `start` and `end` parameters,
+	 * it is possible to control whether the interval expands to include content
+	 * inserted at its start or end.
+	 *
+	 *	See {@link SequencePlace} for more details on the model.
+	 *
+	 *	@example
+	 *
+	 *	Given the string "ABCD":
+	 *
+	 *```typescript
+	 *	// Refers to "BC". If any content is inserted before B or after C, this
+	 *	// interval will include that content
+	 *	//
+	 *	// Picture:
+	 *	// \{start\} - A[- B - C -]D - \{end\}
+	 *	// \{start\} - A - B - C - D - \{end\}
+	 *	collection.add(\{ pos: 0, side: Side.After \}, \{ pos: 3, side: Side.Before \}, IntervalType.SlideOnRemove);
+	 *	// Equivalent to specifying the same positions and Side.Before.
+	 *	// Refers to "ABC". Content inserted after C will be included in the
+	 *	// interval, but content inserted before A will not.
+	 *	// \{start\} -[A - B - C -]D - \{end\}
+	 *	// \{start\} - A - B - C - D - \{end\}
+	 *	collection.add(0, 3, IntervalType.SlideOnRemove);
+	 *```
 	 */
 	add(
 		start: number | "start" | "end" | SequencePlace,

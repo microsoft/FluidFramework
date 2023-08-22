@@ -428,6 +428,8 @@ export interface IMergeTreeOptions {
 	 * the end of the string.
 	 *
 	 * This is primarily useful in the case of interval stickiness.
+	 *
+	 * @alpha
 	 */
 	mergeTreeReferencesCanSlideToEndpoint?: boolean;
 	mergeTreeSnapshotChunkSize?: number;
