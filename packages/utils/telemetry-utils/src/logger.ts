@@ -431,10 +431,7 @@ export class ChildLogger extends TelemetryLogger {
 	 * @param event - the event to send
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-		if (
-			this.baseLogger.minLogLevel !== undefined &&
-			this.shouldFilterOutEvent(event, logLevel)
-		) {
+		if (this.shouldFilterOutEvent(event, logLevel)) {
 			return;
 		}
 		this.baseLogger.send(this.prepareEvent(event), logLevel);
