@@ -120,7 +120,11 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * @param logLevel - optional level of the log.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel): void;
+	sendTelemetryEvent(
+		event: ITelemetryGenericEvent,
+		error?: any,
+		logLevel?: LogLevel.verbose | LogLevel.default,
+	): void;
 
 	/**
 	 * Send error telemetry event
@@ -137,5 +141,9 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * @param logLevel - optional level of the log.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel): void;
+	sendPerformanceEvent(
+		event: ITelemetryPerformanceEvent,
+		error?: any,
+		logLevel?: LogLevel.verbose | LogLevel.default,
+	): void;
 }

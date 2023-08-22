@@ -443,8 +443,8 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
 }
 
 // @public

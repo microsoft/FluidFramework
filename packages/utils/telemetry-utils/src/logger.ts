@@ -62,25 +62,6 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 /**
- * Decides the log level based on the category of the event
- * @param category - category of the event
- * @param currentLogLevel - log level as specified by the caller
- * @returns - final log level
- */
-function decideLogLevel(category: TelemetryEventCategory, currentLogLevel?: LogLevel): LogLevel {
-	switch (category) {
-		case "error":
-			return LogLevel.error;
-		case "generic":
-		case "performance":
-			// For perf/generic category, log level could either be verbose or default.
-			return currentLogLevel === LogLevel.verbose ? LogLevel.verbose : LogLevel.default;
-		default:
-			return LogLevel.default;
-	}
-}
-
-/**
  * Attempts to parse number from string.
  * If fails,returns original string.
  * Used to make telemetry data typed (and support math operations, like comparison),
@@ -165,13 +146,18 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
+	 * @param logLevel - optional level of the log. It category of event is set as error,
+	 * then the logLevel will be upgraded to be an error.
 	 */
-	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel) {
+	public sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: any,
+		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+	) {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
 			error,
-			decideLogLevel(event.category ?? "generic", logLevel),
+			event.category === "error" ? LogLevel.error : logLevel,
 		);
 	}
 
@@ -225,19 +211,24 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - Event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
+	 * @param logLevel - optional level of the log. It category of event is set as error,
+	 * then the logLevel will be upgraded to be an error.
 	 */
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: any,
-		logLevel?: LogLevel,
+		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
 	): void {
 		const perfEvent = {
 			...event,
 			category: event.category ?? "performance",
 		};
 
-		this.sendTelemetryEventCore(perfEvent, error, decideLogLevel(perfEvent.category, logLevel));
+		this.sendTelemetryEventCore(
+			perfEvent,
+			error,
+			perfEvent.category === "error" ? LogLevel.error : logLevel,
+		);
 	}
 
 	protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
