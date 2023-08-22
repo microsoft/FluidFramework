@@ -152,6 +152,8 @@ export function generateGCConfigs(
 		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
 	}
 
+	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
+
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
@@ -171,6 +173,7 @@ export function generateGCConfigs(
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
 		inactiveTimeoutMs,
+		throwOnInactiveLoad,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect,
