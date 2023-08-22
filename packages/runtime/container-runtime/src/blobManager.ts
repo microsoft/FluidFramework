@@ -30,8 +30,9 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	LoggingError,
 	createChildMonitoringContext,
+	GenericError,
+	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
@@ -40,7 +41,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";

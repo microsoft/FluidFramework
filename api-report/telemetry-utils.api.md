@@ -7,7 +7,9 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDisposable } from '@fluidframework/core-interfaces';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -16,6 +18,7 @@ import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
@@ -45,6 +48,15 @@ export function createMultiSinkLogger(props: {
     tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
 
+// @public
+export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    constructor(message: string, props: ITelemetryProperties);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType: "dataCorruptionError";
+}
+
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
 
@@ -73,6 +85,15 @@ export function generateErrorWithStack(): Error;
 
 // @public (undocumented)
 export function generateStack(): string | undefined;
+
+// @public
+export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+    constructor(message: string, error?: any, props?: ITelemetryProperties);
+    // (undocumented)
+    readonly error?: any;
+    // (undocumented)
+    readonly errorType: "genericError";
+}
 
 // @public
 export const getCircularReplacer: () => (key: string, value: any) => any;
@@ -356,6 +377,13 @@ export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLoggerExt, thresholdMultiple?: number);
     send(eventName: string, value: number): void;
     sendIfMultiple(eventName: string, value: number): void;
+}
+
+// @public
+export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
+    constructor(message: string, props?: ITelemetryProperties);
+    // (undocumented)
+    readonly errorType: "usageError";
 }
 
 // @public
