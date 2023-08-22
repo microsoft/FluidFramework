@@ -103,10 +103,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
-	protected buildAnchor(): Anchor {
-		return this.context.forest.anchors.track(this.anchorNode);
-	}
-
 	protected tryMoveCursorToAnchor(
 		anchor: Anchor,
 		cursor: ITreeSubscriptionCursor,
