@@ -30,6 +30,7 @@ import { fieldPhones, retrieveNodes } from "./editableTree.binder.spec";
 
 describe("Data binder benchmarks", () => {
 	describe("Direct data binder", () => {
+		// TODO: Do not create shared trees during test enumeration.
 		const { tree, root, address } = retrieveNodes();
 		const bindTree: BindTree = compileSyntaxTree({ address: true });
 		const options: BinderOptions = createBinderOptions({
@@ -168,6 +169,7 @@ describe("Data binder benchmarks", () => {
 		});
 	}
 	describe("Buffering data binder, batched notification", () => {
+		// TODO: Do not create shared trees during test enumeration.
 		const { tree, root, address } = retrieveNodes();
 		const bindTree: BindTree = compileSyntaxTree({ address: true });
 		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({

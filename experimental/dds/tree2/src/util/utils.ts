@@ -373,3 +373,12 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 		return item;
 	}
 }
+
+/**
+ * Type with a name describing what it is.
+ * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
+ * @alpha
+ */
+export interface Named<TName> {
+	readonly name: TName;
+}
