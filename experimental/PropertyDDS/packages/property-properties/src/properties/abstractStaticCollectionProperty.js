@@ -347,7 +347,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * Given an object that mirrors a PSet Template, assigns the properties to the values
 	 * found in that object.
 	 * See {@link setValues}
-	 * @param {Object | Array | string} in_values - The object containing the nested values to assign
+	 * @param {object | Array | string} in_values - The object containing the nested values to assign
 	 * @param {boolean} in_typed - Whether the values are typed/polymorphic.
 	 * @param {boolean} in_initial - Whether we are setting default/initial values
 	 * or if the function is called directly with the values to set.
@@ -400,7 +400,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * </pre>
 	 * ```
 	 *
-	 * @param {Object | Array | string} in_values - The object containing the nested values to assign
+	 * @param {object | Array | string} in_values - The object containing the nested values to assign
 	 * @throws If in_values is not an object (or in the case of ArrayProperty, an array)
 	 * @throws If one of the path in in_values does not correspond to a path in that property
 	 * @throws If one of the path to a value in in_values leads to a property in this property.

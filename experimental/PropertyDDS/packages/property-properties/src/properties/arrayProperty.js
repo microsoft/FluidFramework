@@ -1441,7 +1441,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 	/**
 	 * @inheritdoc
 	 *
-	 * @param {Object} [in_filteringOptions = {}] - The filtering options to consider while deserializing the property.
+	 * @param {object} [in_filteringOptions = {}] - The filtering options to consider while deserializing the property.
 	 * @param {boolean} [in_createChangeSet = true] - Should a changeset be created for this deserialization?
 	 */
 	_deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
