@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalType } from "../intervalCollection";
+import { IntervalType } from "../intervals";
 import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 function assertIntervalCollectionsAreEquivalent(

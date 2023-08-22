@@ -218,7 +218,6 @@ describe("Storage Utils", () => {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: 0,
 			sequenceNumber: 1,
-			term: 1,
 		};
 
 		const summaryTree: ISummaryTree = {

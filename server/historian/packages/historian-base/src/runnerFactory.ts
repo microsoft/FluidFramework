@@ -27,6 +27,7 @@ export class HistorianResources implements core.IResources {
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
+		public readonly denyList?: historianServices.IDenyList,
 	) {
 		this.webServerFactory = new services.BasicWebServerFactory();
 	}
@@ -210,6 +211,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
 			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
 
+		const denyListConfig = config.get("documentDenyList");
+		const denyList: historianServices.IDenyList = new historianServices.DenyList(
+			denyListConfig,
+		);
+
 		return new HistorianResources(
 			config,
 			port,
@@ -220,6 +226,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			gitCache,
 			asyncLocalStorage,
 			revokedTokenChecker,
+			denyList,
 		);
 	}
 }
@@ -237,6 +244,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.cache,
 			resources.asyncLocalStorage,
 			resources.revokedTokenChecker,
+			resources.denyList,
 		);
 	}
 }

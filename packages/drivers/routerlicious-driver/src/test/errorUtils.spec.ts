@@ -54,12 +54,6 @@ describe("ErrorUtils", () => {
 			assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
 			assert.strictEqual(error.canRetry, true);
 		});
-		it("creates retriable error on Network Error", () => {
-			const message = "NetworkError: failed to fetch";
-			const error = createR11sNetworkError(message);
-			assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
-			assert.strictEqual(error.canRetry, true);
-		});
 		it("creates retriable error on anything else with retryAfter", () => {
 			const message = "test error";
 			const error = createR11sNetworkError(message, 400, 100000);
@@ -69,9 +63,6 @@ describe("ErrorUtils", () => {
 		});
 		it("creates non-retriable error on anything else", () => {
 			const message = "test error";
-			const error = createR11sNetworkError(message);
-			assert.strictEqual(error.errorType, DriverErrorType.genericNetworkError);
-			assert.strictEqual(error.canRetry, false);
 			const error2 = createR11sNetworkError(message, 400);
 			assert.strictEqual(error2.errorType, DriverErrorType.genericNetworkError);
 			assert.strictEqual(error2.canRetry, false);
@@ -151,18 +142,6 @@ describe("ErrorUtils", () => {
 				},
 			);
 		});
-		it("throws retriable error on Network Error", () => {
-			const message = "NetworkError: failed to fetch";
-			assert.throws(
-				() => {
-					throwR11sNetworkError(message);
-				},
-				{
-					errorType: DriverErrorType.genericNetworkError,
-					canRetry: true,
-				},
-			);
-		});
 		it("throws retriable error on anything else with retryAfter", () => {
 			const message = "test error";
 			assert.throws(
@@ -178,15 +157,6 @@ describe("ErrorUtils", () => {
 		});
 		it("throws non-retriable error on anything else", () => {
 			const message = "test error";
-			assert.throws(
-				() => {
-					throwR11sNetworkError(message);
-				},
-				{
-					errorType: DriverErrorType.genericNetworkError,
-					canRetry: false,
-				},
-			);
 			assert.throws(
 				() => {
 					throwR11sNetworkError(message, 400);

@@ -31,14 +31,7 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	rootFieldKeySymbol,
 	fieldSchema,
-	FieldScope,
-	GlobalFieldKeySymbol,
-	symbolFromKey,
-	keyFromSymbol,
-	symbolIsFieldKey,
-	isGlobalFieldKey,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -52,12 +45,7 @@ export {
 	ForestLocation,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	LocalFieldKey,
-	GlobalFieldKey,
 	TreeSchemaIdentifier,
-	TreeSchemaBuilder,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	TreeStoredSchema,
@@ -65,12 +53,9 @@ export {
 	FieldKindIdentifier,
 	TreeTypeSet,
 	SchemaData,
-	SchemaPolicy,
-	SchemaDataAndPolicy,
-	lookupGlobalFieldSchema,
-	lookupTreeSchema,
 	FieldAnchor,
 	RevisionTag,
+	ChangesetLocalId,
 	TaggedChange,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
@@ -87,10 +72,10 @@ export {
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
-	FieldAdapter,
 	TreeAdapter,
 	MapTree,
 	LocalCommitSource,
+	forbiddenFieldKindIdentifier,
 } from "./core";
 
 export {
@@ -110,6 +95,7 @@ export {
 	BrandedKey,
 	BrandedMapSubset,
 	RangeEntry,
+	Named,
 } from "./util";
 
 export {
@@ -137,11 +123,7 @@ export {
 } from "./domains";
 
 export {
-	buildForest,
-	ChangesetLocalId,
-	emptyField,
 	IdAllocator,
-	neverTree,
 	ModularChangeset,
 	EditDescription,
 	FieldChangeHandler,
@@ -200,7 +182,6 @@ export {
 	prefixPath,
 	prefixFieldPath,
 	singleTextCursor,
-	namedTreeSchema,
 	singleStackTreeCursor,
 	CursorAdapter,
 	CursorWithNode,
@@ -212,10 +193,7 @@ export {
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
-	SchemaCollection,
 	ContextuallyTypedFieldData,
-	ITreeSchema,
-	IFieldSchema,
 	cursorFromContextualData,
 	UntypedField,
 	UntypedTree,
@@ -238,9 +216,7 @@ export {
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,
-	GlobalFieldSchema,
 	Any,
-	Sourced,
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
@@ -283,6 +259,7 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	nodeKeyFieldKey,
+	SchemaLintConfiguration,
 } from "./feature-libraries";
 
 export {

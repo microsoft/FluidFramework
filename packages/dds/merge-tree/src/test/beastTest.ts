@@ -12,7 +12,7 @@ import fs from "fs";
 import path from "path";
 import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { Trace } from "@fluidframework/common-utils";
-import { createDebugLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";
 import {
@@ -1373,7 +1373,7 @@ export function TestPack(verbose = true) {
 			}
 		}
 		const segs = <SharedStringJSONSegment[]>(
-			new SnapshotLegacy(cli.mergeTree, createDebugLogger({ namespace: "fluid:snapshot" }))
+			new SnapshotLegacy(cli.mergeTree, createChildLogger({ namespace: "fluid:snapshot" }))
 				.extractSync()
 				.map((seg) => seg.toJSONObject() as JsonSegmentSpecs)
 		);

@@ -9,6 +9,7 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import {
 	createHandleNode,
@@ -17,7 +18,9 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	VisualNodeKind,
+	defaultEditors,
 } from "../data-visualization";
+import { EditType } from "../CommonInterfaces";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
@@ -33,6 +36,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				counter: sharedCounter,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -46,6 +50,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 0,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childTree).to.deep.equal(expectedChildTree);
 
@@ -59,6 +64,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childTreeAfterEdit).to.deep.equal(expectedChildTreeAfterEdit);
 	});
@@ -74,6 +80,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				map: sharedMap,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -166,6 +173,7 @@ describe("DataVisualizerGraph unit tests", () => {
 				cell: sharedCell,
 			},
 			defaultVisualizers,
+			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -182,22 +190,53 @@ describe("DataVisualizerGraph unit tests", () => {
 			value: 42,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 		expect(childCounterTree).to.deep.equal(expectedChildCounterTree);
 
 		const childCellTree = await visualizer.render(sharedCell.id);
-		const expectedChildCellTree: FluidObjectTreeNode = {
+		const expectedChildCellTree: FluidObjectValueNode = {
 			fluidObjectId: sharedCell.id,
-			children: {
-				data: {
-					value: "Hello world",
-					typeMetadata: "string",
-					nodeKind: VisualNodeKind.ValueNode,
-				},
-			},
+			value: "Hello world",
 			typeMetadata: "SharedCell",
-			nodeKind: VisualNodeKind.FluidTreeNode,
+			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: {
+				editTypes: undefined,
+			},
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
+	});
+
+	it("Unknown object in Container Data", async () => {
+		const unknownObject = {};
+
+		const visualizer = new DataVisualizerGraph(
+			{
+				unknownObject: unknownObject as IFluidLoadable,
+			},
+			defaultVisualizers,
+			defaultEditors,
+		);
+
+		const rootTrees = await visualizer.renderRootHandles();
+		const expectedChildUnknownObject = {
+			unknownObject: {
+				nodeKind: VisualNodeKind.UnknownObjectNode,
+			},
+		};
+
+		expect(rootTrees).to.deep.equal(expectedChildUnknownObject);
+	});
+
+	it("Empty Container Data", async () => {
+		// Pass in the empty containerData to the visualizer.
+		const emptyRecord: Record<string, IFluidLoadable> = {};
+
+		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers, defaultEditors);
+
+		const childEmptyRecord = await visualizer.renderRootHandles();
+		const expectedChildEmptyRecord = {};
+
+		expect(childEmptyRecord).to.deep.equal(expectedChildEmptyRecord);
 	});
 });

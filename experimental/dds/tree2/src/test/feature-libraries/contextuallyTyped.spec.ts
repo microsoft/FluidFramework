@@ -32,33 +32,33 @@ describe("ContextuallyTyped", () => {
 	});
 
 	it("allowsValue", () => {
-		assert(allowsValue(ValueSchema.Serializable, undefined));
+		assert(!allowsValue(ValueSchema.Serializable, undefined));
 		assert(!allowsValue(ValueSchema.Boolean, undefined));
-		assert(allowsValue(ValueSchema.Nothing, undefined));
+		assert(allowsValue(undefined, undefined));
 		assert(!allowsValue(ValueSchema.String, undefined));
 		assert(!allowsValue(ValueSchema.Number, undefined));
 
 		assert(allowsValue(ValueSchema.Serializable, false));
 		assert(allowsValue(ValueSchema.Boolean, false));
-		assert(!allowsValue(ValueSchema.Nothing, false));
+		assert(!allowsValue(undefined, false));
 		assert(!allowsValue(ValueSchema.String, false));
 		assert(!allowsValue(ValueSchema.Number, false));
 
 		assert(allowsValue(ValueSchema.Serializable, 5));
 		assert(!allowsValue(ValueSchema.Boolean, 5));
-		assert(!allowsValue(ValueSchema.Nothing, 5));
+		assert(!allowsValue(undefined, 5));
 		assert(!allowsValue(ValueSchema.String, 5));
 		assert(allowsValue(ValueSchema.Number, 5));
 
 		assert(allowsValue(ValueSchema.Serializable, ""));
 		assert(!allowsValue(ValueSchema.Boolean, ""));
-		assert(!allowsValue(ValueSchema.Nothing, ""));
+		assert(!allowsValue(undefined, ""));
 		assert(allowsValue(ValueSchema.String, ""));
 		assert(!allowsValue(ValueSchema.Number, ""));
 
 		assert(allowsValue(ValueSchema.Serializable, {}));
 		assert(!allowsValue(ValueSchema.Boolean, {}));
-		assert(!allowsValue(ValueSchema.Nothing, {}));
+		assert(!allowsValue(undefined, {}));
 		assert(!allowsValue(ValueSchema.String, {}));
 		assert(!allowsValue(ValueSchema.Number, {}));
 	});

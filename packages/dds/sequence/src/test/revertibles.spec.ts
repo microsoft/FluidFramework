@@ -19,8 +19,9 @@ import {
 	SharedStringRevertible,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
-import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalType, SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
 describe("Sequence.Revertibles with Local Edits", () => {

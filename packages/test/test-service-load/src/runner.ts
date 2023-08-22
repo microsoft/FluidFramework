@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
@@ -201,6 +201,7 @@ async function runnerProcess(
 		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
 	);
 
+	const loggerLogLevelOptions = [LogLevel.verbose, LogLevel.default];
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
@@ -215,6 +216,8 @@ async function runnerProcess(
 			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
 			// Construct the loader
+			runConfig.logger.minLogLevel =
+				loggerLogLevelOptions[runConfig.runId % loggerLogLevelOptions.length];
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
@@ -490,7 +493,8 @@ async function scheduleOffline(
 				}
 				if (
 					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent
+					random.real() < stashPercent &&
+					container.closeAndGetPendingLocalState
 				) {
 					printStatus(runConfig, "closing offline container!");
 					return container.closeAndGetPendingLocalState();

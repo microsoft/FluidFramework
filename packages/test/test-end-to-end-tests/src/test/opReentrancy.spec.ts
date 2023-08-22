@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
@@ -28,9 +28,11 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
 	const sharedStringId = "sharedStringKey";
+	const sharedDirectoryId = "sharedDirectoryKey";
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[sharedStringId, SharedString.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
 	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
@@ -45,6 +47,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 	let sharedMap2: SharedMap;
 	let sharedString1: SharedString;
 	let sharedString2: SharedString;
+	let sharedDirectory1: SharedDirectory;
+	let sharedDirectory2: SharedDirectory;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -78,6 +82,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
+
+		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
+		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 		await provider.ensureSynchronized();
 	};
@@ -187,6 +194,56 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				assert.ok(!container2.closed, "Remote container is closed");
 			},
 		);
+
+		itSkipsFailureOnSpecificDrivers(
+			`Eventual consistency for shared directories with op reentry - ${
+				enableGroupedBatching ? "Grouped" : "Regular"
+			} batches`,
+			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+			async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						enableGroupedBatching,
+					},
+				});
+
+				const concurrentValue = 10;
+				const topLevel = "root";
+				const innerLevel = "inner";
+				const key = "key";
+				sharedDirectory1
+					.createSubDirectory(topLevel)
+					.createSubDirectory(innerLevel)
+					.set(key, concurrentValue);
+
+				await provider.ensureSynchronized();
+
+				const concurrentValue1 = concurrentValue + 10;
+				const concurrentValue2 = concurrentValue + 20;
+
+				sharedDirectory1
+					.getSubDirectory(topLevel)
+					?.getSubDirectory(innerLevel)
+					?.set(key, concurrentValue1);
+				sharedDirectory2
+					.getSubDirectory(topLevel)
+					?.getSubDirectory(innerLevel)
+					?.set(key, concurrentValue2);
+
+				await provider.ensureSynchronized();
+				assert.strictEqual(
+					sharedDirectory1
+						.getSubDirectory(topLevel)
+						?.getSubDirectory(innerLevel)
+						?.get(key),
+					sharedDirectory2
+						.getSubDirectory(topLevel)
+						?.getSubDirectory(innerLevel)
+						?.get(key),
+				);
+			},
+		);
 	});
 
 	describe("Reentry safeguards", () => {
@@ -215,63 +272,71 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					),
 				);
 
-				assert.throws(() => sharedString1.insertText(0, "ad"));
+				sharedString1.insertText(0, "ad");
 				await provider.ensureSynchronized();
 			},
 		);
 
-		it("Flushing is supported if it happens in the next batch", async () => {
+		itSkipsFailureOnSpecificDrivers(
+			"Flushing is supported if it happens in the next batch",
+			["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+			async () => {
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
+					},
+				});
+
+				sharedString1.on("sequenceDelta", (sequenceDeltaEvent) => {
+					if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad") {
+						void Promise.resolve().then(() => {
+							sharedString1.insertText(0, "bc");
+						});
+					}
+				});
+
+				sharedString1.insertText(0, "ad");
+				await provider.ensureSynchronized();
+				assert.strictEqual(sharedString1.getText(), "bcad");
+			},
+		);
+	});
+
+	itSkipsFailureOnSpecificDrivers(
+		"Should throw when submitting an op while handling an event - offline",
+		["tinylicious", "t9s"], // This test is flaky on Tinylicious. ADO:5010
+		async () => {
 			await setupContainers({
 				...testContainerConfig,
 				runtimeOptions: {
-					flushMode: FlushMode.Immediate,
+					enableOpReentryCheck: true,
 				},
 			});
 
-			sharedString1.on("sequenceDelta", (sequenceDeltaEvent) => {
-				if ((sequenceDeltaEvent.opArgs.op as IMergeTreeInsertMsg).seg === "ad") {
-					void Promise.resolve().then(() => {
-						sharedString1.insertText(0, "bc");
-					});
+			await container1.deltaManager.inbound.pause();
+			await container1.deltaManager.outbound.pause();
+
+			sharedMap1.on("valueChanged", (changed) => {
+				if (changed.key !== "key2") {
+					sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
 				}
 			});
 
-			sharedString1.insertText(0, "ad");
+			assert.throws(() => {
+				sharedMap1.set("key1", "1");
+			});
+
+			container1.deltaManager.inbound.resume();
+			container1.deltaManager.outbound.resume();
+
 			await provider.ensureSynchronized();
-			assert.strictEqual(sharedString1.getText(), "bcad");
-		});
-	});
 
-	it("Should throw when submitting an op while handling an event - offline", async () => {
-		await setupContainers({
-			...testContainerConfig,
-			runtimeOptions: {
-				enableOpReentryCheck: true,
-			},
-		});
-
-		await container1.deltaManager.inbound.pause();
-		await container1.deltaManager.outbound.pause();
-
-		sharedMap1.on("valueChanged", (changed) => {
-			if (changed.key !== "key2") {
-				sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-			}
-		});
-
-		assert.throws(() => {
-			sharedMap1.set("key1", "1");
-		});
-
-		container1.deltaManager.inbound.resume();
-		container1.deltaManager.outbound.resume();
-
-		await provider.ensureSynchronized();
-
-		// The offending container is not closed
-		assert.ok(!container1.closed);
-		assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
-	});
+			// The offending container is not closed
+			assert.ok(!container1.closed);
+			assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
+		},
+	);
 
 	describe("Allow reentry", () =>
 		[

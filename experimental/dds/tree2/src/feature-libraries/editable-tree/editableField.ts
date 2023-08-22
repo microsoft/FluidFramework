@@ -10,10 +10,8 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
-	LocalFieldKey,
 	TreeStoredSchema,
 	ValueSchema,
-	lookupTreeSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -63,8 +61,21 @@ export function makeField(
 	fieldSchema: FieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
-	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
-	return adaptWithProxy(targetSequence, fieldProxyHandler);
+	const fieldAnchor = cursor.buildFieldAnchor();
+
+	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor, fieldAnchor);
+	const output = adaptWithProxy(targetSequence, fieldProxyHandler);
+	// Fields currently live as long as their parent does.
+	// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
+	if (fieldAnchor.parent !== undefined) {
+		const anchorNode =
+			context.forest.anchors.locate(fieldAnchor.parent) ??
+			fail("parent anchor node should always exist since field is under a node");
+		anchorNode.on("afterDelete", () => {
+			targetSequence.free();
+		});
+	}
+	return output;
 }
 
 function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
@@ -76,7 +87,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  */
 function getPrimaryArrayKey(
 	type: TreeStoredSchema,
-): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
+): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
 		return undefined;
@@ -104,8 +115,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		// TODO: use view schema typed in editableTree
 		public readonly fieldSchema: FieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
 	) {
-		super(context, cursor);
+		super(context, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.fieldKey = cursor.getFieldKey();
 		this[arrayLikeMarkerSymbol] = true;
@@ -159,10 +171,6 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.fieldKey);
 		return output;
-	}
-
-	protected buildAnchor(): FieldAnchor {
-		return this.cursor.buildFieldAnchor();
 	}
 
 	protected tryMoveCursorToAnchor(
@@ -273,7 +281,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		}
 	}
 
-	public set content(newContent: NewFieldContent) {
+	public setContent(newContent: NewFieldContent): void {
 		const content = this.normalizeNewContent(newContent);
 
 		switch (this.kind) {
@@ -310,10 +318,6 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			default:
 				fail(`Cannot set content of fields of "${this.kind.identifier}" kind.`);
 		}
-	}
-
-	public setContent(newContent: NewFieldContent): void {
-		this.content = newContent;
 	}
 
 	public delete(): void {
@@ -488,7 +492,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 	set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
 		switch (key) {
 			case "content": {
-				target.content = value as NewFieldContent;
+				target.setContent(value as NewFieldContent);
 				break;
 			}
 			default: {
@@ -515,7 +519,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 						index === 0,
 						0x6c1 /* Assignments to non-sequence field content by index must use index 0. */,
 					);
-					target.content = cursor;
+					target.setContent(cursor);
 				}
 			}
 		}
@@ -602,7 +606,9 @@ function unwrappedTree(
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableTree {
 	const nodeTypeName = cursor.type;
-	const nodeType = lookupTreeSchema(context.schema, nodeTypeName);
+	const nodeType =
+		context.schema.treeSchema.get(nodeTypeName) ??
+		fail("requested type does not exist in schema");
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
 	if (isPrimitive(nodeType)) {
 		const nodeValue = cursor.value;
@@ -610,7 +616,7 @@ function unwrappedTree(
 			return nodeValue;
 		}
 		assert(
-			nodeType.value === ValueSchema.Serializable,
+			nodeType.leafValue === ValueSchema.Serializable,
 			0x3c7 /* `undefined` values not allowed for primitive fields */,
 		);
 	}

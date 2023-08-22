@@ -57,6 +57,7 @@ import {
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	createChildMonitoringContext,
+	DataCorruptionError,
 	generateStack,
 	ITelemetryLoggerExt,
 	LoggingError,
@@ -65,11 +66,9 @@ import {
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import {
-	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
-
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -849,8 +848,7 @@ export abstract class FluidDataStoreContext
 			await this.realize();
 		}
 		assert(!!this.channel, 0x14c /* "Channel must exist when rebasing ops" */);
-		const innerContents = contents as FluidDataStoreMessage;
-		return this.channel.applyStashedOp(innerContents.content);
+		return this.channel.applyStashedOp(contents);
 	}
 
 	private verifyNotClosed(

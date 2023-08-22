@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	SchemaDataAndPolicy,
 	FieldKey,
 	genericTreeKeys,
 	getGenericTreeField,
 	JsonableTree,
-	lookupTreeSchema,
+	SchemaData,
 } from "../../../core";
 import { fail, brand } from "../../../util";
 import {
@@ -39,12 +38,12 @@ import {
  * fields to be unwrapped according to {@link UnwrappedEditableField} documentation.
  */
 export function expectTreeEquals(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	inputField: UnwrappedEditableField,
 	expected: JsonableTree,
 ): void {
 	assert(inputField !== undefined);
-	const expectedType = lookupTreeSchema(schemaData, expected.type);
+	const expectedType = schemaData.treeSchema.get(expected.type) ?? fail("missing field");
 	const primary = getPrimaryField(expectedType);
 	if (primary !== undefined) {
 		assert(isEditableField(inputField));
@@ -72,13 +71,13 @@ export function expectTreeEquals(
 	assert.deepEqual(type, expectedType);
 	const expectedFields = new Set(genericTreeKeys(expected));
 	for (const ok of Reflect.ownKeys(node)) {
+		assert(typeof ok === "string");
 		const key: FieldKey = brand(ok);
 		assert(expectedFields.delete(key));
 		const subNode = node[key];
 		const expectedField = getGenericTreeField(expected, key, false);
 		const isSequence =
-			getFieldKind(getFieldSchema(brand(key), schemaData, type)).multiplicity ===
-			Multiplicity.Sequence;
+			getFieldKind(getFieldSchema(brand(key), type)).multiplicity === Multiplicity.Sequence;
 		// implicit sequence
 		if (isSequence) {
 			expectTreeSequence(schemaData, subNode, expectedField);
@@ -95,7 +94,7 @@ export function expectTreeEquals(
  * where every element might be unwrapped on not.
  */
 export function expectTreeSequence(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	field: UnwrappedEditableField,
 	expected: JsonableTree[],
 ): void {
@@ -114,7 +113,7 @@ export function expectTreeSequence(
  * are handled in the same way.
  */
 export function expectFieldEquals(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	field: EditableField,
 	expected: JsonableTree[],
 ): void {
@@ -150,7 +149,7 @@ export function expectFieldEquals(
  * and expecting them to be "non-unwrapped" EditableTrees.
  */
 export function expectNodeEquals(
-	schemaData: SchemaDataAndPolicy,
+	schemaData: SchemaData,
 	node: EditableTree,
 	expected: JsonableTree,
 ): void {

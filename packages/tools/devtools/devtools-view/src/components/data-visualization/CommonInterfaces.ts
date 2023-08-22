@@ -4,6 +4,7 @@
  */
 
 import { VisualNode, VisualNodeBase } from "@fluid-experimental/devtools-core";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 /**
  * Base interface used in passing key of the child node from Record {@link VisualTree}.
@@ -29,4 +30,11 @@ export interface DataVisualizationTreeProps<TNode extends VisualNodeBase = Visua
 	 * The visual data to be displayed.
 	 */
 	node: TNode;
+}
+
+/**
+ * TODO
+ */
+export interface CanSupplyEdit {
+	edit(newValue: Serializable<unknown>);
 }
