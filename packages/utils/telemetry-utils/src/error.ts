@@ -86,7 +86,11 @@ export type MessageLike = Partial<
  * client or session.
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+	/**
+	 * {@inheritDoc IFluidErrorBase.errorType}
+	 */
 	public readonly errorType = FluidErrorTypes.dataProcessingError;
+
 	public readonly canRetry = false;
 
 	private constructor(errorMessage: string) {

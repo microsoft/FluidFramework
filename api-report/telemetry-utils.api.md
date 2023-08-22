@@ -64,7 +64,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     // (undocumented)
     readonly canRetry = false;
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
-    // (undocumented)
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: MessageLike): IFluidErrorBase;
 }
