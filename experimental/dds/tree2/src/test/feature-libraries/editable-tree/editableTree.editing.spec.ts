@@ -693,7 +693,7 @@ describe("editable-tree: editing", () => {
 
 			// Currently returns TreeStatus.Deleted.
 			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed.
-			it("removed node returns TreeStatus.Deleted on itself and its children", () => {
+			it("removed node returns TreeStatus.Deleted on itself and its contents", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -744,7 +744,7 @@ describe("editable-tree: editing", () => {
 
 			// Currently returns TreeStatus.Deleted.
 			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed
-			it("removed field returns TreeStatus.Deleted", () => {
+			it("removed field and its contents returns TreeStatus.Deleted", () => {
 				const view = createSharedTreeView().schematize({
 					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
