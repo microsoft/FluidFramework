@@ -56,6 +56,11 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 
 /**
  * Error indicating that a client's session has reached its time limit and is closed.
+ *
+ * @deprecated
+ *
+ * This type is not intended for external use and is being removed from library exports.
+ * No replacement API is intended.
  */
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
 	readonly errorType = ContainerErrorTypes.clientSessionExpiredError;

@@ -25,7 +25,7 @@ import { LoggingError } from '@fluidframework/telemetry-utils';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { UsageError } from '@fluidframework/telemetry-utils';
 
-// @public
+// @public @deprecated
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
     constructor(message: string, expiryMs: number);
     // (undocumented)
@@ -113,7 +113,5 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 export { UsageError }
-
-// (No @packageDocumentation comment for this package)
 
 ```
