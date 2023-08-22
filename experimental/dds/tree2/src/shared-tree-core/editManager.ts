@@ -284,6 +284,8 @@ export class EditManager<
 			// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
 			// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
 			const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
+			// The metadata for new trunk base revision needs to be deleted before modifying it.
+			this.trunkMetadata.delete(newTrunkBase.revision);
 			// Copying the revision of the old trunk base into the new trunk base means we don't need to write out the original
 			// revision to summaries. All clients agree that the trunk base always has the same hardcoded revision.
 			newTrunkBase.revision = this.trunkBase.revision;
@@ -321,7 +323,7 @@ export class EditManager<
 			);
 			assert(
 				this.trunkMetadata.size === trunkSize,
-				"The size of the trunkMetadata must be the same as teh trunk",
+				"The size of the trunkMetadata must be the same as the trunk",
 			);
 		}
 	}
