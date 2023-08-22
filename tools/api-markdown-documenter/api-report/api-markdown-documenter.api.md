@@ -368,6 +368,7 @@ export type LoggingFunction = (message: string | Error, ...args: unknown[]) => v
 export interface MarkdownRenderConfiguration extends ConfigurationBase {
     readonly newlineKind?: NewlineKind;
     readonly renderers?: MarkdownRenderers;
+    readonly startingHeadingLevel?: number;
 }
 
 // @public
