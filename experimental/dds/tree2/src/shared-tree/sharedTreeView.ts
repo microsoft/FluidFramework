@@ -469,23 +469,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		// TODO:
-		// When this becomes a more proper out of schema adapter, editing should be made lazy.
-		// This will improve support for readonly documents, cross version collaboration and attribution.
-
-		// Check for empty.
-		// TODO: Better detection of empty case
-		if (this.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
-			this.transaction.start();
-			initializeContent(this.storedSchema, config.schema, () =>
-				this.setContent(config.initialTree),
-			);
-			this.transaction.commit();
-		}
-
-		schematize(this.events, this.storedSchema, config);
-
-		return this;
+		return schematizeView(this, config);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -561,6 +545,29 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public dispose(): void {
 		this.branch.dispose();
 	}
+}
+
+export function schematizeView<TRoot extends FieldSchema>(
+	view: ISharedTreeView,
+	config: InitializeAndSchematizeConfiguration<TRoot>,
+): ISharedTreeView {
+	// TODO:
+	// When this becomes a more proper out of schema adapter, editing should be made lazy.
+	// This will improve support for readonly documents, cross version collaboration and attribution.
+
+	// Check for empty.
+	// TODO: Better detection of empty case
+	if (view.forest.isEmpty && schemaDataIsEmpty(view.storedSchema)) {
+		view.transaction.start();
+		initializeContent(view.storedSchema, config.schema, () =>
+			view.setContent(config.initialTree),
+		);
+		view.transaction.commit();
+	}
+
+	schematize(view.events, view.storedSchema, config);
+
+	return view;
 }
 
 /**
