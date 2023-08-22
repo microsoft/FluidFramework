@@ -85,7 +85,7 @@ async function renderApiDocumentation() {
 			let fileContents;
 			try {
 				fileContents = renderDocumentAsMarkdown(document, {
-					headingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
+					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
 					renderers: customRenderers,
 				});
 			} catch (error) {

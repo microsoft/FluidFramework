@@ -4,8 +4,12 @@
  */
 
 const {
+	createDocumentWriter,
 	getLinkForApiItem,
+	getMarkdownRenderersWithDefaults,
 	getUnscopedPackageName,
+	renderNodeAsMarkdown,
+	transformDocNode,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
@@ -24,29 +28,25 @@ const generatedContentNotice =
  * @returns The JSON-formatted Hugo front-matter as a `string`.
  */
 function createHugoFrontMatter(apiItem, config, customRenderers) {
-	// const renderers = getMarkdownRenderersWithDefaults(customRenderers);
-	
-	// function extractSummary() {
-	// 	const summaryParagraph = transformDocNode(
-	// 		apiItem.tsdocComment.summarySection,
-	// 		apiItem,
-	// 		config,
-	// 	);
+	const renderers = getMarkdownRenderersWithDefaults(customRenderers);
 
-	// 	if (!summaryParagraph) {
-	// 		return "";
-	// 	}
+	function extractSummary() {
+		const summaryParagraph = transformDocNode(
+			apiItem.tsdocComment.summarySection,
+			apiItem,
+			config,
+		);
 
-	// 	const documentWriter = createDocumentWriter();
-	// 	renderNodeAsMarkdown(
-	// 		summaryParagraph,
-	// 		documentWriter,
-	// 		{
-	// 			renderers,
-	// 		},
-	// 	);
-	// 	return documentWriter.getText().replace(/"/g, "'").trim();
-	// }
+		if (!summaryParagraph) {
+			return "";
+		}
+
+		const documentWriter = createDocumentWriter();
+		renderNodeAsMarkdown(summaryParagraph, documentWriter, {
+			renderers,
+		});
+		return documentWriter.getText().replace(/"/g, "'").trim();
+	}
 
 	const frontMatter = {};
 	frontMatter.title = apiItem.displayName.replace(/"/g, "").replace(/!/g, "");
@@ -56,30 +56,30 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 			frontMatter.title = "Package Reference";
 			break;
 		case ApiItemKind.Class:
-			// if (apiItem.tsdocComment) {
-			// 	frontMatter.summary = extractSummary();
-			// }
+			if (apiItem.tsdocComment) {
+				frontMatter.summary = extractSummary();
+			}
 			frontMatter.title += " Class";
 			break;
 		case ApiItemKind.Interface:
 			frontMatter.title += " Interface";
-			// if (apiItem.tsdocComment) {
-			// 	frontMatter.summary = extractSummary();
-			// }
+			if (apiItem.tsdocComment) {
+				frontMatter.summary = extractSummary();
+			}
 			break;
 		case ApiItemKind.Package:
 			frontMatter.title += " Package";
 			apiMembers = apiItem.entryPoints[0].members;
-			// if (apiItem.tsdocComment) {
-			// 	frontMatter.summary = extractSummary();
-			// }
+			if (apiItem.tsdocComment) {
+				frontMatter.summary = extractSummary();
+			}
 			break;
 		case ApiItemKind.Namespace:
 			frontMatter.title += " Namespace";
 			apiMembers = apiItem.members;
-			// if (apiItem.tsdocComment) {
-			// 	frontMatter.summary = extractSummary();
-			// }
+			if (apiItem.tsdocComment) {
+				frontMatter.summary = extractSummary();
+			}
 			break;
 		default:
 			break;
