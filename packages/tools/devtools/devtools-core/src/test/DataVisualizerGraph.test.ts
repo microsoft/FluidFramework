@@ -218,8 +218,14 @@ describe("DataVisualizerGraph unit tests", () => {
 			defaultEditors,
 		);
 
-		const childUnknownObject = await visualizer.render("unknown-object");
-		expect(childUnknownObject).to.deep.equal(undefined);
+		const rootTrees = await visualizer.renderRootHandles();
+		const expectedChildUnknownObject = {
+			unknownObject: {
+				nodeKind: VisualNodeKind.UnknownObjectNode,
+			},
+		};
+
+		expect(rootTrees).to.deep.equal(expectedChildUnknownObject);
 	});
 
 	it("Empty Container Data", async () => {
