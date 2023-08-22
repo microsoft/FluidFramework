@@ -70,7 +70,7 @@ export function makeField(
 	if (fieldAnchor.parent !== undefined) {
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
-			fail("cursor should point to a node that is not the root of the AnchorSet");
+			fail("parent anchor node should always exist since field is under a node");
 		anchorNode.on("afterDelete", () => {
 			targetSequence.free();
 		});
