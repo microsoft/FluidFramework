@@ -136,13 +136,7 @@ export interface IInterval {
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
-    add(start: number | "start" | "end" | {
-        pos: number;
-        side: Side;
-    }, end: number | "start" | "end" | {
-        pos: number;
-        side: Side;
-    }, intervalType: IntervalType, props?: PropertySet): TInterval;
+    add(start: number | "start" | "end" | SequencePlace, end: number | "start" | "end" | SequencePlace, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
@@ -320,20 +314,8 @@ export enum IntervalType {
 // @public (undocumented)
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
-    findOverlappingIntervals(start: number | {
-        pos: number;
-        side: Side;
-    }, end: number | {
-        pos: number;
-        side: Side;
-    }): TInterval[];
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number | {
-        pos: number;
-        side: Side;
-    }, end?: number | {
-        pos: number;
-        side: Side;
-    }): void;
+    findOverlappingIntervals(start: number | SequencePlace, end: number | SequencePlace): TInterval[];
+    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number | SequencePlace, end?: number | SequencePlace): void;
 }
 
 // @public
@@ -501,6 +483,14 @@ export interface SequenceOptions {
     // (undocumented)
     [key: string]: boolean;
     intervalStickinessEnabled: boolean;
+}
+
+// @public
+export interface SequencePlace {
+    // (undocumented)
+    pos: number;
+    // (undocumented)
+    side: Side;
 }
 
 // @internal

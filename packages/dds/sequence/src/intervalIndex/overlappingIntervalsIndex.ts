@@ -6,7 +6,7 @@
 import { Client } from "@fluidframework/merge-tree";
 import { IntervalType, IIntervalHelpers, ISerializableInterval } from "../intervals";
 import { IntervalNode, IntervalTree } from "../intervalTree";
-import { Side, endpointPosAndSide } from "../intervalCollection";
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
 import { IntervalIndex } from "./intervalIndex";
 
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -16,8 +16,8 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	 * `[start end]`.
 	 */
 	findOverlappingIntervals(
-		start: number | { pos: number; side: Side },
-		end: number | { pos: number; side: Side },
+		start: number | SequencePlace,
+		end: number | SequencePlace,
 	): TInterval[];
 
 	/**
@@ -26,8 +26,8 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	gatherIterationResults(
 		results: TInterval[],
 		iteratesForward: boolean,
-		start?: number | { pos: number; side: Side },
-		end?: number | { pos: number; side: Side },
+		start?: number | SequencePlace,
+		end?: number | SequencePlace,
 	): void;
 }
 
@@ -54,8 +54,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	public gatherIterationResults(
 		results: TInterval[],
 		iteratesForward: boolean,
-		start?: number | { pos: number; side: Side },
-		end?: number | { pos: number; side: Side },
+		start?: number | SequencePlace,
+		end?: number | SequencePlace,
 	): void {
 		if (this.intervalTree.intervals.isEmpty()) {
 			return;
@@ -141,8 +141,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	}
 
 	public findOverlappingIntervals(
-		start: number | { pos: number; side: Side },
-		end: number | { pos: number; side: Side },
+		start: number | SequencePlace,
+		end: number | SequencePlace,
 	): TInterval[] {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 

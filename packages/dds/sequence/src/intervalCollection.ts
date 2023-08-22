@@ -64,7 +64,7 @@ import {
 } from "./intervalIndex";
 
 /**
- * Defines a position relative to a character in a sequence.
+ * Defines a position and side relative to a character in a sequence.
  *
  * For this purpose, sequences look like:
  *
@@ -79,6 +79,18 @@ import {
  *
  * This gives us 2N + 2 possible positions to refer to within a string, where N
  * is the number of characters.
+ *
+ * @public
+ */
+export interface SequencePlace {
+	pos: number;
+	side: Side;
+}
+
+/**
+ * Defines a side relative to a character in a sequence.
+ *
+ * @remarks See {@link SequencePlace} for additional context on usage.
  *
  * @public
  */
@@ -155,8 +167,8 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
  * @internal
  */
 export function endpointPosAndSide(
-	start: number | "start" | "end" | { pos: number; side: Side } | undefined,
-	end: number | "start" | "end" | { pos: number; side: Side } | undefined,
+	start: number | "start" | "end" | SequencePlace | undefined,
+	end: number | "start" | "end" | SequencePlace | undefined,
 ) {
 	const startIsPlainEndpoint = typeof start === "number" || start === "start" || start === "end";
 	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
@@ -735,8 +747,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * {@link (IntervalStickiness:type)} for additional context.
 	 */
 	add(
-		start: number | "start" | "end" | { pos: number; side: Side },
-		end: number | "start" | "end" | { pos: number; side: Side },
+		start: number | "start" | "end" | SequencePlace,
+		end: number | "start" | "end" | SequencePlace,
 		intervalType: IntervalType,
 		props?: PropertySet,
 	): TInterval;
@@ -1089,8 +1101,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * {@inheritdoc IIntervalCollection.add}
 	 */
 	public add(
-		start: number | "start" | "end" | { pos: number; side: Side },
-		end: number | "start" | "end" | { pos: number; side: Side },
+		start: number | "start" | "end" | SequencePlace,
+		end: number | "start" | "end" | SequencePlace,
 		intervalType: IntervalType,
 		props?: PropertySet,
 	): TInterval {
