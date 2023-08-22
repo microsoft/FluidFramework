@@ -11,6 +11,7 @@ import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -57,6 +58,16 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     readonly errorType: "dataCorruptionError";
 }
 
+// @public
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    // (undocumented)
+    readonly canRetry = false;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
+    // (undocumented)
+    readonly errorType: "dataProcessingError";
+    static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: MessageLike): IFluidErrorBase;
+}
+
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
 
@@ -75,6 +86,16 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
     message: string;
     errorType?: string | undefined;
     stack?: string | undefined;
+};
+
+// @public
+export const extractSafePropertiesFromMessage: (messageLike: MessageLike) => {
+    messageClientId: string | undefined;
+    messageSequenceNumber: number | undefined;
+    messageClientSequenceNumber: number | undefined;
+    messageReferenceSequenceNumber: number | undefined;
+    messageMinimumSequenceNumber: number | undefined;
+    messageTimestamp: number | undefined;
 };
 
 // @public (undocumented)
@@ -246,6 +267,9 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
+
+// @public
+export type MessageLike = Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>;
 
 // @public (undocumented)
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;

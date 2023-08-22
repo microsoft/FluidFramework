@@ -5,7 +5,9 @@
 ```ts
 
 import { DataCorruptionError } from '@fluidframework/telemetry-utils';
+import { DataProcessingError } from '@fluidframework/telemetry-utils';
 import { EventForwarder } from '@fluidframework/common-utils';
+import { extractSafePropertiesFromMessage } from '@fluidframework/telemetry-utils';
 import { GenericError } from '@fluidframework/telemetry-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -14,12 +16,10 @@ import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDeltaSender } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
@@ -36,15 +36,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
 
 export { DataCorruptionError }
 
-// @public
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    // (undocumented)
-    readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
-    // (undocumented)
-    readonly errorType: "dataProcessingError";
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
-}
+export { DataProcessingError }
 
 // @public @deprecated
 export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -91,15 +83,7 @@ export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> i
     get version(): string;
 }
 
-// @public (undocumented)
-export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
-    messageClientId: string | undefined;
-    messageSequenceNumber: number | undefined;
-    messageClientSequenceNumber: number | undefined;
-    messageReferenceSequenceNumber: number | undefined;
-    messageMinimumSequenceNumber: number | undefined;
-    messageTimestamp: number | undefined;
-};
+export { extractSafePropertiesFromMessage }
 
 export { GenericError }
 
