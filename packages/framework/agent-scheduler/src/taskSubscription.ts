@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAgentScheduler } from "./agent";
 

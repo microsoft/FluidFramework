@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -45,9 +45,9 @@
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:stress:run",
 		"test:stress": "npm run test:stress:tinylicious",
-		"test:stress:run": "mocha dist/test --no-timeouts",
+		"test:stress:run": "mocha",
 		"test:stress:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:stress:tinylicious:run",
-		"test:stress:tinylicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:stress:tinylicious",
+		"test:stress:tinylicious:report": "npm run test:stress:tinylicious",
 		"test:stress:tinylicious:run": "npm run test:stress:run",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
@@ -79,7 +79,6 @@
 		"@fluid-internal/test-drivers": "workspace:~",
 		"@fluid-internal/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",

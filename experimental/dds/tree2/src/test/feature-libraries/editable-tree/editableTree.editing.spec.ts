@@ -21,7 +21,6 @@ import {
 	FieldKindTypes,
 	TypedSchemaCollection,
 	UnwrappedEditableField,
-	FieldSchema,
 	NewFieldContent,
 	setField,
 	EditableTree,
@@ -50,7 +49,7 @@ const otherFieldKey: FieldKey = brand("foo2");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
 function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
-	const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
+	const builder = new SchemaBuilder("getTestSchema", {}, personSchemaLibrary);
 	const rootNodeSchema = builder.struct("Test", {
 		foo: SchemaBuilder.field(fieldKind, stringSchema),
 		foo2: SchemaBuilder.field(fieldKind, stringSchema),
@@ -58,10 +57,7 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
 }
 
-function createSharedTree(
-	schemaData: TypedSchemaCollection<FieldSchema>,
-	data?: JsonableTree[],
-): ISharedTree {
+function createSharedTree(schemaData: TypedSchemaCollection, data?: JsonableTree[]): ISharedTree {
 	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests
 	// involving more than 1 tree should be moved elsewhere.
 	const numberOfTrees = 1;

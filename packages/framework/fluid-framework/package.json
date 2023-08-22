@@ -1,6 +1,6 @@
 {
 	"name": "fluid-framework",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "The main entry point into Fluid Framework public packages",
 	"homepage": "https://fluidframework.com",
 	"repository": {

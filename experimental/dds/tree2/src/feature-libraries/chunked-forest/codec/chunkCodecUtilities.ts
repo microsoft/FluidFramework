@@ -135,7 +135,7 @@ export function readStream(stream: StreamCursor): TreeValue {
  */
 export function readStreamNumber(stream: StreamCursor): number {
 	const content = readStream(stream);
-	assert(typeof content === "number", "expected number in stream");
+	assert(typeof content === "number", 0x730 /* expected number in stream */);
 	return content;
 }
 
@@ -144,7 +144,7 @@ export function readStreamNumber(stream: StreamCursor): number {
  */
 export function readStreamBoolean(stream: StreamCursor): boolean {
 	const content = readStream(stream);
-	assert(typeof content === "boolean", "expected boolean in stream");
+	assert(typeof content === "boolean", 0x731 /* expected boolean in stream */);
 	return content;
 }
 
@@ -155,7 +155,7 @@ export function readStreamBoolean(stream: StreamCursor): boolean {
  */
 export function readStreamStream(stream: StreamCursor): StreamCursor {
 	const content = readStream(stream);
-	assert(Array.isArray(content), "expected Array in stream");
+	assert(Array.isArray(content), 0x732 /* expected Array in stream */);
 	return { data: content, offset: 0 };
 }
 
@@ -202,7 +202,10 @@ export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends a
 
 	public dispatch(union: TUnion, ...args: TArgs): TResult {
 		const keys = Reflect.ownKeys(union);
-		assert(keys.length === 1, "discriminated union type should have exactly one member");
+		assert(
+			keys.length === 1,
+			0x733 /* discriminated union type should have exactly one member */,
+		);
 		const key: keyof TUnion = keys[0] as keyof TUnion;
 		const value = union[key];
 		const factory = this.library.get(key) ?? fail("missing function for union member");

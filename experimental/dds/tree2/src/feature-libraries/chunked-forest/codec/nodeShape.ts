@@ -44,7 +44,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		if (this.type === undefined) {
 			outputBuffer.push(new IdentifierToken(cursor.type));
 		} else {
-			assert(cursor.type === this.type, "type must match shape");
+			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
 
 		encodeValue(cursor.value, this.value, outputBuffer);
@@ -62,7 +62,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			if (!this.explicitKeys.has(key)) {
 				assert(
 					this.extraLocal !== undefined,
-					"had extra local fields when shape does not support them",
+					0x742 /* had extra local fields when shape does not support them */,
 				);
 				localBuffer.push(new IdentifierToken(key));
 				this.extraLocal.encodeField(cursor, cache, localBuffer);
