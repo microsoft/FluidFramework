@@ -122,9 +122,8 @@ function decompressInterval(
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
 		stickiness: interval[5],
-		canSlideToEndpoint: interval[6],
-		startSide: interval[7] ?? Side.Before,
-		endSide: interval[8] ?? Side.After,
+		startSide: interval[6] ?? Side.Before,
+		endSide: interval[7] ?? Side.After,
 	};
 }
 
@@ -145,16 +144,11 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 		{ ...properties, [reservedRangeLabelsKey]: undefined },
 	];
 
-	if (
-		interval.stickiness !== undefined &&
-		interval.stickiness !== IntervalStickiness.END &&
-		interval.canSlideToEndpoint
-	) {
+	if (interval.stickiness !== undefined && interval.stickiness !== IntervalStickiness.END) {
 		// reassignment to make it easier for typescript to reason about types
 		base = [
 			...base,
 			interval.stickiness,
-			interval.canSlideToEndpoint,
 			interval.startSide ?? Side.Before,
 			interval.endSide ?? Side.After,
 		];
@@ -283,7 +277,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
-		canSlideToEndpoint: boolean = false,
 		startSide: Side = Side.Before,
 		endSide: Side = Side.After,
 	): TInterval {
@@ -296,7 +289,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			op,
 			undefined,
 			stickiness,
-			canSlideToEndpoint,
 			startSide,
 			endSide,
 		);
@@ -309,7 +301,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
-		canSlideToEndpoint: boolean = false,
 		startSide: Side = Side.Before,
 		endSide: Side = Side.After,
 	) {
@@ -319,7 +310,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			intervalType,
 			op,
 			stickiness,
-			canSlideToEndpoint,
 			startSide,
 			endSide,
 		);
@@ -1123,10 +1113,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			"start and end cannot be undefined because they were not passed in as undefined",
 		);
 
-		// for back-compat, if both endpoints are passed as plain numbers, they
-		// cannot slide to endpoint segments
-		const canSlideToEndpoint = typeof start !== "number" || typeof end !== "number";
-
 		let stickiness: IntervalStickiness = IntervalStickiness.NONE;
 
 		if (startSide === Side.After || start === "start" || start === "end") {
@@ -1154,7 +1140,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			props,
 			undefined,
 			stickiness as IntervalStickiness,
-			canSlideToEndpoint,
 			startSide,
 			endSide,
 		);
@@ -1167,7 +1152,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness: stickiness as IntervalStickiness,
-				canSlideToEndpoint,
 				startSide,
 				endSide,
 			};
@@ -1478,8 +1462,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		const { intervalType, properties, stickiness, canSlideToEndpoint, startSide, endSide } =
-			serializedInterval;
+		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
@@ -1494,7 +1477,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 			properties,
 			stickiness,
-			canSlideToEndpoint,
 			startSide,
 			endSide,
 		};
@@ -1620,9 +1602,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					startReferenceSlidingPreference(interval.stickiness),
-					interval.canSlideToEndpoint &&
-						startReferenceSlidingPreference(interval.stickiness) ===
-							SlidingPreference.BACKWARD,
+					startReferenceSlidingPreference(interval.stickiness) ===
+						SlidingPreference.BACKWARD,
 				);
 				if (props) {
 					interval.start.addProperties(props);
@@ -1643,9 +1624,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					endReferenceSlidingPreference(interval.stickiness),
-					interval.canSlideToEndpoint &&
-						endReferenceSlidingPreference(interval.stickiness) ===
-							SlidingPreference.FORWARD,
+					endReferenceSlidingPreference(interval.stickiness) ===
+						SlidingPreference.FORWARD,
 				);
 				if (props) {
 					interval.end.addProperties(props);

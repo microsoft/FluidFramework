@@ -122,12 +122,6 @@ export interface ISerializedInterval {
 	 * The stickiness of this interval
 	 */
 	stickiness?: IntervalStickiness;
-	/**
-	 * Whether or not the endpoints of this interval can be slide to the special
-	 * endpoint segments denoting the position immediately before or after the
-	 * string
-	 */
-	canSlideToEndpoint?: boolean;
 	startSide?: Side;
 	endSide?: Side;
 	/** Any properties the interval has */
@@ -178,7 +172,6 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  * intervalType,
  * properties,
  * stickiness?,
- * canSlideToEndpoint?,
  * startSide?,
  * endSide?,
  * ]
@@ -191,7 +184,6 @@ export type CompressedSerializedInterval =
 			IntervalType,
 			PropertySet,
 			IntervalStickiness,
-			boolean,
 			Side,
 			Side,
 	  ]
@@ -224,7 +216,6 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
 		stickiness?: IntervalStickiness,
-		canSlideToEndpoint?: boolean,
 		startSide?: Side,
 		endSide?: Side,
 	): TInterval;

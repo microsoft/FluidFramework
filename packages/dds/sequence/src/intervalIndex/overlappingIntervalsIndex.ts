@@ -83,7 +83,6 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 				undefined,
 				undefined,
 				undefined,
-				undefined,
 				startSide,
 				endSide,
 			);
@@ -160,7 +159,6 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 			endPos,
 			this.client,
 			IntervalType.Transient,
-			undefined,
 			undefined,
 			undefined,
 			undefined,

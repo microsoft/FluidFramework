@@ -181,7 +181,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | "start" | "end" | undefined, end: number | "start" | "end" | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, canSlideToEndpoint?: boolean, startSide?: Side, endSide?: Side): TInterval;
+    create(label: string, start: number | "start" | "end" | undefined, end: number | "start" | "end" | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness, startSide?: Side, endSide?: Side): TInterval;
 }
 
 // @public @deprecated (undocumented)
@@ -340,7 +340,6 @@ export interface ISerializableInterval extends IInterval {
 
 // @internal
 export interface ISerializedInterval {
-    canSlideToEndpoint?: boolean;
     end: number | "start" | "end";
     // (undocumented)
     endSide?: Side;
@@ -415,13 +414,11 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(client: Client,
     start: LocalReferencePosition,
-    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, canSlideToEndpoint?: boolean, startSide?: Side, endSide?: Side);
+    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness, startSide?: Side, endSide?: Side);
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // @internal (undocumented)
     addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
-    // (undocumented)
-    readonly canSlideToEndpoint: boolean;
     // (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;

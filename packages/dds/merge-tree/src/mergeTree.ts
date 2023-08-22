@@ -422,6 +422,14 @@ export interface ClientSeq {
 
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
+	/**
+	 * Whether or not reference positions can slide to special endpoint segments
+	 * denoting the positions immediately before the start and immediately after
+	 * the end of the string.
+	 *
+	 * This is primarily useful in the case of interval stickiness.
+	 */
+	mergeTreeReferencesCanSlideToEndpoint?: boolean;
 	mergeTreeSnapshotChunkSize?: number;
 	/**
 	 * Whether to use the SnapshotV1 format over SnapshotLegacy.
@@ -1057,9 +1065,14 @@ export class MergeTree {
 					currentSlideIsForward,
 					currentSlideGroup,
 					pred,
-					maybeEndpoint,
+					this.options?.mergeTreeReferencesCanSlideToEndpoint ? maybeEndpoint : undefined,
 				);
-				reassign(segment.localRefs, slideToSegment, slideIsForward, maybeEndpoint);
+				reassign(
+					segment.localRefs,
+					slideToSegment,
+					slideIsForward,
+					this.options?.mergeTreeReferencesCanSlideToEndpoint ? maybeEndpoint : undefined,
+				);
 			} else {
 				currentSlideGroup.push(segment.localRefs);
 			}

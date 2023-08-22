@@ -61,9 +61,10 @@ const reservedIntervalIdKey = "intervalId";
  * endpoint segments, "start" and "end", which represent the position immediately
  * before or immediately after the string respectively.
  *
- * If a `SequenceInterval` is created with `canSlideToEndpoint` set to true, the
- * endpoints of the interval that are exclusive will have the ability to slide
- * to these special endpoint segments.
+ * If a `SequenceInterval` is created on a sequence with the
+ * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
+ * of the interval that are exclusive will have the ability to slide to these
+ * special endpoint segments.
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**
@@ -91,7 +92,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public intervalType: IntervalType,
 		props?: PropertySet,
 		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
-		public readonly canSlideToEndpoint: boolean = false,
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.After,
 	) {
@@ -151,7 +151,6 @@ export class SequenceInterval implements ISerializableInterval {
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			canSlideToEndpoint: this.canSlideToEndpoint,
 			startSide: this.startSide,
 			endSide: this.endSide,
 		};
@@ -177,7 +176,6 @@ export class SequenceInterval implements ISerializableInterval {
 			this.intervalType,
 			this.properties,
 			this.stickiness,
-			this.canSlideToEndpoint,
 			this.startSide,
 			this.endSide,
 		);
@@ -275,7 +273,6 @@ export class SequenceInterval implements ISerializableInterval {
 			undefined,
 			// todo: not happy with how merging here works
 			(this.stickiness | b.stickiness) as IntervalStickiness,
-			this.canSlideToEndpoint || b.canSlideToEndpoint,
 			this.start === newStart ? this.startSide : b.startSide,
 			this.end === newEnd ? this.endSide : b.endSide,
 		);
@@ -334,8 +331,7 @@ export class SequenceInterval implements ISerializableInterval {
 				undefined,
 				localSeq,
 				startReferenceSlidingPreference(this.stickiness),
-				this.canSlideToEndpoint &&
-					startReferenceSlidingPreference(this.stickiness) === SlidingPreference.BACKWARD,
+				startReferenceSlidingPreference(this.stickiness) === SlidingPreference.BACKWARD,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -352,8 +348,7 @@ export class SequenceInterval implements ISerializableInterval {
 				undefined,
 				localSeq,
 				endReferenceSlidingPreference(this.stickiness),
-				this.canSlideToEndpoint &&
-					endReferenceSlidingPreference(this.stickiness) === SlidingPreference.FORWARD,
+				endReferenceSlidingPreference(this.stickiness) === SlidingPreference.FORWARD,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -367,7 +362,6 @@ export class SequenceInterval implements ISerializableInterval {
 			this.intervalType,
 			undefined,
 			this.stickiness,
-			this.canSlideToEndpoint,
 			this.startSide,
 			this.endSide,
 		);
@@ -500,7 +494,6 @@ export function createSequenceInterval(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	stickiness: IntervalStickiness = IntervalStickiness.END,
-	canSlideToEndpoint: boolean = false,
 	startSide: Side = Side.Before,
 	endSide: Side = Side.After,
 ): SequenceInterval {
@@ -534,8 +527,7 @@ export function createSequenceInterval(
 		fromSnapshot,
 		undefined,
 		startReferenceSlidingPreference(stickiness),
-		canSlideToEndpoint &&
-			startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
+		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
 	);
 
 	const endLref = createPositionReference(
@@ -546,8 +538,7 @@ export function createSequenceInterval(
 		fromSnapshot,
 		undefined,
 		endReferenceSlidingPreference(stickiness),
-		canSlideToEndpoint &&
-			endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
+		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
 	);
 
 	const rangeProp = {
@@ -563,7 +554,6 @@ export function createSequenceInterval(
 		intervalType,
 		rangeProp,
 		stickiness,
-		canSlideToEndpoint,
 		startSide,
 		endSide,
 	);
