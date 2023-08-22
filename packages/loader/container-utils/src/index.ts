@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
 export {
 	ClientSessionExpiredError,
 	DataCorruptionError,
