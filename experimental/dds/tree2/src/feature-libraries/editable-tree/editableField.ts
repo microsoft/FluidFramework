@@ -173,10 +173,6 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return output;
 	}
 
-	protected buildAnchor(): FieldAnchor {
-		return this.cursor.buildFieldAnchor();
-	}
-
 	protected tryMoveCursorToAnchor(
 		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
