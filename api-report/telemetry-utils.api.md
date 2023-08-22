@@ -54,8 +54,6 @@ export function createMultiSinkLogger(props: {
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     constructor(message: string, props: ITelemetryProperties);
     // (undocumented)
-    readonly canRetry = false;
-    // (undocumented)
     readonly errorType: "dataCorruptionError";
 }
 
@@ -65,7 +63,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly canRetry = false;
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     readonly errorType: "dataProcessingError";
-    static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: MessageLike): IFluidErrorBase;
+    static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -89,7 +87,7 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 };
 
 // @public
-export const extractSafePropertiesFromMessage: (messageLike: MessageLike) => {
+export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
     messageClientId: string | undefined;
     messageSequenceNumber: number | undefined;
     messageClientSequenceNumber: number | undefined;
@@ -267,9 +265,6 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
-
-// @public
-export type MessageLike = Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>;
 
 // @public (undocumented)
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;

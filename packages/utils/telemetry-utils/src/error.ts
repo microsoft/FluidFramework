@@ -54,27 +54,12 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.dataCorruptionError;
-	readonly canRetry = false;
+	// readonly canRetry = false;
 
 	constructor(message: string, props: ITelemetryProperties) {
 		super(message, { ...props, dataProcessingError: 1 });
 	}
 }
-
-/**
- * An incoming message from the Fluid Service.
- */
-export type MessageLike = Partial<
-	Pick<
-		ISequencedDocumentMessage,
-		| "clientId"
-		| "sequenceNumber"
-		| "clientSequenceNumber"
-		| "referenceSequenceNumber"
-		| "minimumSequenceNumber"
-		| "timestamp"
-	>
->;
 
 /**
  * Indicates we hit a fatal error while processing incoming data from the Fluid Service.
@@ -128,15 +113,26 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 	 * one day we will move away from throwing these errors but rather we'll return them.
 	 * But an unrecognized error needs to be classified as `DataProcessingError`.
 	 *
-	 * @param originalError - error to be converted
-	 * @param dataProcessingCodepath - which codepath failed while processing data
-	 * @param messageLike - Sequenced message to include info about via telemetry props
-	 * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
+	 * @param originalError - The error to be converted.
+	 * @param dataProcessingCodepath - Which code-path failed while processing data.
+	 * @param messageLike - Message to include info about via telemetry props.
+	 *
+	 * @returns Either a new `DataProcessingError`, or (if wrapping is deemed unnecessary) the given error.
 	 */
 	public static wrapIfUnrecognized(
 		originalError: unknown,
 		dataProcessingCodepath: string,
-		messageLike?: MessageLike,
+		messageLike?: Partial<
+			Pick<
+				ISequencedDocumentMessage,
+				| "clientId"
+				| "sequenceNumber"
+				| "clientSequenceNumber"
+				| "referenceSequenceNumber"
+				| "minimumSequenceNumber"
+				| "timestamp"
+			>
+		>,
 	): IFluidErrorBase {
 		const props = {
 			dataProcessingError: 1,
@@ -169,9 +165,23 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 }
 
 /**
- * Extracts specific properties from the incoming message that we know are safe to log.
+ * Extracts specific properties from the provided message that we know are safe to log.
+ *
+ * @param messageLike - Message to include info about via telemetry props.
  */
-export const extractSafePropertiesFromMessage = (messageLike: MessageLike) => ({
+export const extractSafePropertiesFromMessage = (
+	messageLike: Partial<
+		Pick<
+			ISequencedDocumentMessage,
+			| "clientId"
+			| "sequenceNumber"
+			| "clientSequenceNumber"
+			| "referenceSequenceNumber"
+			| "minimumSequenceNumber"
+			| "timestamp"
+		>
+	>,
+) => ({
 	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
 	messageSequenceNumber: messageLike.sequenceNumber,
 	messageClientSequenceNumber: messageLike.clientSequenceNumber,

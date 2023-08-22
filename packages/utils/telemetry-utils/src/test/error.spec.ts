@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
-import { DataCorruptionError, DataProcessingError, MessageLike } from "../error";
+import { DataCorruptionError, DataProcessingError } from "../error";
 import { LoggingError, isILoggingError, normalizeError } from "../errorLogging";
 
 describe("Errors", () => {
@@ -214,7 +214,7 @@ describe("Errors", () => {
 			const originalError = {
 				message: "Inherited error message",
 			};
-			const op: MessageLike = { sequenceNumber: 42 };
+			const op = { sequenceNumber: 42 };
 			const coercedError = DataProcessingError.wrapIfUnrecognized(
 				originalError,
 				"someCodepath",
@@ -231,7 +231,7 @@ describe("Errors", () => {
 			const originalError = {
 				errorType: "hello",
 			};
-			const op: MessageLike = { sequenceNumber: 42 };
+			const op = { sequenceNumber: 42 };
 			const coercedError = DataProcessingError.wrapIfUnrecognized(
 				originalError,
 				"someCodepath",

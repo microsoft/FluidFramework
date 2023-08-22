@@ -17,7 +17,6 @@ export {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
-	type MessageLike,
 	UsageError,
 } from "./error";
 export {
