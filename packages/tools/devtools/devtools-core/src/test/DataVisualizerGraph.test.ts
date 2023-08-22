@@ -18,7 +18,6 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	VisualNodeKind,
-	RootHandleNode,
 	defaultEditors,
 } from "../data-visualization";
 import { EditType } from "../CommonInterfaces";
@@ -236,7 +235,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers, defaultEditors);
 
 		const childEmptyRecord = await visualizer.renderRootHandles();
-		const expectedChildEmptyRecord: Record<string, RootHandleNode> = {};
+		const expectedChildEmptyRecord = {};
 
 		expect(childEmptyRecord).to.deep.equal(expectedChildEmptyRecord);
 	});
