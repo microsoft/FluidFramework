@@ -35,7 +35,7 @@ export function logIfFalse(
 /**
  * sampletext
  */
-export function createSampledLoggerSend(
+export function createSampledLogger(
 	logger: ITelemetryBaseLogger,
 	shouldSampleEventCallback: () => boolean,
 ) {
@@ -49,8 +49,8 @@ export function createSampledLoggerSend(
 			if (isSamplingEnabled && shouldSampleEventCallback() === true) {
 				logger.send(event);
 			}
-		}
-	}
+		},
+	};
 
 	return sampledLogger;
 }
@@ -61,7 +61,7 @@ export function createSampledLoggerSend(
 export const createSystematicSamplingCallback = (samplingRate: number) => {
 	const state = {
 		eventsSinceLastSample: 0,
-		isFirstEvent: true
+		isFirstEvent: true,
 	};
 	return () => {
 		state.eventsSinceLastSample++;
