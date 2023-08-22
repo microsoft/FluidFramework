@@ -110,6 +110,7 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
+	MemoizedIdAllocator,
 	IdAllocator,
 	NodeChangeComposer,
 	NodeChangeInverter,

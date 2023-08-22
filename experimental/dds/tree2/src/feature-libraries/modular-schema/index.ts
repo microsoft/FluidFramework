@@ -30,6 +30,7 @@ export {
 } from "./fieldKind";
 export {
 	IdAllocator,
+	MemoizedIdAllocator,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,

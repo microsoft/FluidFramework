@@ -23,7 +23,7 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
+import { brand, getOrAddEmptyToMap, MemoizedIdRangeAllocator, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
 	CrossFieldManager,
@@ -42,6 +42,7 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 	NodeExistenceState,
+	MemoizedIdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
@@ -721,7 +722,8 @@ export class ModularChangeFamily
 			return new Map();
 		}
 
-		return this.intoDeltaImpl(change.fieldChanges);
+		const idAllocator = MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator;
+		return this.intoDeltaImpl(change.fieldChanges, idAllocator);
 	}
 
 	/**
@@ -730,25 +732,29 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
+	private intoDeltaImpl(change: FieldChangeMap, idAllocator: MemoizedIdAllocator): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
-				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
+				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange, idAllocator),
+				idAllocator,
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+	private deltaFromNodeChange(
+		change: NodeChangeset,
+		idAllocator: MemoizedIdAllocator,
+	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, idAllocator);
 		}
 
 		return modify;
