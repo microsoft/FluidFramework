@@ -115,7 +115,7 @@ export class SharedTree
 			branch: this.getLocalBranch(),
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
-			// This allows editing schema on the vide without sending ops, which is incorrect behavior.
+			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			repairProvider,
@@ -137,7 +137,7 @@ export class SharedTree
 		// TODO:
 		// Schema editing on the view should be the same as editing it here.
 		// However, currently editing schema on views doesn't send ops because schema editing is a hack and not properly implemented.
-		// When this is fixes, this assert should start passing:
+		// When this is fixed, this assert should start passing:
 		// assert(this.schema === this.view.storedSchema, "mismatched schema");
 		return this.schema;
 	}

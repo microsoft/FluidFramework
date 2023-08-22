@@ -60,8 +60,21 @@ export function makeField(
 	fieldSchema: FieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
-	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
-	return adaptWithProxy(targetSequence, fieldProxyHandler);
+	const fieldAnchor = cursor.buildFieldAnchor();
+
+	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor, fieldAnchor);
+	const output = adaptWithProxy(targetSequence, fieldProxyHandler);
+	// Fields currently live as long as their parent does.
+	// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
+	if (fieldAnchor.parent !== undefined) {
+		const anchorNode =
+			context.forest.anchors.locate(fieldAnchor.parent) ??
+			fail("parent anchor node should always exist since field is under a node");
+		anchorNode.on("afterDelete", () => {
+			targetSequence.free();
+		});
+	}
+	return output;
 }
 
 function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
@@ -101,8 +114,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		// TODO: use view schema typed in editableTree
 		public readonly fieldSchema: FieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
 	) {
-		super(context, cursor);
+		super(context, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.fieldKey = cursor.getFieldKey();
 		this[arrayLikeMarkerSymbol] = true;
@@ -140,10 +154,6 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.fieldKey);
 		return output;
-	}
-
-	protected buildAnchor(): FieldAnchor {
-		return this.cursor.buildFieldAnchor();
 	}
 
 	protected tryMoveCursorToAnchor(

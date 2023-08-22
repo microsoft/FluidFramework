@@ -70,7 +70,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
@@ -695,9 +695,9 @@ export interface FieldStoredSchema {
 }
 
 // @alpha
-export interface FieldUpPath {
+export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
     readonly field: FieldKey;
-    readonly parent: UpPath | undefined;
+    readonly parent: TUpPath | undefined;
 }
 
 // @alpha
