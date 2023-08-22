@@ -10,7 +10,6 @@ import {
 	ContainerErrorType,
 	IContainerContext,
 	ICriticalContainerError,
-	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -27,7 +26,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
