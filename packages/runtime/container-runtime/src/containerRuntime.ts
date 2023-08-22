@@ -32,13 +32,17 @@ import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataCorruptionError,
+	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import {
 	DriverHeader,
 	FetchSource,
@@ -46,12 +50,6 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	UsageError,
-} from "@fluidframework/container-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -508,9 +506,13 @@ export enum RuntimeHeaders {
 
 /** True if a tombstoned object should be returned without erroring */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+/** [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned";
+/** Inactive error responses will have this header set to true */
+export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
@@ -840,7 +842,7 @@ export class ContainerRuntime
 			idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), logger);
+					: IdCompressor.create(logger);
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -1845,6 +1847,7 @@ export class ContainerRuntime
 			dataStoreContext.packagePath,
 			request?.headers,
 		);
+
 		return dataStoreChannel;
 	}
 
@@ -3290,7 +3293,7 @@ export class ContainerRuntime
 				);
 				idRange = this.idCompressor.takeNextCreationRange();
 				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+				idRange = idRange?.ids !== undefined ? idRange : undefined;
 			}
 
 			if (idRange !== undefined) {
@@ -3622,7 +3625,7 @@ export class ContainerRuntime
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
 		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.fetchLatestSnapshotFromStorage(
+			let fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3630,6 +3633,7 @@ export class ContainerRuntime
 					targetSequenceNumber: summaryRefSeq,
 				},
 				readAndParseBlob,
+				null,
 			);
 
 			/**
@@ -3639,7 +3643,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorageAndClose(
+				fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3712,12 +3716,13 @@ export class ContainerRuntime
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const { snapshotTree, versionId, latestSnapshotRefSeq } =
-			await this.fetchLatestSnapshotFromStorage(
+			await this.fetchSnapshotFromStorageAndMaybeClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryFromServerFetch",
 				},
 				readAndParseBlob,
+				null,
 			);
 		const fetchLatestSnapshot: IFetchSnapshotResult = {
 			snapshotTree,
@@ -3741,20 +3746,12 @@ export class ContainerRuntime
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
 	}
 
-	private async fetchLatestSnapshotFromStorage(
-		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorageAndClose(
-			logger,
-			event,
-			readAndParseBlob,
-			null /* latest */,
-		);
-	}
-
-	private async fetchSnapshotFromStorageAndClose(
+	/**
+	 * Downloads snapshot from storage with the given versionId or latest if versionId is null.
+	 * By default, it also closes the container after downloading the snapshot. However, this may be
+	 * overridden via options.
+	 */
+	private async fetchSnapshotFromStorageAndMaybeClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,

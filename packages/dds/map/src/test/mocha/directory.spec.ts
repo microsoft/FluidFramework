@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {

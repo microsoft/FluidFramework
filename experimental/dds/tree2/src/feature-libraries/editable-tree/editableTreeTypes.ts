@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Value, TreeSchemaIdentifier, ITreeCursor, isCursor, FieldKey } from "../../core";
 import {
-	PrimitiveValue,
-	typeNameSymbol,
-	valueSymbol,
-	ContextuallyTypedFieldData,
-} from "../contextuallyTyped";
+	Value,
+	TreeSchemaIdentifier,
+	isCursor,
+	FieldKey,
+	ITreeCursorSynchronous,
+} from "../../core";
+import { PrimitiveValue, typeNameSymbol, valueSymbol, NewFieldContent } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { UntypedField, UntypedTreeCore, parentField } from "../untypedTree";
 import { EditableTreeContext } from "./editableTreeContext";
@@ -120,26 +121,13 @@ export interface EditableTree
 }
 
 /**
- * Content to use for a field.
- *
- * When used, this content will be deeply copied into the tree, and must comply with the schema.
- *
- * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
- * - use a single cursor for an `optional` or `value` field;
- * - use array of cursors for a `sequence` field;
- *
- * TODO: this should allow a field cursor instead of an array of cursors.
- * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
- * @alpha
- */
-export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
-
-/**
  * Check if NewFieldContent is made of {@link ITreeCursor}s.
  *
  * Useful when APIs want to take in tree data in multiple formats, including cursors.
  */
-export function areCursors(data: NewFieldContent): data is ITreeCursor | readonly ITreeCursor[] {
+export function areCursors(
+	data: NewFieldContent,
+): data is ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] {
 	if (isCursor(data)) {
 		return true;
 	}
