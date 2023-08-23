@@ -18,6 +18,8 @@ import {
 	inCursorNode,
 	FieldUpPath,
 	ITreeCursor,
+	keyAsDetachedField,
+	rootField,
 } from "../../core";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -43,11 +45,13 @@ import {
 	isPrimitive,
 	keyIsValidIndex,
 	getOwnArrayKeys,
+	treeStatusFromPath,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
+	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	proxyTargetSymbol,
@@ -303,7 +307,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		}
 	}
 
-	public delete(): void {
+	public remove(): void {
 		switch (this.kind.multiplicity) {
 			case Multiplicity.Optional: {
 				const fieldEditor = this.optionalEditor();
@@ -385,11 +389,30 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		);
 	}
 
+	public treeStatus(): TreeStatus {
+		if (this.isFreed()) {
+			return TreeStatus.Deleted;
+		}
+		const fieldAnchor = this.getAnchor();
+		const parentAnchor = fieldAnchor.parent;
+		// If the parentAnchor is undefined it is a detached field.
+		if (parentAnchor === undefined) {
+			return keyAsDetachedField(fieldAnchor.fieldKey) === rootField
+				? TreeStatus.InDocument
+				: TreeStatus.Removed;
+		}
+		const parentAnchorNode = this.context.forest.anchors.locate(parentAnchor);
+
+		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
+		assert(parentAnchorNode !== undefined, "parentAnchorNode must exist.");
+		return treeStatusFromPath(parentAnchorNode);
+	}
+
 	public getfieldPath(): FieldUpPath {
 		return this.cursor.getFieldPath();
 	}
 
-	public deleteNodes(index: number, count?: number): void {
+	public removeNodes(index: number, count?: number): void {
 		const fieldEditor = this.sequenceEditor();
 		assert(
 			this.length === 0 || keyIsValidIndex(index, this.length),
@@ -446,8 +469,6 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		if (typeof key === "string") {
 			if (editableFieldPropertySet.has(key)) {
 				return Reflect.get(target, key);
-			} else if (keyIsValidIndex(key, target.length)) {
-				return target.unwrappedTree(Number(key));
 			}
 			// This maps the methods of the `EditableField` to their implementation in the `FieldProxyTarget`.
 			// Expected are only the methods declared in the `EditableField` interface,
@@ -458,6 +479,9 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				return function (...args: unknown[]): unknown {
 					return Reflect.apply(reflected, target, args);
 				};
+			}
+			if (keyIsValidIndex(key, target.length)) {
+				return target.unwrappedTree(Number(key));
 			}
 			return undefined;
 		}
