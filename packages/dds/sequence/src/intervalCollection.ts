@@ -70,9 +70,9 @@ import {
  *
  * `{start} - {character 0} - {character 1} - ... - {character N} - {end}`
  *
- * Each `{value}` in the diagram is a possible character.
- * Each `-` in the above diagram is a position, and can be described as being
- * `After` a particular character or `Before` it.
+ * Each `{value}` in the diagram is a character within a sequence.
+ * Each `-` in the above diagram is a position where text could be inserted.
+ * Each position between a `{value}` and a `-` is a `SequencePlace`.
  *
  * The special endpoints `{start}` and `{end}` refer to positions outside the
  * contents of the string.
@@ -751,7 +751,38 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 *	// \{start\} - A - B - C - D - \{end\}
 	 *	collection.add(0, 3, IntervalType.SlideOnRemove);
 	 *```
+	 *
+	 * In the case of the first example, if text is deleted,
+	 *
+	 * ```typescript
+	 *	// Delete the character "B"
+	 *	string.removeRange(1, 2);
+	 * ```
+	 *
+	 * The start point of the interval will slide to the position immediately
+	 * before "C", and the same will be true.
+	 *
+	 * ```
+	 * \{start\} - A[- C -]D - \{end\}
+	 * ```
+	 *
+	 * In this case, text inserted immediately before "C" would be included in
+	 * the interval.
+	 *
+	 * ```typescript
+	 * string.insertText(1, "EFG");
+	 * ```
+	 *
+	 * With the string now being,
+	 *
+	 * ```
+	 * \{start\} - A[- E - F - G - C -]D - \{end\}
+	 * ```
+	 *
 	 */
+	// todo: ADO:5205 the above comment regarding behavior in the case that the
+	// entire interval has been deleted should be resolved at the same time as
+	// this ticket
 	add(
 		start: number | "start" | "end" | SequencePlace,
 		end: number | "start" | "end" | SequencePlace,
