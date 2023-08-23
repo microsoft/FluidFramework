@@ -20,8 +20,6 @@ import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
-import {
 	normalizeError,
 	logIfFalse,
 	safeRaiseEvent,

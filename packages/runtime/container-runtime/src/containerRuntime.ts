@@ -33,6 +33,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	DataCorruptionError,
+	DataProcessingError,
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
@@ -43,7 +44,6 @@ import {
 	ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import {
 	DriverHeader,
 	FetchSource,
