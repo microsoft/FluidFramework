@@ -22,7 +22,7 @@ import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
+import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC phases without overlapping.
@@ -64,13 +64,10 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
 
-		const { summarizer } = await createSummarizer(
-			provider,
-			mainContainer,
-			undefined /* summaryVersion */,
-			gcOptions,
-			mockConfigProvider(settings),
-		);
+		const { summarizer } = await createSummarizer(provider, mainContainer, {
+			runtimeOptions: { gcOptions },
+			loaderProps: { configProvider: mockConfigProvider(settings) },
+		});
 
 		// create datastore and blob
 		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(

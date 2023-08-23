@@ -398,7 +398,7 @@ For exceptionally large documents it is likely that the number of concurrently e
 This means that each client would receive, process, and ignore most edits—resulting in computational waste and bottlenecks.
 
 The [storage performance: incrementality and virtualization](#storage-performance-incrementality-and-virtualization) milestone ensures that document load times and summarization performance (both bandwidth and CPU time) are not limiting factors in these cases.
-This milestone introduces a _partial checkout_: a partial view of the tree registered with the server during document load.
+This milestone introduces a partial view of the tree registered with the server during document load.
 The view (a subset of the tree) is dynamic and can be expanded by navigating the tree.
 The server provides op filtering to ensure that a client only receives the edits that apply to the region of the tree that they are viewing.
 

@@ -710,10 +710,10 @@ const _validateContextAsync = async function (in_template) {
 
 	const error = getInvalidContextError(context);
 	if (error) {
-		return Promise.reject(error);
+		throw error;
 	}
 	if (context === "map" && in_template.contextKeyType === "typeid") {
-		return Promise.reject(new Error(MSG.INVALID_OPTION_NONE_CONSTANTS));
+		throw new Error(MSG.INVALID_OPTION_NONE_CONSTANTS);
 	}
 	// If context is not 'set' validation doesn't apply
 	if (context !== "set") {
@@ -728,7 +728,7 @@ const _validateContextAsync = async function (in_template) {
 	} else {
 		// Since context is 'set' the template must eventually inherit from NamedProperty
 		if (in_template.inherits === undefined) {
-			return Promise.reject(new Error(MSG.SET_ONLY_NAMED_PROPS));
+			throw new Error(MSG.SET_ONLY_NAMED_PROPS);
 		}
 
 		// Since context is 'set' the template must eventually inherit from NamedProperty (same as above)
@@ -757,14 +757,14 @@ const _validateContextAsync = async function (in_template) {
 		.then(function (results) {
 			const foundNamedPropertyDescendant = find(results, (res) => res);
 			if (!foundNamedPropertyDescendant) {
-				return Promise.reject(Error(MSG.SET_ONLY_NAMED_PROPS));
+				throw Error(MSG.SET_ONLY_NAMED_PROPS);
 			}
 
 			return that._hasSchemaAsync(in_template.typeid);
 		})
 		.then(function (hasIt) {
 			if (!hasIt) {
-				return Promise.reject(new Error(MSG.SET_ONLY_NAMED_PROPS));
+				throw new Error(MSG.SET_ONLY_NAMED_PROPS);
 			}
 
 			return that._inheritsFromAsync(in_template.typeid, "NamedProperty");
@@ -774,7 +774,7 @@ const _validateContextAsync = async function (in_template) {
 				return undefined;
 			}
 
-			return Promise.reject(new Error(MSG.SET_ONLY_NAMED_PROPS));
+			throw new Error(MSG.SET_ONLY_NAMED_PROPS);
 		});
 };
 

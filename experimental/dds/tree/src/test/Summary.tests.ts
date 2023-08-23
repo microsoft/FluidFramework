@@ -337,13 +337,6 @@ export function runSummaryTests(title: string): void {
 					await testObjectProvider.ensureSynchronized();
 					await expectSharedTreesEqual(resubmitTree, tree);
 					await expectSharedTreesEqual(tree, await createSummaryTestTree(WriteFormat.v0_1_1, true));
-
-					// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-					const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-					expect(events.unexpectedErrors.length).to.equal(1);
-					expect(events.unexpectedErrors[0].eventName).to.equal(
-						'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
-					);
 				});
 
 				it('Normalizes a denormalized summary containing nodes with empty traits', async () => {

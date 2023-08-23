@@ -12,7 +12,7 @@ import { Commit, EncodedEditManager } from "./editManagerFormat";
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<TChangeset>,
 	{ jsonValidator: validator }: ICodecOptions,
-): IJsonCodec<SummaryData<TChangeset>, string> {
+): IJsonCodec<SummaryData<TChangeset>> {
 	const format = validator.compile(
 		EncodedEditManager(changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema),
 	);
@@ -36,12 +36,11 @@ export function makeEditManagerCodec<TChangeset>(
 					{ ...branch, commits: branch.commits.map(encodeCommit) },
 				]),
 			};
-			assert(format.check(json), "Encoded schema should validate");
-			return JSON.stringify(json);
+			assert(format.check(json), 0x6cc /* Encoded schema should validate */);
+			return json;
 		},
-		decode: (summary) => {
-			const json: EncodedEditManager<TChangeset> = JSON.parse(summary);
-			assert(format.check(json), "Encoded schema should validate");
+		decode: (json) => {
+			assert(format.check(json), 0x6cd /* Encoded schema should validate */);
 			return {
 				trunk: json.trunk.map(decodeCommit),
 				branches: new Map(

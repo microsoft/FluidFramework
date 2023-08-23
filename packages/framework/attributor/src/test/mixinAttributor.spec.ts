@@ -56,6 +56,7 @@ describe("mixinAttributor", () => {
 			},
 			options: {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
+			getLoadedFromVersion: () => undefined,
 		};
 	};
 

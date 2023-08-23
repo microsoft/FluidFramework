@@ -27,7 +27,7 @@ import {
 	getGCStateFromSummary,
 	getGCDeletedStateFromSummary,
 	getGCTombstoneStateFromSummary,
-} from "./gcTestSummaryUtils";
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
@@ -56,9 +56,11 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 		return createSummarizer(
 			provider,
 			container,
+			{
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 			summaryVersion,
-			gcOptions,
-			mockConfigProvider(settings),
 		);
 	};
 

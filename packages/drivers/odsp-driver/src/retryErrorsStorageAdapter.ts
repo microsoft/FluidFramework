@@ -17,7 +17,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { runWithRetry } from "./retryUtils";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {

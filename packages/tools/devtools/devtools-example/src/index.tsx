@@ -22,14 +22,16 @@ ReactDOM.render(
 	},
 );
 
-const debuggerElement = document.createElement("debugger");
-document.body.append(debuggerElement);
+const devtoolsElement = document.createElement("devtools");
+document.body.append(devtoolsElement);
 
-ReactDOM.render(<DevToolsView />, debuggerElement, () => {
-	console.log("Debugger UI rendered!");
+ReactDOM.render(<DevtoolsView />, devtoolsElement, () => {
+	console.log("Devtools UI rendered!");
+	// Setting "fluidStarted" is just for our test automation
+	globalThis.fluidStarted = true;
 });
 
-function DevToolsView(): React.ReactElement {
+function DevtoolsView(): React.ReactElement {
 	return (
 		<Resizable
 			style={{

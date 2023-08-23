@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
@@ -14,10 +14,10 @@ import {
 } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import {
-	ChildLogger,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -40,7 +40,6 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
@@ -200,8 +199,21 @@ export async function fetchArray(
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
 	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	let arrayBuffer: ArrayBuffer;
+	try {
+		arrayBuffer = await content.arrayBuffer();
+	} catch (e) {
+		// Parsing can fail and message could contain full request URI, including
+		// tokens, etc. So do not log error object itself.
+		throwOdspNetworkError(
+			"Error while parsing fetch response",
+			fetchIncorrectResponse,
+			content, // response
+			undefined, // response text
+			propsToLog,
+		);
+	}
 
-	const arrayBuffer = await content.arrayBuffer();
 	propsToLog.bodySize = arrayBuffer.byteLength;
 	return {
 		headers,
@@ -236,6 +248,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 			fetchIncorrectResponse,
 			content, // response
 			text,
+			propsToLog,
 		);
 	}
 
@@ -289,9 +302,13 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 }
 
 export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
-	ChildLogger.create(logger, "OdspDriver", {
-		all: {
-			driverVersion,
+	createChildLogger({
+		logger,
+		namespace: "OdspDriver",
+		properties: {
+			all: {
+				driverVersion,
+			},
 		},
 	});
 
@@ -447,38 +464,6 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 	return [result, time];
 }
 
-export function validateMessages(
-	reason: string,
-	messages: ISequencedDocumentMessage[],
-	from: number,
-	logger: ITelemetryLoggerExt,
-) {
-	if (messages.length !== 0) {
-		const start = messages[0].sequenceNumber;
-		const length = messages.length;
-		const last = messages[length - 1].sequenceNumber;
-		if (start !== from) {
-			logger.sendErrorEvent({
-				eventName: "OpsFetchViolation",
-				reason,
-				from,
-				start,
-				last,
-				length,
-			});
-			messages.length = 0;
-		}
-		if (last + 1 !== from + length) {
-			logger.sendErrorEvent({
-				eventName: "OpsFetchViolation",
-				reason,
-				from,
-				start,
-				last,
-				length,
-			});
-			// we can do better here by finding consecutive sub-block and return it
-			messages.length = 0;
-		}
-	}
+export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
+	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
 }

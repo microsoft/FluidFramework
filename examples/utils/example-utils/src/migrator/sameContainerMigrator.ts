@@ -63,6 +63,7 @@ export class SameContainerMigrator
 		super();
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
+		this._currentModel.migrationTool.setContainerRef(this._currentModel.container);
 		this.takeAppropriateActionForCurrentMigratable();
 	}
 

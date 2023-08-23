@@ -17,27 +17,21 @@ export {
 } from "./browserPackage";
 export {
 	IConnectionDetails,
-	IConnectionDetailsInternal,
-	IDeltaHandlerStrategy,
 	IDeltaManager,
 	IDeltaManagerEvents,
-	IDeltaSender,
 	IDeltaQueue,
 	IDeltaQueueEvents,
+	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas";
 export {
+	ContainerErrorTypes,
 	ContainerErrorType,
 	ContainerWarning,
 	ICriticalContainerError,
-	IErrorBase,
-	IGenericError,
-	IUsageError,
-	IThrottlingWarning,
 } from "./error";
 export {
 	ConnectionState,
-	ICodeAllowList,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,
@@ -73,3 +67,22 @@ export {
 	IRuntime,
 	IRuntimeFactory,
 } from "./runtime";
+
+export {
+	/**
+	 * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IErrorBase,
+	/**
+	 * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IGenericError,
+	/**
+	 * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IThrottlingWarning,
+	/**
+	 * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
+	 */
+	IUsageError,
+} from "@fluidframework/core-interfaces";

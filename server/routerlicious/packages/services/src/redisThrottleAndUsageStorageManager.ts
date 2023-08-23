@@ -13,7 +13,7 @@ import {
 	executeRedisMultiWithHmsetExpireAndLpush,
 	IRedisParameters,
 } from "@fluidframework/server-services-utils";
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 import * as winston from "winston";
 import {
 	BaseTelemetryProperties,
@@ -28,7 +28,7 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "throttle";
 
-	constructor(private readonly client: Redis, parameters?: IRedisParameters) {
+	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}

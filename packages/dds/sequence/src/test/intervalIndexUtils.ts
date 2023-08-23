@@ -6,11 +6,11 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { Interval } from "../intervalCollection";
+import { Interval } from "../intervals";
 
 const reservedIntervalIdKey = "intervalId";
 
-interface RandomIntervalOptions {
+export interface RandomIntervalOptions {
 	random: IRandom;
 	count: number;
 	min: number;

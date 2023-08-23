@@ -4,23 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKinds, NodeChangeset } from "../feature-libraries";
-import { makeAnonChange, TreeSchemaIdentifier, Delta } from "../core";
+import { singleTextCursor } from "../feature-libraries";
+import { makeAnonChange, Delta, FieldKey } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
-
-const nodeType: TreeSchemaIdentifier = brand("Node");
-const fieldHandler = FieldKinds.value.changeHandler;
-const tree1 = { type: nodeType, value: "value1" };
-const tree2 = { type: nodeType, value: "value2" };
-const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
-const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
-const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
-
-const change1WithChildChange = { value: tree1, changes: nodeChange1 };
-const childChange1 = { changes: nodeChange1 };
-const childChange2 = { changes: nodeChange2 };
-const childChange3 = { changes: nodeChange3 };
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -73,9 +60,26 @@ describe("TestChange", () => {
 	it("can be represented as a delta", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
 		const delta = TestChange.toDelta(change1);
+		const fooField: FieldKey = brand("foo");
 		const expected = {
 			type: Delta.MarkType.Modify,
-			setValue: "2|3",
+			fields: new Map([
+				[
+					fooField,
+					[
+						{ type: Delta.MarkType.Delete, count: 1 },
+						{
+							type: Delta.MarkType.Insert,
+							content: [
+								singleTextCursor({
+									type: brand("test"),
+									value: "2|3",
+								}),
+							],
+						},
+					],
+				],
+			]),
 		};
 
 		assert.deepEqual(delta, expected);

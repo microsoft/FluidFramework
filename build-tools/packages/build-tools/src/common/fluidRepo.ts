@@ -143,13 +143,66 @@ export interface PolicyConfig {
 		};
 	};
 	dependencies?: {
-		requireTilde?: string[];
+		commandPackages: [string, string][];
 	};
 	/**
 	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
 	 * policy-check.
 	 */
 	exclusions?: string[];
+
+	/**
+	 * An object with handler name as keys that maps to an array of strings/regular expressions to
+	 * exclude that rule from being checked.
+	 */
+	handlerExclusions?: { [rule: string]: string[] };
+
+	packageNames?: PackageNamePolicyConfig;
+}
+
+/**
+ * Configuration for package naming and publication policies.
+ */
+export interface PackageNamePolicyConfig {
+	/**
+	 * A list of package scopes that are permitted in the repo.
+	 */
+	allowedScopes?: string[];
+	/**
+	 * A list of packages that have no scope.
+	 */
+	unscopedPackages?: string[];
+	/**
+	 * Packages that must be published.
+	 */
+	mustPublish: {
+		/**
+		 * A list of package names or scopes that must publish to npm, and thus should never be marked private.
+		 */
+		npm?: string[];
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus should always be marked
+		 * private.
+		 */
+		internalFeed?: string[];
+	};
+
+	/**
+	 * Packages that may or may not be published.
+	 */
+	mayPublish: {
+		/**
+		 * A list of package names or scopes that may publish to npm, and thus might or might not be marked private.
+		 */
+		npm?: string[];
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus might or might not be marked
+		 * private.
+		 */
+		internalFeed?: string[];
+	};
 }
 
 /**
@@ -293,6 +346,16 @@ export class FluidRepo {
 			return this.packages.noHoistInstall(this.resolvedRoot);
 		}
 		return FluidRepo.ensureInstalled(this.packages.packages);
+	}
+
+	/**
+	 * Transforms an absolute path to a path relative to the repo root.
+	 *
+	 * @param p - The path to make relative to the repo root.
+	 * @returns the relative path.
+	 */
+	public relativeToRepo(p: string): string {
+		return path.relative(this.resolvedRoot, p);
 	}
 }
 

@@ -23,8 +23,8 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
@@ -83,7 +83,9 @@ describeFullVersionCompat("GC Data Store Aliased Full Compat", (getTestObjectPro
 		const containerRuntime2 = mainDataStore2._context
 			.containerRuntime as unknown as IContainerRuntime;
 		assert.doesNotThrow(
-			async () => containerRuntime2.getRootDataStore(alias),
+			async () =>
+				containerRuntime2.getAliasedDataStoreEntryPoint?.(alias) ??
+				containerRuntime2.getRootDataStore(alias),
 			"Aliased datastore should be root as it is aliased!",
 		);
 		summaryWithStats = await waitForSummary(container2);

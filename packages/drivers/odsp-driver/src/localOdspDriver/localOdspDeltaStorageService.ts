@@ -7,7 +7,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { validateMessages } from "../odspUtils";
+import { validateMessages } from "@fluidframework/driver-base";
 
 /**
  * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages

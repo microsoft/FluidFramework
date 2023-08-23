@@ -4,7 +4,6 @@
  */
 
 import { URL } from "url";
-import child_process from "child_process";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
@@ -23,16 +22,6 @@ import { resolveWrapper } from "./fluidFetchSharePoint";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
-
-export const fluidFetchWebNavigator = (url: string) => {
-	let message = "Please open browser and navigate to this URL:";
-	if (process.platform === "win32") {
-		child_process.exec(`start "fluid-fetch" /B "${url}"`);
-		message =
-			"Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
-	}
-	console.log(`${message}\n  ${url}`);
-};
 
 async function initializeODSPCore(
 	odspResolvedUrl: IOdspResolvedUrl,

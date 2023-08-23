@@ -637,6 +637,7 @@ declare function get_current_InterfaceDeclaration_IQuorum():
 declare function use_old_InterfaceDeclaration_IQuorum(
     use: TypeOnly<old.IQuorum>);
 use_old_InterfaceDeclaration_IQuorum(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IQuorum());
 
 /*
@@ -661,6 +662,7 @@ declare function get_current_InterfaceDeclaration_IQuorumClients():
 declare function use_old_InterfaceDeclaration_IQuorumClients(
     use: TypeOnly<old.IQuorumClients>);
 use_old_InterfaceDeclaration_IQuorumClients(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IQuorumClients());
 
 /*
@@ -733,6 +735,7 @@ declare function get_current_InterfaceDeclaration_IQuorumProposals():
 declare function use_old_InterfaceDeclaration_IQuorumProposals(
     use: TypeOnly<old.IQuorumProposals>);
 use_old_InterfaceDeclaration_IQuorumProposals(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IQuorumProposals());
 
 /*

@@ -8,7 +8,6 @@ import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
@@ -34,7 +33,7 @@ const { log, verbose, errorLog: error } = defaultLogger;
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
-type FluidPackageJson = {
+export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
@@ -55,12 +54,11 @@ type FluidPackageJson = {
 /**
  * A type representing all known fields in package.json, including fluid-build-specific config.
  *
- * By default all fields are optional, but we require that the name, dependencies, devDependencies, scripts, and version
- * all be defined.
+ * By default all fields are optional, but we require that the name, scripts, and version all be defined.
  */
 export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
-	"name" | "dependencies" | "devDependencies" | "scripts" | "version"
+	"name" | "scripts" | "version"
 >;
 
 export class Package {
@@ -93,10 +91,21 @@ export class Package {
 		return this._packageJson;
 	}
 
+	/**
+	 * Create a new package from a package.json file. Prefer the .load method to calling the contructor directly.
+	 *
+	 * @param packageJsonFileName - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 */
 	constructor(
-		private readonly packageJsonFileName: string,
+		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		additionalProperties: any = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
@@ -107,6 +116,7 @@ export class Package {
 			? "yarn"
 			: "npm";
 		verbose(`Package loaded: ${this.nameColored}`);
+		Object.assign(this, additionalProperties);
 	}
 
 	/**
@@ -137,16 +147,27 @@ export class Package {
 		return PackageName.getScope(this.name);
 	}
 
+	public get private(): boolean {
+		return this.packageJson.private ?? false;
+	}
+
 	public get version(): string {
 		return this.packageJson.version;
 	}
 
 	public get isPublished(): boolean {
-		return !this.packageJson.private;
+		return !this.private;
 	}
 
 	public get isTestPackage(): boolean {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
+	}
+
+	/**
+	 * Returns true if the package is a release group root package based on its directory path.
+	 */
+	public get isReleaseGroupRoot(): boolean {
+		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
 	}
 
 	public get matched() {
@@ -184,6 +205,22 @@ export class Package {
 
 	public get directory(): string {
 		return path.dirname(this.packageJsonFileName);
+	}
+
+	/**
+	 * Get the full path for the lock file.
+	 * @returns full path for the lock file, or undefined if one doesn't exist
+	 */
+	public getLockFilePath() {
+		const directory = this.monoRepo ? this.monoRepo.repoPath : this.directory;
+		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
+		for (const lockFileName of lockFileNames) {
+			const full = path.join(directory, lockFileName);
+			if (fs.existsSync(full)) {
+				return full;
+			}
+		}
+		return undefined;
 	}
 
 	public get installCommand(): string {
@@ -267,6 +304,56 @@ export class Package {
 		log(`${this.nameColored}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
 	}
+
+	/**
+	 * Load a package from a package.json file. Prefer this to calling the contructor directly.
+	 *
+	 * @param packageJsonFileName - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 */
+	public static load<T extends typeof Package, TAddProps>(
+		this: T,
+		packageJsonFileName: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: TAddProps,
+	) {
+		return new this(
+			packageJsonFileName,
+			group,
+			monoRepo,
+			additionalProperties,
+		) as InstanceType<T> & TAddProps;
+	}
+
+	/**
+	 * Load a package from directory containing a package.json.
+	 *
+	 * @param packageDir - The path to a package.json file.
+	 * @param group - A group that this package is a part of.
+	 * @param monoRepo - Set this if the package is part of a release group (monorepo).
+	 * @param additionalProperties - An object with additional properties that should be added to the class. This is
+	 * useful to augment the package class with additional properties.
+	 * @typeParam TAddProps - The type of the additional properties object.
+	 * @returns a loaded Package. If additional properties are specifed, the returned type will be Package & TAddProps.
+	 */
+	public static loadDir<T extends typeof Package, TAddProps>(
+		this: T,
+		packageDir: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: TAddProps,
+	) {
+		return Package.load(
+			path.join(packageDir, "package.json"),
+			group,
+			monoRepo,
+			additionalProperties,
+		) as InstanceType<T> & TAddProps;
+	}
 }
 
 interface TaskExec<TItem, TResult> {
@@ -319,7 +406,7 @@ export class Packages {
 	) {
 		const packageJsonFileName = path.join(dirFullPath, "package.json");
 		if (existsSync(packageJsonFileName)) {
-			return [new Package(packageJsonFileName, group, monoRepo)];
+			return [Package.load(packageJsonFileName, group, monoRepo)];
 		}
 
 		const packages: Package[] = [];

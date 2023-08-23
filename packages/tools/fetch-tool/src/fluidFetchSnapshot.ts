@@ -254,7 +254,7 @@ async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: 
 		storage.getSnapshotTree(version),
 	);
 	if (!tree) {
-		return Promise.reject(new Error("Failed to load snapshot tree"));
+		throw new Error("Failed to load snapshot tree");
 	}
 	return fetchBlobsFromSnapshotTree(storage, tree);
 }

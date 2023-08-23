@@ -8,7 +8,7 @@ import * as git from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
 	IThrottler,
-	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
@@ -18,7 +18,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -29,7 +29,8 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -54,6 +55,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.createBlob(body);
 	}
@@ -72,6 +74,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getBlob(sha, useCache);
 	}
@@ -94,7 +97,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		utils.validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const blobP = createBlob(
 				request.params.tenantId,
@@ -112,7 +115,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const blobP = getBlob(
@@ -132,7 +135,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 
@@ -143,8 +146,8 @@ export function create(
 				useCache,
 			);
 
-			blobP.then(
-				(blob) => {
+			blobP
+				.then((blob) => {
 					if (useCache) {
 						response.setHeader("Cache-Control", "public, max-age=31536000");
 					}
@@ -158,11 +161,10 @@ export function create(
 					response
 						.status(200)
 						.write(Buffer.from(blob.content, "base64"), () => response.end());
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(error?.code ?? 400).json(error?.message ?? error);
-				},
-			);
+				});
 		},
 	);
 

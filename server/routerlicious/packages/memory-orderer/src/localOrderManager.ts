@@ -62,16 +62,15 @@ export class LocalOrderManager {
 
 	private createLocalNode() {
 		this.localNodeP = this.nodeFactory.create();
-		this.localNodeP.then(
-			(localNode) => {
+		this.localNodeP
+			.then((localNode) => {
 				localNode.on("error", (error) => {
 					// Handle disconnects, error, etc... and create a new node
 				});
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				// Reconnect the node
-			},
-		);
+			});
 	}
 
 	private getKey(tenantId: string, documentId: string) {

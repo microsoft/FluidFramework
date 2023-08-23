@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { DocSegmentKind, getCss, getDocSegmentKind } from "../document";
-import { emptyObject, TagName } from "../util";
-import { getAttrs, syncAttrs } from "../util/attr";
+import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
+import { emptyObject, TagName } from "../util/index.js";
+import { getAttrs, syncAttrs } from "../util/attr.js";
 
-import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
-import { Layout } from "../view/layout";
-import { ICssProps, sameCss, syncCss } from "./css";
-import { debug } from "./debug";
+import { Formatter, IFormatterState, RootFormatter } from "../view/formatter.js";
+import { Layout } from "../view/layout.js";
+import { ICssProps, sameCss, syncCss } from "./css.js";
+import { debug } from "./debug.js";
 
 class HtmlFormatter extends RootFormatter<IFormatterState> {
 	public begin(layout: Layout) {

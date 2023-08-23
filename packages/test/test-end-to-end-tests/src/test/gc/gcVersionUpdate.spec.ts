@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -29,7 +28,7 @@ import {
 	IGCMetadata,
 	IGarbageCollector,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/gc";
+} from "@fluidframework/container-runtime/dist/gc/index.js";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -40,8 +39,12 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset GC state and regenerate summary. Basically, when we
  * update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeNoCompat("GC version update", (getTestObjectProvider) => {
+describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
+	const {
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
 	let provider: ITestObjectProvider;
+	// TODO:#4670: Make this compat-version-specific.
 	const dataObjectFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

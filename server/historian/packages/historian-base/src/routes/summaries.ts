@@ -12,7 +12,7 @@ import {
 import {
 	IStorageNameRetriever,
 	IThrottler,
-	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
@@ -22,7 +22,8 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../services";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { ICache, IDenyList, ITenantService } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
@@ -34,9 +35,11 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
+	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
@@ -96,6 +99,7 @@ export function create(
 			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -106,6 +110,8 @@ export function create(
 		params: IWholeSummaryPayload,
 		initial?: boolean,
 		storageName?: string,
+		isEphemeralContainer?: boolean,
+		ignoreEphemeralFlag?: boolean,
 	): Promise<IWriteSummaryResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -117,6 +123,9 @@ export function create(
 			asyncLocalStorage,
 			initialUpload: initial,
 			storageName,
+			isEphemeralContainer,
+			ignoreEphemeralFlag,
+			denyList,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -135,6 +144,7 @@ export function create(
 			cache,
 			asyncLocalStorage,
 			allowDisabledTenant: true,
+			denyList,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
@@ -149,7 +159,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -176,7 +186,7 @@ export function create(
 			createSummaryPerClusterThrottleOptions,
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -187,12 +197,35 @@ export function create(
 					? request.query.initial
 					: request.query.initial === "true";
 
+			const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
+
+			// We treat these cases where we did not get the header as non-ephemeral containers
+			const isEphemeral: boolean =
+				isEphemeralFromRequest === undefined ? false : isEphemeralFromRequest === "true";
+
+			// Only the initial post summary has a valid IsEphemeralContainer flag which we store in cache
+			// For the other cases, we set the flag to undefined so that it can fetched from cache/storage
+			const isEphemeralContainer: boolean | undefined = !ignoreIsEphemeralFlag
+				? initial
+					? isEphemeral
+					: undefined
+				: false;
+
+			const lumberjackProperties = {
+				[BaseTelemetryProperties.tenantId]: request.params.tenantId,
+				[Constants.IsEphemeralContainer]: isEphemeralContainer,
+				[Constants.isInitialSummary]: initial,
+			};
+			Lumberjack.info(`Calling createSummary`, lumberjackProperties);
+
 			const summaryP = createSummary(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
 				initial,
 				request.get("StorageName"),
+				isEphemeralContainer,
+				ignoreIsEphemeralFlag,
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);
@@ -202,7 +235,7 @@ export function create(
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/summaries",
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
-		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		utils.verifyTokenNotRevoked(revokedTokenChecker),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(

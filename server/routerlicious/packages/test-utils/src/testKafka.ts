@@ -46,7 +46,7 @@ export class TestConsumer implements IConsumer {
 		assert(partitionId === 0);
 
 		if (this.failOnCommit) {
-			return Promise.reject(new Error("TestConsumer set to fail on commit"));
+			throw new Error("TestConsumer set to fail on commit");
 		} else {
 			this.context.checkpoint(queuedMessage);
 			return;

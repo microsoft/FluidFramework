@@ -24,12 +24,15 @@ export interface TreeViewProps
  */
 export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerKey, label, node } = props;
+	const metadata = JSON.stringify(node.metadata);
 
 	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (
 		<TreeDataView key={key} containerKey={containerKey} label={key} node={fluidObject} />
 	));
 
-	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
+	const header = (
+		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+	);
 
 	return <TreeItem header={header}>{childNodes}</TreeItem>;
 }

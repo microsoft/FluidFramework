@@ -25,7 +25,7 @@ browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
 	popupElement.style.height = "100%";
 	popupElement.style.width = "100%";
 	popupElement.textContent =
-		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Client Debugger" tab.';
+		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
 
 	document.body.append(popupElement);
 });

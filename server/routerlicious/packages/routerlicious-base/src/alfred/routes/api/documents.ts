@@ -11,6 +11,8 @@ import {
 	ICache,
 	IDocumentRepository,
 	ITokenRevocationManager,
+	IRevokeTokenOptions,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -20,11 +22,17 @@ import {
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
+	getCorrelationIdWithHttpFallback,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import {
+	getBooleanParam,
+	validateRequestParams,
+	handleResponse,
+} from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
 	ISession,
 	NetworkError,
@@ -47,7 +55,8 @@ export function create(
 	tenantManager: ITenantManager,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	tokenManager?: ITokenRevocationManager,
+	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -57,6 +66,8 @@ export function create(
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
 	);
+
+	const ignoreEphemeralFlag: boolean = config.get("alfred:ignoreEphemeralFlag") ?? true;
 	// Whether to enforce server-generated document ids in create doc flow
 	const enforceServerGeneratedDocumentId: boolean =
 		config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
@@ -99,29 +110,29 @@ export function create(
 		singleUseTokenCache: undefined,
 		enableTokenCache: enableJwtTokenCache,
 		tokenCache: singleUseTokenCache,
+		revokedTokenChecker,
 	};
 
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
 				getParam(request.params, "id"),
 			);
-			documentP.then(
-				(document) => {
+			documentP
+				.then((document) => {
 					if (!document || document.scheduledDeletionTime) {
 						response.status(404);
 					}
 					response.status(200).json(document);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					response.status(400).json(error);
-				},
-			);
+				});
 		},
 	);
 
@@ -141,12 +152,13 @@ export function create(
 			winston,
 			createDocTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager, {
+		verifyStorageToken(tenantManager, config, {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
 			enableTokenCache: enableJwtTokenCache,
 			tokenCache: singleUseTokenCache,
+			revokedTokenChecker,
 		}),
 		async (request, response, next) => {
 			// Tenant and document
@@ -157,12 +169,25 @@ export function create(
 				: (request.body.id as string) || uuid();
 
 			// Summary information
-			const summary = request.body.summary;
+			const summary = request.body.enableAnyBinaryBlobOnFirstSummary
+				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
+				: request.body.summary;
+
+			Lumberjack.info(
+				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
 
 			// Protocol state
-			const { sequenceNumber, values, generateToken = false } = request.body;
+			const {
+				sequenceNumber,
+				values,
+				generateToken = false,
+				isEphemeralContainer = false,
+			} = request.body;
 
 			const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
+			const isEphemeral: boolean =
+				getBooleanParam(isEphemeralContainer) && !ignoreEphemeralFlag;
 
 			const createP = storage.createDocument(
 				tenantId,
@@ -175,6 +200,7 @@ export function create(
 				externalDeltaStreamUrl,
 				values,
 				enableDiscovery,
+				isEphemeral,
 			);
 
 			// Handle backwards compatibility for older driver versions.
@@ -237,7 +263,7 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -261,7 +287,7 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -281,7 +307,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -297,8 +323,17 @@ export function create(
 					response,
 				);
 			}
-			if (tokenManager) {
-				const resultP = tokenManager.revokeToken(tenantId, documentId, tokenId);
+			if (tokenRevocationManager) {
+				const correlationId = getCorrelationIdWithHttpFallback(request, response);
+				const options: IRevokeTokenOptions = {
+					correlationId,
+				};
+				const resultP = tokenRevocationManager.revokeToken(
+					tenantId,
+					documentId,
+					tokenId,
+					options,
+				);
 				return handleResponse(resultP, response);
 			} else {
 				return handleResponse(

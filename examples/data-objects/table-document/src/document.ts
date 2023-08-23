@@ -4,8 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
@@ -191,9 +190,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
 		this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
 
-		this.forwardEvent(this.cols, "op", "sequenceDelta");
-		this.forwardEvent(this.rows, "op", "sequenceDelta");
-		this.forwardEvent(this.matrix, "op", "sequenceDelta");
+		this.cols.on("op", (...args: any[]) => this.emit("op", ...args));
+		this.cols.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.rows.on("op", (...args: any[]) => this.emit("op", ...args));
+		this.rows.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+		this.matrix.on("op", (...args: any[]) => this.emit("op", ...args));
+		this.matrix.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
 	}
 
 	private readonly localRefToRowCol = (localRef: ReferencePosition) => {

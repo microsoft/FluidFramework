@@ -11,7 +11,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -24,8 +24,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 
-import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { defaultGCConfig } from "./gcTestConfigs.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates the state of the given node in the GC summary tree:
@@ -49,7 +49,7 @@ async function validateNodeStateInGCSummaryTree(
 		runGC: true,
 		fullTree: true,
 		trackState: false,
-		summaryLogger: new TelemetryNullLogger(),
+		summaryLogger: createChildLogger(),
 	});
 
 	const gcState = getGCStateFromSummary(summary);

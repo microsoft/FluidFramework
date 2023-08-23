@@ -11,9 +11,8 @@ import {
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 
 /**

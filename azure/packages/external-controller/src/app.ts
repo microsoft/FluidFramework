@@ -11,8 +11,10 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+
+import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
@@ -31,7 +33,10 @@ const userDetails: ICustomUserDetails = {
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
-const user = generateTestUser();
+const user = {
+	id: uuid(),
+	name: uuid(),
+};
 
 const azureUser = {
 	userId: user.id,
@@ -108,7 +113,7 @@ async function initializeNewContainer(
 async function start(): Promise<void> {
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
-	const baseLogger = new TelemetryNullLogger();
+	const baseLogger = createChildLogger();
 
 	// Wrap telemetry logger for use with Devtools
 	const devtoolsLogger = new DevtoolsLogger(baseLogger);

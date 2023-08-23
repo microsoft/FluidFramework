@@ -348,12 +348,15 @@ The following npm scripts are supported in this directory:
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
+| `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
+| `prettier` | `prettier --check . --ignore-path ../.prettierignore` |
+| `prettier:fix` | `prettier --write . --ignore-path ../.prettierignore` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->

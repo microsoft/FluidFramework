@@ -16,7 +16,7 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { DependencyUpdateType } from "./lib";
-import { isReleaseGroup } from "./releaseGroups";
+import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
 
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
@@ -30,13 +30,32 @@ export const rootPathFlag = Flags.custom({
 /**
  * A re-usable CLI flag to parse release groups.
  */
-export const releaseGroupFlag = Flags.custom({
+export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 	char: "g",
-	description: "Name of the release group",
+	description: "Name of a release group.",
+	aliases: ["releaseGroups"],
 	options: [...supportedMonoRepoValues()],
 	parse: async (str: string) => {
 		const group = str.toLowerCase();
 		if (!isReleaseGroup(group)) {
+			throw new TypeError(`Not a release group: ${str}`);
+		}
+
+		return group;
+	},
+});
+
+/**
+ * A re-usable CLI flag to parse release groups along with the value "all" to indicate all release groups.
+ */
+export const releaseGroupWithAllFlag = Flags.custom<ReleaseGroup | "all">({
+	char: "g",
+	description: "Name of a release group.",
+	aliases: ["releaseGroups"],
+	options: [...supportedMonoRepoValues(), "all"],
+	parse: async (str: string) => {
+		const group = str.toLowerCase();
+		if (group !== "all" && !isReleaseGroup(group)) {
 			throw new TypeError(`Not a release group: ${str}`);
 		}
 
@@ -122,6 +141,17 @@ export const versionSchemeFlag = Flags.custom<VersionScheme | undefined>({
 });
 
 /**
+ * A re-usable CLI flag used to enable test-only behavior in commands. The flag is hidden because it is intended to only
+ * be used for internal testing.
+ */
+export const testModeFlag = Flags.boolean({
+	default: false,
+	description: "Enables test mode. This flag enables other flags used for testing.",
+	hidden: true,
+	helpGroup: "TESTING",
+});
+
+/**
  * Reusable flags for cases where a command typically checks something before taking action. They default to true, but
  * can be negated with `--no-<flag>`. Intended to be used with {@link skipCheckFlag}.
  *
@@ -191,3 +221,100 @@ export const skipCheckFlag = Flags.boolean({
 	description: "Skip all checks.",
 	exclusive: ["install", "commit", "branchCheck", "updateCheck", "policyCheck"],
 });
+
+/**
+ * A set of flags that can be used to select packages in the repo. These flags provide a common way for commands to
+ * implement package selection and filtering.
+ */
+export const selectionFlags = {
+	all: Flags.boolean({
+		description:
+			"Run on all packages and release groups. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		exclusive: ["dir", "packages", "releaseGroup", "releaseGroupRoot"],
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	dir: Flags.directory({
+		description:
+			"Run on the package in this directory. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	packages: Flags.boolean({
+		description:
+			"Run on all independent packages in the repo. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		default: false,
+		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all"],
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	releaseGroup: releaseGroupWithAllFlag({
+		description:
+			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoot argument. Cannot be used with --all, --dir, or --packages.",
+		exclusive: ["all", "dir", "packages"],
+		helpGroup: "PACKAGE SELECTION",
+		multiple: true,
+	}),
+	releaseGroupRoot: releaseGroupWithAllFlag({
+		description:
+			"Run on the root package of the specified release groups. This does not include any child packages within the release group. To include those, use the --releaseGroup argument. Cannot be used with --all, --dir, or --packages.",
+		exclusive: ["all", "dir", "packages"],
+		helpGroup: "PACKAGE SELECTION",
+		multiple: true,
+		char: undefined,
+		aliases: ["releaseGroupRoots"],
+	}),
+};
+
+/**
+ * This interface is used for type enforcement of selection flags. The default oclif typing is complex and difficult to
+ * simplify, so this type just mirrors the object above with simpler typing. This should ONLY be used when processing
+ * raw flags.
+ *
+ * @internal
+ */
+export interface selectionFlags {
+	readonly all: boolean;
+	readonly dir: string | undefined;
+	readonly packages: boolean;
+	readonly releaseGroup: string[] | undefined;
+	readonly releaseGroupRoot: string[] | undefined;
+}
+
+/**
+ * A set of flags that can be used to filter selected packages in the repo.
+ */
+export const filterFlags = {
+	private: Flags.boolean({
+		description:
+			"Only include private packages. Use --no-private to exclude private packages instead.",
+		allowNo: true,
+		helpGroup: "PACKAGE FILTER",
+	}),
+	scope: Flags.string({
+		description:
+			"Package scopes to filter to. If provided, only packages whose scope matches the flag will be included. Cannot be used with --skipScope.",
+		exclusive: ["skipScope"],
+		multiple: true,
+		helpGroup: "PACKAGE FILTER",
+	}),
+	skipScope: Flags.string({
+		description:
+			"Package scopes to filter out. If provided, packages whose scope matches the flag will be excluded. Cannot be used with --scope.",
+		exclusive: ["scope"],
+		aliases: ["no-scope"],
+		multiple: true,
+		helpGroup: "PACKAGE FILTER",
+	}),
+};
+
+/**
+ * This interface is used for type enforcement of filter flags. The default oclif typing is complex and difficult to
+ * simplify, so this type just mirrors the object above with simpler typing. This should ONLY be used when processing
+ * raw flags.
+ *
+ * @internal
+ */
+export interface filterFlags {
+	readonly private: boolean;
+	readonly scope: string[] | undefined;
+	readonly skipScope: string[] | undefined;
+}

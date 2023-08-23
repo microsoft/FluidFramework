@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Redis } from "ioredis";
+import * as Redis from "ioredis";
 
 export interface IRedisParameters {
 	prefix?: string;
@@ -11,7 +11,7 @@ export interface IRedisParameters {
 }
 
 export const executeRedisMultiWithHmsetExpire = async (
-	client: Redis,
+	client: Redis.default,
 	key: string,
 	data: { [key: string]: any },
 	expireAfterSeconds: number,
@@ -22,7 +22,7 @@ export const executeRedisMultiWithHmsetExpire = async (
 			.hmset(key, data)
 			.expire(key, expireAfterSeconds)
 			.exec()
-			.then((results) => {
+			.then((results: any) => {
 				// results` is an array of responses corresponding to the sequence of queued commands.
 				// In other words, it is [Error | null, any][].
 				// Each response follows the format `[err, result]`. `err` refers to runtime errors.
@@ -57,7 +57,7 @@ export const executeRedisMultiWithHmsetExpire = async (
 	});
 
 export const executeRedisMultiWithHmsetExpireAndLpush = async (
-	client: Redis,
+	client: Redis.default,
 	hKey: string,
 	hData: { [key: string]: any },
 	lKey: string,
@@ -71,7 +71,7 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 			.expire(hKey, expireAfterSeconds)
 			.lpush(lKey, lData)
 			.exec()
-			.then((results) => {
+			.then((results: any) => {
 				// results` is an array of responses corresponding to the sequence of queued commands.
 				// In other words, it is [Error | null, any][].
 				// Each response follows the format `[err, result]`. `err` refers to runtime errors.

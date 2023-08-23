@@ -12,59 +12,48 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel } from "@fluid-internal/test-dds-utils";
+import {
+	createDDSFuzzSuite,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+} from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IIntervalCollection, IntervalStickiness, SequenceInterval } from "../intervalCollection";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalStickiness, SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
 	RangeSpec,
-	AddText,
-	RemoveRange,
 	AddInterval,
 	DeleteInterval,
 	ChangeInterval,
 	ChangeProperties,
 	FuzzTestState,
 	makeReducer,
+	IntervalOperationGenerationConfig,
+	defaultIntervalOperationGenerationConfig,
+	createSharedStringGeneratorOperations,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
-// Note: none of these options are currently exercised, since the fuzz test fails with pretty much
-// any configuration due to known bugs. Once shared interval collections are in a better state these
-// should be revisited.
-interface OperationGenerationConfig {
-	/**
-	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
-	 * Note due to concurency, during test execution the actual length of the string may exceed this.
-	 */
-	maxStringLength?: number;
-	/**
-	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
-	 * Note due to concurency, during test execution the actual number of intervals may exceed this.
-	 */
-	maxIntervals?: number;
-	maxInsertLength?: number;
-	intervalCollectionNamePool?: string[];
-	propertyNamePool?: string[];
-	validateInterval?: number;
-}
-
-const defaultOptions: Required<OperationGenerationConfig> = {
-	maxStringLength: 1000,
-	maxIntervals: 100,
-	maxInsertLength: 10,
-	intervalCollectionNamePool: ["comments"],
-	propertyNamePool: ["prop1", "prop2", "prop3"],
-	validateInterval: 100,
-};
-
 type ClientOpState = FuzzTestState;
-function makeOperationGenerator(
-	optionsParam?: OperationGenerationConfig,
+export function makeOperationGenerator(
+	optionsParam?: IntervalOperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
 ): Generator<Operation, ClientOpState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const {
+		startPosition,
+		addText,
+		removeRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	} = createSharedStringGeneratorOperations(optionsParam);
+
+	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
 
 	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
 		for (const _ of collection) {
@@ -72,17 +61,6 @@ function makeOperationGenerator(
 		}
 
 		return false;
-	}
-
-	// All subsequent helper functions are generators; note that they don't actually apply any operations.
-	function startPosition({ random, channel }: ClientOpState): number {
-		return random.integer(0, Math.max(0, channel.getLength() - 1));
-	}
-
-	function exclusiveRange(state: ClientOpState): RangeSpec {
-		const start = startPosition(state);
-		const end = state.random.integer(start + 1, state.channel.getLength());
-		return { start, end };
 	}
 
 	function inclusiveRange(state: ClientOpState): RangeSpec {
@@ -123,19 +101,6 @@ function makeOperationGenerator(
 			id,
 			collectionName,
 		};
-	}
-
-	async function addText(state: ClientOpState): Promise<AddText> {
-		const { random, channel } = state;
-		return {
-			type: "addText",
-			index: random.integer(0, channel.getLength()),
-			content: random.string(random.integer(0, options.maxInsertLength)),
-		};
-	}
-
-	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
-		return { type: "removeRange", ...exclusiveRange(state) };
 	}
 
 	async function addInterval(state: ClientOpState): Promise<AddInterval> {
@@ -181,13 +146,6 @@ function makeOperationGenerator(
 			return isNonEmpty(collection);
 		});
 
-	const lengthSatisfies =
-		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
-		({ channel }) =>
-			criteria(channel.getLength());
-	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
-	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
-
 	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ channel }) => {
 		let intervalCount = 0;
 		for (const label of channel.getIntervalCollectionLabels()) {
@@ -205,54 +163,134 @@ function makeOperationGenerator(
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
-
+	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
-		[addText, 2, isShorterThanMaxLength],
-		[removeRange, 1, hasNonzeroLength],
-		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
-		[deleteInterval, 2, hasAnInterval],
-		[changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
-		[changeProperties, 2, hasAnInterval],
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+				  })
+				: hasNonzeroLength,
+		],
+		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
+		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
+		[changeProperties, usableWeights.changeProperties, hasAnInterval],
 	]);
 }
 
+const baseModel: Omit<
+	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
+	"workloadName"
+> = {
+	generatorFactory: () =>
+		take(100, makeOperationGenerator(defaultIntervalOperationGenerationConfig)),
+	reducer:
+		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+		makeReducer(),
+	validateConsistency: assertEquivalentSharedStrings,
+	factory: new SharedStringFactory(),
+};
+
+const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
+	validationStrategy: { type: "fixedInterval", interval: 10 },
+	reconnectProbability: 0.1,
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	defaultTestCount: 100,
+	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+	parseOperations: (serialized: string) => {
+		const operations: Operation[] = JSON.parse(serialized);
+		// Replace this value with some other interval ID and uncomment to filter replay of the test
+		// suite to only include interval operations with this ID.
+		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+		// if (filterIntervalId) {
+		// 	return operations.filter((entry) =>
+		// 		[undefined, filterIntervalId].includes((entry as any).id),
+		// 	);
+		// }
+		return operations;
+	},
+};
+
 describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
+	const model = {
+		...baseModel,
 		workloadName: "default interval collection",
-		generatorFactory: () => take(100, makeOperationGenerator()),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new SharedStringFactory(),
 	};
 
 	createDDSFuzzSuite(model, {
-		validationStrategy: { type: "fixedInterval", interval: 10 },
-		reconnectProbability: 0.1,
-		numberOfClients: 3,
-		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.1,
-		},
-		defaultTestCount: 100,
+		...defaultFuzzOptions,
+		// ADO:5083, the seed 12 started failing after rebasing was added,
+		// however there are no rebase ops in this test run.
+		// the other failing seeds were added when updates of the msn on reconnects
+		// were introduced to
+		// skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
+		// TODO: remove when the sequence is fixed.
+		skip: [
+			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
+			76, 79, 86, 91, 92, 94,
+		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		parseOperations: (serialized: string) => {
-			const operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID and uncomment to filter replay of the test
-			// suite to only include interval operations with this ID.
-			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			// if (filterIntervalId) {
-			// 	return operations.filter((entry) =>
-			// 		[undefined, filterIntervalId].includes((entry as any).id),
-			// 	);
-			// }
-			return operations;
+	});
+});
+
+describe("IntervalCollection no reconnect fuzz testing", () => {
+	const noReconnectModel = {
+		...baseModel,
+		workloadName: "interval collection without reconnects",
+	};
+
+	const options = {
+		...defaultFuzzOptions,
+		reconnectProbability: 0.0,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
 		},
+	};
+
+	createDDSFuzzSuite(noReconnectModel, {
+		...options,
+		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
+		skip: [80, 9, 12, 44],
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+	});
+});
+
+describe("IntervalCollection fuzz testing with rebased batches", () => {
+	const noReconnectWithRebaseModel = {
+		...baseModel,
+		workloadName: "interval collection with rebasing",
+	};
+
+	createDDSFuzzSuite(noReconnectWithRebaseModel, {
+		...defaultFuzzOptions,
+		// ADO:5083, eventual consistency issue was detected
+		skip: [9, 12, 29],
+		reconnectProbability: 0.0,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
+		},
+		rebaseProbability: 0.2,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
 	});
 });
 

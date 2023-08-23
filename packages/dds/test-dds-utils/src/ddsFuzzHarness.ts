@@ -27,6 +27,7 @@ import {
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
@@ -66,6 +67,10 @@ export interface BaseOperation {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+}
+
+export interface TriggerRebase {
+	type: "rebase";
 }
 
 export interface AddClient {
@@ -188,6 +193,16 @@ export interface DDSFuzzHarnessEvents {
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
 	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
+
+	/**
+	 * Raised after creating the initialState but prior to performing the fuzzActions..
+	 */
+	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
+
+	/**
+	 * Raised after all fuzzActions have been completed.
+	 */
+	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 }
 
 export interface DDSFuzzSuiteOptions {
@@ -273,6 +288,11 @@ export interface DDSFuzzSuiteOptions {
 	reconnectProbability: number;
 
 	/**
+	 * Each non-synchronization option has this probability of rebasing the current batch before sending it.
+	 */
+	rebaseProbability: number;
+
+	/**
 	 * Seed which should be replayed from disk.
 	 *
 	 * This option is intended for quick, by-hand minimization of failure JSON. As such, it adds a `.only`
@@ -291,9 +311,21 @@ export interface DDSFuzzSuiteOptions {
 	 * createDDSFuzzSuite(model, { only: [42] });
 	 * ```
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}
+	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}.
 	 */
 	only: Iterable<number>;
+
+	/**
+	 * Skips the provided seeds.
+	 * @example
+	 * ```typescript
+	 * // Skips seed 42 for the given model.
+	 * createDDSFuzzSuite(model, { skip: [42] });
+	 * ```
+	 * @remarks
+	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link createDDSFuzzSuite.skip}.
+	 */
+	skip: Iterable<number>;
 
 	/**
 	 * Whether failure files should be saved to disk, and if so, the directory in which they should be saved.
@@ -302,6 +334,15 @@ export interface DDSFuzzSuiteOptions {
 	 * Turning on this feature is encouraged for quick minimization.
 	 */
 	saveFailures: false | { directory: string };
+
+	/**
+	 * Options to be provided to the underlying container runtimes {@link IMockContainerRuntimeOptions}.
+	 * By default nothing will be provided, which means that the runtimes will:
+	 * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
+	 * therefore all batches have a single op.
+	 * - not use grouped batching.
+	 */
+	containerRuntimeOptions?: IMockContainerRuntimeOptions;
 }
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
@@ -309,8 +350,10 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
+	skip: [],
 	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
 	reconnectProbability: 0,
+	rebaseProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
 };
@@ -422,6 +465,56 @@ export function mixinReconnect<
 }
 
 /**
+ * Mixes in functionality to rebase in-flight batches in a DDS fuzz model. A batch is rebased by
+ * resending it to the datastores before being sent over the wire.
+ *
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinRebase<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | TriggerRebase, TState> {
+	const generatorFactory: () => Generator<TOperation | TriggerRebase, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | TriggerRebase | typeof done> => {
+			const baseOp = baseGenerator(state);
+			if (state.random.bool(options.rebaseProbability)) {
+				const client = state.clients.find((c) => c.channel.id === state.channel.id);
+				assert(client !== undefined);
+				return {
+					type: "rebase",
+				};
+			}
+
+			return baseOp;
+		};
+	};
+
+	const reducer: Reducer<TOperation | TriggerRebase, TState> = async (state, operation) => {
+		if (operation.type === "rebase") {
+			assert(
+				state.client.containerRuntime.rebase !== undefined,
+				"Unsupported mock runtime version",
+			);
+			state.client.containerRuntime.rebase();
+			return state;
+		} else {
+			return model.reducer(state, operation as TOperation);
+		}
+	};
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
+/**
  * Mixes in functionality to generate ops which synchronize all clients and assert the resulting state is consistent.
  * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
@@ -473,16 +566,26 @@ export function mixinSynchronization<
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		if (isSynchronizeOp(operation)) {
-			state.containerRuntimeFactory.processAllMessages();
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,
 			);
+
+			for (const client of connectedClients) {
+				assert(
+					client.containerRuntime.flush !== undefined,
+					"Unsupported mock runtime version",
+				);
+				client.containerRuntime.flush();
+			}
+
+			state.containerRuntimeFactory.processAllMessages();
 			if (connectedClients.length > 0) {
 				const readonlyChannel = state.summarizerClient.channel;
 				for (const { channel } of connectedClients) {
 					model.validateConsistency(readonlyChannel, channel);
 				}
 			}
+
 			return state;
 		}
 		return model.reducer(state, operation);
@@ -640,12 +743,14 @@ export async function runTestForSeed<
 	TOperation extends BaseOperation,
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation>,
-	options: Omit<DDSFuzzSuiteOptions, "only">,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
 ): Promise<DDSFuzzTestState<TChannelFactory>> {
 	const random = makeRandom(seed);
-	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
+		options.containerRuntimeOptions,
+	);
 	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
 
 	const clients = await Promise.all(
@@ -672,12 +777,17 @@ export async function runTestForSeed<
 		client: makeUnreachableCodepathProxy("client"),
 	};
 
+	options.emitter.emit("testStart", initialState);
+
 	const finalState = await performFuzzActions(
 		model.generatorFactory(),
 		model.reducer,
 		initialState,
 		saveInfo,
 	);
+
+	options.emitter.emit("testEnd", finalState);
+
 	return finalState;
 }
 
@@ -687,16 +797,19 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	seed: number,
 	saveInfo: SaveInfo | undefined,
 ): void {
-	const itFn = options.only.has(seed) ? it.only : it;
+	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
 		await runTestForSeed(model, options, seed, saveInfo);
 	});
 }
 
-type InternalOptions = Omit<DDSFuzzSuiteOptions, "only"> & { only: Set<number> };
+type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
+	only: Set<number>;
+	skip: Set<number>;
+};
 
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
-	return options.only instanceof Set;
+	return options.only instanceof Set && options.skip instanceof Set;
 }
 
 export async function replayTest<
@@ -713,12 +826,10 @@ export async function replayTest<
 		...defaultDDSFuzzSuiteOptions,
 		...providedOptions,
 		only: new Set(providedOptions?.only ?? []),
+		skip: new Set(providedOptions?.skip ?? []),
 	};
 
-	const _model = mixinSynchronization(
-		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
-		options,
-	);
+	const _model = getFullModel(ddsModel, options);
 
 	const model = {
 		..._model,
@@ -745,13 +856,11 @@ export function createDDSFuzzSuite<
 	};
 
 	const only = new Set(options.only);
-	options.only = only;
+	const skip = new Set(options.skip);
+	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
-	const model = mixinSynchronization(
-		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
-		options,
-	);
+	const model = getFullModel(ddsModel, options);
 
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
 	describeFuzz(model.workloadName, ({ testCount }) => {
@@ -791,6 +900,21 @@ export function createDDSFuzzSuite<
 	});
 }
 
+const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<
+	TChannelFactory,
+	TOperation | AddClient | ChangeConnectionState | TriggerRebase | Synchronize
+> =>
+	mixinSynchronization(
+		mixinNewClient(
+			mixinClientSelection(mixinReconnect(mixinRebase(ddsModel, options), options), options),
+			options,
+		),
+		options,
+	);
+
 /**
  * Runs only the provided seeds.
  * @example
@@ -808,4 +932,23 @@ createDDSFuzzSuite.only =
 		createDDSFuzzSuite(ddsModel, {
 			...providedOptions,
 			only: [...seeds, ...(providedOptions?.only ?? [])],
+		});
+
+/**
+ * Skips the provided seeds.
+ * @example
+ * ```typescript
+ * // Skips seed 42 for the given model.
+ * createDDSFuzzSuite(model, { skip: [42] });
+ * ```
+ */
+createDDSFuzzSuite.skip =
+	(...seeds: number[]) =>
+	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+		providedOptions?: Partial<DDSFuzzSuiteOptions>,
+	): void =>
+		createDDSFuzzSuite(ddsModel, {
+			...providedOptions,
+			skip: [...seeds, ...(providedOptions?.skip ?? [])],
 		});

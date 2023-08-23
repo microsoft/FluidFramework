@@ -4,19 +4,17 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	ITelemetryLoggerExt,
-	ChildLogger,
-	DebugLogger,
 	IConfigProviderBase,
-	loggerToMonitoringContext,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 	sessionStorageConfigProvider,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryBaseLogger,
 	FluidObject,
 	IFluidRouter,
 	IRequest,
@@ -39,18 +37,16 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/container-utils";
+import { IClientDetails } from "@fluidframework/protocol-definitions";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
+import { DebugLogger } from "./debugLogger";
 
 function canUseCache(request: IRequest): boolean {
-	if (request.headers === undefined) {
-		return true;
-	}
-
-	return request.headers[LoaderHeader.cache] !== false;
+	return request.headers?.[LoaderHeader.cache] === true;
 }
 
 function ensureResolvedUrlDefined(
@@ -69,6 +65,9 @@ export class RelativeLoader implements ILoader {
 		private readonly loader: ILoader | undefined,
 	) {}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -79,8 +78,7 @@ export class RelativeLoader implements ILoader {
 				return this.container;
 			} else {
 				ensureResolvedUrlDefined(this.container.resolvedUrl);
-				const container = await Container.clone(
-					this.container,
+				const container = await this.container.clone(
 					{
 						resolvedUrl: { ...this.container.resolvedUrl },
 						version: request.headers?.[LoaderHeader.version] ?? undefined,
@@ -101,6 +99,9 @@ export class RelativeLoader implements ILoader {
 		return this.loader.resolve(request);
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		if (request.url.startsWith("/")) {
 			const container = await this.resolve(request);
@@ -308,38 +309,69 @@ export class Loader implements IHostLoader {
 	private readonly mc: MonitoringContext;
 
 	constructor(loaderProps: ILoaderProps) {
-		const scope: FluidObject<ILoader> = { ...loaderProps.scope };
-		if (loaderProps.options?.provideScopeLoader !== false) {
-			scope.ILoader = this;
-		}
+		const {
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options,
+			scope,
+			logger,
+			detachedBlobStorage,
+			configProvider,
+			protocolHandlerBuilder,
+		} = loaderProps;
+
 		const telemetryProps = {
 			loaderId: uuid(),
 			loaderVersion: pkgVersion,
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, {
+			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
 				all: telemetryProps,
 			}),
 			sessionStorageConfigProvider.value,
-			loaderProps.configProvider,
+			configProvider,
 		);
 
 		this.services = {
-			...loaderProps,
-			scope,
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			options: options ?? {},
+			scope:
+				options?.provideScopeLoader !== false ? { ...scope, ILoader: this } : { ...scope },
+			detachedBlobStorage,
+			protocolHandlerBuilder,
 			subLogger: subMc.logger,
-			options: loaderProps.options ?? {},
 		};
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.services.subLogger, "Loader"));
+		this.mc = createChildMonitoringContext({
+			logger: this.services.subLogger,
+			namespace: "Loader",
+		});
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
 
-	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(this.services, codeDetails);
+	public async createDetachedContainer(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> {
+		const container = await Container.createDetached(
+			{
+				...createDetachedProps,
+				...this.services,
+			},
+			codeDetails,
+		);
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
@@ -354,8 +386,20 @@ export class Loader implements IHostLoader {
 		return container;
 	}
 
-	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(this.services, snapshot);
+	public async rehydrateDetachedContainerFromSnapshot(
+		snapshot: string,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> {
+		return Container.rehydrateDetachedFromSnapshot(
+			{
+				...createDetachedProps,
+				...this.services,
+			},
+			snapshot,
+		);
 	}
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -369,6 +413,9 @@ export class Loader implements IHostLoader {
 		});
 	}
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -395,16 +442,23 @@ export class Loader implements IHostLoader {
 		this.containers.set(key, containerP);
 		containerP
 			.then((container) => {
-				// If the container is closed or becomes closed after we resolve it, remove it from the cache.
-				if (container.closed) {
+				// If the container is closed/disposed or becomes closed/disposed after we resolve it,
+				// remove it from the cache.
+				if (container.closed || container.disposed) {
 					this.containers.delete(key);
 				} else {
 					container.once("closed", () => {
 						this.containers.delete(key);
 					});
+					container.once("disposed", () => {
+						this.containers.delete(key);
+					});
 				}
 			})
-			.catch((error) => {});
+			.catch((error) => {
+				// If an error occured while resolving the container request, then remove it from the cache.
+				this.containers.delete(key);
+			});
 	}
 
 	private async resolveCore(
@@ -431,11 +485,36 @@ export class Loader implements IHostLoader {
 			}
 		}
 
-		const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-		const shouldCache = pendingLocalState !== undefined ? false : canCache;
+		request.headers ??= {};
+		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
+		request.headers[LoaderHeader.version] =
+			parsed.version ?? request.headers[LoaderHeader.version];
+		const cacheHeader = request.headers[LoaderHeader.cache];
+		const canCache =
+			// Take header value if present, else use ILoaderOptions.cache value
+			(cacheHeader !== undefined ? cacheHeader === true : this.cachingEnabled) &&
+			pendingLocalState === undefined;
+		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as
+			| number
+			| undefined;
+		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
+			| string
+			| undefined;
+
+		if (
+			opsBeforeReturn === "sequenceNumber" &&
+			(fromSequenceNumber === undefined || fromSequenceNumber < 0)
+		) {
+			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
+			throw new UsageError("sequenceNumber must be set to a non-negative integer");
+		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== undefined) {
+			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be undefined (default value).
+			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
+			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
+		}
 
 		let container: Container;
-		if (shouldCache) {
+		if (canCache) {
 			const key = this.getKeyForContainerCache(request, parsed);
 			const maybeContainer = await this.containers.get(key);
 			if (maybeContainer !== undefined) {
@@ -449,50 +528,11 @@ export class Loader implements IHostLoader {
 			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 		}
 
-		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
-			await new Promise<void>((resolve, reject) => {
-				function opHandler(message: ISequencedDocumentMessage) {
-					if (message.sequenceNumber > fromSequenceNumber) {
-						resolve();
-						container.removeListener("op", opHandler);
-					}
-				}
-
-				container.on("op", opHandler);
-			});
-		}
-
 		return { container, parsed };
 	}
 
 	private get cachingEnabled() {
-		return this.services.options.cache !== false;
-	}
-
-	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
-	}
-
-	private parseHeader(parsed: IParsedUrl, request: IRequest) {
-		let fromSequenceNumber = -1;
-
-		request.headers = request.headers ?? {};
-
-		const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
-		if (headerSeqNum !== undefined) {
-			fromSequenceNumber = headerSeqNum;
-		}
-
-		// If set in both query string and headers, use query string
-		request.headers[LoaderHeader.version] =
-			parsed.version ?? request.headers[LoaderHeader.version];
-
-		const canCache = this.canCacheForRequest(request.headers);
-
-		return {
-			canCache,
-			fromSequenceNumber,
-		};
+		return this.services.options.cache === true;
 	}
 
 	private async loadContainer(
@@ -506,6 +546,7 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,
+				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
 			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],

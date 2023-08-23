@@ -11,7 +11,7 @@ import {
 	ILocationRedirectionError,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {

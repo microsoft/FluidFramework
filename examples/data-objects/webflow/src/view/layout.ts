@@ -13,7 +13,7 @@ import {
 	LocalReferencePosition,
 } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
-import { FlowDocument } from "../document";
+import { FlowDocument } from "../document/index.js";
 import {
 	clamp,
 	Dom,
@@ -23,10 +23,10 @@ import {
 	hasTagName,
 	isTextNode,
 	TagName,
-} from "../util";
-import { extractRef, updateRef } from "../util/localref";
-import { debug } from "./debug";
-import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
+} from "../util/index.js";
+import { extractRef, updateRef } from "../util/localref.js";
+import { debug } from "./debug.js";
+import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter.js";
 
 interface ILayoutCursor {
 	parent: Node;

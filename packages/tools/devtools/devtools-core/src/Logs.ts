@@ -6,7 +6,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { ContainerStateChangeKind } from "./Container";
 
 /**
- * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
+ * Base interface for data logs, associating data with a timestamp at which the data was recorded by the devtools.
  *
  * @internal
  */

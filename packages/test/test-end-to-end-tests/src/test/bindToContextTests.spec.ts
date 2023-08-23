@@ -12,73 +12,85 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IDataStoreWithBindToContext_Deprecated } from "@fluidframework/container-runtime-definitions";
 
-class InnerDataObject extends DataObject implements ITestDataObject {
-	public get _root() {
-		return this.root;
+describeFullCompat("bindToContext tests", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	class InnerDataObject extends DataObject implements ITestDataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _context() {
+			return this.context;
+		}
+
+		public get _runtime() {
+			return this.runtime;
+		}
 	}
+	const innerDataObjectFactory = new DataObjectFactory(
+		"InnerDataObject",
+		InnerDataObject,
+		[],
+		[],
+	);
 
-	public get _context() {
-		return this.context;
+	class OuterDataObject extends DataObject implements ITestDataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _context() {
+			return this.context;
+		}
+
+		public get _runtime() {
+			return this.runtime;
+		}
+
+		private readonly innerDataStoreKey = "innerDataStore";
+
+		protected async initializingFirstTime(): Promise<void> {
+			const innerDataStoreRouter = await this._context.containerRuntime.createDataStore(
+				innerDataObjectFactory.type,
+			);
+			const innerDataStore = await requestFluidObject<ITestDataObject>(
+				innerDataStoreRouter,
+				"",
+			);
+
+			this.root.set(this.innerDataStoreKey, innerDataStore.handle);
+
+			// IMPORTANT: Without calling bindToContext, requesting this inner object deadlocks (handle.get is fine)
+			(
+				innerDataStoreRouter as IDataStoreWithBindToContext_Deprecated
+			)?.fluidDataStoreChannel?.bindToContext?.();
+		}
+
+		protected async hasInitialized(): Promise<void> {
+			const innerDataStoreHandle = this.root.get<IFluidHandle<InnerDataObject>>(
+				this.innerDataStoreKey,
+			);
+			assert(innerDataStoreHandle !== undefined, "inner data store handle is missing");
+
+			const innerDataStore = await this._context.containerRuntime.request({
+				url: innerDataStoreHandle.absolutePath,
+			});
+			assert(innerDataStore.status === 200, "could not load inner data store");
+		}
 	}
+	const outerDataObjectFactory = new DataObjectFactory(
+		"OuterDataObject",
+		OuterDataObject,
+		[],
+		[],
+	);
 
-	public get _runtime() {
-		return this.runtime;
-	}
-}
-const innerDataObjectFactory = new DataObjectFactory("InnerDataObject", InnerDataObject, [], []);
-
-class OuterDataObject extends DataObject implements ITestDataObject {
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	public get _runtime() {
-		return this.runtime;
-	}
-
-	private readonly innerDataStoreKey = "innerDataStore";
-
-	protected async initializingFirstTime(): Promise<void> {
-		const innerDataStoreRouter = await this._context.containerRuntime.createDataStore(
-			innerDataObjectFactory.type,
-		);
-		const innerDataStore = await requestFluidObject<ITestDataObject>(innerDataStoreRouter, "");
-
-		this.root.set(this.innerDataStoreKey, innerDataStore.handle);
-
-		// IMPORTANT: Without calling bindToContext, requesting this inner object deadlocks (handle.get is fine)
-		(
-			innerDataStoreRouter as IDataStoreWithBindToContext_Deprecated
-		)?.fluidDataStoreChannel?.bindToContext?.();
-	}
-
-	protected async hasInitialized(): Promise<void> {
-		const innerDataStoreHandle = this.root.get<IFluidHandle<InnerDataObject>>(
-			this.innerDataStoreKey,
-		);
-		assert(innerDataStoreHandle !== undefined, "inner data store handle is missing");
-
-		const innerDataStore = await this._context.containerRuntime.request({
-			url: innerDataStoreHandle.absolutePath,
-		});
-		assert(innerDataStore.status === 200, "could not load inner data store");
-	}
-}
-const outerDataObjectFactory = new DataObjectFactory("OuterDataObject", OuterDataObject, [], []);
-
-describeFullCompat("bindToContext tests", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);

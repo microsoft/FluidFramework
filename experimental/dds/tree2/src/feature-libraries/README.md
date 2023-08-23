@@ -4,7 +4,7 @@ Libraries which plug into the [Core Libraries](../core/README.md) to provide spe
 
 This includes concrete implementations of abstractions used to parameterize `SharedTreeCore` (Like `Index` and `ChangeFamily`), or any other entry points to the `core` libraries] package (like `Forest`).
 
-`SharedTreeCore` should be usable with alternative versions of anything withing this library.
+`SharedTreeCore` should be usable with alternative versions of anything within this library.
 
 Some important libraries in here:
 
@@ -77,7 +77,7 @@ There are a few different usage patterns for systems with existing data:
 
 ### Misc use-case
 
-Large documents, partial checkout, permissions
+Large documents, partial view, permissions
 
 indexing / external readonly copies: update them from deltas (or maybe from change sets?)
 
@@ -133,7 +133,7 @@ rest: document specific schema perf
 
 cross document schema caching: hash -> rest service
 
-rest: need partial checkout
+rest: need partial view
 
 rest: post vs put. Constraint to prevent concurrent edits. can express cancel of modified. Json patch. Reference identifier to diff against.
 

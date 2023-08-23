@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ConnectionState } from "./connectionState";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
-import { ILocalSequencedClient, IProtocolHandler } from "./protocol";
+import { ConnectionState } from "./connectionState";
+import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts";
+import { IProtocolHandler } from "./protocol";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -32,8 +33,7 @@ export interface IConnectionStateHandlerInputs {
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string | undefined,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -45,6 +45,8 @@ export interface IConnectionStateHandlerInputs {
 		category: TelemetryEventCategory,
 		details?: ITelemetryProperties,
 	) => void;
+	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
+	clientShouldHaveLeft: (clientId: string) => void;
 }
 
 /**
@@ -58,7 +60,14 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
+	receivedDisconnectEvent(reason: IConnectionStateChangeReason): void;
+	establishingConnection(reason: IConnectionStateChangeReason): void;
+	/**
+	 * Switches state to disconnected when we are still establishing connection during container.load(),
+	 * container connect() or reconnect and the container gets closed or disposed or disconnect happens.
+	 * @param reason - reason for cancelling the connection.
+	 */
+	cancelEstablishingConnection(reason: IConnectionStateChangeReason): void;
 }
 
 export function createConnectionStateHandler(
@@ -140,8 +149,16 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
-		return this.pimpl.receivedDisconnectEvent(reason, error);
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
+		return this.pimpl.receivedDisconnectEvent(reason);
+	}
+
+	public establishingConnection(reason: IConnectionStateChangeReason) {
+		return this.pimpl.establishingConnection(reason);
+	}
+
+	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
+		return this.pimpl.cancelEstablishingConnection(reason);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -158,10 +175,9 @@ class ConnectionStateHandlerPassThrough
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string | undefined,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	) {
-		return this.inputs.connectionStateChanged(value, oldState, reason, error);
+		return this.inputs.connectionStateChanged(value, oldState, reason);
 	}
 	public shouldClientJoinWrite() {
 		return this.inputs.shouldClientJoinWrite();
@@ -175,6 +191,9 @@ class ConnectionStateHandlerPassThrough
 		details?: ITelemetryProperties,
 	) {
 		return this.inputs.logConnectionIssue(eventName, category, details);
+	}
+	public clientShouldHaveLeft(clientId: string) {
+		return this.inputs.clientShouldHaveLeft(clientId);
 	}
 }
 
@@ -202,8 +221,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
-		reason?: string | undefined,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason<IAnyDriverError>,
 	) {
 		switch (value) {
 			case ConnectionState.Connected:
@@ -230,16 +248,24 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
 				break;
-			case ConnectionState.CatchingUp:
+			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
+			// during container.connect() or reconnect because of an error.
+			case ConnectionState.EstablishingConnection:
 				assert(
 					this._connectionState === ConnectionState.Disconnected,
+					0x6d2 /* connectivity transition to establishing connection */,
+				);
+				break;
+			case ConnectionState.CatchingUp:
+				assert(
+					this._connectionState === ConnectionState.EstablishingConnection,
 					0x3e3 /* connectivity transitions */,
 				);
 				break;
 			default:
 		}
 		this._connectionState = value;
-		this.inputs.connectionStateChanged(value, oldState, reason, error);
+		this.inputs.connectionStateChanged(value, oldState, reason);
 	}
 
 	private readonly transitionToConnectedState = () => {
@@ -248,11 +274,9 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		assert(state === ConnectionState.Connected, 0x3e5 /* invariant broken */);
 		assert(this._connectionState === ConnectionState.CatchingUp, 0x3e6 /* invariant broken */);
 		this._connectionState = ConnectionState.Connected;
-		this.inputs.connectionStateChanged(
-			ConnectionState.Connected,
-			ConnectionState.CatchingUp,
-			"caught up",
-		);
+		this.inputs.connectionStateChanged(ConnectionState.Connected, ConnectionState.CatchingUp, {
+			text: "caught up",
+		});
 	};
 }
 
@@ -466,9 +490,29 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
+	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
 		this.connection = undefined;
-		this.setConnectionState(ConnectionState.Disconnected, reason, error);
+		this.setConnectionState(ConnectionState.Disconnected, reason);
+	}
+
+	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
+		assert(
+			this._connectionState === ConnectionState.EstablishingConnection,
+			0x6d3 /* Connection state should be EstablishingConnection */,
+		);
+		assert(this.connection === undefined, 0x6d4 /* No connetion should be present */);
+		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.Disconnected;
+		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
+	}
+
+	public establishingConnection(reason: IConnectionStateChangeReason) {
+		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.EstablishingConnection;
+		this.handler.connectionStateChanged(ConnectionState.EstablishingConnection, oldState, {
+			text: `Establishing Connection due to ${reason.text}`,
+			error: reason.error,
+		});
 	}
 
 	private shouldWaitForJoinSignal() {
@@ -533,14 +577,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 	private setConnectionState(
 		value: ConnectionState.Disconnected,
-		reason: string,
-		error?: IAnyDriverError,
+		reason: IConnectionStateChangeReason,
 	): void;
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
-		reason?: string,
-		error?: IAnyDriverError,
+		reason?: IConnectionStateChangeReason,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early
@@ -554,18 +596,18 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// This is the only place in code that deals with quorum. The rest works with audience
 		// The code below ensures that we do not send ops until we know that old "write" client's disconnect
 		// produced (and sequenced) leave op
-		let client: ILocalSequencedClient | undefined;
-		if (this._clientId !== undefined) {
-			client = this.protocol?.quorum?.getMember(this._clientId);
-		}
+		const currentClientInQuorum =
+			this._clientId !== undefined &&
+			this.protocol?.quorum?.getMember(this._clientId) !== undefined;
 		if (value === ConnectionState.Connected) {
 			assert(
 				oldState === ConnectionState.CatchingUp,
 				0x1d8 /* "Should only transition from Connecting state" */,
 			);
 			// Mark our old client should have left in the quorum if it's still there
-			if (client !== undefined) {
-				client.shouldHaveLeft = true;
+			if (currentClientInQuorum) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.handler.clientShouldHaveLeft(this._clientId!);
 			}
 			this._clientId = this.pendingClientId;
 		} else if (value === ConnectionState.Disconnected) {
@@ -581,7 +623,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			// we could receive "Disconnected" event multiple times without getting connected and in that case we
 			// don't want to reset the timer as we still want to wait on original client which started this timer.
 			if (
-				client !== undefined &&
+				currentClientInQuorum &&
 				this.handler.shouldClientJoinWrite() &&
 				!this.waitingForLeaveOp // same as !this.prevClientLeftTimer.hasTimer
 			) {
@@ -592,7 +634,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					eventName: "noWaitOnDisconnected",
 					details: JSON.stringify({
 						clientId: this._clientId,
-						inQuorum: client !== undefined,
+						inQuorum: currentClientInQuorum,
 						waitingForLeaveOp: this.waitingForLeaveOp,
 						hadOutstandingOps: this.handler.shouldClientJoinWrite(),
 					}),
@@ -601,7 +643,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 
 		// Report transition before we propagate event across layers
-		this.handler.connectionStateChanged(this._connectionState, oldState, reason, error);
+		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
 	}
 
 	// Helper method to switch between quorum and audience.

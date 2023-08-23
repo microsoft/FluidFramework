@@ -26,6 +26,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		url: string,
 		logger: ITelemetryLoggerExt,
 		timeoutMs = 20000,
+		enableLongPollingDowngrade = true,
 	): Promise<IDocumentDeltaConnection> {
 		const socket = io(url, {
 			query: {
@@ -50,13 +51,11 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			),
 		};
 
-		// TODO: expose to host at factory level
-		const enableLongPollingDowngrades = true;
 		const deltaConnection = new R11sDocumentDeltaConnection(
 			socket,
 			id,
 			logger,
-			enableLongPollingDowngrades,
+			enableLongPollingDowngrade,
 		);
 
 		await deltaConnection.initialize(connectMessage, timeoutMs);

@@ -21,8 +21,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
-import { pkgVersion } from "../../packageVersion";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
+import { pkgVersion } from "../../packageVersion.js";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime

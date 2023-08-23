@@ -12,6 +12,7 @@ import {
 	Table,
 	TableHeader,
 	TableHeaderCell,
+	makeStyles,
 } from "@fluentui/react-components";
 import {
 	DoorArrowLeftRegular,
@@ -21,9 +22,28 @@ import {
 	ArrowExitRegular,
 } from "@fluentui/react-icons";
 
+import { ThemeOption, useThemeContext } from "../ThemeHelper";
 import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 import { LabelCellLayout } from "./utility-components";
+
+const audienceStyles = makeStyles({
+	joined: {
+		backgroundColor: tokens.colorPaletteRoyalBlueBackground2,
+	},
+	left: {
+		backgroundColor: tokens.colorPaletteRedBackground2,
+	},
+	highContrast: {
+		"color": "#FFF",
+		"&:hover": {
+			"color": "#000",
+			"& *": {
+				color: "#000",
+			},
+		},
+	},
+});
 
 /**
  * Represents audience history data filtered to the attributes that will be displayed in the history table.
@@ -38,9 +58,14 @@ export interface AudienceHistoryTableProps {
 
 /**
  * Renders audience history data of user status event, clientId & timestamp.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
+	const { themeInfo } = useThemeContext();
+
+	const style = audienceStyles();
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
@@ -81,13 +106,16 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			<TableBody>
 				{audienceHistoryItems.map((item, itemIndex) => (
 					<TableRow
+						// The list of items here is never reordered, and is strictly appended to,
+						// so using the index as the key here is safe.
 						key={itemIndex}
-						style={{
-							backgroundColor:
-								item.changeKind === "joined"
-									? tokens.colorPaletteRoyalBlueBackground2
-									: tokens.colorPaletteRedBorder1,
-						}}
+						className={
+							themeInfo.name === ThemeOption.HighContrast
+								? style.highContrast
+								: item.changeKind === "joined"
+								? style.joined
+								: style.left
+						}
 					>
 						<TableCell>
 							<LabelCellLayout

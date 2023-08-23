@@ -14,11 +14,11 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-v] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-t
+  $ flub release [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-t
     major|minor|patch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
+  -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
                                @fluid-tools/markdown-magic and markdown-magic are valid.
@@ -31,8 +31,9 @@ FLAGS
   --[no-]policyCheck           Check that the local repo complies with all policy.
   --[no-]updateCheck           Check that the local repo is up to date with the remote.
 
-GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
 
 DESCRIPTION
   Releases a package or release group.
@@ -57,14 +58,17 @@ Determines release information based on a git tag argument.
 
 ```
 USAGE
-  $ flub release fromTag TAG [-v] [--json]
+  $ flub release fromTag TAG [-v | --quiet] [--json]
 
 ARGUMENTS
   TAG  A git tag that represents a release. May begin with 'refs/tags/'.
 
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
 GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-  --json         Format output as json.
+  --json  Format output as json.
 
 DESCRIPTION
   Determines release information based on a git tag argument.
@@ -87,20 +91,23 @@ Prints a list of released versions of a package or release group. Releases are g
 
 ```
 USAGE
-  $ flub release history [-v] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-l <value>]
-    [--json]
+  $ flub release history [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-l
+    <value>] [--json]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of the release group
+  -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
                                @fluid-tools/markdown-magic and markdown-magic are valid.
 
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
 GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-  --json         Format output as json.
+  --json  Format output as json.
 
 DESCRIPTION
   Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo
@@ -126,8 +133,8 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [-v] [--json] [-i | -r | -s] [-g client|server|azure|build-tools|gitrest|historian] [-o
-    <value>]
+  $ flub release report [-v | --quiet] [--json] [-i | -r | -s] [-g
+    client|server|azure|build-tools|gitrest|historian] [-o <value>]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -153,9 +160,12 @@ FLAGS
   -s, --highest
       Always pick the greatest semver version as the latest (ignore dates).
 
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
 GLOBAL FLAGS
-  -v, --verbose  Verbose logging.
-  --json         Format output as json.
+  --json  Format output as json.
 
 DESCRIPTION
   Generates a report of Fluid Framework releases.

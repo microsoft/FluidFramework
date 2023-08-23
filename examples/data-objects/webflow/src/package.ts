@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { name, version } = require("../package.json");
-/* eslint-enable @typescript-eslint/no-var-requires */
+import { pkgName, pkgVersion } from "./packageVersion.js";
 
-const makeTypeName = (type: string) => `${name}/${type}@${version}`;
+const makeTypeName = (type: string) => `${pkgName}/${type}@${pkgVersion}`;
 
 export const hostType = makeTypeName("host");
 export const documentType = makeTypeName("flow-document");

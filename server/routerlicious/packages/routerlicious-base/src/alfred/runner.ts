@@ -20,19 +20,23 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { runnerHttpServerStop } from "../utils";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
+	private stopped: boolean = false;
+	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.AlfredRunner);
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
@@ -59,7 +63,8 @@ export class AlfredRunner implements IRunner {
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
 		private readonly socketTracker?: IWebSocketTracker,
-		private readonly tokenManager?: ITokenRevocationManager,
+		private readonly tokenRevocationManager?: ITokenRevocationManager,
+		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -79,7 +84,8 @@ export class AlfredRunner implements IRunner {
 			this.producer,
 			this.documentRepository,
 			this.documentDeleteService,
-			this.tokenManager,
+			this.tokenRevocationManager,
+			this.revokedTokenChecker,
 		);
 		alfred.set("port", this.port);
 
@@ -121,6 +127,7 @@ export class AlfredRunner implements IRunner {
 			this.throttleAndUsageStorageManager,
 			this.verifyMaxMessageSize,
 			this.socketTracker,
+			this.revokedTokenChecker,
 		);
 
 		// Listen on provided port, on all network interfaces.
@@ -129,34 +136,50 @@ export class AlfredRunner implements IRunner {
 		httpServer.on("listening", () => this.onListening());
 
 		// Start token manager
-		if (this.tokenManager) {
-			this.tokenManager.start().catch((error) => {
-				this.runningDeferred.reject(error);
+		if (this.tokenRevocationManager) {
+			this.tokenRevocationManager.start().catch((error) => {
+				// Prevent service crash if token revocation manager fails to start
+				Lumberjack.error("Failed to start token revocation manager.", undefined, error);
 			});
 		}
+
+		this.stopped = false;
 
 		return this.runningDeferred.promise;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public stop(): Promise<void> {
-		// Close the underlying server and then resolve the runner once closed
-		this.server.close().then(
-			() => {
-				this.runningDeferred.resolve();
-			},
-			(error) => {
-				this.runningDeferred.reject(error);
-			},
-		);
+	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
+		if (this.stopped) {
+			Lumberjack.info("AlfredRunner.stop already called, returning early.");
+			return;
+		}
 
-		return this.runningDeferred.promise;
+		this.stopped = true;
+		Lumberjack.info("AlfredRunner.stop starting.");
+
+		const runnerServerCloseTimeoutMs =
+			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
+
+		await runnerHttpServerStop(
+			this.server,
+			this.runningDeferred,
+			runnerServerCloseTimeoutMs,
+			this.runnerMetric,
+			caller,
+			uncaughtException,
+		);
 	}
 
 	/**
 	 * Event listener for HTTP server "error" event.
 	 */
 	private onError(error) {
+		if (!this.runnerMetric.isCompleted()) {
+			this.runnerMetric.error(
+				`${this.runnerMetric.eventName} encountered an error in http server`,
+				error,
+			);
+		}
 		if (error.syscall !== "listen") {
 			throw error;
 		}
@@ -166,10 +189,12 @@ export class AlfredRunner implements IRunner {
 		// Handle specific listen errors with friendly messages
 		switch (error.code) {
 			case "EACCES":
-				this.runningDeferred.reject(`${bind} requires elevated privileges`);
+				this.runningDeferred?.reject(`${bind} requires elevated privileges`);
+				this.runningDeferred = undefined;
 				break;
 			case "EADDRINUSE":
-				this.runningDeferred.reject(`${bind} is already in use`);
+				this.runningDeferred?.reject(`${bind} is already in use`);
+				this.runningDeferred = undefined;
 				break;
 			default:
 				throw error;

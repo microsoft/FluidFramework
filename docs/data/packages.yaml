@@ -6,4 +6,3 @@ serviceClients:
   - "@fluidframework/tinylicious-client"
 utilities:
   - "@fluidframework/azure-service-utils"
-  - "@fluidframework/test-client-utils"

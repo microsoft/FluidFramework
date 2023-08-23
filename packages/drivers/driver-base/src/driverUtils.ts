@@ -4,6 +4,8 @@
  */
 
 import { performance } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
  * Extract and return the w3c data.
@@ -102,4 +104,51 @@ export async function promiseRaceWithWinner<T>(
 			p.then((v) => resolve({ index, value: v })).catch(reject);
 		});
 	});
+}
+
+export function validateMessages(
+	reason: string,
+	messages: ISequencedDocumentMessage[],
+	from: number,
+	logger: ITelemetryLoggerExt,
+	strict: boolean = true,
+) {
+	if (messages.length !== 0) {
+		const start = messages[0].sequenceNumber;
+		const length = messages.length;
+		const last = messages[length - 1].sequenceNumber;
+		if (last + 1 !== from + length) {
+			// If not strict, then return the first consecutive sub-block. If strict or start
+			// seq number is not what we expected, then return no ops.
+			if (strict || from !== start) {
+				messages.length = 0;
+			} else {
+				let validOpsCount = 1;
+				while (
+					validOpsCount < messages.length &&
+					messages[validOpsCount].sequenceNumber ===
+						messages[validOpsCount - 1].sequenceNumber + 1
+				) {
+					validOpsCount++;
+				}
+				messages.length = validOpsCount;
+			}
+			logger.sendErrorEvent({
+				eventName: "OpsFetchViolation",
+				reason,
+				from,
+				start,
+				last,
+				length,
+				details: JSON.stringify({
+					validLength: messages.length,
+					lastValidOpSeqNumber:
+						messages.length > 0
+							? messages[messages.length - 1].sequenceNumber
+							: undefined,
+					strict,
+				}),
+			});
+		}
+	}
 }

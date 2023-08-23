@@ -24,7 +24,11 @@ import {
 	isDocumentMultipleDataStoresInfo,
 } from "@fluid-internal/test-version-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
@@ -57,7 +61,7 @@ class TestDataObject extends DataObject {
 		this.map = await mapHandle.get();
 
 		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
+		assert(sharedStringHandle !== undefined, "SharedString not found");
 		this.sharedString = await sharedStringHandle.get();
 	}
 }
@@ -177,7 +181,9 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	public async initializeDocument(): Promise<void> {
-		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory);
+		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory, {
+			logger: this.props.logger,
+		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
@@ -203,9 +209,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			url: requestUrl,
 		};
 
-		const loader = this.props.provider.createLoader([
-			[this.props.provider.defaultCodeDetails, this.runtimeFactory],
-		]);
+		const loader = this.props.provider.createLoader(
+			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
+			{ logger: this.props.logger },
+		);
 		const container2 = await loader.resolve(request);
 		return container2;
 	}
@@ -218,17 +225,15 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	public async summarize(
+		_container: IContainer,
 		summaryVersion?: string,
 		closeContainer: boolean = true,
 	): Promise<ISummarizeResult> {
-		assert(
-			this._mainContainer !== undefined,
-			"Container should be initialized before summarize",
-		);
+		assert(_container !== undefined, "Container should be initialized before summarize");
 		const { container: containerClient, summarizer: summarizerClient } =
 			await createSummarizerFromFactory(
 				this.props.provider,
-				this._mainContainer,
+				_container,
 				this.dataObjectFactory,
 				summaryVersion,
 				undefined,

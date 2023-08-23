@@ -32,6 +32,16 @@ export type RecursiveReadonly<T> = {
  */
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
+/**
+ * Casts a readonly object to a mutable one.
+ * Better than casting to `Mutable<Foo>` because it doesn't risk casting a non-`Foo` to a `Mutable<Foo>`.
+ * @param readonly - The object with readonly fields.
+ * @returns The same object but with a type that makes all fields mutable.
+ */
+export function asMutable<T>(readonly: T): Mutable<T> {
+	return readonly as Mutable<T>;
+}
+
 export function clone<T>(original: T): T {
 	return structuredClone(original);
 }
@@ -277,8 +287,8 @@ export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : 
 let deterministicStableIdCount: number | undefined;
 
 /**
- * This function is used to generate deterministic stable ids for testing purposes.
- * @param f - A function that will be called and if a stable id is needed inside it a deterministic one will be used.
+ * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
+ * Used to make test logic that uses {@link generateStableId} deterministic.
  *
  * @remarks
  * Only use this function for testing purposes.
@@ -286,24 +296,37 @@ let deterministicStableIdCount: number | undefined;
  * @example
  * ```ts
  * function f() {
- *    ....
+ *    const id = generateStableId();
+ *    ...
  * }
  * const result = useDeterministicStableId(f());
  * ```
  */
 export function useDeterministicStableId<T>(f: () => T): T {
-	assert(deterministicStableIdCount === undefined, "useDeterministicStableId cannot be nested");
+	assert(
+		deterministicStableIdCount === undefined,
+		0x6ce /* useDeterministicStableId cannot be nested */,
+	);
 	deterministicStableIdCount = 1;
-	const result = f();
-	deterministicStableIdCount = undefined;
-	return result;
+	try {
+		return f();
+		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
+		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
+	} finally {
+		deterministicStableIdCount = undefined;
+	}
 }
 
+/**
+ * Generates a random StableId.
+ *
+ * For test usage desiring deterministic results, see {@link useDeterministicStableId}.
+ */
 export function generateStableId(): StableId {
 	if (deterministicStableIdCount !== undefined) {
 		assert(
 			deterministicStableIdCount < 281_474_976_710_656,
-			"The maximum valid value for deterministicStableIdCount is 16^12",
+			0x6cf /* The maximum valid value for deterministicStableIdCount is 16^12 */,
 		);
 		// Tried to generate a unique id prefixing it with the word 'beef'
 		return assertIsStableId(
@@ -334,4 +357,28 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
 		map.set(key as MapKey, element);
 	}
 	return map;
+}
+
+/**
+ * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ */
+export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
+	if (set === undefined) {
+		return undefined;
+	}
+	if (set.size !== 1) {
+		return undefined;
+	}
+	for (const item of set) {
+		return item;
+	}
+}
+
+/**
+ * Type with a name describing what it is.
+ * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
+ * @alpha
+ */
+export interface Named<TName> {
+	readonly name: TName;
 }

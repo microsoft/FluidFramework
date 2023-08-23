@@ -54,8 +54,13 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
+		"checkpointsTTLInSeconds": 864000,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
+	},
+	"apiCounters": {
+		"fetchTenantKeyMetricMs": 60000,
+		"riddlerStorageRequestMetricMs": 60000
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -65,6 +70,7 @@
 		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
+		"ignoreEphemeralFlag": true,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -110,7 +116,8 @@
 		},
 		"jwtTokenCache": {
 			"enable": true
-		}
+		},
+		"getDeltasRequestMaxOpsRange": 2000
 	},
 	"client": {
 		"type": "browser",
@@ -144,7 +151,8 @@
 		"getDeltasViaAlfred": true,
 		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true,
-		"disableTransientTenantFiltering": true
+		"disableTransientTenantFiltering": true,
+		"maxLogtailLength": 2000
 	},
 	"system": {
 		"httpServer": {
@@ -159,7 +167,8 @@
 		"signalUsageCountingEnabled": false
 	},
 	"shared": {
-		"transientTenants": []
+		"transientTenants": [],
+		"runnerServerCloseTimeoutMs": 30000
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
@@ -233,22 +242,38 @@
 	"redis": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
-		"tls": false
+		"tls": false,
+		"connectTimeout": 10000,
+		"maxRetriesPerRequest": 20,
+		"enableAutoPipelining": false,
+		"enableOfflineQueue": true
 	},
 	"error": {
 		"track": false,
@@ -316,6 +341,6 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": false
+		"enable": true
 	}
 }

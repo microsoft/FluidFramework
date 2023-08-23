@@ -4,6 +4,7 @@
  */
 
 import { IAudienceOwner } from "@fluidframework/container-definitions";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
@@ -18,7 +19,6 @@ import {
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 
 // "term" was an experimental feature that is being removed.  The only safe value to use is 1.
 export const OnlyValidTermValue = 1 as const;
@@ -28,17 +28,6 @@ export enum SignalType {
 	ClientJoin = "join", // same value as MessageType.ClientJoin,
 	ClientLeave = "leave", // same value as MessageType.ClientLeave,
 	Clear = "clear", // used only by client for synthetic signals
-}
-
-/**
- * ADO: #4277: ConnectionStateHandler can mutate Quorum members, but shouldn't
- * This interface might go away after the above ADO item is done
- */
-export interface ILocalSequencedClient extends ISequencedClient {
-	/**
-	 * True if the client should have left the quorum, false otherwise
-	 */
-	shouldHaveLeft?: boolean;
 }
 
 /**
@@ -60,12 +49,12 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
 		sendProposal: (key: string, value: any) => number,
-		readonly audience: IAudienceOwner,
+		public readonly audience: IAudienceOwner,
+		private readonly shouldClientHaveLeft: (clientId: string) => boolean,
 	) {
 		super(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			OnlyValidTermValue,
 			quorumSnapshot.members,
 			quorumSnapshot.proposals,
 			quorumSnapshot.values,
@@ -86,7 +75,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		message: ISequencedDocumentMessage,
 		local: boolean,
 	): IProcessMessageResult {
-		const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
+		const client: ISequencedClient | undefined = this.quorum.getMember(message.clientId);
 
 		// Check and report if we're getting messages from a clientId that we previously
 		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
@@ -96,7 +85,10 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 				throw new Error("Remote message's clientId is missing from the quorum");
 			}
 
-			if (client?.shouldHaveLeft === true && !canBeCoalescedByService(message)) {
+			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
+			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
+			// document we don't need to blow up aggressively.
+			if (this.shouldClientHaveLeft(message.clientId) && !canBeCoalescedByService(message)) {
 				// pre-0.58 error message: messageClientIdShouldHaveLeft
 				throw new Error("Remote message's clientId already should have left");
 			}
@@ -137,4 +129,22 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 				break;
 		}
 	}
+}
+
+/**
+ * Function to check whether the protocol handler should process the Signal.
+ * The protocol handler should strictly handle only ClientJoin, ClientLeave
+ * and Clear signal types.
+ */
+export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
+	// Signal originates from server
+	if (message.clientId === null) {
+		const innerContent = message.content as { content: unknown; type: string };
+		return (
+			innerContent.type === SignalType.Clear ||
+			innerContent.type === SignalType.ClientJoin ||
+			innerContent.type === SignalType.ClientLeave
+		);
+	}
+	return false;
 }

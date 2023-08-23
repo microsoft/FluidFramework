@@ -9,7 +9,7 @@ import {
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 
 /**
  * Type of "valueChanged" event parameter.

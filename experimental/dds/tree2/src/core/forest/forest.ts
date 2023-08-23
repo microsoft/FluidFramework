@@ -6,14 +6,13 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
-import { StoredSchemaRepository } from "../schema-stored";
+import { StoredSchemaRepository, FieldKey } from "../schema-stored";
 import {
 	Anchor,
 	AnchorSet,
 	Delta,
 	DetachedField,
 	detachedFieldAsKey,
-	FieldKey,
 	ITreeCursor,
 	rootField,
 } from "../tree";
@@ -96,6 +95,14 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
+
+	/**
+	 * True if there are no nodes in the forest at all.
+	 *
+	 * @remarks
+	 * This means no nodes under any detached field, not just the special document root one.
+	 */
+	readonly isEmpty: boolean;
 }
 
 /**

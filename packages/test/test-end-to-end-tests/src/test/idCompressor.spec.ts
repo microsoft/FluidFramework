@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
@@ -18,56 +13,66 @@ import {
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-	createSummarizerWithTestConfig,
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
-import { SharedCell } from "@fluidframework/cell";
-import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
-import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import type { SharedCell } from "@fluidframework/cell";
+import {
+	IIdCompressor,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/runtime-definitions";
+import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	private readonly sharedMapKey = "map";
-	public map!: SharedMap;
-
-	private readonly sharedCellKey = "sharedCell";
-	public sharedCell!: SharedCell;
-
-	protected async initializingFirstTime() {
-		const sharedMap = SharedMap.create(this.runtime);
-		this.root.set(this.sharedMapKey, sharedMap.handle);
-
-		const sharedCell = SharedCell.create(this.runtime);
-		this.root.set(this.sharedCellKey, sharedCell.handle);
-	}
-
-	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.sharedMapKey);
-		assert(mapHandle !== undefined, "SharedMap not found");
-		this.map = await mapHandle.get();
-
-		const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
-		assert(sharedCellHandle !== undefined, "SharedCell not found");
-		this.sharedCell = await sharedCellHandle.get();
-	}
-}
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluidframework/common-utils";
 
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
+describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+		dds: { SharedMap, SharedCell },
+	} = apis;
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _context() {
+			return this.context;
+		}
+
+		private readonly sharedMapKey = "map";
+		public map!: SharedMap;
+
+		private readonly sharedCellKey = "sharedCell";
+		public sharedCell!: SharedCell;
+
+		protected async initializingFirstTime() {
+			const sharedMap = SharedMap.create(this.runtime);
+			this.root.set(this.sharedMapKey, sharedMap.handle);
+
+			const sharedCell = SharedCell.create(this.runtime);
+			this.root.set(this.sharedCellKey, sharedCell.handle);
+		}
+
+		protected async hasInitialized() {
+			const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.sharedMapKey);
+			assert(mapHandle !== undefined, "SharedMap not found");
+			this.map = await mapHandle.get();
+
+			const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
+			assert(sharedCellHandle !== undefined, "SharedCell not found");
+			this.sharedCell = await sharedCellHandle.get();
+		}
+	}
+
 	let provider: ITestObjectProvider;
 	const factory = new DataObjectFactory(
 		"TestDataObject",
@@ -243,10 +248,12 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 		// After synchronization, each compressor should allocate a cluster. Because the order is deterministic
 		// in e2e tests, we can directly validate the cluster ranges. After synchronizing, each compressor will
-		// get a positive id cluster that corresponds to its locally allocated ranges. Compressor states after synchronizing:
-		// SharedMap1 Compressor: { first: 0, last: 511 }
-		// SharedMap2 Compressor: { first: 512, last: 1023 }
-		// SharedMap3 Compressor: { first: 1024, last: 1535 }
+		// get a positive id cluster that corresponds to its locally allocated ranges. Each cluster will be sized
+		// as the number of IDs produced + the default cluster size (512).
+		// Compressor states after synchronizing:
+		// SharedMap1 Compressor: { first: 0, last: 1023 }
+		// SharedMap2 Compressor: { first: 1024, last: 2047 }
+		// SharedMap3 Compressor: { first: 2048, last: 2559 }
 		for (let i = 0; i < 512; i++) {
 			assert.strictEqual(
 				getIdCompressor(sharedMapContainer1).normalizeToOpSpace(
@@ -259,14 +266,14 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 				getIdCompressor(sharedMapContainer2).normalizeToOpSpace(
 					-(i + 1) as SessionSpaceCompressedId,
 				),
-				i + 512,
+				i + 1024,
 			);
 
 			assert.strictEqual(
 				getIdCompressor(sharedMapContainer3).normalizeToOpSpace(
 					-(i + 1) as SessionSpaceCompressedId,
 				),
-				i + 1024,
+				i + 2048,
 			);
 		}
 
@@ -450,11 +457,11 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		);
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(secondIdContainer2),
-			512,
+			513,
 		);
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(thirdIdContainer2),
-			513,
+			514,
 		);
 
 		decompressedIds.forEach((id, index) => {
@@ -541,13 +548,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id2),
-			512,
+			513,
 			"Second container should get second cluster and allocate Id 512",
 		);
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id3),
-			513,
+			514,
 			"Second Id from second container should get second cluster and allocate Id 513",
 		);
 	});
@@ -567,7 +574,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		compressedIds.push(getIdCompressor(sharedCellContainer1).generateCompressedId());
 		compressedIds.push(getIdCompressor(dataStore2.map).generateCompressedId());
 
-		const decompressedIds: string[] = [];
+		const decompressedIds: StableId[] = [];
 		compressedIds.forEach((id) => {
 			const decompressedId = getIdCompressor(sharedMapContainer1).decompress(id);
 
@@ -613,7 +620,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) => {
+describeNoCompat("IdCompressor in detached container", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
@@ -625,7 +632,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) =
 	it("Compressors sync after detached container attaches and sends an op", async () => {
 		const testConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [["sharedCell", SharedCell.getFactory()]],
+			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
 			runtimeOptions: {
 				enableRuntimeIdCompressor: true,
 			},
@@ -663,7 +670,7 @@ describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) =
 		// Compressor from second container will get the first 512 Ids (0-511)
 		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
 		// Compressor from first container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 512);
+		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
 	});
 });
 
@@ -682,11 +689,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 	it("Summary includes IdCompressor when enabled", async () => {
 		const container = await createContainer(enabledConfig);
-		const { summarizer } = await createSummarizerWithTestConfig(
-			provider,
-			container,
-			enabledConfig,
-		);
+		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
 		const { summaryTree } = await summarizeNow(summarizer);
 
 		assert(
@@ -706,16 +709,26 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		);
 	});
 
+	function getCompressorSummaryStats(summaryTree: ISummaryTree): {
+		sessionCount: number;
+		clusterCount: number;
+	} {
+		const compressorSummary = summaryTree.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const base64Content = (compressorSummary as any).content as string;
+		const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
+		return {
+			sessionCount: floatView[3],
+			clusterCount: floatView[4],
+		};
+	}
+
 	it("Shouldn't include unack'd local ids in summary", async () => {
 		const container = await createContainer(enabledConfig);
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer } = await createSummarizerWithTestConfig(
-			provider,
-			container,
-			enabledConfig,
-		);
+		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
 		idCompressor.generateCompressedId();
@@ -723,16 +736,13 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		const { summaryTree } = await summarizeNow(summarizer);
-
-		const compressorSummary = summaryTree.tree[".idCompressor"];
-		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		const summaryStats = getCompressorSummaryStats(summaryTree);
 		assert(
-			summaryAsObj.sessions.length === 0,
+			summaryStats.sessionCount === 0,
 			"Shouldn't have any local sessions as all ids are unack'd",
 		);
 		assert(
-			summaryAsObj.clusters.length === 0,
+			summaryStats.clusterCount === 0,
 			"Shouldn't have any local clusters as all ids are unack'd",
 		);
 	});
@@ -742,11 +752,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer } = await createSummarizerWithTestConfig(
-			provider,
-			container,
-			enabledConfig,
-		);
+		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
 
@@ -756,18 +762,9 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		const { summaryTree } = await summarizeNow(summarizer);
-
-		const compressorSummary = summaryTree.tree[".idCompressor"];
-		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const summaryAsObj = JSON.parse((compressorSummary as any).content);
-		assert(
-			summaryAsObj.sessions.length === 1,
-			"Should have a local session as all ids are ack'd",
-		);
-		assert(
-			summaryAsObj.clusters.length === 1,
-			"Should have a local cluster as all ids are ack'd",
-		);
+		const summaryStats = getCompressorSummaryStats(summaryTree);
+		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
+		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 	});
 
 	it("Newly connected container synchronizes from summary", async () => {
@@ -775,7 +772,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer: summarizer1 } = await createSummarizerWithTestConfig(
+		const { summarizer: summarizer1 } = await createSummarizer(
 			provider,
 			container,
 			enabledConfig,
@@ -786,21 +783,10 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
 
-		const { summaryTree: summaryTree1, summaryVersion: summaryVersion1 } = await summarizeNow(
-			summarizer1,
-		);
-
-		const compressorSummary = summaryTree1.tree[".idCompressor"];
-		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
-		const summaryAsObj = JSON.parse((compressorSummary as any).content);
-		assert(
-			summaryAsObj.sessions.length === 1,
-			"Should have a local session as all ids are ack'd",
-		);
-		assert(
-			summaryAsObj.clusters.length === 1,
-			"Should have a local cluster as all ids are ack'd",
-		);
+		const { summaryTree } = await summarizeNow(summarizer1);
+		const summaryStats = getCompressorSummaryStats(summaryTree);
+		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
+		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 
 		const container2 = await provider.loadTestContainer(enabledConfig);
 		const container2DataStore = await requestFluidObject<ITestDataObject>(

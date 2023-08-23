@@ -12,18 +12,9 @@ import {
 import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import { ITestObjectProvider, createTestContainerRuntimeFactory } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
-
-const runtimeFactory: IProvideRuntimeFactory = {
-	IRuntimeFactory: new TestContainerRuntimeFactory(
-		AgentSchedulerFactory.type,
-		new AgentSchedulerFactory(),
-		{},
-		[rootDataStoreRequestHandler],
-	),
-};
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
@@ -33,7 +24,19 @@ let writeModeCount = 0;
 const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> =>
 	scheduler.register(`makeWriteMode ${writeModeCount++}`);
 
-describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
+describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
+	const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(
+		apis.containerRuntime.ContainerRuntime,
+	);
+	const runtimeFactory: IProvideRuntimeFactory = {
+		IRuntimeFactory: new TestContainerRuntimeFactory(
+			AgentSchedulerFactory.type,
+			new AgentSchedulerFactory(),
+			{},
+			[rootDataStoreRequestHandler],
+		),
+	};
+
 	let provider: ITestObjectProvider;
 
 	const createContainer = async (): Promise<IContainer> =>

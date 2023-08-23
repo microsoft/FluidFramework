@@ -21,11 +21,13 @@ export type UnknownDataViewProps = DataVisualizationTreeProps<UnknownObjectNode>
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { label, node } = props;
 
+	const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<TreeHeader
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			inlineValue={<i>Unrecognized kind of data.</i>}
+			metadata={metadata}
 		/>
 	);
 	return <TreeItem header={header} />;

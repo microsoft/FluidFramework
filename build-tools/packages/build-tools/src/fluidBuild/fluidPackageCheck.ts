@@ -52,7 +52,6 @@ export class FluidPackageCheck {
 
 	public static checkScripts(pkg: Package, fix: boolean) {
 		const fixed = [
-			FluidPackageCheck.checkCleanScript(pkg, fix),
 			FluidPackageCheck.checkTestCoverageScripts(pkg, fix),
 			FluidPackageCheck.checkTestScripts(pkg, fix),
 			FluidPackageCheck.checkClientTestScripts(pkg, fix),
@@ -232,21 +231,6 @@ export class FluidPackageCheck {
 		}
 
 		return fixed;
-	}
-
-	private static checkCleanScript(pkg: Package, fix: boolean) {
-		const cleanScript = pkg.getScript("clean");
-		if (!cleanScript) {
-			if (pkg.getScript("build")) {
-				this.logWarn(pkg, `package has "build" script without "clean" script`, false);
-			}
-			return false;
-		}
-
-		if (cleanScript.startsWith("rimraf")) {
-			return this.ensureDevDependency(pkg, fix, "rimraf");
-		}
-		return false;
 	}
 
 	private static checkLintScripts(pkg: Package, fix: boolean) {

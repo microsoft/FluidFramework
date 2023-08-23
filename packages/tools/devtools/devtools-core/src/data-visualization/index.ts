@@ -13,6 +13,8 @@ export {
 	visualizeChildData,
 	VisualizerNode,
 } from "./DataVisualization";
+export { Edit, EditData, EditSharedObject, SharedObjectEdit } from "./DataEditing";
+export { defaultEditors } from "./DefaultEditors";
 export {
 	defaultVisualizers,
 	visualizeSharedCell,
@@ -21,6 +23,7 @@ export {
 	visualizeSharedMap,
 	visualizeSharedMatrix,
 	visualizeSharedString,
+	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers";
 export {

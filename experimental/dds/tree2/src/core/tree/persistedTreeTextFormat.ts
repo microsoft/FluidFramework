@@ -45,14 +45,14 @@ import { TreeSchemaIdentifierSchema } from "../schema-stored";
  * but even in those cases consider lists of key value pairs for serialization and using `Map`
  * for runtime.
  */
-export interface EncodedFieldMapObject<TChild> {
+interface EncodedFieldMapObject<TChild> {
 	[key: string]: TChild[];
 }
-export const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
+const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
 	Type.Record(Type.String(), Type.Array(tChild, { minItems: 1 }));
 
-export type EncodedNodeData = Static<typeof EncodedNodeData>;
-export const EncodedNodeData = Type.Object({
+type EncodedNodeData = Static<typeof EncodedNodeData>;
+const EncodedNodeData = Type.Object({
 	value: Type.Optional(Type.Any()),
 	type: Type.Readonly(TreeSchemaIdentifierSchema),
 });
@@ -61,11 +61,11 @@ export const EncodedNodeData = Type.Object({
  * Json comparable field collection, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
  */
-export interface EncodedGenericFieldsNode<TChild> {
+interface EncodedGenericFieldsNode<TChild> {
 	fields?: EncodedFieldMapObject<TChild>;
 	globalFields?: EncodedFieldMapObject<TChild>;
 }
-export const EncodedGenericFieldsNode = <Schema extends TSchema>(tChild: Schema) =>
+const EncodedGenericFieldsNode = <Schema extends TSchema>(tChild: Schema) =>
 	Type.Object({
 		fields: Type.Optional(EncodedFieldMapObject(tChild)),
 		globalFields: Type.Optional(EncodedFieldMapObject(tChild)),
@@ -75,10 +75,10 @@ export const EncodedGenericFieldsNode = <Schema extends TSchema>(tChild: Schema)
  * Json comparable tree node, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
  */
-export interface EncodedGenericTreeNode<TChild>
+interface EncodedGenericTreeNode<TChild>
 	extends EncodedGenericFieldsNode<TChild>,
 		EncodedNodeData {}
-export const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
+const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
 	Type.Intersect([EncodedGenericFieldsNode(tChild), EncodedNodeData], {
 		additionalProperties: false,
 	});

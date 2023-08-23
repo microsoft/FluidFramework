@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Direction, getTabDirection } from "./direction";
-import { IRect } from "./rect";
+import { Direction, getTabDirection } from "./direction.js";
+import { IRect } from "./rect.js";
 
 export type ICaretBounds = Pick<IRect, "left" | "top" | "bottom">;
 

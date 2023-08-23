@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Dom, ICommand, KeyCode, randomId } from "../../util";
-import { debug } from "../debug";
-import { View } from "./view";
+import { Dom, ICommand, KeyCode, randomId } from "../../util/index.js";
+import { debug } from "../debug.js";
+import { View } from "./view.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./index.css";

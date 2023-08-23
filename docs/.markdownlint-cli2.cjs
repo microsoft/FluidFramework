@@ -110,6 +110,7 @@ module.exports = {
 			ul_single: 3,
 		},
 		"no-empty-links": true, // MD042
+		"no-bare-urls": false, // MD034
 		"no-hard-tabs": {
 			// MD010
 			code_blocks: false,
@@ -145,6 +146,7 @@ module.exports = {
 				"tinylicious-client",
 			],
 		},
+		"reference-links-images": false, // MD052
 		"ul-indent": {
 			// MD007
 			indent: 4,

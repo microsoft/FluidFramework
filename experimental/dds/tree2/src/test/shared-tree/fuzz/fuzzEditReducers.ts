@@ -3,70 +3,53 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AsyncReducer, combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
+import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
+import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
-import { toJsonableTree } from "../../utils";
-import { ISharedTree } from "../../../shared-tree";
+import { toJsonableTree, validateTreeConsistency } from "../../utils";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { FieldUpPath } from "../../../core";
-import { FuzzTestState } from "./fuzzEditGenerators";
 import {
 	FieldEdit,
 	FuzzDelete,
 	FuzzFieldChange,
-	FuzzNodeEditChange,
 	FuzzTransactionType,
-	NodeEdit,
+	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
 
-export const fuzzReducer = withNumberOfEditsCounted(
-	combineReducersAsync<Operation, FuzzTestState>({
-		edit: async (state, operation) => {
-			const { contents } = operation;
-			switch (contents.type) {
-				case "fieldEdit": {
-					const index = operation.index;
-					const tree = state.trees[index];
-					applyFieldEdit(tree, contents);
-					break;
-				}
-				case "nodeEdit": {
-					const change = operation.contents as NodeEdit;
-					const index = operation.index;
-					const tree = state.trees[index];
-					applyNodeEdit(tree, change.edit);
-					break;
-				}
-				default:
-					break;
+export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
+	edit: async (state, operation) => {
+		const { contents } = operation;
+		switch (contents.type) {
+			case "fieldEdit": {
+				const tree = state.channel;
+				applyFieldEdit(tree, contents);
+				break;
 			}
-			return state;
-		},
-		synchronize: async (state) => {
-			const { testTreeProvider } = state;
-			assert(testTreeProvider !== undefined);
-			await testTreeProvider.ensureSynchronized();
-			checkTreesAreSynchronized(state.trees);
-			return state;
-		},
-		transaction: async (state, operation) => {
-			const { contents, treeIndex } = operation;
-			const tree = state.trees[treeIndex];
-			applyTransactionEdit(tree, contents);
-			return state;
-		},
-	}),
-);
-
-function withNumberOfEditsCounted(
-	reducer: AsyncReducer<Operation, FuzzTestState>,
-): AsyncReducer<Operation, FuzzTestState> {
-	return async (state, op) => {
-		state.numberOfEdits++;
-		return reducer(state, op);
-	};
-}
+			default:
+				break;
+		}
+		return state;
+	},
+	transaction: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyTransactionEdit(tree, contents);
+		return state;
+	},
+	undoRedo: async (state, operation) => {
+		const { contents } = operation;
+		const tree = state.channel;
+		applyUndoRedoEdit(tree, contents);
+		return state;
+	},
+	synchronizeTrees: async (state) => {
+		applySynchronizationOp(state);
+		return state;
+	},
+});
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	const lastTree = toJsonableTree(trees[trees.length - 1]);
@@ -78,7 +61,18 @@ export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	}
 }
 
-function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
+export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory>) {
+	state.containerRuntimeFactory.processAllMessages();
+	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
+	if (connectedClients.length > 0) {
+		const readonlyChannel = state.summarizerClient.channel;
+		for (const { channel } of connectedClients) {
+			validateTreeConsistency(channel, readonlyChannel);
+		}
+	}
+}
+
+export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":
 			applySequenceFieldEdit(tree, fieldEdit.change.edit);
@@ -94,7 +88,7 @@ function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
 	}
 }
 
-function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
+function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
 			const field = tree.editor.sequenceField({ parent: change.parent, field: change.field });
@@ -117,7 +111,7 @@ function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
-function applyValueFieldEdit(tree: ISharedTree, change: FuzzDelete): void {
+function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzDelete): void {
 	const fieldPath: FieldUpPath = {
 		parent: change.firstNode?.parent,
 		field: change.firstNode?.parentField,
@@ -126,7 +120,7 @@ function applyValueFieldEdit(tree: ISharedTree, change: FuzzDelete): void {
 	field.delete(change.firstNode?.parentIndex, change.count);
 }
 
-function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
+function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
 			const fieldPath: FieldUpPath = {
@@ -151,19 +145,7 @@ function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
-function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
-	switch (change.type) {
-		case "sequence":
-		case "value":
-		case "optional": {
-			tree.editor.setValue(change.edit.path, change.edit.value);
-			break;
-		}
-		default:
-			fail("Invalid edit.");
-	}
-}
-function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType): void {
+export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();
@@ -175,6 +157,21 @@ function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType):
 		}
 		case "transactionAbort": {
 			tree.transaction.abort();
+			break;
+		}
+		default:
+			fail("Invalid edit.");
+	}
+}
+
+export function applyUndoRedoEdit(tree: ISharedTreeView, contents: FuzzUndoRedoType): void {
+	switch (contents.type) {
+		case "undo": {
+			tree.undo();
+			break;
+		}
+		case "redo": {
+			tree.redo();
 			break;
 		}
 		default:

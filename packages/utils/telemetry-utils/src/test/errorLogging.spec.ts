@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
 import {
 	LoggingError,
@@ -1044,7 +1044,7 @@ describe("wrapError", () => {
 describe("wrapErrorAndLog", () => {
 	const mockLogger = new MockLogger();
 	const innerError = new LoggingError("hello");
-	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger);
+	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger.toTelemetryLogger());
 	assert(
 		mockLogger.matchEvents([
 			{

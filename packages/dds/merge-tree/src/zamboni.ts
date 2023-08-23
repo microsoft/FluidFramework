@@ -127,75 +127,71 @@ export function packParent(parent: IMergeBlock, mergeTree: MergeTree) {
 }
 
 function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree) {
+	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
+	// when possible.
 	let prevSegment: ISegment | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		const childNode = node.children[k];
-		if (childNode.isLeaf()) {
-			const segment = childNode;
-			if (segment.segmentGroups.empty) {
-				const removalInfo = toRemovalInfo(segment);
-				if (removalInfo !== undefined) {
-					if (!seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq)) {
-						holdNodes.push(segment);
-					} else if (!segment.trackingCollection.empty) {
-						holdNodes.push(segment);
-					} else {
-						// Notify maintenance event observers that the segment is being unlinked from the MergeTree
-						if (mergeTree.mergeTreeMaintenanceCallback) {
-							mergeTree.mergeTreeMaintenanceCallback(
-								{
-									operation: MergeTreeMaintenanceType.UNLINK,
-									deltaSegments: [{ segment }],
-								},
-								undefined,
-							);
-						}
+		if (!childNode.isLeaf() || !childNode.segmentGroups.empty) {
+			holdNodes.push(childNode);
+			prevSegment = undefined;
+			continue;
+		}
 
-						segment.parent = undefined;
-					}
-					prevSegment = undefined;
+		const segment = childNode;
+		const removalInfo = toRemovalInfo(segment);
+		if (removalInfo !== undefined) {
+			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
+			// it can be unlinked (i.e. removed from the merge-tree)
+			if (
+				seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq) &&
+				segment.trackingCollection.empty
+			) {
+				mergeTree.mergeTreeMaintenanceCallback?.(
+					{
+						operation: MergeTreeMaintenanceType.UNLINK,
+						deltaSegments: [{ segment }],
+					},
+					undefined,
+				);
+
+				segment.parent = undefined;
+			} else {
+				holdNodes.push(segment);
+			}
+
+			prevSegment = undefined;
+		} else {
+			if (segment.seq! <= mergeTree.collabWindow.minSeq) {
+				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
+				const canAppend =
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+					prevSegment &&
+					prevSegment.canAppend(segment) &&
+					matchProperties(prevSegment.properties, segment.properties) &&
+					prevSegment.trackingCollection.matches(segment.trackingCollection) &&
+					segmentHasPositiveLength;
+
+				if (canAppend) {
+					prevSegment!.append(segment);
+					mergeTree.mergeTreeMaintenanceCallback?.(
+						{
+							operation: MergeTreeMaintenanceType.APPEND,
+							deltaSegments: [{ segment: prevSegment! }, { segment }],
+						},
+						undefined,
+					);
+
+					segment.parent = undefined;
+					segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
 				} else {
-					if (segment.seq! <= mergeTree.collabWindow.minSeq) {
-						const canAppend =
-							// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-							prevSegment &&
-							prevSegment.canAppend(segment) &&
-							matchProperties(prevSegment.properties, segment.properties) &&
-							prevSegment.trackingCollection.matches(segment.trackingCollection) &&
-							(mergeTree.localNetLength(segment) ?? 0) > 0;
-
-						if (canAppend) {
-							prevSegment!.append(segment);
-							if (mergeTree.mergeTreeMaintenanceCallback) {
-								mergeTree.mergeTreeMaintenanceCallback(
-									{
-										operation: MergeTreeMaintenanceType.APPEND,
-										deltaSegments: [{ segment: prevSegment! }, { segment }],
-									},
-									undefined,
-								);
-							}
-							segment.parent = undefined;
-							segment.trackingCollection.trackingGroups.forEach((tg) =>
-								tg.unlink(segment),
-							);
-						} else {
-							holdNodes.push(segment);
-							prevSegment =
-								(mergeTree.localNetLength(segment) ?? 0) > 0 ? segment : undefined;
-						}
-					} else {
-						holdNodes.push(segment);
-						prevSegment = undefined;
-					}
+					holdNodes.push(segment);
+					prevSegment = segmentHasPositiveLength ? segment : undefined;
 				}
 			} else {
 				holdNodes.push(segment);
 				prevSegment = undefined;
 			}
-		} else {
-			holdNodes.push(childNode);
-			prevSegment = undefined;
 		}
 	}
 }

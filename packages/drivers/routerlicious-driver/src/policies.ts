@@ -48,4 +48,10 @@ export interface IRouterliciousDriverPolicies {
 	 * Default: true
 	 */
 	enableInternalSummaryCaching: boolean;
+	/**
+	 * Enable downgrading socket connection to long-polling
+	 * when websocket connection cannot be established.
+	 * Default: true
+	 */
+	enableLongPollingDowngrade: boolean;
 }

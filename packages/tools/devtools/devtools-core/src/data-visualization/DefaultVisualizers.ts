@@ -13,10 +13,17 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
-import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
-
 import {
+	SharedTreeFactory,
+	ISharedTree,
+	UntypedTree,
+	UntypedField,
+} from "@fluid-experimental/tree2";
+import { ISharedObject } from "@fluidframework/shared-object-base";
+import { EditType } from "../CommonInterfaces";
+import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
+import {
+	FluidObjectNode,
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
@@ -31,18 +38,53 @@ import {
 export const visualizeSharedCell: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
+): Promise<FluidObjectNode> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
 
 	const renderedData = await visualizeChildData(data);
 
-	return {
-		fluidObjectId: sharedCell.id,
-		children: { data: renderedData },
-		typeMetadata: "SharedCell",
-		nodeKind: VisualNodeKind.FluidTreeNode,
+	const editProps = {
+		editTypes: undefined,
 	};
+
+	// By separating cases it lets us avoid unnecessary hierarchy by flattening the tree
+	switch (renderedData.nodeKind) {
+		case VisualNodeKind.FluidHandleNode:
+			return {
+				children: {
+					data: renderedData,
+				},
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidTreeNode,
+				editProps,
+			};
+		case VisualNodeKind.ValueNode:
+			return {
+				...renderedData,
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidValueNode,
+				editProps,
+			};
+		case VisualNodeKind.TreeNode:
+			return {
+				...renderedData,
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidTreeNode,
+				editProps,
+			};
+		case VisualNodeKind.UnknownObjectNode:
+			return {
+				fluidObjectId: sharedCell.id,
+				typeMetadata: "SharedCell",
+				nodeKind: VisualNodeKind.FluidUnknownObjectNode,
+			};
+		default:
+			throw new Error("Unrecognized node kind.");
+	}
 };
 
 /**
@@ -57,6 +99,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
+		editProps: { editTypes: [EditType.Number] },
 	};
 };
 
@@ -187,6 +230,43 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 		value: text,
 		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
+		editProps: { editTypes: [EditType.String] },
+	};
+};
+
+/**
+ * {@link VisualizeSharedObject} for {@link ISharedTree}.
+ */
+export const visualizeSharedTree: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const sharedTree = sharedObject as ISharedTree;
+
+	const contextRoot = sharedTree.context.root;
+	const children: Record<string, VisualChildNode> = {};
+
+	const iterateNodes = async (field: UntypedField): Promise<void> => {
+		for (const child of field) {
+			await iterateFields(child as unknown as UntypedTree);
+		}
+	};
+
+	const iterateFields = async (node: UntypedTree): Promise<void> => {
+		for (const field of node) {
+			const renderedChild = await visualizeChildData(field);
+
+			children[field.fieldKey as string] = renderedChild;
+		}
+	};
+
+	await iterateNodes(contextRoot);
+
+	return {
+		fluidObjectId: sharedTree.id,
+		children,
+		typeMetadata: "SharedTree",
+		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
 
@@ -213,5 +293,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
+	[new SharedTreeFactory().type]: visualizeSharedTree,
 	// TODO: the others
 };

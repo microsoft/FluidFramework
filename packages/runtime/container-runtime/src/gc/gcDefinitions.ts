@@ -263,7 +263,6 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly activeConnection: () => boolean;
-	readonly getContainerDiagnosticId: () => string;
 }
 
 export interface IGCRuntimeOptions {
@@ -350,6 +349,8 @@ export interface IGarbageCollectorConfigs {
 	readonly sweepTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
+	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
+	readonly throwOnInactiveLoad: boolean | undefined;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**

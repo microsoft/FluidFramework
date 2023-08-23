@@ -7,5 +7,6 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };

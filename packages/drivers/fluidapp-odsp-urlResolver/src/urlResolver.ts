@@ -76,9 +76,7 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 	const storageType = decodedSite.split(":")[0];
 	const expectedStorageType = "spo"; // Only support spo for now
 	if (storageType !== expectedStorageType) {
-		return Promise.reject(
-			new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`),
-		);
+		throw new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
 	}
 
 	// Since we have the drive and item, only take the host ignore the rest

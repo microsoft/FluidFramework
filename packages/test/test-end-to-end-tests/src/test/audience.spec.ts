@@ -4,12 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
@@ -21,18 +15,23 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
+	class TestDataObject extends apis.dataRuntime.DataObject {
+		public get _root() {
+			return this.root;
+		}
 	}
-}
 
-describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
+	const dataObjectFactory = new apis.dataRuntime.DataObjectFactory(
+		"TestDataObject",
+		TestDataObject,
+		[],
+		[],
+	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore(
 		dataObjectFactory,
 		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		undefined,

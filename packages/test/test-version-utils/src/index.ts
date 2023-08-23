@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export { mochaGlobalSetup } from "./compatConfig";
+export { mochaGlobalSetup } from "./compatConfig.js";
 export {
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
+	getVersionedTestObjectProviderFromApis,
 	ITestDataObject,
 	TestDataObjectType,
-} from "./compatUtils";
-export { describeInstallVersions } from "./describeWithVersions";
+} from "./compatUtils.js";
+export { describeInstallVersions } from "./describeWithVersions.js";
 export {
 	DescribeCompat,
 	DescribeCompatSuite,
@@ -18,7 +19,7 @@ export {
 	describeLoaderCompat,
 	describeNoCompat,
 	ITestObjectProviderOptions,
-} from "./describeCompat";
+} from "./describeCompat.js";
 export {
 	describeE2EDocs,
 	DocumentType,
@@ -32,15 +33,22 @@ export {
 	isMemoryTest,
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
+	DocumentMatrixInfo,
 	assertDocumentTypeInfo,
 	isDocumentMapInfo,
 	isDocumentMultipleDataStoresInfo,
-} from "./describeE2eDocs";
-export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
+	isDocumentMatrixInfo,
+} from "./describeE2eDocs.js";
+export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
+	CompatApis,
 	ensurePackageInstalled,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,
 	getLoaderApi,
-} from "./testApi";
+} from "./testApi.js";
+export {
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
+} from "./itSkipsOnFailure.js";

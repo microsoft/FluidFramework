@@ -17,6 +17,7 @@ import {
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
+import { singleTextCursor } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -185,7 +186,23 @@ function toDelta(change: TestChange): Delta.Modify {
 	if (change.intentions.length > 0) {
 		return {
 			type: Delta.MarkType.Modify,
-			setValue: change.intentions.map(String).join("|"),
+			fields: new Map([
+				[
+					brand("foo"),
+					[
+						{ type: Delta.MarkType.Delete, count: 1 },
+						{
+							type: Delta.MarkType.Insert,
+							content: [
+								singleTextCursor({
+									type: brand("test"),
+									value: change.intentions.map(String).join("|"),
+								}),
+							],
+						},
+					],
+				],
+			]),
 		};
 	}
 	return { type: Delta.MarkType.Modify };
@@ -233,6 +250,32 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
 		assert.fail("Unexpected call to rebase");
+	}
+}
+
+export class NoOpChangeRebaser extends TestChangeRebaser {
+	public rebasedCount = 0;
+	public invertedCount = 0;
+	public composedCount = 0;
+	public rebaseAnchorCallsCount = 0;
+
+	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+		this.rebasedCount += 1;
+		return change;
+	}
+
+	public invert(change: TaggedChange<TestChange>): TestChange {
+		this.invertedCount += 1;
+		return change.change;
+	}
+
+	public compose(changes: TaggedChange<TestChange>[]): TestChange {
+		this.composedCount += changes.length;
+		return changes.length === 0 ? emptyChange : changes[0].change;
+	}
+
+	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
+		this.rebaseAnchorCallsCount += 1;
 	}
 }
 

@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "@fluentui/react";
+
 import {
+	Divider,
+	makeStyles,
+	SelectTabData,
+	SelectTabEvent,
+	shorthands,
 	Tab,
 	TabList,
 	TabValue,
-	SelectTabData,
-	SelectTabEvent,
-	Divider,
 } from "@fluentui/react-components";
 import {
-	ContainerDevtoolsFeature,
 	ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
@@ -23,8 +24,9 @@ import {
 } from "@fluid-experimental/devtools-core";
 import React from "react";
 
-import { initializeFluentUiIcons } from "../InitializeIcons";
 import { useMessageRelay } from "../MessageRelayContext";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
+import { useLogger } from "../TelemetryUtils";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -35,15 +37,7 @@ import { Waiting } from "./Waiting";
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
 // - History of client ID changes
 
-// Ensure FluentUI icons are initialized for use below.
-initializeFluentUiIcons();
-
 const loggingContext = "INLINE(ContainerView)";
-
-/**
- * `className` used by {@link ContainerDevtoolsView}.
- */
-const containerDevtoolsViewClassName = `fluid-client-debugger-view`;
 
 /**
  * {@link ContainerDevtoolsView} input props.
@@ -74,6 +68,14 @@ enum PanelView {
 	// - Ops/message latency stats
 }
 
+const useStyles = makeStyles({
+	root: {
+		...shorthands.gap("15px"),
+		display: "flex",
+		flexDirection: "column",
+	},
+});
+
 /**
  * Container Devtools view.
  * Communicates with {@link @fluid-experimental/devtools-core#ContainerDevtools} via {@link MessageRelayContext} to get
@@ -99,6 +101,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
 				if (message.data.containerKey === containerKey) {
 					setSupportedFeatures(message.data.features);
+
 					return true;
 				}
 				return false;
@@ -146,10 +149,15 @@ interface _ContainerDevtoolsViewProps extends HasContainerKey {
  */
 function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.ReactElement {
 	const { containerKey, supportedFeatures } = props;
+
+	const styles = useStyles();
+	const usageLogger = useLogger();
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
-		supportedFeatures[ContainerDevtoolsFeature.ContainerData] === true
+		supportedFeatures.containerDataVisualization === true ||
+			// Backwards compatibility check, needed until we require at least devtools-core/devtools v2.0.0-internal.6.1.0
+			supportedFeatures["container-data"] === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);
@@ -157,7 +165,13 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
-			innerView = <DataObjectsView containerKey={containerKey} />;
+			innerView = (
+				<ContainerFeatureFlagContext.Provider
+					value={{ containerFeatureFlags: supportedFeatures }}
+				>
+					<DataObjectsView containerKey={containerKey} />
+				</ContainerFeatureFlagContext.Provider>
+			);
 			break;
 		case PanelView.Audience:
 			innerView = <AudienceView containerKey={containerKey} />;
@@ -171,39 +185,28 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
 		setInnerViewSelection(data.value);
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: `Container_${data.value}Tab` },
+		});
 	};
 
 	return (
-		<Stack
-			tokens={{
-				// Add some spacing between the menu and the inner view
-				childrenGap: 25,
-			}}
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-			className={containerDevtoolsViewClassName}
-		>
-			<Stack.Item>
-				<ContainerSummaryView containerKey={containerKey} />
-			</Stack.Item>
+		<div className={styles.root}>
+			<ContainerSummaryView containerKey={containerKey} />
 			<Divider appearance="strong" />
-			<Stack.Item style={{ width: "100%", height: "100%", overflowY: "auto" }}>
-				<Stack tokens={{ childrenGap: 10 }}>
-					<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>
-						{panelViews.map((view: string) => {
-							return (
-								<Tab key={view} value={view}>
-									{view}
-								</Tab>
-							);
-						})}
-					</TabList>
-					{innerView}
-				</Stack>
-			</Stack.Item>
-		</Stack>
+			<div>
+				<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>
+					{panelViews.map((view: string) => {
+						return (
+							<Tab key={view} value={view}>
+								{view}
+							</Tab>
+						);
+					})}
+				</TabList>
+				{innerView}
+			</div>
+		</div>
 	);
 }

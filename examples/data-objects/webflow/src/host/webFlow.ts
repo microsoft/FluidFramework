@@ -13,8 +13,8 @@ import {
 	LazyLoadedDataObject,
 } from "@fluidframework/data-object-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { FlowDocument } from "../document";
-import { hostType } from "../package";
+import { FlowDocument } from "../document/index.js";
+import { hostType } from "../package.js";
 
 export class WebFlow extends LazyLoadedDataObject<ISharedDirectory> {
 	private static readonly factory = new LazyLoadedDataObjectFactory<WebFlow>(

@@ -5,7 +5,10 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import {
+	readAndParse,
+	blobHeadersBlobName as blobNameForBlobHeaders,
+} from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -153,6 +156,7 @@ export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 export const idCompressorBlobName = ".idCompressor";
+export const blobHeadersBlobName = blobNameForBlobHeaders;
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;

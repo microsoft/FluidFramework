@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { pkgVersion } from "../packageVersion";
+import { pkgVersion } from "../packageVersion.js";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;

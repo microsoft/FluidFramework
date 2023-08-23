@@ -7,11 +7,11 @@ import { AsyncLocalStorage } from "async_hooks";
 import {
 	IStorageNameRetriever,
 	IThrottler,
-	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, ITenantService } from "../services";
+import { ICache, IDenyList, ITenantService } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -48,7 +48,8 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): IRoutes {
 	return {
 		git: {
@@ -59,7 +60,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			commits: commits.create(
 				config,
@@ -68,7 +70,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			refs: refs.create(
 				config,
@@ -77,7 +80,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			tags: tags.create(
 				config,
@@ -86,7 +90,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			trees: trees.create(
 				config,
@@ -95,7 +100,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 		},
 		repository: {
@@ -106,7 +112,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			contents: contents.create(
 				config,
@@ -115,7 +122,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 			headers: headers.create(
 				config,
@@ -124,7 +132,8 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
-				tokenRevocationManager,
+				revokedTokenChecker,
+				denyList,
 			),
 		},
 		summaries: summaries.create(
@@ -135,7 +144,8 @@ export function create(
 			restClusterThrottlers,
 			cache,
 			asyncLocalStorage,
-			tokenRevocationManager,
+			revokedTokenChecker,
+			denyList,
 		),
 	};
 }
