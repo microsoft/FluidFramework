@@ -425,6 +425,7 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 			collaboratorsMatches((count) => count < maximumCollaborators),
 		],
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/5357
 		// [makeEditGenerator(config.editConfig, config.joinConfig, true), config.stashWeight, atLeastOneActiveClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
