@@ -74,15 +74,11 @@ function cellDeltaFromMark<TNodeChange>(
 			case "MoveIn":
 			case "ReturnTo": {
 				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
-				const deltas: Mutable<Delta.Mark>[] = [];
-				for (const range of ranges) {
-					deltas.push({
-						type: Delta.MarkType.MoveIn,
-						count: range.count,
-						moveId: brandOpaque<Delta.MoveId>(range.first),
-					});
-				}
-				return deltas;
+				return ranges.map(({ first, count }) => ({
+					type: Delta.MarkType.MoveIn,
+					moveId: brandOpaque<Delta.MoveId>(first),
+					count,
+				}));
 			}
 			case NoopMarkType: {
 				return [mark.count];
@@ -98,15 +94,11 @@ function cellDeltaFromMark<TNodeChange>(
 			case "MoveOut":
 			case "ReturnFrom": {
 				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
-				const deltas: Mutable<Delta.Mark>[] = [];
-				for (const range of ranges) {
-					deltas.push({
-						type: Delta.MarkType.MoveOut,
-						count: range.count,
-						moveId: brandOpaque<Delta.MoveId>(range.first),
-					});
-				}
-				return deltas;
+				return ranges.map(({ first, count }) => ({
+					type: Delta.MarkType.MoveOut,
+					moveId: brandOpaque<Delta.MoveId>(first),
+					count,
+				}));
 			}
 			case "Revive": {
 				const insertMark: Mutable<Delta.Insert> = {

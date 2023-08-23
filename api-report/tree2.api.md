@@ -570,7 +570,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TaggedChange<TChangeset>, deltaFromChild: ToDelta, idAllocator: MemoizedIdAllocator): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -831,6 +831,14 @@ export interface IDefaultEditBuilder {
     sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
+}
+
+// @alpha (undocumented)
+export interface IdRange {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly first: ChangesetLocalId;
 }
 
 // @alpha
@@ -1284,6 +1292,9 @@ const MarkType: {
 
 // @alpha
 export type MatchPolicy = "subtree" | "path";
+
+// @alpha
+export type MemoizedIdAllocator = (revision: RevisionTag | undefined, localId: ChangesetLocalId, count?: number) => IdRange[];
 
 // @alpha
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {

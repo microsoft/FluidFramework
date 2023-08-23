@@ -95,5 +95,5 @@ export {
 	brandedSlot,
 } from "./brandedMap";
 
-export { IdRange, MemoizedIdRangeAllocator } from "./memoizedIdAllocator";
+export { IdRange, MemoizedIdRangeAllocator } from "./memoizedIdRangeAllocator";
 export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";

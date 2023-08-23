@@ -31,6 +31,7 @@ export {
 export {
 	IdAllocator,
 	MemoizedIdAllocator,
+	IdRange,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,

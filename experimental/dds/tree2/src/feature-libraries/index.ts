@@ -112,6 +112,7 @@ export {
 	ToDelta,
 	ModularChangeset,
 	MemoizedIdAllocator,
+	IdRange,
 	IdAllocator,
 	NodeChangeComposer,
 	NodeChangeInverter,
