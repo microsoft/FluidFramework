@@ -138,7 +138,7 @@ steps:
                   exit 1
                 fi
             else
-              if [[ $release == "release" $$ $feedId == "build"]]; then
+              if [[ $release == "release" && $feedId == "build"]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
                 feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
                 
@@ -151,7 +151,9 @@ steps:
                   done
                 fi
 
-                promote_api_url="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm/$packageName/versions/$packageVersion?api-version=7.1-preview.1"
+                buildFeedBaseUrl="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm"
+                buildFeedPromotionUrl="$buildFeedBaseUrl/$packageName/versions/$packageVersion?api-version=7.1-preview.1"
+                
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \
@@ -163,10 +165,10 @@ steps:
                           "value": "Release"
                         }
                       }' \
-                      "$promote_api_url"
+                      "$buildFeedPromotionUrl"
                   )
                 
-                curl_exit_status=$?
+                curlExitStatus=$?
                 
                 if echo "$response" | grep -q '"success":"false"'; then
                   reason="${response#*\"reason\":\"}"
@@ -174,7 +176,7 @@ steps:
                   echo "Failed to promote package to Release view"
                   echo "Error reason: $reason"
                   exit 1
-                elif [ $curl_exit_status -ne 0 ]; then
+                elif [ $curlExitStatus -ne 0 ]; then
                   echo "Failed to promote package due to curl error"
                   exit 1
                 fi
