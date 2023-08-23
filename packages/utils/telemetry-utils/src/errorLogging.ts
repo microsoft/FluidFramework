@@ -387,6 +387,7 @@ export class LoggingError
 
 	/** Back-compat to appease isFluidError typeguard in old code that may handle this error */
 	// @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
+	// eslint-disable-next-line @typescript-eslint/prefer-as-const
 	private readonly fluidErrorCode: "-" = "-";
 
 	/**

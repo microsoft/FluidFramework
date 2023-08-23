@@ -36,6 +36,7 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
@@ -744,6 +745,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,

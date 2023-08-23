@@ -361,7 +361,7 @@ export class ConnectionManager implements IConnectionManager {
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
 		public readonly containerDirty: () => boolean,
-		private client: IClient,
+		private readonly client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
