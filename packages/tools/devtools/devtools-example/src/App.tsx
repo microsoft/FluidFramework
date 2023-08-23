@@ -74,11 +74,11 @@ function useContainerInfo(
 				: loadExistingContainer(containerId, loader);
 		}
 
-		async function getPrivateContainerData(): Promise<ContainerInfo> {
-			// Always create a new container for the private view.
-			// This isn't shared with other collaborators.
-			return createContainer(loader);
-		}
+		// async function getPrivateContainerData(): Promise<ContainerInfo> {
+		// 	// Always create a new container for the private view.
+		// 	// This isn't shared with other collaborators.
+		// 	return createContainer(loader);
+		// }
 
 		getSharedFluidData().then((containerInfo) => {
 			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
