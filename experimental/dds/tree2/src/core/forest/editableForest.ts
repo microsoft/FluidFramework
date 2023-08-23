@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { FieldKey } from "../schema-stored";
 import {
 	AnchorSet,
@@ -36,8 +37,18 @@ export interface IEditableForest extends IForestSubscription {
 	applyDelta(delta: Delta.Root): void;
 }
 
-export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
-	// TODO: maybe assert forest is empty?
+/**
+ * Sets the contents of the forest via delta.
+ * Requires the fores starts empty.
+ *
+ * @remarks
+ * This does not perform an edit: it updates the forest content as if there was an edit that did that.
+ */
+export function initializeForest(
+	forest: IEditableForest,
+	content: readonly ITreeCursorSynchronous[],
+): void {
+	assert(forest.isEmpty, "forest must be empty");
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
 	forest.applyDelta(new Map([[rootFieldKey, [insert]]]));
 }

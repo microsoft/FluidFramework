@@ -4,48 +4,33 @@
  */
 
 import {
-	ContainerErrorType,
-	IGenericError,
 	IErrorBase,
+	ITelemetryProperties,
 	IThrottlingWarning,
-	IUsageError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/core-interfaces";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	LoggingError,
 	IFluidErrorBase,
+	isExternalError,
+	ITelemetryLoggerExt,
+	LoggingError,
+	NORMALIZED_ERROR_TYPE,
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
-	isExternalError,
-	NORMALIZED_ERROR_TYPE,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-
-/**
- * Generic wrapper for an unrecognized/uncategorized error object
- */
-export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.genericError;
-
-	/**
-	 * Create a new GenericError
-	 * @param message - Error message
-	 * @param error - inner error object
-	 * @param props - Telemetry props to include when the error is logged
-	 */
-	constructor(message: string, readonly error?: any, props?: ITelemetryProperties) {
-		// Don't try to log the inner error
-		super(message, props, new Set(["error"]));
-	}
-}
 
 /**
  * Warning emitted when requests to storage are being throttled.
+ *
+ * @deprecated
+ *
+ * This type is not intended for external use and is being removed from library exports.
+ * No replacement API is intended.
  */
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.throttlingError;
+	readonly errorType = ContainerErrorTypes.throttlingError;
 
 	private constructor(
 		message: string,
@@ -69,34 +54,19 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 	}
 }
 
-/** Error indicating an API is being used improperly resulting in an invalid operation. */
-export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.usageError;
-
-	constructor(message: string, props?: ITelemetryProperties) {
-		super(message, { ...props, usageError: true });
-	}
-}
-
-/** Error indicating that a client's session has reached its time limit and is closed. */
+/**
+ * Error indicating that a client's session has reached its time limit and is closed.
+ *
+ * @deprecated
+ *
+ * This type is not intended for external use and is being removed from library exports.
+ * No replacement API is intended.
+ */
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
-	readonly errorType = ContainerErrorType.clientSessionExpiredError;
+	readonly errorType = ContainerErrorTypes.clientSessionExpiredError;
 
 	constructor(message: string, readonly expiryMs: number) {
 		super(message, { timeoutMs: expiryMs });
-	}
-}
-
-/**
- * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
- * backing this container is corrupted, and this container would never be expected to load properly again
- */
-export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.dataCorruptionError;
-	readonly canRetry = false;
-
-	constructor(message: string, props: ITelemetryProperties) {
-		super(message, { ...props, dataProcessingError: 1 });
 	}
 }
 
@@ -107,7 +77,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
  * client or session.
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	readonly errorType = ContainerErrorType.dataProcessingError;
+	readonly errorType = ContainerErrorTypes.dataProcessingError;
 	readonly canRetry = false;
 
 	private constructor(errorMessage: string) {

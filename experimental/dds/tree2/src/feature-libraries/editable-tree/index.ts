@@ -10,10 +10,10 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	NewFieldContent,
 	areCursors,
 	localNodeKeySymbol,
 	setField,
+	TreeStatus,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";

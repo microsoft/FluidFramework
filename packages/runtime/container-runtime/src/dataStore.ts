@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	AliasResult,

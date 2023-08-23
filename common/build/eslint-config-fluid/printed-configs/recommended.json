@@ -562,7 +562,7 @@
             "error"
         ],
         "import/no-deprecated": [
-            "off"
+            "error"
         ],
         "import/no-duplicates": [
             1
