@@ -4,9 +4,11 @@
  */
 
 import assert from "assert";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	ContainerErrorTypes,
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
@@ -190,7 +192,7 @@ describe("Pending State Manager", () => {
 
 			submitBatch(messages);
 			process(messages);
-			assert(closeError instanceof DataProcessingError);
+			assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
 		});
@@ -213,7 +215,7 @@ describe("Pending State Manager", () => {
 						type: "otherType",
 					})),
 				);
-				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 				assert.strictEqual(
 					closeError.getTelemetryProperties().expectedMessageType,
 					MessageType.Operation,
@@ -238,7 +240,7 @@ describe("Pending State Manager", () => {
 						contents: undefined,
 					})),
 				);
-				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
 
 			it("stringified message content does not match", () => {
@@ -259,7 +261,7 @@ describe("Pending State Manager", () => {
 						contents: { prop1: true },
 					})),
 				);
-				assert(closeError instanceof DataProcessingError);
+				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
 		});
 
