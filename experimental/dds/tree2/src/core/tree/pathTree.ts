@@ -46,11 +46,12 @@ export interface UpPath<TParent = UpPathDefault> {
  * See {@link UpPath}.
  * @alpha
  */
-export interface FieldUpPath {
+export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 	/**
 	 * The parent, or undefined in the case where this path is to a detached sequence.
 	 */
-	readonly parent: UpPath | undefined;
+	readonly parent: TUpPath | undefined;
+
 	/**
 	 * The Field to which this path points.
 	 * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.

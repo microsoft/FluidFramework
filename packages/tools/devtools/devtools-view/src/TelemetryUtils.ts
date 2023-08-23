@@ -5,7 +5,7 @@
 
 import React from "react";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
@@ -43,7 +43,7 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 
 	public send(event: ITelemetryBaseEvent): void {
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
-		// verobsity level is set to "Verbose".
+		// verbosity level is set to "Verbose".
 		console.debug(`USAGE_TELEMETRY: ${JSON.stringify(event)}`);
 		this.baseLogger?.send(event);
 	}

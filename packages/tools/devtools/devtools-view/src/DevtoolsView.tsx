@@ -15,7 +15,7 @@ import {
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ContainerKey,
@@ -211,7 +211,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 				});
 
 				newTopLevelLogger.sendTelemetryEvent({
-					eventName: "Connection established with Devtools in the application.",
+					eventName: "DevtoolsConnected",
 				});
 
 				setTopLevelLogger(newTopLevelLogger);

@@ -4,22 +4,31 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import {
+	IThrottlingWarning,
+	IEventProvider,
+	ITelemetryProperties,
+	ITelemetryErrorEvent,
+} from "@fluidframework/core-interfaces";
 import {
 	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	IThrottlingWarning,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 import {
 	normalizeError,
 	logIfFalse,
 	safeRaiseEvent,
 	isFluidError,
 	ITelemetryLoggerExt,
+	DataCorruptionError,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
@@ -34,13 +43,7 @@ import {
 	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
-import {
-	ThrottlingWarning,
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-	DataProcessingError,
-	UsageError,
-} from "@fluidframework/container-utils";
+
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
@@ -49,6 +52,7 @@ import {
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
+import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;

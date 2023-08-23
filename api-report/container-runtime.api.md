@@ -21,8 +21,8 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -54,6 +54,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export const agentSchedulerId = "_scheduler";
+
+// @public
+export const AllowInactiveRequestHeaderKey = "allowInactive";
 
 // @public
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
@@ -137,7 +140,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
@@ -228,7 +231,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runSweep?: boolean;
     }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
-    readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: string[]): void;
@@ -439,6 +442,9 @@ export interface INackSummaryResult extends IRetriableFailureResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
+// @public
+export const InactiveResponseHeaderKey = "isInactive";
+
 // @public (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
@@ -481,6 +487,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 // @public
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
+    // @deprecated
     readonly refreshLatestAck?: boolean;
 }
 
@@ -688,7 +695,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)
-    readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
@@ -698,7 +705,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     stop(reason: SummarizerStopReason): void;
     static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
     // (undocumented)
-    readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     // (undocumented)
     readonly summaryCollection: SummaryCollection;
 }

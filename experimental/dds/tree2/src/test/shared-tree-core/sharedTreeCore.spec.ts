@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";

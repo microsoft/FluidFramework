@@ -359,7 +359,6 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<current.IContainerContext>);
 use_current_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -876,6 +875,7 @@ declare function get_current_InterfaceDeclaration_IGenericError():
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: TypeOnly<old.IGenericError>);
 use_old_InterfaceDeclaration_IGenericError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericError());
 
 /*
@@ -1212,6 +1212,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
@@ -1236,6 +1237,7 @@ declare function get_current_InterfaceDeclaration_IUsageError():
 declare function use_old_InterfaceDeclaration_IUsageError(
     use: TypeOnly<old.IUsageError>);
 use_old_InterfaceDeclaration_IUsageError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUsageError());
 
 /*
