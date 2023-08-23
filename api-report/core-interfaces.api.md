@@ -8,6 +8,18 @@
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
 // @public
+export const FluidErrorTypes: {
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type FluidErrorTypes = typeof FluidErrorTypes[keyof typeof FluidErrorTypes];
+
+// @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
@@ -22,6 +34,15 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
 export interface IDisposable {
     dispose(error?: Error): void;
     readonly disposed: boolean;
+}
+
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
 }
 
 // @public
@@ -297,6 +318,13 @@ export interface IFluidRunnable {
 }
 
 // @public
+export interface IGenericError extends IErrorBase {
+    // (undocumented)
+    error?: any;
+    readonly errorType: typeof FluidErrorTypes.genericError;
+}
+
+// @public
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryProperties;
 }
@@ -392,7 +420,9 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 // @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
+    minLogLevel?: LogLevel;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
 // @public
@@ -411,10 +441,10 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 
 // @public
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
 }
 
 // @public
@@ -427,6 +457,28 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+}
+
+// @public
+export interface IThrottlingWarning extends IErrorBase {
+    readonly errorType: typeof FluidErrorTypes.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+}
+
+// @public
+export interface IUsageError extends IErrorBase {
+    readonly errorType: typeof FluidErrorTypes.usageError;
+}
+
+// @public
+export const enum LogLevel {
+    // (undocumented)
+    default = 10,
+    // (undocumented)
+    error = 20,
+    // (undocumented)
+    verbose = 0
 }
 
 // @public
