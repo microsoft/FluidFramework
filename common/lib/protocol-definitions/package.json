@@ -37,7 +37,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^1.0.0-0"
+		"@fluidframework/common-definitions": "^1.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
@@ -106,6 +106,16 @@
 			"InterfaceDeclaration_IQuorumProposals": {
 				"backCompat": false
 			}
+		}
+	},
+	"pnpm": {
+		"peerDependencyComments": [
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
+		],
+		"peerDependencyRules": {
+			"ignoreMissing": [
+				"@types/node"
+			]
 		}
 	}
 }
