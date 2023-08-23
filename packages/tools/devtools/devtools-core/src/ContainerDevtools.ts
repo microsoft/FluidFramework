@@ -13,8 +13,10 @@ import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	DataVisualizerGraph,
 	defaultVisualizers,
+	defaultEditors,
 	FluidObjectNode,
 	RootHandleNode,
+	SharedObjectEdit,
 } from "./data-visualization";
 import { IContainerDevtools } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -25,6 +27,7 @@ import {
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
@@ -41,7 +44,7 @@ import {
 	RootDataVisualizations,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
-import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
+import { ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
@@ -325,6 +328,15 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			}
 			return false;
 		},
+
+		[DataEdit.MessageType]: async (untypedMessage) => {
+			const message = untypedMessage as DataEdit.Message;
+			if (message.data.containerKey === this.containerKey) {
+				await this.editData(message.data.edit);
+				return true;
+			}
+			return false;
+		},
 	};
 
 	/**
@@ -447,7 +459,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers, defaultEditors);
+
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
@@ -510,7 +523,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
@@ -521,7 +534,14 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 */
 	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
-			[ContainerDevtoolsFeature.ContainerData]: this.containerData !== undefined,
+			// If no container data was provided to the devtools, we cannot support data visualization.
+			"containerDataVisualization": this.containerData !== undefined,
+
+			// Required for backwards compatibility with the extension through v0.0.3
+			"container-data": this.containerData !== undefined,
+
+			// TODO: When ready to enable feature set it to this.containerData !== undefined
+			"containerDataEditing": false,
 		};
 	}
 
@@ -548,5 +568,12 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
+	}
+
+	/**
+	 * Applies an {@link Edit} to a {@link SharedObject}
+	 */
+	private async editData(edit: SharedObjectEdit): Promise<void> {
+		return this.dataVisualizer?.applyEdit(edit);
 	}
 }

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { fail } from "../util";
+import { fail, isReadonlyArray } from "../util";
 import {
 	EmptyKey,
 	FieldKey,
@@ -72,7 +72,7 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
 	return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
-export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
+export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	switch (schema) {
 		case ValueSchema.String:
 			return typeof nodeValue === "string";
@@ -80,12 +80,12 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
 			return typeof nodeValue === "number";
 		case ValueSchema.Boolean:
 			return typeof nodeValue === "boolean";
-		case ValueSchema.Nothing:
-			return typeof nodeValue === "undefined";
+		case undefined:
+			return nodeValue === undefined;
 		case ValueSchema.Serializable:
-			return true;
+			return nodeValue !== undefined;
 		default:
-			fail("invalid value schema");
+			fail("invalid ValueSchema");
 	}
 }
 
@@ -108,7 +108,7 @@ export function getPrimaryField(
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
 export function getFieldSchema(field: FieldKey, schema: TreeStoredSchema): FieldStoredSchema {
-	return schema.structFields.get(field) ?? schema.mapFields;
+	return schema.structFields.get(field) ?? schema.mapFields ?? FieldSchema.empty;
 }
 
 export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
@@ -325,7 +325,7 @@ function shallowCompatibilityTest(
 	const schema =
 		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 	if (isPrimitiveValue(data)) {
-		return isPrimitive(schema) && allowsValue(schema.value, data);
+		return isPrimitive(schema) && allowsValue(schema.leafValue, data);
 	}
 	if (isArrayLike(data)) {
 		const primary = getPrimaryField(schema);
@@ -386,12 +386,12 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
-	schemaData: SchemaData,
+	context: TreeDataContext,
 	schema: T,
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		{ schema: schemaData },
+		context,
 		allowedTypesToTypeSet(schema),
 		data as unknown as ContextuallyTypedNodeData,
 	);
@@ -417,15 +417,11 @@ export function cursorsFromContextualData(
  * @alpha
  */
 export function cursorsForTypedFieldData<T extends FieldSchema>(
-	schemaData: SchemaData,
+	context: TreeDataContext,
 	schema: T,
-	data: TypedField<T, ApiMode.Simple>,
-): ITreeCursorSynchronous {
-	return cursorFromContextualData(
-		{ schema: schemaData },
-		schema.types,
-		data as ContextuallyTypedNodeData,
-	);
+	data: TypedField<T, ApiMode.Flexible>,
+): ITreeCursorSynchronous[] {
+	return cursorsFromContextualData(context, schema, data as ContextuallyTypedNodeData);
 }
 
 /**
@@ -466,7 +462,7 @@ export function applyTypesFromContext(
 			0x5c3 /* Schema must be primitive when providing a primitive value */,
 		);
 		assert(
-			allowsValue(schema.value, data),
+			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,
 		);
 		return { value: data, type, fields: new Map() };
@@ -502,7 +498,7 @@ export function applyTypesFromContext(
 
 		const value = data[valueSymbol];
 		assert(
-			allowsValue(schema.value, value),
+			allowsValue(schema.leafValue, value),
 			0x4d7 /* provided value not permitted by the schema */,
 		);
 		return { value, type, fields };
@@ -568,4 +564,49 @@ export function applyFieldTypesFromContext(
 		0x4da /* single value provided for an unsupported field */,
 	);
 	return [applyTypesFromContext(context, field.types, data)];
+}
+
+/**
+ * Content to use for a field.
+ *
+ * When used, this content will be deeply copied into the tree, and must comply with the schema.
+ *
+ * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
+ * - use a single cursor for an `optional` or `value` field;
+ * - use array of cursors for a `sequence` field;
+ *
+ * TODO: this should allow a field cursor instead of an array of cursors.
+ * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
+ * @alpha
+ */
+export type NewFieldContent =
+	| ITreeCursorSynchronous
+	| readonly ITreeCursorSynchronous[]
+	| ContextuallyTypedFieldData;
+
+/**
+ * Convert NewFieldContent into ITreeCursor array.
+ */
+export function normalizeNewFieldContent(
+	context: TreeDataContext,
+	schema: FieldStoredSchema,
+	content: NewFieldContent,
+): readonly ITreeCursorSynchronous[] {
+	if (areCursors(content)) {
+		if (getFieldKind(schema).multiplicity === Multiplicity.Sequence) {
+			assert(isReadonlyArray(content), 0x6b7 /* sequence fields require array content */);
+			return content;
+		} else {
+			if (isReadonlyArray(content)) {
+				assert(
+					content.length === 1,
+					0x6b8 /* non-sequence fields can not be provided content that is multiple cursors */,
+				);
+				return content;
+			}
+			return [content];
+		}
+	}
+
+	return cursorsFromContextualData(context, schema, content);
 }

@@ -130,7 +130,10 @@ function buildTreeSchema(
 				return cache.treeSchema;
 			}
 			if (PropertyFactory.inheritsFrom(typeid, nodePropertyType)) {
-				assert(!fields.has(nodePropertyField), "name collision for nodePropertyField");
+				assert(
+					!fields.has(nodePropertyField),
+					0x712 /* name collision for nodePropertyField */,
+				);
 				fields.set(nodePropertyField, SchemaBuilder.fieldValue(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
@@ -324,7 +327,11 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder", builtinLibrary);
+	const builder = new SchemaBuilder(
+		"PropertyDDS to SharedTree schema builder",
+		{},
+		builtinLibrary,
+	);
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 

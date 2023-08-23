@@ -24,12 +24,12 @@ import {
 	ForestEvents,
 	ITreeSubscriptionCursorState,
 	rootFieldKey,
+	mapCursorField,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
-import { FullSchemaPolicy } from "../modular-schema";
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
-import { basicChunkTree, ChunkPolicy, chunkTree, Disposable, makeTreeChunker } from "./chunkTree";
+import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
 import { ChunkedCursor, TreeChunk } from "./chunk";
 
 function makeRoot(): BasicChunk {
@@ -48,27 +48,28 @@ interface StackNode {
  */
 class ChunkedForest extends SimpleDependee implements IEditableForest {
 	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
-	// TODO: dispose of this when forest is disposed.
-	private readonly chunker: Disposable & ChunkPolicy;
 
 	private readonly events = createEmitter<ForestEvents>();
 
 	/**
 	 * @param roots - dummy node above the root under which detached fields are stored. All content of the forest is reachable from this.
 	 * @param schema - schema which all content in this forest is assumed to comply with.
-	 * @param policy - provides information needed to interpret the schema, mainly multiplicities for each field kind which are used for chunking policy.
+	 * @param chunker - Chunking policy. TODO: dispose of this when forest is disposed.
 	 * @param anchors - anchorSet used to track location in this forest across changes. Callers of applyDelta must ensure this is updated accordingly.
 	 */
 	public constructor(
 		public roots: BasicChunk,
 		public readonly schema: StoredSchemaRepository,
-		public readonly policy: FullSchemaPolicy,
+		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {
 		super("object-forest.ChunkedForest");
 		// Invalidate forest if schema change.
 		recordDependency(this.dependent, this.schema);
-		this.chunker = makeTreeChunker(schema, policy);
+	}
+
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
@@ -77,7 +78,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 
 	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ChunkedForest {
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, this.policy, anchors);
+		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -177,11 +178,15 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 					// 2. Support traversing sequence chunks.
 					//
 					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
-
-					const newChunk = basicChunkTree(found.cursor(), this.chunker);
-					chunks[indexOfChunk] = newChunk;
+					const newChunks = mapCursorField(found.cursor(), (cursor) =>
+						basicChunkTree(cursor, this.chunker),
+					);
+					// TODO: this could fail for really long chunks being split (due to argument count limits).
+					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
+					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
-					found = newChunk;
+
+					found = newChunks[indexWithinChunk];
 				}
 				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {
@@ -355,6 +360,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 		this.index = 0;
 		this.indexOfChunk = 0;
 		this.indexWithinChunk = 0;
+		this.nestedCursor = undefined;
 	}
 
 	public override fork(): Cursor {
@@ -400,10 +406,6 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildChunkedForest(
-	schema: StoredSchemaRepository,
-	policy: FullSchemaPolicy,
-	anchors?: AnchorSet,
-): IEditableForest {
-	return new ChunkedForest(makeRoot(), schema, policy, anchors);
+export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): IEditableForest {
+	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors);
 }

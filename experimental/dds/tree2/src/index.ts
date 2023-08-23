@@ -46,9 +46,6 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeSchemaIdentifier,
-	TreeSchemaBuilder,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	TreeStoredSchema,
@@ -58,6 +55,7 @@ export {
 	SchemaData,
 	FieldAnchor,
 	RevisionTag,
+	ChangesetLocalId,
 	TaggedChange,
 	RepairDataStore,
 	ReadonlyRepairDataStore,
@@ -97,6 +95,7 @@ export {
 	BrandedKey,
 	BrandedMapSubset,
 	RangeEntry,
+	Named,
 } from "./util";
 
 export {
@@ -124,11 +123,7 @@ export {
 } from "./domains";
 
 export {
-	buildForest,
-	ChangesetLocalId,
-	emptyField,
 	IdAllocator,
-	neverTree,
 	ModularChangeset,
 	EditDescription,
 	FieldChangeHandler,
@@ -187,7 +182,6 @@ export {
 	prefixPath,
 	prefixFieldPath,
 	singleTextCursor,
-	namedTreeSchema,
 	singleStackTreeCursor,
 	CursorAdapter,
 	CursorWithNode,
@@ -199,10 +193,7 @@ export {
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
-	SchemaCollection,
 	ContextuallyTypedFieldData,
-	ITreeSchema,
-	IFieldSchema,
 	cursorFromContextualData,
 	UntypedField,
 	UntypedTree,
@@ -226,7 +217,6 @@ export {
 	SchemaLibraryData,
 	FieldSchema,
 	Any,
-	Sourced,
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
@@ -269,15 +259,17 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	nodeKeyFieldKey,
+	SchemaLintConfiguration,
 } from "./feature-libraries";
 
 export {
 	ISharedTree,
 	ISharedTreeView,
+	ITransaction,
 	runSynchronous,
 	SharedTreeFactory,
 	SharedTreeOptions,
-	SharedTreeView,
+	ISharedTreeBranchView,
 	ViewEvents,
 	SchematizeConfiguration,
 } from "./shared-tree";

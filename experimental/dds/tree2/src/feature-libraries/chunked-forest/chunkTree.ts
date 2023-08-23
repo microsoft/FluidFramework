@@ -10,7 +10,6 @@ import {
 	ITreeCursorSynchronous,
 	mapCursorFields,
 	TreeSchemaIdentifier,
-	ValueSchema,
 	SimpleObservingDependent,
 	recordDependency,
 	Value,
@@ -39,22 +38,34 @@ export interface Disposable {
 export function makeTreeChunker(
 	schema: StoredSchemaRepository,
 	policy: FullSchemaPolicy,
-): ChunkPolicy & Disposable {
+): IChunker {
 	return new Chunker(
 		schema,
 		policy,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
+		tryShapeFromSchema,
 	);
 }
 
 /**
- * Indicates that there are multiple possible `TreeShapes` trees with a given type can have.
+ * Extends ChunkPolicy to include stateful details required by ChunkedForest.
+ *
+ * This extra complexity is mostly due to the fact that schema can change over time,
+ * and that chunk policy uses caching which thus needs invalidation.
+ */
+export interface IChunker extends ChunkPolicy, Disposable {
+	readonly schema: StoredSchemaRepository;
+	clone(schema: StoredSchemaRepository): IChunker;
+}
+
+/**
+ * Indicates that there are multiple possible `TreeShape` trees with a given type can have.
  *
  * @remarks
  * For example, a schema transitively containing a sequence field, optional field, or allowing multiple child types will be Polymorphic.
- * See `tryShapeForSchema` for how to tell if a type is Polymorphic.
+ * See `tryShapeFromSchema` for how to tell if a type is Polymorphic.
  *
  * TODO: cache some of the possible shapes here.
  */
@@ -71,9 +82,9 @@ export const polymorphic = new Polymorphic();
  * Information about the possible shapes a tree could take based on its type.
  * Note that this information is for a specific version of the schema.
  */
-type ShapeInfo = TreeShape | Polymorphic;
+export type ShapeInfo = TreeShape | Polymorphic;
 
-class Chunker implements ChunkPolicy, Disposable {
+export class Chunker implements IChunker {
 	/**
 	 * Cache for information about possible shapes for types.
 	 * Corresponds to the version of the schema in `schema`.
@@ -92,17 +103,37 @@ class Chunker implements ChunkPolicy, Disposable {
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
+		// eslint-disable-next-line @typescript-eslint/no-shadow
+		private readonly tryShapeFromSchema: (
+			schema: SchemaData,
+			policy: FullSchemaPolicy,
+			type: TreeSchemaIdentifier,
+			shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+		) => ShapeInfo,
 	) {
 		this.dependent = new SimpleObservingDependent(() => this.schemaChanged());
 	}
 
-	public schemaToShape(schema: TreeSchemaIdentifier): ShapeInfo {
+	public clone(schema: StoredSchemaRepository): IChunker {
+		// This does not preserve the cache.
+		// This is probably fine, but is a potential way it could be optimized in the future (with care to ensure invalidation work properly).
+		return new Chunker(
+			schema,
+			this.policy,
+			this.sequenceChunkSplitThreshold,
+			this.sequenceChunkInlineThreshold,
+			this.uniformChunkNodeCount,
+			this.tryShapeFromSchema,
+		);
+	}
+
+	public shapeFromSchema(schema: TreeSchemaIdentifier): ShapeInfo {
 		const cached = this.typeShapes.get(schema);
 		if (cached !== undefined) {
 			return cached;
 		}
 		recordDependency(this.dependent, this.schema);
-		return tryShapeForSchema(this.schema, this.policy, schema, this.typeShapes);
+		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
 	}
 
 	public dispose(): void {
@@ -168,7 +199,7 @@ export function shapesFromSchema(
 ): Map<TreeSchemaIdentifier, ShapeInfo> {
 	const shapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
 	for (const identifier of schema.treeSchema.keys()) {
-		tryShapeForSchema(schema, policy, identifier, shapes);
+		tryShapeFromSchema(schema, policy, identifier, shapes);
 	}
 	return shapes;
 }
@@ -178,7 +209,7 @@ export function shapesFromSchema(
  *
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
-function tryShapeForSchema(
+export function tryShapeFromSchema(
 	schema: SchemaData,
 	policy: FullSchemaPolicy,
 	type: TreeSchemaIdentifier,
@@ -194,14 +225,14 @@ function tryShapeForSchema(
 	}
 	const fieldsArray: FieldShape[] = [];
 	for (const [key, field] of treeSchema.structFields) {
-		const fieldShape = tryShapeForFieldSchema(schema, policy, field, key, shapes);
+		const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
 		if (fieldShape === undefined) {
 			return polymorphic;
 		}
 		fieldsArray.push(fieldShape);
 	}
 
-	const shape = new TreeShape(type, treeSchema.value !== ValueSchema.Nothing, fieldsArray);
+	const shape = new TreeShape(type, treeSchema.leafValue !== undefined, fieldsArray);
 	shapes.set(type, shape);
 	return shape;
 }
@@ -211,7 +242,7 @@ function tryShapeForSchema(
  *
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
-function tryShapeForFieldSchema(
+export function tryShapeFromFieldSchema(
 	schema: SchemaData,
 	policy: FullSchemaPolicy,
 	type: FieldStoredSchema,
@@ -226,7 +257,7 @@ function tryShapeForFieldSchema(
 		return undefined;
 	}
 	const childType = [...type.types][0];
-	const childShape = tryShapeForSchema(schema, policy, childType, shapes);
+	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}
@@ -246,14 +277,14 @@ export const defaultChunkPolicy: ChunkPolicy = {
 	uniformChunkNodeCount: 400,
 	// Without knowing what the schema is, all shapes are possible.
 	// Use `makeTreeChunker` to do better.
-	schemaToShape: () => polymorphic,
+	shapeFromSchema: () => polymorphic,
 };
 
 export const basicOnlyChunkPolicy: ChunkPolicy = {
 	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	uniformChunkNodeCount: 0,
-	schemaToShape: () => polymorphic,
+	shapeFromSchema: () => polymorphic,
 };
 
 /**
@@ -281,7 +312,7 @@ export interface ChunkPolicy {
 	/**
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
-	schemaToShape(schema: TreeSchemaIdentifier): ShapeInfo;
+	shapeFromSchema(schema: TreeSchemaIdentifier): ShapeInfo;
 }
 
 function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): BasicChunk {
@@ -340,7 +371,7 @@ export function chunkRange(
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
 			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
-			const shape = policy.schemaToShape(type);
+			const shape = policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.ceil(

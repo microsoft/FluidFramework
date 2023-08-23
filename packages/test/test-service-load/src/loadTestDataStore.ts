@@ -662,7 +662,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  };
 
 		try {
-			while (dataModel.counter.value < clientSendCount && !this.disposed) {
+			while (dataModel.counter.value < clientSendCount && !this.runtime.disposed) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.

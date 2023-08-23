@@ -15,13 +15,14 @@ import {
 	createMockNodeKeyManager,
 	StableNodeKey,
 	nodeKeyFieldKey,
+	setField,
 } from "../../../feature-libraries";
 import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
-import { compareSets } from "../../../util";
+import { brand, compareSets } from "../../../util";
 import { SummarizeType, TestTreeProvider, initializeTestTree } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
-const builder = new SchemaBuilder("node key index tests", nodeKeySchema);
+const builder = new SchemaBuilder("node key index tests", {}, nodeKeySchema);
 const nodeSchema = builder.structRecursive("node", {
 	...nodeKeyField,
 	child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
@@ -103,7 +104,7 @@ describe("Node Key Index", () => {
 		const node = typedView.nodeKey.map.get(keyA);
 		assert(node !== undefined);
 		const keyB = typedView.nodeKey.generate();
-		node.child = { ...contextualizeKey(typedView, keyB) };
+		node[setField](brand("child"), { ...contextualizeKey(typedView, keyB) });
 		assertIds(typedView, [keyA, keyB]);
 	});
 
@@ -118,7 +119,7 @@ describe("Node Key Index", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 		});
 
-		typedView.root = undefined;
+		typedView.setContent(undefined);
 		assertIds(typedView, []);
 	});
 
@@ -244,14 +245,14 @@ describe("Node Key Index", () => {
 		});
 
 		expectedIds = [];
-		typedView.root = undefined;
+		typedView.setContent(undefined);
 		assert.equal(batches, 2);
 	});
 
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global node key field on the node
-		const builder2 = new SchemaBuilder("node key index test", nodeKeySchema);
+		const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
 		const nodeSchemaNoKey = builder2.structRecursive("node", {
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
@@ -295,7 +296,7 @@ describe("Node Key Index", () => {
 				});
 
 				const fork = typedView.fork();
-				fork.root = undefined;
+				fork.setContent(undefined);
 				assertIds(typedView, [key]);
 				assertIds(fork, []);
 				typedView.merge(fork);
@@ -315,7 +316,7 @@ describe("Node Key Index", () => {
 				});
 
 				const fork = typedView.fork();
-				typedView.root = undefined;
+				typedView.setContent(undefined);
 				assertIds(typedView, []);
 				assertIds(fork, [key]);
 				typedView.merge(fork);

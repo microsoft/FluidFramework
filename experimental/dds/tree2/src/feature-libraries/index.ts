@@ -9,19 +9,12 @@ export {
 	EditableTreeContext,
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
-	typeSymbol,
 	isEditableField,
 	isPrimitive,
 	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
@@ -57,6 +50,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
+	setField,
 } from "./editable-tree";
 
 export {
@@ -80,6 +74,8 @@ export {
 	cursorsForTypedFieldData,
 	FieldGenerator,
 	TreeDataContext,
+	normalizeNewFieldContent,
+	NewFieldContent,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -102,7 +98,6 @@ import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
 export {
-	ChangesetLocalId,
 	idAllocatorFromMaxId,
 	isNeverField,
 	ModularEditBuilder,
@@ -134,15 +129,9 @@ export {
 	RevisionInfo,
 	HasFieldChanges,
 	revisionMetadataSourceFromInfo,
-	ViewSchema,
-	SchemaCollection,
-	IFieldSchema,
-	ITreeSchema,
-	Sourced,
 	NodeExistsConstraint,
 	NodeExistenceState,
 	BrandedFieldKind,
-	ChangeAtomId,
 } from "./modular-schema";
 
 export {
@@ -156,14 +145,14 @@ export {
 	SchemaLibraryData,
 	LazyTreeSchema,
 	InternalTypedSchemaTypes,
+	ViewSchema,
+	SchemaLintConfiguration,
 } from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
 export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
-
-export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
@@ -195,9 +184,6 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-	emptyField,
-	neverField,
-	neverTree,
 } from "./default-field-kinds";
 
 export {
@@ -208,6 +194,12 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
+	typeSymbol,
+	getField,
+	parentField,
+	EditableTreeEvents,
+	on,
+	contextSymbol,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.

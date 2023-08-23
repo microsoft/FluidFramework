@@ -5,7 +5,7 @@
 
 import { FieldKey, UpPath } from "../../../core";
 
-export type Operation = TreeOperation;
+export type Operation = TreeOperation | Synchronize;
 
 export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
 
@@ -82,6 +82,13 @@ export interface UndoOp {
 
 export interface RedoOp {
 	type: "redo";
+}
+
+/**
+ * This Synchronize interface was duplicated from the ddsFuzzHarness code for use cases which requires more control over how the synchronize op is generated.
+ */
+export interface Synchronize {
+	type: "synchronizeTrees";
 }
 
 export interface NodeRangePath {

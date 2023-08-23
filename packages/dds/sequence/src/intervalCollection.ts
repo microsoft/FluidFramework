@@ -6,8 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IEvent } from "@fluidframework/common-definitions";
-import { UsageError } from "@fluidframework/container-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,
 	Client,
@@ -24,7 +23,7 @@ import {
 	DetachedReferencePosition,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	IMapMessageLocalMetadata,
@@ -35,7 +34,6 @@ import {
 	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
-import { IntervalConflictResolver } from "./intervalTree";
 import {
 	CompressedSerializedInterval,
 	IIntervalHelpers,
@@ -1294,19 +1292,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (changedProperties) {
 				this.emit("propertyChanged", interval, deltaProps, local, op);
 			}
-		}
-	}
-
-	/**
-	 * @deprecated - This functionality was useful when adding two intervals at the same start/end positions resulted
-	 * in a conflict. This is no longer the case (as of PR#6407), as interval collections support multiple intervals
-	 * at the same location and gives each interval a unique id.
-	 *
-	 * As such, the conflict resolver is never invoked and unnecessary. This API will be removed in an upcoming release.
-	 */
-	public addConflictResolver(_: IntervalConflictResolver<TInterval>): void {
-		if (!this.localCollection) {
-			throw new LoggingError("attachSequence must be called");
 		}
 	}
 

@@ -15,12 +15,11 @@ import {
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ContainerKey,
 	ContainerList,
-	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 	GetContainerList,
@@ -37,6 +36,7 @@ import {
 	MenuSection,
 	MenuItem,
 	NoDevtoolsErrorBar,
+	OpLatencyView,
 	SettingsView,
 	TelemetryView,
 	Waiting,
@@ -107,6 +107,17 @@ interface HomeMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Op Latency view
+ * @see {@link MenuSection} for other possible options.
+ */
+interface OpLatencyMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "opLatencyMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
@@ -116,7 +127,8 @@ type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
-	| HomeMenuSelection;
+	| HomeMenuSelection
+	| OpLatencyMenuSelection;
 
 const useDevtoolsStyles = makeStyles({
 	root: {
@@ -199,7 +211,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 				});
 
 				newTopLevelLogger.sendTelemetryEvent({
-					eventName: "Connection established with Devtools in the application.",
+					eventName: "DevtoolsConnected",
 				});
 
 				setTopLevelLogger(newTopLevelLogger);
@@ -396,6 +408,9 @@ function View(props: ViewProps): React.ReactElement {
 		case "homeMenuSelection":
 			view = <LandingView />;
 			break;
+		case "opLatencyMenuSelection":
+			view = <OpLatencyView />;
+			break;
 		default:
 			view = <LandingView />;
 			break;
@@ -504,6 +519,14 @@ function Menu(props: MenuProps): React.ReactElement {
 		});
 	}
 
+	function onOpLatencyClicked(): void {
+		setSelection({ type: "opLatencyMenuSelection" });
+		usageLogger?.sendTelemetryEvent({
+			eventName: "Navigation",
+			details: { target: "Menu_OpLatency" },
+		});
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -521,7 +544,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	);
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
-	if (supportedFeatures[DevtoolsFeature.Telemetry] === true) {
+	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
 			<MenuSection header="Telemetry" key="telemetry-menu-section">
 				<MenuItem
@@ -530,6 +553,16 @@ function Menu(props: MenuProps): React.ReactElement {
 					onClick={onTelemetryClicked}
 				/>
 			</MenuSection>,
+		);
+	}
+
+	if (supportedFeatures.opLatencyTelemetry === true) {
+		menuSections.push(
+			<MenuSection
+				header="Op Latency"
+				key="op-latency-menu-section"
+				onHeaderClick={onOpLatencyClicked}
+			/>,
 		);
 	}
 

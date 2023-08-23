@@ -18,7 +18,8 @@ describe("TestTreeProvider", () => {
 		const summaries = summaryCount;
 		await provider.summarize();
 
-		assert.strictEqual(summaryCount, summaries + 1);
+		// summarizeCore is invoked as part of getGCData, hence why this is +2 and not +1
+		assert.strictEqual(summaryCount, summaries + 2);
 		unspy();
 	});
 
@@ -54,7 +55,9 @@ describe("TestTreeProvider", () => {
 
 		const summaries = summaryCount;
 		await provider.summarize();
-		assert.strictEqual(summaryCount, summaries + 1);
+
+		// summarizeCore is invoked as part of getGCData, hence why this is +2 and not +1
+		assert.strictEqual(summaryCount, summaries + 2);
 		unspy();
 	});
 });

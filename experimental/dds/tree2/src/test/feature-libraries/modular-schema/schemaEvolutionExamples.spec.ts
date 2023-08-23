@@ -8,12 +8,11 @@ import { strict as assert } from "assert";
 import {
 	FieldSchema,
 	FullSchemaPolicy,
-	SchemaCollection,
 	ViewSchema,
 	SchemaBuilder,
 	FieldKinds,
 	defaultSchemaPolicy,
-	emptyField,
+	TypedSchemaCollection,
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
@@ -23,6 +22,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
+	storedEmptyFieldSchema,
 } from "../../../core";
 import { brand } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
@@ -107,6 +107,7 @@ describe("Schema Evolution Examples", () => {
 
 	const containersBuilder = new SchemaBuilder(
 		"Schema Evolution Examples: default containers",
+		{},
 		defaultContentLibrary,
 	);
 
@@ -136,8 +137,9 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: SchemaCollection = new SchemaBuilder(
+		const viewCollection: TypedSchemaCollection = new SchemaBuilder(
 			"basic usage",
+			{},
 			treeViewSchema,
 		).intoDocumentSchema(root);
 
@@ -150,7 +152,7 @@ describe("Schema Evolution Examples", () => {
 		// StoredSchemaRepository defaults to a state that permits no document states at all.
 		// To permit an empty document, we have to define a root field, and permit it to be empty.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
-		assert(stored.tryUpdateRootFieldSchema(emptyField));
+		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
 		{
 			// When we open this document, we should check it's compatibility with our application:
@@ -188,6 +190,7 @@ describe("Schema Evolution Examples", () => {
 			// Lets simulate the developers of the app making this change by modifying the view schema:
 			const viewCollection2 = new SchemaBuilder(
 				"basic usage2",
+				{},
 				treeViewSchema,
 			).intoDocumentSchema(tolerantRoot);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
@@ -246,6 +249,7 @@ describe("Schema Evolution Examples", () => {
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 			const builderWithCounter = new SchemaBuilder(
 				"builderWithCounter",
+				{},
 				defaultContentLibrary,
 			);
 			const counterIdentifier: TreeSchemaIdentifier = brand(
@@ -267,7 +271,7 @@ describe("Schema Evolution Examples", () => {
 				items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: SchemaCollection = builderWithCounter.intoDocumentSchema(
+			const viewCollection3: TypedSchemaCollection = builderWithCounter.intoDocumentSchema(
 				SchemaBuilder.field(FieldKinds.optional, canvas2),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);

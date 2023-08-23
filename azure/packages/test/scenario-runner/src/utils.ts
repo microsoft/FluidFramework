@@ -2,32 +2,29 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import child_process from "child_process";
+import commander from "commander";
 import {
 	AzureClient,
 	AzureFunctionTokenProvider,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
+	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
 
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
-import { ContainerFactorySchema } from "./interface";
+import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface";
 
 export interface AzureClientConfig {
-	connType: string;
-	connEndpoint?: string;
 	userId?: string;
 	userName?: string;
 	logger?: ITelemetryLogger;
-	tenantId?: string;
-	tenantKey?: string;
-	functionUrl?: string;
-	secureTokenProvider?: boolean; // defaults to Insecure
 }
 
 export const delay = async (timeMs: number): Promise<void> =>
@@ -45,6 +42,21 @@ export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerS
 		}
 	}
 	return schema;
+}
+
+export function convertConfigToScriptParams<T extends IRunConfig>(config: T): string[] {
+	const params: string[] = [];
+	Object.entries(config).forEach(([key, value]) => {
+		const paramName = `--${key}`;
+		if (value === undefined) {
+			return;
+		}
+		if (typeof value === "string") {
+			params.push(paramName, value);
+		}
+		params.push(paramName, JSON.stringify(value));
+	});
+	return params;
 }
 
 export function createAzureTokenProvider(
@@ -70,62 +82,80 @@ export function createInsecureTokenProvider(
 	return new InsecureTokenProvider(tenantKey, user);
 }
 
+export function getAzureClientConnectionConfigFromEnv(): AzureClientConnectionConfig {
+	const partialConfig: Partial<AzureClientConnectionConfig> = {
+		endpoint: process.env.azure__fluid__relay__service__endpoint,
+		tenantId: process.env.azure__fluid__relay__service__tenantId,
+		key: process.env.azure__fluid__relay__service__tenantKey,
+		functionUrl: process.env.azure__fluid__relay__service__function__url,
+		region: process.env.azure__fluid__relay__service__region,
+	};
+	const type =
+		partialConfig.tenantId && (partialConfig.key || partialConfig.functionUrl)
+			? "remote"
+			: "local";
+	const useSecureTokenProvider = partialConfig.functionUrl !== undefined && !partialConfig.key;
+	return {
+		...partialConfig,
+		type,
+		useSecureTokenProvider,
+	};
+}
+
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
 export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
-	const useAzure = config.connType === "remote";
+	const connectionConfig = getAzureClientConnectionConfigFromEnv();
+	const useAzure = connectionConfig.type === "remote";
 
-	if (!config.connEndpoint) {
+	if (!connectionConfig.endpoint) {
 		throw new Error("Missing FRS configuration: Relay Service Endpoint URL.");
 	}
 
 	let connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 
 	if (useAzure) {
-		if (!config.tenantId) {
+		if (!connectionConfig.tenantId) {
 			throw new Error("Missing FRS configuration: Tenant ID.");
 		}
 
+		let tokenProvider: ITokenProvider;
 		/* Insecure Token Provider */
-		if (!config.secureTokenProvider) {
-			if (!config.tenantKey) {
+		if (!connectionConfig.useSecureTokenProvider) {
+			if (!connectionConfig.key) {
 				throw new Error("Missing FRS configuration: Tenant Primary Key.");
 			}
-			connectionProps = {
-				tenantId: config.tenantId,
-				tokenProvider: createInsecureTokenProvider(
-					config.tenantKey,
-					config.userId,
-					config.userName,
-				),
-				endpoint: config.connEndpoint,
-				type: "remote",
-			};
+			tokenProvider = createInsecureTokenProvider(
+				connectionConfig.key,
+				config.userId,
+				config.userName,
+			);
 		} else {
 			/* Secure Token Provider (Azure Function) */
-			if (!config.functionUrl) {
+			if (!connectionConfig.functionUrl) {
 				throw new Error("Missing FRS configuration: Function URL.");
 			}
-			connectionProps = {
-				tenantId: config.tenantId,
-				tokenProvider: createAzureTokenProvider(
-					config.functionUrl,
-					config.userId,
-					config.userName,
-				),
-				endpoint: config.connEndpoint,
-				type: "remote",
-			};
+			tokenProvider = createAzureTokenProvider(
+				connectionConfig.functionUrl,
+				config.userId,
+				config.userName,
+			);
 		}
+		connectionProps = {
+			tenantId: connectionConfig.tenantId,
+			tokenProvider,
+			endpoint: connectionConfig.endpoint,
+			type: "remote",
+		};
 	} else {
 		connectionProps = {
 			tokenProvider: new InsecureTokenProvider("fooBar", {
 				id: uuid(),
 				name: uuid(),
 			}),
-			endpoint: config.connEndpoint,
+			endpoint: connectionConfig.endpoint,
 			type: "local",
 		};
 	}
@@ -133,13 +163,29 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 	return new AzureClient({ connection: connectionProps, logger: config.logger });
 }
 
-export async function createContainer(
-	ac: AzureClient,
-	s: ContainerFactorySchema,
-): Promise<IFluidContainer> {
-	const schema = loadInitialObjSchema(s);
-	const r = await ac.createContainer(schema);
-	return r.container;
+export async function createChildProcess(
+	childArgs: string[],
+	additionalSetup?: (runnerProcess: child_process.ChildProcess) => void,
+): Promise<boolean> {
+	const envVar = { ...process.env };
+	const runnerProcess = child_process.spawn("node", childArgs, {
+		stdio: "inherit",
+		env: envVar,
+	});
+
+	if (additionalSetup !== undefined) {
+		additionalSetup(runnerProcess);
+	}
+
+	return new Promise((resolve, reject) =>
+		runnerProcess.once("close", (status) => {
+			if (status === 0) {
+				resolve(true);
+			} else {
+				reject(new Error("Client failed to complet the tests sucesfully."));
+			}
+		}),
+	);
 }
 
 export type ScenarioRunnerTelemetryEventNames =
@@ -227,4 +273,23 @@ export function getScenarioRunnerTelemetryEventMap(
 			`scenario:runner${scenarioName}:Summarize:Summarized`,
 		],
 	]);
+}
+
+export function commanderParseIntArg(value: any): number {
+	if (isNaN(parseInt(value, 10))) {
+		throw new commander.InvalidArgumentError("Not a number.");
+	}
+	return parseInt(value, 10);
+}
+export function getCommander(): commander.CommanderStatic {
+	return commander
+		.version("0.0.1")
+		.requiredOption("-r, --runId <runId>", "orchestrator run id.")
+		.requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
+		.requiredOption("-c, --childId <childId>", "id of this node client.", commanderParseIntArg)
+		.option(
+			"-l, --log <filter>",
+			"Filter debug logging. If not provided, uses DEBUG env variable.",
+		)
+		.requiredOption("-v, --verbose", "Enables verbose logging");
 }

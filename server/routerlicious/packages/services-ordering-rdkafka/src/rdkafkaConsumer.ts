@@ -20,8 +20,16 @@ export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeLoopTimeoutDelay: number;
 	optimizedRebalance: boolean;
 	commitRetryDelay: number;
+
+	/**
+	 * Amount of milliseconds to delay after a successful offset commit.
+	 * This allows slowing down how often commits are done.
+	 */
+	commitSuccessDelay?: number;
+
 	automaticConsume: boolean;
 	maxConsumerCommitRetries: number;
+
 	zooKeeperClientConstructor?: ZookeeperClientConstructor;
 
 	/**
@@ -69,6 +77,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			consumeLoopTimeoutDelay: options?.consumeLoopTimeoutDelay ?? 100,
 			optimizedRebalance: options?.optimizedRebalance ?? false,
 			commitRetryDelay: options?.commitRetryDelay ?? 1000,
+			commitSuccessDelay: options?.commitSuccessDelay ?? 0,
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
@@ -373,6 +382,16 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 
 			const result = await deferredCommit.promise;
 			const latency = Date.now() - startTime;
+
+			if (
+				this.consumerOptions.commitSuccessDelay !== undefined &&
+				this.consumerOptions.commitSuccessDelay > 0
+			) {
+				await new Promise((resolve) =>
+					setTimeout(resolve, this.consumerOptions.commitSuccessDelay),
+				);
+			}
+
 			this.emit("checkpoint_success", partitionId, queuedMessage, retries, latency);
 			return result;
 		} catch (ex) {

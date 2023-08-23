@@ -6,16 +6,12 @@ env:
     initialObjects:
       key1: SharedMap
       key2: SharedMap
-  connectionConfig:
-    type: remote
-    useSecureTokenProvider: false
 stages:
   - stage-1:
     id: 1
     name: Create single azure client
     package: azure-client
     params:
-      connectionConfig: ${connectionConfig}
       userId: SomeUserId;
       userName: SomeName;
     out: ${client}
@@ -24,7 +20,6 @@ stages:
     name: Nest Maps
     package: nested-maps
     params:
-      connectionConfig: ${connectionConfig}
       schema: ${schema}
       client: ${client}
       initialMapKey: key1
@@ -36,7 +31,6 @@ stages:
     name: Load documents
     package: doc-loader
     params:
-      connectionConfig: ${connectionConfig}
       numOfLoads: 1
       schema: ${schema}
       docIds: ${docIds}
