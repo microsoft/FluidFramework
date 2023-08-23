@@ -9,6 +9,7 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, performance } from "@fluidframework/common-utils";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
@@ -227,16 +228,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		// If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
 		if (count === 1 && (blobid === null || blobid === this.documentId)) {
-			const verboseLoggingEnabled =
-				loggerToMonitoringContext(this.logger).config.getBoolean(
-					"Fluid.enableVerboseLogging",
-				) ?? false;
 			const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
 			const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
 				this.logger,
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
+					let cacheLookupTimeInSerialFetch = 0;
 					let retrievedSnapshot:
 						| ISnapshotContents
 						| IPrefetchSnapshotContents
@@ -251,7 +249,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						);
 						method = "networkOnly";
 					} else {
-						let startTime = performance.now();
 						// Here's the logic to grab the persistent cache snapshot implemented by the host
 						// Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
 						const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
@@ -284,7 +281,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 									return snapshotCachedEntry;
 								});
-						let cacheLookUpTime = performance.now() - startTime;
 						// Based on the concurrentSnapshotFetch policy:
 						// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
 						// or grab the cache value and then the network value if the cache value returns undefined.
@@ -327,9 +323,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						} else {
 							// Note: There's a race condition here - another caller may come past the undefined check
 							// while the first caller is awaiting later async code in this block.
-							startTime = performance.now();
+							cacheLookupTimeInSerialFetch = performance.now();
 							retrievedSnapshot = await cachedSnapshotP;
-							cacheLookUpTime += performance.now() - startTime;
+							cacheLookupTimeInSerialFetch +=
+								performance.now() - cacheLookupTimeInSerialFetch;
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
@@ -339,12 +336,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 									scenarioName,
 								);
 							}
-						}
-						if (verboseLoggingEnabled) {
-							this.logger.sendTelemetryEvent({
-								eventName: "ObtainSnapshotExtraTime",
-								duration: cacheLookUpTime,
-							});
 						}
 					}
 					if (method === "network") {
@@ -361,6 +352,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						method,
 						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
 						...evalBlobsAndTrees(retrievedSnapshot),
+						cacheLookupTimeInSerialFetch,
 						prefetchSavedDuration:
 							prefetchStartTime !== undefined && method !== "cache"
 								? prefetchWaitStartTime - prefetchStartTime
@@ -373,12 +365,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const stTime = performance.now();
 			// Don't override ops which were fetched during initial load, since we could still need them.
 			const id = this.initializeFromSnapshot(odspSnapshotCacheValue, this.firstVersionCall);
-			if (verboseLoggingEnabled) {
-				this.logger.sendTelemetryEvent({
-					eventName: "InitalizeSnapshotTime",
+			this.logger.sendTelemetryEvent(
+				{
+					eventName: "SnapshotInitializeTime",
 					duration: performance.now() - stTime,
-				});
-			}
+				},
+				undefined,
+				LogLevel.verbose,
+			);
 			this.firstVersionCall = false;
 
 			return id ? [{ id, treeId: undefined! }] : [];

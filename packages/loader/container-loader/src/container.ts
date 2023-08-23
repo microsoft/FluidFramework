@@ -1752,7 +1752,7 @@ export class Container
 		this.setLoaded();
 		this.subLogger.sendTelemetryEvent(
 			{
-				eventName: "UnaccountedLoadTime",
+				eventName: "LoadStagesTimings",
 				...timings,
 			},
 			undefined,
