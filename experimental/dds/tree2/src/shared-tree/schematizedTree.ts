@@ -27,11 +27,11 @@ import { ISubscribable } from "../events";
 import { ViewEvents } from "./sharedTreeView";
 
 /**
- * Modify `storedSchema` and invoke `setInitialTree` when its time to set the tree content.
+ * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
  *
  * Requires `storedSchema` to be in its default/empty state.
  *
- * This is done in such a way that if the content that the content (implicitly assumed to start empty)
+ * This is done in such a way that if the content (implicitly assumed to start empty)
  * is never out of schema.
  * This means that if the root field of the new schema requires content (like a value field),
  * a temporary intermediate schema is used so the initial empty state is not out of schema.
