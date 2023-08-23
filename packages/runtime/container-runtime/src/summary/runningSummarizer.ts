@@ -9,9 +9,9 @@ import {
 	MonitoringContext,
 	createChildMonitoringContext,
 	createChildLogger,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
@@ -556,12 +556,16 @@ export class RunningSummarizer implements IDisposable {
 				this.beforeSummaryAction();
 			},
 			async () => {
-				const summarizeResult = this.generator.summarize(
-					summarizeProps,
-					options,
-					this.cancellationToken,
-					resultsBuilder,
-				);
+				const summaryLogger = createChildLogger({
+					logger: this.mc.logger,
+					properties: { all: summarizeProps },
+				});
+				const summaryOptions: ISubmitSummaryOptions = {
+					...options,
+					summaryLogger,
+					cancellationToken: this.cancellationToken,
+				};
+				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
 				return summarizeResult.receivedSummaryAckOrNack;
 			},
@@ -636,14 +640,19 @@ export class RunningSummarizer implements IDisposable {
 				summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
 				...summarizeOptions,
 			};
+			const summaryLogger = createChildLogger({
+				logger: this.mc.logger,
+				properties: { all: summarizeProps },
+			});
+			const summaryOptions: ISubmitSummaryOptions = {
+				...summarizeOptions,
+				summaryLogger,
+				cancellationToken: this.cancellationToken,
+			};
 
 			// Note: no need to account for cancellationToken.waitCancelled here, as
 			// this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
-			const resultSummarize = this.generator.summarize(
-				summarizeProps,
-				summarizeOptions,
-				this.cancellationToken,
-			);
+			const resultSummarize = this.generator.summarize(summaryOptions);
 			const ackNackResult = await resultSummarize.receivedSummaryAckOrNack;
 			if (ackNackResult.success) {
 				return;
@@ -706,11 +715,16 @@ export class RunningSummarizer implements IDisposable {
 				summaryAttempts: currentAttempt,
 				...summarizeOptions,
 			};
-			const summarizeResult = this.generator.summarize(
-				summarizeProps,
-				summarizeOptions,
-				this.cancellationToken,
-			);
+			const summaryLogger = createChildLogger({
+				logger: this.mc.logger,
+				properties: { all: summarizeProps },
+			});
+			const summaryOptions: ISubmitSummaryOptions = {
+				...summarizeOptions,
+				summaryLogger,
+				cancellationToken: this.cancellationToken,
+			};
+			const summarizeResult = this.generator.summarize(summaryOptions);
 
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;

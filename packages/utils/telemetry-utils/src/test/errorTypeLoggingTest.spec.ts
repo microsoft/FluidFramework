@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import { GenericError, DataCorruptionError } from "../error";
+import { MockLogger } from "../mockLogger";
+import { createChildLogger } from "../logger";
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
 	// In all tests below, the `stack` prop will be left out of validation because it is difficult to properly
@@ -26,7 +27,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 						eventName: "A",
 						category: "error",
 						message: "genericError",
-						errorType: ContainerErrorType.genericError,
+						errorType: FluidErrorTypes.genericError,
 						error: "genericError",
 					},
 				]),
@@ -43,7 +44,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 						eventName: "A",
 						category: "error",
 						message: "genericError",
-						errorType: ContainerErrorType.genericError,
+						errorType: FluidErrorTypes.genericError,
 						error: "genericError",
 					},
 				]),
@@ -59,7 +60,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 						eventName: "A",
 						category: "error",
 						message: "genericError",
-						errorType: ContainerErrorType.genericError,
+						errorType: FluidErrorTypes.genericError,
 						error: "genericError",
 					},
 				]),
@@ -83,7 +84,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 						eventName: "A",
 						category: "error",
 						message: "dataCorruptionError",
-						errorType: ContainerErrorType.dataCorruptionError,
+						errorType: FluidErrorTypes.dataCorruptionError,
 						error: "dataCorruptionError",
 						clientId: "clientId",
 						sequenceNumber: 0,
@@ -111,7 +112,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 						eventName: "errorTypeTestNamespace:A",
 						category: "error",
 						message: "genericError",
-						errorType: ContainerErrorType.genericError,
+						errorType: FluidErrorTypes.genericError,
 						error: "genericError",
 					},
 				]),

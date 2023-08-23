@@ -103,6 +103,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidDataStoreRuntime": {
+				"backCompat": false
+			}
+		}
 	}
 }
