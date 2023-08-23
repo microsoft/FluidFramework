@@ -15,50 +15,18 @@ const { fromInternalScheme, toInternalScheme } = require("@fluid-tools/version-t
 // incorrect.
 const pkg = require("./package.json");
 
-const isTestCIBuild = process.env.TEST_BRANCH === "true";
+// Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
+const verString = process.env.SETVERSION_VERSION ?? pkg.version;
+console.warn(`verString: ${verString}`);
 
-// An array of webpack module rules. We build the list of rules dynamically, depending on whether we are running in a CI
-// test branch or not.
-const webpackModuleRules = [];
+const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
+const versionToReplace = new RegExp(verString, "g");
+const internalVersionNoPrerelease = [major, minor, patch].join(".");
+const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
 
-// Unless we are running in a test branch in CI, then we want to replace the version string in the bundled code. test
-// branch builds are exlcuded because they use a version scheme that fromInternalScheme does not parse.
-if (!isTestCIBuild) {
-	// Read the version from an environment variable, if set. The version in the package.json file will be used otherwise.
-	const verString = process.env.SETVERSION_VERSION ?? pkg.version;
-
-	const [publicVer, { major, minor, patch }] = fromInternalScheme(verString, true, true);
-	const versionToReplace = new RegExp(verString, "g");
-	const internalVersionNoPrerelease = [major, minor, patch].join(".");
-	const newVersion = toInternalScheme(publicVer, internalVersionNoPrerelease).version;
-
-	// This rule replaces the version string in the bundled code.
-	webpackModuleRules.push({
-		test: /packageVersion\.js$/,
-		loader: "string-replace-loader",
-		options: {
-			search: versionToReplace,
-			replace: newVersion,
-			// If true, webpack will fail if the search string is not found in the file. Since we have some files that
-			// don't have the version numbers, we need to set this to false.
-			strict: false,
-		},
-	});
-}
-
-// Always use these module rules
-webpackModuleRules.push(
-	{
-		test: /\.tsx?$/,
-		use: "ts-loader",
-		exclude: /node_modules/,
-	},
-	{
-		test: /\.js$/,
-		use: [require.resolve("source-map-loader")],
-		enforce: "pre",
-	},
-);
+console.warn(`versionToReplace: ${versionToReplace}`);
+console.warn(`public: ${publicVer}, internal: ${internalVersionNoPrerelease}`);
+console.warn(`newVersion: ${newVersion}`);
 
 module.exports = {
 	entry: {
@@ -75,7 +43,29 @@ module.exports = {
 	},
 	mode: "production",
 	module: {
-		rules: webpackModuleRules,
+		rules: [
+			{
+				test: /packageVersion\.js$/,
+				loader: "string-replace-loader",
+				options: {
+					search: versionToReplace,
+					replace: newVersion,
+					// If true, webpack will fail if the search string is not found in the file. Since we have some files that
+					// don't have the version numbers, we need to set this to false.
+					strict: false,
+				},
+			},
+			{
+				test: /\.tsx?$/,
+				use: "ts-loader",
+				exclude: /node_modules/,
+			},
+			{
+				test: /\.js$/,
+				use: [require.resolve("source-map-loader")],
+				enforce: "pre",
+			},
+		],
 	},
 	resolve: {
 		extensions: [".tsx", ".ts", ".js"],
