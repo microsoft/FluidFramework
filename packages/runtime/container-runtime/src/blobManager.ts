@@ -349,24 +349,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	private async stashPendingBlobs(): Promise<void> {
-		for (const [localId, entry] of this.pendingBlobs) {
-			if (!entry.opsent) {
-				this.sendBlobAttachOp(localId, entry.storageId);
-			}
-			entry.handleP.resolve(this.getBlobHandle(localId));
-		}
-		return new Promise<void>((resolve) => {
-			if (this.allBlobsAttached) {
-				resolve();
-			} else {
-				this.once("allBlobsAttached", () => {
-					resolve();
-				});
-			}
-		});
-	}
-
 	/**
 	 * Set of actual storage IDs (i.e., IDs that can be requested from storage). This will be empty if the container is
 	 * detached or there are no (non-pending) attachment blobs in the document
@@ -943,20 +925,47 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
-		if (waitBlobsToAttach) {
-			await this.stashPendingBlobs();
+	private async stashPendingBlobs(ids): Promise<void> {
+		for (const localId of ids) {
+			const entry = this.pendingBlobs.get(localId) as PendingBlob;
+			if (!entry.opsent) {
+				this.sendBlobAttachOp(localId, entry.storageId);
+			}
+			entry.handleP.resolve(this.getBlobHandle(localId));
 		}
+		return new Promise<void>((resolve) => {
+			if (this.allBlobsAttached) {
+				resolve();
+			} else {
+				this.once("allBlobsAttached", () => {
+					resolve();
+				});
+			}
+		});
+	}
+
+	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
 		const blobs = {};
-		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = {
-				blob: bufferToString(entry.blob, "base64"),
-				storageId: entry.storageId,
-				attached: entry.attached,
-				acked: entry.acked,
-				minTTLInSeconds: entry.minTTLInSeconds,
-				uploadTime: entry.uploadTime,
-			};
+		const localIds = new Set<string>();
+		while (Object.keys(blobs).length < this.pendingBlobs.size) {
+			const ids = Array.from(this.pendingBlobs.keys()).filter(
+				(localId) => !localIds.has(localId),
+			);
+			if (waitBlobsToAttach) {
+				await this.stashPendingBlobs(ids);
+			}
+			for (const id of ids) {
+				localIds.add(id);
+				const entry = this.pendingBlobs.get(id) as PendingBlob;
+				blobs[id] = {
+					blob: bufferToString(entry.blob, "base64"),
+					storageId: entry.storageId,
+					attached: entry.attached,
+					acked: entry.acked,
+					minTTLInSeconds: entry.minTTLInSeconds,
+					uploadTime: entry.uploadTime,
+				};
+			}
 		}
 		return blobs;
 	}
