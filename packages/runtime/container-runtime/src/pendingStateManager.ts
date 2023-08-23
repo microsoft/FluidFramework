@@ -193,7 +193,6 @@ export class PendingStateManager implements IDisposable {
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		// assert(this.initialMessages.isEmpty(), "Must not submit messages while applying stashed ops");
 		const pendingMessage: IPendingMessageNew = {
 			type: "message",
 			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
@@ -255,7 +254,6 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.savedOps.push(pendingMessage);
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		this.pendingMessages.shift();
 
 		// IMPORTANT: Order matters here, this must match the order of the properties used
