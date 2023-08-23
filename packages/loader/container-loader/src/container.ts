@@ -21,6 +21,7 @@ import {
 	IResponse,
 	IFluidRouter,
 	FluidObject,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -1516,9 +1517,7 @@ export class Container
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber: number | undefined,
 	) {
-		const verboseLoggingEnabled =
-			this.mc.config.getBoolean("Fluid.enableVerboseLogging") ?? false;
-		let startTime = performance.now();
+		const timings: Record<string, number> = { phase1: performance.now() };
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
 			this.subLogger,
@@ -1556,15 +1555,14 @@ export class Container
 		}
 
 		this._attachState = AttachState.Attached;
-		const loadStage1 = performance.now() - startTime;
 
+		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
 				? await this.fetchSnapshotTree(specifiedVersion)
 				: { snapshot: pendingLocalState.baseSnapshot, versionId: undefined };
 
-		startTime = performance.now();
 		if (pendingLocalState) {
 			this.baseSnapshot = pendingLocalState.baseSnapshot;
 			this.baseSnapshotBlobs = pendingLocalState.snapshotBlobs;
@@ -1670,8 +1668,8 @@ export class Container
 		// ...load in the existing quorum
 		// Initialize the protocol handler
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
-		const loadStage2 = performance.now() - startTime;
 
+		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
@@ -1697,7 +1695,6 @@ export class Container
 			this._clientId = pendingLocalState?.clientId;
 		}
 
-		let loadStage3: number = 0;
 		// We might have hit some failure that did not manifest itself in exception in this flow,
 		// do not start op processing in such case - static version of Container.load() will handle it correctly.
 		if (!this.closed) {
@@ -1741,16 +1738,7 @@ export class Container
 				this.on("op", opHandler);
 			});
 		}
-		loadStage3 = performance.now() - startTime;
-		if (verboseLoggingEnabled) {
-			this.subLogger.sendTelemetryEvent({
-				eventName: "UnaccountedLoadTime",
-				loadStage1,
-				loadStage2,
-				loadStage3,
-				duration: loadStage1 + loadStage2 + loadStage3,
-			});
-		}
+
 		// Safety net: static version of Container.load() should have learned about it through "closed" handler.
 		// But if that did not happen for some reason, fail load for sure.
 		// Otherwise we can get into situations where container is closed and does not try to connect to ordering
@@ -1762,7 +1750,14 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
-
+		this.subLogger.sendTelemetryEvent(
+			{
+				eventName: "UnaccountedLoadTime",
+				...timings,
+			},
+			undefined,
+			LogLevel.verbose,
+		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,
 			version: versionId,
