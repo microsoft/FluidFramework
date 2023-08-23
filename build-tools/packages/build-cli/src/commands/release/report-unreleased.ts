@@ -4,7 +4,7 @@
  */
 
 import fetch from "node-fetch";
-import { promises as fsPromises } from "fs";
+import * as fs from "fs/promises";
 import { Flags } from "@oclif/core";
 import { Logger } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
@@ -22,7 +22,7 @@ interface IBuildDetails {
 }
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
-	static description = `Creates a release report for the most recent build published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report always uses the "caret" report format.`;
+	static readonly description = `Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
 
 	static flags = {
 		repo: Flags.string({
@@ -30,7 +30,8 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			required: true,
 		}),
 		ado_pat: Flags.string({
-			description: "ADO Personal Access Token",
+			description:
+				"ADO Personal Access Token. This flag should be provided via the ADO_PAT environment variable for security reasons.",
 			required: true,
 			env: "ADO_PAT",
 		}),
@@ -49,6 +50,12 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		const flags = this.flags;
 
 		const repoName: string[] = flags.repo.split("/");
+
+		if (repoName.length !== 2) {
+			throw new Error(
+				"Invalid repository format. Provide the repository name in the format `owner/repository-name`.",
+			);
+		}
 
 		const PACKAGE_NAME = "@fluidframework/container-runtime";
 		const GITHUB_RELEASE_URL = `https://api.github.com/repos/${flags.repo}/releases`;
@@ -101,7 +108,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 				);
 			}
 		} catch (error: unknown) {
-			this.errorLog(`Error creating manifest file: ${error}`);
+			throw new Error(`Error creating manifest file: ${error}`);
 		}
 	}
 }
@@ -241,7 +248,7 @@ async function generateReleaseReportForUnreleasedVersions(
 			const manifestFile: PackageVersionList = JSON.parse(manifestData.toString());
 
 			for (const key of Object.keys(manifestFile)) {
-				if (isInternalVersionRange(manifestFile[key])) {
+				if (isInternalVersionRange(manifestFile[key], true)) {
 					manifestFile[key] = version;
 				}
 			}
@@ -268,7 +275,7 @@ async function writeManifestToFile(
 	log?: Logger,
 ): Promise<string | undefined> {
 	try {
-		await fsPromises.writeFile(output, JSON.stringify(manifestFile, null, 2));
+		await fs.writeFile(output, JSON.stringify(manifestFile, null, 2));
 
 		log?.log("Manifest modified successfully.", output);
 
