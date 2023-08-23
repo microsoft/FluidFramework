@@ -21,7 +21,61 @@ export interface IWinstonConfig {
 	label: string;
 	level: string;
 	timestamp: boolean;
-	additionalTransportList: Transport[];
+	additionalTransportList?: Transport[];
+}
+const defaultWinstonConfig: IWinstonConfig = {
+	colorize: true,
+	json: false,
+	level: "info",
+	timestamp: true,
+	label: "winston",
+};
+
+function configureWinstonLogging(config: IWinstonConfig): void {
+	const formatters = [winston.format.label({ label: config.label })];
+
+	if (config.colorize) {
+		formatters.push(winston.format.colorize());
+	}
+
+	if (config.timestamp) {
+		formatters.push(winston.format.timestamp());
+	}
+
+	if (config.json) {
+		formatters.push(winston.format.json());
+	} else {
+		formatters.push(winston.format.simple());
+	}
+
+	winston.configure({
+		format: winston.format.combine(...formatters),
+		transports: [
+			new winston.transports.Console({
+				handleExceptions: true,
+				level: config.level,
+			}),
+		],
+	});
+	if (config.additionalTransportList) {
+		for (const transport of config.additionalTransportList) {
+			winston.add(transport);
+		}
+	}
+}
+
+export interface ILumberjackConfig {
+	engineList: ILumberjackEngine[];
+	schemaValidator?: ILumberjackSchemaValidator[];
+}
+
+const defaultLumberjackConfig: ILumberjackConfig = {
+	engineList: [new WinstonLumberjackEngine()],
+	schemaValidator: undefined,
+};
+
+function configureLumberjackLogging(config: ILumberjackConfig) {
+	Lumberjack.setup(config.engineList, config.schemaValidator);
 }
 
 /**
@@ -37,53 +91,17 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
 					.use("memory")
 			: configOrPath;
 
-	const winstonConfig = config.get("logger");
+	const winstonConfig: IWinstonConfig = {
+		...defaultWinstonConfig,
+		...(config.get("logger") as Partial<IWinstonConfig>),
+	};
+	configureWinstonLogging(winstonConfig);
 
-	const formatters = [winston.format.label({ label: winstonConfig.label })];
-
-	if (winstonConfig.colorize) {
-		formatters.push(winston.format.colorize());
-	}
-
-	if (winstonConfig.timestamp) {
-		formatters.push(winston.format.timestamp());
-	}
-
-	if (winstonConfig.json) {
-		formatters.push(winston.format.json());
-	} else {
-		formatters.push(winston.format.simple());
-	}
-
-	winston.configure({
-		format: winston.format.combine(...formatters),
-		transports: [
-			new winston.transports.Console({
-				handleExceptions: true,
-				level: winstonConfig.level,
-			}),
-		],
-	});
-	if (winstonConfig.additionalTransportList) {
-		for (const transport of winstonConfig.additionalTransportList) {
-			winston.add(transport);
-		}
-	}
-
-	const lumberjackConfig = config.get("lumberjack");
-	const engineList =
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-		lumberjackConfig && lumberjackConfig.engineList
-			? (lumberjackConfig.engineList as ILumberjackEngine[])
-			: [new WinstonLumberjackEngine()];
-
-	const schemaValidatorList =
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-		lumberjackConfig && lumberjackConfig.schemaValidator
-			? (lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[])
-			: undefined;
-
-	Lumberjack.setup(engineList, schemaValidatorList);
+	const lumberjackConfig: ILumberjackConfig = {
+		...defaultLumberjackConfig,
+		...(config.get("lumberjack") as Partial<ILumberjackConfig>),
+	};
+	configureLumberjackLogging(lumberjackConfig);
 
 	// Forward all debug library logs through winston and Lumberjack
 	(debug as any).log = function (msg, ...args) {
