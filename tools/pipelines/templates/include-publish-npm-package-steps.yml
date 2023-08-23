@@ -138,21 +138,24 @@ steps:
                   exit 1
                 fi
             else
-              packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
               feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
-              promote_api_url="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/testRishhiRetentionPolicy/npm/@fluidframework/tree2/versions/2.0.0-internal.6.2.1?api-version=7.1-preview.1"
-              
-              if [[ "$packageName" != @(tinylicious|fluid-framework) ]]; then
-                prefixes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
-                for prefix in "${prefixes[@]}"; do
-                    if [[ "$packageName" == "$prefix"* ]]; then
-                        packageName="${packageName/$prefix-/$prefix/}"
-                    fi
-                done
-              fi
-              
-              # change condition to release and feedId is build in prod; $feedId == "build"
-              if [[ $release == "prerelease" ]]; then
+
+              if [[ $release == "prerelease" && "$feedId" == @(build|dev) ]]; then
+                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+                
+                if [[ "$packageName" != @(tinylicious|fluid-framework) ]]; then
+                  prefixes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  for prefix in "${prefixes[@]}"; do
+                      if [[ "$packageName" == "$prefix"* ]]; then
+                          packageName="@${packageName/$prefix-/$prefix/}"
+                      fi
+                  done
+                fi
+
+                baseURLWithoutRegistry="${${{ parameters.feedName }}%/registry/}"
+                feedPromotionUrl="${baseURLWithoutRegistry/_packaging/_apis/packaging/feeds}"
+                echo "$feedPromotionUrl"
+
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \
@@ -164,10 +167,10 @@ steps:
                           "value": "Release"
                         }
                       }' \
-                      "$promote_api_url"
+                      "$feedPromotionUrl"
                   )
                 
-                curl_exit_status=$?
+                curlExitStatus=$?
                 
                 if echo "$response" | grep -q '"success":"false"'; then
                   reason="${response#*\"reason\":\"}"
@@ -175,7 +178,7 @@ steps:
                   echo "Failed to promote package to Release view"
                   echo "Error reason: $reason"
                   exit 1
-                elif [ $curl_exit_status -ne 0 ]; then
+                elif [ $curlExitStatus -ne 0 ]; then
                   echo "Failed to promote package due to curl error"
                   exit 1
                 fi
