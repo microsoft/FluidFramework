@@ -140,7 +140,7 @@ steps:
             else
               feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
 
-              if [[ $release == "prerelease" && "$feedId" == @(build|dev) ]]; then
+              if [[ $release == "prerelease" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
                 
                 if [[ "$packageName" != @(tinylicious|fluid-framework) ]]; then
