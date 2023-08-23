@@ -3077,12 +3077,20 @@ export class ContainerRuntime
 						finalAttempt &&
 						this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
 					) {
-						this.mc.logger.sendErrorEvent({
-							eventName: "SkipFailingIncorrectSummary",
-							referenceSequenceNumber: summaryRefSeqNum,
-							minimumSequenceNumber,
-							pendingMessages: this.pendingMessagesCount,
-						});
+						const error = DataProcessingError.create(
+							"Pending ops during summarization",
+							"submitSummary",
+							undefined,
+							{ pendingMessages: this.pendingMessagesCount },
+						);
+						summaryLogger.sendErrorEvent(
+							{
+								eventName: "SkipFailingIncorrectSummary",
+								referenceSequenceNumber: summaryRefSeqNum,
+								minimumSequenceNumber,
+							},
+							error,
+						);
 					} else {
 						const error = new RetriableSummaryError(
 							"PendingMessagesInSummary",

@@ -696,6 +696,7 @@ export class RunningSummarizer implements IDisposable {
 				summarizeReason: reason,
 				summaryAttempts: attemptNumber,
 				...summarizeOptions,
+				finalAttempt,
 			};
 			const summaryLogger = createChildLogger({
 				logger: this.mc.logger,

@@ -456,6 +456,8 @@ type ISummarizeTelemetryOptionalProperties =
 	| "summaryAttemptsPerPhase"
 	/** One-based count of phases we've attempted (used to index into an array of ISummarizeOptions */
 	| "summaryAttemptPhase"
+	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt */
+	| "finalAttempt"
 	| keyof ISummarizeOptions;
 
 export type ISummarizeTelemetryProperties = Pick<
