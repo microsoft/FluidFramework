@@ -52,7 +52,7 @@ export class Redis {
 	}
 
 	public async delete(key: string): Promise<boolean> {
-		const result = await this.client.del(this.getKey(key));
+		const result = await this.client.del(key);
 		// The DEL API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.

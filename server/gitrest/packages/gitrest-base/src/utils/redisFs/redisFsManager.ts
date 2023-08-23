@@ -295,7 +295,7 @@ export class RedisFs implements IFileSystemPromises {
 				this.redisFsConfig.enableRedisFsMetrics,
 				this.redisFsConfig.redisApiMetricsSamplingPeriod,
 				{
-					folderpathString,
+					key,
 				},
 			);
 		});
@@ -363,6 +363,10 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	public async rm(filepath: PathLike, options?: RmOptions): Promise<void> {
 		const filepathString = filepath.toString();
+		if (options?.recursive) {
+			return this.rmdir(filepath);
+		}
+
 		await executeRedisFsApi(
 			async () => this.redisFsClient.delete(filepathString),
 			RedisFsApis.Removefile,

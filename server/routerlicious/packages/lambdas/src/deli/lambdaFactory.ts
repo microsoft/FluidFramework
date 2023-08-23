@@ -225,6 +225,22 @@ export class DeliLambdaFactory
 					closeType === LambdaCloseType.ActivityTimeout ||
 					closeType === LambdaCloseType.Error
 				) {
+					if (document?.isEphemeralContainer) {
+						// Call to historian to delete summaries
+						await gitManager.deleteSummary(false);
+
+						// Delete the document metadata
+						await this.documentRepository.deleteOne({
+							documentId,
+							tenantId,
+						});
+						Lumberjack.info(
+							`Successfully cleaned up ephemeral container`,
+							getLumberBaseProperties(documentId, tenantId),
+						);
+
+						return;
+					}
 					const filter = { documentId, tenantId, session: { $exists: true } };
 					const data = {
 						"session.isSessionAlive": false,
@@ -234,8 +250,14 @@ export class DeliLambdaFactory
 					await this.documentRepository.updateOne(filter, data, undefined);
 					const message = `Marked session alive and active as false for closeType:
                         ${JSON.stringify(closeType)}`;
+
+					const lumberjackProperties: Record<string, any> = getLumberBaseProperties(
+						documentId,
+						tenantId,
+					);
+					lumberjackProperties.isEphemeralContainer = document?.isEphemeralContainer;
 					context.log?.info(message, { messageMetaData });
-					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+					Lumberjack.info(message, lumberjackProperties);
 				}
 			};
 			handler().catch((e) => {
