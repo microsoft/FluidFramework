@@ -251,13 +251,8 @@ export class DeliLambdaFactory
 					const message = `Marked session alive and active as false for closeType:
                         ${JSON.stringify(closeType)}`;
 
-					const lumberjackProperties: Record<string, any> = getLumberBaseProperties(
-						documentId,
-						tenantId,
-					);
-					lumberjackProperties.isEphemeralContainer = document?.isEphemeralContainer;
 					context.log?.info(message, { messageMetaData });
-					Lumberjack.info(message, lumberjackProperties);
+					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			};
 			handler().catch((e) => {
