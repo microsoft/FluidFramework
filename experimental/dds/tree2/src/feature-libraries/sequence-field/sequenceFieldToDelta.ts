@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
-import { Delta } from "../../core";
+import { Delta, RevisionTag, TaggedChange } from "../../core";
 import { MemoizedIdAllocator } from "../modular-schema";
 import { singleTextCursor } from "../treeTextCursor";
 import { Mark, MarkList, NoopMarkType } from "./format";
@@ -19,14 +19,14 @@ import {
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
-	marks: MarkList<TNodeChange>,
+	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
 	deltaFromChild: ToDelta<TNodeChange>,
 	idAllocator: MemoizedIdAllocator,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
-	for (const mark of marks) {
+	for (const mark of change) {
 		const changes = getEffectiveNodeChanges(mark);
-		const cellDeltas = cellDeltaFromMark(mark, idAllocator, changes === undefined);
+		const cellDeltas = cellDeltaFromMark(mark, revision, idAllocator, changes === undefined);
 		if (changes !== undefined) {
 			assert(cellDeltas.length === 1, "Invalid nested changes on non length-1 mark");
 			const fullDelta = withChildModifications(changes, cellDeltas[0], deltaFromChild);
@@ -40,6 +40,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 
 function cellDeltaFromMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
+	revision: RevisionTag | undefined,
 	idAllocator: MemoizedIdAllocator,
 	ignoreTransient: boolean,
 ): Mutable<Delta.Mark>[] {
@@ -72,8 +73,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveIn":
 			case "ReturnTo": {
-				// TODO: use parent revision when mark.revision is undefined
-				const ranges = idAllocator(mark.revision, mark.id, mark.count);
+				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
 				const deltas: Mutable<Delta.Mark>[] = [];
 				for (const range of ranges) {
 					deltas.push({
@@ -97,8 +97,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveOut":
 			case "ReturnFrom": {
-				// TODO: use parent revision when mark.revision is undefined
-				const ranges = idAllocator(mark.revision, mark.id, mark.count);
+				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
 				const deltas: Mutable<Delta.Mark>[] = [];
 				for (const range of ranges) {
 					deltas.push({

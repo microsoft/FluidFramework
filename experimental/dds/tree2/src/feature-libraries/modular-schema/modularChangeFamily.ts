@@ -723,7 +723,7 @@ export class ModularChangeFamily
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator;
-		return this.intoDeltaImpl(change.fieldChanges, idAllocator);
+		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
 	}
 
 	/**
@@ -732,12 +732,18 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(change: FieldChangeMap, idAllocator: MemoizedIdAllocator): Delta.Root {
+	private intoDeltaImpl(
+		change: FieldChangeMap,
+		revision: RevisionTag | undefined,
+		idAllocator: MemoizedIdAllocator,
+	): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
+			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-				fieldChange.change,
-				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange, idAllocator),
+				tagChange(fieldChange.change, fieldRevision),
+				(childChange): Delta.Modify =>
+					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
 				idAllocator,
 			);
 			delta.set(field, deltaField);
@@ -746,7 +752,7 @@ export class ModularChangeFamily
 	}
 
 	private deltaFromNodeChange(
-		change: NodeChangeset,
+		{ change, revision }: TaggedChange<NodeChangeset>,
 		idAllocator: MemoizedIdAllocator,
 	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
@@ -754,7 +760,7 @@ export class ModularChangeFamily
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, idAllocator);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
 
 		return modify;

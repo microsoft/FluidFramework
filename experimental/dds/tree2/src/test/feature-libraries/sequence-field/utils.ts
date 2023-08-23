@@ -165,7 +165,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
 	return SF.sequenceFieldToDelta(
-		change,
+		makeAnonChange(change),
 		TestChange.toDelta,
 		MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
 	);

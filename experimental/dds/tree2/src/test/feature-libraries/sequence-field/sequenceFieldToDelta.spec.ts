@@ -12,6 +12,7 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 	ChangesetLocalId,
+	makeAnonChange,
 } from "../../../core";
 import {
 	FieldChange,
@@ -36,7 +37,7 @@ const moveId2 = brand<ChangesetLocalId>(4343);
 const tag: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
-const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
+const deltaMoveId = brandOpaque<Delta.MoveId>(0);
 const fooField = brand<FieldKey>("foo");
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
@@ -48,7 +49,7 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 function toDelta(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
-		change,
+		makeAnonChange(change),
 		TestChange.toDelta,
 		MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
 	);
@@ -57,7 +58,7 @@ function toDelta(change: TestChangeset): Delta.MarkList {
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
-		change,
+		makeAnonChange(change),
 		() => fail("Unexpected call to child ToDelta"),
 		MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
 	);
@@ -130,7 +131,7 @@ describe("SequenceField - toDelta", () => {
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
 		const actual = SF.sequenceFieldToDelta(
-			changeset,
+			makeAnonChange(changeset),
 			deltaFromChild,
 			MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
 		);
@@ -373,7 +374,7 @@ describe("SequenceField - toDelta", () => {
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
 		const actual = SF.sequenceFieldToDelta(
-			changeset,
+			makeAnonChange(changeset),
 			deltaFromChild,
 			MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
 		);

@@ -32,23 +32,38 @@ describe("MemoizedIdAllocator", () => {
 
 	it("Handles subset range overlaps", () => {
 		const allocator = MemoizedIdRangeAllocator.fromNextId(1);
-		const id123 = allocator("A", 1, 3);
-		assert.deepEqual(id123, [{ first: 1, count: 3 }]);
-		const id2 = allocator("A", 2, 1);
-		const expected = [{ first: 2, count: 1 }];
-		assert.deepEqual(id2, expected);
+		const id123456 = allocator("A", 1, 6);
+		assert.deepEqual(id123456, [{ first: 1, count: 6 }]);
+		const id23 = allocator("A", 2, 2);
+		const expected = [{ first: 2, count: 2 }];
+		assert.deepEqual(id23, expected);
 	});
 
 	it("Handles superset range overlaps", () => {
 		const allocator = MemoizedIdRangeAllocator.fromNextId(1);
-		const id2 = allocator("A", 2, 1);
-		assert.deepEqual(id2, [{ first: 1, count: 1 }]);
-		const id123 = allocator("A", 1, 3);
+		const id23 = allocator("A", 2, 2);
+		assert.deepEqual(id23, [{ first: 1, count: 2 }]);
+		const id123456 = allocator("A", 1, 6);
 		const expected = [
-			{ first: 2, count: 1 },
-			{ first: 1, count: 1 },
 			{ first: 3, count: 1 },
+			{ first: 1, count: 2 },
+			{ first: 4, count: 3 },
 		];
-		assert.deepEqual(id123, expected);
+		assert.deepEqual(id123456, expected);
+	});
+
+	it("Can extend an existing range when valid", () => {
+		const allocator = MemoizedIdRangeAllocator.fromNextId(1);
+		const id1 = allocator("A", 1, 1);
+		assert.deepEqual(id1, [{ first: 1, count: 1 }]);
+		const id123 = allocator("A", 1, 3);
+		assert.deepEqual(id123, [{ first: 1, count: 3 }]);
+		const id4 = allocator("B", 1, 1);
+		assert.deepEqual(id4, [{ first: 4, count: 1 }]);
+		const id1234 = allocator("A", 1, 4);
+		assert.deepEqual(id1234, [
+			{ first: 1, count: 3 },
+			{ first: 5, count: 1 },
+		]);
 	});
 });

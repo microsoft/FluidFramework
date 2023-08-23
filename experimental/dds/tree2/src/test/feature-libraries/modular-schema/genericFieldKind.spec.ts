@@ -404,7 +404,7 @@ describe("Generic FieldKind", () => {
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
 		const actual = genericFieldKind.changeHandler.intoDelta(
-			input,
+			makeAnonChange(input),
 			childToDelta,
 			MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
 		);

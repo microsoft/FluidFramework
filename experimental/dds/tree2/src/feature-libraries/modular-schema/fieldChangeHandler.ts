@@ -23,7 +23,7 @@ export interface FieldChangeHandler<
 	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
 	intoDelta(
-		change: TChangeset,
+		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdAllocator,
 	): Delta.MarkList;

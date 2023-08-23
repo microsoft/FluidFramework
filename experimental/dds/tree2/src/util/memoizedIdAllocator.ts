@@ -34,7 +34,7 @@ export interface IdRange {
 
 export const MemoizedIdRangeAllocator = {
 	fromNextId(nextId: number = 0): MemoizedIdRangeAllocator {
-		let _nextId = nextId ?? -1;
+		let _nextId = nextId;
 		const rangeMap: Map<SpaceKey, RangeMap<number>> = new Map();
 		return (key: string | number | undefined, startId: number, length?: number): IdRange[] => {
 			let count = length ?? 1;
@@ -53,7 +53,6 @@ export const MemoizedIdRangeAllocator = {
 					setInRangeMap(ranges, currId, count, newId);
 					out.push({ first: newId, count });
 					count = 0;
-					currId += count;
 				} else {
 					const idRange: Mutable<IdRange> = {
 						first: firstRange.value,
@@ -63,8 +62,9 @@ export const MemoizedIdRangeAllocator = {
 						const countToAdd = firstRange.start - currId;
 						setInRangeMap(ranges, currId, countToAdd, _nextId);
 						out.push({ first: _nextId, count: countToAdd });
-						count -= countToAdd;
+						_nextId += countToAdd;
 						currId += countToAdd;
+						count -= countToAdd;
 					} else if (firstRange.start < currId) {
 						const countToTrim = currId - firstRange.start;
 						idRange.first += countToTrim;
@@ -72,11 +72,18 @@ export const MemoizedIdRangeAllocator = {
 					}
 					if (idRange.count > count) {
 						idRange.count = count;
+					} else if (
+						idRange.count < count &&
+						firstRange.value + firstRange.length === _nextId
+					) {
+						// The existing range can be extended
+						_nextId += count - idRange.count;
+						firstRange.length = count;
+						idRange.count = count;
 					}
 					out.push(idRange);
 					count -= idRange.count;
 					currId += idRange.count;
-					_nextId += count;
 				}
 			}
 			return out;
