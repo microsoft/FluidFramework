@@ -137,6 +137,11 @@ interface IInternalMockRuntimeMessage {
 	localOpMetadata: unknown;
 }
 
+interface RuntimeAndQueue {
+	queue: ISequencedDocumentMessage[];
+	runtime: MockContainerRuntime;
+}
+
 /**
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
@@ -332,8 +337,8 @@ export class MockContainerRuntimeFactory {
 	 * They are held in this queue until we explicitly choose to process them, at which time they are "broadcast" to
 	 * each of the runtimes.
 	 */
-	protected messages: ISequencedDocumentMessage[] = [];
-	protected readonly runtimes: MockContainerRuntime[] = [];
+	public messages = new Map<string, RuntimeAndQueue>();
+	public readonly runtimes = new Map<string, MockContainerRuntime>();
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -350,7 +355,12 @@ export class MockContainerRuntimeFactory {
 	}
 
 	public get outstandingMessageCount() {
-		return this.messages.length;
+		let max = 0;
+		for (const [_, { queue, runtime: _runtime }] of this.messages) {
+			max = queue.length > max ? queue.length : max;
+		}
+
+		return max;
 	}
 
 	/**
@@ -383,7 +393,8 @@ export class MockContainerRuntimeFactory {
 			this,
 			this.runtimeOptions,
 		);
-		this.runtimes.push(containerRuntime);
+		this.messages.set(containerRuntime.clientId, { runtime: containerRuntime, queue: [] });
+		this.runtimes.set(containerRuntime.clientId, containerRuntime);
 		return containerRuntime;
 	}
 
@@ -396,45 +407,46 @@ export class MockContainerRuntimeFactory {
 			this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
 		}
 
-		this.messages.push(msg as ISequencedDocumentMessage);
-	}
-
-	private lastProcessedMessage?: ISequencedDocumentMessage;
-	private processFirstMessage() {
-		assert(this.messages.length > 0, "The message queue should not be empty");
-
-		// Explicitly JSON clone the value to match the behavior of going thru the wire.
-		const message = JSON.parse(
-			JSON.stringify(this.messages.shift()),
-		) as ISequencedDocumentMessage;
+		assert(
+			msg.clientId !== undefined && msg.referenceSequenceNumber !== undefined,
+			"Should have those properties",
+		);
 
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		if (
-			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			this.lastProcessedMessage?.clientId !== message.clientId
-		) {
-			this.sequenceNumber++;
-		}
+		this.minSeq.set(msg.clientId as string, msg.referenceSequenceNumber);
+
+		// Explicitly JSON clone the value to match the behavior of going thru the wire.
+		const message = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
+		this.sequenceNumber++;
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
-		this.lastProcessedMessage = message;
-		for (const runtime of this.runtimes) {
-			runtime.process(message);
+
+		for (const [_, { runtime: _runtime, queue }] of this.messages) {
+			queue.push(message);
 		}
+	}
+
+	public processMessageOnClient(client: string) {
+		const runtimeAndQueue = this.messages.get(client);
+		if (runtimeAndQueue === undefined) {
+			throw new Error("No runtime and queue exists for this client.");
+		}
+		const { runtime, queue } = runtimeAndQueue;
+		const message = queue.shift();
+		if (message === undefined) {
+			throw new Error("No message to process");
+		}
+		runtime.process(message);
 	}
 
 	/**
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
 	public processOneMessage() {
-		if (this.messages.length === 0) {
-			throw new Error("Tried to process a message that did not exist");
+		for (const [client, _] of this.runtimes) {
+			this.processMessageOnClient(client);
 		}
-		this.lastProcessedMessage = undefined;
-
-		this.processFirstMessage();
 	}
 
 	/**
@@ -442,14 +454,10 @@ export class MockContainerRuntimeFactory {
 	 * @param count - the number of messages to process
 	 */
 	public processSomeMessages(count: number) {
-		if (count > this.messages.length) {
-			throw new Error("Tried to process more messages than exist");
-		}
-
-		this.lastProcessedMessage = undefined;
-
 		for (let i = 0; i < count; i++) {
-			this.processFirstMessage();
+			for (const [client, _] of this.runtimes) {
+				this.processMessageOnClient(client);
+			}
 		}
 	}
 
@@ -457,9 +465,10 @@ export class MockContainerRuntimeFactory {
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		this.lastProcessedMessage = undefined;
-		while (this.messages.length > 0) {
-			this.processFirstMessage();
+		for (const [client, { queue, runtime: _ }] of this.messages) {
+			while (queue.length > 0) {
+				this.processMessageOnClient(client);
+			}
 		}
 	}
 }

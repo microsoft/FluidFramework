@@ -40,11 +40,21 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			this.pendingRemoteMessages.length = 0;
 			this.clientSequenceNumber = 0;
+			this.factory.messages.delete(this.clientId);
+			this.factory.runtimes.delete(this.clientId);
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
+
+			let queue: ISequencedDocumentMessage[] = [];
+			if (this.factory.messages.size > 0) {
+				queue = [...this.factory.messages.values().next().value.queue];
+			}
+
+			this.factory.messages.set(this.clientId, { runtime: this, queue });
+			this.factory.runtimes.set(this.clientId, this);
 			// On reconnection, ask the DDSes to resubmit pending messages.
 			this.reSubmitMessages();
 		} else {
@@ -118,14 +128,36 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 			this.runtimeOptions,
 			overrides,
 		);
-		this.runtimes.push(containerRuntime);
+
+		let queue: ISequencedDocumentMessage[] = [];
+		if (this.messages.size > 0) {
+			queue = [...this.messages.values().next().value.queue];
+		}
+
+		this.runtimes.set(containerRuntime.clientId, containerRuntime);
+		this.messages.set(containerRuntime.clientId, { runtime: containerRuntime, queue });
 		return containerRuntime;
 	}
 
 	public clearOutstandingClientMessages(clientId: string) {
 		// Delete all the messages for client with the given clientId.
-		this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
-			return message.clientId !== clientId;
-		});
+		for (const [client, { runtime, queue }] of this.messages) {
+			this.messages.set(client, {
+				queue: queue.filter((msg) => msg.clientId !== clientId),
+				runtime,
+			});
+		}
+	}
+
+	public override pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+		assert(msg.clientId !== undefined, "Message should have a clientId");
+		const messagingRuntime = this.runtimes.get(msg.clientId);
+		assert(
+			messagingRuntime !== undefined,
+			"Runtime associated with this message does not exist",
+		);
+		if ((messagingRuntime as MockContainerRuntimeForReconnection).connected) {
+			super.pushMessage(msg);
+		}
 	}
 }
