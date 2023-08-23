@@ -373,7 +373,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it.only("requestResolvedObjectFromContainer can handle requests with headers", async () => {
+	it("requestResolvedObjectFromContainer can handle requests with headers", async () => {
 		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
 			dataStore1._context.containerRuntime,
 		);

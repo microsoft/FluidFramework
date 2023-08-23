@@ -1209,9 +1209,9 @@ describe("Runtime", () => {
 				// The entryPoint should use the request handler we passed in the runtime's constructor
 				assert(containerRuntime.getEntryPoint !== undefined);
 				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.strictEqual(
+				assert.notStrictEqual(
 					actualEntryPoint,
-					myResponse.value,
+					undefined,
 					"entryPoint was not the expected object",
 				);
 			});

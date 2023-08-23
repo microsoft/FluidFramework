@@ -754,8 +754,14 @@ export class ContainerRuntime
 
 		const initializeEntryPoint =
 			params.initializeEntryPoint ??
-			(async (containerRuntime: IContainerRuntime) =>
-				requestFluidObject(containerRuntime, "/"));
+			(async (containerRuntime: IContainerRuntime) => ({
+				get IFluidRouter() {
+					return this;
+				},
+				async request(req) {
+					return containerRuntime.request(req);
+				},
+			}));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
