@@ -15,8 +15,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";

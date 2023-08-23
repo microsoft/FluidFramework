@@ -77,12 +77,12 @@ import {
 	InMemoryStoredSchemaRepository,
 	TaggedChange,
 	TreeSchemaBuilder,
-	Named,
-	NamedTreeSchema,
 	treeSchema,
 	FieldUpPath,
+	TreeSchemaIdentifier,
+	TreeStoredSchema,
 } from "../core";
-import { JsonCompatible, brand, makeArray } from "../util";
+import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
@@ -846,9 +846,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link NamedTreeSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
  */
-export function namedTreeSchema(data: TreeSchemaBuilder & Named<string>): NamedTreeSchema {
+export function namedTreeSchema(
+	data: TreeSchemaBuilder & Named<string>,
+): Named<TreeSchemaIdentifier> & TreeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),

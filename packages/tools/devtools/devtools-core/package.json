@@ -38,6 +38,7 @@
 		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc",
+		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -67,7 +68,6 @@
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/container-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -75,7 +75,8 @@
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~"
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.6.1.1",
@@ -85,7 +86,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/chai": "^4.0.0",

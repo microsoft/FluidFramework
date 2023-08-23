@@ -146,6 +146,12 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 	...intervalTestOptions,
 	emitter,
+	// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+	// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+	detachedStartOptions: {
+		enabled: false,
+		attachProbability: 0.2,
+	},
 };
 
 type ClientOpState = FuzzTestState;

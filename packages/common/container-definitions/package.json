@@ -61,6 +61,16 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IGenericError": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IThrottlingWarning": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IUsageError": {
+				"backCompat": false
+			}
+		}
 	}
 }

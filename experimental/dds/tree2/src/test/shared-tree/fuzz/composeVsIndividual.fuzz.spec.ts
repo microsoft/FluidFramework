@@ -16,7 +16,7 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { SharedTreeView } from "../../../shared-tree";
+import { ISharedTreeBranchView } from "../../../shared-tree";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import {
 	applyFieldEdit,
@@ -31,7 +31,7 @@ import { Operation } from "./operationTypes";
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	branch?: SharedTreeView;
+	branch?: ISharedTreeBranchView;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
