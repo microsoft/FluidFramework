@@ -379,7 +379,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
 					assert(isFluidError(e));
-					assert(e.errorType === FluidErrorTypes.dataProcessingError);
+					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);
