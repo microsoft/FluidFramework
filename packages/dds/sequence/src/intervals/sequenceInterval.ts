@@ -51,6 +51,22 @@ function compareSides(sideA: Side, sideB: Side): number {
 	return -1;
 }
 
+function minSide(sideA: Side, sideB: Side): Side {
+	if (sideA === Side.After && sideB === Side.After) {
+		return Side.After;
+	}
+
+	return Side.Before;
+}
+
+function maxSide(sideA: Side, sideB: Side): Side {
+	if (sideA === Side.Before && sideB === Side.Before) {
+		return Side.Before;
+	}
+
+	return Side.After;
+}
+
 /**
  * Interval implementation whose ends are associated with positions in a mutatable sequence.
  * As such, when content is inserted into the middle of the interval, the interval expands to
@@ -271,16 +287,31 @@ export class SequenceInterval implements ISerializableInterval {
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
 
+		let startSide: Side;
+
+		if (this.start === b.start) {
+			startSide = minSide(this.startSide, b.startSide);
+		} else {
+			startSide = this.start === newStart ? this.startSide : b.startSide;
+		}
+
+		let endSide: Side;
+
+		if (this.end === b.end) {
+			endSide = maxSide(this.endSide, b.endSide);
+		} else {
+			endSide = this.end === newEnd ? this.endSide : b.endSide;
+		}
+
 		return new SequenceInterval(
 			this.client,
 			newStart,
 			newEnd,
 			this.intervalType,
 			undefined,
-			// todo: not happy with how merging here works
 			(this.stickiness | b.stickiness) as IntervalStickiness,
-			this.start === newStart ? this.startSide : b.startSide,
-			this.end === newEnd ? this.endSide : b.endSide,
+			startSide,
+			endSide,
 		);
 	}
 
