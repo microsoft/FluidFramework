@@ -54,7 +54,7 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.dataCorruptionError;
-	// readonly canRetry = false;
+	readonly canRetry = false;
 
 	constructor(message: string, props: ITelemetryProperties) {
 		super(message, { ...props, dataProcessingError: 1 });
