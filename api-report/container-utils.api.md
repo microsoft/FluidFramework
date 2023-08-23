@@ -5,24 +5,14 @@
 ```ts
 
 import { DataCorruptionError } from '@fluidframework/telemetry-utils';
-import { EventForwarder } from '@fluidframework/common-utils';
 import { GenericError } from '@fluidframework/telemetry-utils';
-import { IClientConfiguration } from '@fluidframework/protocol-definitions';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
-import { IDeltaQueue } from '@fluidframework/container-definitions';
-import { IDeltaSender } from '@fluidframework/container-definitions';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
-import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { UsageError } from '@fluidframework/telemetry-utils';
 
 // @public @deprecated
@@ -44,51 +34,6 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     // (undocumented)
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
-}
-
-// @public @deprecated
-export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>);
-    // (undocumented)
-    get active(): boolean;
-    // (undocumented)
-    get clientDetails(): IClientDetails;
-    // (undocumented)
-    protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    flush(): void;
-    // (undocumented)
-    get hasCheckpointSequenceNumber(): boolean;
-    // (undocumented)
-    get IDeltaSender(): IDeltaSender;
-    // (undocumented)
-    get inbound(): IDeltaQueue<ISequencedDocumentMessage>;
-    // (undocumented)
-    get inboundSignal(): IDeltaQueue<ISignalMessage>;
-    // (undocumented)
-    get initialSequenceNumber(): number;
-    // (undocumented)
-    get lastKnownSeqNumber(): number;
-    // (undocumented)
-    get lastMessage(): ISequencedDocumentMessage | undefined;
-    // (undocumented)
-    get lastSequenceNumber(): number;
-    // (undocumented)
-    get maxMessageSize(): number;
-    // (undocumented)
-    get minimumSequenceNumber(): number;
-    // (undocumented)
-    get outbound(): IDeltaQueue<IDocumentMessage[]>;
-    // (undocumented)
-    get readOnlyInfo(): ReadOnlyInfo;
-    // (undocumented)
-    get serviceConfiguration(): IClientConfiguration | undefined;
-    // (undocumented)
-    submitSignal(content: any): void;
-    // (undocumented)
-    get version(): string;
 }
 
 // @public (undocumented)

@@ -13,7 +13,6 @@
  * @packageDocumentation
  */
 
-export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
 export {
 	ClientSessionExpiredError,
 	DataProcessingError,
