@@ -323,10 +323,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						} else {
 							// Note: There's a race condition here - another caller may come past the undefined check
 							// while the first caller is awaiting later async code in this block.
-							cacheLookupTimeInSerialFetch = performance.now();
+							const startTime = performance.now();
 							retrievedSnapshot = await cachedSnapshotP;
-							cacheLookupTimeInSerialFetch +=
-								performance.now() - cacheLookupTimeInSerialFetch;
+							cacheLookupTimeInSerialFetch = performance.now() - startTime;
 							method = retrievedSnapshot !== undefined ? "cache" : "network";
 
 							if (retrievedSnapshot === undefined) {
