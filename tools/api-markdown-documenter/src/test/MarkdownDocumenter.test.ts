@@ -236,6 +236,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 			},
 			renderConfig: {
 				newlineKind: NewlineKind.Lf,
+				startingHeadingLevel: 2,
 			},
 		},
 	];

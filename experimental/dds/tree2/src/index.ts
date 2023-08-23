@@ -260,15 +260,18 @@ export {
 	compileSyntaxTree,
 	nodeKeyFieldKey,
 	SchemaLintConfiguration,
+	TreeStatus,
+	treeStatus,
 } from "./feature-libraries";
 
 export {
 	ISharedTree,
 	ISharedTreeView,
+	ITransaction,
 	runSynchronous,
 	SharedTreeFactory,
 	SharedTreeOptions,
-	SharedTreeView,
+	ISharedTreeBranchView,
 	ViewEvents,
 	SchematizeConfiguration,
 } from "./shared-tree";

@@ -23,7 +23,13 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import {
+	getFieldKind,
+	NewFieldContent,
+	getFieldSchema,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
 import {
@@ -33,17 +39,23 @@ import {
 	parentField,
 	typeSymbol,
 	contextSymbol,
+	treeStatus,
 } from "../untypedTree";
-import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
+import {
+	AdaptingProxyHandler,
+	adaptWithProxy,
+	getStableNodeKey,
+	treeStatusFromPath,
+} from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
 	UnwrappedEditableField,
 	proxyTargetSymbol,
-	NewFieldContent,
 	localNodeKeySymbol,
 	setField,
+	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -101,10 +113,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
 			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
-	}
-
-	protected buildAnchor(): Anchor {
-		return this.context.forest.anchors.track(this.anchorNode);
 	}
 
 	protected tryMoveCursorToAnchor(
@@ -237,6 +245,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return { parent: proxifiedField, index };
 	}
 
+	public treeStatus(): TreeStatus {
+		if (this.isFreed()) {
+			return TreeStatus.Deleted;
+		}
+		const path = this.anchorNode;
+		return treeStatusFromPath(path);
+	}
+
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -288,6 +304,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.getField.bind(target);
 			case setField:
 				return target.setField.bind(target);
+			case treeStatus:
+				return target.treeStatus.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:
@@ -320,7 +338,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).delete();
+			target.getField(fieldKey).remove();
 			return true;
 		}
 		return false;

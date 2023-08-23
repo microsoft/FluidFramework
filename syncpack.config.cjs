@@ -40,28 +40,6 @@ module.exports = {
 			range: "~",
 		},
 
-		// Workaround for compatibility issues.
-		// Ideally this section would be empty (and removed).
-		// Items should be removed from here when possible.
-		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: ["@types/react", "@types/react-dom"],
-			dependencyTypes: ["pnpmOverrides"],
-			packages: ["**"],
-			range: "",
-		},
-
-		// Workaround for compatibility issues.
-		// Ideally this section would be empty (and removed).
-		// Items should be removed from here when possible.
-		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: ["office-ui-fabric-react"],
-			dependencyTypes: ["prod"],
-			packages: ["**"],
-			range: "",
-		},
-
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],

@@ -59,6 +59,7 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
+	getMarkdownRenderersWithDefaults,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
