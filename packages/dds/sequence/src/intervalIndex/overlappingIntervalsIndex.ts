@@ -70,17 +70,12 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 				});
 			}
 		} else {
-			const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 			const transientInterval: TInterval = this.helpers.create(
 				"transient",
-				startPos,
-				endPos,
+				start,
+				end,
 				this.client,
 				IntervalType.Transient,
-				undefined,
-				undefined,
-				startSide,
-				endSide,
 			);
 
 			if (start === undefined) {
@@ -136,7 +131,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	}
 
 	public findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[] {
-		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+		const { startPos, endPos } = endpointPosAndSide(start, end);
 
 		if (
 			startPos === undefined ||
@@ -148,14 +143,10 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		}
 		const transientInterval = this.helpers.create(
 			"transient",
-			startPos,
-			endPos,
+			start,
+			end,
 			this.client,
 			IntervalType.Transient,
-			undefined,
-			undefined,
-			startSide,
-			endSide,
 		);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);

@@ -78,6 +78,9 @@ import {
  *
  * This gives us 2N + 2 possible positions to refer to within a string, where N
  * is the number of characters.
+ *
+ * If the position is specified with a bare number, the side defaults to
+ * `Side.Before`.
  */
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
@@ -286,29 +289,19 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	public createInterval(
-		start: number | "start" | "end",
-		end: number | "start" | "end",
+		start: SequencePlace,
+		end: SequencePlace,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		startSide: Side = Side.Before,
 		endSide: Side = Side.Before,
 	): TInterval {
-		return this.helpers.create(
-			this.label,
-			start,
-			end,
-			this.client,
-			intervalType,
-			op,
-			undefined,
-			startSide,
-			endSide,
-		);
+		return this.helpers.create(this.label, start, end, this.client, intervalType, op);
 	}
 
 	public addInterval(
-		start: number | "start" | "end",
-		end: number | "start" | "end",
+		start: SequencePlace,
+		end: SequencePlace,
 		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
@@ -1081,8 +1074,22 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (this.savedSerializedIntervals) {
 			for (const serializedInterval of this.savedSerializedIntervals) {
 				this.localCollection.ensureSerializedId(serializedInterval);
-				const { start, end, intervalType, properties, startSide, endSide } =
-					serializedInterval;
+				const {
+					start: startPos,
+					end: endPos,
+					intervalType,
+					properties,
+					startSide,
+					endSide,
+				} = serializedInterval;
+				const start =
+					typeof startPos === "number" && startSide !== undefined
+						? { pos: startPos, side: startSide }
+						: startPos;
+				const end =
+					typeof endPos === "number" && endSide !== undefined
+						? { pos: endPos, side: endSide }
+						: endPos;
 				const interval = this.helpers.create(
 					label,
 					start,
@@ -1091,8 +1098,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					intervalType,
 					undefined,
 					true,
-					startSide,
-					endSide,
 				);
 				if (properties) {
 					interval.addProperties(properties);

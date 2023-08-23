@@ -210,14 +210,12 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 */
 	create(
 		label: string,
-		start: number | "start" | "end" | undefined,
-		end: number | "start" | "end" | undefined,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
-		startSide?: Side,
-		endSide?: Side,
 	): TInterval;
 }
 

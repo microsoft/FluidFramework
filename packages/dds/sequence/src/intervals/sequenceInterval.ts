@@ -546,16 +546,22 @@ function createPositionReference(
 
 export function createSequenceInterval(
 	label: string,
-	start: number | "start" | "end",
-	end: number | "start" | "end",
+	start: SequencePlace,
+	end: SequencePlace,
 	client: Client,
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	startSide: Side = Side.Before,
-	endSide: Side = Side.Before,
 ): SequenceInterval {
-	const stickiness = computeStickinessFromSide(start, startSide, end, endSide);
+	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
+	assert(
+		startPos !== undefined &&
+			endPos !== undefined &&
+			startSide !== undefined &&
+			endSide !== undefined,
+		"start and end cannot be undefined because they were not passed in as undefined",
+	);
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
 	if (intervalType === IntervalType.Transient) {
@@ -580,7 +586,7 @@ export function createSequenceInterval(
 
 	const startLref = createPositionReference(
 		client,
-		start,
+		startPos,
 		beginRefType,
 		op,
 		fromSnapshot,
@@ -591,7 +597,7 @@ export function createSequenceInterval(
 
 	const endLref = createPositionReference(
 		client,
-		end,
+		endPos,
 		endRefType,
 		op,
 		fromSnapshot,

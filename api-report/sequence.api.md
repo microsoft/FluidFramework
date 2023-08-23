@@ -181,7 +181,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | "start" | "end" | undefined, end: number | "start" | "end" | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, startSide?: Side, endSide?: Side): TInterval;
+    create(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
 }
 
 // @public @deprecated (undocumented)
