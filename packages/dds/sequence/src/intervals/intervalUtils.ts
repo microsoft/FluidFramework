@@ -12,7 +12,7 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Side } from "../intervalCollection";
+import { SequencePlace, Side } from "../intervalCollection";
 
 /**
  * Basic interval abstraction
@@ -48,8 +48,8 @@ export interface IInterval {
 	 */
 	modify(
 		label: string,
-		start: number | "start" | "end" | undefined,
-		end: number | "start" | "end" | undefined,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	): IInterval | undefined;
@@ -184,8 +184,6 @@ export type CompressedSerializedInterval =
 			IntervalType,
 			PropertySet,
 			IntervalStickiness,
-			Side,
-			Side,
 	  ]
 	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
 
@@ -205,7 +203,10 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
 	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
-	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
+	 * @param startSide - The side on which the start position lays. See
+	 * {@link SequencePlace} for additional context
+	 * @param endSide - The side on which the end position lays. See
+	 * {@link SequencePlace} for additional context
 	 */
 	create(
 		label: string,
@@ -215,7 +216,6 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
-		stickiness?: IntervalStickiness,
 		startSide?: Side,
 		endSide?: Side,
 	): TInterval;
@@ -227,6 +227,8 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ *
+ * @internal
  */
 export const IntervalStickiness = {
 	/**
@@ -258,6 +260,8 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ *
+ * @internal
  */
 export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
 

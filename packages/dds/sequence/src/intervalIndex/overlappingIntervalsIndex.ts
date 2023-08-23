@@ -15,10 +15,7 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	 * @returns an array of all intervals contained in this collection that overlap the range
 	 * `[start end]`.
 	 */
-	findOverlappingIntervals(
-		start: number | SequencePlace,
-		end: number | SequencePlace,
-	): TInterval[];
+	findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
 
 	/**
 	 * Gathers the interval results based on specified parameters.
@@ -26,8 +23,8 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	gatherIterationResults(
 		results: TInterval[],
 		iteratesForward: boolean,
-		start?: number | SequencePlace,
-		end?: number | SequencePlace,
+		start?: SequencePlace,
+		end?: SequencePlace,
 	): void;
 }
 
@@ -54,8 +51,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	public gatherIterationResults(
 		results: TInterval[],
 		iteratesForward: boolean,
-		start?: number | SequencePlace,
-		end?: number | SequencePlace,
+		start?: SequencePlace,
+		end?: SequencePlace,
 	): void {
 		if (this.intervalTree.intervals.isEmpty()) {
 			return;
@@ -80,7 +77,6 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 				endPos,
 				this.client,
 				IntervalType.Transient,
-				undefined,
 				undefined,
 				undefined,
 				startSide,
@@ -139,10 +135,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		}
 	}
 
-	public findOverlappingIntervals(
-		start: number | SequencePlace,
-		end: number | SequencePlace,
-	): TInterval[] {
+	public findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[] {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 
 		if (
@@ -159,7 +152,6 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 			endPos,
 			this.client,
 			IntervalType.Transient,
-			undefined,
 			undefined,
 			undefined,
 			startSide,

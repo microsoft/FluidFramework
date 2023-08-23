@@ -36,6 +36,7 @@ export {
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 	Side,
+	InteriorSequencePlace,
 	SequencePlace,
 } from "./intervalCollection";
 export {

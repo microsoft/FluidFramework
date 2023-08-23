@@ -26,7 +26,12 @@ import {
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { Side } from "../intervalCollection";
+import {
+	SequencePlace,
+	Side,
+	computeStickinessFromSide,
+	endpointPosAndSide,
+} from "../intervalCollection";
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -105,6 +110,20 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public propertyManager: PropertiesManager;
 
+	/**
+	 * @internal
+	 */
+	public get stickiness(): IntervalStickiness {
+		const startSegment = this.start.getSegment();
+		const endSegment = this.end.getSegment();
+		return computeStickinessFromSide(
+			startSegment?.endpointType ?? -1,
+			this.startSide,
+			endSegment?.endpointType ?? -1,
+			this.startSide,
+		);
+	}
+
 	constructor(
 		private readonly client: Client,
 		/**
@@ -119,7 +138,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
 		props?: PropertySet,
-		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
 	) {
@@ -179,8 +197,6 @@ export class SequenceInterval implements ISerializableInterval {
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
-			startSide: this.startSide,
-			endSide: this.endSide,
 		};
 
 		if (this.properties) {
@@ -203,7 +219,6 @@ export class SequenceInterval implements ISerializableInterval {
 			this.end,
 			this.intervalType,
 			this.properties,
-			this.stickiness,
 			this.startSide,
 			this.endSide,
 		);
@@ -309,7 +324,6 @@ export class SequenceInterval implements ISerializableInterval {
 			newEnd,
 			this.intervalType,
 			undefined,
-			(this.stickiness | b.stickiness) as IntervalStickiness,
 			startSide,
 			endSide,
 		);
@@ -344,11 +358,20 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public modify(
 		label: string,
-		start: number,
-		end: number,
+		start: SequencePlace,
+		end: SequencePlace,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+		assert(
+			startPos !== undefined &&
+				endPos !== undefined &&
+				startSide !== undefined &&
+				endSide !== undefined,
+			"start and end cannot be undefined because they were not passed in as undefined",
+		);
+		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
 			if (op === undefined) {
@@ -362,13 +385,13 @@ export class SequenceInterval implements ISerializableInterval {
 		if (start !== undefined) {
 			startRef = createPositionReference(
 				this.client,
-				start,
+				startPos,
 				getRefType(this.start.refType),
 				op,
 				undefined,
 				localSeq,
-				startReferenceSlidingPreference(this.stickiness),
-				startReferenceSlidingPreference(this.stickiness) === SlidingPreference.BACKWARD,
+				startReferenceSlidingPreference(stickiness),
+				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -379,13 +402,13 @@ export class SequenceInterval implements ISerializableInterval {
 		if (end !== undefined) {
 			endRef = createPositionReference(
 				this.client,
-				end,
+				endPos,
 				getRefType(this.end.refType),
 				op,
 				undefined,
 				localSeq,
-				endReferenceSlidingPreference(this.stickiness),
-				endReferenceSlidingPreference(this.stickiness) === SlidingPreference.FORWARD,
+				endReferenceSlidingPreference(stickiness),
+				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -398,9 +421,8 @@ export class SequenceInterval implements ISerializableInterval {
 			endRef,
 			this.intervalType,
 			undefined,
-			this.stickiness,
-			this.startSide,
-			this.endSide,
+			startSide,
+			endSide,
 		);
 		if (this.properties) {
 			newInterval.initializeProperties();
@@ -530,10 +552,10 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	stickiness: IntervalStickiness = IntervalStickiness.END,
 	startSide: Side = Side.Before,
 	endSide: Side = Side.Before,
 ): SequenceInterval {
+	const stickiness = computeStickinessFromSide(start, startSide, end, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
 	if (intervalType === IntervalType.Transient) {
@@ -590,7 +612,6 @@ export function createSequenceInterval(
 		endLref,
 		intervalType,
 		rangeProp,
-		stickiness,
 		startSide,
 		endSide,
 	);
