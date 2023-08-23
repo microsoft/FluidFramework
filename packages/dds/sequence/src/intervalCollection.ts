@@ -185,11 +185,11 @@ export function computeStickinessFromSide(
 ): IntervalStickiness {
 	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
 
-	if (startSide === Side.After || startPos === "start" || startPos === "end") {
+	if (startSide === Side.After || startPos === "start") {
 		stickiness |= IntervalStickiness.START;
 	}
 
-	if (endSide === Side.Before || endPos === "start" || endPos === "end") {
+	if (endSide === Side.Before || endPos === "end") {
 		stickiness |= IntervalStickiness.END;
 	}
 
@@ -793,10 +793,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * \{start\} - A[- E - F - G - C -]D - \{end\}
 	 * ```
 	 *
+	 * @privateRemarks todo: ADO:5205 the above comment regarding behavior in
+	 * the case that the entire interval has been deleted should be resolved at
+	 * the same time as this ticket
 	 */
-	// todo: ADO:5205 the above comment regarding behavior in the case that the
-	// entire interval has been deleted should be resolved at the same time as
-	// this ticket
 	add(
 		start: SequencePlace,
 		end: SequencePlace,
