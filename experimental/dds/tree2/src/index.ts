@@ -260,6 +260,8 @@ export {
 	compileSyntaxTree,
 	nodeKeyFieldKey,
 	SchemaLintConfiguration,
+	TreeStatus,
+	treeStatus,
 } from "./feature-libraries";
 
 export {
