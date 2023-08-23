@@ -209,15 +209,22 @@ export class MockContainerRuntimeFactory {
     }
 
     public getMinSeq(): number {
-        let minSeq: number | undefined;
-        for (const [, clientSeq] of this.minSeq) {
-            if (!minSeq) {
-                minSeq = clientSeq;
-            } else {
-                minSeq = Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
+			// We have to make sure, a client is part of the quorum, when
+			// we compute the msn. We assume that the quoarum accurately
+			// represents the currently connected clients. In some tests
+			// for reconnects, we will remove clients from the quorum
+			// to indicate they are currently not connected. In that case,
+			// they must no longer contribute to the msn computation.
+			if (this.quorum.getMember(client) !== undefined) {
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
             }
         }
-        return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
     }
 
     public createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime {
