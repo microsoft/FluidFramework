@@ -32,13 +32,17 @@ import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataCorruptionError,
+	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import {
 	DriverHeader,
 	FetchSource,
@@ -46,12 +50,6 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	UsageError,
-} from "@fluidframework/container-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -873,6 +871,7 @@ export class ContainerRuntime
 			initializeEntryPoint,
 		);
 
+		await runtime.blobManager.processStashedChanges();
 		// It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
 		// at 1, so we won't see a replayed saved op with a sequence number of 0.
 		await runtime.pendingStateManager.applyStashedOpsAt(0);
@@ -2061,32 +2060,6 @@ export class ContainerRuntime
 				eventName: "UnsuccessfulConnectedTransition",
 			});
 			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
-			return;
-		}
-
-		// If attachment blobs were added while disconnected, we need to delay
-		// propagation of the "connected" event until we have uploaded them to
-		// ensure we don't submit ops referencing a blob that has not been uploaded
-		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
-		const connecting =
-			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
-		if (connecting && this.blobManager.hasPendingOfflineUploads) {
-			assert(
-				!this.delayConnectClientId,
-				0x392 /* Connect event delay must be canceled before subsequent connect event */,
-			);
-			assert(!!clientId, 0x393 /* Must have clientId when connecting */);
-			this.delayConnectClientId = clientId;
-			this.blobManager.onConnected().then(
-				() => {
-					// make sure we didn't reconnect before the promise resolved
-					if (this.delayConnectClientId === clientId && !this.disposed) {
-						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore(connected, clientId);
-					}
-				},
-				(error) => this.closeFn(error),
-			);
 			return;
 		}
 

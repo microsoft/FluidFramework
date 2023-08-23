@@ -12,6 +12,7 @@ export {
 	ConfigTypes,
 	loggerToMonitoringContext,
 } from "./config";
+export { DataCorruptionError, GenericError, UsageError } from "./error";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
