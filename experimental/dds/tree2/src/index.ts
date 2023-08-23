@@ -124,7 +124,7 @@ export {
 
 export {
 	IdAllocator,
-	MemoizedIdAllocator,
+	MemoizedIdRangeAllocator,
 	IdRange,
 	ModularChangeset,
 	EditDescription,

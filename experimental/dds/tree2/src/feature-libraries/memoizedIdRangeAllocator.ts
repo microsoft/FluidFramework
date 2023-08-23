@@ -3,24 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { RangeMap, getFirstFromRangeMap, setInRangeMap } from "./rangeMap";
-import { Mutable } from "./utils";
-
-/**
- * A value used to differentiate ranges of IDs that belong to different spaces.
- * @alpha
- */
-type SpaceKey = string | number | undefined;
+import { ChangesetLocalId, RevisionTag } from "../core";
+import {
+	RangeMap,
+	getOrAddEmptyToMap,
+	getFirstFromRangeMap,
+	setInRangeMap,
+	Mutable,
+	brand,
+} from "../util";
 
 /**
  * An unique ID allocator that returns the output ID for the same input ID.
  * "The same" here includes cases where a prior call allocated a range of IDs that partially or fully overlap with the
  * current call.
  * @alpha
+ *
+ * @param revision - The revision associated with the range of IDs to allocate.
+ * @param startId - The first ID to allocate.
+ * @param count - The number of IDs to allocate. Interpreted as 1 if undefined.
  */
 export type MemoizedIdRangeAllocator = (
-	key: SpaceKey,
-	startId: number,
+	revision: RevisionTag | undefined,
+	startId: ChangesetLocalId,
 	count?: number,
 ) => IdRange[];
 
@@ -28,22 +33,21 @@ export type MemoizedIdRangeAllocator = (
  * @alpha
  */
 export interface IdRange {
-	readonly first: number;
+	readonly first: ChangesetLocalId;
 	readonly count: number;
 }
 
+/**
+ * @alpha
+ */
 export const MemoizedIdRangeAllocator = {
 	fromNextId(nextId: number = 0): MemoizedIdRangeAllocator {
 		let _nextId = nextId;
-		const rangeMap: Map<SpaceKey, RangeMap<number>> = new Map();
+		const rangeMap: Map<RevisionTag | undefined, RangeMap<number>> = new Map();
 		return (key: string | number | undefined, startId: number, length?: number): IdRange[] => {
 			let count = length ?? 1;
 			const out: IdRange[] = [];
-			let ranges = rangeMap.get(key);
-			if (ranges === undefined) {
-				ranges = [];
-				rangeMap.set(key, ranges);
-			}
+			const ranges = getOrAddEmptyToMap(rangeMap, key);
 			let currId = startId;
 			while (count > 0) {
 				const firstRange = getFirstFromRangeMap(ranges, currId, count);
@@ -51,23 +55,23 @@ export const MemoizedIdRangeAllocator = {
 					const newId = _nextId;
 					_nextId += count;
 					setInRangeMap(ranges, currId, count, newId);
-					out.push({ first: newId, count });
+					out.push({ first: brand(newId), count });
 					count = 0;
 				} else {
 					const idRange: Mutable<IdRange> = {
-						first: firstRange.value,
+						first: brand(firstRange.value),
 						count: firstRange.length,
 					};
 					if (currId < firstRange.start) {
 						const countToAdd = firstRange.start - currId;
 						setInRangeMap(ranges, currId, countToAdd, _nextId);
-						out.push({ first: _nextId, count: countToAdd });
+						out.push({ first: brand(_nextId), count: countToAdd });
 						_nextId += countToAdd;
 						currId += countToAdd;
 						count -= countToAdd;
 					} else if (firstRange.start < currId) {
 						const countToTrim = currId - firstRange.start;
-						idRange.first += countToTrim;
+						idRange.first = brand((idRange.first as number) + countToTrim);
 						idRange.count -= countToTrim;
 					}
 					if (idRange.count > count) {

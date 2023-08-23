@@ -23,8 +23,9 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, MemoizedIdRangeAllocator, Mutable } from "../../util";
+import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -42,7 +43,6 @@ import {
 	IdAllocator,
 	RevisionMetadataSource,
 	NodeExistenceState,
-	MemoizedIdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
@@ -722,7 +722,7 @@ export class ModularChangeFamily
 			return new Map();
 		}
 
-		const idAllocator = MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator;
+		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
 		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
 	}
 
@@ -735,7 +735,7 @@ export class ModularChangeFamily
 	private intoDeltaImpl(
 		change: FieldChangeMap,
 		revision: RevisionTag | undefined,
-		idAllocator: MemoizedIdAllocator,
+		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
@@ -753,7 +753,7 @@ export class ModularChangeFamily
 
 	private deltaFromNodeChange(
 		{ change, revision }: TaggedChange<NodeChangeset>,
-		idAllocator: MemoizedIdAllocator,
+		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,

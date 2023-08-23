@@ -80,6 +80,7 @@ export {
 
 export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
@@ -111,8 +112,6 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
-	MemoizedIdAllocator,
-	IdRange,
 	IdAllocator,
 	NodeChangeComposer,
 	NodeChangeInverter,

@@ -17,12 +17,12 @@ import {
 import {
 	FieldChange,
 	FieldKinds,
-	MemoizedIdAllocator,
+	MemoizedIdRangeAllocator,
 	NodeChangeset,
 	SequenceField as SF,
 	singleTextCursor,
 } from "../../../feature-libraries";
-import { MemoizedIdRangeAllocator, brand, brandOpaque, makeArray } from "../../../util";
+import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -51,7 +51,7 @@ function toDelta(change: TestChangeset): Delta.MarkList {
 	return SF.sequenceFieldToDelta(
 		makeAnonChange(change),
 		TestChange.toDelta,
-		MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
+		MemoizedIdRangeAllocator.fromNextId(),
 	);
 }
 
@@ -60,7 +60,7 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 	return SF.sequenceFieldToDelta(
 		makeAnonChange(change),
 		() => fail("Unexpected call to child ToDelta"),
-		MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
+		MemoizedIdRangeAllocator.fromNextId(),
 	);
 }
 
@@ -133,7 +133,7 @@ describe("SequenceField - toDelta", () => {
 		const actual = SF.sequenceFieldToDelta(
 			makeAnonChange(changeset),
 			deltaFromChild,
-			MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
+			MemoizedIdRangeAllocator.fromNextId(),
 		);
 		const expected: Delta.MarkList = [
 			{
@@ -376,7 +376,7 @@ describe("SequenceField - toDelta", () => {
 		const actual = SF.sequenceFieldToDelta(
 			makeAnonChange(changeset),
 			deltaFromChild,
-			MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
+			MemoizedIdRangeAllocator.fromNextId(),
 		);
 		assertMarkListEqual(actual, expected);
 	});

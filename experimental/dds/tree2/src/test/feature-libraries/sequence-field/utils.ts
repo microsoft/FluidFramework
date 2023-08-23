@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	IdAllocator,
 	idAllocatorFromMaxId,
-	MemoizedIdAllocator,
+	MemoizedIdRangeAllocator,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
@@ -20,7 +20,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	fakeTaggedRepair as fakeRepair,
 } from "../../utils";
-import { brand, fail, MemoizedIdRangeAllocator } from "../../../util";
+import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -167,7 +167,7 @@ export function toDelta(change: TestChangeset): Delta.MarkList {
 	return SF.sequenceFieldToDelta(
 		makeAnonChange(change),
 		TestChange.toDelta,
-		MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
+		MemoizedIdRangeAllocator.fromNextId(),
 	);
 }
 

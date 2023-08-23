@@ -6,6 +6,7 @@
 import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
 import { fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
 import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 
@@ -25,7 +26,7 @@ export interface FieldChangeHandler<
 	intoDelta(
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
-		idAllocator: MemoizedIdAllocator,
+		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.MarkList;
 
 	/**
@@ -212,25 +213,25 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
  */
 export type IdAllocator = (count?: number) => ChangesetLocalId;
 
-/**
- * An unique ID allocator that returns the same ID for the same combination of `revision` and `localId`.
- * "The same" here includes cases where a prior call allocated a range of ID that partially or fully overlaps with the
- * current call.
- * @alpha
- */
-export type MemoizedIdAllocator = (
-	revision: RevisionTag | undefined,
-	localId: ChangesetLocalId,
-	count?: number,
-) => IdRange[];
+// /**
+//  * An unique ID allocator that returns the same ID for the same combination of `revision` and `localId`.
+//  * "The same" here includes cases where a prior call allocated a range of ID that partially or fully overlaps with the
+//  * current call.
+//  * @alpha
+//  */
+// export type MemoizedIdRangeAllocator = (
+// 	revision: RevisionTag | undefined,
+// 	localId: ChangesetLocalId,
+// 	count?: number,
+// ) => IdRange[];
 
-/**
- * @alpha
- */
-export interface IdRange {
-	readonly first: ChangesetLocalId;
-	readonly count: number;
-}
+// /**
+//  * @alpha
+//  */
+// export interface IdRange {
+// 	readonly first: ChangesetLocalId;
+// 	readonly count: number;
+// }
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being

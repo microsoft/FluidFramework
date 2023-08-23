@@ -11,10 +11,10 @@ import {
 	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
-	MemoizedIdAllocator,
+	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
-import { MemoizedIdRangeAllocator, brand } from "../../../util";
+import { brand } from "../../../util";
 import {
 	EncodingTestData,
 	fakeTaggedRepair as fakeRepair,
@@ -406,7 +406,7 @@ describe("Generic FieldKind", () => {
 		const actual = genericFieldKind.changeHandler.intoDelta(
 			makeAnonChange(input),
 			childToDelta,
-			MemoizedIdRangeAllocator.fromNextId() as unknown as MemoizedIdAllocator,
+			MemoizedIdRangeAllocator.fromNextId(),
 		);
 		assert.deepEqual(actual, expected);
 	});

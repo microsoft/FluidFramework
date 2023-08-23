@@ -570,7 +570,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TaggedChange<TChangeset>, deltaFromChild: ToDelta, idAllocator: MemoizedIdAllocator): Delta.MarkList;
+    intoDelta(change: TaggedChange<TChangeset>, deltaFromChild: ToDelta, idAllocator: MemoizedIdRangeAllocator): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -1294,7 +1294,12 @@ const MarkType: {
 export type MatchPolicy = "subtree" | "path";
 
 // @alpha
-export type MemoizedIdAllocator = (revision: RevisionTag | undefined, localId: ChangesetLocalId, count?: number) => IdRange[];
+export type MemoizedIdRangeAllocator = (revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number) => IdRange[];
+
+// @alpha (undocumented)
+export const MemoizedIdRangeAllocator: {
+    fromNextId(nextId?: number): MemoizedIdRangeAllocator;
+};
 
 // @alpha
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {

@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta, RevisionTag, TaggedChange } from "../../core";
-import { MemoizedIdAllocator } from "../modular-schema";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { singleTextCursor } from "../treeTextCursor";
 import { Mark, MarkList, NoopMarkType } from "./format";
 import {
@@ -21,7 +21,7 @@ export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 export function sequenceFieldToDelta<TNodeChange>(
 	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	idAllocator: MemoizedIdAllocator,
+	idAllocator: MemoizedIdRangeAllocator,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of change) {
@@ -41,7 +41,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 function cellDeltaFromMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
 	revision: RevisionTag | undefined,
-	idAllocator: MemoizedIdAllocator,
+	idAllocator: MemoizedIdRangeAllocator,
 	ignoreTransient: boolean,
 ): Mutable<Delta.Mark>[] {
 	if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
