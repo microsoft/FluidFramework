@@ -84,6 +84,7 @@ Dependencies between packages in various layers of the system are enforced via a
 Install the required tools:
 
 -   [Git](https://git-scm.com/downloads).
+    -   \+ [Git LFS](https://git-lfs.com/)
 -   [Node.js](https://nodejs.org/): install the version noted in in the [.nvmrc file](./.nvmrc).
     See [NodeJs Installation](#NodeJs-Installation) for details.
 
@@ -155,7 +156,8 @@ Note: Some of the tests depend on test collateral that lives in a submodule here
 <https://github.com/microsoft/FluidFrameworkTestData>. You may choose to fetch that collateral into your local
 repository, which is required to run all the tests - otherwise some will be skipped.
 
-First install Git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
+First, ensure you have installed [Git LFS](https://git-lfs.com/).
+Then, from the repo root:
 
 ```shell
 git lfs install
