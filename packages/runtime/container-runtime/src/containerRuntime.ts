@@ -1775,11 +1775,6 @@ export class ContainerRuntime
 			}
 			if (this.requestHandler !== undefined) {
 				return this.requestHandler(parser, this);
-			} else {
-				const router: FluidObject<IFluidRouter> | undefined = await this.getEntryPoint?.();
-				if (router?.IFluidRouter !== undefined) {
-					return router.IFluidRouter.request(request);
-				}
 			}
 
 			return create404Response(request);
