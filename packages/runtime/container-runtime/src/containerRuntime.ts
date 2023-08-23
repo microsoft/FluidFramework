@@ -3804,13 +3804,20 @@ export class ContainerRuntime
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+		const pending = this.pendingStateManager.getLocalState();
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GetPendingLocalState_Runtime",
+			waitBlobsToAttach,
+			attachmentBlobsSize: Object.keys(pendingAttachmentBlobs).length,
+			pendingOpsSize: pending?.pendingStates.length,
+		});
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
 		return {
-			pending: this.pendingStateManager.getLocalState(),
+			pending,
 			pendingAttachmentBlobs,
 		};
 	}

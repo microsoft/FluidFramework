@@ -1117,7 +1117,11 @@ export class Container
 		);
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
-		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+		const pendingRuntimeState = await PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{ eventName: "runtime_getPendingLocalState" },
+			async () => this.runtime.getPendingLocalState(props),
+		);
 		const pendingState: IPendingContainerState = {
 			pendingRuntimeState,
 			baseSnapshot: this.baseSnapshot,
@@ -1127,8 +1131,12 @@ export class Container
 			term: OnlyValidTermValue,
 			clientId: this.clientId,
 		};
-
-		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "GetPendingLocalState",
+			savedOpsSize: this.savedOps.length,
+			url: this.resolvedUrl.url,
+			clientId: this.clientId,
+		});
 
 		return JSON.stringify(pendingState);
 	}
