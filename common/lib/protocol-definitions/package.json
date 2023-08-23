@@ -69,6 +69,16 @@
 			]
 		}
 	},
+	"pnpm": {
+		"peerDependencyComments": [
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
+		],
+		"peerDependencyRules": {
+			"ignoreMissing": [
+				"@types/node"
+			]
+		}
+	},
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IDocumentAttributes": {
@@ -106,16 +116,6 @@
 			"InterfaceDeclaration_IQuorumProposals": {
 				"backCompat": false
 			}
-		}
-	},
-	"pnpm": {
-		"peerDependencyComments": [
-			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
-		],
-		"peerDependencyRules": {
-			"ignoreMissing": [
-				"@types/node"
-			]
 		}
 	}
 }
