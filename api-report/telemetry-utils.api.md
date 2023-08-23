@@ -54,6 +54,8 @@ export function createMultiSinkLogger(props: {
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     constructor(message: string, props: ITelemetryProperties);
     // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
     readonly errorType: "dataCorruptionError";
 }
 
