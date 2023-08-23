@@ -140,7 +140,7 @@ steps:
             else
               feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
 
-              if [[ $release == "release" && $feedId == "build"]]; then
+              if [[ $release == "release" && "$feedId" == @(build|dev) ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
                 
                 if [[ "$packageName" != @(tinylicious|fluid-framework) ]]; then
@@ -152,9 +152,9 @@ steps:
                   done
                 fi
 
-                buildFeedBaseUrl="https://pkgs.dev.azure.com/fluidframework/internal/_apis/packaging/feeds/build/npm"
-                buildFeedPromotionUrl="$buildFeedBaseUrl/$packageName/versions/$packageVersion?api-version=7.1-preview.1"
-                
+                baseURL="${${{ parameters.feedName }}%/registry/}"
+                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \
@@ -166,7 +166,7 @@ steps:
                           "value": "Release"
                         }
                       }' \
-                      "$buildFeedPromotionUrl"
+                      "$feedPromotionUrl"
                   )
                 
                 curlExitStatus=$?
