@@ -553,7 +553,7 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-interface IPendingRuntimeState {
+export interface IPendingRuntimeState {
 	/**
 	 * Pending ops from PendingStateManager
 	 */
@@ -3842,15 +3842,21 @@ export class ContainerRuntime
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+
+		if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+			return; // no pending state to save
+		}
+
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
-		return {
+		const pendingState: IPendingRuntimeState = {
 			pending: this.pendingStateManager.getLocalState(),
 			pendingAttachmentBlobs,
 		};
+		return pendingState;
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
