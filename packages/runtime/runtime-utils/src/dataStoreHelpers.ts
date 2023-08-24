@@ -4,19 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-	ITaggedTelemetryPropertyType,
-	FluidObject,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -69,18 +63,6 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	};
 
 	return responseErr;
-}
-
-/**
- * Takes a set of packages and joins them pkg1/pkg2... etc. Tags the field as a code artifact
- * @deprecated - use tagCodeArtifacts instead
- */
-export function packagePathToTelemetryProperty(
-	packagePath: readonly string[] | undefined,
-): ITaggedTelemetryPropertyType | undefined {
-	return packagePath
-		? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact }
-		: undefined;
 }
 
 export async function requestFluidObject<T = FluidObject>(

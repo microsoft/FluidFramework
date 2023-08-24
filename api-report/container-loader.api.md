@@ -6,6 +6,7 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
+import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
@@ -42,8 +43,8 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 // @public
 export interface IContainerExperimental extends IContainer {
-    closeAndGetPendingLocalState(): string;
-    getPendingLocalState?(): string;
+    closeAndGetPendingLocalState?(): Promise<string>;
+    getPendingLocalState?(): Promise<string>;
 }
 
 // @public
@@ -101,12 +102,18 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
-    // (undocumented)
+    createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
+    // @deprecated (undocumented)
     get IFluidRouter(): IFluidRouter;
     // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
-    // (undocumented)
+    rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;

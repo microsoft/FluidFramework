@@ -20,7 +20,7 @@ describe("SchemaIndex", () => {
 	it("roundtrip", () => {
 		// Just test with the Json domain schema for now.
 		// TODO: add more targeted tests, and tests for more cases.
-		const data: SchemaData = new SchemaBuilder("roundtrip", jsonSchema).intoDocumentSchema(
+		const data: SchemaData = new SchemaBuilder("roundtrip", {}, jsonSchema).intoDocumentSchema(
 			SchemaBuilder.fieldOptional(...jsonRoot),
 		);
 		const s = codec.encode(data);

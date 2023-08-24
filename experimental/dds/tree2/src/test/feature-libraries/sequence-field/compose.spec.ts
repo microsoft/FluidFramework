@@ -11,13 +11,13 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 	tagRollbackInverse,
+	ChangesetLocalId,
+	ChangeAtomId,
 } from "../../../core";
-import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
+import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
 import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 import { compose, composeNoVerify, shallowCompose } from "./utils";
 
@@ -481,7 +481,7 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected = [
-			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
+			Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag2 }),
 			Mark.delete(3, brand(0), { revision: tag1 }),
 		];
 		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
@@ -808,6 +808,24 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, []);
 	});
 
+	it("modify ○ return", () => {
+		const changes = TestChange.mint([], 42);
+		const modify = tagChange(Change.modify(3, changes), tag3);
+		const ret = tagChange(Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }), tag4);
+		const actual = shallowCompose([modify, ret]);
+		const expected = [
+			Mark.returnTo(
+				2,
+				{ revision: tag4, localId: brand(0) },
+				{ revision: tag1, localId: brand(0) },
+			),
+			{ count: 3 },
+			Mark.returnFrom(1, brand(0), { revision: tag4, changes }),
+			Mark.returnFrom(1, brand(1), { revision: tag4 }),
+		];
+		assert.deepEqual(actual, expected);
+	});
+
 	it("move ○ move (forward)", () => {
 		const move1 = Change.move(0, 1, 1, brand(0));
 		const move2 = Change.move(1, 1, 2, brand(1));
@@ -829,8 +847,8 @@ describe("SequenceField - Compose", () => {
 		const move2 = Change.move(0, 1, 1);
 		const expected = [
 			{ count: 1 },
-			Mark.moveIn(1, brand(0), { revision: tag2 }),
-			Mark.moveOut(1, brand(0), { revision: tag2 }),
+			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
+			Mark.moveOut(1, { localId: brand(0), revision: tag2 }),
 		];
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		assert.deepEqual(actual, expected);
@@ -840,8 +858,8 @@ describe("SequenceField - Compose", () => {
 		const move1 = Change.move(0, 1, 1);
 		const move2 = Change.move(1, 1, 0);
 		const expected = [
-			Mark.moveIn(1, brand(0), { revision: tag2 }),
-			Mark.moveOut(1, brand(0), { revision: tag2 }),
+			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
+			Mark.moveOut(1, { localId: brand(0), revision: tag2 }),
 		];
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		assert.deepEqual(actual, expected);

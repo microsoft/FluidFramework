@@ -7,7 +7,7 @@ import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
-import { toJsonableTree } from "../../utils";
+import { toJsonableTree, validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { FieldUpPath } from "../../../core";
 import {
@@ -45,6 +45,10 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		applyUndoRedoEdit(tree, contents);
 		return state;
 	},
+	synchronizeTrees: async (state) => {
+		applySynchronizationOp(state);
+		return state;
+	},
 });
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
@@ -54,6 +58,17 @@ export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 		// Uncomment to get a merged view of the trees
 		// const mergedView = merge(actual, lastTree);
 		assert.deepEqual(actual, lastTree);
+	}
+}
+
+export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory>) {
+	state.containerRuntimeFactory.processAllMessages();
+	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
+	if (connectedClients.length > 0) {
+		const readonlyChannel = state.summarizerClient.channel;
+		for (const { channel } of connectedClients) {
+			validateTreeConsistency(channel, readonlyChannel);
+		}
 	}
 }
 

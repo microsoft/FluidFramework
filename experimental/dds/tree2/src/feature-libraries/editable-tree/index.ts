@@ -4,21 +4,16 @@
  */
 
 export {
-	typeSymbol,
 	EditableTree,
 	EditableField,
 	EditableTreeOrPrimitive,
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	NewFieldContent,
 	areCursors,
 	localNodeKeySymbol,
+	setField,
+	TreeStatus,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";

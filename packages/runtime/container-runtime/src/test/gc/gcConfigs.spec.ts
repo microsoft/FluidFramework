@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ICriticalContainerError, IErrorBase } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IErrorBase } from "@fluidframework/core-interfaces";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -15,6 +16,7 @@ import {
 	ConfigTypes,
 	MonitoringContext,
 	mixinMonitoringContext,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -59,7 +61,7 @@ describe("Garbage Collection configurations", () => {
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
-	let mc: MonitoringContext;
+	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -122,7 +124,7 @@ describe("Garbage Collection configurations", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mc.logger,
+			baseLogger: createChildLogger({ logger: mc.logger }),
 			existing: createParams.metadata !== undefined /* existing */,
 			metadata: createParams.metadata,
 			createContainerMetadata: {

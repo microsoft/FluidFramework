@@ -4,30 +4,34 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
 import {
-	IDeltaHandlerStrategy,
+	IThrottlingWarning,
+	IEventProvider,
+	ITelemetryProperties,
+	ITelemetryErrorEvent,
+} from "@fluidframework/core-interfaces";
+import {
+	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	ICriticalContainerError,
-	IThrottlingWarning,
-	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	normalizeError,
 	logIfFalse,
 	safeRaiseEvent,
 	isFluidError,
 	ITelemetryLoggerExt,
+	DataCorruptionError,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorType,
-	IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -37,21 +41,21 @@ import {
 	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
+
 import {
-	ThrottlingWarning,
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-	DataProcessingError,
-	UsageError,
-} from "@fluidframework/container-utils";
-import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionManagerFactoryArgs,
+	IConnectionStateChangeReason,
+} from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
+import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
 	fetchOpsFromStorage?: boolean;
-	reason: string;
+	reason: IConnectionStateChangeReason;
 }
 
 /**
@@ -62,8 +66,11 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
-	(event: "establishingConnection", listener: (reason: string) => void);
-	(event: "cancelEstablishingConnection", listener: (reason: string) => void);
+	(event: "establishingConnection", listener: (reason: IConnectionStateChangeReason) => void);
+	(
+		event: "cancelEstablishingConnection",
+		listener: (reason: IConnectionStateChangeReason) => void,
+	);
 }
 
 /**
@@ -71,6 +78,21 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
  */
 interface IBatchMetadata {
 	batch?: boolean;
+}
+
+/**
+ * Interface used to define a strategy for handling incoming delta messages
+ */
+export interface IDeltaHandlerStrategy {
+	/**
+	 * Processes the message.
+	 */
+	process: (message: ISequencedDocumentMessage) => void;
+
+	/**
+	 * Processes the signal.
+	 */
+	processSignal: (message: ISignalMessage) => void;
 }
 
 /**
@@ -330,6 +352,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
+			deltaManagerState: this._disposed ? "disposed" : this._closed ? "closed" : "open",
 			...this.connectionManager.connectionProps,
 		};
 	}
@@ -383,15 +406,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string, error?: IAnyDriverError) =>
-				this.disconnectHandler(reason, error),
+			disconnectHandler: (reason: IConnectionStateChangeReason) =>
+				this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
-			establishConnectionHandler: (reason: string) => this.establishingConnection(reason),
-			cancelConnectionHandler: (reason: string) => this.cancelEstablishingConnection(reason),
+			establishConnectionHandler: (reason: IConnectionStateChangeReason) =>
+				this.establishingConnection(reason),
+			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>
+				this.cancelEstablishingConnection(reason),
 		};
 
 		this.connectionManager = createConnectionManager(props);
@@ -431,11 +456,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
 	}
 
-	private cancelEstablishingConnection(reason: string) {
+	private cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
 		this.emit("cancelEstablishingConnection", reason);
 	}
 
-	private establishingConnection(reason: string) {
+	private establishingConnection(reason: IConnectionStateChangeReason) {
 		this.emit("establishingConnection", reason);
 	}
 
@@ -495,7 +520,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		minSequenceNumber: number,
 		sequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "cached" | "all" | "none" = "none",
+		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
 	) {
 		this.initSequenceNumber = sequenceNumber;
 		this.lastProcessedSequenceNumber = sequenceNumber;
@@ -569,7 +594,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// on the wire, we might be always behind.
 		// See comment at the end of "connect" handler
 		if (fetchOpsFromStorage) {
-			this.fetchMissingDeltas(args.reason);
+			this.fetchMissingDeltas(args.reason.text);
 		}
 
 		this.connectionManager.connect(args.reason, args.mode);
@@ -755,9 +780,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string, error?: IAnyDriverError) {
+	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason, error);
+		this.emit("disconnect", reason);
 	}
 
 	/**

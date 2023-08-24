@@ -64,7 +64,7 @@ testSpecializedCursor({
 	dataFromCursor: cursorToJsonObject,
 	testData: cursors,
 	builders: {
-		withLocalKeys: (keys) => {
+		withKeys: (keys) => {
 			const obj = {};
 			for (const key of keys) {
 				Object.defineProperty(obj, key, {

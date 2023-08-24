@@ -4,10 +4,6 @@
  */
 
 import {
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
-import {
 	ITelemetryBaseLogger,
 	IDisposable,
 	IFluidHandle,
@@ -42,9 +38,11 @@ import {
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
+	createChildMonitoringContext,
+	DataCorruptionError,
+	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
-	createChildMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -431,8 +429,7 @@ export class DataStores implements IDisposable {
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
-		const request = { url: envelope.address };
-		this.validateNotDeleted(envelope.address, request);
+		this.validateNotDeleted(envelope.address);
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
@@ -451,104 +448,145 @@ export class DataStores implements IDisposable {
 		requestHeaderData: RuntimeHeaderData,
 	): Promise<FluidDataStoreContext> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
-		const request = { url: id };
-
-		this.validateNotDeleted(id, request, headerData);
+		this.validateNotDeleted(id, headerData);
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
+			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
 
-		this.validateNotTombstoned(context, request, requestHeaderData);
+		this.validateNotTombstoned(context, requestHeaderData);
 
 		return context;
 	}
 
 	/**
-	 * Validate that the data store had not been deleted by GC.
-	 *
+	 * Returns the data store requested with the given id if available. Otherwise, returns undefined.
+	 */
+	public async getDataStoreIfAvailable(
+		id: string,
+		requestHeaderData: RuntimeHeaderData,
+	): Promise<FluidDataStoreContext | undefined> {
+		// If the data store has been deleted, return undefined.
+		if (this.checkIfDeleted(id, requestHeaderData)) {
+			return undefined;
+		}
+		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
+		if (context === undefined) {
+			return undefined;
+		}
+		// Check if the data store is tombstoned. If so, we want to log a telemetry event.
+		this.checkIfTombstoned(context, requestHeaderData);
+		return context;
+	}
+
+	/**
+	 * Checks if the data store has been deleted by GC.
 	 * @param id - data store id
 	 * @param request - the request information to log if the validation detects the data store has been deleted
 	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
+	 * @returns true if the data store is deleted. Otherwise, returns false.
 	 */
-	private validateNotDeleted(
-		id: string,
-		request: IRequest,
-		requestHeaderData?: RuntimeHeaderData,
-	) {
+	private checkIfDeleted(id: string, requestHeaderData?: RuntimeHeaderData) {
 		const dataStoreNodePath = `/${id}`;
-		if (this.isDataStoreDeleted(dataStoreNodePath)) {
-			assert(
-				!this.contexts.has(id),
-				0x570 /* Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime. */,
-			);
+		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
+			return false;
+		}
+		assert(
+			!this.contexts.has(id),
+			0x570 /* Inconsistent state! GC says the data store is deleted, but the data store is not deleted from the runtime. */,
+		);
+		sendGCUnexpectedUsageEvent(
+			this.mc,
+			{
+				eventName: "GC_Deleted_DataStore_Requested",
+				category: "error",
+				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+				id,
+				headers: JSON.stringify(requestHeaderData),
+				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
+			},
+			undefined /* packagePath */,
+		);
+		return true;
+	}
+
+	/**
+	 * Validate that the data store had not been deleted by GC.
+	 * @param id - data store id
+	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been deleted
+	 */
+	private validateNotDeleted(id: string, requestHeaderData?: RuntimeHeaderData) {
+		if (this.checkIfDeleted(id, requestHeaderData)) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const error = responseToException(
+			const request: IRequest = { url: id };
+			throw responseToException(
 				createResponseError(404, "DataStore was deleted", request),
 				request,
 			);
-			sendGCUnexpectedUsageEvent(
-				this.mc,
-				{
-					eventName: "GC_Deleted_DataStore_Requested",
-					category: "error",
-					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-					headers: JSON.stringify(requestHeaderData),
-					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-				},
-				undefined /** packagePath */,
-				error,
-			);
-			throw error;
 		}
 	}
 
 	/**
+	 * Checks if the data store has not been marked as tombstone by GC or not.
+	 * @param context - the data store context in question
+	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been tombstoned
+	 * @returns true if the data store is tombstoned. Otherwise, returns false.
+	 */
+	private checkIfTombstoned(
+		context: FluidDataStoreContext,
+		requestHeaderData: RuntimeHeaderData,
+	) {
+		if (!context.tombstoned) {
+			return false;
+		}
+		const logErrorEvent = this.throwOnTombstoneLoad && !requestHeaderData.allowTombstone;
+		sendGCUnexpectedUsageEvent(
+			this.mc,
+			{
+				eventName: "GC_Tombstone_DataStore_Requested",
+				category: logErrorEvent ? "error" : "generic",
+				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+				id: context.id,
+				headers: JSON.stringify(requestHeaderData),
+				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
+			},
+			context.isLoaded ? context.packagePath : undefined,
+		);
+		return true;
+	}
+
+	/**
 	 * Validates that the data store context requested has not been marked as tombstone by GC.
-	 *
 	 * @param context - the data store context in question
 	 * @param request - the request information to log if the validation detects the data store has been tombstoned
-	 * @param headerData - the request header information to log if the validation detects the data store has been tombstoned
+	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been tombstoned
 	 */
 	private validateNotTombstoned(
 		context: FluidDataStoreContext,
-		request: IRequest,
-		headerData: RuntimeHeaderData,
+		requestHeaderData: RuntimeHeaderData,
 	) {
-		if (context.tombstoned) {
-			const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
-
+		if (this.checkIfTombstoned(context, requestHeaderData)) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
+			const request: IRequest = { url: context.id };
 			const error = responseToException(
 				createResponseError(404, "DataStore was deleted", request, {
 					[TombstoneResponseHeaderKey]: true,
 				}),
 				request,
 			);
-			sendGCUnexpectedUsageEvent(
-				this.mc,
-				{
-					eventName: "GC_Tombstone_DataStore_Requested",
-					category: shouldFail ? "error" : "generic",
-					isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-					headers: JSON.stringify(headerData),
-					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-				},
-				context.isLoaded ? context.packagePath : undefined,
-				error,
-			);
-
-			if (shouldFail) {
+			// Throw an error if configured via options and via request headers.
+			if (this.throwOnTombstoneLoad && !requestHeaderData.allowTombstone) {
 				throw error;
 			}
 		}
 	}
 
 	public processSignal(fluidDataStoreId: string, message: IInboundSignalMessage, local: boolean) {
-		const request = { url: fluidDataStoreId };
-		this.validateNotDeleted(fluidDataStoreId, request);
+		this.validateNotDeleted(fluidDataStoreId);
 		const context = this.contexts.get(fluidDataStoreId);
 		if (!context) {
 			// Attach message may not have been processed yet

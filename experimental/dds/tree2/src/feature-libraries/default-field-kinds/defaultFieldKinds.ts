@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, ITreeCursor, forbiddenFieldKindIdentifier } from "../../core";
+import {
+	FieldKindIdentifier,
+	Delta,
+	ITreeCursor,
+	forbiddenFieldKindIdentifier,
+	ChangesetLocalId,
+} from "../../core";
 import { fail } from "../../util";
 import {
 	FieldKind,
@@ -13,7 +19,6 @@ import {
 	FieldChangeHandler,
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
-	ChangesetLocalId,
 	BrandedFieldKind,
 	brandedFieldKind,
 } from "../modular-schema";
@@ -151,7 +156,7 @@ export const nodeKey: BrandedFieldKind<
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
 export const forbidden = brandedFieldKind(
-	"Forbidden",
+	forbiddenFieldKindIdentifier,
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.

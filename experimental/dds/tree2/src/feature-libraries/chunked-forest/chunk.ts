@@ -8,7 +8,7 @@ import {
 	CursorLocationType,
 	ITreeCursor,
 	ITreeCursorSynchronous,
-	LocalFieldKey,
+	FieldKey,
 	rootFieldKey,
 } from "../../core";
 import { ReferenceCounted } from "../../util";
@@ -45,7 +45,7 @@ export interface TreeChunk extends ReferenceCounted {
  *
  * For now this is using the document root key to ease testing/compatibility, but this may change.
  */
-export const dummyRoot: LocalFieldKey = rootFieldKey;
+export const dummyRoot: FieldKey = rootFieldKey;
 
 /**
  * A symbol for extracting a TreeChunk from {@link ITreeCursor}.

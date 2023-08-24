@@ -19,27 +19,43 @@ import {
 	anchorSlot,
 	AnchorNode,
 	inCursorField,
+	rootFieldKey,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
-import { getFieldKind, getFieldSchema, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import {
+	getFieldKind,
+	NewFieldContent,
+	getFieldSchema,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
-import { neverTree } from "../default-field-kinds";
-import { AdaptingProxyHandler, adaptWithProxy, getStableNodeKey } from "./utilities";
+import { FieldKinds } from "../default-field-kinds";
+import {
+	EditableTreeEvents,
+	getField,
+	on,
+	parentField,
+	typeSymbol,
+	contextSymbol,
+	treeStatus,
+} from "../untypedTree";
+import {
+	AdaptingProxyHandler,
+	adaptWithProxy,
+	getStableNodeKey,
+	treeStatusFromPath,
+} from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	EditableTreeEvents,
 	UnwrappedEditableField,
-	getField,
-	on,
-	parentField,
 	proxyTargetSymbol,
-	typeSymbol,
-	contextSymbol,
-	NewFieldContent,
 	localNodeKeySymbol,
+	setField,
+	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -97,10 +113,6 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
 			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
-	}
-
-	protected buildAnchor(): Anchor {
-		return this.context.forest.anchors.track(this.anchorNode);
 	}
 
 	protected tryMoveCursorToAnchor(
@@ -169,6 +181,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
+	public setField(fieldKey: FieldKey, content: NewFieldContent): void {
+		this.getField(fieldKey).setContent(content);
+	}
+
 	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
@@ -182,24 +198,59 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public get parentField(): { readonly parent: EditableField; readonly index: number } {
 		const cursor = this.cursor;
-		const index = cursor.fieldIndex;
+		const index = this.anchorNode.parentIndex;
+		assert(this.cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
+		const key = this.anchorNode.parentField;
+
 		cursor.exitNode();
-		const key = cursor.getFieldKey();
-		// TODO: make this work properly for root
-		cursor.exitField();
-		const parentType = cursor.type;
-		cursor.enterField(key);
-		// TODO: this should error if schema is not found.
-		// For now this suppresses the error to work around root handling issues.
-		const fieldSchema = getFieldSchema(
-			key,
-			this.context.schema.treeSchema.get(parentType) ?? neverTree,
-			// fail("requested schema that does not exist"),
-		);
+		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
+		let fieldSchema: FieldStoredSchema;
+
+		// Check if the current node is in a detached sequence.
+		if (this.anchorNode.parent === undefined) {
+			// Parent field is a detached sequence, and thus needs special handling for its schema.
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (key === rootFieldKey) {
+				fieldSchema = this.context.schema.rootFieldSchema;
+			} else {
+				// All fields (in the editable tree API) have a schema.
+				// Since currently there is no known schema for detached sequences other than the special default root:
+				// give all other detached fields a schema of sequence of any.
+				// That schema is the only one that is safe since its the only field schema that allows any possible field content.
+				//
+				// TODO:
+				// if any of the following are done this schema will need to be more specific:
+				// 1. Editing APIs start exposing user created detached sequences.
+				// 2. Remove (and its inverse) start working on subsequences or fields contents (like everything in a sequence or optional field) and not just single nodes.
+				// 3. Possibly other unknown cases.
+				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
+				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
+				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
+				fieldSchema = { kind: FieldKinds.sequence };
+			}
+		} else {
+			cursor.exitField();
+			const parentType = cursor.type;
+			cursor.enterField(key);
+			fieldSchema = getFieldSchema(
+				key,
+				this.context.schema.treeSchema.get(parentType) ??
+					fail("requested schema that does not exist"),
+			);
+		}
+
 		const proxifiedField = makeField(this.context, fieldSchema, this.cursor);
 		this.cursor.enterNode(index);
 
 		return { parent: proxifiedField, index };
+	}
+
+	public treeStatus(): TreeStatus {
+		if (this.isFreed()) {
+			return TreeStatus.Deleted;
+		}
+		const path = this.anchorNode;
+		return treeStatusFromPath(path);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
@@ -251,6 +302,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target[Symbol.iterator].bind(target);
 			case getField:
 				return target.getField.bind(target);
+			case setField:
+				return target.setField.bind(target);
+			case treeStatus:
+				return target.treeStatus.bind(target);
 			case parentField:
 				return target.parentField;
 			case contextSymbol:
@@ -275,7 +330,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 		);
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).content = value;
+			target.setField(fieldKey, value);
 			return true;
 		}
 		return false;
@@ -283,7 +338,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 	deleteProperty: (target: NodeProxyTarget, key: string | symbol): boolean => {
 		if (typeof key === "string") {
 			const fieldKey: FieldKey = brand(key);
-			target.getField(fieldKey).delete();
+			target.getField(fieldKey).remove();
 			return true;
 		}
 		return false;
@@ -303,11 +358,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case parentField:
 			case on:
 			case contextSymbol:
-			case localNodeKeySymbol:
 				return true;
+			case localNodeKeySymbol:
+				return target.context.nodeKeyFieldKey !== undefined;
 			case valueSymbol:
-				// Could do `target.value !== ValueSchema.Nothing`
-				// instead if values which could be modified should report as existing.
 				return target.value !== undefined;
 			default:
 				return false;
@@ -371,6 +425,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					configurable: true,
 					enumerable: false,
 					value: target.getField.bind(target),
+					writable: false,
+				};
+			case setField:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.setField.bind(target),
 					writable: false,
 				};
 			case parentField:

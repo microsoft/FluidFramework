@@ -12,14 +12,13 @@ import {
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
+import { DataProcessingError, isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /**
@@ -45,7 +44,10 @@ type ProxyOverrides<T> = {
 		: OverrideFunction<T, P>;
 };
 
-function createFunctionOverrideProxy<T extends object>(obj: T, overrides: ProxyOverrides<T>): T {
+function createFunctionOverrideProxy<T extends Record<string, any>>(
+	obj: T,
+	overrides: ProxyOverrides<T>,
+): T {
 	return new Proxy(obj, {
 		get: (target: T, property: string) => {
 			const override = overrides[property as keyof T];

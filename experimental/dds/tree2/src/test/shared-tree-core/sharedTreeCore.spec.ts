@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
@@ -240,15 +240,15 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 1);
 		changeTree(tree);
 		changeTree(tree);
-		// No commits are evicted yet because there are none behind the minimum sequence number
+		// One commit is at the minimum sequence number and is evicted
 		factory.processAllMessages(); // Minimum sequence number === 1
-		assert.equal(getTrunkLength(tree), 3);
+		assert.equal(getTrunkLength(tree), 2);
 		changeTree(tree);
 		changeTree(tree);
 		changeTree(tree);
-		// Two commits are behind the minimum sequence number and are evicted
+		// Three commits are behind or at the minimum sequence number and are evicted
 		factory.processAllMessages(); // Minimum sequence number === 3
-		assert.equal(getTrunkLength(tree), 6 - 2);
+		assert.equal(getTrunkLength(tree), 6 - 3);
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
@@ -260,40 +260,44 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		// The following scenario tests that branches are tracked across rebases and untracked after disposal
+		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
+		// Calling `factory.processAllMessages()` will result in the minimum sequence number being set to the the
+		// sequence number just before the most recently received changed. Thus, eviction from this point of view
+		// is "off by one"; a commit is only evicted once another commit is sequenced after it.
 		//
-		//                                 trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
+		//                                            trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
 		changeTree(tree);
-		factory.processAllMessages(); //          [1]
+		factory.processAllMessages(); //                     [1]
 		assert.equal(getTrunkLength(tree), 1);
 		const branch1 = tree.getLocalBranch().fork();
 		const branch2 = tree.getLocalBranch().fork();
 		const branch3 = branch2.fork();
 		changeTree(tree);
-		factory.processAllMessages(); //          [1 (b1, b2, b3), 2]
+		factory.processAllMessages(); //                     [x (b1, b2, b3), 2]
 		changeTree(tree);
-		factory.processAllMessages(); //          [1 (b1, b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
-		branch1.dispose(); //                     [1 (b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
-		branch2.dispose(); //                     [1 (b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
-		branch3.dispose(); //                     [x, 2, 3]
+		factory.processAllMessages(); //                     [x (b1, b2, b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		const branch4 = tree.getLocalBranch().fork(); //     [x, 2, 3 (b4)]
-		changeTree(tree);
-		changeTree(tree);
-		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
-		assert.equal(getTrunkLength(tree), 3);
-		const branch5 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4), 4, 5 (b5)]
-		branch4.rebaseOnto(branch5); //           [x, x, 3, 4, 5 (b4, b5)]
-		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
-		assert.equal(getTrunkLength(tree), 3);
-		changeTree(tree);
-		factory.processAllMessages(); //          [x, x, x, 4, 5 (b5)]
+		branch1.dispose(); //                                [x (b2, b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		branch5.dispose(); //                     [x, x, x, 4, 5]
+		branch2.dispose(); //                                [x (b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
+		branch3.dispose(); //                                [x, x, 3]
+		assert.equal(getTrunkLength(tree), 1);
+		const branch4 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4)]
+		changeTree(tree);
+		changeTree(tree);
+		factory.processAllMessages(); //                     [x, x, x (b4), 4, 5]
+		assert.equal(getTrunkLength(tree), 2);
+		const branch5 = tree.getLocalBranch().fork(); //     [x, x, x (b4), 4, 5 (b5)]
+		branch4.rebaseOnto(branch5); //                      [x, x, x, 4, 5 (b4, b5)]
+		branch4.dispose(); //                                [x, x, x, 4, 5 (b5)]
+		assert.equal(getTrunkLength(tree), 2);
+		changeTree(tree);
+		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5), 6]
+		assert.equal(getTrunkLength(tree), 1);
+		changeTree(tree);
+		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
+		assert.equal(getTrunkLength(tree), 1);
 	});
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {

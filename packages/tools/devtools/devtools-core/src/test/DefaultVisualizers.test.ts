@@ -25,7 +25,7 @@ import {
 	valueSymbol,
 } from "@fluid-experimental/tree2";
 
-import { FluidObjectId } from "../CommonInterfaces";
+import { EditType, FluidObjectId } from "../CommonInterfaces";
 import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
@@ -56,23 +56,47 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 }
 
 describe("DefaultVisualizers unit tests", () => {
-	it("SharedCell", async () => {
+	it("SharedCell (Primitive data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+
+		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
+
+		const expected: FluidObjectValueNode = {
+			fluidObjectId: sharedCell.id,
+			value: undefined,
+			typeMetadata: "SharedCell",
+			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: {
+				editTypes: undefined,
+			},
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedCell (JSON data)", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+
+		sharedCell.set({ test: undefined });
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: sharedCell.id,
 			children: {
-				data: {
-					value: undefined,
-					typeMetadata: "undefined",
+				test: {
 					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "undefined",
+					value: undefined,
 				},
 			},
-			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
+			typeMetadata: "SharedCell",
+			editProps: {
+				editTypes: undefined,
+			},
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -94,6 +118,7 @@ describe("DefaultVisualizers unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.Number] },
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -371,6 +396,7 @@ describe("DefaultVisualizers unit tests", () => {
 			value: "Hello World!",
 			typeMetadata: "SharedString",
 			nodeKind: VisualNodeKind.FluidValueNode,
+			editProps: { editTypes: [EditType.String] },
 		};
 
 		expect(result).to.deep.equal(expected);

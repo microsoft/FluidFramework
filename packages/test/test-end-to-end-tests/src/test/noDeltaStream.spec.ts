@@ -28,7 +28,8 @@ import { describeFullCompat } from "@fluid-internal/test-version-utils";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
-	opsBeforeReturn: [undefined, "cached", "all"],
+	opsBeforeReturn: [undefined, "sequenceNumber", "cached", "all"],
+	pauseAfterLoad: [undefined, true, false],
 });
 
 const testConfigs = generatePairwiseOptions({
@@ -72,11 +73,14 @@ const testContainerConfigDisabled: ITestContainerConfig = {
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
 	const scenarioToContainerUrl = new Map<string, string>();
+	const scenarioToSeqNum = new Map<string, number>();
+
 	before(() => {
 		// clear first, so each version combination gets a new container
 		scenarioToContainerUrl.clear();
+		scenarioToSeqNum.clear();
 	});
-	async function getContainerUrl(
+	async function setupContainer(
 		provider: ITestObjectProvider,
 		waitForSummary: boolean,
 		timeout: number,
@@ -118,6 +122,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						errorMsg: "Not saved before timeout",
 					});
 				}
+				scenarioToSeqNum.set(scenario, initContainer.deltaManager.lastSequenceNumber);
 				initContainer.close();
 			}
 			const containerUrl = await provider.driver.createContainerUrl(
@@ -160,11 +165,16 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					durationMs: timeout / 2,
 					errorMsg: "Not summary acked before timeout",
 				});
+				scenarioToSeqNum.set(scenario, summaryContainer.deltaManager.lastSequenceNumber);
 				summaryContainer.close();
 			}
 		}
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return scenarioToContainerUrl.get(scenario)!;
+		return {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			containerUrl: scenarioToContainerUrl.get(scenario)!,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			lastKnownSeqNum: scenarioToSeqNum.get(scenario)!,
+		};
 	}
 
 	for (const testConfig of testConfigs) {
@@ -176,7 +186,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				default:
 					this.skip();
 			}
-			const containerUrl = await getContainerUrl(
+			const { containerUrl, lastKnownSeqNum } = await setupContainer(
 				provider,
 				testConfig.waitForSummary,
 				this.timeout(),
@@ -225,7 +235,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 										return policies;
 									}
 
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Reflection
 									return Reflect.get(target, prop, r);
 								},
 							},
@@ -243,36 +253,74 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					provider.urlResolver,
 				);
 
+				// Define sequenceNumber if opsBeforeReturn is set to "sequenceNumber", otherwise leave undefined
+				const sequenceNumber =
+					testConfig.loadOptions.opsBeforeReturn === "sequenceNumber"
+						? lastKnownSeqNum
+						: undefined;
+
 				const storageOnlyContainer = await storageOnlyLoader.resolve({
 					url: containerUrl,
-					headers: { [LoaderHeader.loadMode]: testConfig.loadOptions },
+					headers: {
+						[LoaderHeader.loadMode]: testConfig.loadOptions,
+						[LoaderHeader.sequenceNumber]: sequenceNumber,
+					},
 				});
 
-				storageOnlyContainer.connect();
 				const deltaManager = storageOnlyContainer.deltaManager;
-				assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-				assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
-				assert.ok(
-					deltaManager.readOnlyInfo.permissions,
-					"deltaManager.readOnlyInfo.permissions",
-				);
-				assert.ok(
-					deltaManager.readOnlyInfo.storageOnly,
-					"deltaManager.readOnlyInfo.storageOnly",
-				);
 
-				const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
-					storageOnlyContainer,
-					"default",
-				);
+				const loadedSeqNum = deltaManager.lastSequenceNumber;
+				if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
+					// We should have at loaded to at least the specified sequence number.
+					assert.ok(
+						loadedSeqNum >= lastKnownSeqNum,
+						"loadedSeqNum >= lastSequenceNumber",
+					);
+				}
 
-				for (const key of validationDataObject.root.keys()) {
+				if (testConfig.loadOptions.pauseAfterLoad !== true) {
+					storageOnlyContainer.connect();
+					assert.strictEqual(deltaManager.active, false, "deltaManager.active");
+					assert.ok(
+						deltaManager.readOnlyInfo.readonly,
+						"deltaManager.readOnlyInfo.readonly",
+					);
+					assert.ok(
+						deltaManager.readOnlyInfo.permissions,
+						"deltaManager.readOnlyInfo.permissions",
+					);
+					assert.ok(
+						deltaManager.readOnlyInfo.storageOnly,
+						"deltaManager.readOnlyInfo.storageOnly",
+					);
+
+					const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
+						storageOnlyContainer,
+						"default",
+					);
+					for (const key of validationDataObject.root.keys()) {
+						assert.strictEqual(
+							storageOnlyDataObject.root.get(key),
+							storageOnlyDataObject.root.get(key),
+							`${storageOnlyDataObject.root.get(
+								key,
+							)} !== ${storageOnlyDataObject.root.get(key)}`,
+						);
+					}
+				} else {
+					if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
+						// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
+						assert.strictEqual(
+							loadedSeqNum,
+							lastKnownSeqNum,
+							"loadedSeqNum === lastKnownSeqNum",
+						);
+					}
+					// The sequence number should still be the same as when we loaded.
 					assert.strictEqual(
-						storageOnlyDataObject.root.get(key),
-						storageOnlyDataObject.root.get(key),
-						`${storageOnlyDataObject.root.get(
-							key,
-						)} !== ${storageOnlyDataObject.root.get(key)}`,
+						deltaManager.lastSequenceNumber,
+						loadedSeqNum,
+						"deltaManager.lastSequenceNumber === loadedSeqNum",
 					);
 				}
 			}

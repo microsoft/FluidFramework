@@ -19,7 +19,6 @@ export {
 
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	Value,
 	TreeValue,
@@ -39,7 +38,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	FieldScope,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -65,7 +63,6 @@ export {
 	compareUpPaths,
 	clonePath,
 	topDownPath,
-	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
 	forEachField,
@@ -101,12 +98,10 @@ export {
 } from "./forest";
 
 export {
-	LocalFieldKey,
-	LocalFieldKeySchema,
+	FieldKey,
+	FieldKeySchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	NamedTreeSchema,
-	Named,
 	FieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
@@ -140,6 +135,8 @@ export {
 	isRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
+	ChangesetLocalId,
+	ChangeAtomId,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -13,10 +13,8 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -25,6 +23,7 @@ import {
 	CollaborationWindow,
 	compareStrings,
 	IConsensusInfo,
+	IMergeLeaf,
 	ISegment,
 	ISegmentAction,
 	Marker,
@@ -60,7 +59,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree, getSlideToSegoff } from "./mergeTree";
+import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
@@ -264,9 +263,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		const op = createInsertSegmentOp(pos, segment);
 
-		const opArgs = { op };
-		this._mergeTree.insertAtReferencePosition(refPos, segment, opArgs);
-		return op;
+		if (this.applyInsertOp({ op })) {
+			return op;
+		}
 	}
 
 	public walkSegments<TClientData>(
@@ -355,11 +354,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		if (segment?.parent === undefined) {
+		const mergeSegment: IMergeLeaf | undefined = segment;
+		if (mergeSegment?.parent === undefined) {
 			return -1;
 		}
 		return this._mergeTree.getPosition(
-			segment,
+			mergeSegment,
 			this.getCurrentSeq(),
 			this.getClientId(),
 			localSeq,
@@ -834,17 +834,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
 		let metadata: SegmentGroup | SegmentGroup[] | undefined;
+		const stashed = true;
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
-				this.applyInsertOp({ op });
+				this.applyInsertOp({ op, stashed });
 				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.REMOVE:
-				this.applyRemoveRangeOp({ op });
+				this.applyRemoveRangeOp({ op, stashed });
 				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.ANNOTATE:
-				this.applyAnnotateRangeOp({ op });
+				this.applyAnnotateRangeOp({ op, stashed });
 				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.GROUP:
@@ -1038,6 +1039,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(
 			startPos,
@@ -1101,16 +1105,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 	}
 
-	/**
-	 * Returns the position to slide a reference to if a slide is required.
-	 * @param segoff - The segment and offset to slide from
-	 * @returns - segment and offset to slide the reference to
-	 * @deprecated Use getSlideToSegoff function instead.
-	 */
-	getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined }) {
-		return getSlideToSegoff(segoff);
-	}
-
 	getPropertiesAtPosition(pos: number) {
 		let propertiesAtPosition: PropertySet | undefined;
 		const segoff = this.getContainingSegment(pos);
@@ -1140,7 +1134,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getLength() {
-		return this._mergeTree.length;
+		return this._mergeTree.length ?? 0;
 	}
 
 	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {

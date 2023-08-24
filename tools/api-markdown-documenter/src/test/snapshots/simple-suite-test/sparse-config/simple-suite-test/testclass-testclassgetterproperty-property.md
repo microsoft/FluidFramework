@@ -1,14 +1,14 @@
-# testClassGetterProperty
+## testClassGetterProperty
 
 Test class getter-only property
 
-## Signature {#testclassgetterproperty-signature}
+### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
 ```
 
-## Remarks {#testclassgetterproperty-remarks}
+### Remarks {#testclassgetterproperty-remarks}
 
 Here are some remarks about the getter-only property

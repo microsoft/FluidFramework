@@ -10,8 +10,8 @@ import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { INack } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -214,23 +214,6 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @public @deprecated (undocumented)
-export interface IFluidResolvedUrl {
-    // (undocumented)
-    endpoints: {
-        [name: string]: string;
-    };
-    id: string;
-    // (undocumented)
-    tokens: {
-        [name: string]: string;
-    };
-    // (undocumented)
-    type: "fluid";
-    // (undocumented)
-    url: string;
-}
-
 // @public (undocumented)
 export interface IGenericNetworkError extends IDriverErrorBase {
     // (undocumented)
@@ -248,7 +231,21 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export type IResolvedUrl = IFluidResolvedUrl;
+export interface IResolvedUrl {
+    // (undocumented)
+    endpoints: {
+        [name: string]: string;
+    };
+    id: string;
+    // (undocumented)
+    tokens: {
+        [name: string]: string;
+    };
+    // (undocumented)
+    type: "fluid";
+    // (undocumented)
+    url: string;
+}
 
 // @public
 export interface IStream<T> {
