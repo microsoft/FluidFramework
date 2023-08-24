@@ -753,6 +753,7 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
+		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -1688,13 +1689,6 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
-
-			// now set clientId to stashed clientId so live ops are correctly processed as local
-			assert(
-				this.clientId === undefined,
-				0x5d6 /* Unexpected clientId when setting stashed clientId */,
-			);
-			this._clientId = pendingLocalState?.clientId;
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,

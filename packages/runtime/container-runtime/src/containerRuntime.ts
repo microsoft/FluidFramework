@@ -562,10 +562,6 @@ export interface IPendingRuntimeState {
 	 * Pending blobs from BlobManager
 	 */
 	pendingAttachmentBlobs?: IPendingBlobs;
-	/**
-	 * Used to recognize replayed local sequenced ops
-	 */
-	clientId?: string;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1146,11 +1142,6 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
-	 * clientId of previous container instance. Used to recognize replayed local sequenced ops.
-	 */
-	private readonly stashClientId?: string;
-
-	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1352,7 +1343,6 @@ export class ContainerRuntime
 		}
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
-		this.stashClientId = pendingRuntimeState?.clientId;
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -2152,9 +2142,8 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		const stashedLocal = this.stashClientId === messageArg.clientId;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			this.processCore(message, local || stashedLocal, modernRuntimeMessage);
+			this.processCore(message, local, modernRuntimeMessage);
 		}
 	}
 
@@ -3866,7 +3855,6 @@ export class ContainerRuntime
 		const pendingState: IPendingRuntimeState = {
 			pending: this.pendingStateManager.getLocalState(),
 			pendingAttachmentBlobs,
-			clientId: this.clientId,
 		};
 		return pendingState;
 	}
