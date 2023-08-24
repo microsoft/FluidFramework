@@ -6,8 +6,8 @@
 import {
 	FieldSchema,
 	ISharedTreeView,
+	InitializeAndSchematizeConfiguration,
 	SchemaAware,
-	SchematizeConfiguration,
 } from "@fluid-experimental/tree2";
 import React from "react";
 
@@ -22,7 +22,7 @@ import React from "react";
  */
 export function useTree<TRoot extends FieldSchema>(
 	tree: ISharedTreeView,
-	config: SchematizeConfiguration<TRoot>,
+	config: InitializeAndSchematizeConfiguration<TRoot>,
 ): SchemaAware.TypedField<TRoot> {
 	// TODO: reconsider where this belongs. Consider error handling from schema changes.
 	const typedTree = React.useMemo<ISharedTreeView>(() => tree.schematize(config), [tree]);

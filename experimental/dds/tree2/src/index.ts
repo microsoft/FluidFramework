@@ -274,6 +274,9 @@ export {
 	ISharedTreeBranchView,
 	ViewEvents,
 	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
 } from "./shared-tree";
 
 export type {
