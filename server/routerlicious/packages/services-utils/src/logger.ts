@@ -12,6 +12,7 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	Lumberjack,
+	ILumberjackOptions,
 } from "@fluidframework/server-services-telemetry";
 import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 
@@ -30,7 +31,6 @@ const defaultWinstonConfig: IWinstonConfig = {
 	timestamp: true,
 	label: "winston",
 };
-
 function configureWinstonLogging(config: IWinstonConfig): void {
 	const formatters = [winston.format.label({ label: config.label })];
 
@@ -67,15 +67,15 @@ function configureWinstonLogging(config: IWinstonConfig): void {
 export interface ILumberjackConfig {
 	engineList: ILumberjackEngine[];
 	schemaValidator?: ILumberjackSchemaValidator[];
+	options?: ILumberjackOptions;
 }
-
 const defaultLumberjackConfig: ILumberjackConfig = {
 	engineList: [new WinstonLumberjackEngine()],
 	schemaValidator: undefined,
+	options: undefined,
 };
-
 function configureLumberjackLogging(config: ILumberjackConfig) {
-	Lumberjack.setup(config.engineList, config.schemaValidator);
+	Lumberjack.setup(config.engineList, config.schemaValidator, config.options);
 }
 
 /**

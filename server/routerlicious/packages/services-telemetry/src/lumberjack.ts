@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getGlobalTelemetryContext } from "./isomorphicUtils";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import {
@@ -13,6 +14,13 @@ import {
 	handleError,
 } from "./resources";
 
+export interface ILumberjackOptions {
+	enableGlobalTelemetryContext: boolean;
+}
+const defaultLumberjackOptions: ILumberjackOptions = {
+	enableGlobalTelemetryContext: true,
+};
+
 // Lumberjack is a telemetry manager class that allows the collection of metrics and logs
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
 // by calling setup() before Lumberjack can be used - the engines process and emit the collected data.
@@ -20,33 +28,53 @@ import {
 export class Lumberjack {
 	private readonly _engineList: ILumberjackEngine[] = [];
 	private _schemaValidators: ILumberjackSchemaValidator[] | undefined;
+	private _options: ILumberjackOptions = defaultLumberjackOptions;
 	private _isSetupCompleted: boolean = false;
+	protected static _staticOptions: ILumberjackOptions = defaultLumberjackOptions;
 	protected static _instance: Lumberjack | undefined;
 	private static readonly LogMessageEventName = "LogMessage";
 	protected constructor() {}
 
-	protected static get instance() {
+	protected static get instance(): Lumberjack {
 		if (!Lumberjack._instance) {
-			Lumberjack._instance = new Lumberjack();
+			if (this._staticOptions.enableGlobalTelemetryContext) {
+				const telemetryContext = getGlobalTelemetryContext();
+				if (telemetryContext && !telemetryContext?.lumberjackInstance) {
+					telemetryContext.lumberjackInstance = new Lumberjack();
+				}
+				Lumberjack._instance = telemetryContext?.lumberjackInstance ?? new Lumberjack();
+			} else {
+				Lumberjack._instance = new Lumberjack();
+			}
 		}
 
 		return Lumberjack._instance;
 	}
 
+	protected static set options(options: Partial<ILumberjackOptions> | undefined) {
+		this._staticOptions = {
+			...this._staticOptions,
+			...options,
+		};
+	}
+
 	public static createInstance(
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
+		options?: Partial<ILumberjackOptions>,
 	) {
 		const newInstance = new Lumberjack();
-		newInstance.setup(engines, schemaValidators);
+		newInstance.setup(engines, schemaValidators, options);
 		return newInstance;
 	}
 
 	public static setup(
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
+		options?: Partial<ILumberjackOptions>,
 	) {
-		this.instance.setup(engines, schemaValidators);
+		this.options = options;
+		this.instance.setup(engines, schemaValidators, options);
 	}
 
 	public static newLumberMetric<T extends string = LumberEventName>(
@@ -93,7 +121,11 @@ export class Lumberjack {
 		this.instance.log(message, LogLevel.Error, properties, exception);
 	}
 
-	public setup(engines: ILumberjackEngine[], schemaValidators?: ILumberjackSchemaValidator[]) {
+	public setup(
+		engines: ILumberjackEngine[],
+		schemaValidators?: ILumberjackSchemaValidator[],
+		options?: Partial<ILumberjackOptions>,
+	) {
 		if (this._isSetupCompleted) {
 			handleError(
 				LumberEventName.LumberjackError,
@@ -114,6 +146,10 @@ export class Lumberjack {
 
 		this._engineList.push(...engines);
 		this._schemaValidators = schemaValidators;
+		this._options = {
+			...defaultLumberjackOptions,
+			...options,
+		};
 		this._isSetupCompleted = true;
 	}
 
@@ -142,12 +178,15 @@ export class Lumberjack {
 		exception?: any,
 	) {
 		this.errorOnIncompleteSetup();
+		const lumberProperties = this._options.enableGlobalTelemetryContext
+			? { ...properties, ...getGlobalTelemetryContext()?.getProperties() }
+			: properties;
 		const lumber = new Lumber<string>(
 			Lumberjack.LogMessageEventName,
 			LumberType.Log,
 			this._engineList,
 			this._schemaValidators,
-			properties,
+			lumberProperties,
 		);
 
 		if (level === LogLevel.Warning || level === LogLevel.Error) {
