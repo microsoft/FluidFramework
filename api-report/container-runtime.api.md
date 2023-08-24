@@ -56,6 +56,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export const agentSchedulerId = "_scheduler";
 
 // @public
+export const AllowInactiveRequestHeaderKey = "allowInactive";
+
+// @public
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @public
@@ -439,6 +442,9 @@ export interface INackSummaryResult extends IRetriableFailureResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
+// @public
+export const InactiveResponseHeaderKey = "isInactive";
+
 // @public (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
@@ -475,6 +481,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
+    readonly finalAttempt?: boolean;
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 

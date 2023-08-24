@@ -147,7 +147,7 @@ export class ValueProperty extends BaseProperty {
 	 * this can result in an infinite loop
 	 *
 	 * @return {*} The serialized representation of this property
-	 * @private
+	 * @protected
 	 */
 	_serialize(
 		in_dirtyOnly,
@@ -176,7 +176,7 @@ export class ValueProperty extends BaseProperty {
 	/**
 	 * Return a JSON representation of the property.
 	 * @return {object} A JSON representation of the property.
-	 * @private
+	 * @protected
 	 */
 	_toJson() {
 		return {

@@ -1,8 +1,8 @@
-# foo
+## foo
 
 Test constant in module.
 
-## Signature {#foo-signature}
+### Signature {#foo-signature}
 
 ```typescript
 foo = 2

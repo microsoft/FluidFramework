@@ -15,7 +15,6 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
@@ -52,6 +51,7 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
+	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -75,10 +75,13 @@ export {
 	cursorsForTypedFieldData,
 	FieldGenerator,
 	TreeDataContext,
+	normalizeNewFieldContent,
+	NewFieldContent,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
@@ -199,6 +202,7 @@ export {
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	treeStatus,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.

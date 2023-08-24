@@ -7,14 +7,17 @@
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	ITelemetryLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";

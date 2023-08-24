@@ -20,7 +20,9 @@ export {
 	ContainerRuntime,
 	RuntimeHeaders,
 	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
+	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
@@ -72,5 +74,5 @@ export {
 	SummaryStage,
 	IRetriableFailureResult,
 } from "./summary";
+export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
-export { generateStableId, isStableId, assertIsStableId } from "./id-compressor";

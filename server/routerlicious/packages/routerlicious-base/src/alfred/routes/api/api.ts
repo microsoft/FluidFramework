@@ -6,13 +6,9 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
-import {
-	BasicRestWrapper,
-	validateTokenClaimsExpiration,
-} from "@fluidframework/server-services-client";
+import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
-	validateTokenClaims,
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
@@ -261,37 +257,18 @@ async function verifyTokenWrapper(
 	if (!documentId) {
 		throw new Error("Missing documentId in request.");
 	}
-	const claims = validateTokenClaims(token, documentId, tenantId);
-	if (isTokenExpiryEnabled) {
-		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
-	}
 
-	if (!tokenCacheEnabled && revokedTokenChecker && claims.jti) {
-		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
-			tenantId,
-			documentId,
-			claims.jti,
-		);
-		if (tokenRevoked) {
-			throw new Error("Permission denied. Token is revoked.");
-		}
-	}
-
-	if (tokenCacheEnabled && tokenCache) {
-		const options = {
-			requireDocumentId: true,
-			requireTokenExpiryCheck: isTokenExpiryEnabled,
-			maxTokenLifetimeSec,
-			ensureSingleUseToken: false,
-			singleUseTokenCache: undefined,
-			enableTokenCache: tokenCacheEnabled,
-			tokenCache,
-			revokedTokenChecker,
-		};
-		return verifyToken(tenantId, documentId, token, tenantManager, options);
-	}
-
-	return tenantManager.verifyToken(claims.tenantId, token);
+	const options = {
+		requireDocumentId: true,
+		requireTokenExpiryCheck: isTokenExpiryEnabled,
+		maxTokenLifetimeSec,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: tokenCacheEnabled,
+		tokenCache,
+		revokedTokenChecker,
+	};
+	return verifyToken(tenantId, documentId, token, tenantManager, options);
 }
 
 async function checkDocumentExistence(

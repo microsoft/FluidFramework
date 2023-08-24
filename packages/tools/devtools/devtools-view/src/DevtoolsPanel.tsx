@@ -30,6 +30,11 @@ export interface DevtoolsPanelProps {
 	 * inline with the app, it should *not* be used in those cases.
 	 */
 	usageTelemetryLogger?: ITelemetryBaseLogger;
+
+	/**
+	 * Optional function that will be invoked when the React component for the Devtools panel is unloaded.
+	 */
+	unloadCallback?: () => void;
 }
 
 /**
@@ -40,7 +45,14 @@ export interface DevtoolsPanelProps {
  * Initializes the message relay context required by internal components.
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
-	const { usageTelemetryLogger, messageRelay } = props;
+	const { usageTelemetryLogger, messageRelay, unloadCallback } = props;
+
+	React.useEffect(() => {
+		// Called when the React component for the Devtools panel is unloaded.
+		return (): void => {
+			unloadCallback?.();
+		};
+	}, [unloadCallback]);
 
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
