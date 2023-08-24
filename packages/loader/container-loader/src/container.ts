@@ -1746,10 +1746,11 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
+		timings.end = performance.now();
 		this.subLogger.sendTelemetryEvent(
 			{
 				eventName: "LoadStagesTimings",
-				...timings,
+				details: JSON.stringify(timings),
 			},
 			undefined,
 			LogLevel.verbose,
