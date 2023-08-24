@@ -9,7 +9,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
+import { describeFullVersionCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import {
 	IFluidHandle,
 	IFluidHandleContext,
@@ -68,7 +68,7 @@ class TestSubDataStoreObject {
  * should not result in any asserts / errors. There shouldn't be nodes corresponding to these handle paths in the
  * GC data that is generated.
  */
-describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
+describeFullVersionCompat("GC unknown handles", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let dataStoreA: ITestDataObject;

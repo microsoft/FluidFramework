@@ -22,7 +22,7 @@ import {
 	ITestObjectProvider,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullVersionCompat } from "@fluid-internal/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -44,7 +44,7 @@ function generate(
 	input: any[],
 	output: any[],
 ) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+	describeFullVersionCompat(name, (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		beforeEach(() => {
 			provider = getTestObjectProvider();

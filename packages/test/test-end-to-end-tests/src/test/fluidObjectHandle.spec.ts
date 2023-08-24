@@ -9,12 +9,12 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TestFluidObject, ITestObjectProvider } from "@fluidframework/test-utils";
 import {
-	describeFullCompat,
+	describeFullVersionCompat,
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 
-describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
+describeFullVersionCompat("FluidObjectHandle", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
