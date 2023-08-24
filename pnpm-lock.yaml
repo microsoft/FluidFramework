@@ -8866,45 +8866,6 @@ importers:
       sinon: 7.5.0
       typescript: 4.5.5
 
-  packages/loader/container-utils:
-    specifiers:
-      '@fluid-tools/build-cli': ^0.22.0
-      '@fluidframework/build-common': ^2.0.0
-      '@fluidframework/build-tools': ^0.22.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-utils-previous': npm:@fluidframework/container-utils@2.0.0-internal.6.1.1
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^1.1.0
-      '@fluidframework/telemetry-utils': workspace:~
-      '@microsoft/api-extractor': ^7.34.4
-      '@types/node': ^16.18.38
-      concurrently: ^7.6.0
-      copyfiles: ^2.4.1
-      eslint: ~8.6.0
-      prettier: ~2.6.2
-      rimraf: ^4.4.0
-      typescript: ~4.5.5
-    dependencies:
-      '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-    devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
-      '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
-      '@fluidframework/container-utils-previous': /@fluidframework/container-utils/2.0.0-internal.6.1.1
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/node': 16.18.38
-      concurrently: 7.6.0
-      copyfiles: 2.4.1
-      eslint: 8.6.0
-      prettier: 2.6.2
-      rimraf: 4.4.1
-      typescript: 4.5.5
-
   packages/loader/driver-utils:
     specifiers:
       '@fluid-tools/build-cli': ^0.22.0
