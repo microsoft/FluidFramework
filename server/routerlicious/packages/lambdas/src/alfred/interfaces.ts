@@ -7,16 +7,20 @@ import { IEvent } from "@fluidframework/common-definitions";
 import { IClient, IConnected } from "@fluidframework/protocol-definitions";
 
 /**
- * Connection details of a client
+ * Connection details of a client.
  */
 export interface IConnectedClient {
 	/**
-	 *
+	 * Message sent to indicate a client has successfully connected to the server.
+	 * Includes client and service connection details to establish communication limits and expectations.
 	 */
 	connection: IConnected;
 
 	/**
-	 *
+	 * Connected client details including associated user details, permissions, and connection mode.
+	 * Most details come from the {@link IConnect.client} message property, but {@link IClient.user}
+	 * and {@link IClient.scopes} properties are overwritten by the parsed claims from the validated
+	 * {@link IConnect.token}.
 	 */
 	details: IClient;
 
@@ -31,12 +35,12 @@ export interface IConnectedClient {
  */
 export interface IRoom {
 	/**
-	 * ID of instance of an ordering service that the application will interact with
+	 * ID of instance of an ordering service that the application will interact with.
 	 */
 	tenantId: string;
 
 	/**
-	 * ID of the document (typically known as container ID within Fluid Framework)
+	 * ID of the document (typically known as container ID within Fluid Framework).
 	 */
 	documentId: string;
 }
