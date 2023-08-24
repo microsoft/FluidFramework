@@ -4,7 +4,7 @@
 
 Remove @fluidframework/container-utils package
 
-All members of the **@fluidframework/container-utils** package have been deprecated and is now removed.
+All members of the **@fluidframework/container-utils** package have been deprecated and the package is now removed.
 
 Migration by API member:
 
