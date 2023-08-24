@@ -4,7 +4,14 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Delta, ITreeCursor, TaggedChange, ITreeCursorSynchronous, tagChange } from "../../core";
+import {
+	Delta,
+	ITreeCursor,
+	TaggedChange,
+	ITreeCursorSynchronous,
+	tagChange,
+	ChangesetLocalId,
+} from "../../core";
 import { fail, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
@@ -21,7 +28,6 @@ import {
 	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
-	ChangesetLocalId,
 	FieldChangeHandler,
 } from "../modular-schema";
 import { populateChildModifications } from "../deltaUtils";
@@ -369,7 +375,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,
 
-	intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) =>
+	intoDelta: ({ change }: TaggedChange<OptionalChangeset>, deltaFromChild: ToDelta) =>
 		optionalFieldIntoDelta(change, deltaFromChild),
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChange === undefined && change.fieldChange === undefined,

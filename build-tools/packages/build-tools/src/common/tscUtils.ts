@@ -4,6 +4,7 @@
  */
 import * as path from "path";
 import * as ts from "typescript";
+import { sha256 } from "./hash";
 
 const defaultTscUtil = getTscUtil(ts);
 export const parseCommandLine = defaultTscUtil.parseCommandLine;
@@ -127,6 +128,7 @@ function toLowerCase(x: string) {
 }
 // eslint-disable-next-line no-useless-escape
 const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
+
 function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
@@ -135,7 +137,40 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
 					: x;
 }
+
 export const getCanonicalFileName = createGetCanonicalFileName(ts);
+
+function createGetSourceFileVersion(tsLib: typeof ts) {
+	// The TypeScript compiler performs some light preprocessing of the source file
+	// text before calculating the file hashes that appear in *.tsbuildinfo.
+	//
+	// Our options are to either reach into the compiler internals, or duplicate
+	// this preprocessing in 'fluid-build'.  Both options are fragile, but since
+	// we're already calling into the TypeScript compiler, calling internals is
+	// convenient.
+	const maybeGetHash = tsLib["getSourceFileVersionAsHashFromText"];
+
+	if (!maybeGetHash) {
+		console.warn(
+			`Warning: TypeScript compiler has changed.  Incremental builds likely broken.`,
+		);
+
+		// Return 'sha256' for compatibility with older versions of TypeScript while we're
+		// transitioning.
+		return sha256;
+	}
+
+	return (buffer: Buffer): string => {
+		return maybeGetHash(
+			{
+				createHash: sha256,
+			},
+			buffer.toString(),
+		);
+	};
+}
+
+export const getSourceFileVersion = createGetSourceFileVersion(ts);
 
 export function getTscUtil(tsLib: typeof ts) {
 	return {
@@ -178,6 +213,7 @@ export function getTscUtil(tsLib: typeof ts) {
 			return configFile.config;
 		},
 		convertToOptionsWithAbsolutePath,
-		getCanonicalFileName: createGetCanonicalFileName(tsLib),
+		getCanonicalFileName: getCanonicalFileName,
+		getSourceFileVersion: getSourceFileVersion,
 	};
 }

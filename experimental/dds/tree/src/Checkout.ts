@@ -5,8 +5,7 @@
 
 import { assert } from '@fluidframework/common-utils';
 import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IDisposable, ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { IDisposable, IErrorEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditId } from './Identifiers';
 import { CachingLogViewer } from './LogViewer';

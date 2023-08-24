@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export class ChannelDeltaConnection implements IDeltaConnection {

@@ -4,7 +4,11 @@
 
 ```ts
 
+import { DataCorruptionError } from '@fluidframework/telemetry-utils';
+import { DataProcessingError } from '@fluidframework/telemetry-utils';
 import { EventForwarder } from '@fluidframework/common-utils';
+import { extractSafePropertiesFromMessage } from '@fluidframework/telemetry-utils';
+import { GenericError } from '@fluidframework/telemetry-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -12,47 +16,29 @@ import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDeltaSender } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorBase } from '@fluidframework/container-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/common-definitions';
-import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { IUsageError } from '@fluidframework/container-definitions';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { UsageError } from '@fluidframework/telemetry-utils';
 
-// @public
+// @public @deprecated
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
     constructor(message: string, expiryMs: number);
     // (undocumented)
-    readonly errorType = ContainerErrorType.clientSessionExpiredError;
+    readonly errorType: "clientSessionExpiredError";
     // (undocumented)
     readonly expiryMs: number;
 }
 
-// @public
-export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(message: string, props: ITelemetryProperties);
-    // (undocumented)
-    readonly canRetry = false;
-    // (undocumented)
-    readonly errorType = ContainerErrorType.dataCorruptionError;
-}
+export { DataCorruptionError }
 
-// @public
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    // (undocumented)
-    readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
-    // (undocumented)
-    readonly errorType = ContainerErrorType.dataProcessingError;
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
-}
+export { DataProcessingError }
 
-// @public
+// @public @deprecated
 export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>);
     // (undocumented)
@@ -97,41 +83,19 @@ export class DeltaManagerProxyBase extends EventForwarder<IDeltaManagerEvents> i
     get version(): string;
 }
 
-// @public (undocumented)
-export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
-    messageClientId: string | undefined;
-    messageSequenceNumber: number | undefined;
-    messageClientSequenceNumber: number | undefined;
-    messageReferenceSequenceNumber: number | undefined;
-    messageMinimumSequenceNumber: number | undefined;
-    messageTimestamp: number | undefined;
-};
+export { extractSafePropertiesFromMessage }
 
-// @public
-export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-    constructor(message: string, error?: any, props?: ITelemetryProperties);
-    // (undocumented)
-    readonly error?: any;
-    // (undocumented)
-    readonly errorType = ContainerErrorType.genericError;
-}
+export { GenericError }
 
-// @public
+// @public @deprecated
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     // (undocumented)
-    readonly errorType = ContainerErrorType.throttlingError;
+    readonly errorType: "throttlingError";
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLoggerExt): IThrottlingWarning;
 }
 
-// @public
-export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-    constructor(message: string, props?: ITelemetryProperties);
-    // (undocumented)
-    readonly errorType = ContainerErrorType.usageError;
-}
-
-// (No @packageDocumentation comment for this package)
+export { UsageError }
 
 ```

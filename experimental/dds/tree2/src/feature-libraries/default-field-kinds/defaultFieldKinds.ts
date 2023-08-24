@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, ITreeCursor, forbiddenFieldKindIdentifier } from "../../core";
+import {
+	FieldKindIdentifier,
+	Delta,
+	ITreeCursor,
+	forbiddenFieldKindIdentifier,
+	ChangesetLocalId,
+} from "../../core";
 import { fail } from "../../util";
 import {
 	FieldKind,
@@ -13,7 +19,6 @@ import {
 	FieldChangeHandler,
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
-	ChangesetLocalId,
 	BrandedFieldKind,
 	brandedFieldKind,
 } from "../modular-schema";
@@ -33,7 +38,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
+	intoDelta: (change, deltaFromChild: ToDelta): Delta.MarkList => [],
 	isEmpty: (change: 0) => true,
 };
 

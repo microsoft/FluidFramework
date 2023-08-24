@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**
  * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the
