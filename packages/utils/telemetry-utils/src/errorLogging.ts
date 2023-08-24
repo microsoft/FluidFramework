@@ -321,8 +321,7 @@ export function isExternalError(error: unknown): boolean {
 export function isTaggedTelemetryPropertyValue(
 	x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,
 ): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-	return typeof (x as any)?.tag === "string";
+	return typeof (x as Partial<ITaggedTelemetryPropertyTypeExt>)?.tag === "string";
 }
 
 /**
