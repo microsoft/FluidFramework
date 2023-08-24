@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64, TypedEventEmitter } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
 import {
 	BasicRestWrapper,
 	validateTokenClaimsExpiration,
@@ -44,6 +48,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ): Router {
 	const router: Router = Router();
 
@@ -131,6 +136,19 @@ export function create(
 				});
 		},
 	);
+
+	router.post("/broadcast-signal", (req, res) => {
+		try {
+			const tenantId = req.body?.tenantId;
+			const documentId = req.body?.documentId;
+			const signalContent = req.body?.singalContent;
+			const payload: IBroadcastSignalEventPayload = { tenantId, documentId, signalContent };
+			collaborationSessionEventEmitter.emit("broadcast-signal", payload);
+			res.status(200).send("Triggering debug signal from tinylicious");
+		} catch (error) {
+			res.status(500).send(error);
+		}
+	});
 
 	return router;
 }
