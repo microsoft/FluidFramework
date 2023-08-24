@@ -9,4 +9,5 @@ const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mochar
 
 const packageDir = __dirname;
 const config = getFluidTestMochaConfig(packageDir);
+config.timeout = 50000; // Mega screenshot test takes a while...
 module.exports = config;

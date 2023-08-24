@@ -166,8 +166,8 @@ export function makeOperationGenerator(
 
 	const all =
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
-		(t: T) =>
-			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
+			(t: T) =>
+				clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
@@ -176,8 +176,8 @@ export function makeOperationGenerator(
 			usableWeights.removeRange,
 			alwaysLeaveChar
 				? lengthSatisfies((length) => {
-						return length > 1;
-				  })
+					return length > 1;
+				})
 				: hasNonzeroLength,
 		],
 		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
@@ -252,16 +252,22 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// ADO:5083, the seed 12 started failing after rebasing was added,
-		// however there are no rebase ops in this test run.
-		// the other failing seeds were added when updates of the msn on reconnects
-		// were introduced to
-		// skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
-		// TODO: remove when the sequence is fixed.
+		// AB#4477: Seed 12 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
+		// The other failing seeds were added when updates of the msn on reconnects
+		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
+		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
+		// on segments that can be zamboni'd.
+		// TODO:AB#5337: re-enable these seeds.
 		skip: [
 			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
 			76, 79, 86, 91, 92, 94,
 		],
+		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -285,8 +291,14 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
+		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
 		skip: [80, 9, 12, 44, 31, 56],
+		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -300,8 +312,14 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// ADO:5083, eventual consistency issue was detected
+		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
 		skip: [9, 12, 29],
+		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {

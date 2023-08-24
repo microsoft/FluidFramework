@@ -11,7 +11,6 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
@@ -20,6 +19,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,
+	DataProcessingError,
+	GenericError,
 	IConfigProviderBase,
 	mixinMonitoringContext,
 	MockLogger,

@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
 import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {

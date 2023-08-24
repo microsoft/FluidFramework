@@ -420,7 +420,9 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 // @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
+    minLogLevel?: LogLevel;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
 // @public
@@ -439,10 +441,10 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 
 // @public
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
 }
 
 // @public
@@ -467,6 +469,16 @@ export interface IThrottlingWarning extends IErrorBase {
 // @public
 export interface IUsageError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.usageError;
+}
+
+// @public
+export const enum LogLevel {
+    // (undocumented)
+    default = 10,
+    // (undocumented)
+    error = 20,
+    // (undocumented)
+    verbose = 0
 }
 
 // @public

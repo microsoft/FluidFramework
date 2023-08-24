@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import {
 	IIntervalHelpers,
 	ISerializableInterval,

@@ -9,7 +9,7 @@ import { jsonObject, jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import { makeTreeFromJson, remove, insert, expectJsonTree } from "../utils";
-import { SharedTreeView } from "../../shared-tree";
+import { ISharedTreeView } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
 
 describe("Editing", () => {
@@ -1537,10 +1537,10 @@ describe("Editing", () => {
 				return buildScenariosWithPrefix();
 			}
 
-			const delAction = (peer: SharedTreeView, idx: number) => remove(peer, idx, 1);
+			const delAction = (peer: ISharedTreeView, idx: number) => remove(peer, idx, 1);
 			const srcField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 			const dstField: FieldUpPath = { parent: undefined, field: brand("dst") };
-			const moveAction = (peer: SharedTreeView, idx: number) =>
+			const moveAction = (peer: ISharedTreeView, idx: number) =>
 				peer.editor.move(srcField, idx, 1, dstField, 0);
 
 			/**

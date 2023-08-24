@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { List } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";

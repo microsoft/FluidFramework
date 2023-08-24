@@ -1,8 +1,8 @@
-# TestMappedType
+## TestMappedType
 
 Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)
 
-## Signature {#testmappedtype-signature}
+### Signature {#testmappedtype-signature}
 
 ```typescript
 export declare type TestMappedType = {
@@ -10,6 +10,6 @@ export declare type TestMappedType = {
 };
 ```
 
-## Remarks {#testmappedtype-remarks}
+### Remarks {#testmappedtype-remarks}
 
 Here are some remarks about the mapped type
