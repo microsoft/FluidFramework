@@ -21,12 +21,20 @@ import {
 import {
 	ConfigTypes,
 	IConfigProviderBase,
+	isFluidError,
+	isILoggingError,
 	mixinMonitoringContext,
 	MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IErrorBase, IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IRequest,
+	IResponse,
+	FluidObject,
+	IGenericError,
+} from "@fluidframework/core-interfaces";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -258,9 +266,10 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual(error.error.message, "Any");
+						assert.strictEqual((error as IGenericError).error.message, "Any");
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -273,9 +282,10 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual(error.error.message, "Any");
+						assert.strictEqual((error as IGenericError).error.message, "Any");
 					});
 
 					it("Batching property set properly", () => {
@@ -787,6 +797,7 @@ describe("Runtime", () => {
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
+					assert(isILoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -949,6 +960,7 @@ describe("Runtime", () => {
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
+					assert(isILoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,

@@ -4,12 +4,15 @@
  */
 
 import assert from "assert";
+import Deque from "double-ended-queue";
+
 import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import Deque from "double-ended-queue";
+import { isILoggingError } from "@fluidframework/telemetry-utils";
+
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
 import { ContainerMessageType, ContainerRuntimeMessage } from "..";
@@ -192,7 +195,8 @@ describe("Pending State Manager", () => {
 
 			submitBatch(messages);
 			process(messages);
-			assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
+			assert(isILoggingError(closeError));
+			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
 		});
@@ -215,7 +219,8 @@ describe("Pending State Manager", () => {
 						type: "otherType",
 					})),
 				);
-				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
+				assert(isILoggingError(closeError));
+				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 				assert.strictEqual(
 					closeError.getTelemetryProperties().expectedMessageType,
 					MessageType.Operation,
