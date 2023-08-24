@@ -1,0 +1,45 @@
+{
+	"name": "@fluid-example/node-demo",
+	"version": "2.0.0-internal.6.2.0",
+	"private": true,
+	"description": "Example test app for perf measurements.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/node-demo"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "module",
+	"main": "lib/index.js",
+	"module": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"clean": "rimraf --glob \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier",
+		"lint:fix": "npm run prettier:fix",
+		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"start": "node ./lib/index.js",
+		"start:server": "npx tinylicious@latest",
+		"tsc": "tsc"
+	},
+	"dependencies": {
+		"@fluidframework/counter": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/tinylicious-client": "workspace:~"
+	},
+	"devDependencies": {
+		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-tools": "^0.22.0",
+		"@types/node": "^16.18.38",
+		"prettier": "^2.6.2",
+		"rimraf": "^4.4.0",
+		"tinylicious": "^1.0.0",
+		"typescript": "~4.5.5"
+	}
+}
