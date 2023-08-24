@@ -546,15 +546,13 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		const multiSinkLogger = new MultiSinkLogger();
-		multiSinkLogger.addLogger(this.logger);
-		if (loaderProps?.logger !== undefined) {
-			multiSinkLogger.addLogger(loaderProps.logger);
-		}
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
 
 		const loader = new this.LoaderConstructorForLoading({
 			...loaderProps,
-			logger: multiSinkLogger,
+			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
 			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
 			documentServiceFactory:

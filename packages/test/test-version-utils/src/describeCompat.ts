@@ -31,7 +31,11 @@ await mochaGlobalSetup();
  * Mocha Utils for test to generate the compat variants.
  */
 function createCompatSuite(
-	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis?: CompatApis) => void,
+	tests: (
+		this: Mocha.Suite,
+		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
+		apis: CompatApis,
+	) => void,
 	enableVersionCompat: boolean,
 	compatFilter?: CompatKind[],
 ) {
@@ -108,10 +112,23 @@ function createCompatSuite(
 		}
 
 		if (enableVersionCompat) {
-			getMajorCompatConfig().forEach((config) => {
+			const versionConfigs = getMajorCompatConfig();
+			for (const config of versionConfigs) {
 				describe(config.name, function () {
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
+					const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.createWith.base);
+					const apis: CompatApis = {
+						containerRuntime: getContainerRuntimeApi(
+							baseVersion,
+							config.createWith.base,
+						),
+						dataRuntime: dataRuntimeApi,
+						dds: dataRuntimeApi.dds,
+						driver: getDriverApi(baseVersion, config.createWith.base),
+						loader: getLoaderApi(baseVersion, config.createWith.base),
+					};
+
 					before(async function () {
 						this.timeout(180000);
 						try {
@@ -149,7 +166,7 @@ function createCompatSuite(
 							provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 						}
 						return provider;
-					});
+					}, apis);
 
 					afterEach(function (done: Mocha.Done) {
 						const logErrors = getUnexpectedLogErrorException(provider.logger);
@@ -166,7 +183,7 @@ function createCompatSuite(
 						}
 					});
 				});
-			});
+			}
 		}
 	};
 }

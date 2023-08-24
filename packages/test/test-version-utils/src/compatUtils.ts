@@ -172,14 +172,27 @@ export async function getCompatVersionedTestObjectProvider(
 	const loadContainerRuntimeApi = getContainerRuntimeApi(loadVersion.base, loadVersion.delta);
 	const dataRuntimeApi = getDataRuntimeApi(createVersion.base, createVersion.delta);
 	const dataRuntimeApiForLoading = getDataRuntimeApi(loadVersion.base, loadVersion.delta);
-	if (driverConfig) driverConfig.version = createVersion.delta;
-	const driver = await createVersionedFluidTestDriver(createVersion.base, driverConfig);
-	const driverConfigForLoading = driverConfig;
-	if (driverConfigForLoading) driverConfigForLoading.version = loadVersion.delta;
-	const driverForLoading = await createVersionedFluidTestDriver(
-		loadVersion.base,
-		driverConfigForLoading,
+	if (driverConfig) {
+		driverConfig.version = createVersion.delta;
+	}
+	// const driver = getDriverApi(loadVersion.base, loadVersion.delta);
+	const driver = await createFluidTestDriver(
+		driverConfig?.type ?? "local",
+		driverConfig?.config,
+		getDriverApi(createVersion.base, driverConfig?.version),
 	);
+
+	const driverConfigForLoading = driverConfig;
+	if (driverConfigForLoading) {
+		driverConfigForLoading.version = loadVersion.delta;
+	}
+
+	const driverForLoading = await createFluidTestDriver(
+		driverConfigForLoading?.type ?? "local",
+		driverConfigForLoading?.config,
+		getDriverApi(loadVersion.base, driverConfigForLoading?.version),
+	);
+
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
