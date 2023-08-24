@@ -13,7 +13,7 @@
 				"stringSize": 100
 			},
 			"minSampleCount": 1,
-			"supportedEndpoints": ["local", "odsp"]
+			"supportedEndpoints": ["odsp"]
 		},
 		{
 			"testTitle": "Matrix 20k cells (1000 x 20 - 100 bytes each)",
@@ -28,7 +28,7 @@
 				"stringSize": 100
 			},
 			"minSampleCount": 1,
-			"supportedEndpoints": ["local", "odsp"]
+			"supportedEndpoints": ["odsp"]
 		},
 		{
 			"testTitle": "Matrix 20k cells (2000 x 10 - 100 bytes each)",
@@ -43,7 +43,7 @@
 				"stringSize": 100
 			},
 			"minSampleCount": 1,
-			"supportedEndpoints": ["local", "odsp"]
+			"supportedEndpoints": ["odsp"]
 		},
 		{
 			"testTitle": "Matrix 1M x 16k cells (20k with 100 bytes each)",
@@ -58,7 +58,7 @@
 				"stringSize": 100
 			},
 			"minSampleCount": 1,
-			"supportedEndpoints": ["local", "odsp"]
+			"supportedEndpoints": ["odsp"]
 		},
 		{
 			"testTitle": "1Mb Map",
