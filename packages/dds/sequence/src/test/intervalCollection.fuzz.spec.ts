@@ -166,8 +166,8 @@ export function makeOperationGenerator(
 
 	const all =
 		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
-			(t: T) =>
-				clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
+		(t: T) =>
+			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
@@ -176,8 +176,8 @@ export function makeOperationGenerator(
 			usableWeights.removeRange,
 			alwaysLeaveChar
 				? lengthSatisfies((length) => {
-					return length > 1;
-				})
+						return length > 1;
+				  })
 				: hasNonzeroLength,
 		],
 		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],

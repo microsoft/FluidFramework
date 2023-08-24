@@ -567,7 +567,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // @alpha
-    obliterateRange(start: number, end: number): IMergeTreeObliterateMsg | undefined;
+    obliterateRange(start: number, end: number): IMergeTreeObliterateMsg;
     // (undocumented)
     protected onConnect(): void;
     // (undocumented)

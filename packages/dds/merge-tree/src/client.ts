@@ -250,13 +250,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 *
 	 * @alpha
 	 */
-	public obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg | undefined {
+	public obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg {
 		const obliterateOp = createObliterateRangeOp(start, end);
-
-		if (this.applyObliterateRangeOp({ op: obliterateOp })) {
-			return obliterateOp;
-		}
-		return undefined;
+		this.applyObliterateRangeOp({ op: obliterateOp });
+		return obliterateOp;
 	}
 
 	/**

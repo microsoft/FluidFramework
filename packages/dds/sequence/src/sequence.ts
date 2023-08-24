@@ -114,7 +114,8 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
-	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
+	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
+{
 	get loaded(): Promise<void> {
 		return this.loadedDeferred.promise;
 	}
@@ -229,14 +230,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
 				? ensureNoReentrancy
 				: createReentrancyDetector((depth) => {
-					if (totalReentrancyLogs > 0) {
-						totalReentrancyLogs--;
-						this.logger.sendTelemetryEvent(
-							{ eventName: "LocalOpReentry", depth },
-							new LoggingError(reentrancyErrorMessage),
-						);
-					}
-				});
+						if (totalReentrancyLogs > 0) {
+							totalReentrancyLogs--;
+							this.logger.sendTelemetryEvent(
+								{ eventName: "LocalOpReentry", depth },
+								new LoggingError(reentrancyErrorMessage),
+							);
+						}
+				  });
 
 		this.loadedDeferred.promise.catch((error) => {
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
@@ -289,12 +290,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * @alpha
 	 */
-	public obliterateRange(start: number, end: number): IMergeTreeObliterateMsg | undefined {
-		const obliterateOp = this.client.obliterateRangeLocal(start, end);
-		if (obliterateOp) {
-			this.submitSequenceMessage(obliterateOp);
-		}
-		return obliterateOp;
+	public obliterateRange(start: number, end: number): IMergeTreeObliterateMsg {
+		return this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
 	/**
@@ -597,7 +594,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
 	 */
-	protected onDisconnect() { }
+	protected onDisconnect() {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
