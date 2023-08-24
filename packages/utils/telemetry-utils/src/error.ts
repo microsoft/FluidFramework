@@ -33,7 +33,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	 * @param error - inner error object
 	 * @param props - Telemetry props to include when the error is logged
 	 */
-	// TODO: Use `unknown` instead (API breaking change)
+	// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	constructor(message: string, public readonly error?: any, props?: ITelemetryProperties) {
 		// Don't try to log the inner error
