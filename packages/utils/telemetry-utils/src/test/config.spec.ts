@@ -30,13 +30,13 @@ const getMockStore = (settings: Record<string, string>): Storage => {
 	};
 };
 
-describe("Config", () => {
-	const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
-		return {
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		};
+const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
 	};
+};
 
+describe("Config", () => {
 	it("Typing - storage provider", () => {
 		const settings = {
 			number: "1",

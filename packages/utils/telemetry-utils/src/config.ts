@@ -114,7 +114,9 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 			// a false sense of security by just
 			// casting.
 			defaultReturn = { raw: input, string: input };
-		} catch {}
+		} catch {
+			// No-op
+		}
 	}
 
 	if (output === undefined) {

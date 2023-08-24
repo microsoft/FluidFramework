@@ -92,7 +92,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
 		props: ITelemetryProperties = {},
-	) {
+	): IFluidErrorBase {
 		const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 			errorMessage,
 			dataProcessingCodepath,
@@ -183,7 +183,14 @@ export const extractSafePropertiesFromMessage = (
 			| "timestamp"
 		>
 	>,
-) => ({
+): {
+	messageClientId: string | undefined;
+	messageSequenceNumber: number | undefined;
+	messageClientSequenceNumber: number | undefined;
+	messageReferenceSequenceNumber: number | undefined;
+	messageMinimumSequenceNumber: number | undefined;
+	messageTimestamp: number | undefined;
+} => ({
 	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
 	messageSequenceNumber: messageLike.sequenceNumber,
 	messageClientSequenceNumber: messageLike.clientSequenceNumber,
