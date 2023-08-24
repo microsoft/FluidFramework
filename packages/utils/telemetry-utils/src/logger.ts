@@ -291,7 +291,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
 
 	/**
-	 * {@inheritDoc ITelemetryBaseLogger.send}
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(eventWithTagsMaybe: ITelemetryBaseEvent): void {
 		const newEvent: ITelemetryBaseEvent = {

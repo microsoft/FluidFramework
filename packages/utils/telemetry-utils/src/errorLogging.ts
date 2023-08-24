@@ -4,7 +4,6 @@
  */
 
 import {
-	FluidErrorTypes,
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
 	ITelemetryProperties,
@@ -395,7 +394,7 @@ function getValidTelemetryProps(
  */
 // TODO: Use `unknown` instead (API breaking change)
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const getCircularReplacer = (): any => {
+export const getCircularReplacer = (): ((key: string, value: unknown) => any) => {
 	const seen = new WeakSet();
 	return (key: string, value: unknown): any => {
 		if (typeof value === "object" && value !== null) {
@@ -497,7 +496,7 @@ export class LoggingError
 /**
  * The Error class used when normalizing an external error
  */
-export const NORMALIZED_ERROR_TYPE = FluidErrorTypes.genericError;
+export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
 	// Note that this matches ContainerErrorType/DriverErrorType's genericError
