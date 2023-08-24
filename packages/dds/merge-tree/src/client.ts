@@ -1170,7 +1170,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	/**
 	 * Searches a string for the nearest marker in either direction to a given start position.
-	 * Makes use of block-accelerated search functions for log(n) complexity.
+	 * The search will include the start position, so markers at the start position are valid
+	 * results of the search. Makes use of block-accelerated search functions for log(n) complexity.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param markerLabel - Label of the marker to search for
