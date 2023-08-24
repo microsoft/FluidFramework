@@ -81,7 +81,8 @@ export interface IRuntimeStateHandler {
  */
 export class PendingStateManager implements IDisposable {
 	private readonly pendingMessages = new Deque<IPendingMessageNew>();
-	private readonly initialMessages = new Deque<IPendingMessageNew>();
+	private readonly unappliedStashedMessages = new Deque<IPendingMessageNew>();
+	private readonly appliedStashedMessages = new Deque<IPendingMessageNew>();
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
@@ -89,7 +90,8 @@ export class PendingStateManager implements IDisposable {
 	private savedOps: IPendingMessageNew[] = [];
 
 	private readonly disposeOnce = new Lazy<void>(() => {
-		this.initialMessages.clear();
+		this.unappliedStashedMessages.clear();
+		this.appliedStashedMessages.clear();
 		this.pendingMessages.clear();
 	});
 
@@ -103,11 +105,11 @@ export class PendingStateManager implements IDisposable {
 	private clientId: string | undefined;
 
 	/**
-	 * The pending messages count. Includes `pendingMessages` and `initialMessages` to keep in sync with
+	 * The pending messages count. Includes pending and stashed messages to keep in sync with
 	 * 'hasPendingMessages'.
 	 */
 	public get pendingMessagesCount(): number {
-		return this.pendingMessages.length + this.initialMessages.length;
+		return this.pendingMessages.length + this.unappliedStashedMessages.length + this.appliedStashedMessages.length;
 	}
 
 	/**
@@ -120,12 +122,12 @@ export class PendingStateManager implements IDisposable {
 
 	public getLocalState(): IPendingLocalState | undefined {
 		assert(
-			this.initialMessages.isEmpty(),
+			this.unappliedStashedMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
 		);
-		if (!this.pendingMessages.isEmpty()) {
+		if (this.hasPendingMessages()) {
 			return {
-				pendingStates: [...this.savedOps, ...this.pendingMessages.toArray()].map(
+				pendingStates: [...this.savedOps, ...this.appliedStashedMessages.toArray(), ...this.pendingMessages.toArray()].map(
 					(message) => {
 						let content = message.content;
 						const parsedContent = JSON.parse(content);
@@ -168,7 +170,7 @@ export class PendingStateManager implements IDisposable {
 					});
 				}
 				// Note: this object may contain "messageType" prop, but it should not be easily accesible due to interface being used
-				this.initialMessages.push({
+				this.unappliedStashedMessages.push({
 					...initialState,
 					content: messageContent,
 				});
@@ -212,9 +214,9 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public async applyStashedOpsAt(seqNum?: number) {
 		// apply stashed ops at sequence number
-		while (!this.initialMessages.isEmpty()) {
+		while (!this.unappliedStashedMessages.isEmpty()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const nextMessage = this.initialMessages.peekFront()!;
+			const nextMessage = this.unappliedStashedMessages.peekFront()!;
 			if (seqNum !== undefined) {
 				if (nextMessage.referenceSequenceNumber > seqNum) {
 					break; // nothing left to do at this sequence number
@@ -234,7 +236,7 @@ export class PendingStateManager implements IDisposable {
 
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.pendingMessages.push(this.initialMessages.shift()!);
+			this.appliedStashedMessages.push(this.unappliedStashedMessages.shift()!);
 		}
 	}
 
@@ -247,15 +249,15 @@ export class PendingStateManager implements IDisposable {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 
-		// Get the next message from the pending queue. Verify a message exists.
-		const pendingMessage = this.pendingMessages.peekFront();
+		// Get the next pending message. Stashed messages are processed before newly submitted ones.
+		const pendingMessage = !this.appliedStashedMessages.isEmpty() ? this.appliedStashedMessages.peekFront() : this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
 		this.savedOps.push(pendingMessage);
 
-		this.pendingMessages.shift();
+		(!this.appliedStashedMessages.isEmpty() ? this.appliedStashedMessages : this.pendingMessages).shift();
 
 		// IMPORTANT: Order matters here, this must match the order of the properties used
 		// when submitting the message.
@@ -318,7 +320,7 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		const batchEndMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
-		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
+		if ((this.pendingMessages.isEmpty() && this.appliedStashedMessages.isEmpty()) || batchEndMetadata === false) {
 			// Get the batch begin metadata from the first message in the batch.
 			const batchBeginMetadata = (
 				this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined
@@ -379,9 +381,14 @@ export class PendingStateManager implements IDisposable {
 		this.clientId = this.stateHandler.clientId();
 
 		assert(
-			this.initialMessages.isEmpty(),
+			this.unappliedStashedMessages.isEmpty(),
 			0x174 /* "initial states should be empty before replaying pending" */,
 		);
+
+		if (this.appliedStashedMessages.length > 0) {
+			this.pendingMessages.unshift(...this.appliedStashedMessages.toArray());
+			this.appliedStashedMessages.clear();
+		}
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
