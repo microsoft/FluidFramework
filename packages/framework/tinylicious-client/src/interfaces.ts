@@ -6,6 +6,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 // Re-export so developers can build loggers without pulling in core-interfaces
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
@@ -22,6 +23,11 @@ export interface TinyliciousClientProps {
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
 	logger?: ITelemetryBaseLogger;
+
+	/**
+	 * The configuration provider which may be used to control features.
+	 */
+	readonly configProvider?: IConfigProviderBase;
 }
 
 /**

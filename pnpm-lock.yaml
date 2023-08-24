@@ -8583,6 +8583,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/tinylicious-client-previous': npm:@fluidframework/tinylicious-client@2.0.0-internal.6.1.1
       '@fluidframework/tinylicious-driver': workspace:~
@@ -8611,6 +8612,7 @@ importers:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       uuid: 9.0.0
     devDependencies:

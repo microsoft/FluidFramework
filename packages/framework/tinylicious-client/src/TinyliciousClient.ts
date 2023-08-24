@@ -147,6 +147,7 @@ export class TinyliciousClient {
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.props?.logger,
+			configProvider: this.props?.configProvider,
 			options: { client },
 		});
 
