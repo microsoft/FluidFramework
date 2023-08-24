@@ -644,9 +644,8 @@ describe("editable-tree: editing", () => {
 	describe("treeStatus", () => {
 		describe("EditableTree", () => {
 			it("root node and non-root node returns TreeStatus.InDocument", () => {
-				const view = createSharedTreeView().schematize({
+				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
-					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { foo: ["foo"], foo2: [] },
 				});
 				const rootNode = view.root;
@@ -664,9 +663,8 @@ describe("editable-tree: editing", () => {
 			// Currently returns TreeStatus.Deleted.
 			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed.
 			it("removed node returns TreeStatus.Deleted on itself and its contents", () => {
-				const view = createSharedTreeView().schematize({
+				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
-					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { foo: ["foo"], foo2: [] },
 				});
 				const root = view.root;
@@ -695,9 +693,8 @@ describe("editable-tree: editing", () => {
 
 		describe("EditableField", () => {
 			it("root field and non-root field returns TreeStatus.InDocument", () => {
-				const view = createSharedTreeView().schematize({
+				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
-					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { foo: ["foo"], foo2: [] },
 				});
 
@@ -715,9 +712,8 @@ describe("editable-tree: editing", () => {
 			// Currently returns TreeStatus.Deleted.
 			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed
 			it("removed field and its contents returns TreeStatus.Deleted", () => {
-				const view = createSharedTreeView().schematize({
+				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
-					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { foo: ["foo"], foo2: [] },
 				});
 				const rootNode = view.root;
