@@ -1753,7 +1753,7 @@ export class Container
 		this.subLogger.sendTelemetryEvent(
 			{
 				eventName: "LoadStagesTimings",
-				...timings,
+				details: JSON.stringify({ ...timings, end: performance.now() }),
 			},
 			undefined,
 			LogLevel.verbose,
