@@ -19,6 +19,7 @@ export interface IValueChanged {
 	 * The value that was stored at the key prior to the change.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	previousValue: any;
 }
 
@@ -64,6 +65,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  */
 // TODO: Use `unknown` instead (breaking change).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
@@ -71,6 +73,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @returns The stored value, or undefined if the key is not set
 	 */
 	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	get<T = any>(key: string): T | undefined;
 
 	/**
@@ -114,6 +117,7 @@ export interface ISerializableValue {
 	/**
 	 * The JSONable representation of the value.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 
 	/**
