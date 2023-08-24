@@ -199,9 +199,11 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
-				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
+				0x6_c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const detailsExpanded = JSON.parse(details);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return matchObjects({ ...actualForMatching, ...detailsExpanded }, expected);
 		}
 		return matchObjects(actual, expected);
