@@ -13,7 +13,10 @@ export interface ITelemetryContextProperties {
 }
 
 export interface ITelemetryContextPropertyProvider {
-	bindContextualProperties(props: Partial<ITelemetryContextProperties>): void;
+	bindContextualProperties(
+		props: Partial<ITelemetryContextProperties>,
+		callback: () => void,
+	): void;
 	getContextualProperties(): Partial<ITelemetryContextProperties>;
 }
 
@@ -48,7 +51,7 @@ export class TelemetryContext {
 	/**
 	 * Bind properties to context.
 	 */
-	public bindProperties(props: Partial<ITelemetryContextProperties>): void {
-		this._telemetryContextPropertyProvider?.bindContextualProperties(props);
+	public bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void {
+		this._telemetryContextPropertyProvider?.bindContextualProperties(props, callback);
 	}
 }
