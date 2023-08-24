@@ -40,11 +40,11 @@ import {
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
+	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert } from "@fluidframework/common-utils";

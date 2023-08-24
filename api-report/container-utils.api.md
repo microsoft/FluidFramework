@@ -5,17 +5,16 @@
 ```ts
 
 import { DataCorruptionError } from '@fluidframework/telemetry-utils';
+import { DataProcessingError } from '@fluidframework/telemetry-utils';
+import { extractSafePropertiesFromMessage } from '@fluidframework/telemetry-utils';
 import { GenericError } from '@fluidframework/telemetry-utils';
-import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { UsageError } from '@fluidframework/telemetry-utils';
 
-// @public
+// @public @deprecated
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
     constructor(message: string, expiryMs: number);
     // (undocumented)
@@ -26,25 +25,9 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
 
 export { DataCorruptionError }
 
-// @public
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    // (undocumented)
-    readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
-    // (undocumented)
-    readonly errorType: "dataProcessingError";
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
-}
+export { DataProcessingError }
 
-// @public (undocumented)
-export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
-    messageClientId: string | undefined;
-    messageSequenceNumber: number | undefined;
-    messageClientSequenceNumber: number | undefined;
-    messageReferenceSequenceNumber: number | undefined;
-    messageMinimumSequenceNumber: number | undefined;
-    messageTimestamp: number | undefined;
-};
+export { extractSafePropertiesFromMessage }
 
 export { GenericError }
 
@@ -58,7 +41,5 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 export { UsageError }
-
-// (No @packageDocumentation comment for this package)
 
 ```

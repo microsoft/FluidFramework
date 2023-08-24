@@ -11,6 +11,7 @@ import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -20,6 +21,7 @@ import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
+import { LogLevel } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -57,6 +59,15 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     readonly errorType: "dataCorruptionError";
 }
 
+// @public
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    // (undocumented)
+    readonly canRetry = false;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
+    readonly errorType: "dataProcessingError";
+    static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
+}
+
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
 
@@ -75,6 +86,16 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
     message: string;
     errorType?: string | undefined;
     stack?: string | undefined;
+};
+
+// @public
+export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
+    messageClientId: string | undefined;
+    messageSequenceNumber: number | undefined;
+    messageClientSequenceNumber: number | undefined;
+    messageReferenceSequenceNumber: number | undefined;
+    messageMinimumSequenceNumber: number | undefined;
+    messageTimestamp: number | undefined;
 };
 
 // @public (undocumented)
@@ -199,8 +220,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 // @public
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
 }
 
 // @public (undocumented)

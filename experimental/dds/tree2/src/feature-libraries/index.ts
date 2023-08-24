@@ -15,7 +15,6 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
-	NewFieldContent,
 	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
@@ -52,6 +51,7 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
+	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -75,6 +75,8 @@ export {
 	cursorsForTypedFieldData,
 	FieldGenerator,
 	TreeDataContext,
+	normalizeNewFieldContent,
+	NewFieldContent,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -199,6 +201,7 @@ export {
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	treeStatus,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.
