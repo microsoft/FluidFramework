@@ -18,8 +18,8 @@ import { BatchManager, BatchMessage } from "../opLifecycle";
 import { ContainerMessageType, ContainerRuntimeMessage } from "..";
 import { SequencedContainerRuntimeMessage } from "../containerRuntime";
 
-type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
-	initialMessages: Deque<IPendingMessageNew>;
+type PendingStateManager_WithPrivates = Omit<PendingStateManager, "unappliedStashedMessages"> & {
+	unappliedStashedMessages: Deque<IPendingMessageNew>;
 };
 
 describe("Pending State Manager", () => {
@@ -337,11 +337,11 @@ describe("Pending State Manager", () => {
 				it("Empty local state", () => {
 					{
 						const pendingStateManager = createPendingStateManager(undefined);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+						assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), []);
 					}
 					{
 						const pendingStateManager = createPendingStateManager([]);
-						assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+						assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), []);
 					}
 				});
 
@@ -350,7 +350,7 @@ describe("Pending State Manager", () => {
 						{ type: "message", messageType: "component" },
 						{ type: "message", messageType: "component", content: { prop1: "value" } },
 					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+					assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), [
 						{
 							type: "message",
 							messageType: "component",
@@ -373,7 +373,7 @@ describe("Pending State Manager", () => {
 						},
 					];
 					const pendingStateManager = createPendingStateManager(messages);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
+					assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), messages);
 				});
 
 				it("Mix of new and old formats", () => {
@@ -386,7 +386,7 @@ describe("Pending State Manager", () => {
 						},
 						{ type: "message", messageType: "component", content: { prop1: "value" } },
 					]);
-					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+					assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), [
 						{
 							type: "message",
 							messageType: "component",
