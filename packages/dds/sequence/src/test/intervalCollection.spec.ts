@@ -1591,6 +1591,8 @@ describe("SharedString interval collections", () => {
 				IntervalType.SlideOnRemove,
 			);
 			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			assert.equal(interval1.startSide, Side.Before);
+			assert.equal(interval1.endSide, Side.After);
 			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
 
@@ -1643,6 +1645,8 @@ describe("SharedString interval collections", () => {
 				undefined,
 			);
 			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			assert.equal(interval1.startSide, Side.After);
+			assert.equal(interval1.endSide, Side.After);
 			const intervalId = interval1.getIntervalId();
 			assert(intervalId);
 			sharedString.insertText(4, "ghi");
@@ -1759,6 +1763,8 @@ describe("SharedString interval collections", () => {
 				undefined,
 			);
 			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+			assert.equal(interval1.startSide, Side.After);
+			assert.equal(interval1.endSide, Side.Before);
 			const intervalId = interval1.getIntervalId();
 			assert(intervalId);
 			sharedString.removeRange(0, 6);

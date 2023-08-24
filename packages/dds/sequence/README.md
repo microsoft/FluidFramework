@@ -438,7 +438,7 @@ aXbYc
  ^^^
 ```
 
-#### Concrete Implementation 
+#### Concrete Implementation
 
 The above is a description of the abstract semantics of the concept of stickiness.
 In practice, this is implemented using the concept of "sides."
@@ -461,7 +461,11 @@ Given the string "ABCD":
 // Picture:
 // {start} - A[- B - C -]D - {end}
 // {start} - A - B - C - D - {end}
-collection.add({ pos: 0, side: Side.After }, { pos: 3, side: Side.Before }, IntervalType.SlideOnRemove);
+collection.add(
+	{ pos: 0, side: Side.After },
+	{ pos: 3, side: Side.Before },
+	IntervalType.SlideOnRemove,
+);
 // Equivalent to specifying the same positions and Side.Before.
 // Refers to "ABC". Content inserted after C will be included in the
 // interval, but content inserted before A will not.

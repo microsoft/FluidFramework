@@ -112,6 +112,13 @@ export interface ISerializedIntervalCollectionV2 {
 	intervals: CompressedSerializedInterval[];
 }
 
+export function sidesFromStickiness(stickiness: IntervalStickiness) {
+	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
+	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
+
+	return { startSide, endSide };
+}
+
 /**
  * Decompress an interval after loading a summary from JSON. The exact format
  * of this compression is unspecified and subject to change
@@ -121,6 +128,7 @@ function decompressInterval(
 	label?: string,
 ): ISerializedInterval {
 	const stickiness = interval[5] ?? IntervalStickiness.END;
+	const { startSide, endSide } = sidesFromStickiness(stickiness);
 	return {
 		start: interval[0],
 		end: interval[1],
@@ -128,8 +136,8 @@ function decompressInterval(
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
 		stickiness,
-		startSide: (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before,
-		endSide: (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After,
+		startSide,
+		endSide,
 	};
 }
 
@@ -179,10 +187,14 @@ export function endpointPosAndSide(
 	};
 }
 
+function toSequencePlace(pos: number | "start" | "end", side: Side): SequencePlace {
+	return typeof pos === "number" ? { pos, side } : pos;
+}
+
 export function computeStickinessFromSide(
-	startPos: number | "start" | "end",
+	startPos: number | "start" | "end" | undefined,
 	startSide: Side,
-	endPos: number | "start" | "end",
+	endPos: number | "start" | "end" | undefined,
 	endSide: Side,
 ): IntervalStickiness {
 	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
@@ -293,8 +305,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		end: SequencePlace,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
-		startSide: Side = Side.Before,
-		endSide: Side = Side.Before,
 	): TInterval {
 		return this.helpers.create(this.label, start, end, this.client, intervalType, op);
 	}
@@ -305,17 +315,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
-		startSide: Side = Side.Before,
-		endSide: Side = Side.Before,
 	) {
-		const interval: TInterval = this.createInterval(
-			start,
-			end,
-			intervalType,
-			op,
-			startSide,
-			endSide,
-		);
+		const interval: TInterval = this.createInterval(start, end, intervalType, op);
 		if (interval) {
 			if (!interval.properties) {
 				interval.properties = createMap<any>();
@@ -1196,13 +1197,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		this.assertStickinessEnabled(start, end);
 
 		const interval: TInterval = this.localCollection.addInterval(
-			startPos,
-			endPos,
+			toSequencePlace(startPos, startSide),
+			toSequencePlace(endPos, endSide),
 			intervalType,
 			props,
-			undefined,
-			startSide,
-			endSide,
 		);
 
 		if (interval) {
@@ -1213,6 +1211,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
+				startSide,
+				endSide,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -1521,7 +1521,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		const { intervalType, properties, stickiness } = serializedInterval;
+		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
 
 		const { start: startRebased, end: endRebased } =
 			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
@@ -1536,6 +1536,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 			properties,
 			stickiness,
+			startSide,
+			endSide,
 		};
 
 		if (
@@ -1726,13 +1728,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		this.localCollection.ensureSerializedId(serializedInterval);
 
 		const interval: TInterval = this.localCollection.addInterval(
-			serializedInterval.start,
-			serializedInterval.end,
+			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
+			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
 			serializedInterval.intervalType,
 			serializedInterval.properties,
 			op,
-			serializedInterval.startSide,
-			serializedInterval.endSide,
 		);
 
 		if (interval) {

@@ -31,6 +31,7 @@ import {
 	Side,
 	computeStickinessFromSide,
 	endpointPosAndSide,
+	sidesFromStickiness,
 } from "../intervalCollection";
 import {
 	IIntervalHelpers,
@@ -117,10 +118,10 @@ export class SequenceInterval implements ISerializableInterval {
 		const startSegment = this.start.getSegment();
 		const endSegment = this.end.getSegment();
 		return computeStickinessFromSide(
-			startSegment?.endpointType ?? -1,
+			startSegment?.endpointType,
 			this.startSide,
-			endSegment?.endpointType ?? -1,
-			this.startSide,
+			endSegment?.endpointType,
+			this.endSide,
 		);
 	}
 
@@ -191,12 +192,15 @@ export class SequenceInterval implements ISerializableInterval {
 	public serialize(): ISerializedInterval {
 		const startPosition = this.client.localReferencePositionToPosition(this.start);
 		const endPosition = this.client.localReferencePositionToPosition(this.end);
+		const { startSide, endSide } = sidesFromStickiness(this.stickiness);
 		const serializedInterval: ISerializedInterval = {
 			end: endPosition,
 			intervalType: this.intervalType,
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
 			stickiness: this.stickiness,
+			startSide,
+			endSide,
 		};
 
 		if (this.properties) {
@@ -358,20 +362,18 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public modify(
 		label: string,
-		start: SequencePlace,
-		end: SequencePlace,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
-		assert(
-			startPos !== undefined &&
-				endPos !== undefined &&
-				startSide !== undefined &&
-				endSide !== undefined,
-			"start and end cannot be undefined because they were not passed in as undefined",
+		const stickiness = computeStickinessFromSide(
+			startPos ?? this.start.getSegment()?.endpointType,
+			startSide ?? this.startSide,
+			endPos ?? this.end.getSegment()?.endpointType,
+			endSide ?? this.endSide,
 		);
-		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
 			if (op === undefined) {
@@ -382,7 +384,7 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		let startRef = this.start;
-		if (start !== undefined) {
+		if (startPos !== undefined) {
 			startRef = createPositionReference(
 				this.client,
 				startPos,
@@ -399,7 +401,7 @@ export class SequenceInterval implements ISerializableInterval {
 		}
 
 		let endRef = this.end;
-		if (end !== undefined) {
+		if (endPos !== undefined) {
 			endRef = createPositionReference(
 				this.client,
 				endPos,
@@ -421,8 +423,8 @@ export class SequenceInterval implements ISerializableInterval {
 			endRef,
 			this.intervalType,
 			undefined,
-			startSide,
-			endSide,
+			startSide ?? this.startSide,
+			endSide ?? this.endSide,
 		);
 		if (this.properties) {
 			newInterval.initializeProperties();

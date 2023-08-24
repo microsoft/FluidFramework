@@ -439,7 +439,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // @internal
-    modify(label: string, start: SequencePlace, end: SequencePlace, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
