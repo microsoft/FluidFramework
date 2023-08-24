@@ -4,6 +4,7 @@
  */
 import { strict as assert } from "assert";
 import {
+	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
@@ -15,25 +16,25 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-internal/test-version-utils";
+import {
+	ChannelFactoryRegistry,
+	ITestContainerConfig,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
+import {
+	DocumentMatrixPlainInfo,
+	assertDocumentTypeInfo,
+	isDocumentMatrixPlainInfo,
+} from "@fluid-internal/test-version-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
-
-const featureGates = {
-	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
-};
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
@@ -53,25 +54,15 @@ class TestDataObject extends DataObject {
 	private readonly matrixKey = "matrix1";
 	public matrix!: SharedMatrix;
 
-	private readonly sharedStringKey = "sharedString";
-	public sharedString!: SharedString;
-
 	protected async initializingFirstTime() {
 		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 		this.root.set(this.matrixKey, sharedMatrix.handle);
-
-		const sharedString = SharedString.create(this.runtime);
-		this.root.set(this.sharedStringKey, sharedString.handle);
 	}
 
 	protected async hasInitialized() {
 		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 		assert(matrixHandle !== undefined, "SharedMatrix not found");
 		this.matrix = await matrixHandle.get();
-
-		const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-		assert(sharedStringHandle !== undefined, "SharedMatrix not found");
-		this.sharedString = await sharedStringHandle.get();
 	}
 }
 
@@ -81,15 +72,38 @@ const runtimeOptions: IContainerRuntimeOptions = {
 			state: "disabled",
 		},
 	},
+	gcOptions: { gcEnabled: false, disableGC: true, runGC: false },
+	compressionOptions: {
+		minimumBatchSizeInBytes: 1024 * 1024,
+		compressionAlgorithm: CompressionAlgorithms.lz4,
+	},
+	chunkSizeInBytes: 600 * 1024,
+};
+const matrixId = "matrix1";
+const registry: ChannelFactoryRegistry = [[matrixId, SharedMatrix.getFactory()]];
+const testContainerConfig: ITestContainerConfig = {
+	registry,
+	runtimeOptions,
+	loaderProps: {},
 };
 
-export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
+const featureGates = {
+	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
+};
+const featureGatesWithGcOff = {
+	"Fluid.GarbageCollection.RunGC": false,
+	"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": true,
+};
+
+export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	private _mainContainer: IContainer | undefined;
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
-	private readonly rowSize: number;
-	private readonly columnSize: number;
-	private readonly stringSize: number;
+	private readonly docInfo: DocumentMatrixPlainInfo;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
@@ -130,33 +144,6 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		return result;
 	}
 
-	private async createDataStores() {
-		assert(
-			this._mainContainer !== undefined,
-			"Container should be initialized before creating data stores",
-		);
-		assert(
-			this.mainDataStore !== undefined,
-			"mainDataStore should be initialized before creating data stores",
-		);
-
-		const matrixHandle = this.mainDataStore._root.get("matrix1");
-		assert(matrixHandle !== undefined, "SharedMatrix not found");
-		const matrix = await matrixHandle.get();
-
-		matrix.insertRows(0, this.rowSize);
-		matrix.insertCols(0, this.columnSize);
-		const randomString = this.generateRandomString(this.stringSize);
-		for (let i = 0; i < this.rowSize; i++) {
-			for (let j = 0; j < this.columnSize; j++) {
-				const id = `${i.toString()}_${j.toString()}`;
-				const sharedString = SharedString.create(this.mainDataStore._runtime, id);
-				sharedString.insertText(0, randomString);
-				matrix.setCell(i, j, sharedString.getText());
-			}
-		}
-	}
-
 	private async waitForContainerSave(c: IContainer) {
 		if (!c.isDirty) {
 			return;
@@ -172,7 +159,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		this._dataObjectFactory = new DataObjectFactory(
 			"TestDataObject",
 			TestDataObject,
-			[SharedMatrix.getFactory(), SharedString.getFactory()],
+			[SharedMatrix.getFactory()],
 			[],
 		);
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -186,17 +173,48 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo
 		// and info.documentType is either "DocumentMap" or "DocumentMultipleDataStores"
-		assert(isDocumentMatrixInfo(this.props.documentTypeInfo));
+		assert(isDocumentMatrixPlainInfo(this.props.documentTypeInfo));
 
 		switch (this.props.documentType) {
-			case "DocumentMatrix":
-				this.rowSize = this.props.documentTypeInfo.rowSize;
-				this.columnSize = this.props.documentTypeInfo.columnSize;
-				this.stringSize = this.props.documentTypeInfo.stringSize;
+			case "DocumentMatrixPlain":
+				this.docInfo = this.props.documentTypeInfo;
+
+				assert(
+					this.docInfo.rowSize > this.docInfo.beginRow &&
+						this.docInfo.rowSize > this.docInfo.endRow &&
+						this.docInfo.beginRow < this.docInfo.endRow,
+					`Invalid combination Row Size (${this.docInfo.rowSize}), begin row (${this.docInfo.beginRow}) and end row (${this.docInfo.endRow}) `,
+				);
+				assert(
+					this.docInfo.columnSize > this.docInfo.beginColumn &&
+						this.docInfo.columnSize > this.docInfo.endColumn &&
+						this.docInfo.beginColumn < this.docInfo.endColumn,
+					`Invalid combination Column Size (${this.docInfo.columnSize}), begin column (${this.docInfo.beginColumn}) and end column (${this.docInfo.endColumn})`,
+				);
 				break;
 			default:
 				throw new Error("Invalid document type");
 		}
+	}
+
+	/**
+	 * Sets the corners of the given matrix.
+	 */
+	private setCorners(matrix: SharedMatrix) {
+		matrix.setCell(this.docInfo.beginRow, this.docInfo.beginColumn, "TopLeft" as any);
+		matrix.setCell(this.docInfo.beginRow, this.docInfo.endColumn, "TopRight" as any);
+		matrix.setCell(this.docInfo.endRow, this.docInfo.endColumn, "BottomRight" as any);
+		matrix.setCell(this.docInfo.endRow, this.docInfo.beginColumn, "BottomLeft" as any);
+	}
+
+	/**
+	 * Checks the corners of the given matrix.
+	 */
+	private checkCorners(matrix: SharedMatrix) {
+		assert.equal(matrix.getCell(this.docInfo.beginRow, this.docInfo.beginColumn), "TopLeft");
+		assert.equal(matrix.getCell(this.docInfo.beginRow, this.docInfo.endColumn), "TopRight");
+		assert.equal(matrix.getCell(this.docInfo.endRow, this.docInfo.endColumn), "BottomRight");
+		assert.equal(matrix.getCell(this.docInfo.endRow, this.docInfo.beginColumn), "BottomLeft");
 	}
 
 	public async initializeDocument(): Promise<void> {
@@ -211,12 +229,30 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
 		this.mainDataStore._root.set("mode", "write");
 
-		await this.createDataStores();
+		const matrixHandle = this.mainDataStore._root.get("matrix1");
+		assert(matrixHandle !== undefined, "SharedMatrix not found");
+		const matrix = await matrixHandle.get();
 
+		matrix.insertRows(0, this.docInfo.rowSize);
+		matrix.insertCols(0, this.docInfo.columnSize);
+		const randomString = this.generateRandomString(this.docInfo.stringSize);
+		for (let i = this.docInfo.beginRow; i < this.docInfo.endRow; i++) {
+			for (let j = this.docInfo.beginColumn; j < this.docInfo.endColumn; j++) {
+				// 1/4 of the cells will have similar value
+				const cellValue =
+					Math.floor(Math.random() * 4) === 0
+						? randomString
+						: this.generateRandomString(this.docInfo.stringSize);
+				matrix.setCell(i, j, cellValue);
+				// const id = `${i.toString()}_${j.toString()}`;
+				// const finalString = `${id}${randomString.substring(id.length)}`;
+				// matrix.setCell(i, j, finalString);
+			}
+		}
+		this.setCorners(matrix);
 		await this._mainContainer.attach(
 			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
 		);
-
 		await this.waitForContainerSave(this._mainContainer);
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 
@@ -247,6 +283,14 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			{ logger: this.props.logger, configProvider: configProvider(featureGates) },
 		);
 		const container2 = await loader.resolve(request);
+
+		await this.props.provider.ensureSynchronized();
+		const dataStore = await requestFluidObject<TestDataObject>(container2, "/");
+
+		const matrixHandle = dataStore._root.get(matrixId);
+		assert(matrixHandle !== undefined, "matrix not found");
+		const matrix = await matrixHandle.get();
+		this.checkCorners(matrix);
 		return container2;
 	}
 
@@ -260,30 +304,37 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	public async summarize(
 		_container: IContainer,
 		summaryVersion?: string,
-		closeContainer: boolean = true,
+		closeContainer: boolean = false,
 	): Promise<ISummarizeResult> {
-		assert(_container !== undefined, "Container should be initialized before summarize");
-		const { container: containerClient, summarizer: summarizerClient } =
-			await createSummarizerFromFactory(
-				this.props.provider,
-				_container,
-				this.dataObjectFactory,
-				summaryVersion,
-				undefined,
-				undefined,
-				this.logger,
-				configProvider(featureGates),
-			);
+		try {
+			assert(_container !== undefined, "Container should be initialized before summarize");
 
-		const newSummaryVersion = await this.waitForSummary(summarizerClient);
-		assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
-		if (closeContainer) {
-			summarizerClient.close();
+			const { container: containerClient, summarizer: summarizerClient } =
+				await createSummarizerFromFactory(
+					this.props.provider,
+					_container,
+					this.dataObjectFactory,
+					summaryVersion,
+					undefined,
+					undefined,
+					this.logger,
+					this.docInfo.rowSize > 30000
+						? configProvider(featureGatesWithGcOff)
+						: configProvider(featureGates),
+				);
+
+			const newSummaryVersion = await this.waitForSummary(summarizerClient);
+			assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
+			if (closeContainer) {
+				summarizerClient.close();
+			}
+			return {
+				container: containerClient,
+				summarizer: summarizerClient,
+				summaryVersion: newSummaryVersion,
+			};
+		} catch (error: any) {
+			throw new Error(`Error Summarizing ${error}`);
 		}
-		return {
-			container: containerClient,
-			summarizer: summarizerClient,
-			summaryVersion: newSummaryVersion,
-		};
 	}
 }
