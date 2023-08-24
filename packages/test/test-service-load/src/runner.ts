@@ -219,6 +219,15 @@ async function runnerProcess(
 			runConfig.logger.minLogLevel =
 				loggerLogLevelOptions[runConfig.runId % loggerLogLevelOptions.length];
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			runConfig.logger.sendTelemetryEvent({
+				eventName: "RunConfigOptions",
+				details: JSON.stringify({
+					loaderOptions: runConfig.loaderConfig,
+					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
+					logLevel: runConfig.logger.minLogLevel,
+					configurations: configurations[runConfig.runId % configurations.length],
+				}),
+			});
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
