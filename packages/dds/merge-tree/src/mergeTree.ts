@@ -128,7 +128,7 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
-export interface IReferenceSearchInfo {
+interface IReferenceSearchInfo {
 	mergeTree: MergeTree;
 	tileLabel: string;
 	forwards?: boolean;
@@ -222,7 +222,7 @@ function tileShift(
 ) {
 	if (node.isLeaf()) {
 		const seg = node;
-		if ((searchInfo.mergeTree?.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
+		if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
 			if (refHasTileLabel(seg, searchInfo.tileLabel)) {
 				searchInfo.tile = seg;
 			}
@@ -1259,7 +1259,7 @@ export class MergeTree {
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param tileLabel - Label of the tile to search for
-	 * @param tilePrecedesPos - Whether the desired tile comes before (false) or after (true) `startPos`
+	 * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
 	 */
 	public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
 		const searchInfo: IReferenceSearchInfo = {
@@ -1306,7 +1306,7 @@ export class MergeTree {
 	}
 
 	/**
-	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `posPrecedesTile`.
+	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `forwards`.
 	 * Uses depthFirstNodeWalk in addition to block-accelerated functionality. The search position will be included in
 	 * the nodes to walk, so searching on all positions, including the endpoints, can be considered inclusive.
 	 * Any out of bound search positions will return undefined, so in order to search the whole string, a forward
@@ -1315,7 +1315,7 @@ export class MergeTree {
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param markerLabel - Label of the marker to search for
-	 * @param backwards - Whether the desired marker comes before (true) or after (false) `startPos`
+	 * @param forwards - Whether the string should be searched in the forward or backward direction
 	 */
 	public searchForMarker(
 		startPos: number,

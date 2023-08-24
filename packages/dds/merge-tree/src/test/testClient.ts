@@ -25,7 +25,7 @@ import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceTy
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
-import { getSlideToSegoff, IReferenceSearchInfo, MergeTree } from "../mergeTree";
+import { getSlideToSegoff, MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
@@ -519,27 +519,24 @@ export class TestClient extends Client {
 
 	slowSearchForMarker(
 		startPos: number,
-		tileLabel: string,
+		markerLabel: string,
 		forwards = true,
 	): ReferencePosition | undefined {
-		const searchInfo: IReferenceSearchInfo = {
-			mergeTree: this.mergeTree,
-			forwards,
-			tileLabel,
-		};
+		let foundMarker: Marker | undefined;
+
 		const { segment } = this.getContainingSegment(startPos);
 		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
 
 		if (Marker.is(segWithParent)) {
-			if (refHasTileLabel(segWithParent, tileLabel)) {
-				searchInfo.tile = segWithParent;
+			if (refHasTileLabel(segWithParent, markerLabel)) {
+				foundMarker = segWithParent;
 			}
 		} else {
 			if (forwards) {
 				forwardExcursion(segWithParent, (seg) => {
 					if (Marker.is(seg)) {
-						if (refHasTileLabel(seg, tileLabel)) {
-							searchInfo.tile = seg;
+						if (refHasTileLabel(seg, markerLabel)) {
+							foundMarker = seg;
 							return false;
 						}
 					}
@@ -547,8 +544,8 @@ export class TestClient extends Client {
 			} else {
 				backwardExcursion(segWithParent, (seg) => {
 					if (Marker.is(seg)) {
-						if (refHasTileLabel(seg, tileLabel)) {
-							searchInfo.tile = seg;
+						if (refHasTileLabel(seg, markerLabel)) {
+							foundMarker = seg;
 							return false;
 						}
 					}
@@ -556,7 +553,7 @@ export class TestClient extends Client {
 			}
 		}
 
-		return searchInfo.tile;
+		return foundMarker;
 	}
 }
 
