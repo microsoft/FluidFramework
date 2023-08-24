@@ -52,7 +52,7 @@ export function makeSerializable(
 	localValue: ILocalValue,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import/no-deprecated
 ): ISerializableValue {
 	const value = localValue.makeSerialized(serializer, bind);
 	return {

@@ -532,7 +532,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidOpRange(
 		op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
 		clientArgs: IMergeTreeClientSequenceArgs,
-	// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import/no-deprecated
 	): IIntegerRange {
 		let start: number | undefined = op.pos1;
 		if (start === undefined && op.relativePos1) {
