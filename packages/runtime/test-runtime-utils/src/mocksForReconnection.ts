@@ -40,21 +40,19 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			this.pendingRemoteMessages.length = 0;
 			this.clientSequenceNumber = 0;
+			const runtimeAndQueue = this.factory.messages.get(this.clientId);
+			assert(runtimeAndQueue !== undefined, "Reconnecting a runtime that never existed.");
 			this.factory.messages.delete(this.clientId);
 			this.factory.runtimes.delete(this.clientId);
+
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
 
-			let queue: ISequencedDocumentMessage[] = [];
-			if (this.factory.messages.size > 0) {
-				queue = [...this.factory.messages.values().next().value.queue];
-			}
-
-			this.factory.messages.set(this.clientId, { runtime: this, queue });
-			this.factory.runtimes.set(this.clientId, this);
+			this.factory.messages.set(this.clientId, runtimeAndQueue);
+			this.factory.runtimes.set(this.clientId, runtimeAndQueue.runtime);
 			// On reconnection, ask the DDSes to resubmit pending messages.
 			this.reSubmitMessages();
 		} else {
@@ -146,18 +144,6 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 				queue: queue.filter((msg) => msg.clientId !== clientId),
 				runtime,
 			});
-		}
-	}
-
-	public override pushMessage(msg: Partial<ISequencedDocumentMessage>) {
-		assert(msg.clientId !== undefined, "Message should have a clientId");
-		const messagingRuntime = this.runtimes.get(msg.clientId);
-		assert(
-			messagingRuntime !== undefined,
-			"Runtime associated with this message does not exist",
-		);
-		if ((messagingRuntime as MockContainerRuntimeForReconnection).connected) {
-			super.pushMessage(msg);
 		}
 	}
 }
