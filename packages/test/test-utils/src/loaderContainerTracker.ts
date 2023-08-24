@@ -102,16 +102,19 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		// the Loader. Such containers won't be added by the `add` method so do it here. For example, summarizer
 		// containers are created via the `clone` method.
 		const c = container as Container;
-		const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
-			const boundFn = fn.bind(c);
-			return async (...args: T[]) => {
-				const newContainer = await boundFn(...args);
-				this.addContainer(newContainer);
-				return newContainer;
+		// back-compat: Check for undefined because this function was added recently and older containers won't have it.
+		if (c.clone !== undefined) {
+			const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
+				const boundFn = fn.bind(c);
+				return async (...args: T[]) => {
+					const newContainer = await boundFn(...args);
+					this.addContainer(newContainer);
+					return newContainer;
+				};
 			};
-		};
-		// This is hack but `clone` is readonly on Container and it didn't feel worth changing it for test utility.
-		(c as any).clone = patch(c.clone);
+			// This is hack but `clone` is readonly on Container and it didn't feel worth changing it for a test utility.
+			(c as any).clone = patch(c.clone);
+		}
 	}
 
 	/**
