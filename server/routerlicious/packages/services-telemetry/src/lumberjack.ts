@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getGlobalTelemetryContext } from "./isomorphicUtils";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import {
@@ -13,6 +12,7 @@ import {
 	ILumberjackSchemaValidator,
 	handleError,
 } from "./resources";
+import { getGlobalTelemetryContext } from "./telemetryContext";
 
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
@@ -36,16 +36,17 @@ export class Lumberjack {
 	protected constructor() {}
 
 	protected static get instance(): Lumberjack {
-		if (!Lumberjack._instance) {
-			if (this._staticOptions.enableGlobalTelemetryContext) {
-				const telemetryContext = getGlobalTelemetryContext();
-				if (telemetryContext && !telemetryContext?.lumberjackInstance) {
+		if (this._staticOptions.enableGlobalTelemetryContext) {
+			const telemetryContext = getGlobalTelemetryContext();
+			if (telemetryContext) {
+				if (!telemetryContext.lumberjackInstance) {
 					telemetryContext.lumberjackInstance = new Lumberjack();
 				}
-				Lumberjack._instance = telemetryContext?.lumberjackInstance ?? new Lumberjack();
-			} else {
-				Lumberjack._instance = new Lumberjack();
+				return telemetryContext.lumberjackInstance;
 			}
+		}
+		if (!Lumberjack._instance) {
+			Lumberjack._instance = new Lumberjack();
 		}
 
 		return Lumberjack._instance;

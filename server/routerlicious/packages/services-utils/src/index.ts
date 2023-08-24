@@ -3,6 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import { AsyncLocalStorageContextProvider } from "./asyncLocalStorage";
+
+// TODO: Maybe all of this should happen in a `configureGlobalTelemetryContext()` helper
+const globalAsyncLocalStorageContextProvider = new AsyncLocalStorageContextProvider();
+global.asyncLocalStorageContextProvider = globalAsyncLocalStorageContextProvider;
+const globalTelemetryContext = getGlobalTelemetryContext();
+if (globalTelemetryContext) {
+	globalTelemetryContext.telemetryContextPropertyProvider =
+		globalAsyncLocalStorageContextProvider;
+}
+
 export {
 	bindCorrelationId,
 	getCorrelationId,

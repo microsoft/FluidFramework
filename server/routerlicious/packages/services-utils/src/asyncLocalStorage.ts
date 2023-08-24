@@ -10,7 +10,6 @@ import { CorrelationIdHeaderName } from "@fluidframework/server-services-client"
 import {
 	ITelemetryContextProperties,
 	ITelemetryContextPropertyProvider,
-	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
 
 const defaultAsyncLocalStorage = new AsyncLocalStorage<string>();
@@ -54,23 +53,26 @@ export class AsyncLocalStorageContextProvider implements ITelemetryContextProper
 	private readonly asyncLocalStorage = new AsyncLocalStorage<
 		Partial<ITelemetryContextProperties>
 	>();
-	public bindContextualProperties(
+	public bindTelemetryContextProperties(
 		props: Partial<ITelemetryContextProperties>,
 		callback: () => void,
 	): void {
-		const existingProps = this.getContextualProperties();
+		const existingProps = this.getTelemetryContextProperties();
 		const newProperties: Partial<ITelemetryContextProperties> = { ...existingProps, ...props };
 		// Anything within callback context will have access to properties.
 		this.asyncLocalStorage.run(newProperties, () => callback());
 	}
-	public getContextualProperties(): Partial<ITelemetryContextProperties> {
+	public getTelemetryContextProperties(): Partial<ITelemetryContextProperties> {
 		const store: Partial<ITelemetryContextProperties> = this.asyncLocalStorage.getStore() ?? {};
 		return store;
 	}
 }
 
-const globalTelemetryContext = getGlobalTelemetryContext();
-if (globalTelemetryContext) {
-	globalTelemetryContext.telemetryContextPropertyProvider =
-		new AsyncLocalStorageContextProvider();
-}
+export const getGlobalAsyncLocalStorageContextProvider = () =>
+	global.asyncLocalStorageContextProvider as AsyncLocalStorageContextProvider | undefined;
+
+export const setGlobalAsyncLocalStorageContextProvider = (
+	asyncLocalStorageContextProvider: AsyncLocalStorageContextProvider,
+) => {
+	global.asyncLocalStorageContextProvider = asyncLocalStorageContextProvider;
+};

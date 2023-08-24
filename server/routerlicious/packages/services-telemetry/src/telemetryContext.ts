@@ -13,11 +13,11 @@ export interface ITelemetryContextProperties {
 }
 
 export interface ITelemetryContextPropertyProvider {
-	bindContextualProperties(
+	bindTelemetryContextProperties(
 		props: Partial<ITelemetryContextProperties>,
 		callback: () => void,
 	): void;
-	getContextualProperties(): Partial<ITelemetryContextProperties>;
+	getTelemetryContextProperties(): Partial<ITelemetryContextProperties>;
 }
 
 export class TelemetryContext {
@@ -45,13 +45,22 @@ export class TelemetryContext {
 	 * Retrieve contextual properties for telemetry.
 	 */
 	public getProperties(): Partial<ITelemetryContextProperties> {
-		return this._telemetryContextPropertyProvider?.getContextualProperties() ?? {};
+		return this._telemetryContextPropertyProvider?.getTelemetryContextProperties() ?? {};
 	}
 
 	/**
 	 * Bind properties to context.
 	 */
 	public bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void {
-		this._telemetryContextPropertyProvider?.bindContextualProperties(props, callback);
+		this._telemetryContextPropertyProvider?.bindTelemetryContextProperties(props, callback);
 	}
 }
+
+const getGlobal = () => (typeof window !== "undefined" ? window : global);
+
+export const getGlobalTelemetryContext = () =>
+	(getGlobal() as any).telemetryContext as TelemetryContext | undefined;
+
+export const setGlobalTelemetryContext = (telemetryContext: TelemetryContext) => {
+	(getGlobal() as any).telemetryContext = telemetryContext;
+};
