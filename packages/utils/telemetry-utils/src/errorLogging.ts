@@ -357,18 +357,12 @@ function isTelemetryEventPropertyValue(x: unknown): x is TelemetryEventPropertyT
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	obj: any,
-	keysToOmit: Set<string>,
-): ITelemetryProperties {
+function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetryProperties {
 	const props: ITelemetryProperties = {};
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	for (const key of Object.keys(obj)) {
 		if (keysToOmit.has(key)) {
 			continue;
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const val = obj[key] as ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt;
 
 		// ensure only valid props get logged, since props of logging error could be in any shape
