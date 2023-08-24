@@ -337,11 +337,17 @@ describe("Pending State Manager", () => {
 				it("Empty local state", () => {
 					{
 						const pendingStateManager = createPendingStateManager(undefined);
-						assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), []);
+						assert.deepStrictEqual(
+							pendingStateManager.unappliedStashedMessages.toArray(),
+							[],
+						);
 					}
 					{
 						const pendingStateManager = createPendingStateManager([]);
-						assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), []);
+						assert.deepStrictEqual(
+							pendingStateManager.unappliedStashedMessages.toArray(),
+							[],
+						);
 					}
 				});
 
@@ -373,7 +379,10 @@ describe("Pending State Manager", () => {
 						},
 					];
 					const pendingStateManager = createPendingStateManager(messages);
-					assert.deepStrictEqual(pendingStateManager.unappliedStashedMessages.toArray(), messages);
+					assert.deepStrictEqual(
+						pendingStateManager.unappliedStashedMessages.toArray(),
+						messages,
+					);
 				});
 
 				it("Mix of new and old formats", () => {
