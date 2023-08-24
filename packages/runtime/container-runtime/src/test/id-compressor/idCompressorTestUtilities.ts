@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise */
-
 import { strict as assert } from "assert";
 import {
 	Generator,
@@ -18,31 +16,25 @@ import {
 	BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
 import {
-	FinalCompressedId,
-	SessionId,
-	StableId,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
-} from "@fluidframework/runtime-definitions";
-import type {
 	IdCreationRange,
-	SerializedIdCompressorWithOngoingSession,
+	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
 } from "@fluidframework/runtime-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { IdCompressor, createSessionId, assertIsSessionId } from "../../id-compressor";
 import {
-	IdCompressor,
-	isLocalId,
-	createSessionId,
-	ensureSessionUuid,
-	NumericUuid,
-	numericUuidFromStableId,
-	stableIdFromNumericUuid,
-	getIds,
-	assertIsStableId,
+	FinalCompressedId,
 	getOrCreate,
+	incrementStableId,
+	isFinalId,
+	isLocalId,
+	ReadonlyIdCompressor,
 	fail,
-} from "../../id-compressor";
+} from "./testCommon";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key
@@ -58,37 +50,88 @@ export enum Client {
 	Client3 = "Client3",
 }
 
-/** Identifies a compressor with respect to a specific operation */
-export enum SemanticClient {
-	LocalClient = "LocalClient",
-}
-
 /** Identifies categories of compressors */
 export enum MetaClient {
 	All = "All",
+}
+
+/** Identifies a compressor inside the network but outside the three specially tracked clients. */
+export enum OutsideClient {
+	Remote = "Remote",
 }
 
 /**
  * Used to attribute actions to clients in a distributed collaboration session.
  * `Local` implies a local and unsequenced operation. All others imply sequenced operations.
  */
-export type OriginatingClient = Client | SemanticClient;
-export const OriginatingClient = { ...Client, ...SemanticClient };
+export type OriginatingClient = Client | OutsideClient;
+export const OriginatingClient = { ...Client, ...OutsideClient };
 
 /** Identifies a compressor to which to send an operation */
 export type DestinationClient = Client | MetaClient;
 export const DestinationClient = { ...Client, ...MetaClient };
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class CompressorFactory {
+	/**
+	 * Creates a new compressor with the supplied cluster capacity.
+	 */
+	public static createCompressor(
+		client: Client,
+		clusterCapacity = 5,
+		logger?: ITelemetryBaseLogger,
+	): IdCompressor {
+		return CompressorFactory.createCompressorWithSession(
+			sessionIds.get(client),
+			clusterCapacity,
+			logger,
+		);
+	}
+
+	/**
+	 * Creates a new compressor with the supplied cluster capacity.
+	 */
+	public static createCompressorWithSession(
+		sessionId: SessionId,
+		clusterCapacity = 5,
+		logger?: ITelemetryBaseLogger,
+	): IdCompressor {
+		const compressor = IdCompressor.create(sessionId, logger);
+		compressor.clusterCapacity = clusterCapacity;
+		return compressor;
+	}
+}
+
 /**
- * Creates a new compressor with the supplied cluster capacity.
+ * Utility for building a huge compressor.
+ * Build via the compressor factory.
  */
-export function createCompressor(
-	client: Client,
-	clusterCapacity = 5,
-	logger?: ITelemetryBaseLogger,
+export function buildHugeCompressor(
+	numSessions = 10000,
+	capacity = 10,
+	numClustersPerSession = 3,
 ): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), logger);
-	compressor.clusterCapacity = clusterCapacity;
+	const compressor = CompressorFactory.createCompressorWithSession(createSessionId(), capacity);
+	const sessions: SessionId[] = [];
+	for (let i = 0; i < numSessions; i++) {
+		sessions.push(createSessionId());
+	}
+	for (let i = 0; i < numSessions * numClustersPerSession; i++) {
+		const sessionId = sessions[i % numSessions];
+		if (Math.random() > 0.1) {
+			for (let j = 0; j < Math.round(capacity / 2); j++) {
+				compressor.generateCompressedId();
+			}
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+		}
+		compressor.finalizeCreationRange({
+			sessionId,
+			ids: {
+				firstGenCount: Math.floor(i / numSessions) * capacity + 1,
+				count: capacity,
+			},
+		});
+	}
 	return compressor;
 }
 
@@ -103,9 +146,7 @@ function makeSessionIds(): ClientMap<SessionId> {
 	for (let i = 0; i < clients.length; i++) {
 		// Place session uuids roughly in the middle of uuid space to increase odds of encountering interesting
 		// orderings in sorted collections
-		const sessionId = ensureSessionUuid(
-			assertIsStableId(`88888888-8888-4888-b${i}88-888888888888`),
-		);
+		const sessionId = assertIsSessionId(`88888888-8888-4888-b${i}88-888888888888`);
 		stableIds.set(clients[i], sessionId);
 	}
 	return stableIds as ClientMap<SessionId>;
@@ -116,34 +157,11 @@ function makeSessionIds(): ClientMap<SessionId> {
  */
 export const sessionIds = makeSessionIds();
 
-/**
- * An array of session uuids corresponding to all non-local `Client` entries.
- */
-export const sessionNumericUuids = new Map(
-	[...sessionIds.entries()].map(([client, sessionId]) => {
-		return [client, numericUuidFromStableId(sessionId)];
-	}),
-) as ClientMap<NumericUuid>;
-
-/** An immutable view of an `IdCompressor` */
-export interface ReadonlyIdCompressor
-	extends Omit<
-		IdCompressor,
-		| "generateCompressedId"
-		| "generateCompressedIdRange"
-		| "takeNextCreationRange"
-		| "finalizeCreationRange"
-	> {
-	readonly clusterCapacity: number;
-}
-
 /** Information about a generated ID in a network to be validated by tests */
 export interface TestIdData {
 	readonly id: SessionSpaceCompressedId;
-	readonly originatingClient: Client;
+	readonly originatingClient: OriginatingClient;
 	readonly sessionId: SessionId;
-	readonly sessionNumericUuid: NumericUuid;
-	readonly expectedOverride: string | undefined;
 	readonly isSequenced: boolean;
 }
 
@@ -156,7 +174,12 @@ export class IdCompressorTestNetwork {
 	private readonly compressors: ClientMap<IdCompressor>;
 	/** The log of operations seen by the server so far. Append-only. */
 	private readonly serverOperations: (
-		| [creationRange: IdCreationRange, opSpaceIds: OpSpaceCompressedId[], clientFrom: Client]
+		| [
+				creationRange: IdCreationRange,
+				opSpaceIds: OpSpaceCompressedId[],
+				clientFrom: OriginatingClient,
+				sessionIdFrom: SessionId,
+		  ]
 		| number
 	)[] = [];
 	/** An index into `serverOperations` for each client which represents how many operations have been delivered to that client */
@@ -166,20 +189,13 @@ export class IdCompressorTestNetwork {
 	/** All ids that a client has received from the server, in order. */
 	private readonly sequencedIdLogs: ClientMap<TestIdData[]>;
 
-	public constructor(
-		public readonly initialClusterSize = 5,
-		private readonly onIdReceived?: (
-			network: IdCompressorTestNetwork,
-			clientTo: Client,
-			ids: TestIdData[],
-		) => void,
-	) {
+	public constructor(public readonly initialClusterSize = 5) {
 		const compressors = new Map<Client, IdCompressor>();
 		const clientProgress = new Map<Client, number>();
 		const clientIds = new Map<Client, TestIdData[]>();
 		const clientSequencedIds = new Map<Client, TestIdData[]>();
 		for (const client of Object.values(Client)) {
-			const compressor = createCompressor(client, initialClusterSize);
+			const compressor = CompressorFactory.createCompressor(client, initialClusterSize);
 			compressors.set(client, compressor);
 			clientProgress.set(client, 0);
 			clientIds.set(client, []);
@@ -269,16 +285,14 @@ export class IdCompressorTestNetwork {
 	private addNewId(
 		client: Client,
 		id: SessionSpaceCompressedId,
-		expectedOverride: string | undefined,
-		originatingClient: Client,
+		originatingClient: OriginatingClient,
+		sessionIdFrom: SessionId,
 		isSequenced: boolean,
 	): void {
 		const idData = {
 			id,
 			originatingClient,
-			sessionId: sessionIds.get(originatingClient),
-			sessionNumericUuid: sessionNumericUuids.get(originatingClient),
-			expectedOverride,
+			sessionId: sessionIdFrom,
 			isSequenced,
 		};
 		const clientIds = this.idLogs.get(client);
@@ -287,59 +301,55 @@ export class IdCompressorTestNetwork {
 			const sequencedIds = this.sequencedIdLogs.get(client);
 			sequencedIds.push(idData);
 		}
-		this.onIdReceived?.(this, client, clientIds);
 	}
 
 	/**
 	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
 	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
 	 */
-	public allocateAndSendIds(client: Client, numIds: number): OpSpaceCompressedId[];
+	public allocateAndSendIds(clientFrom: Client, numIds: number): OpSpaceCompressedId[] {
+		return this.allocateAndSendIdsFromRemoteClient(
+			clientFrom,
+			sessionIds.get(clientFrom),
+			numIds,
+		);
+	}
 
 	/**
-	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
-	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
+	 * Same contract as `allocateAndSendIds`, but the originating client will be a client with the supplied sessionId.
 	 */
-	public allocateAndSendIds(
-		client: Client,
+	public allocateAndSendIdsFromRemoteClient(
+		clientFrom: OriginatingClient,
+		sessionIdFrom: SessionId,
 		numIds: number,
-		overrides: { [index: number]: string },
-	): IdCreationRange;
-
-	public allocateAndSendIds(
-		client: Client,
-		numIds: number,
-		overrides: { [index: number]: string } = {},
-	): OpSpaceCompressedId[] | IdCreationRange {
+	): OpSpaceCompressedId[] {
 		assert(numIds > 0, "Must allocate a non-zero number of IDs");
-		const compressor = this.compressors.get(client);
-		let nextIdIndex = 0;
-		const opSpaceIds: OpSpaceCompressedId[] = [];
-		for (const [overrideIndex, uuid] of Object.entries(overrides)
-			.map(([id, u]) => [Number.parseInt(id, 10), u] as [number, string])
-			.sort(([a], [b]) => a - b)) {
-			while (nextIdIndex < overrideIndex) {
-				const newId = compressor.generateCompressedId();
-				opSpaceIds.push(compressor.normalizeToOpSpace(newId));
-				this.addNewId(client, newId, undefined, client, false);
-				nextIdIndex += 1;
+		if (clientFrom === OriginatingClient.Remote) {
+			const range: IdCreationRange = {
+				sessionId: sessionIdFrom,
+				ids: {
+					firstGenCount: 1,
+					count: numIds,
+				},
+			};
+			const opSpaceIds: OpSpaceCompressedId[] = [];
+			for (let i = 0; i < numIds; i++) {
+				opSpaceIds.push(-(i + 1) as OpSpaceCompressedId);
 			}
-			const newOverrideId = compressor.generateCompressedId(uuid);
-			opSpaceIds.push(compressor.normalizeToOpSpace(newOverrideId));
-			this.addNewId(client, newOverrideId, uuid, client, false);
-			nextIdIndex += 1;
-		}
-		const numTrailingIds = numIds - nextIdIndex;
-		if (numTrailingIds > 0) {
-			const sessionSpaceIds = generateCompressedIds(compressor, numTrailingIds);
-			for (let i = 0; i < numTrailingIds; i++) {
-				this.addNewId(client, sessionSpaceIds[i], undefined, client, false);
+			this.serverOperations.push([range, opSpaceIds, clientFrom, sessionIdFrom]);
+			return opSpaceIds;
+		} else {
+			assert(sessionIdFrom === sessionIds.get(clientFrom));
+			const compressor = this.compressors.get(clientFrom);
+			const sessionSpaceIds = generateCompressedIds(compressor, numIds);
+			for (let i = 0; i < numIds; i++) {
+				this.addNewId(clientFrom, sessionSpaceIds[i], clientFrom, sessionIdFrom, false);
 			}
-			sessionSpaceIds.forEach((id) => opSpaceIds.push(compressor.normalizeToOpSpace(id)));
+			const opSpaceIds = sessionSpaceIds.map((id) => compressor.normalizeToOpSpace(id));
+			const creationRange = compressor.takeNextCreationRange();
+			this.serverOperations.push([creationRange, opSpaceIds, clientFrom, sessionIdFrom]);
+			return opSpaceIds;
 		}
-		const creationRange = compressor.takeNextCreationRange();
-		this.serverOperations.push([creationRange, opSpaceIds, client]);
-		return nextIdIndex === 0 ? opSpaceIds : creationRange;
 	}
 
 	/**
@@ -372,33 +382,24 @@ export class IdCompressorTestNetwork {
 				if (typeof operation === "number") {
 					compressorTo.clusterCapacity = operation;
 				} else {
-					const [range, opSpaceIds, clientFrom] = operation;
+					const [range, opSpaceIds, clientFrom, sessionIdFrom] = operation;
 					compressorTo.finalizeCreationRange(range);
 
-					const ids = getIds(range);
+					const ids = range.ids;
 					if (ids !== undefined) {
-						let overrideIndex = 0;
-						const overrides = ids.overrides;
 						for (const id of opSpaceIds) {
-							let override: string | undefined;
-							if (
-								overrides !== undefined &&
-								overrideIndex < overrides.length &&
-								id === overrides[overrideIndex][0]
-							) {
-								override = overrides[overrideIndex][1];
-								overrideIndex++;
-							}
 							const sessionSpaceId = compressorTo.normalizeToSessionSpace(
 								id,
 								range.sessionId,
 							);
-							this.addNewId(clientTo, sessionSpaceId, override, clientFrom, true);
+							this.addNewId(
+								clientTo,
+								sessionSpaceId,
+								clientFrom,
+								sessionIdFrom,
+								true,
+							);
 						}
-						assert(
-							overrideIndex === (overrides?.length ?? 0),
-							"Inconsistent override index",
-						);
 					}
 				}
 			}
@@ -428,11 +429,9 @@ export class IdCompressorTestNetwork {
 		for (const [compressor, ids] of sequencedLogs) {
 			const allUuids = new Set<StableId | string>();
 			for (const idData of ids) {
-				if (idData.expectedOverride === undefined) {
-					const uuid = compressor.decompress(idData.id);
-					assert.strictEqual(!allUuids.has(uuid), true, "Duplicate UUID generated.");
-					allUuids.add(uuid);
-				}
+				const uuid = compressor.decompress(idData.id);
+				assert.strictEqual(!allUuids.has(uuid), true, "Duplicate UUID generated.");
+				allUuids.add(uuid);
 			}
 		}
 
@@ -450,11 +449,11 @@ export class IdCompressorTestNetwork {
 			return undefined;
 		}
 
-		const uuids = new Set<string>();
+		const uuids = new Set<StableId>();
 		const finalIds = new Set<FinalCompressedId>();
-		const idIndicesAggregator = new Map<Client, number>();
+		const idIndicesAggregator = new Map<SessionId, number>();
 
-		function* getLogIndices(
+		function* getIdLogEntries(
 			columnIndex: number,
 		): Iterable<
 			[
@@ -480,60 +479,48 @@ export class IdCompressorTestNetwork {
 		}
 
 		for (let i = 0; i < maxLogLength; i++) {
-			const creator: [creator: Client, override?: string][] = [];
-			let originatingClient: Client | undefined;
-			let localCount = 0;
-			let rowCount = 0;
-			for (const [current, next] of getLogIndices(i)) {
+			let idCreatorCount = 0;
+			let originatingSession: SessionId | undefined;
+			for (const [current, next] of getIdLogEntries(i)) {
 				const [compressorA, idDataA] = current;
 				const sessionSpaceIdA = idDataA.id;
-				const idIndex = getOrCreate(
-					idIndicesAggregator,
-					idDataA.originatingClient,
-					() => 0,
-				);
-				originatingClient ??= idDataA.originatingClient;
+				const idIndex = getOrCreate(idIndicesAggregator, idDataA.sessionId, () => 0);
+				originatingSession ??= idDataA.sessionId;
 				assert(
-					idDataA.originatingClient === originatingClient,
+					idDataA.sessionId === originatingSession,
 					"Test infra gave wrong originating client to TestIdData",
 				);
 
 				// Only one client should have this ID as local in its session space, as only one client could have created this ID
 				if (isLocalId(sessionSpaceIdA)) {
-					localCount++;
-					assert.strictEqual(
-						idDataA.sessionId,
-						this.compressors.get(originatingClient).localSessionId,
-					);
-					assert.strictEqual(
-						creator.length === 0 ||
-							creator[creator.length - 1][1] === idDataA.expectedOverride,
-						true,
-					);
-					creator.push([originatingClient, idDataA.expectedOverride]);
+					if (originatingSession !== OriginatingClient.Remote) {
+						assert.strictEqual(
+							idDataA.sessionId,
+							this.compressors.get(idDataA.originatingClient as Client)
+								.localSessionId,
+						);
+					}
+					idCreatorCount++;
 				}
 
 				const uuidASessionSpace = compressorA.decompress(sessionSpaceIdA);
-				if (idDataA.expectedOverride !== undefined) {
-					assert.strictEqual(uuidASessionSpace, idDataA.expectedOverride);
-				} else {
-					assert.strictEqual(
-						uuidASessionSpace,
-						stableIdFromNumericUuid(idDataA.sessionNumericUuid, idIndex),
-					);
-				}
+				assert.strictEqual(
+					uuidASessionSpace,
+					incrementStableId(idDataA.sessionId, idIndex),
+				);
 				assert.strictEqual(compressorA.recompress(uuidASessionSpace), sessionSpaceIdA);
 				uuids.add(uuidASessionSpace);
 				const opSpaceIdA = compressorA.normalizeToOpSpace(sessionSpaceIdA);
-				if (isLocalId(opSpaceIdA)) {
+				if (!isFinalId(opSpaceIdA)) {
 					fail("IDs should have been finalized.");
 				}
-				assert.strictEqual(
-					compressorA.normalizeToSessionSpace(opSpaceIdA, compressorA.localSessionId),
-					sessionSpaceIdA,
+				const reNormalizedIdA = compressorA.normalizeToSessionSpace(
+					opSpaceIdA,
+					compressorA.localSessionId,
 				);
+				assert.strictEqual(reNormalizedIdA, sessionSpaceIdA);
 				finalIds.add(opSpaceIdA);
-				const uuidAOpSpace = compressorA.decompress(opSpaceIdA);
+				const uuidAOpSpace = compressorA.decompress(reNormalizedIdA);
 
 				assert.strictEqual(uuidASessionSpace, uuidAOpSpace);
 
@@ -549,27 +536,23 @@ export class IdCompressorTestNetwork {
 						compressorA.normalizeToOpSpace(sessionSpaceIdA);
 					}
 					assert.strictEqual(opSpaceIdA, opSpaceIdB);
-					if (isLocalId(opSpaceIdB)) {
+					if (!isFinalId(opSpaceIdB)) {
 						fail("IDs should have been finalized.");
 					}
-					const uuidBOpSpace = compressorB.decompress(opSpaceIdB);
+					const uuidBOpSpace = compressorB.decompress(
+						opSpaceIdB as unknown as SessionSpaceCompressedId,
+					);
 					assert.strictEqual(uuidAOpSpace, uuidBOpSpace);
 				}
-
-				rowCount += 1;
 			}
 
-			// A local count === 0 indicates the ID was created as an eager final, and thus cannot have had an
-			// override to unify.
-			if (rowCount === this.sequencedIdLogs.size && localCount <= 1) {
-				assert.strictEqual(localCount <= 1, true);
-			}
-
+			assert(idCreatorCount <= 1, "Only one client can create an ID.");
 			assert.strictEqual(uuids.size, finalIds.size);
-			assert(originatingClient !== undefined, "Expected originating client to be defined");
+			assert(originatingSession !== undefined, "Expected originating client to be defined");
 			idIndicesAggregator.set(
-				originatingClient,
-				(idIndicesAggregator.get(originatingClient) ??
+				originatingSession,
+				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+				(idIndicesAggregator.get(originatingSession) ??
 					fail("Expected pre-existing index for originating client")) + 1,
 			);
 		}
@@ -627,34 +610,6 @@ export function expectSerializes(
 		} else {
 			[serialized, deserialized] = roundtrip(compressor, false);
 		}
-		const chainCount: number[] = [];
-		for (let i = 0; i < serialized.sessions.length; i++) {
-			chainCount[i] = 0;
-		}
-		const chainProcessed: number[] = [...chainCount];
-
-		for (const cluster of serialized.clusters) {
-			const [sessionIndex] = cluster;
-			assert.strictEqual(sessionIndex < serialized.sessions.length, true);
-			chainCount[sessionIndex]++;
-		}
-
-		for (const cluster of serialized.clusters) {
-			const [sessionIndex, capacity, maybeSize] = cluster;
-			const chainIndex = chainProcessed[sessionIndex];
-			if (chainIndex < chainCount[sessionIndex] - 1) {
-				assert.strictEqual(typeof maybeSize !== "number", true);
-			} else {
-				assert.strictEqual(
-					maybeSize === undefined ||
-						typeof maybeSize !== "number" ||
-						maybeSize < capacity,
-					true,
-				);
-			}
-			chainProcessed[sessionIndex]++;
-		}
-
 		assert.strictEqual(compressor.equals(deserialized, withSession), true);
 		return serialized;
 	}
@@ -687,7 +642,12 @@ interface AllocateIds {
 	type: "allocateIds";
 	client: Client;
 	numIds: number;
-	overrides: { [index: number]: string };
+}
+
+interface AllocateOutsideIds {
+	type: "allocateOutsideIds";
+	sessionId: SessionId;
+	numIds: number;
 }
 
 interface DeliverAllOperations {
@@ -705,13 +665,6 @@ interface ChangeCapacity {
 	newSize: number;
 }
 
-interface GenerateUnifyingIds {
-	type: "generateUnifyingIds";
-	clientA: Client;
-	clientB: Client;
-	uuid: string;
-}
-
 // Represents intent to go offline then resume.
 interface Reconnect {
 	type: "reconnect";
@@ -724,10 +677,10 @@ interface Validate {
 
 type Operation =
 	| AllocateIds
+	| AllocateOutsideIds
 	| DeliverSomeOperations
 	| DeliverAllOperations
 	| ChangeCapacity
-	| GenerateUnifyingIds
 	| Reconnect
 	| Validate;
 
@@ -739,27 +692,28 @@ interface FuzzTestState extends BaseFuzzTestState {
 }
 
 export interface OperationGenerationConfig {
-	/** whether or not the fuzz actions will generate override UUIDs */
-	includeOverrides: boolean;
 	/** maximum cluster size of the network. Default: 25 */
 	maxClusterSize?: number;
 	/** Number of ops between validation ops. Default: 200 */
 	validateInterval?: number;
+	/** Fraction of ID allocations that are from an outside client (not Client1/2/3). */
+	outsideAllocationFraction?: number;
 }
 
 const defaultOptions = {
-	includeOverrides: false,
 	maxClusterSize: 25,
 	validateInterval: 200,
+	outsideAllocationFraction: 0.1,
 };
 
 export function makeOpGenerator(
 	options: OperationGenerationConfig,
 ): Generator<Operation, FuzzTestState> {
-	const { includeOverrides, maxClusterSize, validateInterval } = {
+	const { maxClusterSize, validateInterval, outsideAllocationFraction } = {
 		...defaultOptions,
 		...options,
 	};
+	assert(outsideAllocationFraction >= 0 && outsideAllocationFraction <= 1);
 
 	function allocateIdsGenerator({
 		activeClients,
@@ -769,19 +723,23 @@ export function makeOpGenerator(
 		const client = random.pick(activeClients);
 		const maxIdsPerUsage = clusterSize * 2;
 		const numIds = Math.floor(random.real(0, 1) ** 3 * maxIdsPerUsage) + 1;
-		const overrides: AllocateIds["overrides"] = {};
-		if (includeOverrides && random.bool(1 / 4)) {
-			for (let j = 0; j < numIds; j++) {
-				if (random.bool(1 / 3)) {
-					overrides[j] = random.uuid4();
-				}
-			}
-		}
 		return {
 			type: "allocateIds",
 			client,
 			numIds,
-			overrides,
+		};
+	}
+
+	function allocateOutsideIdsGenerator({
+		clusterSize,
+		random,
+	}: FuzzTestState): AllocateOutsideIds {
+		const maxIdsPerUsage = clusterSize * 2;
+		const numIds = Math.floor(random.real(0, 1) ** 3 * maxIdsPerUsage) + 1;
+		return {
+			type: "allocateOutsideIds",
+			sessionId: createSessionId(),
+			numIds,
 		};
 	}
 
@@ -822,26 +780,18 @@ export function makeOpGenerator(
 		};
 	}
 
-	function generateUnifyingIdsGenerator({
-		activeClients,
-		random,
-	}: FuzzTestState): GenerateUnifyingIds {
-		const clientA = random.pick(activeClients);
-		const clientB = random.pick(activeClients.filter((c) => c !== clientA));
-		return { type: "generateUnifyingIds", clientA, clientB, uuid: random.uuid4() };
-	}
-
 	function reconnectGenerator({ activeClients, random }: FuzzTestState): Reconnect {
 		return { type: "reconnect", client: random.pick(activeClients) };
 	}
 
+	const allocationWeight = 16;
 	return interleave(
 		createWeightedGenerator<Operation, FuzzTestState>([
 			[changeCapacityGenerator, 1],
-			[allocateIdsGenerator, 16],
+			[allocateIdsGenerator, Math.round(allocationWeight * (1 - outsideAllocationFraction))],
+			[allocateOutsideIdsGenerator, Math.round(allocationWeight * outsideAllocationFraction)],
 			[deliverAllOperationsGenerator, 2],
 			[deliverSomeOperationsGenerator, 6],
-			[generateUnifyingIdsGenerator, 2],
 			[reconnectGenerator, 1],
 		]),
 		take(1, repeat<Operation, FuzzTestState>({ type: "validate" })),
@@ -883,8 +833,16 @@ export function performFuzzActions(
 	performFuzzActionsBase(
 		generator,
 		{
-			allocateIds: (state, { client, numIds, overrides }) => {
-				network.allocateAndSendIds(client, numIds, overrides);
+			allocateIds: (state, { client, numIds }) => {
+				network.allocateAndSendIdsFromRemoteClient(client, sessionIds.get(client), numIds);
+				return state;
+			},
+			allocateOutsideIds: (state, { sessionId, numIds }) => {
+				network.allocateAndSendIdsFromRemoteClient(
+					OriginatingClient.Remote,
+					sessionId,
+					numIds,
+				);
 				return state;
 			},
 			changeCapacity: (state, op) => {
@@ -897,11 +855,6 @@ export function performFuzzActions(
 			},
 			deliverAllOperations: (state) => {
 				network.deliverOperations(DestinationClient.All);
-				return state;
-			},
-			generateUnifyingIds: (state, { clientA, clientB, uuid }) => {
-				network.allocateAndSendIds(clientA, 1, { 0: uuid });
-				network.allocateAndSendIds(clientB, 1, { 0: uuid });
 				return state;
 			},
 			reconnect: (state, { client }) => {
@@ -922,41 +875,6 @@ export function performFuzzActions(
 		network.deliverOperations(DestinationClient.All);
 		validator?.(network);
 	}
-}
-
-/**
- * Converts the supplied integer to a uuid.
- */
-export function integerToStableId(num: number | bigint): StableId {
-	const bigintNum = BigInt(num);
-	const upper = bigintNum >> BigInt(74);
-	const middle = (bigintNum & (BigInt(0xfff) << BigInt(62))) >> BigInt(62);
-	const lower = bigintNum & BigInt("0x3fffffffffffffff");
-	const upperString = padToLength(upper.toString(16), "0", 12);
-	const middleString = `4${padToLength(middle.toString(16), "0", 3)}`;
-	const lowerString = padToLength(
-		(BigInt("0x8000000000000000") | BigInt(lower)).toString(16),
-		"0",
-		16,
-	);
-	const uuid = upperString + middleString + lowerString;
-	return assertIsStableId(
-		`${uuid.substr(0, 8)}-${uuid.substr(8, 4)}-${uuid.substr(12, 4)}-${uuid.substr(
-			16,
-			4,
-		)}-${uuid.substr(20)}`,
-	);
-}
-
-/**
- * Pads the strings to a length of 32 with zeroes.
- */
-export function padToUuidLength(str: string): string {
-	return padToLength(str, "0", 32);
-}
-
-function padToLength(str: string, char: string, length: number): string {
-	return char.repeat(length - str.length) + str;
 }
 
 /**

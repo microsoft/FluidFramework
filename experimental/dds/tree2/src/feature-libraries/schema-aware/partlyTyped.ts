@@ -4,9 +4,8 @@
  */
 
 import { FieldStoredSchema, ITreeCursor } from "../../core";
-import { ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { ContextuallyTypedNodeData, NewFieldContent } from "../contextuallyTyped";
 import { Optional, Sequence, ValueFieldKind } from "../default-field-kinds";
-import { NewFieldContent } from "../editable-tree";
 import {
 	UntypedField,
 	UntypedTree,
@@ -53,13 +52,13 @@ export interface UntypedSequenceField<
 	): void;
 
 	/**
-	 * Sequentially deletes the nodes from this field.
+	 * Sequentially removes the nodes from this field.
 	 *
-	 * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.
-	 * @param count - the number of nodes to be deleted. If not provided, deletes all nodes
+	 * @param index - the index of the first node to be removed. It must be in a range of existing node indices.
+	 * @param count - the number of nodes to be removed. If not provided, removes all nodes
 	 * starting from the index and up to the length of the field.
 	 */
-	deleteNodes(index: number, count?: number): void;
+	removeNodes(index: number, count?: number): void;
 
 	/**
 	 * Sequentially replaces the nodes of this field.
@@ -74,9 +73,9 @@ export interface UntypedSequenceField<
 	replaceNodes(index: number, newContent: TNewFieldContent, count?: number): void;
 
 	/**
-	 * Delete the content of this field.
+	 * Removes the content of this field.
 	 */
-	delete(): void;
+	remove(): void;
 
 	/**
 	 * Sets the content of this field.
@@ -132,9 +131,9 @@ export interface UntypedOptionalField<
 	};
 
 	/**
-	 * Delete the content of this field.
+	 * Removes the content of this field.
 	 */
-	delete(): void;
+	remove(): void;
 
 	/**
 	 * The child within this field.

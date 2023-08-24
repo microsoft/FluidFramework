@@ -4,10 +4,6 @@
  */
 
 import {
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
-import {
 	ITelemetryBaseLogger,
 	IDisposable,
 	IFluidHandle,
@@ -42,9 +38,11 @@ import {
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
+	createChildMonitoringContext,
+	DataCorruptionError,
+	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
-	createChildMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";

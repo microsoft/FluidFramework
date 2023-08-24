@@ -162,7 +162,7 @@ export class BackgroundConnection
 
 		// Create a connection to the background page
 		this.backgroundServiceConnection = browser.runtime.connect({
-			name: "Background Script",
+			name: "Devtools-Background-Port",
 		});
 
 		// Relay the tab ID to the background service worker.

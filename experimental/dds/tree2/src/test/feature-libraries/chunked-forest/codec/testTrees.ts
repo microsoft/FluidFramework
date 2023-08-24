@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, SchemaData, ValueSchema } from "../../../../core";
+import { JsonableTree, ValueSchema } from "../../../../core";
 import {
 	Any,
 	FieldKinds,
@@ -12,6 +12,7 @@ import {
 	SchemaAware,
 	SchemaBuilder,
 	TreeSchema,
+	TypedSchemaCollection,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -21,7 +22,7 @@ import {
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: SchemaData;
+	readonly schemaData: TypedSchemaCollection;
 	readonly policy: FullSchemaPolicy;
 	readonly schema: FieldSchema;
 	readonly treeFactory: () => JsonableTree[];
@@ -29,7 +30,7 @@ interface TestTree {
 
 function testTree<T extends TreeSchema>(
 	name: string,
-	schemaData: SchemaData,
+	schemaData: TypedSchemaCollection,
 	schema: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
@@ -39,7 +40,7 @@ function testTree<T extends TreeSchema>(
 
 function testField<T extends FieldSchema>(
 	name: string,
-	schemaData: SchemaData,
+	schemaData: TypedSchemaCollection,
 	schema: T,
 	data: SchemaAware.TypedField<T, SchemaAware.ApiMode.Flexible>,
 ): TestTree {

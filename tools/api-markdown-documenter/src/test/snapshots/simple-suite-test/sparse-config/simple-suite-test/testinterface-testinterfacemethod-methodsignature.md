@@ -1,13 +1,13 @@
-# testInterfaceMethod
+## testInterfaceMethod
 
 Test interface method
 
-## Signature {#testinterfacemethod-signature}
+### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;
 ```
 
-## Remarks {#testinterfacemethod-remarks}
+### Remarks {#testinterfacemethod-remarks}
 
 Here are some remarks about the method

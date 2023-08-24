@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	ChangesetLocalId,
 	IdAllocator,
 	idAllocatorFromMaxId,
+	MemoizedIdRangeAllocator,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertMarkListEqual,
@@ -164,7 +164,11 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+	return SF.sequenceFieldToDelta(
+		makeAnonChange(change),
+		TestChange.toDelta,
+		MemoizedIdRangeAllocator.fromNextId(),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
@@ -188,4 +192,20 @@ export function getMaxIdTagged(
 
 export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>[]): IdAllocator {
 	return idAllocatorFromMaxId(getMaxIdTagged(changes));
+}
+
+export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
+	const factory = new SF.MarkListFactory<T>();
+	for (const mark of changeset) {
+		if (mark.cellId?.lineage === undefined) {
+			factory.push(mark);
+		} else {
+			const cloned = SF.cloneMark(mark);
+			assert(cloned.cellId !== undefined, "Should have cell ID");
+			delete cloned.cellId.lineage;
+			factory.push(cloned);
+		}
+	}
+
+	return factory.list;
 }
