@@ -85,7 +85,8 @@ export class SampledTelemetryHelper implements IDisposable {
 	) {}
 
 	/**
-	 * Executes the specified code and logs the duration of time taken to execute it.
+	 * Executes the specified code and keeps track of execution time statistics.
+	 * If it's been called enough times (the sampleThreshold for the class) then it generates a log message with the necessary information.
 	 *
 	 * @param codeToMeasure - The code to be executed and measured.
 	 * @param bucket - A key to track executions of the code block separately.
