@@ -1418,7 +1418,7 @@
             "error"
         ],
         "unicorn/numeric-separators-style": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-add-event-listener": [
             "error"

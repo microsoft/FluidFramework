@@ -57,6 +57,11 @@ module.exports = {
 		"unicorn/no-useless-undefined": "off",
 
 		/**
+		 * Conflicts with our internal error code formats.
+		 */
+		"unicorn/numeric-separators-style": "off",
+
+		/**
 		 * "node:" imports are not supported prior to Node.js v16.
 		 * TODO: re-enable this (remove override) once the repo has been updated to v16.
 		 */
