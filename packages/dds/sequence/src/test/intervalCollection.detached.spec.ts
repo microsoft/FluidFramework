@@ -121,6 +121,41 @@ describe("IntervalCollection detached", () => {
 		});
 	});
 
+	describe("interval with properties changed while detached", () => {
+		it("synchronizes correctly on another client", async () => {
+			sharedString.insertText(0, "0123");
+			const interval = collection.add(0, 2, IntervalType.SlideOnRemove, { foo: "a1" });
+			collection.changeProperties(interval.getIntervalId(), { foo: "a2" });
+			const { sharedString2, containerRuntimeFactory } =
+				await attachAndLoadSecondSharedString();
+
+			containerRuntimeFactory.processAllMessages();
+			assertEquivalentSharedStrings(sharedString, sharedString2);
+			assert.equal(
+				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
+				"a2",
+			);
+		});
+
+		it("can be changed by another client after attaching", async () => {
+			sharedString.insertText(0, "0123");
+			const interval = collection.add(0, 2, IntervalType.SlideOnRemove, { foo: "a1" });
+			collection.changeProperties(interval.getIntervalId(), { foo: "a2" });
+			const { sharedString2, containerRuntimeFactory } =
+				await attachAndLoadSecondSharedString();
+
+			const collection2 = sharedString2.getIntervalCollection("intervals");
+			collection2.changeProperties(interval.getIntervalId(), { foo: "b1" });
+			containerRuntimeFactory.processAllMessages();
+
+			assertEquivalentSharedStrings(sharedString, sharedString2);
+			assert.equal(
+				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
+				"b1",
+			);
+		});
+	});
+
 	describe("intervals deleted while detached", () => {
 		it("aren't added to the remote client", async () => {
 			sharedString.insertText(0, "0123");

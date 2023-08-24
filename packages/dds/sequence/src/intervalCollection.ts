@@ -21,6 +21,7 @@ import {
 	reservedRangeLabelsKey,
 	UnassignedSequenceNumber,
 	DetachedReferencePosition,
+	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
@@ -1105,8 +1106,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
-			// Pass Unassigned as the sequence number to indicate that this is a local op that is waiting for an ack.
-			const deltaProps = interval.addProperties(props, true, UnassignedSequenceNumber);
+			const deltaProps = interval.addProperties(
+				props,
+				true,
+				this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+			);
 			const serializedInterval: ISerializedInterval = interval.serialize();
 
 			// Emit a change op that will only change properties. Add the ID to
