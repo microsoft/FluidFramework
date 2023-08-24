@@ -39,7 +39,9 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	}
 }
 
-/** Error indicating an API is being used improperly resulting in an invalid operation. */
+/**
+ * Error indicating an API is being used improperly resulting in an invalid operation.
+ */
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.usageError;
 

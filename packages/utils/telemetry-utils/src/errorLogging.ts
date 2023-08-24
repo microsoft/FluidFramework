@@ -4,6 +4,7 @@
  */
 
 import {
+	FluidErrorTypes,
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
 	ITelemetryProperties,
@@ -22,12 +23,16 @@ import {
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
-/** @returns true if value is an object but neither null nor an array */
-const isRegularObject = (value: any): boolean => {
+/**
+ * Determines if the provided value is an object but neither null nor an array.
+ */
+const isRegularObject = (value: unknown): boolean => {
 	return value !== null && !Array.isArray(value) && typeof value === "object";
 };
 
-/** Inspect the given error for common "safe" props and return them */
+/**
+ * Inspect the given error for common "safe" props and return them.
+ */
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
 	const removeMessageFromStack = (stack: string, errorName?: string) => {
 		if (!sanitizeStack) {
@@ -63,11 +68,15 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 	return safeProps;
 }
 
-/** type guard for ILoggingError interface */
+/**
+ * type guard for ILoggingError interface
+ */
 export const isILoggingError = (x: any): x is ILoggingError =>
 	typeof x?.getTelemetryProperties === "function";
 
-/** Copy props from source onto target, but do not overwrite an existing prop that matches */
+/**
+ * Copy props from source onto target, but do not overwrite an existing prop that matches
+ */
 function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {
 	for (const key of Object.keys(source)) {
 		if (target[key] === undefined) {
@@ -76,13 +85,19 @@ function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemet
 	}
 }
 
-/** Metadata to annotate an error object when annotating or normalizing it */
+/**
+ * Metadata to annotate an error object when annotating or normalizing it
+ */
 export interface IFluidErrorAnnotations {
-	/** Telemetry props to log with the error */
+	/**
+	 * Telemetry props to log with the error
+	 */
 	props?: ITelemetryProperties;
 }
 
-/** For backwards compatibility with pre-errorInstanceId valid errors */
+/**
+ * For backwards compatibility with pre-errorInstanceId valid errors
+ */
 function patchLegacyError(
 	legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
@@ -180,8 +195,8 @@ export function generateErrorWithStack(): Error {
 
 	try {
 		throw err;
-	} catch (e) {
-		return e as Error;
+	} catch (error) {
+		return error as Error;
 	}
 }
 
@@ -230,7 +245,9 @@ export function wrapError<T extends LoggingError>(
 	return newError;
 }
 
-/** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
+/**
+ * The same as wrapError, but also logs the innerError, including the wrapping error's instance id
+ */
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
@@ -260,7 +277,7 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
 	// supposedly setting stack on an Error can throw.
 	try {
 		Object.assign(error, { stack });
-	} catch (errorSettingStack) {
+	} catch {
 		error.addTelemetryProperties({ stack2: stack });
 	}
 }
@@ -385,7 +402,9 @@ export class LoggingError
 		this._errorInstanceId = id;
 	}
 
-	/** Back-compat to appease isFluidError typeguard in old code that may handle this error */
+	/**
+	 * Backwards compatibility to appease {@link isFluidError} in old code that may handle this error.
+	 */
 	// @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
 	private readonly fluidErrorCode: "-" = "-";
 
@@ -449,8 +468,10 @@ export class LoggingError
 	}
 }
 
-/** The Error class used when normalizing an external error */
-export const NORMALIZED_ERROR_TYPE = "genericError";
+/**
+ * The Error class used when normalizing an external error
+ */
+export const NORMALIZED_ERROR_TYPE = FluidErrorTypes.genericError;
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
 	// Note that this matches ContainerErrorType/DriverErrorType's genericError

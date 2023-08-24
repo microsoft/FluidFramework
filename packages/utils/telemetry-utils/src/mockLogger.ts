@@ -124,7 +124,9 @@ ${JSON.stringify(actualEvents)}`);
 		);
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchEvents is true, and prints the actual/expected output if not
+	 */
 	assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
@@ -141,7 +143,9 @@ ${JSON.stringify(actualEvents)}`);
 		}
 	}
 
-	/** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not
+	 */
 	assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
@@ -163,7 +167,7 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean,
 	): number {
 		let iExpectedEvent = 0;
-		this.events.forEach((event) => {
+		for (const event of this.events) {
 			if (
 				iExpectedEvent < expectedEvents.length &&
 				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
@@ -171,7 +175,7 @@ ${JSON.stringify(actualEvents)}`);
 				// We found the next expected event; increment
 				++iExpectedEvent;
 			}
-		});
+		}
 
 		// Remove the events so far; next call will just compare subsequent events from here
 		this.events = [];

@@ -45,9 +45,13 @@ export interface PerformanceWithMemory extends IsomorphicPerformance {
  * Please do not modify existing entries for backwards compatibility.
  */
 export enum TelemetryDataTag {
-	/** Data containing terms or IDs from code packages that may have been dynamically loaded */
+	/**
+	 * Data containing terms or IDs from code packages that may have been dynamically loaded
+	 */
 	CodeArtifact = "CodeArtifact",
-	/** Personal data of a variety of classifications that pertains to the user */
+	/**
+	 * Personal data of a variety of classifications that pertains to the user
+	 */
 	UserData = "UserData",
 }
 

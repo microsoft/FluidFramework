@@ -435,8 +435,8 @@ describe("Error Logging", () => {
 				const error = new Error("asdf");
 				error.name = "FooError";
 				throw error;
-			} catch (e) {
-				return e as Error;
+			} catch (error) {
+				return error as Error;
 			}
 		}
 
@@ -985,10 +985,14 @@ describe("normalizeError", () => {
 	});
 });
 
-/** Create an error missing errorType that will not be recognized as a valid Fluid error */
+/**
+ * Create an error missing errorType that will not be recognized as a valid Fluid error
+ */
 const createExternalError = (m) => new Error(m);
 
-/** Create a simple valid Fluid error */
+/**
+ * Create a simple valid Fluid error
+ */
 const createTestError = (m) =>
 	Object.assign(new LoggingError(m), {
 		errorType: "someErrorType",

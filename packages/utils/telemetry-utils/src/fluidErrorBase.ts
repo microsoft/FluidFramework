@@ -11,7 +11,9 @@ import { ITelemetryProperties } from "@fluidframework/core-interfaces";
  * and a getter/setter for telemetry props to be included when the error is logged.
  */
 export interface IFluidErrorBase extends Error {
-	/** Classification of what type of error this is, used programmatically by consumers to interpret the error */
+	/**
+	 * Classification of what type of error this is, used programmatically by consumers to interpret the error
+	 */
 	readonly errorType: string;
 
 	/**
@@ -21,10 +23,14 @@ export interface IFluidErrorBase extends Error {
 	 */
 	readonly message: string;
 
-	/** Error's stack property, made readonly */
+	/**
+	 * Error's stack property, made readonly
+	 */
 	readonly stack?: string;
 
-	/** Error's name property, made readonly */
+	/**
+	 * Error's name property, made readonly
+	 */
 	readonly name: string;
 
 	/**
@@ -34,9 +40,13 @@ export interface IFluidErrorBase extends Error {
 	 */
 	readonly errorInstanceId: string;
 
-	/** Get the telemetry properties stashed on this error for logging */
+	/**
+	 * Get the telemetry properties stashed on this error for logging
+	 */
 	getTelemetryProperties(): ITelemetryProperties;
-	/** Add telemetry properties to this error which will be logged with the error */
+	/**
+	 * Add telemetry properties to this error which will be logged with the error
+	 */
 	addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
 
@@ -47,7 +57,9 @@ const hasTelemetryPropFunctions = (x: any): boolean =>
 export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
 	typeof x?.errorInstanceId === "string";
 
-/** type guard for IFluidErrorBase interface */
+/**
+ * type guard for IFluidErrorBase interface
+ */
 export function isFluidError(e: any): e is IFluidErrorBase {
 	return (
 		typeof e?.errorType === "string" &&
@@ -57,7 +69,9 @@ export function isFluidError(e: any): e is IFluidErrorBase {
 	);
 }
 
-/** type guard for old standard of valid/known errors */
+/**
+ * type guard for old standard of valid/known errors
+ */
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId"> {
 	return (
 		typeof e?.errorType === "string" &&
