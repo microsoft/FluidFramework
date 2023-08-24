@@ -27,9 +27,6 @@ import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 /**
  * Data for undoing edits on SharedStrings and Intervals.
  *
- * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
- * be set as true on the underlying merge tree in order to function correctly.
- *
  * @alpha
  */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
@@ -40,9 +37,6 @@ type IntervalOpType = typeof IntervalOpType[keyof typeof IntervalOpType];
 
 /**
  * Data for undoing edits affecting Intervals.
- *
- * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
- * be set as true on the underlying merge tree in order to function correctly.
  *
  * @alpha
  */
@@ -270,9 +264,6 @@ function addIfRevertibleRef(
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
- *
- * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
- * be set as true on the underlying merge tree in order to function correctly.
  *
  * @alpha
  */
@@ -596,9 +587,6 @@ function revertLocalSequenceRemove(
 
 /**
  * Invoke revertibles to reverse prior edits
- *
- * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
- * be set as true on the underlying merge tree in order to function correctly.
  *
  * @alpha
  */

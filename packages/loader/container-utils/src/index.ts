@@ -13,7 +13,6 @@
  * @packageDocumentation
  */
 
-export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
 export { ClientSessionExpiredError, ThrottlingWarning } from "./error";
 
 // Deprecated exports for backwards compatibility

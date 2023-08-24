@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-utils",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.7.0.0",
 	"description": "Fluid container utils",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,6 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
@@ -69,6 +68,10 @@
 			"ClassDeclaration_DataProcessingError": {
 				"backCompat": false
 			},
+			"ClassDeclaration_DeltaManagerProxyBase": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
 			"ClassDeclaration_GenericError": {
 				"backCompat": false
 			},
@@ -77,6 +80,10 @@
 			},
 			"ClassDeclaration_UsageError": {
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_DeltaManagerProxyBase": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
