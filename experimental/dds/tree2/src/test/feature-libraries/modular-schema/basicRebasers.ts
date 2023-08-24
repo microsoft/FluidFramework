@@ -81,7 +81,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: (change, deltaFromChild) =>
+	intoDelta: ({ change }, deltaFromChild) =>
 		change === 0
 			? []
 			: [
