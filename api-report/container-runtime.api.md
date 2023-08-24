@@ -21,8 +21,8 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -54,6 +54,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export const agentSchedulerId = "_scheduler";
+
+// @public
+export const AllowInactiveRequestHeaderKey = "allowInactive";
 
 // @public
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
@@ -439,6 +442,9 @@ export interface INackSummaryResult extends IRetriableFailureResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
+// @public
+export const InactiveResponseHeaderKey = "isInactive";
+
 // @public (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
@@ -475,6 +481,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
+    readonly finalAttempt?: boolean;
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 

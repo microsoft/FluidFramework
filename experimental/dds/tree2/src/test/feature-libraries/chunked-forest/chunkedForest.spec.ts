@@ -35,16 +35,15 @@ import {
 	IForestSubscription,
 	StoredSchemaRepository,
 } from "../../../core";
-import { jsonSchema, jsonRoot, jsonObject } from "../../../domains";
+import { jsonObject } from "../../../domains";
 import {
 	ForestRepairDataStore,
-	SchemaBuilder,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
-import { mockIntoDelta } from "../../utils";
+import { jsonSequenceRootSchema, mockIntoDelta } from "../../utils";
 
 const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	[
@@ -103,10 +102,6 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	],
 ];
 
-const jsonDocumentSchema = new SchemaBuilder("jsonDocumentSchema", jsonSchema).intoDocumentSchema(
-	SchemaBuilder.fieldSequence(...jsonRoot),
-);
-
 describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {
 		describe(name, () => {
@@ -120,7 +115,7 @@ describe("ChunkedForest", () => {
 				const initialState: JsonableTree = { type: jsonObject.name };
 				const schema = new InMemoryStoredSchemaRepository(
 					defaultSchemaPolicy,
-					jsonDocumentSchema,
+					jsonSequenceRootSchema,
 				);
 				const forest = buildChunkedForest(chunker(schema));
 				const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);

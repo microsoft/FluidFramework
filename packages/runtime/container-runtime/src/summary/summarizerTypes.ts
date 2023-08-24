@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -115,6 +114,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	readonly summaryLogger: ITelemetryLoggerExt;
 	/** Tells when summary process should be cancelled */
 	readonly cancellationToken: ISummaryCancellationToken;
+	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt. */
+	readonly finalAttempt?: boolean;
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -455,6 +456,8 @@ type ISummarizeTelemetryOptionalProperties =
 	| "summaryAttemptsPerPhase"
 	/** One-based count of phases we've attempted (used to index into an array of ISummarizeOptions */
 	| "summaryAttemptPhase"
+	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt */
+	| "finalAttempt"
 	| keyof ISummarizeOptions;
 
 export type ISummarizeTelemetryProperties = Pick<
