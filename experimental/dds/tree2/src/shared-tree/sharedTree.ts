@@ -44,13 +44,14 @@ import {
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeBranchView,
 	ISharedTreeView,
 	ITransaction,
 	ViewEvents,
 	createSharedTreeView,
+	schematizeView,
 } from "./sharedTreeView";
 
 /**
@@ -162,7 +163,7 @@ export class SharedTree
 	}
 
 	public schematize<TRoot extends FieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
+		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		// TODO:
 		// This should work, but schema editing on views doesn't send ops.

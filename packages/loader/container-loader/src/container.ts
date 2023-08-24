@@ -21,6 +21,7 @@ import {
 	IResponse,
 	IFluidRouter,
 	FluidObject,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -1517,6 +1518,7 @@ export class Container
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber: number | undefined,
 	) {
+		const timings: Record<string, number> = { phase1: performance.now() };
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
 			this.subLogger,
@@ -1555,6 +1557,7 @@ export class Container
 
 		this._attachState = AttachState.Attached;
 
+		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
@@ -1667,6 +1670,7 @@ export class Container
 		// Initialize the protocol handler
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
+		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
@@ -1748,7 +1752,14 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
-
+		this.subLogger.sendTelemetryEvent(
+			{
+				eventName: "LoadStagesTimings",
+				...timings,
+			},
+			undefined,
+			LogLevel.verbose,
+		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,
 			version: versionId,

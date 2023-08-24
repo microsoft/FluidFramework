@@ -182,6 +182,16 @@ export async function initialize(
 	});
 	logger.minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
 
+	logger.sendTelemetryEvent({
+		eventName: "RunConfigOptions",
+		details: JSON.stringify({
+			loaderOptions,
+			containerOptions,
+			configurations,
+			logLevel: logger.minLogLevel,
+		}),
+	});
+
 	// Construct the loader
 	const loader = new Loader({
 		urlResolver: testDriver.createUrlResolver(),
