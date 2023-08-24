@@ -57,9 +57,10 @@ module.exports = {
 		"unicorn/no-useless-undefined": "off",
 
 		/**
-		 * Conflicts with our internal error code formats.
+		 * By default, this rule conflicts with our internal error code formats.
+		 * Only enforce `_` separator consistency if any such separators appear in the number literal.
 		 */
-		"unicorn/numeric-separators-style": "off",
+		"unicorn/numeric-separators-style": ["error", { onlyIfContainsSeparator: true }],
 
 		/**
 		 * "node:" imports are not supported prior to Node.js v16.
