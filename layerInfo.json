@@ -62,10 +62,6 @@
 			"Telemetry-Utils": {
 				"packages": ["@fluidframework/telemetry-utils"],
 				"deps": ["Base-Utils", "Base-Definitions", "Core-Utils", "Protocol-Definitions"]
-			},
-			"Container-Utils": {
-				"packages": ["@fluidframework/container-utils"],
-				"deps": ["Telemetry-Utils", "Container-Definitions"]
 			}
 		}
 	},
