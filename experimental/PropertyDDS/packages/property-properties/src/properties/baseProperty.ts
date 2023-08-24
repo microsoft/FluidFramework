@@ -330,16 +330,13 @@ export abstract class BaseProperty {
 	// TODO: Cleaner way to make the property tree aware of the DDS hosting it.
 	// Currently, this._tree is set in SharedPropertyTree constructor.
 	_reportDirtinessToView() {
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		let currentNode: BaseProperty = this;
 
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		while (currentNode._parent) {
 			currentNode = currentNode._parent;
 		}
 
 		if (
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			currentNode._tree &&
 			currentNode._tree.notificationDelayScope === 0 &&
 			currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
@@ -578,7 +575,7 @@ export abstract class BaseProperty {
 	 *
 	 * @returns The path segment to resolve the child property under this property
 	 */
-	_getPathSegmentForChildNode(in_childNode: BaseProperty): string {
+	protected _getPathSegmentForChildNode(in_childNode: BaseProperty): string {
 		return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
 	}
 
@@ -589,9 +586,8 @@ export abstract class BaseProperty {
 	 * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
 	 *
 	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
-	 * @protected
 	 */
-	_resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
+	protected _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
 		// Base Properties only support paths separated via dots
 		if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
 			throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -670,7 +666,7 @@ export abstract class BaseProperty {
 	 *
 	 * @returns the flat representation
 	 */
-	private _flatten(): object {
+	protected _flatten(): object {
 		return { propertyNode: this };
 	}
 
@@ -689,10 +685,8 @@ export abstract class BaseProperty {
 
 	/**
 	 * Return a JSON representation of the properties and its children.
-	 * @return {object} A JSON representation of the properties and its children.
-	 * @private
 	 */
-	_toJson() {
+	protected _toJson(): Object {
 		var json = {
 			id: this.getId(),
 			context: this._context,
@@ -1047,7 +1041,7 @@ export abstract class BaseProperty {
 	 * @param in_flags - Which types of dirtiness are we looking for? If none is given, all types are regarded as dirty.
 	 * @returns The list of keys identifying the dirty children.
 	 */
-	private _getDirtyChildren(in_flags: MODIFIED_STATE_FLAGS): string[] {
+	protected _getDirtyChildren(in_flags: MODIFIED_STATE_FLAGS): string[] {
 		return [];
 	}
 
@@ -1134,7 +1128,7 @@ export abstract class BaseProperty {
 	 *
 	 * @returns The serialized representation of this property
 	 */
-	_serialize(
+	protected _serialize(
 		in_dirtyOnly: boolean = false,
 		in_includeRootTypeid: boolean = false,
 		in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.PENDING_CHANGE,

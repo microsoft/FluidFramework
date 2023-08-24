@@ -10,10 +10,10 @@ import {
 	createChildLogger,
 	IFluidErrorBase,
 	LoggingError,
+	UsageError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";

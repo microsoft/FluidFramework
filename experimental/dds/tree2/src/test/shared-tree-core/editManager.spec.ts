@@ -377,6 +377,36 @@ describe("EditManager", () => {
 				checkChangeList(manager, []);
 			});
 
+			it("Evicts properly when changes come in batches having the same sequence number", () => {
+				const { manager } = editManagerFactory({});
+				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
+				manager.addSequencedChange(peerCommit(peer1, [1], 2), brand(1), brand(0));
+				manager.addSequencedChange(peerCommit(peer1, [1, 2], 3), brand(1), brand(0));
+				checkChangeList(manager, [1, 2, 3]);
+				manager.advanceMinimumSequenceNumber(brand(2));
+				checkChangeList(manager, []);
+				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(1));
+				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3, 4], 5), brand(4), brand(1));
+				manager.addSequencedChange(
+					peerCommit(peer2, [1, 2, 3, 4, 5], 6),
+					brand(5),
+					brand(4),
+				);
+				manager.addSequencedChange(
+					peerCommit(peer2, [1, 2, 3, 4, 5, 6], 7),
+					brand(5),
+					brand(4),
+				);
+				manager.addSequencedChange(
+					peerCommit(peer2, [1, 2, 3, 4, 5, 6, 7], 8),
+					brand(5),
+					brand(4),
+				);
+				checkChangeList(manager, [4, 5, 6, 7, 8]);
+				manager.advanceMinimumSequenceNumber(brand(4));
+				checkChangeList(manager, [6, 7, 8]);
+			});
+
 			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 

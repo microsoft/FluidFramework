@@ -28,7 +28,7 @@ import {
 import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("node key index benchmarks", nodeKeySchema);
+const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
 const nodeSchema = builder.structRecursive("node", {
 	child: SchemaBuilder.fieldRecursive(
 		FieldKinds.optional,

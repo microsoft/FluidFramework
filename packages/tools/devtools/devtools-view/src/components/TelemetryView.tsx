@@ -35,6 +35,7 @@ import {
 	TelemetryHistory,
 	TelemetryEvent,
 } from "@fluid-experimental/devtools-core";
+
 import { useMessageRelay } from "../MessageRelayContext";
 import { useLogger } from "../TelemetryUtils";
 import { ThemeOption, useThemeContext } from "../ThemeHelper";

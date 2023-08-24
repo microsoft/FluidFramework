@@ -48,7 +48,7 @@ export class ClientWrapper implements IClient {
 	public decreaseBubbles() {
 		const bubbles = this.clientTreeProxy.bubbles;
 		if (bubbles.length > 1) {
-			bubbles.deleteNodes(bubbles.length - 1);
+			bubbles.removeNodes(bubbles.length - 1);
 		}
 	}
 }

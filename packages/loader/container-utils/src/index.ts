@@ -3,13 +3,39 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @deprecated
+ *
+ * Note: this package is scheduled for deletion.
+ * Remaining exports are here for backwards compatibility and to notify consumers where to look for replacement APIs.
+ * Please do not add any new code or exports to this package.
+ *
+ * @packageDocumentation
+ */
+
 export { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
+export { ClientSessionExpiredError, ThrottlingWarning } from "./error";
+
+// Deprecated exports for backwards compatibility
 export {
-	ClientSessionExpiredError,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	DataCorruptionError,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	DataProcessingError,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	extractSafePropertiesFromMessage,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	GenericError,
-	ThrottlingWarning,
+	/**
+	 * @deprecated Import from `@fluidframework/telemetry-utils` instead.
+	 */
 	UsageError,
-} from "./error";
+} from "@fluidframework/telemetry-utils";

@@ -23,6 +23,15 @@ export interface RenderConfiguration extends ConfigurationBase {
 	 * {@inheritDoc MarkdownRenderers}
 	 */
 	readonly renderers?: MarkdownRenderers;
+
+	/**
+	 * Optional override for the starting heading level of a document.
+	 *
+	 * @remarks Must be on [1, ∞).
+	 *
+	 * @defaultValue 1
+	 */
+	readonly startingHeadingLevel?: number;
 }
 
 /**
@@ -36,6 +45,7 @@ export function getRenderConfigurationWithDefaults(
 	return {
 		logger: inputConfig.logger ?? defaultConsoleLogger,
 		newlineKind: inputConfig.newlineKind ?? NewlineKind.OsDefault,
+		startingHeadingLevel: inputConfig.startingHeadingLevel ?? 1,
 		renderers,
 	};
 }

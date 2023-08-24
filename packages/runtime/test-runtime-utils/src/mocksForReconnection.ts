@@ -71,7 +71,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		super(dataStoreRuntime, factory, runtimeOptions, overrides);
 	}
 
-	public process(message: ISequencedDocumentMessage) {
+	override process(message: ISequencedDocumentMessage) {
 		if (this.connected) {
 			super.process(message);
 		} else {
@@ -79,7 +79,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown) {
+	override submit(messageContent: any, localOpMetadata: unknown) {
 		// Submit messages only if we are connection, otherwise, just add it to the pending queue.
 		if (this.connected) {
 			return super.submit(messageContent, localOpMetadata);
@@ -108,7 +108,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
  * Specialized implementation of MockContainerRuntimeFactory for testing ops during reconnection.
  */
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
-	public createContainerRuntime(
+	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		overrides?: { minimumSequenceNumber?: number },
 	): MockContainerRuntimeForReconnection {

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IErrorBase, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	IConnectionDetails,
 	ICriticalContainerError,
 	IDeltaQueue,
-	IErrorBase,
 	IFluidCodeDetails,
 	isFluidPackage,
 	ReadOnlyInfo,

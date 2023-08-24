@@ -1,8 +1,8 @@
-# testInterfaceProperty
+## testInterfaceProperty
 
 Test interface property
 
-## Signature {#testinterfaceproperty-signature}
+### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: boolean;

@@ -21,11 +21,11 @@ import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
 import {
 	createChildLogger,
-	PerformanceEvent,
 	loggerToMonitoringContext,
+	PerformanceEvent,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";

@@ -18,7 +18,7 @@ import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
 import { AllowedUpdateType, ValueSchema } from "../../../core";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("EditableTree Node Keys", nodeKeySchema);
+const builder = new SchemaBuilder("EditableTree Node Keys", {}, nodeKeySchema);
 const stringSchema = builder.leaf("string", ValueSchema.String);
 const childNodeSchema = builder.struct("ChildNode", {
 	...nodeKeyField,

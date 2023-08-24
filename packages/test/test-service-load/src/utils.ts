@@ -11,7 +11,7 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -179,6 +179,17 @@ export async function initialize(
 		driverEndpointName: testDriver.endpointName,
 		profile: profileName,
 		runId: undefined,
+	});
+	logger.minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
+
+	logger.sendTelemetryEvent({
+		eventName: "RunConfigOptions",
+		details: JSON.stringify({
+			loaderOptions,
+			containerOptions,
+			configurations,
+			logLevel: logger.minLogLevel,
+		}),
 	});
 
 	// Construct the loader

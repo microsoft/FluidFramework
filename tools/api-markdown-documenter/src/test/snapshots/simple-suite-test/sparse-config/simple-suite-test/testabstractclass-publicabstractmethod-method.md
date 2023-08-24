@@ -1,8 +1,8 @@
-# publicAbstractMethod
+## publicAbstractMethod
 
 A test public abstract method.
 
-## Signature {#publicabstractmethod-signature}
+### Signature {#publicabstractmethod-signature}
 
 ```typescript
 abstract publicAbstractMethod(): void;

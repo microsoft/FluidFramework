@@ -4,7 +4,7 @@
  */
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {

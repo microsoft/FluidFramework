@@ -5,7 +5,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 
 /**

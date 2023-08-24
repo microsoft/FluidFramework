@@ -9,6 +9,7 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import {
 	createHandleNode,
@@ -204,5 +205,38 @@ describe("DataVisualizerGraph unit tests", () => {
 			},
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
+	});
+
+	it("Unknown object in Container Data", async () => {
+		const unknownObject = {};
+
+		const visualizer = new DataVisualizerGraph(
+			{
+				unknownObject: unknownObject as IFluidLoadable,
+			},
+			defaultVisualizers,
+			defaultEditors,
+		);
+
+		const rootTrees = await visualizer.renderRootHandles();
+		const expectedChildUnknownObject = {
+			unknownObject: {
+				nodeKind: VisualNodeKind.UnknownObjectNode,
+			},
+		};
+
+		expect(rootTrees).to.deep.equal(expectedChildUnknownObject);
+	});
+
+	it("Empty Container Data", async () => {
+		// Pass in the empty containerData to the visualizer.
+		const emptyRecord: Record<string, IFluidLoadable> = {};
+
+		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers, defaultEditors);
+
+		const childEmptyRecord = await visualizer.renderRootHandles();
+		const expectedChildEmptyRecord = {};
+
+		expect(childEmptyRecord).to.deep.equal(expectedChildEmptyRecord);
 	});
 });

@@ -189,7 +189,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * @sealed
  * @alpha
  */
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.

@@ -69,6 +69,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		recordDependency(this.dependent, this.schema);
 	}
 
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
+	}
+
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
@@ -445,12 +449,11 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 }
 
-// This function is the only package level export for objectForest, and hides all the implementation types.
+// This function is the folder level export for objectForest, and hides all the implementation types.
 // When other forest implementations are created (ex: optimized ones),
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
- * @alpha
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
 	return new ObjectForest(schema, anchors);

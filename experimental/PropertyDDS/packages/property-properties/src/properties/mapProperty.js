@@ -144,8 +144,8 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * See {@link MapProperty.setValues}
 	 *
 	 * @param {object} in_values - to assign to the collection
-	 * @param {Bool} in_typed - Whether the values are typed/polymorphic.
-	 * @param {Bool} in_initial - Whether we are setting default/initial values or if the function is called directly
+	 * @param {boolean} in_typed - Whether the values are typed/polymorphic.
+	 * @param {boolean} in_initial - Whether we are setting default/initial values or if the function is called directly
 	 * with the values to set.
 	 *
 	 * @override
@@ -224,7 +224,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * @param {String} in_segment - The path segment to resolve
 	 * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
 	 *
-	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+	 * @return {BaseProperty | undefined} The child property that has been resolved
 	 * @protected
 	 */
 	_resolvePathSegment(in_segment, in_segmentType) {
@@ -327,7 +327,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	/**
 	 * Returns the collection entry with the given key
 	 *
-	 * @param {string|array<string>} in_ids - key of the entry to return or an array of keys
+	 * @param {string | Array<string>} in_ids - key of the entry to return or an array of keys
 	 * if an array is passed, the .get function will be performed on each id in sequence
 	 * for example .get(['position','x']) is equivalent to .get('position').get('x').
 	 * If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
@@ -336,7 +336,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]- -
 	 * How should this function behave during reference resolution?
 	 *
-	 * @return {property-properties.Property|*|undefined} The entry in the collection or undefined
+	 * @return {BaseProperty | undefined} The entry in the collection or undefined
 	 * if none could be found
 	 */
 	get(in_ids, in_options) {

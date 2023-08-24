@@ -48,9 +48,22 @@ module.exports = {
 	module: {
 		rules: [
 			{
+				test: /\.m?js/,
+				type: "javascript/auto",
+			},
+			{
+				test: /\.m?js/,
+				resolve: {
+					fullySpecified: false,
+				},
+			},
+			{
 				test: /\.tsx?$/,
 				loader: "ts-loader",
 				exclude: /node_modules/,
+				resolve: {
+					fullySpecified: false,
+				},
 			},
 		],
 	},

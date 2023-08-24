@@ -8,6 +8,7 @@ import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfa
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
+	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	loggerToMonitoringContext,
 	MonitoringContext,
@@ -31,7 +32,6 @@ import {
 	totalBlobSizePropertyName,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";

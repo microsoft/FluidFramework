@@ -26,8 +26,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IErrorBase, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";

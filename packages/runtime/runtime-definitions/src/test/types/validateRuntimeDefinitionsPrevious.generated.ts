@@ -88,26 +88,14 @@ use_old_TypeAliasDeclaration_AttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_CompressedId": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_CompressedId": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_CompressedId():
-    TypeOnly<old.CompressedId>;
-declare function use_current_TypeAliasDeclaration_CompressedId(
-    use: TypeOnly<current.CompressedId>);
-use_current_TypeAliasDeclaration_CompressedId(
-    get_old_TypeAliasDeclaration_CompressedId());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_CompressedId": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_CompressedId": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_CompressedId():
-    TypeOnly<current.CompressedId>;
-declare function use_old_TypeAliasDeclaration_CompressedId(
-    use: TypeOnly<old.CompressedId>);
-use_old_TypeAliasDeclaration_CompressedId(
-    get_current_TypeAliasDeclaration_CompressedId());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -208,26 +196,14 @@ use_old_InterfaceDeclaration_DetachedAttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_FinalCompressedId": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_FinalCompressedId": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_FinalCompressedId():
-    TypeOnly<old.FinalCompressedId>;
-declare function use_current_TypeAliasDeclaration_FinalCompressedId(
-    use: TypeOnly<current.FinalCompressedId>);
-use_current_TypeAliasDeclaration_FinalCompressedId(
-    get_old_TypeAliasDeclaration_FinalCompressedId());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_FinalCompressedId": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_FinalCompressedId": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_FinalCompressedId():
-    TypeOnly<current.FinalCompressedId>;
-declare function use_old_TypeAliasDeclaration_FinalCompressedId(
-    use: TypeOnly<old.FinalCompressedId>);
-use_old_TypeAliasDeclaration_FinalCompressedId(
-    get_current_TypeAliasDeclaration_FinalCompressedId());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -491,6 +467,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -515,6 +492,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -707,6 +685,7 @@ declare function get_current_InterfaceDeclaration_IIdCompressor():
 declare function use_old_InterfaceDeclaration_IIdCompressor(
     use: TypeOnly<old.IIdCompressor>);
 use_old_InterfaceDeclaration_IIdCompressor(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIdCompressor());
 
 /*
@@ -731,6 +710,7 @@ declare function get_current_InterfaceDeclaration_IIdCompressorCore():
 declare function use_old_InterfaceDeclaration_IIdCompressorCore(
     use: TypeOnly<old.IIdCompressorCore>);
 use_old_InterfaceDeclaration_IIdCompressorCore(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIdCompressorCore());
 
 /*
@@ -1055,6 +1035,7 @@ declare function get_old_InterfaceDeclaration_IdCreationRange():
 declare function use_current_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<current.IdCreationRange>);
 use_current_InterfaceDeclaration_IdCreationRange(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IdCreationRange());
 
 /*
@@ -1067,103 +1048,56 @@ declare function get_current_InterfaceDeclaration_IdCreationRange():
 declare function use_old_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<old.IdCreationRange>);
 use_old_InterfaceDeclaration_IdCreationRange(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IdCreationRange());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IdCreationRange.HasOverrides": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IdCreationRange.HasOverrides": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IdCreationRange_HasOverrides():
-    TypeOnly<old.IdCreationRange.HasOverrides>;
-declare function use_current_InterfaceDeclaration_IdCreationRange_HasOverrides(
-    use: TypeOnly<current.IdCreationRange.HasOverrides>);
-use_current_InterfaceDeclaration_IdCreationRange_HasOverrides(
-    get_old_InterfaceDeclaration_IdCreationRange_HasOverrides());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IdCreationRange.HasOverrides": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IdCreationRange.HasOverrides": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IdCreationRange_HasOverrides():
-    TypeOnly<current.IdCreationRange.HasOverrides>;
-declare function use_old_InterfaceDeclaration_IdCreationRange_HasOverrides(
-    use: TypeOnly<old.IdCreationRange.HasOverrides>);
-use_old_InterfaceDeclaration_IdCreationRange_HasOverrides(
-    get_current_InterfaceDeclaration_IdCreationRange_HasOverrides());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRange.Ids": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRange.Ids": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IdCreationRange_Ids():
-    TypeOnly<old.IdCreationRange.Ids>;
-declare function use_current_TypeAliasDeclaration_IdCreationRange_Ids(
-    use: TypeOnly<current.IdCreationRange.Ids>);
-use_current_TypeAliasDeclaration_IdCreationRange_Ids(
-    get_old_TypeAliasDeclaration_IdCreationRange_Ids());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRange.Ids": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRange.Ids": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IdCreationRange_Ids():
-    TypeOnly<current.IdCreationRange.Ids>;
-declare function use_old_TypeAliasDeclaration_IdCreationRange_Ids(
-    use: TypeOnly<old.IdCreationRange.Ids>);
-use_old_TypeAliasDeclaration_IdCreationRange_Ids(
-    get_current_TypeAliasDeclaration_IdCreationRange_Ids());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRange.Override": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRange.Override": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IdCreationRange_Override():
-    TypeOnly<old.IdCreationRange.Override>;
-declare function use_current_TypeAliasDeclaration_IdCreationRange_Override(
-    use: TypeOnly<current.IdCreationRange.Override>);
-use_current_TypeAliasDeclaration_IdCreationRange_Override(
-    get_old_TypeAliasDeclaration_IdCreationRange_Override());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRange.Override": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRange.Override": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IdCreationRange_Override():
-    TypeOnly<current.IdCreationRange.Override>;
-declare function use_old_TypeAliasDeclaration_IdCreationRange_Override(
-    use: TypeOnly<old.IdCreationRange.Override>);
-use_old_TypeAliasDeclaration_IdCreationRange_Override(
-    get_current_TypeAliasDeclaration_IdCreationRange_Override());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRange.Overrides": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRange.Overrides": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IdCreationRange_Overrides():
-    TypeOnly<old.IdCreationRange.Overrides>;
-declare function use_current_TypeAliasDeclaration_IdCreationRange_Overrides(
-    use: TypeOnly<current.IdCreationRange.Overrides>);
-use_current_TypeAliasDeclaration_IdCreationRange_Overrides(
-    get_old_TypeAliasDeclaration_IdCreationRange_Overrides());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRange.Overrides": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRange.Overrides": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IdCreationRange_Overrides():
-    TypeOnly<current.IdCreationRange.Overrides>;
-declare function use_old_TypeAliasDeclaration_IdCreationRange_Overrides(
-    use: TypeOnly<old.IdCreationRange.Overrides>);
-use_old_TypeAliasDeclaration_IdCreationRange_Overrides(
-    get_current_TypeAliasDeclaration_IdCreationRange_Overrides());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1175,6 +1109,7 @@ declare function get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState():
 declare function use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
     use: TypeOnly<current.IdCreationRangeWithStashedState>);
 use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
@@ -1187,6 +1122,7 @@ declare function get_current_TypeAliasDeclaration_IdCreationRangeWithStashedStat
 declare function use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
     use: TypeOnly<old.IdCreationRangeWithStashedState>);
 use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
@@ -1240,26 +1176,14 @@ use_old_InterfaceDeclaration_LocalAttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LocalCompressedId": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_LocalCompressedId": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_LocalCompressedId():
-    TypeOnly<old.LocalCompressedId>;
-declare function use_current_TypeAliasDeclaration_LocalCompressedId(
-    use: TypeOnly<current.LocalCompressedId>);
-use_current_TypeAliasDeclaration_LocalCompressedId(
-    get_old_TypeAliasDeclaration_LocalCompressedId());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LocalCompressedId": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_LocalCompressedId": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_LocalCompressedId():
-    TypeOnly<current.LocalCompressedId>;
-declare function use_old_TypeAliasDeclaration_LocalCompressedId(
-    use: TypeOnly<old.LocalCompressedId>);
-use_old_TypeAliasDeclaration_LocalCompressedId(
-    get_current_TypeAliasDeclaration_LocalCompressedId());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1355,223 +1279,116 @@ declare function get_current_TypeAliasDeclaration_OpSpaceCompressedId():
 declare function use_old_TypeAliasDeclaration_OpSpaceCompressedId(
     use: TypeOnly<old.OpSpaceCompressedId>);
 use_old_TypeAliasDeclaration_OpSpaceCompressedId(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_OpSpaceCompressedId());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedCluster": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedCluster": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SerializedCluster():
-    TypeOnly<old.SerializedCluster>;
-declare function use_current_TypeAliasDeclaration_SerializedCluster(
-    use: TypeOnly<current.SerializedCluster>);
-use_current_TypeAliasDeclaration_SerializedCluster(
-    get_old_TypeAliasDeclaration_SerializedCluster());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedCluster": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedCluster": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SerializedCluster():
-    TypeOnly<current.SerializedCluster>;
-declare function use_old_TypeAliasDeclaration_SerializedCluster(
-    use: TypeOnly<old.SerializedCluster>);
-use_old_TypeAliasDeclaration_SerializedCluster(
-    get_current_TypeAliasDeclaration_SerializedCluster());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedClusterOverrides": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedClusterOverrides": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SerializedClusterOverrides():
-    TypeOnly<old.SerializedClusterOverrides>;
-declare function use_current_TypeAliasDeclaration_SerializedClusterOverrides(
-    use: TypeOnly<current.SerializedClusterOverrides>);
-use_current_TypeAliasDeclaration_SerializedClusterOverrides(
-    get_old_TypeAliasDeclaration_SerializedClusterOverrides());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedClusterOverrides": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedClusterOverrides": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SerializedClusterOverrides():
-    TypeOnly<current.SerializedClusterOverrides>;
-declare function use_old_TypeAliasDeclaration_SerializedClusterOverrides(
-    use: TypeOnly<old.SerializedClusterOverrides>);
-use_old_TypeAliasDeclaration_SerializedClusterOverrides(
-    get_current_TypeAliasDeclaration_SerializedClusterOverrides());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressor": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressor": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedIdCompressor():
-    TypeOnly<old.SerializedIdCompressor>;
-declare function use_current_InterfaceDeclaration_SerializedIdCompressor(
-    use: TypeOnly<current.SerializedIdCompressor>);
-use_current_InterfaceDeclaration_SerializedIdCompressor(
-    get_old_InterfaceDeclaration_SerializedIdCompressor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressor": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressor": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedIdCompressor():
-    TypeOnly<current.SerializedIdCompressor>;
-declare function use_old_InterfaceDeclaration_SerializedIdCompressor(
-    use: TypeOnly<old.SerializedIdCompressor>);
-use_old_InterfaceDeclaration_SerializedIdCompressor(
-    get_current_InterfaceDeclaration_SerializedIdCompressor());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession():
-    TypeOnly<old.SerializedIdCompressorWithNoSession>;
-declare function use_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    use: TypeOnly<current.SerializedIdCompressorWithNoSession>);
-use_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    get_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession():
-    TypeOnly<current.SerializedIdCompressorWithNoSession>;
-declare function use_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    use: TypeOnly<old.SerializedIdCompressorWithNoSession>);
-use_old_InterfaceDeclaration_SerializedIdCompressorWithNoSession(
-    get_current_InterfaceDeclaration_SerializedIdCompressorWithNoSession());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession():
-    TypeOnly<old.SerializedIdCompressorWithOngoingSession>;
-declare function use_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    use: TypeOnly<current.SerializedIdCompressorWithOngoingSession>);
-use_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    get_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession():
-    TypeOnly<current.SerializedIdCompressorWithOngoingSession>;
-declare function use_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    use: TypeOnly<old.SerializedIdCompressorWithOngoingSession>);
-use_old_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession(
-    get_current_InterfaceDeclaration_SerializedIdCompressorWithOngoingSession());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedLocalOverrides": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedLocalOverrides": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SerializedLocalOverrides():
-    TypeOnly<old.SerializedLocalOverrides>;
-declare function use_current_TypeAliasDeclaration_SerializedLocalOverrides(
-    use: TypeOnly<current.SerializedLocalOverrides>);
-use_current_TypeAliasDeclaration_SerializedLocalOverrides(
-    get_old_TypeAliasDeclaration_SerializedLocalOverrides());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedLocalOverrides": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedLocalOverrides": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SerializedLocalOverrides():
-    TypeOnly<current.SerializedLocalOverrides>;
-declare function use_old_TypeAliasDeclaration_SerializedLocalOverrides(
-    use: TypeOnly<old.SerializedLocalOverrides>);
-use_old_TypeAliasDeclaration_SerializedLocalOverrides(
-    get_current_TypeAliasDeclaration_SerializedLocalOverrides());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedLocalState": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedLocalState": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedLocalState():
-    TypeOnly<old.SerializedLocalState>;
-declare function use_current_InterfaceDeclaration_SerializedLocalState(
-    use: TypeOnly<current.SerializedLocalState>);
-use_current_InterfaceDeclaration_SerializedLocalState(
-    get_old_InterfaceDeclaration_SerializedLocalState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedLocalState": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedLocalState": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedLocalState():
-    TypeOnly<current.SerializedLocalState>;
-declare function use_old_InterfaceDeclaration_SerializedLocalState(
-    use: TypeOnly<old.SerializedLocalState>);
-use_old_InterfaceDeclaration_SerializedLocalState(
-    get_current_InterfaceDeclaration_SerializedLocalState());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedSessionData": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedSessionData": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SerializedSessionData():
-    TypeOnly<old.SerializedSessionData>;
-declare function use_current_TypeAliasDeclaration_SerializedSessionData(
-    use: TypeOnly<current.SerializedSessionData>);
-use_current_TypeAliasDeclaration_SerializedSessionData(
-    get_old_TypeAliasDeclaration_SerializedSessionData());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SerializedSessionData": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SerializedSessionData": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SerializedSessionData():
-    TypeOnly<current.SerializedSessionData>;
-declare function use_old_TypeAliasDeclaration_SerializedSessionData(
-    use: TypeOnly<old.SerializedSessionData>);
-use_old_TypeAliasDeclaration_SerializedSessionData(
-    get_current_TypeAliasDeclaration_SerializedSessionData());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedSessionIdNormalizer": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedSessionIdNormalizer": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedSessionIdNormalizer():
-    TypeOnly<old.SerializedSessionIdNormalizer>;
-declare function use_current_InterfaceDeclaration_SerializedSessionIdNormalizer(
-    use: TypeOnly<current.SerializedSessionIdNormalizer>);
-use_current_InterfaceDeclaration_SerializedSessionIdNormalizer(
-    get_old_InterfaceDeclaration_SerializedSessionIdNormalizer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedSessionIdNormalizer": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedSessionIdNormalizer": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedSessionIdNormalizer():
-    TypeOnly<current.SerializedSessionIdNormalizer>;
-declare function use_old_InterfaceDeclaration_SerializedSessionIdNormalizer(
-    use: TypeOnly<old.SerializedSessionIdNormalizer>);
-use_old_InterfaceDeclaration_SerializedSessionIdNormalizer(
-    get_current_InterfaceDeclaration_SerializedSessionIdNormalizer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1595,6 +1412,7 @@ declare function get_current_TypeAliasDeclaration_SessionId():
 declare function use_old_TypeAliasDeclaration_SessionId(
     use: TypeOnly<old.SessionId>);
 use_old_TypeAliasDeclaration_SessionId(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SessionId());
 
 /*
@@ -1619,31 +1437,20 @@ declare function get_current_TypeAliasDeclaration_SessionSpaceCompressedId():
 declare function use_old_TypeAliasDeclaration_SessionSpaceCompressedId(
     use: TypeOnly<old.SessionSpaceCompressedId>);
 use_old_TypeAliasDeclaration_SessionSpaceCompressedId(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SessionSpaceCompressedId());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SessionUnique": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SessionUnique": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SessionUnique():
-    TypeOnly<old.SessionUnique>;
-declare function use_current_InterfaceDeclaration_SessionUnique(
-    use: TypeOnly<current.SessionUnique>);
-use_current_InterfaceDeclaration_SessionUnique(
-    get_old_InterfaceDeclaration_SessionUnique());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SessionUnique": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SessionUnique": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SessionUnique():
-    TypeOnly<current.SessionUnique>;
-declare function use_old_InterfaceDeclaration_SessionUnique(
-    use: TypeOnly<old.SessionUnique>);
-use_old_InterfaceDeclaration_SessionUnique(
-    get_current_InterfaceDeclaration_SessionUnique());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1667,6 +1474,7 @@ declare function get_current_TypeAliasDeclaration_StableId():
 declare function use_old_TypeAliasDeclaration_StableId(
     use: TypeOnly<old.StableId>);
 use_old_TypeAliasDeclaration_StableId(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_StableId());
 
 /*
@@ -1696,74 +1504,38 @@ use_old_TypeAliasDeclaration_SummarizeInternalFn(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_UnackedLocalId": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_UnackedLocalId": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_UnackedLocalId():
-    TypeOnly<old.UnackedLocalId>;
-declare function use_current_TypeAliasDeclaration_UnackedLocalId(
-    use: TypeOnly<current.UnackedLocalId>);
-use_current_TypeAliasDeclaration_UnackedLocalId(
-    get_old_TypeAliasDeclaration_UnackedLocalId());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_UnackedLocalId": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_UnackedLocalId": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_UnackedLocalId():
-    TypeOnly<current.UnackedLocalId>;
-declare function use_old_TypeAliasDeclaration_UnackedLocalId(
-    use: TypeOnly<old.UnackedLocalId>);
-use_old_TypeAliasDeclaration_UnackedLocalId(
-    get_current_TypeAliasDeclaration_UnackedLocalId());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_UuidString": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_UuidString": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_UuidString():
-    TypeOnly<old.UuidString>;
-declare function use_current_TypeAliasDeclaration_UuidString(
-    use: TypeOnly<current.UuidString>);
-use_current_TypeAliasDeclaration_UuidString(
-    get_old_TypeAliasDeclaration_UuidString());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_UuidString": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_UuidString": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_UuidString():
-    TypeOnly<current.UuidString>;
-declare function use_old_TypeAliasDeclaration_UuidString(
-    use: TypeOnly<old.UuidString>);
-use_old_TypeAliasDeclaration_UuidString(
-    get_current_TypeAliasDeclaration_UuidString());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_VersionedSerializedIdCompressor": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_VersionedSerializedIdCompressor():
-    TypeOnly<old.VersionedSerializedIdCompressor>;
-declare function use_current_InterfaceDeclaration_VersionedSerializedIdCompressor(
-    use: TypeOnly<current.VersionedSerializedIdCompressor>);
-use_current_InterfaceDeclaration_VersionedSerializedIdCompressor(
-    get_old_InterfaceDeclaration_VersionedSerializedIdCompressor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_VersionedSerializedIdCompressor": {"backCompat": false}
+* "RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_VersionedSerializedIdCompressor():
-    TypeOnly<current.VersionedSerializedIdCompressor>;
-declare function use_old_InterfaceDeclaration_VersionedSerializedIdCompressor(
-    use: TypeOnly<old.VersionedSerializedIdCompressor>);
-use_old_InterfaceDeclaration_VersionedSerializedIdCompressor(
-    get_current_InterfaceDeclaration_VersionedSerializedIdCompressor());
 
 /*
 * Validate forward compat by using old type in place of current type

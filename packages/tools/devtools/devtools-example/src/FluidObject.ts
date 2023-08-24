@@ -243,7 +243,6 @@ export class AppData extends DataObject {
 			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
 		);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		sharedTree.schematize({
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,

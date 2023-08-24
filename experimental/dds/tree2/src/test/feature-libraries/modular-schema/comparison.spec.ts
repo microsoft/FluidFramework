@@ -17,7 +17,6 @@ import {
 } from "../../../feature-libraries/modular-schema/comparison";
 import {
 	FieldStoredSchema,
-	NamedTreeSchema,
 	TreeStoredSchema,
 	ValueSchema,
 	TreeTypeSet,
@@ -30,6 +29,7 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
+import { namedTreeSchema } from "../../utils";
 
 describe("Schema Comparison", () => {
 	/**
@@ -74,25 +74,25 @@ describe("Schema Comparison", () => {
 		structFields: new Map([[brand("x"), neverField]]),
 	};
 
-	const emptyTree: NamedTreeSchema = {
-		name: brand("empty"),
-		structFields: emptyMap,
-	};
+	const emptyTree = namedTreeSchema({
+		name: "empty",
+		structFields: {},
+	});
 
-	const emptyLocalFieldTree: NamedTreeSchema = {
-		name: brand("emptyLocalFieldTree"),
-		structFields: new Map([[brand("x"), storedEmptyFieldSchema]]),
-	};
+	const emptyLocalFieldTree = namedTreeSchema({
+		name: "emptyLocalFieldTree",
+		structFields: { x: storedEmptyFieldSchema },
+	});
 
-	const optionalLocalFieldTree: NamedTreeSchema = {
-		name: brand("optionalLocalFieldTree"),
-		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
-	};
+	const optionalLocalFieldTree = namedTreeSchema({
+		name: "optionalLocalFieldTree",
+		structFields: { x: fieldSchema(FieldKinds.optional, [emptyTree.name]) },
+	});
 
-	const valueLocalFieldTree: NamedTreeSchema = {
-		name: brand("valueLocalFieldTree"),
-		structFields: new Map([[brand("x"), fieldSchema(FieldKinds.value, [emptyTree.name])]]),
-	};
+	const valueLocalFieldTree = namedTreeSchema({
+		name: "valueLocalFieldTree",
+		structFields: { x: fieldSchema(FieldKinds.value, [emptyTree.name]) },
+	});
 
 	const valueAnyField = fieldSchema(FieldKinds.value);
 	const valueEmptyTreeField = fieldSchema(FieldKinds.value, [emptyTree.name]);

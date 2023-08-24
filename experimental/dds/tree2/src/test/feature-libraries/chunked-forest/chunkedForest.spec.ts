@@ -103,9 +103,11 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	],
 ];
 
-const jsonDocumentSchema = new SchemaBuilder("jsonDocumentSchema", jsonSchema).intoDocumentSchema(
-	SchemaBuilder.fieldSequence(...jsonRoot),
-);
+const jsonDocumentSchema = new SchemaBuilder(
+	"jsonDocumentSchema",
+	{},
+	jsonSchema,
+).intoDocumentSchema(SchemaBuilder.fieldSequence(...jsonRoot));
 
 describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {

@@ -9,13 +9,15 @@ import {
 	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	ForestEvents,
-	NamedTreeSchema,
 	SchemaData,
 	UpPath,
 	PathVisitor,
+	TreeStoredSchema,
 } from "../core";
 import { ISubscribable } from "../events";
+import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
+import { TreeStatus } from "./editable-tree";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -63,6 +65,12 @@ export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 export const on: unique symbol = Symbol("editable-tree:on");
 
 /**
+ * A symbol to get the function, which gets the {@link TreeStatus} of {@link EditableTree}
+ * @alpha
+ */
+export const treeStatus: unique symbol = Symbol("editable-tree:treeStatus()");
+
+/**
  * A tree of an unknown type.
  * This only includes operations that are safe to do without knowing the schema for the tree, so it does not include any editing.
  *
@@ -105,8 +113,8 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
-	readonly [typeSymbol]: NamedTreeSchema;
+	// TODO: update implementation to use view schema in typed views.
+	readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
@@ -117,6 +125,11 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * Gets the field of this node by its key without unwrapping.
 	 */
 	[getField](fieldKey: FieldKey): TField;
+
+	/**
+	 * Gets the {@link TreeStatus} of the tree.
+	 */
+	[treeStatus](): TreeStatus;
 
 	/**
 	 * The field this tree is in, and the index within that field.
@@ -200,6 +213,11 @@ export interface UntypedField<
 	 * Note that a node must exist at the given index.
 	 */
 	getNode(index: number): TChild;
+
+	/**
+	 * Gets the {@link TreeStatus} of the parentNode of this field.
+	 */
+	treeStatus(): TreeStatus;
 }
 
 /**

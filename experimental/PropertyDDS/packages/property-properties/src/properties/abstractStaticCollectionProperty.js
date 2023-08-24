@@ -35,7 +35,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	/**
 	 * Returns the sub-property having the given name, or following the given paths, in this property.
 	 *
-	 * @param {string|number|array<string|number>} in_ids - The ID or IDs of the property or an array of IDs if an array
+	 * @param {string | number | Array<string | number>} in_ids - The ID or IDs of the property or an array of IDs if an array
 	 * is passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
 	 * equivalent to .get('position').get('x'). If `.get` resolves to a ReferenceProperty, it will, by default, return
 	 * the property that the ReferenceProperty refers to.
@@ -44,7 +44,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * should this function behave during reference resolution?
 	 *
 	 * @throws If an in_id is neither a string or an array of strings and numbers.
-	 * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
+	 * @return {BaseProperty | undefined} The property you seek or undefined if none is found.
 	 */
 	get(in_ids, in_options) {
 		in_options = _.isObject(in_options) ? in_options : {};
@@ -250,7 +250,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
 	 * should this function behave during reference resolution?
 	 * @throws If in_path is not a valid path
-	 * @return {property-properties.BaseProperty|undefined|*} Resolved path
+	 * @return {BaseProperty | undefined} Resolved path
 	 */
 	resolvePath(in_path, in_options) {
 		in_options = in_options || {};
@@ -326,7 +326,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * @param {String} in_segment - The path segment to resolve
 	 * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
 	 *
-	 * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+	 * @return {BaseProperty | undefined} The child property that has been resolved
 	 *
 	 * @protected
 	 */
@@ -347,10 +347,11 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * Given an object that mirrors a PSet Template, assigns the properties to the values
 	 * found in that object.
 	 * See {@link setValues}
-	 * @param {object} in_values - The object containing the nested values to assign
+	 * @param {object | Array | string} in_values - The object containing the nested values to assign
 	 * @param {boolean} in_typed - Whether the values are typed/polymorphic.
 	 * @param {boolean} in_initial - Whether we are setting default/initial values
 	 * or if the function is called directly with the values to set.
+	 * @protected
 	 */
 	_setValues(in_values, in_typed, in_initial) {
 		ConsoleUtils.assert(_.isObject(in_values), MSG.SET_VALUES_PARAM_NOT_OBJECT);
@@ -399,7 +400,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * </pre>
 	 * ```
 	 *
-	 * @param {object} in_values - The object containing the nested values to assign
+	 * @param {object | Array | string} in_values - The object containing the nested values to assign
 	 * @throws If in_values is not an object (or in the case of ArrayProperty, an array)
 	 * @throws If one of the path in in_values does not correspond to a path in that property
 	 * @throws If one of the path to a value in in_values leads to a property in this property.
@@ -598,7 +599,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * WARNING: if there are loops in the references this can result in an infinite loop.
 	 *
 	 * @return {Object} The serialized representation of this property
-	 * @private
+	 * @protected
 	 */
 	_serialize(
 		in_dirtyOnly,
@@ -717,7 +718,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 	 * TODO: Do we want to have this feature or is it to dangerous?
 	 *
 	 * @return {Object} the flat representation
-	 * @private
+	 * @protected
 	 */
 	_flatten() {
 		var flattenedRepresentation = {};

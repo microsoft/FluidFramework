@@ -70,7 +70,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
@@ -227,9 +227,6 @@ abstract class BrandedType<ValueType, Name extends string> {
 
 // @alpha
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
-
-// @alpha (undocumented)
-export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
 
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
@@ -456,10 +453,10 @@ export type DownPath = PathStep[];
 export interface EditableField extends UntypedField<EditableTreeContext, EditableTree, EditableTree, UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     get content(): EditableTree | undefined | EditableField;
-    delete(): void;
-    deleteNodes(index: number, count?: number): void;
     insertNodes(index: number, newContent: NewFieldContent): void;
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: EditableField): void;
+    remove(): void;
+    removeNodes(index: number, count?: number): void;
     replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
     setContent(newContent: NewFieldContent): void;
 }
@@ -672,7 +669,7 @@ interface Fields {
 }
 
 // @alpha @sealed
-export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> implements IFieldSchema {
+export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes> {
     constructor(kind: Kind, allowedTypes: Types);
     // (undocumented)
     readonly allowedTypes: Types;
@@ -698,9 +695,9 @@ export interface FieldStoredSchema {
 }
 
 // @alpha
-export interface FieldUpPath {
+export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
     readonly field: FieldKey;
-    readonly parent: UpPath | undefined;
+    readonly parent: TUpPath | undefined;
 }
 
 // @alpha
@@ -854,17 +851,11 @@ export interface IEncoder<TDecoded, TEncoded> {
 }
 
 // @alpha
-export interface IFieldSchema {
-    // (undocumented)
-    readonly kind: FieldKind;
-    readonly types: TreeTypeSet;
-}
-
-// @alpha
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
+    readonly isEmpty: boolean;
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
@@ -1035,33 +1026,33 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
 // @alpha
+export interface ISharedTreeBranchView extends ISharedTreeView {
+    rebaseOnto(view: ISharedTreeView): void;
+}
+
+// @alpha
 export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
-    fork(): SharedTreeView;
-    merge(view: SharedTreeView): void;
-    merge(view: SharedTreeView, disposeView: boolean): void;
+    fork(): ISharedTreeBranchView;
+    merge(view: ISharedTreeBranchView): void;
+    merge(view: ISharedTreeBranchView, disposeView: boolean): void;
     readonly nodeKey: {
         generate(): LocalNodeKey;
         stabilize(key: LocalNodeKey): StableNodeKey;
         localize(key: StableNodeKey): LocalNodeKey;
         map: ReadonlyMap<LocalNodeKey, EditableTree>;
     };
-    rebase(view: SharedTreeView): void;
+    rebase(view: ISharedTreeBranchView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
-    readonly transaction: {
-        start(): void;
-        commit(): TransactionResult.Commit;
-        abort(): TransactionResult.Abort;
-        inProgress(): boolean;
-    };
+    readonly transaction: ITransaction;
     undo(): void;
 }
 
@@ -1077,6 +1068,14 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 // @alpha
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+// @alpha
+export interface ITransaction {
+    abort(): TransactionResult.Abort;
+    commit(): TransactionResult.Commit;
+    inProgress(): boolean;
+    start(): void;
 }
 
 // @alpha
@@ -1111,14 +1110,6 @@ export interface ITreeCursor {
 export interface ITreeCursorSynchronous extends ITreeCursor {
     // (undocumented)
     readonly pending: false;
-}
-
-// @alpha (undocumented)
-export interface ITreeSchema extends NamedTreeSchema, Sourced {
-    // (undocumented)
-    readonly mapFields?: IFieldSchema;
-    // (undocumented)
-    readonly structFields: ReadonlyMap<FieldKey, IFieldSchema>;
 }
 
 // @alpha
@@ -1339,7 +1330,7 @@ export enum Multiplicity {
     Value = 0
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface Named<TName> {
     // (undocumented)
     readonly name: TName;
@@ -1352,9 +1343,6 @@ export interface NamedComputation {
     listDependents?(): Iterable<Dependent>;
 }
 
-// @alpha (undocumented)
-export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
-
 // @alpha
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
@@ -1362,7 +1350,7 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 // @alpha
-export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
+export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
@@ -1630,7 +1618,7 @@ export { SchemaAware }
 
 // @alpha @sealed
 export class SchemaBuilder {
-    constructor(name: string, ...libraries: SchemaLibrary[]);
+    constructor(name: string, lint?: Partial<SchemaLintConfiguration>, ...libraries: SchemaLibrary[]);
     addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     fieldNode<Name extends string, T extends FieldSchema>(name: Name, t: T): TreeSchema<Name, {
@@ -1669,18 +1657,6 @@ export class SchemaBuilder {
 }
 
 // @alpha
-export interface SchemaCollection extends SchemaData {
-    // (undocumented)
-    readonly adapters: Adapters;
-    // (undocumented)
-    readonly policy: FullSchemaPolicy;
-    // (undocumented)
-    readonly rootFieldSchema: IFieldSchema;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
-}
-
-// @alpha
 export interface SchemaData {
     // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;
@@ -1695,7 +1671,7 @@ export interface SchemaEvents {
 }
 
 // @alpha
-export interface SchemaLibrary extends SchemaCollection {
+export interface SchemaLibrary extends TypedSchemaCollection {
     readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
 
@@ -1712,9 +1688,17 @@ export interface SchemaLibraryData {
 }
 
 // @alpha
+export interface SchemaLintConfiguration {
+    // (undocumented)
+    readonly rejectEmpty: boolean;
+    // (undocumented)
+    readonly rejectForbidden: boolean;
+}
+
+// @alpha
 export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursor[];
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[];
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
@@ -1753,48 +1737,6 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 }
 
 // @alpha
-export class SharedTreeView implements ISharedTreeView {
-    // (undocumented)
-    readonly context: EditableTreeContext;
-    dispose(): void;
-    // (undocumented)
-    get editor(): IDefaultEditBuilder;
-    // (undocumented)
-    get events(): ISubscribable<ViewEvents>;
-    // (undocumented)
-    get forest(): IForestSubscription;
-    // (undocumented)
-    fork(): SharedTreeView;
-    // (undocumented)
-    locate(anchor: Anchor): AnchorNode | undefined;
-    // (undocumented)
-    merge(view: SharedTreeView): void;
-    // (undocumented)
-    merge(view: SharedTreeView, disposeView: boolean): void;
-    // (undocumented)
-    readonly nodeKey: ISharedTreeView["nodeKey"];
-    // (undocumented)
-    rebase(view: SharedTreeView): void;
-    rebaseOnto(view: ISharedTreeView): void;
-    // (undocumented)
-    redo(): void;
-    // (undocumented)
-    get root(): UnwrappedEditableField;
-    // (undocumented)
-    get rootEvents(): ISubscribable<AnchorSetRootEvents>;
-    // (undocumented)
-    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
-    // (undocumented)
-    setContent(data: NewFieldContent): void;
-    // (undocumented)
-    get storedSchema(): StoredSchemaRepository;
-    // (undocumented)
-    readonly transaction: ISharedTreeView["transaction"];
-    // (undocumented)
-    undo(): void;
-}
-
-// @alpha
 export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
     // (undocumented)
@@ -1819,12 +1761,6 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @alpha
 type Skip = number;
-
-// @alpha
-export interface Sourced {
-    // (undocumented)
-    readonly builder: Named<string>;
-}
 
 // @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
@@ -1890,8 +1826,8 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha
-export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> implements ITreeSchema {
+// @alpha @sealed
+export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
     readonly builder: Named<string>;
@@ -1916,6 +1852,16 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 type TreeSchemaSpecification = [
 FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
+
+// @alpha
+export enum TreeStatus {
+    Deleted = 2,
+    InDocument = 0,
+    Removed = 1
+}
+
+// @alpha
+export const treeStatus: unique symbol;
 
 // @alpha (undocumented)
 export interface TreeStoredSchema {
@@ -1965,9 +1911,15 @@ TFields extends {
 type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
 // @alpha
-export interface TypedSchemaCollection<T extends FieldSchema> extends SchemaCollection {
+export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+    // (undocumented)
+    readonly adapters: Adapters;
+    // (undocumented)
+    readonly policy: FullSchemaPolicy;
     // (undocumented)
     readonly rootFieldSchema: T;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 // @alpha
@@ -2014,27 +1966,28 @@ export interface UntypedField<TContext = UntypedTreeContext, TChild = UntypedTre
     readonly fieldSchema: FieldStoredSchema;
     getNode(index: number): TChild;
     readonly parent?: TParent;
+    treeStatus(): TreeStatus;
 }
 
 // @alpha
 interface UntypedOptionalField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
     readonly content: TChild;
-    delete(): void;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Optional;
     };
+    remove(): void;
     setContent(newContent: ITreeCursor | ContextuallyTypedNodeData | undefined): void;
 }
 
 // @alpha
 interface UntypedSequenceField<TContext = UntypedTreeContext, TChild = UntypedTree<TContext>, TUnwrappedChild = UnwrappedUntypedTree<TContext>, TNewFieldContent = NewFieldContent> extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
-    delete(): void;
-    deleteNodes(index: number, count?: number): void;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Sequence;
     };
     insertNodes(index: number, newContent: TNewFieldContent): void;
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: UntypedField): void;
+    remove(): void;
+    removeNodes(index: number, count?: number): void;
     replaceNodes(index: number, newContent: TNewFieldContent, count?: number): void;
     setContent(newContent: TNewFieldContent): void;
 }
@@ -2066,7 +2019,8 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
         readonly parent: TField;
         readonly index: number;
     };
-    readonly [typeSymbol]: NamedTreeSchema;
+    [treeStatus](): TreeStatus;
+    readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
 }
 
 // @alpha

@@ -10,6 +10,7 @@
 export {
 	type RenderConfiguration as MarkdownRenderConfiguration,
 	getRenderConfigurationWithDefaults as getMarkdownRenderConfigurationWithDefaults,
+	getRenderersWithDefaults as getMarkdownRenderersWithDefaults,
 	type MarkdownRenderers,
 	type RenderDocumentationNode,
 } from "./configuration";

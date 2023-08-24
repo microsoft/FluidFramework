@@ -432,15 +432,15 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 			// Upload an attachment blob when disconnected. We should get a handle with a localId for the blob. Mark it
 			// referenced by storing its handle in a DDS.
 			const blobContents = "Blob contents";
-			const localHandle1 = await container2DataStore._context.uploadBlob(
+			const localHandle1P = container2DataStore._context.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
 			);
-			container2DataStore._root.set("local1", localHandle1);
 
 			// Connect the container and wait for it to be connected.
 			container2.connect();
 			await waitForContainerConnection(container2);
-
+			const localHandle1 = await localHandle1P;
+			container2DataStore._root.set("local1", localHandle1);
 			// Validate that the localId node is referenced.
 			const s1 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
 			assert.strictEqual(s1.size, 1, "There should be 1 blob entries in GC data");

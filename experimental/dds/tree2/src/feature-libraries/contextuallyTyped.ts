@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { fail } from "../util";
+import { fail, isReadonlyArray } from "../util";
 import {
 	EmptyKey,
 	FieldKey,
@@ -564,4 +564,49 @@ export function applyFieldTypesFromContext(
 		0x4da /* single value provided for an unsupported field */,
 	);
 	return [applyTypesFromContext(context, field.types, data)];
+}
+
+/**
+ * Content to use for a field.
+ *
+ * When used, this content will be deeply copied into the tree, and must comply with the schema.
+ *
+ * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
+ * - use a single cursor for an `optional` or `value` field;
+ * - use array of cursors for a `sequence` field;
+ *
+ * TODO: this should allow a field cursor instead of an array of cursors.
+ * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
+ * @alpha
+ */
+export type NewFieldContent =
+	| ITreeCursorSynchronous
+	| readonly ITreeCursorSynchronous[]
+	| ContextuallyTypedFieldData;
+
+/**
+ * Convert NewFieldContent into ITreeCursor array.
+ */
+export function normalizeNewFieldContent(
+	context: TreeDataContext,
+	schema: FieldStoredSchema,
+	content: NewFieldContent,
+): readonly ITreeCursorSynchronous[] {
+	if (areCursors(content)) {
+		if (getFieldKind(schema).multiplicity === Multiplicity.Sequence) {
+			assert(isReadonlyArray(content), 0x6b7 /* sequence fields require array content */);
+			return content;
+		} else {
+			if (isReadonlyArray(content)) {
+				assert(
+					content.length === 1,
+					0x6b8 /* non-sequence fields can not be provided content that is multiple cursors */,
+				);
+				return content;
+			}
+			return [content];
+		}
+	}
+
+	return cursorsFromContextualData(context, schema, content);
 }

@@ -10,7 +10,7 @@ import {
 	Compatibility,
 	SimpleObservingDependent,
 	SchemaData,
-	ITreeCursor,
+	ITreeCursorSynchronous,
 } from "../core";
 import {
 	ViewSchema,
@@ -191,5 +191,5 @@ export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema
 	 */
 	readonly initialTree:
 		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
-		| readonly ITreeCursor[];
+		| readonly ITreeCursorSynchronous[];
 }

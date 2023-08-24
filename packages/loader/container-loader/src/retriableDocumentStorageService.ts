@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { GenericError } from "@fluidframework/container-utils";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,8 +18,7 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
-
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {

@@ -6,6 +6,8 @@
 /* eslint-disable import/no-internal-modules */
 import isEmpty from "lodash/isEmpty";
 import findIndex from "lodash/findIndex";
+import find from "lodash/find";
+import isEqual from "lodash/isEqual";
 import range from "lodash/range";
 import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
@@ -84,6 +86,7 @@ export interface SharedPropertyTreeOptions {
 	paths?: string[];
 	clientFiltering?: boolean;
 	useMH?: boolean;
+	disablePartialCheckout?: boolean;
 }
 
 export interface ISharedPropertyTreeEncDec {
@@ -195,12 +198,14 @@ export class SharedPropertyTree extends SharedObject {
 	private scopeFutureDeltasToPaths(paths?: string[]) {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
-		let dm = (this.runtime.deltaManager as any).deltaManager;
-		if (dm.deltaManager !== undefined) {
-			dm = dm.deltaManager;
+		if (!this.options.disablePartialCheckout) {
+			let dm = (this.runtime.deltaManager as any).deltaManager;
+			if (dm.deltaManager !== undefined) {
+				dm = dm.deltaManager;
+			}
+			const socket = dm.connectionManager.connection.socket;
+			socket.emit("partial_checkout", { paths });
 		}
-		const socket = dm.connectionManager.connection.socket;
-		socket.emit("partial_checkout", { paths });
 	}
 
 	public _reportDirtinessToView() {
@@ -795,6 +800,10 @@ export class SharedPropertyTree extends SharedObject {
 
 	getRebasedChanges(startGuid: string, endGuid?: string) {
 		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
+		if (startIndex === -1 && startGuid !== "") {
+			// TODO: Consider throwing an error once clients have picked up PR #16277.
+			console.error("Unknown start GUID specified.");
+		}
 		if (endGuid !== undefined) {
 			const endIndex = findIndex(this.remoteChanges, (c) => c.guid === endGuid);
 			return this.remoteChanges.slice(startIndex + 1, endIndex + 1);
@@ -807,7 +816,7 @@ export class SharedPropertyTree extends SharedObject {
 		pendingChanges: SerializedChangeSet,
 		newTipDelta: SerializedChangeSet,
 	): boolean {
-		let rebaseBaseChangeSet = cloneDeep(change.changeSet);
+		let rebaseBaseChangeSet;
 
 		const accumulatedChanges: SerializedChangeSet = {};
 		const conflicts = [] as any[];
@@ -817,15 +826,29 @@ export class SharedPropertyTree extends SharedObject {
 			// assert(JSON.stringify(this.localChanges[0].changeSet) === JSON.stringify(change.changeSet),
 			//        "Local change different than rebased remote change.");
 
-			// If we got a confirmation of the commit on the tip of the localChanges array,
-			// there will be no update of the tip view at all. We just move it from local changes
-			// to remote changes
-			this.localChanges.shift();
+			if (isEqual(this.localChanges[0].changeSet, change.changeSet)) {
+				// If we got a confirmation of the commit on the tip of the localChanges array,
+				// there will be no update of the tip view at all. We just move it from local changes
+				// to remote changes
+				this.localChanges.shift();
 
-			return false;
+				return false;
+			} else {
+				// There is a case where the localChanges that were created by incrementally rebasing with respect
+				// to every incoming change do no exactly agree with the rebased remote change (this happens
+				// when there are changes that cancel out with each other that have happened in the meantime).
+				// In that case, we must make sure, we correctly update the local view to take this difference into
+				// account by rebasing with respect to the changeset that is obtained by combining the inverse of the
+				// local change with the incoming remote change.
+
+				rebaseBaseChangeSet = new ChangeSet(this.localChanges.shift()?.changeSet);
+				rebaseBaseChangeSet.toInverseChangeSet();
+				rebaseBaseChangeSet.applyChangeSet(change.changeSet);
+			}
+		} else {
+			rebaseBaseChangeSet = cloneDeep(change.changeSet);
 		}
 
-		// eslint-disable-next-line @typescript-eslint/prefer-for-of
 		for (let i = 0; i < this.localChanges.length; i++) {
 			// Make sure we never receive changes out of order
 			console.assert(this.localChanges[i].guid !== change.guid);
@@ -849,6 +872,12 @@ export class SharedPropertyTree extends SharedObject {
 			rebaseBaseChangeSet = copiedChangeSet.getSerializedChangeSet();
 
 			new ChangeSet(accumulatedChanges).applyChangeSet(this.localChanges[i].changeSet);
+
+			// Update the reference and head guids
+			this.localChanges[i].remoteHeadGuid = change.guid;
+			if (i === 0) {
+				this.localChanges[i].referenceGuid = change.guid;
+			}
 		}
 
 		// Compute the inverse of the pending changes and store the result in newTipDelta
@@ -876,6 +905,26 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		return true;
+	}
+
+	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+		// We have to provide our own implementation of the resubmit core function, to
+		// handle the case where an operation is no longer referencing a commit within
+		// the collaboration window as its referenceGuid. Other clients would not be
+		// able to perform the rebase for such an operation. To handle this problem
+		// we have to resubmit a version of the operations which has been rebased to
+		// the current remote tip. We already have these rebased versions of the operations
+		// in our localChanges, because we continuously update those to follow the tip.
+		// Therefore our reSubmitCore function searches for the rebased operation in the
+		// localChanges array and submits this up-to-date version instead of the old operation.
+		const rebasedOperation = find(this.localChanges, (op) => op.guid === content.guid);
+
+		if (rebasedOperation) {
+			this.submitLocalMessage(cloneDeep(rebasedOperation), localOpMetadata);
+		} else {
+			// Could this happen or is there a guard that we will never resubmit an already submitted op?
+			console.warn("Resubmitting operation which has already been received back.");
+		}
 	}
 
 	protected applyStashedOp() {

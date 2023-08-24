@@ -87,7 +87,9 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						);
 					}
 
-					tabConnection = browser.tabs.connect(tabId, { name: "Content Script" });
+					tabConnection = browser.tabs.connect(tabId, {
+						name: "Background-Content-Port",
+					});
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`),

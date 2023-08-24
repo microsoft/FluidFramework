@@ -28,10 +28,20 @@ export function createDocument(
 		contents = [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })];
 	}
 
-	const frontMatter =
-		config.generateFrontMatter === undefined
-			? undefined
-			: config.generateFrontMatter(documentItem);
+	// Generate front-matter (if specified in configuration)
+	let frontMatter: string | undefined;
+	if (config.frontMatter !== undefined) {
+		if (typeof config.frontMatter === "string") {
+			frontMatter = config.frontMatter;
+		} else {
+			if (typeof config.frontMatter !== "function") {
+				throw new TypeError(
+					"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
+				);
+			}
+			frontMatter = config.frontMatter(documentItem);
+		}
+	}
 
 	return new DocumentNode({
 		children: contents,

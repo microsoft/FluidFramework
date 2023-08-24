@@ -35,15 +35,34 @@ const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 const SeqNumber = brandedNumberType<SeqNumber>();
 
+export interface SequenceId {
+	readonly sequenceNumber: SeqNumber;
+	readonly indexInBatch?: number;
+}
+export const sequenceIdComparator = (a: SequenceId, b: SequenceId) =>
+	a.sequenceNumber !== b.sequenceNumber
+		? a.sequenceNumber - b.sequenceNumber
+		: (a.indexInBatch ?? 0) - (b.indexInBatch ?? 0);
+export const equalSequenceIds = (a: SequenceId, b: SequenceId) => sequenceIdComparator(a, b) === 0;
+export const minSequenceId = (a: SequenceId, b: SequenceId) =>
+	sequenceIdComparator(a, b) < 0 ? a : b;
+
 /**
  * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
  */
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
 	sequenceNumber: SeqNumber;
+	indexInBatch?: number;
 }
 const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Composite(
-		[CommitBase(tChange), Type.Object({ sequenceNumber: SeqNumber })],
+		[
+			CommitBase(tChange),
+			Type.Object({
+				sequenceNumber: SeqNumber,
+				indexInBatch: Type.Optional(Type.Number()),
+			}),
+		],
 		noAdditionalProps,
 	);
 

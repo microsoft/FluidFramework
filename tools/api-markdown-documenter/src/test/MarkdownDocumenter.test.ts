@@ -178,6 +178,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 			configName: "default-config",
 			transformConfigLessApiModel: {
 				uriRoot: ".",
+				frontMatter: "<!-- Front Matter! -->",
 			},
 			renderConfig: {
 				newlineKind: NewlineKind.Lf,
@@ -195,7 +196,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 				includeTopLevelDocumentHeading: false,
 				documentBoundaries: [], // Render everything to package documents
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
-				generateFrontMatter: (documentItem): string =>
+				frontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
 			},
 			renderConfig: {
@@ -235,6 +236,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 			},
 			renderConfig: {
 				newlineKind: NewlineKind.Lf,
+				startingHeadingLevel: 2,
 			},
 		},
 	];

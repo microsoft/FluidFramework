@@ -1,27 +1,27 @@
-# TestAbstractClass
+## TestAbstractClass
 
 A test abstract class.
 
-## Signature {#testabstractclass-signature}
+### Signature {#testabstractclass-signature}
 
 ```typescript
 export declare abstract class TestAbstractClass
 ```
 
-## Constructors
+### Constructors
 
 | Constructor | Description |
 | --- | --- |
 | [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test/testabstractclass-_constructor_-constructor) | This is a constructor. |
 
-## Properties
+### Properties
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
 | [abstractPropertyGetter](docs/simple-suite-test/testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
 | [protectedProperty](docs/simple-suite-test/testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/simple-suite-test/testenum-enum) | A test protected property. |
 
-## Methods
+### Methods
 
 | Method | Modifiers | Return Type | Description |
 | --- | --- | --- | --- |

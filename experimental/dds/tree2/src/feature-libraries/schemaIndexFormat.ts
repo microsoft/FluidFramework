@@ -10,14 +10,13 @@ import {
 	FieldStoredSchema,
 	FieldKey,
 	FieldKeySchema,
-	Named,
 	SchemaData,
 	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
-import { brand, fail } from "../util";
+import { brand, fail, Named } from "../util";
 import { ICodecOptions, IJsonCodec } from "../codec";
 
 const version = "1.0.0" as const;

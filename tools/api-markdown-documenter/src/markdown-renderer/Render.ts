@@ -17,7 +17,10 @@ import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = new DocumentWriter(new StringBuilder());
-	const renderContext = getContextWithDefaults({ renderers: config.renderers });
+	const renderContext = getContextWithDefaults({
+		headingLevel: config.startingHeadingLevel,
+		renderers: config.renderers,
+	});
 
 	renderNodes(document.children, writer, renderContext);
 

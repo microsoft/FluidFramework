@@ -280,7 +280,9 @@ function TextView(props: TextViewProps): React.ReactElement {
 	return sharedText === undefined ? (
 		<Spinner />
 	) : (
-		<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+		<div className="example-app-text-area">
+			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+		</div>
 	);
 }
 

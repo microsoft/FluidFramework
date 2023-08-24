@@ -4,10 +4,9 @@
  */
 
 const {
-	loadModel,
-	DefaultPolicies,
 	DocumentationNodeType,
-	markdownDocumenterConfigurationWithDefaults,
+	getApiItemTransformationConfigurationWithDefaults,
+	loadModel,
 	renderDocumentAsMarkdown,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
@@ -42,7 +41,7 @@ async function renderApiDocumentation() {
 
 	console.groupEnd();
 
-	const config = markdownDocumenterConfigurationWithDefaults({
+	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
@@ -62,7 +61,7 @@ async function renderApiDocumentation() {
 				? "index"
 				: DefaultPolicies.defaultFileNamePolicy(apiItem);
 		},
-		frontMatterPolicy: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
+		frontMatter: (apiItem) => createHugoFrontMatter(apiItem, config, customRenderers),
 	});
 
 	console.log("Generating API documentation...");
@@ -86,7 +85,7 @@ async function renderApiDocumentation() {
 			let fileContents;
 			try {
 				fileContents = renderDocumentAsMarkdown(document, {
-					headingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
+					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
 					renderers: customRenderers,
 				});
 			} catch (error) {

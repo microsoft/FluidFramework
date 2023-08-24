@@ -1,14 +1,14 @@
-# (constructor)
+## (constructor)
 
 Test class constructor
 
-## Signature {#_constructor_-signature}
+### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-## Parameters {#_constructor_-parameters}
+### Parameters {#_constructor_-parameters}
 
 | Parameter | Type | Description |
 | --- | --- | --- |

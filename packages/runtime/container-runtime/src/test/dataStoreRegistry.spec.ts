@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry";
 
 describe("Data Store Registry Creation Tests", () => {

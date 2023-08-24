@@ -6,7 +6,7 @@
 import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";

@@ -1553,7 +1553,6 @@ class PropertyFactory {
 		// This creates a class that will have the correct name in the debugger, but I am not
 		// sure whether we want to use a dynamic eval for this. It might be flagged by some security scans
 		// It should be safe, since we control the name of constructorClasses for properties
-		// eslint-disable-next-line no-new-func
 		var propertyConstructorFunction = class extends in_baseConstructor {};
 		propertyConstructorFunction.prototype._typeid = in_typeid;
 
@@ -1774,7 +1773,7 @@ class PropertyFactory {
 					out_propertyDef.typeid = in_propertiesEntry.typeid;
 
 					// If this is a primitive type, we create it via the registered constructor
-					var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
+					var result = new templateOrConstructor(in_propertiesEntry);
 					return result;
 				} else {
 					const templateWrapper = this._getWrapper(typeid, context, in_scope);

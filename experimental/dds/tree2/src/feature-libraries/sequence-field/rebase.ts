@@ -865,6 +865,8 @@ function compareCellPositions(
 		0x6a1 /* Lineage should determine order of marks unless one is a new attach */,
 	);
 
+	// BUG 5351: The following assumption is incorrect as `newMark` may be targeting cells which were created on its branch,
+	// which will come after `baseMark` in the final sequence order.
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	// TODO: Use specified tiebreak instead of always tiebreaking left.

@@ -59,6 +59,7 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
+	getMarkdownRenderersWithDefaults,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
@@ -79,5 +80,5 @@ export {
 	verboseConsoleLogger,
 } from "./Logging";
 
-// Conveinence re-exports of API model types
+// Convenience re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

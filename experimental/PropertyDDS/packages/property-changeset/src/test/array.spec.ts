@@ -567,7 +567,7 @@ describe("Array Operations", function () {
 	function validateChangeSet(CS) {
 		const arrayCS = getArrayCS(CS);
 
-		const insertPositions = new Set();
+		const insertPositions = new Set<number>();
 		if (arrayCS.insert) {
 			arrayCS.insert.forEach((x) => insertPositions.add(x[0]));
 		}

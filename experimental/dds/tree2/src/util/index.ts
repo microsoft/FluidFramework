@@ -72,6 +72,7 @@ export {
 	useDeterministicStableId,
 	objectToMap,
 	oneFromSet,
+	Named,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

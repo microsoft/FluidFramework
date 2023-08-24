@@ -198,7 +198,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @defaultValue No front matter is generated.
 	 */
-	generateFrontMatter?: (documentItem: ApiItem) => string | undefined;
+	frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
 }
 
 /**
@@ -315,11 +315,11 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.generateFrontMatter}.
+	 * Default {@link DocumentationSuiteOptions.frontMatter}.
 	 *
 	 * Unconditionally returns `undefined` (i.e. no front-matter will be generated).
 	 */
-	export function defaultGenerateFrontMatter(): undefined {
+	export function defaultFrontMatter(): undefined {
 		return undefined;
 	}
 }
@@ -337,7 +337,7 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
-	generateFrontMatter: DefaultDocumentationSuiteOptions.defaultGenerateFrontMatter,
+	frontMatter: DefaultDocumentationSuiteOptions.defaultFrontMatter,
 };
 
 /**

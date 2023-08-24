@@ -239,7 +239,9 @@ export function getPerson(): Person {
  * Create schema supporting all type defined in this file, with the specified root field.
  */
 export function buildTestSchema<T extends FieldSchema>(rootField: T) {
-	return new SchemaBuilder("buildTestSchema", personSchemaLibrary).intoDocumentSchema(rootField);
+	return new SchemaBuilder("buildTestSchema", {}, personSchemaLibrary).intoDocumentSchema(
+		rootField,
+	);
 }
 
 export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
