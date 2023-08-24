@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-deprecated */
 
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue } from "./interfaces";
 import { ILocalValue } from "./localValues";
 
@@ -24,6 +24,7 @@ export interface IMapSetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 

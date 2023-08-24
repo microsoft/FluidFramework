@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-deprecated */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -12,6 +11,7 @@ import {
 	serializeHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue } from "./interfaces";
 
 /**
@@ -52,6 +52,7 @@ export function makeSerializable(
 	localValue: ILocalValue,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
+// eslint-disable-next-line import/no-deprecated
 ): ISerializableValue {
 	const value = localValue.makeSerialized(serializer, bind);
 	return {
@@ -108,6 +109,7 @@ export class LocalValueMaker {
 	 * Create a new local value from an incoming serialized value.
 	 * @param serializable - The serializable value to make local
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public fromSerializable(serializable: ISerializableValue): ILocalValue {
 		// Migrate from old shared value to handles
 		if (serializable.type === ValueType[ValueType.Shared]) {
