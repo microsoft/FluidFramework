@@ -72,8 +72,8 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		} else {
 			const transientInterval: TInterval = this.helpers.create(
 				"transient",
-				start,
-				end,
+				start ?? "start",
+				end ?? "end",
 				this.client,
 				IntervalType.Transient,
 			);

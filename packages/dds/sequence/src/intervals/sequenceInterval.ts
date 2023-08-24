@@ -548,14 +548,17 @@ function createPositionReference(
 
 export function createSequenceInterval(
 	label: string,
-	start: SequencePlace,
-	end: SequencePlace,
+	start: SequencePlace | undefined,
+	end: SequencePlace | undefined,
 	client: Client,
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 ): SequenceInterval {
-	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
+	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
+		start ?? "start",
+		end ?? "end",
+	);
 	assert(
 		startPos !== undefined &&
 			endPos !== undefined &&
