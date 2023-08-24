@@ -87,7 +87,10 @@ export class TscTask extends LeafTask {
 				if (this._projectReference) {
 					fullPath = this._projectReference.remapSrcDeclFile(fullPath, config);
 				}
-				const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
+				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+					fullPath,
+					TscUtils.getSourceFileVersion,
+				);
 				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
 				if (hash !== version) {
 					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
