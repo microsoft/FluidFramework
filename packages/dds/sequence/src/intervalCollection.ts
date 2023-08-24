@@ -736,7 +736,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * it is possible to control whether the interval expands to include content
 	 * inserted at its start or end.
 	 *
-	 *	See {@link InteriorSequencePlace} for more details on the model.
+	 *	See {@link SequencePlace} for more details on the model.
 	 *
 	 *	@example
 	 *

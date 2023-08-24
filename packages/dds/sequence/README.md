@@ -388,11 +388,18 @@ comments.removeIntervalById(comment.getIntervalId());
 
 ### Interval stickiness
 
-"Stickiness" refers to the behavior of intervals when text is inserted on either side of the interval. A "sticky" interval is one which expands to include text inserted directly adjacent to it.
+"Stickiness" refers to the behavior of intervals when text is inserted on either
+side of the interval. A "sticky" interval is one which expands to include text
+inserted directly adjacent to it.
 
-A "start sticky" interval is one which expands only to include text inserted to the start of it. An "end sticky" interval is the same, but with regard to text inserted adjacent to the end.
+A "start sticky" interval is one which expands only to include text inserted to
+the start of it. An "end sticky" interval is the same, but with regard to text
+inserted adjacent to the end.
 
-For example, let's look at the string "abc". If we have an interval on the character "b", what happens when we insert text on either side of it? In the below diagrams, we represent an interval by putting a caret directly underneath the characters it contains.
+For example, let's look at the string "abc". If we have an interval on the
+character "b", what happens when we insert text on either side of it? In the
+below diagrams, we represent an interval by putting a caret directly underneath
+the characters it contains.
 
 ##### Original string:
 
@@ -431,17 +438,64 @@ aXbYc
  ^^^
 ```
 
-Stickiness on either side is implemented by adding exclusivity to an existing interval. That is, if we were to take the interval `[0, 3]` and make it end-sticky, we would make the end endpoint exclusive: `[0, 4)`.
+#### Concrete Implementation 
 
-If we again look at the string `abc`, and then create an interval on the range `[1, 1]`, in code, no stickiness would be written as `collection.add(1, 1, Stickiness.NONE)` and both endpoints would be placed on `b`.
-Start stickiness would be written as `collection.add(1, 1, Stickiness.START)` and the start endpoint would be placed on `a`, while the end endpoint would be placed on `b`.
-End stickiness would be written as `collection.add(1, 1, Stickiness.END)` and the start endpoint would be placed on `b`, while the end endpoint would be placed on `c`.
-Full stickiness would be written as `collection.add(1, 1, Stickiness.FULL)` and the start endpoint would be placed on `a`, while the end endpoint would be placed on `c`.
-The interval's `LocalReference` endpoints would thus be placed on indices `(0, 1]`, `[1, 2)`, and `(0, 2)` under start, end, and full stickiness respectively.
+The above is a description of the abstract semantics of the concept of stickiness.
+In practice, this is implemented using the concept of "sides."
 
-Such exclusivity requires that it be possible to reference positions before and after the start or end of the string respectively. These positions before and after the string are not possible to reference with regular (insertion, deletion, etc.) ops, but _can_ be referenced by intervals using the values "start" and "end", rather than an integer string position.
+For a given sequence of N characters, there are 2N + 2 positions which can be
+referenced: the position immediately before and after each character, and two
+special endpoint segments denoting the position before and after the start and
+end of the sequence respectively.
 
-In operations that rely on exact positions -- for example in the case of the `OverlappingIntervalsIndex`, the "start" and "end" positions act as though they refer to the positions `0` and `string.length - 1` respectively. Internally intervals are aware of their exclusive endpoints, and can use this to give more semantically correct results in these operations.
+By placing the endpoints of an interval either before or after a character, it
+is possible to make the endpoints inclusive or exclusive. An exclusive endpoint
+in a given direction implies stickiness in that direction.
+
+Given the string "ABCD":
+
+```typescript
+// Refers to "BC". If any content is inserted before B or after C, this
+// interval will include that content
+//
+// Picture:
+// {start} - A[- B - C -]D - {end}
+// {start} - A - B - C - D - {end}
+collection.add({ pos: 0, side: Side.After }, { pos: 3, side: Side.Before }, IntervalType.SlideOnRemove);
+// Equivalent to specifying the same positions and Side.Before.
+// Refers to "ABC". Content inserted after C will be included in the
+// interval, but content inserted before A will not.
+// {start} -[A - B - C -]D - {end}
+// {start} - A - B - C - D - {end}
+collection.add(0, 3, IntervalType.SlideOnRemove);
+```
+
+In the case of the first interval shown, if text is deleted,
+
+```typescript
+// Delete the character "B"
+string.removeRange(1, 2);
+```
+
+The start point of the interval will slide to the position immediately before
+"C", and the same will be true.
+
+```
+{start} - A[- C -]D - {end}
+```
+
+In this case, text inserted immediately before "C" would be included in the
+interval.
+
+```typescript
+string.insertText(1, "EFG");
+```
+
+With the string now being,
+
+```
+{start} - A[- E - F - G - C -]D - {end}
+```
 
 ## SharedString
 
