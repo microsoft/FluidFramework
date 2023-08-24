@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryPropertiesExt } from "./telemetryTypes";
+import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes";
 import { createChildLogger } from "./logger";
 
 /**
@@ -15,11 +15,11 @@ import { createChildLogger } from "./logger";
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
 
-	clear() {
+	clear(): void {
 		this.events = [];
 	}
 
-	toTelemetryLogger() {
+	toTelemetryLogger(): ITelemetryLoggerExt {
 		return createChildLogger({ logger: this });
 	}
 
@@ -48,12 +48,14 @@ export class MockLogger implements ITelemetryBaseLogger {
 		return unmatchedExpectedEventCount === 0;
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
+	 */
 	assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (!this.matchEvents(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -85,12 +87,14 @@ ${JSON.stringify(actualEvents)}`);
 		return matchedExpectedEventCount > 0;
 	}
 
-	/** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that matchAnyEvent is true, and prints the actual/expected output if not.
+	 */
 	assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -125,7 +129,7 @@ ${JSON.stringify(actualEvents)}`);
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -142,7 +146,7 @@ ${JSON.stringify(actualEvents)}`);
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
-	) {
+	): void {
 		const actualEvents = this.events;
 		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp)) {
 			throw new Error(`${message}
@@ -200,7 +204,7 @@ ${JSON.stringify(actualEvents)}`);
 	}
 }
 
-function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt) {
+function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
 		const actualValue = actual[expectedKey];
 		if (

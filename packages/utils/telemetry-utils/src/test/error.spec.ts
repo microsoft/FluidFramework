@@ -27,7 +27,7 @@ describe("Errors", () => {
 	});
 	describe("DataProcessingError coercion via DataProcessingError.wrapIfUnrecognized", () => {
 		it("Should preserve the stack", () => {
-			const originalError = new Error();
+			const originalError = new Error("Test error");
 			const testError = DataProcessingError.wrapIfUnrecognized(
 				originalError,
 				"someCodepath",
@@ -146,13 +146,14 @@ describe("Errors", () => {
 
 		it("Should not fail coercing malformed inputs", () => {
 			const originalMalformations = [
+				// eslint-disable-next-line unicorn/no-null
 				null,
 				undefined,
 				false,
 				true,
 				3.14,
 				Symbol("Unique"),
-				() => {},
+				(): void => {},
 				[],
 				[1, 2, 3],
 			];
