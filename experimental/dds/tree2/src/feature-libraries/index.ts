@@ -51,6 +51,7 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
+	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -200,6 +201,7 @@ export {
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	treeStatus,
 } from "./untypedTree";
 
 // Split into separate import and export for compatibility with API-Extractor.
