@@ -14,12 +14,14 @@ export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,
 > extends TypedEventEmitter<TEvent> {
 	constructor(
+		// TODO: use `unknown` instead (breaking API change)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void,
 	) {
 		super();
 	}
 
-	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
+	public emit(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		try {
 			return super.emit(event, ...args);
 		} catch (error) {
