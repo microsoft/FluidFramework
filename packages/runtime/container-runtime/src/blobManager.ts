@@ -923,7 +923,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
+	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs | undefined> {
+		if (this.pendingBlobs.size === 0) {
+			return;
+		}
 		const blobs = {};
 		const localIds = new Set<PendingBlob>();
 		while (localIds.size < this.pendingBlobs.size) {

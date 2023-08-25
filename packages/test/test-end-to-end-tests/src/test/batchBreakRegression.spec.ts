@@ -12,15 +12,15 @@ import {
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
+import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -378,7 +378,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);
@@ -459,7 +460,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
-					assert(e instanceof DataProcessingError);
+					assert(isFluidError(e));
+					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				}
 			},
 		);

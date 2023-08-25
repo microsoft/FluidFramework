@@ -5,7 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -16,7 +16,6 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy, LazyPromise } from "@fluidframework/core-utils";
 import {

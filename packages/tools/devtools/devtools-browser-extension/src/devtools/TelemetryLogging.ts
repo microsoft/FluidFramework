@@ -8,6 +8,8 @@ import { PostChannel, IChannelConfiguration, IXHROverride } from "@microsoft/1ds
 import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluid-experimental/devtools-view";
 import { ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 
+const extensionVersion = chrome.runtime.getManifest().version;
+
 const fetchHttpXHROverride: IXHROverride = {
 	sendPOST: (payload, oncomplete, sync) => {
 		const telemetryRequestData =
@@ -117,6 +119,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			data: {
 				["Event.Time"]: new Date(),
 				["Event.Name"]: eventType, // Same as 'name' but is an actual column in Kusto; useful for cross-table queries
+				["Data.extensionVersion"]: extensionVersion,
 			},
 		};
 

@@ -13,8 +13,8 @@ export function safeRaiseEvent(
 	emitter: EventEmitter,
 	logger: ITelemetryLoggerExt,
 	event: string,
-	...args
-) {
+	...args: unknown[]
+): void {
 	try {
 		emitter.emit(event, ...args);
 	} catch (error) {
@@ -36,7 +36,7 @@ export function raiseConnectedEvent(
 	connected: boolean,
 	clientId?: string,
 	disconnectedReason?: string,
-) {
+): void {
 	try {
 		if (connected) {
 			emitter.emit(connectedEventName, clientId);

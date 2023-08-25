@@ -8,6 +8,7 @@ import { createSandbox } from "sinon";
 import {
 	AttachState,
 	ContainerErrorType,
+	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
@@ -19,15 +20,21 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,
-	GenericError,
 	IConfigProviderBase,
+	isFluidError,
+	isILoggingError,
 	mixinMonitoringContext,
 	MockLogger,
 } from "@fluidframework/telemetry-utils";
-import { DataProcessingError } from "@fluidframework/container-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IErrorBase, IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IRequest,
+	IResponse,
+	FluidObject,
+	IGenericError,
+} from "@fluidframework/core-interfaces";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -217,7 +224,7 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
 					});
 
@@ -231,7 +238,7 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
 					});
 
@@ -247,7 +254,7 @@ describe("Runtime", () => {
 						});
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
 					});
 
@@ -259,9 +266,10 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert(isFluidError(error));
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual(error.error.message, "Any");
+						assert.strictEqual((error as IGenericError).error.message, "Any");
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -274,9 +282,10 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert(isFluidError(error));
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual(error.error.message, "Any");
+						assert.strictEqual((error as IGenericError).error.message, "Any");
 					});
 
 					it("Batching property set properly", () => {
@@ -783,11 +792,12 @@ describe("Runtime", () => {
 					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
 					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
-					assert.ok(error instanceof DataProcessingError);
+					assert.strictEqual(error.errorType, ContainerErrorTypes.dataProcessingError);
 					assert.strictEqual(
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
+					assert(isILoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -916,7 +926,7 @@ describe("Runtime", () => {
 						containerRuntime.process(
 							{
 								type: "op",
-								clientId: "clientId",
+								clientId: "a unique, remote clientId",
 								sequenceNumber: 0,
 								contents: {
 									address: "address",
@@ -945,11 +955,12 @@ describe("Runtime", () => {
 					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
 					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
-					assert.ok(error instanceof DataProcessingError);
+					assert.strictEqual(error.errorType, ContainerErrorTypes.dataProcessingError);
 					assert.strictEqual(
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
+					assert(isILoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -1183,7 +1194,7 @@ describe("Runtime", () => {
 		describe("EntryPoint initialized correctly", () => {
 			it("when using old load method", async () => {
 				const myResponse: IResponse = {
-					mimeType: "myMimeType",
+					mimeType: "fluid/object",
 					value: "hello!",
 					status: 200,
 				};
@@ -1206,13 +1217,13 @@ describe("Runtime", () => {
 					"request method in runtime did not return the expected object",
 				);
 
-				// The entryPoint should be undefined because the deprecated load() method was used
-				assert(containerRuntime.getEntryPoint !== undefined); // The function should exist, though
+				// The entryPoint should use the request handler we passed in the runtime's constructor
+				assert(containerRuntime.getEntryPoint !== undefined);
 				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.strictEqual(
+				assert.notStrictEqual(
 					actualEntryPoint,
 					undefined,
-					"entryPoint was not undefined as expected",
+					"entryPoint was not the expected object",
 				);
 			});
 

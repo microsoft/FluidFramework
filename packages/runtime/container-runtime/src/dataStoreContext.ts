@@ -58,6 +58,8 @@ import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/run
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	generateStack,
 	ITelemetryLoggerExt,
 	LoggingError,
@@ -65,10 +67,6 @@ import {
 	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import {
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,

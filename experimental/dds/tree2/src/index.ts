@@ -124,6 +124,8 @@ export {
 
 export {
 	IdAllocator,
+	MemoizedIdRangeAllocator,
+	IdRange,
 	ModularChangeset,
 	EditDescription,
 	FieldChangeHandler,
@@ -260,6 +262,8 @@ export {
 	compileSyntaxTree,
 	nodeKeyFieldKey,
 	SchemaLintConfiguration,
+	TreeStatus,
+	treeStatus,
 } from "./feature-libraries";
 
 export {
@@ -272,6 +276,9 @@ export {
 	ISharedTreeBranchView,
 	ViewEvents,
 	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
 } from "./shared-tree";
 
 export type {
