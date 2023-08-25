@@ -61,7 +61,6 @@ describe("Fuzz - undo/redo", () => {
 			const tree = initialState.clients[0].channel;
 			initialState.initialTreeState = toJsonableTree(tree);
 			initialState.anchors = [];
-			// creates an initial anchor for each tree
 			for (const client of initialState.clients) {
 				initialState.anchors.push(createAnchors(client.channel));
 			}

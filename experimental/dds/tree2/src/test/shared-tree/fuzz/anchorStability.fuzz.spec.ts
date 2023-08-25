@@ -9,7 +9,7 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { UpPath, Anchor, Value } from "../../../core";
 import { SharedTreeTestFactory, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
@@ -18,7 +18,7 @@ import { onCreate, initialTreeState, createAnchors, validateAnchors } from "./fu
 import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
-	firstAnchor?: Anchor;
+	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
 /**
@@ -50,12 +50,11 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
-		let anchors: Map<Anchor, [UpPath, Value]>;
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
 			const tree = initialState.clients[0].channel;
 			tree.transaction.start();
-			anchors = createAnchors(tree);
+			initialState.anchors = [createAnchors(initialState.clients[0].channel)];
 		});
 
 		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
@@ -63,7 +62,9 @@ describe("Fuzz - anchor stability", () => {
 			const tree = finalState.clients[0].channel;
 			tree.transaction.abort();
 			validateTree(tree, [initialTreeState]);
-			validateAnchors(finalState.clients[0].channel, anchors, false);
+			const anchors = finalState.anchors;
+			assert(anchors !== undefined, "Anchors should be defined");
+			validateAnchors(finalState.clients[0].channel, anchors[0], true);
 		});
 
 		createDDSFuzzSuite(model, {
@@ -96,18 +97,25 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
-		let anchors: Map<Anchor, [UpPath, Value]>;
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			anchors = createAnchors(initialState.clients[0].channel);
+			initialState.anchors = [];
+			for (const client of initialState.clients) {
+				initialState.anchors.push(createAnchors(client.channel));
+			}
 		});
 
 		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
-			validateAnchors(finalState.clients[0].channel, anchors, false);
+			const anchors = finalState.anchors;
+			assert(anchors !== undefined, "Anchors should be defined");
+			for (const [i, client] of finalState.clients.entries()) {
+				validateAnchors(client.channel, anchors[i], false);
+			}
 		});
 
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
+			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			numberOfClients: 2,
 			emitter,
 		});
