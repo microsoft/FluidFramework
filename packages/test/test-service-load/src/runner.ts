@@ -241,7 +241,7 @@ async function runnerProcess(
 			if (stashedOps !== undefined) {
 				const parsed = JSON.parse(stashedOps);
 				if (
-					parsed.pendingRuntimeState.pending === undefined &&
+					parsed?.pendingRuntimeState?.pending === undefined &&
 					Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0
 				) {
 					parsed.clientId = undefined;
