@@ -15,7 +15,6 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -30,7 +29,6 @@ export class RiddlerResources implements IResources {
 
 	constructor(
 		public readonly config: Provider,
-		public readonly tenantsCollection: ICollection<ITenantDocument>,
 		public readonly tenantsCollectionName: string,
 		public readonly mongoManager: MongoManager,
 		public readonly port: any,
@@ -149,7 +147,6 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 		return new RiddlerResources(
 			config,
-			collection,
 			tenantsCollectionName,
 			mongoManager,
 			port,
@@ -169,8 +166,9 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
 			resources.webServerFactory,
-			resources.tenantsCollection,
+			resources.tenantsCollectionName,
 			resources.port,
+			resources.mongoManager,
 			resources.loggerFormat,
 			resources.baseOrdererUrl,
 			resources.defaultHistorianUrl,

@@ -5,20 +5,21 @@
 
 import { getRandomName } from "@fluidframework/server-services-client";
 import {
+	MongoManager,
 	ISecretManager,
 	ITenantStorage,
 	ITenantOrderer,
 	ITenantCustomData,
 	ICache,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import { handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { getParam } from "@fluidframework/server-services-utils";
-import { ITenantDocument, TenantManager } from "./tenantManager";
+import { TenantManager } from "./tenantManager";
 
 export function create(
-	tenantsCollection: ICollection<ITenantDocument>,
+	collectionName: string,
+	mongoManager: MongoManager,
 	baseOrderUrl: string,
 	defaultHistorianUrl: string,
 	defaultInternalHistorianUrl: string,
@@ -29,7 +30,8 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const manager = new TenantManager(
-		tenantsCollection,
+		mongoManager,
+		collectionName,
 		baseOrderUrl,
 		defaultHistorianUrl,
 		defaultInternalHistorianUrl,

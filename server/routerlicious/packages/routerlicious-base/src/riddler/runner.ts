@@ -5,19 +5,18 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 import {
+	MongoManager,
 	IRunner,
 	ISecretManager,
 	IWebServerFactory,
 	IWebServer,
 	ICache,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { runnerHttpServerStop } from "../utils";
 import * as app from "./app";
-import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerRunner implements IRunner {
 	private server: IWebServer;
@@ -27,8 +26,9 @@ export class RiddlerRunner implements IRunner {
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
-		private readonly tenantsCollection: ICollection<ITenantDocument>,
+		private readonly collectionName: string,
 		private readonly port: string | number,
+		private readonly mongoManager: MongoManager,
 		private readonly loggerFormat: string,
 		private readonly baseOrdererUrl: string,
 		private readonly defaultHistorianUrl: string,
@@ -46,7 +46,8 @@ export class RiddlerRunner implements IRunner {
 
 		// Create the HTTP server and attach alfred to it
 		const riddler = app.create(
-			this.tenantsCollection,
+			this.collectionName,
+			this.mongoManager,
 			this.loggerFormat,
 			this.baseOrdererUrl,
 			this.defaultHistorianUrl,

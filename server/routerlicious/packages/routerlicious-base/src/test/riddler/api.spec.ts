@@ -15,12 +15,10 @@ import {
 } from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
 import Sinon from "sinon";
-import { ITenantDocument } from "../../riddler";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
 const rawDeltasCollectionName = "testRawDeltas";
-const testTenantsCollectionName = "test-tenantAdmins";
 
 class TestSecretManager implements ISecretManager {
 	constructor(private readonly encryptionKey: string) {}
@@ -40,7 +38,7 @@ class TestSecretManager implements ISecretManager {
 
 describe("Routerlicious", () => {
 	describe("Riddler", () => {
-		describe("API", async () => {
+		describe("API", () => {
 			const document = {
 				_id: "doc-id",
 				content: "Hello, World!",
@@ -49,12 +47,8 @@ describe("Routerlicious", () => {
 				[documentsCollectionName]: [document],
 				[deltasCollectionName]: [],
 				[rawDeltasCollectionName]: [],
-				[testTenantsCollectionName]: [],
 			});
 			const defaultMongoManager = new MongoManager(defaultDbFactory);
-			const defaultDb = await defaultMongoManager.getDatabase();
-			const defaultTenantsCollection =
-				defaultDb.collection<ITenantDocument>(testTenantsCollectionName);
 			const testTenantId = "test-tenant-id";
 
 			let app: express.Application;
@@ -79,6 +73,7 @@ describe("Routerlicious", () => {
 				};
 
 				beforeEach(() => {
+					const testCollectionName = "test-tenantAdmins";
 					const testLoggerFormat = "test-logger-format";
 					const testBaseOrdererUrl = "test-base-orderer-url";
 					const testExtHistorianUrl = "test-ext-historian-url";
@@ -91,7 +86,8 @@ describe("Routerlicious", () => {
 					const testRiddlerStorageRequestMetricIntervalMs = 60000;
 
 					app = riddlerApp.create(
-						defaultTenantsCollection,
+						testCollectionName,
+						defaultMongoManager,
 						testLoggerFormat,
 						testBaseOrdererUrl,
 						testExtHistorianUrl,

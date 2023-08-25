@@ -13,9 +13,9 @@ import {
 	ITenantOrderer,
 	ITenantStorage,
 	KeyName,
+	MongoManager,
 	ISecretManager,
 	ICache,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -84,7 +84,8 @@ export class TenantManager {
 		Object.values(StorageRequestMetric),
 	);
 	constructor(
-		private readonly tenantsCollection: ICollection<ITenantDocument>,
+		private readonly mongoManager: MongoManager,
+		private readonly collectionName: string,
 		private readonly baseOrdererUrl: string,
 		private readonly defaultHistorianUrl: string,
 		private readonly defaultInternalHistorianUrl: string,
@@ -287,6 +288,8 @@ export class TenantManager {
 		orderer: ITenantOrderer,
 		customData: ITenantCustomData,
 	): Promise<ITenantConfig & { key: string }> {
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 
 		const tenantKey1 = this.generateTenantKey();
@@ -315,7 +318,7 @@ export class TenantManager {
 		}
 
 		const id = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.insertOne({
+			collection.insertOne({
 				_id: tenantId,
 				key: encryptedTenantKey1,
 				secondaryKey: encryptedTenantKey2,
@@ -334,8 +337,11 @@ export class TenantManager {
 	 * Updates the tenant configured storage provider
 	 */
 	public async updateStorage(tenantId: string, storage: ITenantStorage): Promise<ITenantStorage> {
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
+
 		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.update({ _id: tenantId }, { storage }, null),
+			collection.update({ _id: tenantId }, { storage }, null),
 		);
 
 		return (await this.getTenantDocument(tenantId)).storage;
@@ -345,7 +351,10 @@ export class TenantManager {
 	 * Updates the tenant configured orderer
 	 */
 	public async updateOrderer(tenantId: string, orderer: ITenantOrderer): Promise<ITenantOrderer> {
-		await this.tenantsCollection.update({ _id: tenantId }, { orderer }, null);
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
+
+		await collection.update({ _id: tenantId }, { orderer }, null);
 
 		return (await this.getTenantDocument(tenantId)).orderer;
 	}
@@ -357,12 +366,14 @@ export class TenantManager {
 		tenantId: string,
 		customData: ITenantCustomData,
 	): Promise<ITenantCustomData> {
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
 		const accessInfo = customData.externalStorageData?.accessInfo;
 		if (accessInfo) {
 			customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
 		}
 		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.update({ _id: tenantId }, { customData }, null),
+			collection.update({ _id: tenantId }, { customData }, null),
 		);
 		const tenantDocument = await this.getTenantDocument(tenantId, true);
 		if (tenantDocument.disabled) {
@@ -523,8 +534,10 @@ export class TenantManager {
 			keyName === KeyName.key2
 				? { secondaryKey: encryptedNewTenantKey }
 				: { key: encryptedNewTenantKey };
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
 		await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.update({ _id: tenantId }, updateKey, null),
+			collection.update({ _id: tenantId }, updateKey, null),
 		);
 
 		return tenantKeys;
@@ -649,8 +662,11 @@ export class TenantManager {
 		tenantId: string,
 		includeDisabledTenant = false,
 	): Promise<ITenantDocument> {
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
+
 		const found = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.findOne({ _id: tenantId }),
+			collection.findOne({ _id: tenantId }),
 		);
 		if (!found || (found.disabled && !includeDisabledTenant)) {
 			return null;
@@ -665,9 +681,10 @@ export class TenantManager {
 	 * Retrieves all the raw database tenant documents
 	 */
 	private async getAllTenantDocuments(includeDisabledTenant = false): Promise<ITenantDocument[]> {
-		const allFound = await this.runWithDatabaseRequestCounter(async () =>
-			this.tenantsCollection.findAll(),
-		);
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
+
+		const allFound = await this.runWithDatabaseRequestCounter(async () => collection.findAll());
 
 		allFound.forEach((found) => {
 			this.attachDefaultsToTenantDocument(found);
@@ -683,6 +700,8 @@ export class TenantManager {
 	 * If no scheduledDeletionTime is provided the tenant is only soft-deleted.
 	 */
 	public async deleteTenant(tenantId: string, scheduledDeletionTime?: Date): Promise<void> {
+		const db = await this.mongoManager.getDatabase();
+		const collection = db.collection<ITenantDocument>(this.collectionName);
 		const softDelete = !scheduledDeletionTime || scheduledDeletionTime.getTime() > Date.now();
 		if (softDelete) {
 			const query = {
@@ -691,7 +710,7 @@ export class TenantManager {
 			};
 
 			await this.runWithDatabaseRequestCounter(async () =>
-				this.tenantsCollection.update(
+				collection.update(
 					query,
 					{
 						disabled: true,
@@ -702,7 +721,7 @@ export class TenantManager {
 			);
 		} else {
 			await this.runWithDatabaseRequestCounter(async () =>
-				this.tenantsCollection.deleteOne({ _id: tenantId }),
+				collection.deleteOne({ _id: tenantId }),
 			);
 		}
 		// invalidate cache
