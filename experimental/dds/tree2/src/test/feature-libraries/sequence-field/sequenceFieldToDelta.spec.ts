@@ -12,10 +12,12 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 	ChangesetLocalId,
+	makeAnonChange,
 } from "../../../core";
 import {
 	FieldChange,
 	FieldKinds,
+	MemoizedIdRangeAllocator,
 	NodeChangeset,
 	SequenceField as SF,
 	singleTextCursor,
@@ -31,11 +33,11 @@ const nodeX = { type, value: 0 };
 const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const moveId = brand<ChangesetLocalId>(4242);
+const moveId2 = brand<ChangesetLocalId>(4343);
 const tag: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
-const tag3: RevisionTag = mintRevisionTag();
-const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
+const deltaMoveId = brandOpaque<Delta.MoveId>(0);
 const fooField = brand<FieldKey>("foo");
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
@@ -46,12 +48,20 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 
 function toDelta(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+	return SF.sequenceFieldToDelta(
+		makeAnonChange(change),
+		TestChange.toDelta,
+		MemoizedIdRangeAllocator.fromNextId(),
+	);
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
+	return SF.sequenceFieldToDelta(
+		makeAnonChange(change),
+		() => fail("Unexpected call to child ToDelta"),
+		MemoizedIdRangeAllocator.fromNextId(),
+	);
 }
 
 const childChange1 = TestChange.mint([0], 1);
@@ -120,7 +130,11 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, changes);
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+		const actual = SF.sequenceFieldToDelta(
+			makeAnonChange(changeset),
+			deltaFromChild,
+			MemoizedIdRangeAllocator.fromNextId(),
+		);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
@@ -160,6 +174,50 @@ describe("SequenceField - toDelta", () => {
 			count: 10,
 		};
 		const expected: Delta.MarkList = [42, moveOut, 8, moveIn];
+		const actual = toDelta(changeset);
+		assert.deepStrictEqual(actual, expected);
+	});
+
+	it("multiple moves from different revisions", () => {
+		const changeset = [
+			Mark.moveOut(10, { revision: tag1, localId: moveId }),
+			Mark.moveIn(10, { revision: tag1, localId: moveId }),
+			Mark.moveOut(2, { revision: tag2, localId: moveId }),
+			Mark.moveIn(2, { revision: tag2, localId: moveId }),
+			Mark.moveOut(3, { revision: tag1, localId: moveId2 }),
+			Mark.moveIn(3, { revision: tag1, localId: moveId2 }),
+		];
+		const moveOut1: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			moveId: brandOpaque<Delta.MoveId>(0),
+			count: 10,
+		};
+		const moveIn1: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			moveId: brandOpaque<Delta.MoveId>(0),
+			count: 10,
+		};
+		const moveOut2: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			moveId: brandOpaque<Delta.MoveId>(10),
+			count: 2,
+		};
+		const moveIn2: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			moveId: brandOpaque<Delta.MoveId>(10),
+			count: 2,
+		};
+		const moveOut3: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			moveId: brandOpaque<Delta.MoveId>(12),
+			count: 3,
+		};
+		const moveIn3: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			moveId: brandOpaque<Delta.MoveId>(12),
+			count: 3,
+		};
+		const expected: Delta.MarkList = [moveOut1, moveIn1, moveOut2, moveIn2, moveOut3, moveIn3];
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -315,7 +373,11 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+		const actual = SF.sequenceFieldToDelta(
+			makeAnonChange(changeset),
+			deltaFromChild,
+			MemoizedIdRangeAllocator.fromNextId(),
+		);
 		assertMarkListEqual(actual, expected);
 	});
 

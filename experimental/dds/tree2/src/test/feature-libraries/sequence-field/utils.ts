@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	IdAllocator,
 	idAllocatorFromMaxId,
+	MemoizedIdRangeAllocator,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
@@ -163,7 +164,11 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+	return SF.sequenceFieldToDelta(
+		makeAnonChange(change),
+		TestChange.toDelta,
+		MemoizedIdRangeAllocator.fromNextId(),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

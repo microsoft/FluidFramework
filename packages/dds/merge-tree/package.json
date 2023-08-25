@@ -112,9 +112,6 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"ClassDeclaration_Client": {
-				"forwardCompat": false
-			},
 			"InterfaceDeclaration_IMergeTreeDelta": {
 				"backCompat": false
 			},
@@ -238,6 +235,9 @@
 			"RemovedFunctionDeclaration_ordinalToArray": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"forwardCompat": false
 			}
 		}
 	}

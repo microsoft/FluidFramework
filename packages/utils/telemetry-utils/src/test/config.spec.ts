@@ -13,29 +13,30 @@ import {
 } from "../config";
 import { TelemetryDataTag } from "../logger";
 
+const getMockStore = (settings: Record<string, string>): Storage => {
+	const ops: string[] = [];
+	return {
+		getItem: (key: string): string | null => {
+			ops.push(key);
+			return settings[key];
+		},
+		getOps: (): Readonly<string[]> => ops,
+		length: Object.keys(settings).length,
+		clear: (): void => {},
+		// eslint-disable-next-line unicorn/no-null
+		key: (_index: number): string | null => null,
+		removeItem: (_key: string): void => {},
+		setItem: (_key: string, _value: string): void => {},
+	};
+};
+
+const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	};
+};
+
 describe("Config", () => {
-	const getMockStore = (settings: Record<string, string>): Storage => {
-		const ops: string[] = [];
-		return {
-			getItem: (key: string): string | null => {
-				ops.push(key);
-				return settings[key];
-			},
-			getOps: (): Readonly<string[]> => ops,
-			length: Object.keys(settings).length,
-			clear: () => {},
-			key: (_index: number): string | null => null,
-			removeItem: (_key: string) => {},
-			setItem: (_key: string, _value: string) => {},
-		};
-	};
-
-	const untypedProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
-		return {
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		};
-	};
-
 	it("Typing - storage provider", () => {
 		const settings = {
 			number: "1",
@@ -219,6 +220,7 @@ describe("Config", () => {
 
 		getRawConfig(name: string): ConfigTypes {
 			// The point here is to use `getSetting`
+			// eslint-disable-next-line unicorn/no-null
 			const val = this.getSetting(name, null);
 			return val === null ? undefined : val;
 		}
