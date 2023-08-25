@@ -133,7 +133,7 @@ describe("getPendingLocalState", () => {
 		await assert.doesNotReject(handleP3);
 		(await handleP3).attachGraph();
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1];
+		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 3);
 
 		const summaryData = validateSummary(runtime);

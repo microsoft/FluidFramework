@@ -3874,7 +3874,7 @@ export class ContainerRuntime
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GetPendingLocalState_Runtime",
 			waitBlobsToAttach,
-			attachmentBlobsSize: Object.keys(pendingAttachmentBlobs).length,
+			attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
 			pendingOpsSize: pending?.pendingStates.length,
 		});
 
