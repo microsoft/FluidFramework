@@ -17,9 +17,11 @@ export enum LumberEventName {
 	UnitTestEvent = "UnitTestEvent",
 
 	// Lambdas
+	AlfredRunner = "AlfredRunner",
 	ClientSummary = "ClientSummary",
 	DeliHandler = "DeliHandler",
 	KafkaRunner = "KafkaRunner",
+	RiddlerRunner = "RiddlerRunner",
 	ScribeHandler = "ScribeHandler",
 	ServiceSummary = "ServiceSummary",
 	SummaryReader = "SummaryReader",
@@ -49,4 +51,5 @@ export enum LumberEventName {
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
 	ReprocessOps = "ReprocessOps",
+	MongoMonitoring = "MongoMonitoring",
 }

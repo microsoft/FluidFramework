@@ -4,7 +4,11 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import {
+	ContainerMessageType,
+	ContainerRuntimeMessage,
+	SequencedContainerRuntimeMessage,
+} from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -24,6 +28,11 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
+	/**
+	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
+	 * @param remoteMessage - A message from another client, likely a chunked/grouped op
+	 * @returns the ungrouped, unchunked, unpacked SequencedContainerRuntimeMessage encapsulated in the remote message
+	 */
 	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
@@ -32,11 +41,12 @@ export class RemoteMessageProcessor {
 			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
 			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
+				// unpack and unchunk the ungrouped message in place
 				unpackRuntimeMessage(ungroupedMessage2);
-
 				const chunkProcessingResult =
 					this.opSplitter.processRemoteMessage(ungroupedMessage2);
 				ungroupedMessage2 = chunkProcessingResult.message;
+
 				if (chunkProcessingResult.state !== "Processed") {
 					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
@@ -92,21 +102,30 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
 };
 
 /**
- * For a given message, it moves the nested contents and type on level up.
+ * For a given message, it moves the nested ContainerRuntimeMessage props one level up.
  *
+ * The return type illustrates the assumption that the message param
+ * becomes a ContainerRuntimeMessage by the time the function returns
+ * (but there is no runtime validation of the 'type' or 'compatDetails' values)
  */
-const unpack = (message: ISequencedDocumentMessage) => {
+function unpack(
+	message: ISequencedDocumentMessage,
+): asserts message is SequencedContainerRuntimeMessage {
 	const innerContents = message.contents as ContainerRuntimeMessage;
-	message.type = innerContents.type;
-	message.contents = innerContents.contents;
-};
+
+	// We're going to turn message into a SequencedContainerRuntimeMessage in-place
+	const sequencedContainerRuntimeMessage = message as SequencedContainerRuntimeMessage;
+	sequencedContainerRuntimeMessage.type = innerContents.type;
+	sequencedContainerRuntimeMessage.contents = innerContents.contents;
+	sequencedContainerRuntimeMessage.compatDetails = innerContents.compatDetails;
+}
 
 /**
  * Unpacks runtime messages.
  *
  * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
- * @returns unpacked runtime message
+ * @returns whether the given message was unpacked
  *
  * @internal
  */
@@ -120,7 +139,11 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 	}
 
 	// legacy op format?
-	if (message.contents.address !== undefined && message.contents.type === undefined) {
+	// TODO: Unsure if this is a real format we should be concerned with. There doesn't appear to be anything prepared to handle the address member.
+	if (
+		(message.contents as { address?: unknown }).address !== undefined &&
+		(message.contents as { type?: unknown }).type === undefined
+	) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
 	} else {
 		// new format

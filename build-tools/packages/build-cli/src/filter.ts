@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Package } from "@fluidframework/build-tools";
+import { Context, Logger, Package } from "@fluidframework/build-tools";
 import path from "node:path";
-import { ReleaseGroup } from "./releaseGroups";
+import { filterFlags, selectionFlags } from "./flags";
+import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
@@ -33,6 +34,16 @@ export interface PackageSelectionCriteria {
 }
 
 /**
+ * A pre-defined PackageSelectionCriteria that selects all packages.
+ */
+export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
+	independentPackages: true,
+	releaseGroups: [...knownReleaseGroups],
+	releaseGroupRoots: [...knownReleaseGroups],
+	directory: undefined,
+};
+
+/**
  * The criteria that should be used for filtering package-like objects from a collection.
  */
 export interface PackageFilterOptions {
@@ -56,20 +67,15 @@ export interface PackageFilterOptions {
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageSelectionFlags = (flags: any): PackageSelectionCriteria => {
+export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelectionCriteria => {
 	const options: PackageSelectionCriteria =
 		flags.all === true
-			? {
-					independentPackages: true,
-					releaseGroups: ["all"],
-					releaseGroupRoots: ["all"],
-					directory: undefined,
-			  }
+			? AllPackagesSelectionCriteria
 			: {
 					independentPackages: flags.packages ?? false,
 					releaseGroups: flags.releaseGroup ?? [],
 					releaseGroupRoots: flags.releaseGroupRoot ?? [],
-					directory: flags.directory,
+					directory: flags.dir,
 			  };
 
 	return options;
@@ -80,7 +86,7 @@ export const parsePackageSelectionFlags = (flags: any): PackageSelectionCriteria
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageFilterFlags = (flags: any): PackageFilterOptions => {
+export const parsePackageFilterFlags = (flags: filterFlags): PackageFilterOptions => {
 	const options: PackageFilterOptions = {
 		private: flags.private,
 		scope: flags.scope,
@@ -150,7 +156,7 @@ const selectPackagesFromContext = (
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
 			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				Package.load(pkg.packageJsonFileName, pkg.group, undefined, {
 					kind: "independentPackage",
 				}),
 			);
@@ -170,9 +176,21 @@ const selectPackagesFromContext = (
 
 	// Select release group root packages
 	for (const rg of selection.releaseGroupRoots ?? []) {
-		const dir = context.packagesInReleaseGroup(rg)[0].directory;
-		const pkg = Package.loadDir(dir, rg);
-		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
+		const packages = context.packagesInReleaseGroup(rg);
+		if (packages.length === 0) {
+			continue;
+		}
+		const { monoRepo } = packages[0];
+		if (monoRepo === undefined) {
+			throw new Error(
+				`Package is supposed to be a release group root but cannot find release group: ${rg}`,
+			);
+		}
+
+		const loadedPackage: PackageWithKind = Package.loadDir(monoRepo.repoPath, rg, monoRepo, {
+			kind: "releaseGroupRootPackage",
+		});
+		selected.push(loadedPackage);
 	}
 
 	return selected;

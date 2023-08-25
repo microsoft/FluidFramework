@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -35,23 +36,29 @@ import {
 	ISharedTree,
 	ISharedTreeView,
 	SharedTreeFactory,
+	TreeContent,
+	ViewEvents,
 	createSharedTreeView,
 } from "../shared-tree";
 import {
+	buildForest,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	FieldKinds,
+	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
-	namedTreeSchema,
+	NodeKeyIndex,
+	NodeKeyManager,
 	NodeReviver,
+	normalizeNewFieldContent,
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
+	SchemaBuilder,
 	singleTextCursor,
 } from "../feature-libraries";
 import {
@@ -63,10 +70,7 @@ import {
 	mapCursorField,
 	JsonableTree,
 	SchemaData,
-	fieldSchema,
-	GlobalFieldKey,
 	rootFieldKey,
-	rootFieldKeySymbol,
 	Value,
 	compareUpPaths,
 	UpPath,
@@ -78,13 +82,21 @@ import {
 	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
-	InMemoryStoredSchemaRepository,
 	TaggedChange,
+	TreeSchemaBuilder,
+	treeSchema,
+	FieldUpPath,
+	TreeSchemaIdentifier,
+	TreeStoredSchema,
+	IForestSubscription,
+	InMemoryStoredSchemaRepository,
+	initializeForest,
 } from "../core";
-import { JsonCompatible, brand, makeArray } from "../util";
-import { ICodecFamily } from "../codec";
+import { JsonCompatible, Named, brand, makeArray } from "../util";
+import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities
 
@@ -325,7 +337,7 @@ export class TestTreeProvider {
 }
 
 /**
- * A test helper class that creates one or more SharedTrees connected to a mock runtime.
+ * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
@@ -352,7 +364,10 @@ export class TestTreeProviderLite {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
-			const runtime = new MockFluidDataStoreRuntime();
+			const runtime = new MockFluidDataStoreRuntime({
+				clientId: `test-client-${i}`,
+				id: "test",
+			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
@@ -406,6 +421,47 @@ export function spyOnMethod(
 	return () => {
 		prototype[methodName] = method;
 	};
+}
+
+/**
+ * @returns `true` iff the given delta has a visible impact on the document tree.
+ */
+export function isDeltaVisible(delta: Delta.MarkList): boolean {
+	for (const mark of delta) {
+		if (typeof mark === "object") {
+			const type = mark.type;
+			switch (type) {
+				case Delta.MarkType.Modify: {
+					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+						return true;
+					}
+					if (mark.fields !== undefined) {
+						for (const field of mark.fields.values()) {
+							if (isDeltaVisible(field)) {
+								return true;
+							}
+						}
+					}
+					break;
+				}
+				case Delta.MarkType.Insert: {
+					if (mark.isTransient !== true) {
+						return true;
+					}
+					break;
+				}
+				case Delta.MarkType.MoveOut:
+				case Delta.MarkType.MoveIn:
+				case Delta.MarkType.Delete:
+					return true;
+					break;
+				default:
+					unreachableCase(type);
+			}
+			return false;
+		}
+	}
+	return false;
 }
 
 /**
@@ -517,35 +573,53 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
 }
 
-export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
-	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-	return makeTreeFromCursor(cursors, jsonSchema);
+export function viewWithContent(
+	content: TreeContent,
+	args?: {
+		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyIndex?: NodeKeyIndex;
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	},
+): ISharedTreeView {
+	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, content.schema);
+	const forest = buildForest(schema);
+	initializeForest(
+		forest,
+		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
+	);
+	const view = createSharedTreeView({ ...args, forest, schema });
+	return view;
 }
 
+const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
+export const jsonSequenceRootSchema = new SchemaBuilder(
+	"JsonSequenceRoot",
+	{},
+	jsonSchema,
+).intoDocumentSchema(jsonSequenceRootField);
+
 /**
- * @remarks Remove this once schematize can do the work.
+ * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
+ *
+ * If the root is not an array, a single item root sequence is used.
  */
-export function makeTreeFromCursor(
-	cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
-	schemaData: SchemaData,
-): ISharedTreeView {
-	const schemaPolicy = defaultSchemaPolicy;
-	const tree: ISharedTreeView = createSharedTreeView();
-	// TODO: use ISharedTreeView.schematize once it supports cursors
-	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
-	const field = tree.editor.sequenceField({
-		parent: undefined,
-		field: rootFieldKeySymbol,
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
+	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
+	const tree = viewWithContent({
+		schema: jsonSequenceRootSchema,
+		initialTree: cursors,
 	});
-	if (!Array.isArray(cursor) || cursor.length > 0) {
-		field.insert(0, cursor);
-	}
 	return tree;
 }
 
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	return jsonableTreeFromForest(tree.forest);
+}
+
+export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
 	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
 	return jsonable;
@@ -563,20 +637,20 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 }
 
 /**
- * Helper function to insert node at a given index.
+ * Helper function to insert a jsonString at a given index of the documents root field.
  *
  * @param tree - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
 }
 
@@ -591,39 +665,20 @@ export function expectJsonTree(
 	}
 }
 
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	localFields: {
-		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
-	},
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
-};
-
 /**
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state?: JsonableTree,
-	schema: SchemaData = testSchema,
+	state: JsonableTree | undefined,
+	schema: SchemaData,
 ): void {
 	tree.storedSchema.update(schema);
 
 	if (state) {
 		// Apply an edit to the tree which inserts a node with a value
 		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 		field.insert(0, writeCursor);
 	}
 }
@@ -635,6 +690,11 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
 	}
+}
+
+export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPath): void {
+	expectEqualPaths(path.parent, expectedPath.parent);
+	assert.equal(path.field, expectedPath.field);
 }
 
 export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
@@ -689,36 +749,92 @@ export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, D
 	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
 }
 
+export interface EncodingTestData<TDecoded, TEncoded> {
+	/**
+	 * Contains test cases which should round-trip successfully through all persisted formats.
+	 */
+	successes: [name: string, data: TDecoded][];
+	/**
+	 * Contains malformed encoded data which a particular version's codec should fail to decode.
+	 */
+	failures?: { [version: string]: [name: string, data: TEncoded][] };
+}
+
+const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
+
 /**
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
+ *
+ * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ *
+ * @privateRemarks - It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * but since these round trip tests start with the decoded format (not the encoded format),
+ * they require assert.deepEqual to be a valid comparison.
+ * This can be problematic for some cases (for example edits containing cursors).
+ *
+ * TODO:
+ * - Consider extending this to allow testing in a way where encoded formats (which can safely use deepEqual) are compared.
+ * - Consider adding a custom comparison function for non-encoded data.
+ * - Consider adding a way to test that specific values have specific encodings.
+ * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
+ * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded>(
+export function makeEncodingTestSuite<TDecoded, TEncoded>(
 	family: ICodecFamily<TDecoded>,
-	encodingTestData: [name: string, data: TDecoded][],
+	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
-			for (const [name, data] of encodingTestData) {
-				describe(name, () => {
-					it("json roundtrip", () => {
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
-						assert.deepEqual(decoded, data);
-					});
+			// A common pattern to avoid validating the same portion of encoded data multiple times
+			// is for a codec to either validate its data is in schema itself and not return `encodedSchema`,
+			// or for it to not validate its own data but return an `encodedSchema` and let the caller use that.
+			// This block makes sure we still validate the encoded data schema for codecs following the latter
+			// pattern.
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					: codec.json;
+			describe("can json roundtrip", () => {
+				for (const includeStringification of [false, true]) {
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data] of encodingTestData.successes) {
+								it(name, () => {
+									let encoded = jsonCodec.encode(data);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = jsonCodec.decode(encoded);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
+				}
+			});
 
-					it("json roundtrip with stringification", () => {
-						const encoded = JSON.stringify(codec.json.encode(data));
-						const decoded = codec.json.decode(JSON.parse(encoded));
-						assert.deepEqual(decoded, data);
-					});
-
-					it("binary roundtrip", () => {
+			describe("can binary roundtrip", () => {
+				for (const [name, data] of encodingTestData.successes) {
+					it(name, () => {
 						const encoded = codec.binary.encode(data);
 						const decoded = codec.binary.decode(encoded);
-						assert.deepEqual(decoded, data);
+						assertEquivalent(decoded, data);
 					});
+				}
+			});
+
+			const failureCases = encodingTestData.failures?.[version] ?? [];
+			if (failureCases.length > 0) {
+				describe("rejects malformed data", () => {
+					for (const [name, encodedData] of failureCases) {
+						it(name, () => {
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
+						});
+					}
 				});
 			}
 		});
@@ -756,4 +872,16 @@ export function defaultRevisionMetadataFromChanges(
 		}
 	}
 	return revisionMetadataSourceFromInfo(revInfos);
+}
+
+/**
+ * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ */
+export function namedTreeSchema(
+	data: TreeSchemaBuilder & Named<string>,
+): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+	return {
+		name: brand(data.name),
+		...treeSchema({ ...data }),
+	};
 }

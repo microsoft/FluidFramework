@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { ILoggingError } from "@fluidframework/core-interfaces";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -18,7 +19,7 @@ import {
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 
 import { createRootSummarizerNode, IFetchSnapshotResult, IRootSummarizerNode } from "../summary";
 // eslint-disable-next-line import/no-internal-modules
@@ -35,7 +36,7 @@ describe("Runtime", () => {
 			let midNode: ISummarizerNode | undefined;
 			let leafNode: ISummarizerNode | undefined;
 
-			const logger = new TelemetryNullLogger();
+			const logger = createChildLogger();
 			let summarizeCalls = [0, 0, 0];
 			function assertSummarizeCalls(...expected: [root: number, mid: number, leaf: number]) {
 				for (let i = 0; i < expected.length; i++) {
@@ -108,9 +109,9 @@ describe("Runtime", () => {
 				try {
 					fn();
 					throw Error(`${failMsg}: Expected to fail`);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === error.message),
+						expectedErrors.some((e) => e === (error as ILoggingError).message),
 						errMsg,
 					);
 				}
@@ -125,9 +126,9 @@ describe("Runtime", () => {
 				try {
 					await fn();
 					throw Error(`${failMsg}: Expected to reject`);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === error.message),
+						expectedErrors.some((e) => e === (error as ILoggingError).message),
 						errMsg,
 					);
 				}
@@ -293,7 +294,7 @@ describe("Runtime", () => {
 					// Validate summary fails by calling completeSummary.
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === "";
 							return correctErrorMessage && correctErrorId;
@@ -330,7 +331,7 @@ describe("Runtime", () => {
 
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === midNodeId;
 							return correctErrorMessage && correctErrorId;
@@ -368,7 +369,7 @@ describe("Runtime", () => {
 					// Validate summary fails by calling completeSummary.
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === leafNodeId;
 							return correctErrorMessage && correctErrorId;
@@ -531,7 +532,9 @@ describe("Runtime", () => {
 								readAndParseBlob,
 								logger,
 							),
-						(error) => {
+						(
+							error: ILoggingError & { inProgressSummaryRefSeq: number | undefined },
+						) => {
 							const correctErrorMessage =
 								error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =

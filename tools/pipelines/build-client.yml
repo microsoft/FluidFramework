@@ -110,7 +110,7 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: client
-    poolBuild: Large
+    poolBuild: NewLarge 
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false
@@ -132,5 +132,4 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - check:versions
-    - generate:upcoming
     - prettier

@@ -47,6 +47,9 @@ module.exports = {
 		// Causes issues with some versions of node
 		"unicorn/prefer-node-protocol": "off",
 
+		// Too strict for our needs
+		"unicorn/filename-case": "off",
+
 		// Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
 		"valid-jsdoc": "off",
 	},

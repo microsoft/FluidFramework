@@ -63,6 +63,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 		const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
 		const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
 		const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
 		const customRestartOnKafkaErrorCodes = config.get("kafka:customRestartOnKafkaErrorCodes");
 
 		// Receive topic and group - for now we will assume an entry in config mapping
@@ -87,6 +88,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
 			maxConsumerCommitRetries,
 			sslCACertFilePath,
 			zooKeeperClientConstructor: this.zookeeperClientConstructor,
+			eventHubConnString,
 			restartOnKafkaErrorCodes: customRestartOnKafkaErrorCodes,
 		};
 

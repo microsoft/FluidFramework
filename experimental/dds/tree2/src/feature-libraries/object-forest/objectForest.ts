@@ -17,7 +17,6 @@ import {
 	DetachedField,
 	AnchorSet,
 	detachedFieldAsKey,
-	Value,
 	Delta,
 	UpPath,
 	Anchor,
@@ -68,6 +67,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		super("object-forest.ObjectForest");
 		// Invalidate forest if schema change.
 		recordDependency(this.dependent, this.schema);
+	}
+
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
@@ -160,14 +163,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				moves.delete(id);
 				const countMoved = moveIn(index, toAttach);
 				assert(countMoved === count, 0x369 /* counts must match */);
-			},
-			onSetValue: (value: Value): void => {
-				const node = cursor.getNode();
-				if (value !== undefined) {
-					node.value = value;
-				} else {
-					delete node.value;
-				}
 			},
 			enterNode: (index: number): void => cursor.enterNode(index),
 			exitNode: (index: number): void => cursor.exitNode(),
@@ -454,12 +449,11 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 }
 
-// This function is the only package level export for objectForest, and hides all the implementation types.
+// This function is the folder level export for objectForest, and hides all the implementation types.
 // When other forest implementations are created (ex: optimized ones),
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
- * @alpha
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
 	return new ObjectForest(schema, anchors);

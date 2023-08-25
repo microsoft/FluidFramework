@@ -9,5 +9,6 @@ module.exports = {
 		"@typescript-eslint/restrict-template-expressions": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };

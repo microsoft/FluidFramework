@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import {
@@ -10,11 +11,15 @@ import {
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
 	describeNoCompat,
@@ -23,12 +28,18 @@ import {
 	itExpects,
 } from "@fluid-internal/test-version-utils";
 import { v4 as uuid } from "uuid";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { IPendingRuntimeState, IPendingBlobs } from "@fluidframework/container-runtime/src/test";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		summaryOptions: {
@@ -77,8 +88,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		const blobOpP = new Promise<void>((resolve, reject) =>
 			dataStore._context.containerRuntime.on("op", (op) => {
 				if (op.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -208,8 +222,11 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			const blobOpP = new Promise<void>((resolve, reject) =>
 				dataStore._context.containerRuntime.on("op", (op) => {
 					if (op.type === ContainerMessageType.BlobAttach) {
-						// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-						op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+						if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+							resolve();
+						} else {
+							reject(new Error("no op metadata"));
+						}
 					}
 				}),
 			);
@@ -250,9 +267,15 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
-				if (op.contents?.type === ContainerMessageType.BlobAttach) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+				if (
+					(op.contents as { type?: unknown } | undefined)?.type ===
+					ContainerMessageType.BlobAttach
+				) {
+					if ((op.metadata as { blobId?: unknown } | undefined)?.blobId) {
+						resolve();
+					} else {
+						reject(new Error("no op metadata"));
+					}
 				}
 			}),
 		);
@@ -330,7 +353,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
 				if (!driverSupportsBlobs(provider.driver)) {
-					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+					return assert.rejects(
+						attachP,
+						(err: IErrorBase) => err.message === usageErrorMessage,
+					);
 				}
 				await attachP;
 
@@ -386,55 +412,64 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
-		const detachedBlobStorage = new MockDetachedBlobStorage();
-		const loader = provider.makeTestLoader({
-			...testContainerConfig,
-			loaderProps: { detachedBlobStorage },
-		});
-		const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		// test with and without offline load enabled
+		const offlineCfg = configProvider({ "Fluid.Container.enableOfflineLoad": true });
+		for (const cfg of [undefined, offlineCfg]) {
+			const detachedBlobStorage = new MockDetachedBlobStorage();
+			const loader = provider.makeTestLoader({
+				...testContainerConfig,
+				loaderProps: { detachedBlobStorage, configProvider: cfg },
+			});
+			const detachedContainer = await loader.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
 
-		const text = "this is some example text";
-		const detachedDataStore = await requestFluidObject<ITestDataObject>(
-			detachedContainer,
-			"default",
-		);
+			const text = "this is some example text";
+			const detachedDataStore = await requestFluidObject<ITestDataObject>(
+				detachedContainer,
+				"default",
+			);
 
-		detachedDataStore._root.set(
-			"my blob",
-			await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-		);
-		detachedDataStore._root.set(
-			"my same blob",
-			await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-		);
-		detachedDataStore._root.set(
-			"my other blob",
-			await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")),
-		);
+			detachedDataStore._root.set(
+				"my blob",
+				await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+			);
+			detachedDataStore._root.set(
+				"my same blob",
+				await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+			);
+			detachedDataStore._root.set(
+				"my other blob",
+				await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")),
+			);
 
-		const attachP = detachedContainer.attach(
-			provider.driver.createCreateNewRequest(provider.documentId),
-		);
-		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			const attachP = detachedContainer.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
+			}
+			await attachP;
+			detachedBlobStorage.blobs.clear();
+
+			const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
+			const attachedContainer = await provider
+				.makeTestLoader(testContainerConfig)
+				.resolve({ url });
+
+			const attachedDataStore = await requestFluidObject<ITestDataObject>(
+				attachedContainer,
+				"default",
+			);
+			await provider.ensureSynchronized();
+			assert.strictEqual(
+				bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
+				text,
+			);
 		}
-		await attachP;
-		detachedBlobStorage.blobs.clear();
-
-		const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
-		const attachedContainer = await provider
-			.makeTestLoader(testContainerConfig)
-			.resolve({ url });
-
-		const attachedDataStore = await requestFluidObject<ITestDataObject>(
-			attachedContainer,
-			"default",
-		);
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
-			text,
-		);
 	});
 
 	itExpects("serialize/rehydrate then attach", ContainerCloseUsageError, async function () {
@@ -462,7 +497,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+			return assert.rejects(attachP, (err: IErrorBase) => err.message === usageErrorMessage);
 		}
 		await attachP;
 
@@ -510,7 +545,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
 			}
 			await attachP;
 
@@ -575,5 +613,56 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		]);
 		provider.opProcessingController.resumeProcessing();
 		await uploadP;
+	});
+
+	it("reconnection does not block ops when having pending blobs", async () => {
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
+		const runtimeStorage = (container1 as any).runtime.storage;
+
+		let resolveUploadBlob = () => {};
+		const uploadBlobPromise = new Promise<void>((resolve) => {
+			resolveUploadBlob = resolve;
+		});
+
+		const uploadBlobWithDelay = async (target, thisArg, args) => {
+			// Wait for the uploadBlobPromise to be resolved
+			await uploadBlobPromise;
+			const result = Reflect.apply(target, thisArg, args);
+			return result;
+		};
+
+		const delayedUploadBlob = new Proxy(runtimeStorage.createBlob.bind(runtimeStorage), {
+			async apply(target, thisArg, args) {
+				return uploadBlobWithDelay(target, thisArg, args);
+			},
+		});
+		runtimeStorage.createBlob = delayedUploadBlob;
+
+		const handleP = dataStore1._runtime.uploadBlob(stringToBuffer("test string", "utf8"));
+
+		container1.disconnect();
+		container1.connect();
+		await waitForContainerConnection(container1);
+
+		let pendingBlobs: IPendingBlobs = await (container1 as any).runtime
+			.getPendingLocalState()
+			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
+		assert.strictEqual(Object.values<any>(pendingBlobs).length, 1);
+		const acked = Object.values<any>(pendingBlobs)[0].acked;
+		assert.strictEqual(acked, false, "reconnection should not reupload pending blobs");
+		// sending some ops to confirm pending blob is not blocking other ops
+		dataStore1._root.set("key", "value");
+		dataStore1._root.set("another key", "another value");
+		await provider.ensureSynchronized();
+
+		resolveUploadBlob();
+
+		await assert.doesNotReject(handleP);
+		pendingBlobs = await (container1 as any).runtime
+			.getPendingLocalState()
+			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
+		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, true);
+		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });

@@ -5,6 +5,7 @@
 import { Package } from "@fluidframework/build-tools";
 import { ux, Command, Flags } from "@oclif/core";
 import async from "async";
+import { strict as assert } from "node:assert";
 
 import { BaseCommand } from "./base";
 import {
@@ -34,8 +35,23 @@ export abstract class PackageCommand<
 		...BaseCommand.flags,
 	};
 
-	private filterOptions: PackageFilterOptions | undefined;
-	private selectionOptions: PackageSelectionCriteria | undefined;
+	protected filterOptions: PackageFilterOptions | undefined;
+	protected selectionOptions: PackageSelectionCriteria | undefined;
+
+	/**
+	 * An array of packages selected based on the selection criteria.
+	 *
+	 * @remarks
+	 *
+	 * Note that these packages are not necessarily the ones that are acted on. Packages are selected, then that list is
+	 * further narrowed by filtering criteria, so this array may contain packages that are not acted on.
+	 */
+	protected selectedPackages: PackageWithKind[] | undefined;
+
+	/**
+	 * The list of packages after all filters are applied to the selected packages.
+	 */
+	protected filteredPackages: PackageWithKind[] | undefined;
 
 	/**
 	 * Called for each package that is selected/filtered based on the filter flags passed in to the command.
@@ -49,10 +65,12 @@ export abstract class PackageCommand<
 		kind: PackageKind,
 	): Promise<void>;
 
-	public async run(): Promise<void> {
+	protected parseFlags() {
 		this.selectionOptions = parsePackageSelectionFlags(this.flags);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
+	}
 
+	protected async selectAndFilterPackages() {
 		if (this.selectionOptions === undefined) {
 			throw new Error(`No packages selected.`);
 		}
@@ -64,16 +82,31 @@ export abstract class PackageCommand<
 			this.filterOptions,
 		);
 
+		[this.selectedPackages, this.filteredPackages] = [selected, filtered];
+	}
+
+	public async run(): Promise<any> {
+		this.parseFlags();
+
+		assert(this.selectionOptions !== undefined, "selectionOptions is undefined");
+		assert(this.filterOptions !== undefined, "filterOptions is undefined");
+
+		await this.selectAndFilterPackages();
+
+		assert(this.selectedPackages !== undefined, "selectedPackages is undefined");
+		assert(this.filteredPackages !== undefined, "filteredPackages is undefined");
+
 		this.info(
-			`Filtered ${selected.length} packages to ${listNames(
-				filtered.map((pkg) => pkg.directory),
+			`Filtered ${this.selectedPackages.length} packages to ${listNames(
+				this.filteredPackages.map((pkg) => pkg.directory),
 			)}`,
 		);
 
-		return this.processPackages(filtered);
+		await this.processPackages(this.filteredPackages);
+		return undefined;
 	}
 
-	private async processPackages(packages: PackageWithKind[]): Promise<void> {
+	protected async processPackages(packages: PackageWithKind[]): Promise<void> {
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
@@ -96,21 +129,20 @@ export abstract class PackageCommand<
 		}
 
 		try {
-			await async.mapLimit(
-				packages,
-				this.flags.concurrency,
-				async (details: PackageWithKind) => {
-					started += 1;
+			await async.mapLimit(packages, this.flags.concurrency, async (pkg: PackageWithKind) => {
+				started += 1;
+				updateStatus();
+				try {
+					await this.processPackage(pkg, pkg.kind);
+					succeeded += 1;
+				} catch (error: unknown) {
+					this.errorLog(`Error updating ${pkg.name}: ${error}`);
+					this.log((error as Error).stack);
+				} finally {
+					finished += 1;
 					updateStatus();
-					try {
-						await this.processPackage(details, details.kind);
-						succeeded += 1;
-					} finally {
-						finished += 1;
-						updateStatus();
-					}
-				},
-			);
+				}
+			});
 		} finally {
 			// Stop the spinner if needed.
 			if (!verbose) {
@@ -120,6 +152,10 @@ export abstract class PackageCommand<
 	}
 }
 
-function listNames(strings: string[]): string {
-	return strings.length > 10 ? `${strings.length}` : `${strings.length} (${strings.join(", ")})`;
+function listNames(strings: string[] | undefined): string {
+	return strings === undefined
+		? ""
+		: strings.length > 10
+		? `${strings.length}`
+		: `${strings.length} (${strings.join(", ")})`;
 }

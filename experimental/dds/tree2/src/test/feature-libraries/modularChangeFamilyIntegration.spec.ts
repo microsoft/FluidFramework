@@ -17,17 +17,24 @@ import {
 	tagRollbackInverse,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { DefaultEditBuilder, FieldKind } from "../../feature-libraries";
+import {
+	DefaultEditBuilder,
+	FieldKind,
+	FieldKinds,
+	ModularChangeset,
+	singleTextCursor,
+} from "../../feature-libraries";
 
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/defaultFieldKinds";
-import { brand, Mutable } from "../../util";
+import { brand, brandOpaque, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
+import { jsonNumber } from "../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { MarkMaker } from "./sequence-field/testEdits";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[sequence].map((f) => [f.identifier, f]),
+	[FieldKinds.sequence].map((f) => [f.identifier, f]),
 );
 
 const family = new ModularChangeFamily(fieldKinds, { jsonValidator: typeboxValidator });
@@ -101,10 +108,16 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			editor.setValue({ parent: undefined, parentField: fieldB, parentIndex: 0 }, newValue);
+			const newNode = singleTextCursor({ type: jsonNumber.name, value: newValue });
+			editor
+				.sequenceField({
+					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
+					field: fieldC,
+				})
+				.insert(0, newNode);
 
-			const [move, setValue] = getChanges();
-			const composed = family.compose([makeAnonChange(move), makeAnonChange(setValue)]);
+			const [move, insert] = getChanges();
+			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
 			const expected: Delta.Root = new Map([
 				[
 					fieldA,
@@ -113,7 +126,9 @@ describe("ModularChangeFamily integration", () => {
 							type: Delta.MarkType.MoveOut,
 							count: 1,
 							moveId: brand(0),
-							setValue: newValue,
+							fields: new Map([
+								[fieldC, [{ type: Delta.MarkType.Insert, content: [newNode] }]],
+							]),
 						},
 					],
 				],
@@ -127,7 +142,6 @@ describe("ModularChangeFamily integration", () => {
 		it("cross-field move and inverse with nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
-			const value = 42;
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				0,
@@ -135,9 +149,17 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldB },
 				0,
 			);
-			editor.setValue({ parent: undefined, parentField: fieldA, parentIndex: 0 }, value);
 
-			const [move, setValue] = getChanges();
+			const newValue = "new value";
+			const newNode = singleTextCursor({ type: jsonNumber.name, value: newValue });
+			editor
+				.sequenceField({
+					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
+					field: fieldC,
+				})
+				.insert(0, newNode);
+
+			const [move, insert] = getChanges();
 			const moveTagged = tagChange(move, tag1);
 			const returnTagged = tagRollbackInverse(
 				family.invert(moveTagged, true),
@@ -145,12 +167,23 @@ describe("ModularChangeFamily integration", () => {
 				moveTagged.revision,
 			);
 
-			const moveAndSetValue = family.compose([tagChange(setValue, tag2), moveTagged]);
-			const composed = family.compose([returnTagged, makeAnonChange(moveAndSetValue)]);
+			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
+			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = family.intoDelta(composed);
 			const expected: Delta.Root = new Map([
 				[fieldA, []],
-				[fieldB, [{ type: Delta.MarkType.Modify, setValue: value }]],
+				[
+					fieldB,
+					[
+						1,
+						{
+							type: Delta.MarkType.Modify,
+							fields: new Map([
+								[fieldC, [{ type: Delta.MarkType.Insert, content: [newNode] }]],
+							]),
+						},
+					],
+				],
 			]);
 			assert.deepEqual(actual, expected);
 		});
@@ -184,6 +217,63 @@ describe("ModularChangeFamily integration", () => {
 			const actualDelta = normalizeDelta(family.intoDelta(composed));
 			const expectedDelta = normalizeDelta(family.intoDelta(expected));
 			assert.deepEqual(actualDelta, expectedDelta);
+		});
+	});
+
+	describe("toDelta", () => {
+		it("works when nested changes come from different revisions", () => {
+			const change: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("foo"),
+						{
+							fieldKind: FieldKinds.sequence.identifier,
+							change: brand([
+								MarkMaker.moveOut(1, brand(0)),
+								MarkMaker.moveIn(1, brand(0)),
+							]),
+							revision: tag1,
+						},
+					],
+					[
+						brand("bar"),
+						{
+							fieldKind: FieldKinds.sequence.identifier,
+							change: brand([
+								MarkMaker.moveOut(2, brand(0)),
+								MarkMaker.moveIn(2, brand(0)),
+							]),
+							revision: tag2,
+						},
+					],
+				]),
+			};
+			const moveOut1: Delta.MoveOut = {
+				type: Delta.MarkType.MoveOut,
+				moveId: brandOpaque<Delta.MoveId>(0),
+				count: 1,
+			};
+			const moveIn1: Delta.MoveIn = {
+				type: Delta.MarkType.MoveIn,
+				moveId: brandOpaque<Delta.MoveId>(0),
+				count: 1,
+			};
+			const moveOut2: Delta.MoveOut = {
+				type: Delta.MarkType.MoveOut,
+				moveId: brandOpaque<Delta.MoveId>(1),
+				count: 2,
+			};
+			const moveIn2: Delta.MoveIn = {
+				type: Delta.MarkType.MoveIn,
+				moveId: brandOpaque<Delta.MoveId>(1),
+				count: 2,
+			};
+			const expected: Delta.Root = new Map([
+				[brand("foo"), [moveOut1, moveIn1]],
+				[brand("bar"), [moveOut2, moveIn2]],
+			]);
+			const actual = family.intoDelta(change);
+			assert.deepEqual(actual, expected);
 		});
 	});
 });

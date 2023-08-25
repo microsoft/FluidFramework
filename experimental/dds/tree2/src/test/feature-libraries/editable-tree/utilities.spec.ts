@@ -4,9 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
 	Multiplicity,
 	getPrimaryField,
@@ -15,20 +13,21 @@ import {
 	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
-	LocalFieldKey,
+	FieldKey,
 	FieldStoredSchema,
-	InMemoryStoredSchemaRepository,
 	EmptyKey,
+	UpPath,
 	rootFieldKey,
-	symbolFromKey,
+	rootField,
 } from "../../../core";
-import { brand } from "../../../util";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
 	keyIsValidIndex,
+	getDetachedFieldContainingPath,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
+import { brand } from "../../../util";
 import {
 	arraySchema,
 	buildTestSchema,
@@ -48,30 +47,19 @@ describe("editable-tree utilities", () => {
 
 	it("field utils", () => {
 		const schema =
-			arraySchema.localFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: LocalFieldKey; schema: FieldStoredSchema } = {
+			arraySchema.structFields.get(EmptyKey) ?? fail("Expected primary array field");
+		const expectedPrimary: { key: FieldKey; schema: FieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};
 
 		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
 		const fullSchemaData = buildTestSchema(rootSchema);
-		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
-		assert.equal(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), fullSchemaData.root);
-		assert.throws(
-			() => getFieldSchema(brand(rootFieldKey), fullSchema),
-			(e) =>
-				validateAssertionError(
-					e,
-					"The field is a local field, a parent schema is required.",
-				),
-			"Expected exception was not thrown",
-		);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);
-		assert.deepEqual(getFieldSchema(primary.key, fullSchema, arraySchema), schema);
+		assert.deepEqual(getFieldSchema(primary.key, arraySchema), schema);
 		assert.equal(
-			getFieldKind(getFieldSchema(primary.key, fullSchema, arraySchema)).multiplicity,
+			getFieldKind(getFieldSchema(primary.key, arraySchema)).multiplicity,
 			Multiplicity.Sequence,
 		);
 		assert.deepEqual(primary, expectedPrimary);
@@ -102,5 +90,30 @@ describe("editable-tree utilities", () => {
 		assert.equal(keyIsValidIndex(Infinity, 1), false);
 		assert.equal(keyIsValidIndex("NaN", 1), false);
 		assert.equal(keyIsValidIndex("Infinity", 1), false);
+	});
+
+	describe("getDetachedFieldContainingPath", () => {
+		it("returns the DetachedField of a simple path", () => {
+			const path: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			const detachedField = getDetachedFieldContainingPath(path);
+			assert.equal(detachedField, rootField);
+		});
+		it("returns the DetachedField of a nested path", () => {
+			const path: UpPath = {
+				parent: {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 0,
+				},
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const detachedField = getDetachedFieldContainingPath(path);
+			assert.equal(detachedField, rootField);
+		});
 	});
 });

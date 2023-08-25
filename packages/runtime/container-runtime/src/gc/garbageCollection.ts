@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, Timer, assert } from "@fluidframework/common-utils";
-import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { Timer, assert } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
 	IGarbageCollectionData,
@@ -13,16 +13,26 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
-	ChildLogger,
+	ReadAndParseBlob,
+	createResponseError,
+	responseToException,
+} from "@fluidframework/runtime-utils";
+import {
+	createChildLogger,
+	createChildMonitoringContext,
+	DataProcessingError,
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
-import { RuntimeHeaders } from "../containerRuntime";
+import {
+	AllowInactiveRequestHeaderKey,
+	InactiveResponseHeaderKey,
+	RuntimeHeaders,
+} from "../containerRuntime";
+import { ClientSessionExpiredError } from "../error";
 import { RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
@@ -136,11 +146,13 @@ export class GarbageCollector implements IGarbageCollector {
 		const baseSnapshot = createParams.baseSnapshot;
 		const readAndParseBlob = createParams.readAndParseBlob;
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(createParams.baseLogger, "GarbageCollector", {
+		this.mc = createChildMonitoringContext({
+			logger: createParams.baseLogger,
+			namespace: "GarbageCollector",
+			properties: {
 				all: { completedGCRuns: () => this.completedRuns },
-			}),
-		);
+			},
+		});
 
 		this.configs = generateGCConfigs(this.mc, createParams);
 
@@ -469,8 +481,11 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 
 		const logger = options.logger
-			? ChildLogger.create(options.logger, undefined, {
-					all: { completedGCRuns: () => this.completedRuns },
+			? createChildLogger({
+					logger: options.logger,
+					properties: {
+						all: { completedGCRuns: () => this.completedRuns },
+					},
 			  })
 			: this.mc.logger;
 
@@ -874,7 +889,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive, log an error.
-	 * @param nodePath - The id of the node that changed.
+	 * @param nodePath - The path of the node that changed.
 	 * @param reason - Whether the node was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
 	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
@@ -891,6 +906,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
 			id: nodePath,
 			usageType: reason,
@@ -902,6 +918,29 @@ export class GarbageCollector implements IGarbageCollector {
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
+
+		// Unless this is a Loaded event, we're done after telemetry tracking
+		if (reason !== "Loaded") {
+			return;
+		}
+
+		// We may throw when loading an Inactive object, depending on these preconditions
+		const shouldThrowOnInactiveLoad =
+			!this.isSummarizerClient &&
+			this.configs.throwOnInactiveLoad === true &&
+			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
+		const state = this.unreferencedNodesState.get(nodePath)?.state;
+
+		if (shouldThrowOnInactiveLoad && state === "Inactive") {
+			const request: IRequest = { url: nodePath };
+			const error = responseToException(
+				createResponseError(404, "Object is inactive", request, {
+					[InactiveResponseHeaderKey]: true,
+				}),
+				request,
+			);
+			throw error;
+		}
 	}
 
 	/**

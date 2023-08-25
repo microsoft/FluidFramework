@@ -7,6 +7,52 @@
 // @internal
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
+// @public
+export class Lazy<T> {
+    constructor(valueGenerator: () => T);
+    get evaluated(): boolean;
+    get value(): T;
+}
+
+// @public
+export class LazyPromise<T> implements Promise<T> {
+    // (undocumented)
+    get [Symbol.toStringTag](): string;
+    constructor(execute: () => Promise<T>);
+    // (undocumented)
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined): Promise<T | TResult>;
+    // (undocumented)
+    finally(onfinally?: (() => void) | null | undefined): Promise<T>;
+    // (undocumented)
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
+}
+
+// @public
+export class PromiseCache<TKey, TResult> {
+    constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
+    add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
+    addOrGet(key: TKey, asyncFn: () => Promise<TResult>): Promise<TResult>;
+    addValue(key: TKey, value: TResult): boolean;
+    addValueOrGet(key: TKey, value: TResult): Promise<TResult>;
+    get(key: TKey): Promise<TResult> | undefined;
+    has(key: TKey): boolean;
+    remove(key: TKey): boolean;
+}
+
+// @public
+export type PromiseCacheExpiry = {
+    policy: "indefinite";
+} | {
+    policy: "absolute" | "sliding";
+    durationMs: number;
+};
+
+// @public
+export interface PromiseCacheOptions {
+    expiry?: PromiseCacheExpiry;
+    removeOnError?: (e: any) => boolean;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "./types";
+import { FieldKey } from "../schema-stored";
 
 /**
  * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
@@ -18,7 +18,7 @@ export type UpPathDefault = UpPath;
  * costs related to the depth of the local subtree.
  *
  * UpPaths can be thought of as terminating at a special root node (that is `undefined`)
- * who's FieldKeys are all LocalFieldKey's that correspond to detached sequences.
+ * whose FieldKeys correspond to detached sequences.
  *
  * UpPaths can be mutated over time and should be considered to be invalidated when any edits occurs:
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
@@ -46,11 +46,12 @@ export interface UpPath<TParent = UpPathDefault> {
  * See {@link UpPath}.
  * @alpha
  */
-export interface FieldUpPath {
+export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 	/**
 	 * The parent, or undefined in the case where this path is to a detached sequence.
 	 */
-	readonly parent: UpPath | undefined;
+	readonly parent: TUpPath | undefined;
+
 	/**
 	 * The Field to which this path points.
 	 * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.

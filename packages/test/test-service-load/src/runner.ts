@@ -10,12 +10,11 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState } from "@fluidframework/container-loader";
+import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { assert, delay } from "@fluidframework/common-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
@@ -228,6 +227,7 @@ async function runnerProcess(
 		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
 	);
 
+	const loggerLogLevelOptions = [LogLevel.verbose, LogLevel.default];
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
@@ -242,7 +242,18 @@ async function runnerProcess(
 			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
 			// Construct the loader
+			runConfig.logger.minLogLevel =
+				loggerLogLevelOptions[runConfig.runId % loggerLogLevelOptions.length];
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			runConfig.logger.sendTelemetryEvent({
+				eventName: "RunConfigOptions",
+				details: JSON.stringify({
+					loaderOptions: runConfig.loaderConfig,
+					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
+					logLevel: runConfig.logger.minLogLevel,
+					configurations: configurations[runConfig.runId % configurations.length],
+				}),
+			});
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
@@ -328,6 +339,8 @@ async function runnerProcess(
 			reset = false;
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
+			// clear stashed op in case of error
+			stashedOpP = undefined;
 			runConfig.logger.sendErrorEvent(
 				{
 					eventName: "RunnerFailed",
@@ -473,7 +486,7 @@ function scheduleContainerClose(
 
 async function scheduleOffline(
 	dsf: FaultInjectionDocumentServiceFactory,
-	container: IContainer,
+	container: IContainerExperimental,
 	runConfig: IRunConfig,
 	offlineDelayMinMs: number,
 	offlineDelayMaxMs: number,
@@ -515,7 +528,8 @@ async function scheduleOffline(
 				}
 				if (
 					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent
+					random.real() < stashPercent &&
+					container.closeAndGetPendingLocalState
 				) {
 					printStatus(runConfig, "closing offline container!");
 					return container.closeAndGetPendingLocalState();

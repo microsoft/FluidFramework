@@ -5,20 +5,21 @@
 
 import crypto from "crypto";
 import fs from "fs";
-import { IEvent, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { IEvent, ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITelemetryBufferedLogger,
 	ITestDriver,
@@ -53,7 +54,7 @@ interface IObservableLoggerEvents extends IEvent {
 	(event: "logEvent", listener: (logEvent: ITelemetryBaseEvent) => void): void;
 }
 
-export class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
+export class FileLogger implements ITelemetryBufferedLogger {
 	public static readonly loggerP = new LazyPromise<FileLogger>(async () => {
 		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
 			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
@@ -71,8 +72,11 @@ export class FileLogger extends TelemetryLogger implements ITelemetryBufferedLog
 		profile: string;
 		runId: number | undefined;
 	}) {
-		return ChildLogger.create(await this.loggerP, undefined, {
-			all: dimensions,
+		return createChildLogger({
+			logger: await this.loggerP,
+			properties: {
+				all: dimensions,
+			},
 		});
 	}
 
@@ -86,9 +90,7 @@ export class FileLogger extends TelemetryLogger implements ITelemetryBufferedLog
 
 	readonly observer: TypedEventEmitter<IObservableLoggerEvents> = new TypedEventEmitter();
 
-	public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
@@ -123,7 +125,7 @@ export class FileLogger extends TelemetryLogger implements ITelemetryBufferedLog
 		) {
 			event.category = "generic";
 		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+		this.baseLogger?.send({ ...event, hostName: pkgName, testVersion: pkgVersion });
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write
@@ -192,6 +194,17 @@ export async function initialize(
 		driverEndpointName: testDriver.endpointName,
 		profile: profileName,
 		runId: undefined,
+	});
+	logger.minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
+
+	logger.sendTelemetryEvent({
+		eventName: "RunConfigOptions",
+		details: JSON.stringify({
+			loaderOptions,
+			containerOptions,
+			configurations,
+			logLevel: logger.minLogLevel,
+		}),
 	});
 
 	// Construct the loader

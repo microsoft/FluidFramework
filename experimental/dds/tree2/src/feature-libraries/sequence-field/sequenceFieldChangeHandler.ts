@@ -4,11 +4,12 @@
  */
 
 import { FieldChangeHandler } from "../modular-schema";
-import { Changeset, isEmpty } from "./format";
+import { Changeset } from "./format";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
 import { sequenceFieldChangeCodecFactory } from "./sequenceFieldChangeEncoder";
 import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
+import { isEmpty } from "./utils";
 
 export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceFieldEditor>;
 

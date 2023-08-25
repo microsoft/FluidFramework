@@ -20,11 +20,6 @@ export interface IChannel extends IFluidLoadable {
 	 */
 	readonly id: string;
 
-	/**
-	 * @deprecated 2.0.0-internal.5.1.0 - The owner property does nothing and is not recommended for use.
-	 */
-	readonly owner?: string;
-
 	readonly attributes: IChannelAttributes;
 
 	/**

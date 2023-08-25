@@ -21,11 +21,11 @@ import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
 import {
-	ChildLogger,
-	PerformanceEvent,
+	createChildLogger,
 	loggerToMonitoringContext,
+	PerformanceEvent,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
@@ -152,7 +152,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
-			const logger = ChildLogger.create(runtime.logger, "Attributor");
+			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
 
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution

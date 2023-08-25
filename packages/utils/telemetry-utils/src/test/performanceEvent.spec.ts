@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
 import { ITelemetryLoggerExt } from "../telemetryTypes";
 
@@ -29,7 +29,7 @@ describe("PerformanceEvent", () => {
 	});
 
 	it("Cancel then End", async () => {
-		const callback = async (event: PerformanceEvent) => {
+		const callback = async (event: PerformanceEvent): Promise<string | void> => {
 			const outerPromise: Promise<string> = new Promise((resolve, reject) => {
 				Promise.resolve("A")
 					.finally(() => {

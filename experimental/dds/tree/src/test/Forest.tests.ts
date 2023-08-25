@@ -144,11 +144,11 @@ describe('Forest', () => {
 		const twoNodeForest = oneNodeForest.add([makeForestNodeWithChildren(testTree, childId)]);
 		assert.throws(
 			() => twoNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, -1, [childId]),
-			(e) => validateAssertionError(e, 'invalid attach index')
+			(e: Error) => validateAssertionError(e, 'invalid attach index')
 		);
 		assert.throws(
 			() => twoNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, 1, [childId]),
-			(e) => validateAssertionError(e, 'invalid attach index')
+			(e: Error) => validateAssertionError(e, 'invalid attach index')
 		);
 	});
 
@@ -173,30 +173,30 @@ describe('Forest', () => {
 	it('only accepts valid indices for detaches', () => {
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, -1, -1),
-			(e) => validateAssertionError(e, 'invalid detach index range')
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, -1, 0),
-			(e) => validateAssertionError(e, 'invalid detach index range')
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, 1, 0),
-			(e) => validateAssertionError(e, 'invalid detach index range')
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, 0, 2),
-			(e) => validateAssertionError(e, 'invalid detach index range')
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, 1, 2),
-			(e) => validateAssertionError(e, 'invalid detach index range')
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 	});
 
 	it('cannot delete parented nodes', () => {
 		assert.throws(
 			() => parentForest.delete([childId], false),
-			(e) => validateAssertionError(e, 'deleted nodes must be unparented')
+			(e: Error) => validateAssertionError(e, 'deleted nodes must be unparented')
 		);
 	});
 

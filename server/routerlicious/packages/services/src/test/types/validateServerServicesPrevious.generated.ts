@@ -479,6 +479,7 @@ declare function get_old_ClassDeclaration_SecretManager():
 declare function use_current_ClassDeclaration_SecretManager(
     use: TypeOnly<current.SecretManager>);
 use_current_ClassDeclaration_SecretManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SecretManager());
 
 /*

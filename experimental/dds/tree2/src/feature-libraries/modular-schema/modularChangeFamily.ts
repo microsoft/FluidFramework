@@ -14,7 +14,6 @@ import {
 	Delta,
 	FieldKey,
 	UpPath,
-	Value,
 	TaggedChange,
 	ReadonlyRepairDataStore,
 	RevisionTag,
@@ -22,9 +21,11 @@ import {
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	ChangesetLocalId,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -48,7 +49,6 @@ import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./g
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
-	ChangesetLocalId,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
@@ -57,8 +57,6 @@ import {
 	NodeChangeset,
 	NodeExistsConstraint,
 	RevisionInfo,
-	ValueChange,
-	ValueConstraint,
 } from "./modularChangeTypes";
 
 /**
@@ -242,20 +240,8 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
-		let valueChange: ValueChange | undefined;
-		let valueConstraint: ValueConstraint | undefined;
 		let nodeExistsConstraint: NodeExistsConstraint | undefined;
 		for (const change of changes) {
-			// Use the first defined value constraint before any value changes.
-			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
-			if (
-				change.change.valueConstraint !== undefined &&
-				valueConstraint === undefined &&
-				valueChange === undefined
-			) {
-				valueConstraint = { ...change.change.valueConstraint };
-			}
-
 			// Composition is part of two codepaths:
 			//   1. Combining multiple changesets into a transaction
 			//   2. Generating a state update after rebasing a branch that has
@@ -268,10 +254,6 @@ export class ModularChangeFamily
 				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
 			}
 
-			if (change.change.valueChange !== undefined) {
-				valueChange = { ...change.change.valueChange };
-				valueChange.revision ??= change.revision;
-			}
 			if (change.change.fieldChanges !== undefined) {
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
 			}
@@ -284,16 +266,9 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 		const composedNodeChange: NodeChangeset = {};
-		if (valueChange !== undefined) {
-			composedNodeChange.valueChange = valueChange;
-		}
 
 		if (composedFieldChanges.size > 0) {
 			composedNodeChange.fieldChanges = composedFieldChanges;
-		}
-
-		if (valueConstraint !== undefined) {
-			composedNodeChange.valueConstraint = valueConstraint;
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -440,20 +415,6 @@ export class ModularChangeFamily
 		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
-
-		if (change.change.valueChange !== undefined) {
-			assert(
-				!("revert" in change.change.valueChange),
-				0x4a9 /* Inverting inverse changes is currently not supported */,
-			);
-			assert(
-				path !== undefined,
-				0x59d /* Only existing nodes can have their value restored */,
-			);
-			const revision = change.change.valueChange.revision ?? change.revision;
-			assert(revision !== undefined, 0x59e /* Unable to revert to undefined revision */);
-			inverse.valueChange = { value: repairStore.getValue(revision, path) };
-		}
 
 		if (change.change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
@@ -663,6 +624,7 @@ export class ModularChangeFamily
 					genId,
 					manager,
 					revisionMetadata,
+					existenceState,
 				);
 				const rebasedFieldChange: FieldChange = {
 					fieldKind: fieldKind.identifier,
@@ -717,35 +679,13 @@ export class ModularChangeFamily
 		);
 
 		const rebasedChange: NodeChangeset = {};
-		if (change?.valueChange !== undefined) {
-			rebasedChange.valueChange = change.valueChange;
-		}
 
 		if (fieldChanges.size > 0) {
 			rebasedChange.fieldChanges = fieldChanges;
 		}
 
-		if (change?.valueConstraint !== undefined) {
-			rebasedChange.valueConstraint = change.valueConstraint;
-		}
-
 		if (change?.nodeExistsConstraint !== undefined) {
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
-		}
-
-		// We only care if a violated constraint is fixed or if a non-violated
-		// constraint becomes violated
-		if (rebasedChange.valueConstraint !== undefined && over.change?.valueChange !== undefined) {
-			const violatedAfter =
-				over.change.valueChange.value !== rebasedChange.valueConstraint.value;
-
-			if (rebasedChange.valueConstraint.violated !== violatedAfter) {
-				rebasedChange.valueConstraint = {
-					...rebasedChange.valueConstraint,
-					violated: violatedAfter,
-				};
-				constraintState.violationCount += violatedAfter ? 1 : -1;
-			}
 		}
 
 		// If there's a node exists constraint and we deleted or revived the node, update constraint state
@@ -782,7 +722,8 @@ export class ModularChangeFamily
 			return new Map();
 		}
 
-		return this.intoDeltaImpl(change.fieldChanges);
+		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
+		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
 	}
 
 	/**
@@ -791,30 +732,35 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
+	private intoDeltaImpl(
+		change: FieldChangeMap,
+		revision: RevisionTag | undefined,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
+			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-				fieldChange.change,
-				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
+				tagChange(fieldChange.change, fieldRevision),
+				(childChange): Delta.Modify =>
+					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
+				idAllocator,
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+	private deltaFromNodeChange(
+		{ change, revision }: TaggedChange<NodeChangeset>,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
-		const valueChange = change.valueChange;
-		if (valueChange !== undefined) {
-			modify.setValue = valueChange.value;
-		}
-
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
 
 		return modify;
@@ -846,12 +792,7 @@ export function revisionMetadataSourceFromInfo(
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
-	return (
-		change.fieldChanges === undefined &&
-		change.valueChange === undefined &&
-		change.valueConstraint === undefined &&
-		change.nodeExistsConstraint === undefined
-	);
+	return change.fieldChanges === undefined && change.nodeExistsConstraint === undefined;
 }
 
 export function getFieldKind(
@@ -1151,35 +1092,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		return fieldChangeMap;
-	}
-
-	public setValue(path: UpPath, value: Value): void {
-		const valueChange: ValueChange = value === undefined ? {} : { value };
-		const nodeChange: NodeChangeset = { valueChange };
-		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-			path.parentIndex,
-			nodeChange,
-		);
-		this.submitChange(
-			{ parent: path.parent, field: path.parentField },
-			genericFieldKind.identifier,
-			brand(fieldChange),
-		);
-	}
-
-	public addValueConstraint(path: UpPath, currentValue: Value): void {
-		const nodeChange: NodeChangeset = {
-			valueConstraint: { value: currentValue, violated: false },
-		};
-		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-			path.parentIndex,
-			nodeChange,
-		);
-		this.submitChange(
-			{ parent: path.parent, field: path.parentField },
-			genericFieldKind.identifier,
-			brand(fieldChange),
-		);
 	}
 
 	public addNodeExistsConstraint(path: UpPath): void {

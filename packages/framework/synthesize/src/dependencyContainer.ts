@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,

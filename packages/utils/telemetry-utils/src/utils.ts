@@ -6,7 +6,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryGenericEvent,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 
 /**
  * Like assert, but logs only if the condition is false, rather than throwing
@@ -16,7 +16,7 @@ import {
  * @returns - The outcome of the condition
  */
 export function logIfFalse(
-	condition: any,
+	condition: unknown,
 	logger: ITelemetryBaseLogger,
 	event: string | ITelemetryGenericEvent,
 ): condition is true {

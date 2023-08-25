@@ -5,7 +5,7 @@
 
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
-import { generateToken, Historian } from "@fluidframework/server-services-client";
+import { Historian } from "@fluidframework/server-services-client";
 import {
 	MongoDatabaseManager,
 	MongoManager,
@@ -20,10 +20,10 @@ import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
 	PubSubPublisher,
-	TaskMessageSender,
 	TenantManager,
 	getDbFactory,
 	WebServerFactory,
+	StorageNameAllocator,
 } from "./services";
 
 const defaultTinyliciousPort = 7070;
@@ -39,9 +39,9 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const collectionNames = config.get("mongo:collectionNames");
 
 		const tenantManager = new TenantManager(`http://localhost:${port}`);
+		const storageNameAllocator = new StorageNameAllocator(tenantManager);
 		const dbFactory = await getDbFactory(config);
 
-		const taskMessageSender = new TaskMessageSender();
 		const mongoManager = new MongoManager(dbFactory);
 		const databaseManager = new MongoDatabaseManager(
 			globalDbEnabled,
@@ -49,6 +49,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			null,
 			collectionNames.nodes,
 			collectionNames.documents,
+			collectionNames.checkpoints,
 			collectionNames.deltas,
 			collectionNames.scribeDeltas,
 		);
@@ -63,6 +64,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			tenantManager,
 			false,
 			opsCollection,
+			storageNameAllocator,
 		);
 		const io = new Server({
 			// enable compatibility with socket.io v2 clients
@@ -75,10 +77,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const orderManager = new LocalOrdererManager(
 			storage,
 			databaseManager,
-			tenantManager,
-			taskMessageSender,
-			config.get("foreman:permissions"),
-			generateToken,
 			async (tenantId: string) => {
 				const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
 				return new Historian(url, false, false);

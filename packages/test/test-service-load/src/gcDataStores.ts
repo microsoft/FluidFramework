@@ -9,9 +9,13 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IRequest,
+	ITelemetryGenericEvent,
+	ITelemetryLogger,
+} from "@fluidframework/core-interfaces";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { IValueChanged, SharedMap } from "@fluidframework/map";

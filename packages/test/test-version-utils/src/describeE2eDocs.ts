@@ -4,16 +4,17 @@
  */
 
 import fs from "fs";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList } from "./compatConfig.js";
-import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
+import { baseVersion } from "./baseVersion.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 
 /*
@@ -25,7 +26,9 @@ export type DocumentType =
 	/** Document with Multiple DataStores */
 	| "DocumentMultipleDataStores"
 	/** Document with a SharedMatrix */
-	| "DocumentMatrix";
+	| "DocumentMatrix"
+	/** Document with a SharedMatrix and plain objects */
+	| "DocumentMatrixPlain";
 
 export interface DocumentMapInfo {
 	numberOfItems: number;
@@ -43,10 +46,24 @@ export interface DocumentMatrixInfo {
 	stringSize: number;
 }
 
+export interface DocumentMatrixPlainInfo {
+	// Actual matrix size.
+	rowSize: number;
+	columnSize: number;
+	// Definition of the matrix area to be populated.
+	beginRow: number;
+	endRow: number;
+	beginColumn: number;
+	endColumn: number;
+	// String size in each cell.
+	stringSize: number;
+}
+
 export type DocumentTypeInfo =
 	| DocumentMapInfo
 	| DocumentMultipleDataStoresInfo
-	| DocumentMatrixInfo;
+	| DocumentMatrixInfo
+	| DocumentMatrixPlainInfo;
 
 export interface IE2EDocsConfig {
 	documents: DescribeE2EDocInfo[];
@@ -103,7 +120,7 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	},
 	{
 		testTitle: "Matrix 100x100 with SharedStrings",
-		documentType: "DocumentMatrix",
+		documentType: "DocumentMatrixPlain",
 		documentTypeInfo: {
 			rowSize: 100,
 			columnSize: 100,
@@ -140,6 +157,9 @@ export function isDocumentMultipleDataStoresInfo(
 export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMatrixInfo {
 	return (info as DocumentMatrixInfo).rowSize !== undefined;
 }
+export function isDocumentMatrixPlainInfo(info: DocumentTypeInfo): info is DocumentMatrixPlainInfo {
+	return (info as DocumentMatrixPlainInfo).rowSize !== undefined;
+}
 
 export function assertDocumentTypeInfo(
 	info: DocumentTypeInfo,
@@ -161,6 +181,11 @@ export function assertDocumentTypeInfo(
 		case "DocumentMatrix":
 			if (!isDocumentMatrixInfo(info)) {
 				throw new Error(`Expected DocumentMatrixInfo but got ${JSON.stringify(info)}`);
+			}
+			break;
+		case "DocumentMatrixPlain":
+			if (!isDocumentMatrixPlainInfo(info)) {
+				throw new Error(`Expected DocumentMatrixPlainInfo but got ${JSON.stringify(info)}`);
 			}
 			break;
 		default:
@@ -275,7 +300,10 @@ function createE2EDocCompatSuite(
 								config.dataRuntime,
 							);
 						} catch (error) {
-							const logger = ChildLogger.create(getTestLogger?.(), "DescribeE2EDocs");
+							const logger = createChildLogger({
+								logger: getTestLogger?.(),
+								namespace: "DescribeE2EDocs",
+							});
 							logger.sendErrorEvent(
 								{
 									eventName: "TestObjectProviderLoadFailed",

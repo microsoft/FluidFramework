@@ -13,7 +13,8 @@ import {
 	TelemetryEventPropertyType,
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+	LogLevel,
+} from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
@@ -28,6 +29,7 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -43,9 +45,13 @@ export interface PerformanceWithMemory extends IsomorphicPerformance {
  * Please do not modify existing entries for backwards compatibility.
  */
 export enum TelemetryDataTag {
-	/** Data containing terms or IDs from code packages that may have been dynamically loaded */
+	/**
+	 * Data containing terms or IDs from code packages that may have been dynamically loaded
+	 */
 	CodeArtifact = "CodeArtifact",
-	/** Personal data of a variety of classifications that pertains to the user */
+	/**
+	 * Personal data of a variety of classifications that pertains to the user
+	 */
 	UserData = "UserData",
 }
 
@@ -60,32 +66,35 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 /**
+ * Attempts to parse number from string.
+ * If fails,returns original string.
+ * Used to make telemetry data typed (and support math operations, like comparison),
+ * in places where we do expect numbers (like contentsize/duration property in http header)
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export function numberFromString(str: string | null | undefined): string | number | undefined {
+	if (str === undefined || str === null) {
+		return undefined;
+	}
+	const num = Number(str);
+	return Number.isNaN(num) ? str : num;
+}
+
+export function formatTick(tick: number): number {
+	return Math.floor(tick);
+}
+
+export const eventNamespaceSeparator = ":" as const;
+
+/**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
-	public static readonly eventNamespaceSeparator = ":";
+	public static readonly eventNamespaceSeparator = eventNamespaceSeparator;
 
-	public static formatTick(tick: number): number {
-		return Math.floor(tick);
-	}
-
-	/**
-	 * Attempts to parse number from string.
-	 * If fails,returns original string.
-	 * Used to make telemetry data typed (and support math operations, like comparison),
-	 * in places where we do expect numbers (like contentsize/duration property in http header)
-	 */
-	public static numberFromString(str: string | null | undefined): string | number | undefined {
-		if (str === undefined || str === null) {
-			return undefined;
-		}
-		const num = Number(str);
-		return Number.isNaN(num) ? str : num;
-	}
-
-	public static sanitizePkgName(name: string) {
+	public static sanitizePkgName(name: string): string {
 		return name.replace("@", "").replace("/", "-");
 	}
 
@@ -96,7 +105,11 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param error - Error to extract info from
 	 * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
 	 */
-	public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
+	public static prepareErrorObject(
+		event: ITelemetryBaseEvent,
+		error: unknown,
+		fetchStack: boolean,
+	): void {
 		const { message, errorType, stack } = extractLogSafeErrorProperties(
 			error,
 			true /* sanitizeStack */,
@@ -134,16 +147,26 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent): void;
+	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send a telemetry event with the logger
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log. It category of event is set as error,
+	 * then the logLevel will be upgraded to be an error.
 	 */
-	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any) {
-		this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
+	public sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: unknown,
+		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+	): void {
+		this.sendTelemetryEventCore(
+			{ ...event, category: event.category ?? "generic" },
+			error,
+			event.category === "error" ? LogLevel.error : logLevel,
+		);
 	}
 
 	/**
@@ -151,11 +174,13 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log.
 	 */
 	protected sendTelemetryEventCore(
 		event: ITelemetryGenericEventExt & { category: TelemetryEventCategory },
-		error?: any,
-	) {
+		error?: unknown,
+		logLevel?: LogLevel,
+	): void {
 		const newEvent = convertToBaseEvent(event);
 		if (error !== undefined) {
 			TelemetryLogger.prepareErrorObject(newEvent, error, false);
@@ -163,10 +188,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 
 		// Will include Nan & Infinity, but probably we do not care
 		if (typeof newEvent.duration === "number") {
-			newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
+			newEvent.duration = formatTick(newEvent.duration);
 		}
 
-		this.send(newEvent);
+		this.send(newEvent, logLevel);
 	}
 
 	/**
@@ -175,7 +200,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param event - the event to send
 	 * @param error - optional error object to log
 	 */
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
 		this.sendTelemetryEventCore(
 			{
 				// ensure the error field has some value,
@@ -185,6 +210,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				category: "error",
 			},
 			error,
+			LogLevel.error,
 		);
 	}
 
@@ -193,14 +219,24 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - Event to send
 	 * @param error - optional error object to log
+	 * @param logLevel - optional level of the log. It category of event is set as error,
+	 * then the logLevel will be upgraded to be an error.
 	 */
-	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void {
+	public sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: unknown,
+		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+	): void {
 		const perfEvent = {
 			...event,
 			category: event.category ?? "performance",
 		};
 
-		this.sendTelemetryEventCore(perfEvent, error);
+		this.sendTelemetryEventCore(
+			perfEvent,
+			error,
+			perfEvent.category === "error" ? LogLevel.error : logLevel,
+		);
 	}
 
 	protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
@@ -211,6 +247,14 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		if (this.namespace !== undefined) {
 			newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
 		}
+		return this.extendProperties(newEvent, includeErrorProps);
+	}
+
+	private extendProperties<T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag>(
+		toExtend: T,
+		includeErrorProps: boolean,
+	): T {
+		const eventLike: ITelemetryLoggerPropertyBag = toExtend;
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
 			properties.push(this.properties.all);
@@ -220,7 +264,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			for (const props of properties) {
 				if (props !== undefined) {
 					for (const key of Object.keys(props)) {
-						if (event[key] !== undefined) {
+						if (eventLike[key] !== undefined) {
 							continue;
 						}
 						const getterOrValue = props[key];
@@ -228,13 +272,13 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 						const value =
 							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
 						if (value !== undefined) {
-							newEvent[key] = value;
+							eventLike[key] = value;
 						}
 					}
 				}
 			}
 		}
-		return newEvent;
+		return toExtend;
 	}
 }
 
@@ -246,7 +290,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
 
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent) {
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
+	 */
+	public send(eventWithTagsMaybe: ITelemetryBaseEvent): void {
 		const newEvent: ITelemetryBaseEvent = {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
@@ -282,6 +329,21 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 		}
 		this.logger.send(newEvent);
 	}
+}
+
+/**
+ * Create a child logger based on the provided props object
+ * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ *
+ * @remarks
+ * Passing in no props object (i.e. undefined) will return a logger that is effectively a no-op.
+ */
+export function createChildLogger(props?: {
+	logger?: ITelemetryBaseLogger;
+	namespace?: string;
+	properties?: ITelemetryLoggerPropertyBags;
+}): ITelemetryLoggerExt {
+	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
 }
 
 /**
@@ -330,11 +392,20 @@ export class ChildLogger extends TelemetryLogger {
 					? baseLogger.namespace
 					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
-			return new ChildLogger(baseLogger.baseLogger, combinedNamespace, combinedProperties);
+			const child = new ChildLogger(
+				baseLogger.baseLogger,
+				combinedNamespace,
+				combinedProperties,
+			);
+
+			if (!loggerIsMonitoringContext(child) && loggerIsMonitoringContext(baseLogger)) {
+				mixinMonitoringContext(child, baseLogger.config);
+			}
+			return child;
 		}
 
 		return new ChildLogger(
-			baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
+			baseLogger ? baseLogger : { send(): void {} },
 			namespace,
 			properties,
 		);
@@ -353,14 +424,43 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
+	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
+		const eventLogLevel = logLevel ?? LogLevel.default;
+		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
+		// Filter out in case event log level is below what is wanted in config.
+		return eventLogLevel < configLogLevel;
+	}
+
 	/**
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent): void {
-		this.baseLogger.send(this.prepareEvent(event));
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (this.shouldFilterOutEvent(event, logLevel)) {
+			return;
+		}
+		this.baseLogger.send(this.prepareEvent(event), logLevel);
 	}
+}
+
+/**
+ * Create a logger which logs to multiple other loggers based on the provided props object
+ * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ * tryInheritProperties will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
+ */
+export function createMultiSinkLogger(props: {
+	namespace?: string;
+	properties?: ITelemetryLoggerPropertyBags;
+	loggers?: (ITelemetryBaseLogger | undefined)[];
+	tryInheritProperties?: true;
+}): ITelemetryLoggerExt {
+	return new MultiSinkLogger(
+		props.namespace,
+		props.properties,
+		props.loggers?.filter((l): l is ITelemetryBaseLogger => l !== undefined),
+		props.tryInheritProperties,
+	);
 }
 
 /**
@@ -368,22 +468,45 @@ export class ChildLogger extends TelemetryLogger {
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
  */
 export class MultiSinkLogger extends TelemetryLogger {
-	protected loggers: ITelemetryBaseLogger[] = [];
-
+	protected loggers: ITelemetryBaseLogger[];
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
 	 * @param properties - Base properties to add to all events
+	 * @param loggers - The list of loggers to use as sinks
+	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
-	constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
-		super(namespace, properties);
+	constructor(
+		namespace?: string,
+		properties?: ITelemetryLoggerPropertyBags,
+		loggers: ITelemetryBaseLogger[] = [],
+		tryInheritProperties?: true,
+	) {
+		let realProperties = properties !== undefined ? { ...properties } : undefined;
+		if (tryInheritProperties === true) {
+			const merge = (realProperties ??= {});
+			loggers
+				.filter((l): l is this => l instanceof TelemetryLogger)
+				.map((l) => l.properties ?? {})
+				// eslint-disable-next-line unicorn/no-array-for-each
+				.forEach((cv) => {
+					// eslint-disable-next-line unicorn/no-array-for-each
+					Object.keys(cv).forEach((k) => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+						merge[k] = { ...cv[k], ...merge?.[k] };
+					});
+				});
+		}
+
+		super(namespace, realProperties);
+		this.loggers = loggers;
 	}
 
 	/**
 	 * Add logger to send all events to
 	 * @param logger - Logger to add
 	 */
-	public addLogger(logger?: ITelemetryBaseLogger) {
+	public addLogger(logger?: ITelemetryBaseLogger): void {
 		if (logger !== undefined && logger !== null) {
 			this.loggers.push(logger);
 		}
@@ -396,9 +519,9 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 */
 	public send(event: ITelemetryBaseEvent): void {
 		const newEvent = this.prepareEvent(event);
-		this.loggers.forEach((logger: ITelemetryBaseLogger) => {
+		for (const logger of this.loggers) {
 			logger.send(newEvent);
-		});
+		}
 	}
 }
 
@@ -423,7 +546,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize: boolean = false,
-	) {
+	): PerformanceEvent {
 		return new PerformanceEvent(logger, event, markers, recordHeapSize);
 	}
 
@@ -432,7 +555,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEvent,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
-	) {
+	): T {
 		const perfEvent = PerformanceEvent.start(logger, event, markers);
 		try {
 			const ret = callback(perfEvent);
@@ -450,7 +573,7 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		recordHeapSize?: boolean,
-	) {
+	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(logger, event, markers, recordHeapSize);
 		try {
 			const ret = await callback(perfEvent);
@@ -462,7 +585,7 @@ export class PerformanceEvent {
 		}
 	}
 
-	public get duration() {
+	public get duration(): number {
 		return performance.now() - this.startTime;
 	}
 
@@ -482,6 +605,7 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
+		// eslint-disable-next-line unicorn/no-null
 		if (typeof window === "object" && window != null && window.performance?.mark) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
@@ -492,7 +616,7 @@ export class PerformanceEvent {
 		this.reportEvent(eventNameSuffix, props);
 	}
 
-	private autoEnd() {
+	private autoEnd(): void {
 		// Event might have been cancelled or ended in the callback
 		if (this.event && this.markers.end) {
 			this.reportEvent("end");
@@ -507,7 +631,7 @@ export class PerformanceEvent {
 		this.event = undefined;
 	}
 
-	private performanceEndMark() {
+	private performanceEndMark(): void {
 		if (this.startMark && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
@@ -516,7 +640,7 @@ export class PerformanceEvent {
 		}
 	}
 
-	public cancel(props?: ITelemetryProperties, error?: any): void {
+	public cancel(props?: ITelemetryProperties, error?: unknown): void {
 		if (this.markers.cancel !== undefined) {
 			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
 		}
@@ -526,7 +650,11 @@ export class PerformanceEvent {
 	/**
 	 * Report the event, if it hasn't already been reported.
 	 */
-	public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: any) {
+	public reportEvent(
+		eventNameSuffix: string,
+		props?: ITelemetryProperties,
+		error?: unknown,
+	): void {
 		// There are strange sequences involving multiple Promise chains
 		// where the event can be cancelled and then later a callback is invoked
 		// and the caller attempts to end directly, e.g. issue #3936. Just return.
@@ -559,64 +687,17 @@ export class PerformanceEvent {
 }
 
 /**
- * Logger that is useful for UT
- * It can be used in places where logger instance is required, but events should be not send over.
- */
-export class TelemetryUTLogger implements ITelemetryLoggerExt {
-	public send(event: ITelemetryBaseEvent): void {}
-	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {}
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-		this.reportError("errorEvent in UT logger!", event, error);
-	}
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
-	public logGenericError(eventName: string, error: any) {
-		this.reportError(`genericError in UT logger!`, { eventName }, error);
-	}
-	public logException(event: ITelemetryErrorEvent, exception: any): void {
-		this.reportError("exception in UT logger!", event, exception);
-	}
-	public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-		this.reportError("debugAssert in UT logger!");
-	}
-	public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-		this.reportError("shipAssert in UT logger!");
-	}
-
-	private reportError(message: string, event?: ITelemetryErrorEvent, err?: any) {
-		const error = new Error(message);
-		(error as any).error = error;
-		(error as any).event = event;
-		// report to console as exception can be eaten
-		console.error(message);
-		console.error(error);
-		throw error;
-	}
-}
-
-/**
- * Null logger
- * It can be used in places where logger instance is required, but events should be not send over.
- */
-export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
-	/**
-	 * Send an event with the logger
-	 *
-	 * @param event - the event to send
-	 */
-	public send(event: ITelemetryBaseEvent): void {
-		return;
-	}
-}
-
-/**
- * Null logger
- * It can be used in places where logger instance is required, but events should be not send over.
+ * Null logger that no-ops for all telemetry events passed to it.
+ * @deprecated - This will be removed in a future release.
+ * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
+ * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
+ * where the send() method does nothing and using that.
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
-	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
+	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {}
+	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {}
+	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {}
 }
 
 /**
@@ -676,3 +757,41 @@ function convertToBasePropertyTypeUntagged(
 			return `INVALID PROPERTY (typed as ${typeof x})`;
 	}
 }
+
+export const tagData = <
+	T extends TelemetryDataTag,
+	V extends Record<string, TelemetryEventPropertyTypeExt>,
+>(
+	tag: T,
+	values: V,
+): {
+	[P in keyof V]:
+		| {
+				value: Exclude<V[P], undefined>;
+				tag: T;
+		  }
+		| (V[P] extends undefined ? undefined : never);
+} =>
+	(Object.entries(values) as [keyof V, V[keyof V]][])
+		.filter((e): e is [keyof V, Exclude<V[keyof V], undefined>] => e[1] !== undefined)
+		// eslint-disable-next-line unicorn/no-array-reduce
+		.reduce<{
+			[P in keyof V]:
+				| (V[P] extends undefined ? undefined : never)
+				| { value: Exclude<V[P], undefined>; tag: T };
+		}>((pv, cv) => {
+			pv[cv[0]] = { tag, value: cv[1] };
+			return pv;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+		}, {} as any);
+
+export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyTypeExt>>(
+	values: T,
+): {
+	[P in keyof T]:
+		| {
+				value: Exclude<T[P], undefined>;
+				tag: TelemetryDataTag.CodeArtifact;
+		  }
+		| (T[P] extends undefined ? undefined : never);
+} => tagData(TelemetryDataTag.CodeArtifact, values);

@@ -14,7 +14,7 @@ describe("taskList", () => {
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/dot-notation
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	it.skip("loads and there's an input", async () => {

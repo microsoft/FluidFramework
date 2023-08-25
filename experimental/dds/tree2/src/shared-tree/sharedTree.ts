@@ -34,22 +34,24 @@ import {
 	DefaultChangeset,
 	buildForest,
 	ForestRepairDataStoreProvider,
-	GlobalFieldSchema,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	NewFieldContent,
 	ModularChangeset,
+	nodeKeyFieldKey,
+	FieldSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
-import { nodeKeyFieldKey } from "../domains";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import { JsonCompatibleReadOnly, brand } from "../util";
+import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
+	ISharedTreeBranchView,
 	ISharedTreeView,
-	SharedTreeView,
+	ITransaction,
 	ViewEvents,
 	createSharedTreeView,
+	schematizeView,
 } from "./sharedTreeView";
 
 /**
@@ -75,7 +77,7 @@ export class SharedTree
 		HasListeners<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly nodeKeyIndex: NodeKeyIndex<typeof nodeKeyFieldKey>;
+	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
@@ -88,7 +90,7 @@ export class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(runtime, forest);
+		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
@@ -107,10 +109,13 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this.nodeKeyIndex = new NodeKeyIndex(nodeKeyFieldKey);
+		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
+			// TODO:
+			// This passes in a version of schema thats not wrapped with the editor.
+			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			repairProvider,
@@ -129,6 +134,11 @@ export class SharedTree
 	}
 
 	public get storedSchema(): StoredSchemaRepository {
+		// TODO:
+		// Schema editing on the view should be the same as editing it here.
+		// However, currently editing schema on views doesn't send ops because schema editing is a hack and not properly implemented.
+		// When this is fixed, this assert should start passing:
+		// assert(this.schema === this.view.storedSchema, "mismatched schema");
 		return this.schema;
 	}
 
@@ -140,8 +150,8 @@ export class SharedTree
 		return this.view.root;
 	}
 
-	public set root(data: NewFieldContent) {
-		this.view.root = data;
+	public setContent(data: NewFieldContent): void {
+		this.view.setContent(data);
 	}
 
 	public get context(): EditableTreeContext {
@@ -152,29 +162,35 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
-	public schematize<TRoot extends GlobalFieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
+	public schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
+		// TODO:
+		// This should work, but schema editing on views doesn't send ops.
+		// return this.view.schematize(config);
+		// For now, use this as a workaround:
 		return schematizeView(this, config);
 	}
 
-	public get transaction(): SharedTreeView["transaction"] {
+	public get transaction(): ITransaction {
 		return this.view.transaction;
 	}
 
-	public get nodeKey(): SharedTreeView["nodeKey"] {
+	public get nodeKey(): ISharedTreeView["nodeKey"] {
 		return this.view.nodeKey;
 	}
 
-	public fork(): SharedTreeView {
+	public fork(): ISharedTreeBranchView {
 		return this.view.fork();
 	}
 
-	public merge(fork: SharedTreeView): void {
-		this.view.merge(fork);
+	public merge(view: ISharedTreeBranchView): void;
+	public merge(view: ISharedTreeBranchView, disposeView: boolean): void;
+	public merge(view: ISharedTreeBranchView, disposeView = true): void {
+		this.view.merge(view, disposeView);
 	}
 
-	public rebase(fork: SharedTreeView): void {
+	public rebase(fork: ISharedTreeBranchView): void {
 		fork.rebaseOnto(this.view);
 	}
 
