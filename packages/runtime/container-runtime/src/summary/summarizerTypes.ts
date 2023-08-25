@@ -325,11 +325,14 @@ export type SummarizerStopReason =
 	 */
 	| "latestSummaryStateStale";
 
+export interface ISummarizeEventProps {
+	result: "success" | "failure" | "canceled";
+	currentAttempt: number;
+	maxAttempts: number;
+	error?: any;
+}
 export interface ISummarizerEvents extends IEvent {
-	/**
-	 * An event indicating that the Summarizer is having problems summarizing
-	 */
-	(event: "summarizingError", listener: (error: ISummarizingWarning) => void);
+	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
 }
 
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
