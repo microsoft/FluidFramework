@@ -499,7 +499,7 @@ describe("Op Size", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 			initializeOpDataCollection(tree);
-			// Note that the child node byte size for the initial tree here should be arbitrary
+			// Note that the child node byte size for the initial tree here should be arbitrary.
 			initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			const editPayload = createStringFromLength(
