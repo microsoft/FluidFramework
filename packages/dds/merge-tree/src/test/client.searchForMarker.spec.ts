@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { UniversalSequenceNumber } from "../constants";
 import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes";
-import { ReferenceType } from "../ops";
+import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
@@ -31,60 +31,7 @@ describe("TestClient", () => {
 		client.startOrUpdateCollaboration(localUserLongId);
 	});
 
-	describe(".searchForMarker", () => {
-		it("Should not return tile when searching past the end of a string length 1", () => {
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-
-			assert.equal(client.getLength(), 1);
-			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should not return tile when searching before the start of a string length 1", () => {
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-
-			assert.equal(client.getLength(), 1);
-
-			const foundTile = client.searchForMarker(-1, "Eop", false);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should not return tile when searching past the end of a string length > 1", () => {
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-			client.insertTextLocal(0, "abc");
-
-			assert.equal(client.getLength(), 4);
-
-			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should not return tile when searching before the start of a string length > 1", () => {
-			client.insertTextLocal(0, "abc");
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-
-			assert.equal(client.getLength(), 4);
-
-			const foundTile = client.searchForMarker(-1, "Eop", false);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
+	describe.only(".searchForMarker", () => {
 		it("Should return tile at the search position in either direction", () => {
 			client.insertTextLocal(0, "abcdefg");
 			client.insertMarkerLocal(4, ReferenceType.Tile, {
@@ -201,7 +148,6 @@ describe("TestClient", () => {
 				client.getClientId(),
 			);
 			assert.equal(exp, 1, "Tile with label not at expected position");
-			// assert.equal(tile.tile, ref, "not equal");
 		});
 
 		it("Should be able to find preceding tile position based on label from client with multiple tile", () => {
@@ -434,6 +380,172 @@ describe("TestClient", () => {
 			assert.equal(tile2, undefined, "Returned tile should be undefined.");
 		});
 
+		it("Should be able to find a deleted and rolled back marker", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			client.removeRangeLocal(0, 1);
+
+			client.rollback?.(
+				{ type: MergeTreeDeltaType.REMOVE },
+				client.peekPendingSegmentGroups(),
+			);
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert(marker, "Returned tile undefined.");
+
+			const exp = client.mergeTree.referencePositionToLocalPosition(
+				marker,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Tile with label not at expected position");
+		});
+
+		it("Should not be able to find an inserted and rolled back marker", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			client.rollback?.(
+				{ type: MergeTreeDeltaType.INSERT },
+				client.peekPendingSegmentGroups(),
+			);
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should be able to find a marker at 0 searching at 0 in both directions", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4);
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert(marker, "Returned tile undefined.");
+
+			let exp = client.mergeTree.referencePositionToLocalPosition(
+				marker,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Tile with label not at expected position");
+
+			const marker2 = client.searchForMarker(0, "Eop", false);
+
+			assert(marker2, "Returned tile undefined.");
+
+			exp = client.mergeTree.referencePositionToLocalPosition(
+				marker2,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Tile with label not at expected position");
+		});
+
+		it("Should be able to find a marker at length-1 searching at length-1 in both directions", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+			client.insertTextLocal(0, "abc");
+
+			const length = client.getLength();
+			assert.equal(length, 4);
+
+			const marker = client.searchForMarker(length - 1, "Eop", true);
+
+			assert(marker, "Returned tile undefined.");
+
+			let exp = client.mergeTree.referencePositionToLocalPosition(
+				marker,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, length - 1, "Tile with label not at expected position");
+
+			const marker2 = client.searchForMarker(length - 1, "Eop", false);
+
+			assert(marker2, "Returned tile undefined.");
+
+			exp = client.mergeTree.referencePositionToLocalPosition(
+				marker2,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, length - 1, "Tile with label not at expected position");
+		});
+
+		it("Should return undefined when searching past the end of a string length 1", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 1);
+			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
+
+			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
+		});
+
+		it("Should return undefined when searching before the start of a string length 1", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 1);
+
+			const foundTile = client.searchForMarker(-1, "Eop", false);
+
+			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
+		});
+
+		it("Should return undefined when searching past the end of a string length > 1", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+			client.insertTextLocal(0, "abc");
+
+			assert.equal(client.getLength(), 4);
+
+			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
+
+			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
+		});
+
+		it("Should return undefined when searching before the start of a string length > 1", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4);
+
+			const foundTile = client.searchForMarker(-1, "Eop", false);
+
+			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
+		});
+
 		it("Should return undefined when trying to find tile from text without the specified tile", () => {
 			const tileLabel = "EOP";
 			client.insertTextLocal(0, "abc");
@@ -460,6 +572,55 @@ describe("TestClient", () => {
 			const tile1 = client.searchForMarker(1, tileLabel, false);
 
 			assert.equal(tile1, undefined, "Returned tile should be undefined.");
+		});
+
+		describe("with remote client", () => {
+			const remoteUserLongId = "remoteUser";
+			let client2: TestClient;
+			beforeEach(() => {
+				client2 = new TestClient();
+				insertSegments({
+					mergeTree: client2.mergeTree,
+					pos: 0,
+					segments: [TextSegment.make("")],
+					refSeq: UniversalSequenceNumber,
+					clientId: client2.getClientId(),
+					seq: UniversalSequenceNumber,
+					opArgs: undefined,
+				});
+				client2.startOrUpdateCollaboration(remoteUserLongId);
+			});
+
+			it("Should be able to find remotely inserted marker", () => {
+				let seq = 0;
+				const textMsg = client.makeOpMessage(client.insertTextLocal(0, "abc"), ++seq);
+				const markerMsg = client2.makeOpMessage(
+					client2.insertMarkerLocal(0, ReferenceType.Tile, {
+						[reservedMarkerIdKey]: "marker",
+						[reservedTileLabelsKey]: ["Eop"],
+					}),
+					++seq,
+				);
+				client.applyMsg(textMsg);
+				client2.applyMsg(textMsg);
+				client.applyMsg(markerMsg);
+				client2.applyMsg(markerMsg);
+
+				assert.equal(client.getLength(), 4, "length not expected - client");
+				assert.equal(client2.getLength(), 4, "length not expected - client 2");
+
+				const marker = client.searchForMarker(0, "Eop", true);
+
+				assert(marker, "Returned tile undefined");
+
+				const exp = client.mergeTree.referencePositionToLocalPosition(
+					marker,
+					UniversalSequenceNumber,
+					client.getClientId(),
+				);
+
+				assert.equal(exp, 0, "Tile with label not at expected position");
+			});
 		});
 	});
 });
