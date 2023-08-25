@@ -926,30 +926,24 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
 		const blobs = {};
 		const localIds = new Set<PendingBlob>();
-		while (localIds.size < this.pendingBlobs.size && !this.allBlobsAttached) {
-			const newLocalIds = new Set<PendingBlob>();
+		while (localIds.size < this.pendingBlobs.size) {
 			for (const [id, entry] of this.pendingBlobs) {
 				if (!localIds.has(entry)) {
 					localIds.add(entry);
-					newLocalIds.add(entry);
 					if (waitBlobsToAttach) {
 						if (!entry.opsent) {
 							this.sendBlobAttachOp(id, entry.storageId);
 						}
 						entry.handleP.resolve(this.getBlobHandle(id));
-					}
-				}
-			}
-			for (const [id, entry] of this.pendingBlobs) {
-				if (newLocalIds.has(entry)) {
-					if (waitBlobsToAttach && !entry.attached) {
-						await new Promise<void>((resolve) => {
-							this.on("blobAttached", (attachedEntry) => {
-								if (attachedEntry === entry) {
-									resolve();
-								}
+						if (!entry.attached) {
+							await new Promise<void>((resolve) => {
+								this.on("blobAttached", (attachedEntry) => {
+									if (attachedEntry === entry) {
+										resolve();
+									}
+								});
 							});
-						});
+						}
 					}
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
