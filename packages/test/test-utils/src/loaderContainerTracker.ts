@@ -11,8 +11,11 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-internal-modules
-import { Container } from "@fluidframework/container-loader/dist/container";
+import {
+	IContainerCreateProps,
+	IContainerLoadProps,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-loader/dist/container";
 import { waitForContainerConnection } from "./containerUtils";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
@@ -101,19 +104,26 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		// Container has a `clone` method that can be used to create another container without going through
 		// the Loader. Such containers won't be added by the `add` method so do it here. For example, summarizer
 		// containers are created via the `clone` method.
-		const c = container as Container;
+		// Created a type with clone (which is not on IContainer and is readonly) rather than typing to any.
+		type ContainerWithClone = IContainer & {
+			clone: (
+				loadProps: IContainerLoadProps,
+				createParamOverrides: Partial<IContainerCreateProps>,
+			) => Promise<IContainer>;
+		};
+		const containerWithClone = container as ContainerWithClone;
+
 		// back-compat: Check for undefined because this function was added recently and older containers won't have it.
-		if (c.clone !== undefined) {
+		if (containerWithClone.clone !== undefined) {
 			const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
-				const boundFn = fn.bind(c);
+				const boundFn = fn.bind(containerWithClone);
 				return async (...args: T[]) => {
 					const newContainer = await boundFn(...args);
 					this.addContainer(newContainer);
 					return newContainer;
 				};
 			};
-			// This is hack but `clone` is readonly on Container and it didn't feel worth changing it for a test utility.
-			(c as any).clone = patch(c.clone);
+			containerWithClone.clone = patch(containerWithClone.clone);
 		}
 	}
 
