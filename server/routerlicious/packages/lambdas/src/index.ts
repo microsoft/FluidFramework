@@ -15,6 +15,7 @@ export {
 	IDeliLambdaEvents,
 	OpEventType,
 } from "./deli";
+export { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 export { MoiraLambda, MoiraLambdaFactory } from "./moira";
 export {
 	CheckpointManager,

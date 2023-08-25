@@ -50,7 +50,6 @@ import {
 	IConnectedClient,
 	IRoom,
 } from "./interfaces";
-export { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 
 const summarizerClientType = "summarizer";
 
