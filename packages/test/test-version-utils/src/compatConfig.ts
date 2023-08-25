@@ -16,7 +16,7 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion, getBaseVersion } from "./baseVersion.js";
+import { baseVersion, codeVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -152,9 +152,8 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 
 const genFullBackCompatConfig = (): CompatConfig[] => {
 	const _configList: CompatConfig[] = [];
-	const version: string = getBaseVersion();
 
-	const [, semverInternal] = fromInternalScheme(version, true, true);
+	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 	const greatestMajor = semverInternal.major;
@@ -260,9 +259,10 @@ export async function mochaGlobalSetup() {
 	}
 
 	// Make sure we wait for all before returning, even if one of them has error.
-	const installP = Array.from(versions.values()).map(async (value) =>
-		ensurePackageInstalled(baseVersion, value, reinstall),
-	);
+	const installP = Array.from(versions.values()).map(async (value) => {
+		const version = value === 0 ? baseVersion : codeVersion;
+		return ensurePackageInstalled(version, value, reinstall);
+	});
 
 	let error: unknown;
 	for (const p of installP) {

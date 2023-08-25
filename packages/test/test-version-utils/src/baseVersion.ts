@@ -10,16 +10,20 @@ import { resolveVersion } from "./versionUtils.js";
 import "../compatOptions.cjs";
 import { pkgVersion } from "./packageVersion.js";
 
-export function getBaseVersion() {
+export function getCodeVersion() {
 	const configVersion = nconf.get("fluid:test:baseVersion");
 	if (configVersion !== undefined) {
 		return configVersion as string;
 	}
-	const codeVersion = process.env.SETVERSION_CODEVERSION;
-	if (codeVersion !== undefined && isInternalVersionScheme(codeVersion, true, true)) {
-		return codeVersion;
+	const version = process.env.SETVERSION_CODEVERSION;
+	if (version !== undefined && isInternalVersionScheme(version, true, true)) {
+		return version;
 	}
 	return pkgVersion;
 }
 
-export const baseVersion = resolveVersion(getBaseVersion(), false);
+export const codeVersion = resolveVersion(getCodeVersion(), false);
+export const baseVersion = resolveVersion(
+	(nconf.get("fluid:test:baseVersion") as string) ?? pkgVersion,
+	false,
+);
