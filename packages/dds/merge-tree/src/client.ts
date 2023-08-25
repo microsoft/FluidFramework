@@ -373,13 +373,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param offset - Offset on the segment at which to place the local reference
 	 * @param refType - ReferenceType for the created local reference
 	 * @param properties - PropertySet to place on the created local reference
+	 * @param canSlideToEndpoint - Whether or not the created local reference can
+	 * slide onto one of the special endpoint segments denoting the position
+	 * before the start of or after the end of the tree
 	 */
 	public createLocalReferencePosition(
-		segment: ISegment,
+		segment: ISegment | "start" | "end",
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
@@ -387,6 +391,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			refType,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 	}
 

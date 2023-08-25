@@ -12,6 +12,8 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { SequencePlace, Side } from "../intervalCollection";
+
 /**
  * Basic interval abstraction
  */
@@ -46,8 +48,8 @@ export interface IInterval {
 	 */
 	modify(
 		label: string,
-		start: number | undefined,
-		end: number | undefined,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	): IInterval | undefined;
@@ -111,12 +113,17 @@ export interface ISerializedInterval {
 	 */
 	sequenceNumber: number;
 	/** Start position of the interval */
-	start: number;
+	start: number | "start" | "end";
 	/** End position of the interval */
-	end: number;
+	end: number | "start" | "end";
 	/** Interval type to create */
 	intervalType: IntervalType;
+	/**
+	 * The stickiness of this interval
+	 */
 	stickiness?: IntervalStickiness;
+	startSide?: Side;
+	endSide?: Side;
 	/** Any properties the interval has */
 	properties?: PropertySet;
 }
@@ -158,11 +165,27 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  *
  * Intervals are of the format:
  *
- * [start, end, sequenceNumber, intervalType, properties, stickiness?]
+ * [
+ * start,
+ * end,
+ * sequenceNumber,
+ * intervalType,
+ * properties,
+ * stickiness?,
+ * startSide?,
+ * endSide?,
+ * ]
  */
 export type CompressedSerializedInterval =
-	| [number, number, number, IntervalType, PropertySet, IntervalStickiness]
-	| [number, number, number, IntervalType, PropertySet];
+	| [
+			number | "start" | "end",
+			number | "start" | "end",
+			number,
+			IntervalType,
+			PropertySet,
+			IntervalStickiness,
+	  ]
+	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
 
 /**
  * @sealed
@@ -180,17 +203,19 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
 	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
 	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
-	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
+	 * @param startSide - The side on which the start position lays. See
+	 * {@link SequencePlace} for additional context
+	 * @param endSide - The side on which the end position lays. See
+	 * {@link SequencePlace} for additional context
 	 */
 	create(
 		label: string,
-		start: number | undefined,
-		end: number | undefined,
+		start: SequencePlace | undefined,
+		end: SequencePlace | undefined,
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
-		stickiness?: IntervalStickiness,
 	): TInterval;
 }
 
@@ -200,6 +225,8 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ *
+ * @internal
  */
 export const IntervalStickiness = {
 	/**
@@ -231,19 +258,21 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ *
+ * @internal
  */
 export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
 
-export function endReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
-	// if any end stickiness, prefer sliding forwards
-	return (stickiness & IntervalStickiness.END) !== 0
+export function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
+	// if any start stickiness, prefer sliding backwards
+	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
 		: SlidingPreference.BACKWARD;
 }
 
-export function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
-	// if any start stickiness, prefer sliding backwards
-	return (stickiness & IntervalStickiness.START) !== 0
+export function endReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
+	// if any end stickiness, prefer sliding forwards
+	return (stickiness & IntervalStickiness.END) === 0
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
 }
