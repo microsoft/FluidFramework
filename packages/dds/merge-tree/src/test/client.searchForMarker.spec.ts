@@ -31,7 +31,7 @@ describe("TestClient", () => {
 		client.startOrUpdateCollaboration(localUserLongId);
 	});
 
-	describe.only(".searchForMarker", () => {
+	describe(".searchForMarker", () => {
 		it("Should return marker at the search position in either direction", () => {
 			client.insertTextLocal(0, "abcdefg");
 			client.insertMarkerLocal(4, ReferenceType.Tile, {
