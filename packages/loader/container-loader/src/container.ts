@@ -430,7 +430,11 @@ export class Container
 								// Depending where error happens, we can be attempting to connect to web socket
 								// and continuously retrying (consider offline mode)
 								// Host has no container to close, so it's prudent to do it here
+								// Note: We could only dispose the container instead of just close but that would
+								// the telemetry where users sometimes search for ContainerClose event to look
+								// for load failures. So not removing this at this time.
 								container.close(err);
+								container.dispose(err);
 								onClosed(err);
 							},
 						);
