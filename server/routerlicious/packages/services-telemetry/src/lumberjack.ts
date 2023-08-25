@@ -12,13 +12,20 @@ import {
 	ILumberjackSchemaValidator,
 	handleError,
 } from "./resources";
-import { getGlobalTelemetryContext } from "./telemetryContext";
+import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
 
 export interface ILumberjackOptions {
 	enableGlobalTelemetryContext: boolean;
 }
 const defaultLumberjackOptions: ILumberjackOptions = {
 	enableGlobalTelemetryContext: true,
+};
+
+export const getGlobalLumberjackInstance = () =>
+	getGlobal().lumberjackInstance as Lumberjack | undefined;
+
+export const setGlobalLumberjackInstance = (lumberjackInstance: Lumberjack) => {
+	getGlobal().lumberjackInstance = lumberjackInstance;
 };
 
 // Lumberjack is a telemetry manager class that allows the collection of metrics and logs
@@ -37,13 +44,10 @@ export class Lumberjack {
 
 	protected static get instance(): Lumberjack {
 		if (this._staticOptions.enableGlobalTelemetryContext) {
-			const telemetryContext = getGlobalTelemetryContext();
-			if (telemetryContext) {
-				if (!telemetryContext.lumberjackInstance) {
-					telemetryContext.lumberjackInstance = new Lumberjack();
-				}
-				return telemetryContext.lumberjackInstance;
+			if (!getGlobalLumberjackInstance()) {
+				setGlobalLumberjackInstance(new Lumberjack());
 			}
+			return getGlobalLumberjackInstance() as Lumberjack;
 		}
 		if (!Lumberjack._instance) {
 			Lumberjack._instance = new Lumberjack();
@@ -180,7 +184,7 @@ export class Lumberjack {
 	) {
 		this.errorOnIncompleteSetup();
 		const lumberProperties = this._options.enableGlobalTelemetryContext
-			? { ...properties, ...getGlobalTelemetryContext()?.getProperties() }
+			? { ...properties, ...getGlobalTelemetryContext().getProperties() }
 			: properties;
 		const lumber = new Lumber<string>(
 			Lumberjack.LogMessageEventName,

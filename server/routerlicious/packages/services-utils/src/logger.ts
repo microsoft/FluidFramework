@@ -15,6 +15,7 @@ import {
 	ILumberjackOptions,
 } from "@fluidframework/server-services-telemetry";
 import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
+import { configureGlobalContext } from "./globalContext";
 
 export interface IWinstonConfig {
 	colorize: boolean;
@@ -67,19 +68,24 @@ function configureWinstonLogging(config: IWinstonConfig): void {
 export interface ILumberjackConfig {
 	engineList: ILumberjackEngine[];
 	schemaValidator?: ILumberjackSchemaValidator[];
-	options?: ILumberjackOptions;
+	options?: Partial<ILumberjackOptions>;
 }
 const defaultLumberjackConfig: ILumberjackConfig = {
 	engineList: [new WinstonLumberjackEngine()],
 	schemaValidator: undefined,
-	options: undefined,
+	options: {
+		enableGlobalTelemetryContext: true,
+	},
 };
 function configureLumberjackLogging(config: ILumberjackConfig) {
+	if (config.options?.enableGlobalTelemetryContext) {
+		configureGlobalContext();
+	}
 	Lumberjack.setup(config.engineList, config.schemaValidator, config.options);
 }
 
 /**
- * Configures the default behavior of the Winston logger based on the provided config
+ * Configures the default behavior of the Winston logger and Lumberjack based on the provided config
  */
 export function configureLogging(configOrPath: nconf.Provider | string) {
 	const config =
@@ -100,6 +106,10 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
 	const lumberjackConfig: ILumberjackConfig = {
 		...defaultLumberjackConfig,
 		...(config.get("lumberjack") as Partial<ILumberjackConfig>),
+	};
+	lumberjackConfig.options = {
+		...defaultLumberjackConfig.options,
+		...lumberjackConfig.options,
 	};
 	configureLumberjackLogging(lumberjackConfig);
 

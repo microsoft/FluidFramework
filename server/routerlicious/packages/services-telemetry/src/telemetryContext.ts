@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Lumberjack } from "./lumberjack";
 import { BaseTelemetryProperties } from "./resources";
 
 export interface ITelemetryContextProperties {
@@ -12,55 +11,48 @@ export interface ITelemetryContextProperties {
 	[BaseTelemetryProperties.correlationId]: string;
 }
 
-export interface ITelemetryContextPropertyProvider {
-	bindTelemetryContextProperties(
+export interface ITelemetryContext {
+	/**
+	 * Bind properties to context where `callback()` is executed.
+	 * After this, `getProperties()` within `callback` will include `props`.
+	 */
+	bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void;
+	/**
+	 * Promisified {@link ITelemetryContext.bindProperties}.
+	 */
+	bindPropertiesAsync<T>(
 		props: Partial<ITelemetryContextProperties>,
-		callback: () => void,
-	): void;
-	getTelemetryContextProperties(): Partial<ITelemetryContextProperties>;
-}
-
-export class TelemetryContext {
-	private _lumberjackInstance: Lumberjack | undefined;
-	private _telemetryContextPropertyProvider: ITelemetryContextPropertyProvider | undefined;
-
-	public set lumberjackInstance(lumberjackInstance: Lumberjack | undefined) {
-		if (!this._lumberjackInstance) {
-			this._lumberjackInstance = lumberjackInstance;
-		}
-	}
-	public get lumberjackInstance(): Lumberjack | undefined {
-		return this._lumberjackInstance;
-	}
-
-	public set telemetryContextPropertyProvider(
-		telemetryContextPropertyProvider: ITelemetryContextPropertyProvider,
-	) {
-		if (!this._telemetryContextPropertyProvider) {
-			this._telemetryContextPropertyProvider = telemetryContextPropertyProvider;
-		}
-	}
-
+		callback: () => Promise<T>,
+	): Promise<T>;
 	/**
 	 * Retrieve contextual properties for telemetry.
 	 */
-	public getProperties(): Partial<ITelemetryContextProperties> {
-		return this._telemetryContextPropertyProvider?.getTelemetryContextProperties() ?? {};
-	}
-
-	/**
-	 * Bind properties to context.
-	 */
-	public bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void {
-		this._telemetryContextPropertyProvider?.bindTelemetryContextProperties(props, callback);
-	}
+	getProperties(): Partial<ITelemetryContextProperties>;
 }
 
-const getGlobal = () => (typeof window !== "undefined" ? window : global);
+export class NullTelemetryContext implements ITelemetryContext {
+	public getProperties(): Partial<ITelemetryContextProperties> {
+		return {};
+	}
+
+	public bindProperties(props: Partial<ITelemetryContextProperties>, callback: () => void): void {
+		callback();
+	}
+
+	public async bindPropertiesAsync<T>(
+		props: Partial<ITelemetryContextProperties>,
+		callback: () => Promise<T>,
+	): Promise<T> {
+		return callback();
+	}
+}
+const nullTelemetryContext = new NullTelemetryContext();
+
+export const getGlobal = () => (typeof window !== "undefined" ? window : global);
 
 export const getGlobalTelemetryContext = () =>
-	(getGlobal() as any).telemetryContext as TelemetryContext | undefined;
+	(getGlobal().telemetryContext as ITelemetryContext | undefined) ?? nullTelemetryContext;
 
-export const setGlobalTelemetryContext = (telemetryContext: TelemetryContext) => {
-	(getGlobal() as any).telemetryContext = telemetryContext;
+export const setGlobalTelemetryContext = (telemetryContext: ITelemetryContext) => {
+	getGlobal().telemetryContext = telemetryContext;
 };

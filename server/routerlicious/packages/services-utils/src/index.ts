@@ -3,23 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { AsyncLocalStorageContextProvider } from "./asyncLocalStorage";
-
-// TODO: Maybe all of this should happen in a `configureGlobalTelemetryContext()` helper
-const globalAsyncLocalStorageContextProvider = new AsyncLocalStorageContextProvider();
-global.asyncLocalStorageContextProvider = globalAsyncLocalStorageContextProvider;
-const globalTelemetryContext = getGlobalTelemetryContext();
-if (globalTelemetryContext) {
-	globalTelemetryContext.telemetryContextPropertyProvider =
-		globalAsyncLocalStorageContextProvider;
-}
-
+export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
 export {
 	bindCorrelationId,
 	getCorrelationId,
 	getCorrelationIdWithHttpFallback,
 } from "./asyncLocalStorage";
+export { bindTelemetryContext, getTelemetryContextPropertiesWithHttpInfo } from "./asyncContext";
 export {
 	generateToken,
 	generateUser,
@@ -31,6 +21,7 @@ export {
 	validateTokenScopeClaims,
 	verifyToken,
 } from "./auth";
+export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";
 export { getHostIp } from "./dns";
@@ -51,11 +42,9 @@ export {
 } from "./redisUtils";
 export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./throttlerConfigs";
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
-export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export {
 	WebSocketTracker,
 	DummyTokenRevocationManager,
 	DummyRevokedTokenChecker,
 } from "./tokenRevocationManager";
-export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
-export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
+export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";

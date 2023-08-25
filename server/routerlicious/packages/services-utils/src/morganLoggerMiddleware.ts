@@ -13,6 +13,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getCorrelationIdWithHttpFallback } from "./asyncLocalStorage";
+import { getTelemetryContextPropertiesWithHttpInfo } from "./asyncContext";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -58,6 +59,7 @@ export function jsonMorganLoggerMiddleware(
 				[BaseTelemetryProperties.correlationId]: getCorrelationIdWithHttpFallback(req, res),
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
+				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 				...additionalProperties,
 			};
 			httpMetric.setProperties(properties);
