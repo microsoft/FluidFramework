@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -11,12 +10,11 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { compareUpPaths, rootFieldKey, UpPath, Anchor } from "../../../core";
-import { brand } from "../../../util";
+import { UpPath, Anchor, Value } from "../../../core";
 import { SharedTreeTestFactory, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate, initialTreeState, getFirstAnchor } from "./fuzzUtils";
+import { onCreate, initialTreeState, createAnchors, validateAnchors } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
@@ -33,8 +31,10 @@ interface AbortFuzzTestState extends FuzzTestState {
 describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 20;
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
 	describe("Anchors are unaffected by aborted transaction", () => {
+		// TODO: Add deletes once anchors are stable across removal and reinsertion
+		// TODO: Add moves once we have a generator for them
+		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
@@ -50,35 +50,65 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
+		let anchors: Map<Anchor, [UpPath, Value]>;
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			const firstAnchor = getFirstAnchor(initialState.clients[0].channel);
-			initialState.firstAnchor = firstAnchor;
-			initialState.clients[0].channel.transaction.start();
+			const tree = initialState.clients[0].channel;
+			tree.transaction.start();
+			anchors = createAnchors(tree);
 		});
 
 		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
 			// aborts any transactions that may still be in progress
-			finalState.clients[0].channel.transaction.abort();
-			validateTree(finalState.clients[0].channel, [initialTreeState]);
-			// validate anchor
-			const expectedPath: UpPath = {
-				parent: {
-					parent: undefined,
-					parentIndex: 0,
-					parentField: rootFieldKey,
-				},
-				parentField: brand("foo"),
-				parentIndex: 1,
-			};
-			assert(finalState.firstAnchor !== undefined);
-			const anchorPath = finalState.clients[0].channel.locate(finalState.firstAnchor);
-			assert(compareUpPaths(expectedPath, anchorPath));
+			const tree = finalState.clients[0].channel;
+			tree.transaction.abort();
+			validateTree(tree, [initialTreeState]);
+			validateAnchors(finalState.clients[0].channel, anchors, false);
 		});
 
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 1,
+			emitter,
+		});
+	});
+	describe("Anchors are stable", () => {
+		// TODO: Add deletes once anchors are stable across removal
+		// TODO: Add moves once we have a generator for them
+		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			insert: 2,
+			undo: 1,
+			redo: 1,
+			synchronizeTrees: 1,
+		};
+		const generatorFactory = () =>
+			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
+		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory: () => generator,
+			reducer: fuzzReducer,
+			validateConsistency: () => {},
+		};
+
+		let anchors: Map<Anchor, [UpPath, Value]>;
+		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
+			anchors = createAnchors(initialState.clients[0].channel);
+		});
+
+		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
+			validateAnchors(finalState.clients[0].channel, anchors, false);
+		});
+
+		createDDSFuzzSuite(model, {
+			defaultTestCount: runsPerBatch,
+			numberOfClients: 2,
 			emitter,
 		});
 	});
