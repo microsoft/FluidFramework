@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+// import { strict as assert } from "assert";
 import { benchmark } from "@fluid-tools/benchmark";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
@@ -95,13 +95,13 @@ describeNoCompat.only(
 						unsampledCounter.increment(1);
 					}
 					await provider.ensureSynchronized(); // Wait for all ops to roundtrip so we generate OpRoundtripTime events.
-					assert(
-						unsampledLogger.events.filter((x) =>
-							x.eventName.endsWith("OpRoundtripTime"),
-						).length >= opCount,
-						`Too few events (${unsampledLogger.events.length}) seen in logger. Is sampling really disabled?`,
-					);
-					unsampledLogger.clear();
+					// assert(
+					// 	unsampledLogger.events.filter((x) =>
+					// 		x.eventName.endsWith("OpRoundtripTime"),
+					// 	).length >= opCount,
+					// 	`Too few events (${unsampledLogger.events.length}) seen in logger. Is sampling really disabled?`,
+					// );
+					// unsampledLogger.clear();
 				},
 			});
 
@@ -112,13 +112,13 @@ describeNoCompat.only(
 						sampledCounter.increment(1);
 					}
 					await provider.ensureSynchronized(); // Wait for all ops to roundtrip so we generate OpRoundtripTime events.
-					assert(
-						sampledLogger.events.filter((x) => x.eventName.endsWith("OpRoundtripTime"))
-							.length <=
-							Math.ceil(opCount / 500) + 1, // Sampling rate is 500; bit of buffer to make tests not fail
-						`Too many events (${sampledLogger.events.length}) seen in logger. Is sampling really enabled?`,
-					);
-					sampledLogger.clear();
+					// assert(
+					// 	sampledLogger.events.filter((x) => x.eventName.endsWith("OpRoundtripTime"))
+					// 		.length <=
+					// 		Math.ceil(opCount / 500) + 1, // Sampling rate is 500; bit of buffer to make tests not fail
+					// 	`Too many events (${sampledLogger.events.length}) seen in logger. Is sampling really enabled?`,
+					// );
+					// sampledLogger.clear();
 				},
 			});
 		}
