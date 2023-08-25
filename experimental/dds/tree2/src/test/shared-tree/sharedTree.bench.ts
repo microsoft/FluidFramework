@@ -5,23 +5,33 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import {
-	FieldKinds,
-	isEditableField,
-	isEditableTree,
 	jsonableTreeFromCursor,
-	SchemaAware,
-	SchemaBuilder,
-	UnwrappedEditableField,
 	cursorForTypedData,
 	cursorForTypedTreeData,
 } from "../../feature-libraries";
-import { jsonNumber, jsonSchema, singleJsonCursor } from "../../domains";
-import { brand, requireAssignableTo } from "../../util";
+import { singleJsonCursor } from "../../domains";
 import { insert, TestTreeProviderLite, toJsonableTree, viewWithContent } from "../utils";
 import { ISharedTreeView } from "../../shared-tree";
-import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../../core";
-
-const localFieldKey: FieldKey = brand("foo");
+import { rootFieldKey } from "../../core";
+import {
+	deepPath,
+	deepSchema,
+	JSDeepTree,
+	JSWideTree,
+	localFieldKey,
+	makeDeepContent,
+	makeJsDeepTree,
+	makeWideContentWithEndValue,
+	makeJsWideTreeWithEndValue,
+	readDeepCursorTree,
+	readDeepEditableTree,
+	readDeepTreeAsJSObject,
+	readWideCursorTree,
+	readWideEditableTree,
+	readWideTreeAsJSObject,
+	wideRootSchema,
+	wideSchema,
+} from "../scalableTestTrees";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -35,82 +45,6 @@ const nodesCountDeep = [
 	[10, BenchmarkType.Perspective],
 	[100, BenchmarkType.Measurement],
 ];
-
-const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", {}, jsonSchema);
-
-// Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.structRecursive("linkedList", {
-	foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
-});
-
-const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", {}, jsonSchema);
-
-const wideRootSchema = wideBuilder.struct("WideRoot", {
-	foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
-});
-
-const wideSchema = wideBuilder.intoDocumentSchema(
-	SchemaBuilder.field(FieldKinds.value, wideRootSchema),
-);
-
-const deepSchema = deepBuilder.intoDocumentSchema(
-	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
-);
-
-/**
- * JS object like a deep tree.
- * Compatible with ContextuallyTypedNodeData
- */
-interface JSDeepTree {
-	foo: JSDeepTree | number;
-}
-
-type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
-type JSDeepTreeRoot2 = SchemaAware.TypedField<
-	typeof deepSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
-
-{
-	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
-	type _check2 = requireAssignableTo<JSDeepTree | number, JSDeepTreeRoot2>;
-}
-
-/**
- * JS object like a wide tree.
- * Compatible with ContextuallyTypedNodeData
- */
-interface JSWideTree {
-	foo: number[];
-}
-
-type JSWideTreeRoot2 = SchemaAware.TypedField<
-	typeof wideSchema.rootFieldSchema,
-	SchemaAware.ApiMode.Simple
->;
-
-{
-	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;
-}
-
-function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
-	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
-}
-
-/**
- *
- * @param numberOfNodes - number of nodes of the tree
- * @param endLeafValue - the value of the end leaf of the tree
- * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
- */
-function makeJsWideTreeWithEndValue(numberOfNodes: number, endLeafValue: number): JSWideTree {
-	const numbers = [];
-	for (let index = 0; index < numberOfNodes - 1; index++) {
-		numbers.push(index);
-	}
-	numbers.push(endLeafValue);
-	return { foo: numbers };
-}
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -201,11 +135,7 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					const initialTree: JSDeepTreeRoot2 = makeJsDeepTree(numberOfNodes, 1);
-					tree = viewWithContent({
-						initialTree,
-						schema: deepSchema,
-					});
+					tree = viewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepCursorTree(tree);
@@ -226,14 +156,9 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					const initialTree: JSWideTreeRoot2 = makeJsWideTreeWithEndValue(
-						numberOfNodes,
-						numberOfNodes - 1,
+					tree = viewWithContent(
+						makeWideContentWithEndValue(numberOfNodes, numberOfNodes - 1),
 					);
-					tree = viewWithContent({
-						initialTree,
-						schema: wideSchema,
-					});
 				},
 				benchmarkFn: () => {
 					const { nodesCount, sum } = readWideCursorTree(tree);
@@ -250,11 +175,7 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					const initialTree: JSDeepTreeRoot2 = makeJsDeepTree(numberOfNodes, 1);
-					tree = viewWithContent({
-						initialTree,
-						schema: deepSchema,
-					});
+					tree = viewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepEditableTree(tree);
@@ -302,11 +223,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const initialTree: JSDeepTreeRoot2 = makeJsDeepTree(numberOfNodes, 1);
-						const tree = viewWithContent({
-							initialTree,
-							schema: deepSchema,
-						});
+						const tree = viewWithContent(makeDeepContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -471,124 +388,3 @@ describe("SharedTree benchmarks", () => {
 		}
 	});
 });
-
-function readDeepTreeAsJSObject(tree: JSDeepTree): { depth: number; value: number } {
-	let currentNode = tree.foo;
-	let depth = 1;
-	let value = 0;
-
-	while (typeof currentNode !== "number") {
-		currentNode = currentNode.foo;
-		depth += 1;
-	}
-	if (typeof currentNode === "number") {
-		value = currentNode;
-	}
-	return { depth, value };
-}
-
-function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; sum: number } {
-	let sum = 0;
-
-	const nodes = tree.foo;
-	assert(nodes !== undefined);
-	for (const node of nodes) {
-		sum += node;
-	}
-	return { nodesCount: nodes.length, sum };
-}
-
-function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
-	let nodesCount = 0;
-	let sum = 0;
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
-	assert(readCursor.firstNode());
-	readCursor.firstField();
-	for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
-		sum += readCursor.value as number;
-		nodesCount += 1;
-	}
-	readCursor.free();
-	return { nodesCount, sum };
-}
-
-function readDeepCursorTree(tree: ISharedTreeView): { depth: number; value: number } {
-	let depth = 0;
-	let value = 0;
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
-	assert(readCursor.firstNode());
-	while (readCursor.firstField()) {
-		readCursor.firstNode();
-		depth += 1;
-		value = readCursor.value as number;
-	}
-	value = readCursor.value as number;
-	readCursor.free();
-	return { depth, value };
-}
-
-/**
- * Path to linked list node at provided depth.
- * Depth 1 points to the root node.
- */
-function deepPath(depth: number): UpPath {
-	assert(depth > 0);
-	let path: UpPath = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	for (let i = 0; i < depth - 1; i++) {
-		path = {
-			parent: path,
-			parentField: localFieldKey,
-			parentIndex: 0,
-		};
-	}
-	return path;
-}
-
-/**
- * Path to linked list node at provided depth.
- * Depth 1 points to the root node.
- */
-function wideLeafPath(index: number): UpPath {
-	const path = {
-		parent: {
-			parent: undefined,
-			parentField: rootFieldKey,
-			parentIndex: 0,
-		},
-		parentField: localFieldKey,
-		parentIndex: index,
-	};
-	return path;
-}
-
-function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
-	let sum = 0;
-	let nodesCount = 0;
-	const root = tree.root;
-	assert(isEditableTree(root));
-	const field = root.foo;
-	assert(isEditableField(field));
-	assert(field.length !== 0);
-	for (const currentNode of field) {
-		sum += currentNode as number;
-		nodesCount += 1;
-	}
-	return { nodesCount, sum };
-}
-
-function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
-	let depth = 0;
-	let currentNode: UnwrappedEditableField = tree.root;
-	while (isEditableTree(currentNode)) {
-		currentNode = currentNode.foo;
-		depth++;
-	}
-	assert(typeof currentNode === "number");
-	return { depth, value: currentNode };
-}
