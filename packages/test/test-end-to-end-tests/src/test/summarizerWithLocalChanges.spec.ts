@@ -480,6 +480,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			);
 			rootDataObject._root.set("dataStore2", dataObject2.handle);
 			dataObject2._root.set("op", "value");
+			await provider.ensureSynchronized();
 
 			const props = await summarizePromiseP;
 			assert.strictEqual(props.result, "failure", "Summarization did not fail as expected");
@@ -563,7 +564,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			);
 			rootDataObject._root.set("dataStore2", dataObject2.handle);
 			dataObject2._root.set("op", "value");
-			// await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
 			const props = await summarizePromiseP;
 			assert.strictEqual(
