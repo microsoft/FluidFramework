@@ -62,10 +62,6 @@
 			"Telemetry-Utils": {
 				"packages": ["@fluidframework/telemetry-utils"],
 				"deps": ["Base-Utils", "Base-Definitions", "Core-Utils", "Protocol-Definitions"]
-			},
-			"Container-Utils": {
-				"packages": ["@fluidframework/container-utils"],
-				"deps": ["Telemetry-Utils", "Container-Definitions"]
 			}
 		}
 	},
@@ -78,11 +74,11 @@
 			},
 			"Loader": {
 				"dirs": ["packages/loader/"],
-				"deps": ["Container-Definitions", "Driver-Utils", "Container-Utils"]
+				"deps": ["Container-Definitions", "Driver-Utils"]
 			},
 			"Runtime": {
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": ["Container-Definitions", "Container-Utils", "Core-Utils", "Driver-Utils"]
+				"deps": ["Container-Definitions", "Core-Utils", "Driver-Utils"]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],
