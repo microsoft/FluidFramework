@@ -11,7 +11,13 @@ import {
 	createChildLogger,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import {
+	assert,
+	delay,
+	Deferred,
+	PromiseTimer,
+	TypedEventEmitter,
+} from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
@@ -33,6 +39,8 @@ import {
 	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	IRefreshSummaryAckOptions,
+	ISummarizerEvents,
+	ISummarizeEventProps,
 } from "./summarizerTypes";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -62,7 +70,7 @@ export const defaultMaxAttemptsForSubmitFailures = 5;
  * track of summaries that it is generating as they are broadcast and acked/nacked.
  * This object is created and controlled by Summarizer object.
  */
-export class RunningSummarizer implements IDisposable {
+export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> implements IDisposable {
 	public static async start(
 		logger: ITelemetryBaseLogger,
 		summaryWatcher: IClientSummaryWatcher,
@@ -177,6 +185,8 @@ export class RunningSummarizer implements IDisposable {
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		private readonly runtime: ISummarizerRuntime,
 	) {
+		super();
+
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
@@ -724,24 +734,25 @@ export class RunningSummarizer implements IDisposable {
 		let maxAttempts = defaultMaxAttempts;
 		let currentAttempt = 0;
 		let retryAfterSeconds: number | undefined;
-		let success = false;
 		let done = false;
+		let result: "success" | "failure" | "canceled" = "success";
 		do {
+			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
-				success = true;
+				result = "canceled";
 				done = true;
 				break;
 			}
 
 			const { summarizeProps, summarizeResult } = attemptSummarize(
-				++currentAttempt,
+				currentAttempt,
 				false /* finalAttempt */,
 			);
 
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			if (ackNackResult.success) {
-				success = true;
+				result = "success";
 				done = true;
 				break;
 			}
@@ -759,9 +770,18 @@ export class RunningSummarizer implements IDisposable {
 				retryAfterSeconds = ackNackResult.data?.retryAfterSeconds;
 			}
 
+			// Emit "summarize" event for this failed attempt.
+			result = "failure";
+			const eventProps: ISummarizeEventProps = {
+				result,
+				currentAttempt,
+				maxAttempts,
+				error: ackNackResult.error,
+			};
+			this.emit("summarize", eventProps);
+
 			// If the failure doesn't have "retryAfterSeconds" or the max number of attempts have been done, we're done.
 			if (retryAfterSeconds === undefined || currentAttempt >= maxAttempts - 1) {
-				success = false;
 				done = true;
 			}
 
@@ -780,19 +800,30 @@ export class RunningSummarizer implements IDisposable {
 			}
 		} while (!done);
 
+		// If summarize attempt did not fail, emit "summarize" event and return. A failed attempt may be retried below.
+		if (result !== "failure") {
+			this.emit("summarize", { result, currentAttempt, maxAttempts });
+			return;
+		}
+
 		// If summarization wasn't successful above and the failure contains "retryAfterSeconds", perform one last
 		// attempt. This gives a chance to the runtime to perform additional steps in the last attempt.
-		if (!success && retryAfterSeconds !== undefined) {
+		if (retryAfterSeconds !== undefined) {
 			const { summarizeResult } = attemptSummarize(++currentAttempt, true /* finalAttempt */);
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
-			if (ackNackResult.success) {
-				success = true;
-			}
+			result = ackNackResult.success ? "success" : "failure";
+			const eventProps: ISummarizeEventProps = {
+				result,
+				currentAttempt,
+				maxAttempts,
+				error: ackNackResult.success ? undefined : ackNackResult.error,
+			};
+			this.emit("summarize", eventProps);
 		}
 
 		// If summarization is still unsuccessful, stop the summarizer.
-		if (!success) {
+		if (result === "failure") {
 			this.stopSummarizerCallback("failToSummarize");
 		}
 	}

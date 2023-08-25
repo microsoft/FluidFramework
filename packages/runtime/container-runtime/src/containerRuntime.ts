@@ -153,6 +153,7 @@ import {
 	ISummarizeResults,
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
+	ISummarizerEvents,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -658,7 +659,7 @@ export const makeLegacySendBatchFn =
  * It will define the store level mappings.
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
@@ -1618,6 +1619,9 @@ export class ContainerRuntime
 					},
 					this.heuristicsDisabled,
 				);
+				this.summaryManager.on("summarize", (eventProps) => {
+					this.emit("summarize", eventProps);
+				});
 				this.summaryManager.start();
 			}
 		}
