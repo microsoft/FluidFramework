@@ -7,6 +7,7 @@ import {
 	ITelemetryLoggerExt,
 	createChildLogger,
 	formatTick,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -14,7 +15,8 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { TypedEventEmitter, assert, performance } from "@fluidframework/common-utils";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
@@ -51,7 +53,52 @@ interface IOpPerfTimings {
 	inboundPushEventTime: number;
 }
 
-class OpPerfTelemetry {
+/**
+ * Wraps around an existing logger and applies a provided callback to determine if an event should be sampled.
+ */
+function createSampledLogger(
+	logger: ITelemetryBaseLogger,
+	shouldSampleEventCallback: () => boolean,
+) {
+	const monitoringContext = loggerToMonitoringContext(logger);
+	const isSamplingDisabled = monitoringContext.config.getBoolean(
+		"Fluid.Telemetry.DisableSampling",
+	);
+
+	const sampledLogger: ITelemetryBaseLogger = {
+		send: (event: ITelemetryBaseEvent) => {
+			if (isSamplingDisabled || shouldSampleEventCallback() === true) {
+				logger.send(event);
+			}
+		},
+	};
+
+	return sampledLogger;
+}
+
+/**
+ * sampletext
+ */
+const createSystematicSamplingCallback = (samplingRate: number) => {
+	const state = {
+		eventsSinceLastSample: 0,
+		isFirstEvent: true,
+	};
+	return () => {
+		state.eventsSinceLastSample++;
+		if (state.isFirstEvent) {
+			state.isFirstEvent = false;
+			return true;
+		}
+		const shouldSample = state.eventsSinceLastSample % samplingRate === 0;
+		if (shouldSample) {
+			state.eventsSinceLastSample = 0;
+		}
+		return shouldSample;
+	};
+};
+
+export class OpPerfTelemetry extends TypedEventEmitter<IOpPerfTelemetryProperties> {
 	private pongCount: number = 0;
 	private pingLatency: number | undefined;
 
@@ -73,14 +120,18 @@ class OpPerfTelemetry {
 	private gap = 0;
 
 	private readonly logger: ITelemetryLoggerExt;
+	private readonly sampledLogger: ITelemetryLoggerExt;
 
 	public constructor(
 		private clientId: string | undefined,
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
-		const samplingConfiguration = new Map<string, number>([["OpRoundtripTime", 500]]);
-		this.logger = createChildLogger({ logger, namespace: "OpPerf", samplingConfiguration });
+		super();
+		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
+		this.sampledLogger = createChildLogger({
+			logger: createSampledLogger(this.logger, createSystematicSamplingCallback(500)),
+		});
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
@@ -275,7 +326,7 @@ class OpPerfTelemetry {
 			// performance impacts all workloads relying on service.
 			const category = duration > latencyThreshold ? "error" : "performance";
 
-			this.logger.sendPerformanceEvent({
+			this.sampledLogger.sendPerformanceEvent({
 				eventName: "OpRoundtripTime",
 				sequenceNumber,
 				referenceSequenceNumber: message.referenceSequenceNumber,

@@ -331,14 +331,8 @@ export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
-	samplingConfiguration?: Map<string, number>;
 }): ITelemetryLoggerExt {
-	return ChildLogger.create(
-		props?.logger,
-		props?.namespace,
-		props?.properties,
-		props?.samplingConfiguration,
-	);
+	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
 }
 
 /**
@@ -358,7 +352,6 @@ export class ChildLogger extends TelemetryLogger {
 		baseLogger?: ITelemetryBaseLogger,
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
-		sampling?: Map<string, number>,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
 		// the callstack overhead, just generate a new logger that includes everything from the previous
@@ -392,7 +385,6 @@ export class ChildLogger extends TelemetryLogger {
 				baseLogger.baseLogger,
 				combinedNamespace,
 				combinedProperties,
-				sampling,
 			);
 
 			if (!loggerIsMonitoringContext(child) && loggerIsMonitoringContext(baseLogger)) {
@@ -401,32 +393,19 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(
-			baseLogger ? baseLogger : { send() {} },
-			namespace,
-			properties,
-			sampling,
-		);
+		return new ChildLogger(baseLogger ? baseLogger : { send() {} }, namespace, properties);
 	}
-
-	private readonly isSamplingDisabled: boolean = false;
 
 	private constructor(
 		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
-		private readonly samplingParams?: Map<string, number>,
 	) {
 		super(namespace, properties);
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
 			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
-
-			// Read config flag only once, so we don't pay the price every time an event is logged.
-			if (baseLogger.config.getBoolean("Fluid.Telemetry.DisableSampling") === true) {
-				this.isSamplingDisabled = true;
-			}
 		}
 	}
 
@@ -436,8 +415,6 @@ export class ChildLogger extends TelemetryLogger {
 		// Filter out in case event log level is below what is wanted in config.
 		return eventLogLevel < configLogLevel;
 	}
-
-	private readonly actualSampling: { [key: string]: number } = {};
 
 	/**
 	 * Send an event with the logger
@@ -449,23 +426,7 @@ export class ChildLogger extends TelemetryLogger {
 			return;
 		}
 
-		if (this.isSamplingDisabled) {
-			this.baseLogger.send(this.prepareEvent(event), logLevel);
-			return;
-		}
-		const params = this.samplingParams?.get(event.eventName);
-		if (params !== undefined) {
-			if (this.actualSampling[event.eventName] === undefined) {
-				this.actualSampling[event.eventName] = 0;
-			}
-			this.actualSampling[event.eventName]++;
-			if (this.actualSampling[event.eventName] % params === 1) {
-				this.baseLogger.send(this.prepareEvent(event));
-				this.actualSampling[event.eventName] = 1;
-			}
-		} else {
-			this.baseLogger.send(this.prepareEvent(event));
-		}
+		this.baseLogger.send(this.prepareEvent(event), logLevel);
 	}
 }
 

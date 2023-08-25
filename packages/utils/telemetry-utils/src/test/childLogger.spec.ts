@@ -10,7 +10,7 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { ChildLogger, createChildLogger } from "../logger";
-import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
+// import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
@@ -247,74 +247,72 @@ describe("ChildLogger", () => {
 	});
 
 	describe("Sampling", () => {
-		let events: ITelemetryBaseEvent[] = [];
-		function getBaseLoggerWithConfig(
-			configDictionary?: Record<string, ConfigTypes>,
-		): ITelemetryBaseLogger {
-			const logger: ITelemetryBaseLogger = {
-				send(event: ITelemetryBaseEvent): void {
-					events.push(event);
-				},
-			};
-			const configProvider = (
-				settings: Record<string, ConfigTypes>,
-			): IConfigProviderBase => ({
-				getRawConfig: (name: string): ConfigTypes => settings[name],
-			});
-			return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
-		}
+		// let events: ITelemetryBaseEvent[] = [];
+		// function getBaseLoggerWithConfig(
+		// 	configDictionary?: Record<string, ConfigTypes>,
+		// ): ITelemetryBaseLogger {
+		// 	const logger: ITelemetryBaseLogger = {
+		// 		send(event: ITelemetryBaseEvent): void {
+		// 			events.push(event);
+		// 		},
+		// 	};
+		// 	const configProvider = (
+		// 		settings: Record<string, ConfigTypes>,
+		// 	): IConfigProviderBase => ({
+		// 		getRawConfig: (name: string): ConfigTypes => settings[name],
+		// 	});
+		// 	return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
+		// }
 
 		beforeEach(() => {
-			events = [];
+			// events = [];
 		});
 
-		it("Applies sampling when feature flag to force unsampled telemetry is not set", () => {
-			const samplingConfiguration = new Map<string, number>([
-				["oneEveryTwo", 2],
-				["oneEveryFive", 5],
-			]);
-			const logger = getBaseLoggerWithConfig();
-			const childLogger = createChildLogger({
-				logger,
-				samplingConfiguration,
-			});
+		// it("Applies sampling when feature flag to force unsampled telemetry is not set", () => {
+		// 	const samplingConfiguration = new Map<string, number>([
+		// 		["oneEveryTwo", 2],
+		// 		["oneEveryFive", 5],
+		// 	]);
+		// 	const logger = getBaseLoggerWithConfig();
+		// 	const childLogger = createChildLogger({ logger });
+		// 	const sampledEveryTwoLogger = createS createChildLogger({ logger });
 
-			for (let i = 0; i < 15; i++) {
-				childLogger.send({ category: "generic", eventName: "noSampling" });
-				childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
-				childLogger.send({ category: "generic", eventName: "oneEveryFive" });
-			}
+		// 	for (let i = 0; i < 15; i++) {
+		// 		childLogger.send({ category: "generic", eventName: "noSampling" });
+		// 		childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
+		// 		childLogger.send({ category: "generic", eventName: "oneEveryFive" });
+		// 	}
 
-			// These counts also validate that we issue sampled events the first time we see them, not only until the specified
-			// number of samples have been seen.
-			assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
-			assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 8);
-			assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 3);
-		});
+		// 	// These counts also validate that we issue sampled events the first time we see them, not only until the specified
+		// 	// number of samples have been seen.
+		// 	assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
+		// 	assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 8);
+		// 	assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 3);
+		// });
 
-		it("Ignores sampling when feature flag to force unsampled telemetry is set", () => {
-			const samplingConfiguration = new Map<string, number>([
-				["oneEveryTwo", 2],
-				["oneEveryFive", 5],
-			]);
-			const injectedSettings = {
-				"Fluid.Telemetry.DisableSampling": true,
-			};
-			const logger = getBaseLoggerWithConfig(injectedSettings);
-			const childLogger = createChildLogger({
-				logger,
-				samplingConfiguration,
-			});
+		// it("Ignores sampling when feature flag to force unsampled telemetry is set", () => {
+		// 	const samplingConfiguration = new Map<string, number>([
+		// 		["oneEveryTwo", 2],
+		// 		["oneEveryFive", 5],
+		// 	]);
+		// 	const injectedSettings = {
+		// 		"Fluid.Telemetry.DisableSampling": true,
+		// 	};
+		// 	const logger = getBaseLoggerWithConfig(injectedSettings);
+		// 	const childLogger = createChildLogger({
+		// 		logger,
+		// 		samplingConfiguration,
+		// 	});
 
-			for (let i = 0; i < 15; i++) {
-				childLogger.send({ category: "generic", eventName: "noSampling" });
-				childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
-				childLogger.send({ category: "generic", eventName: "oneEveryFive" });
-			}
+		// 	for (let i = 0; i < 15; i++) {
+		// 		childLogger.send({ category: "generic", eventName: "noSampling" });
+		// 		childLogger.send({ category: "generic", eventName: "oneEveryTwo" });
+		// 		childLogger.send({ category: "generic", eventName: "oneEveryFive" });
+		// 	}
 
-			assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
-			assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 15);
-			assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 15);
-		});
+		// 	assert.equal(events.filter((event) => event.eventName === "noSampling").length, 15);
+		// 	assert.equal(events.filter((event) => event.eventName === "oneEveryTwo").length, 15);
+		// 	assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 15);
+		// });
 	});
 });
