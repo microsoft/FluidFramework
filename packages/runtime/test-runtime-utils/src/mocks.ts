@@ -137,11 +137,6 @@ interface IInternalMockRuntimeMessage {
 	localOpMetadata: unknown;
 }
 
-interface RuntimeAndQueue {
-	queue: ISequencedDocumentMessage[];
-	runtime: MockContainerRuntime;
-}
-
 /**
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
@@ -158,6 +153,7 @@ export class MockContainerRuntime {
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
 	protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
+	public sequencedMessages: ISequencedDocumentMessage[] = [];
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -270,6 +266,15 @@ export class MockContainerRuntime {
 		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
 	}
 
+	public processNextSequencedMessage() {
+		const message = this.sequencedMessages.shift();
+		if (message === undefined) {
+			throw new Error("No sequenced message to process.");
+		}
+
+		this.process(message);
+	}
+
 	public process(message: ISequencedDocumentMessage) {
 		this.deltaManager.lastSequenceNumber = message.sequenceNumber;
 		this.deltaManager.lastMessage = message;
@@ -337,7 +342,7 @@ export class MockContainerRuntimeFactory {
 	 * They are held in this queue until we explicitly choose to process them, at which time they are "broadcast" to
 	 * each of the runtimes.
 	 */
-	public messages = new Map<string, RuntimeAndQueue>();
+	public messages: ISequencedDocumentMessage[] = [];
 	public readonly runtimes = new Map<string, MockContainerRuntime>();
 
 	/**
@@ -356,10 +361,9 @@ export class MockContainerRuntimeFactory {
 
 	public get outstandingMessageCount() {
 		let max = 0;
-		for (const [_, { queue, runtime: _runtime }] of this.messages) {
-			max = queue.length > max ? queue.length : max;
+		for (const [_, runtime] of this.runtimes) {
+			max = runtime.sequencedMessages.length > max ? runtime.sequencedMessages.length : max;
 		}
-
 		return max;
 	}
 
@@ -393,8 +397,8 @@ export class MockContainerRuntimeFactory {
 			this,
 			this.runtimeOptions,
 		);
-		this.messages.set(containerRuntime.clientId, { runtime: containerRuntime, queue: [] });
 		this.runtimes.set(containerRuntime.clientId, containerRuntime);
+		containerRuntime.sequencedMessages = [...this.messages];
 		return containerRuntime;
 	}
 
@@ -422,22 +426,19 @@ export class MockContainerRuntimeFactory {
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 
-		for (const [_, { runtime: _runtime, queue }] of this.messages) {
-			queue.push(message);
+		this.messages.push(message);
+
+		for (const [_, runtime] of this.runtimes) {
+			runtime.sequencedMessages.push(message);
 		}
 	}
 
 	public processMessageOnClient(client: string) {
-		const runtimeAndQueue = this.messages.get(client);
-		if (runtimeAndQueue === undefined) {
-			throw new Error("No runtime and queue exists for this client.");
+		const runtime = this.runtimes.get(client);
+		if (runtime === undefined) {
+			throw new Error("No runtime exists for this client.");
 		}
-		const { runtime, queue } = runtimeAndQueue;
-		const message = queue.shift();
-		if (message === undefined) {
-			throw new Error("No message to process");
-		}
-		runtime.process(message);
+		runtime.processNextSequencedMessage();
 	}
 
 	/**
@@ -447,6 +448,8 @@ export class MockContainerRuntimeFactory {
 		for (const [client, _] of this.runtimes) {
 			this.processMessageOnClient(client);
 		}
+
+		this.messages = this.messages.slice(1);
 	}
 
 	/**
@@ -459,17 +462,21 @@ export class MockContainerRuntimeFactory {
 				this.processMessageOnClient(client);
 			}
 		}
+
+		this.messages = this.messages.slice(count);
 	}
 
 	/**
 	 * Process all remaining messages in the queue.
 	 */
 	public processAllMessages() {
-		for (const [client, { queue, runtime: _ }] of this.messages) {
-			while (queue.length > 0) {
+		for (const [client, runtime] of this.runtimes) {
+			while (runtime.sequencedMessages.length > 0) {
 				this.processMessageOnClient(client);
 			}
 		}
+
+		this.messages.length = 0;
 	}
 }
 

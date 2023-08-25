@@ -40,9 +40,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			this.pendingRemoteMessages.length = 0;
 			this.clientSequenceNumber = 0;
-			const runtimeAndQueue = this.factory.messages.get(this.clientId);
-			assert(runtimeAndQueue !== undefined, "Reconnecting a runtime that never existed.");
-			this.factory.messages.delete(this.clientId);
+			// Delete the runtime for the old clientId
 			this.factory.runtimes.delete(this.clientId);
 
 			// We should get a new clientId on reconnection.
@@ -51,8 +49,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
 
-			this.factory.messages.set(this.clientId, runtimeAndQueue);
-			this.factory.runtimes.set(this.clientId, runtimeAndQueue.runtime);
+			// Add the runtime under its new clientId
+			this.factory.runtimes.set(this.clientId, this);
 			// On reconnection, ask the DDSes to resubmit pending messages.
 			this.reSubmitMessages();
 		} else {
@@ -127,23 +125,19 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 			overrides,
 		);
 
-		let queue: ISequencedDocumentMessage[] = [];
-		if (this.messages.size > 0) {
-			queue = [...this.messages.values().next().value.queue];
-		}
-
 		this.runtimes.set(containerRuntime.clientId, containerRuntime);
-		this.messages.set(containerRuntime.clientId, { runtime: containerRuntime, queue });
+		containerRuntime.sequencedMessages = [...this.messages];
 		return containerRuntime;
 	}
 
 	public clearOutstandingClientMessages(clientId: string) {
+		this.messages = this.messages.filter((msg) => msg.clientId !== clientId);
+
 		// Delete all the messages for client with the given clientId.
-		for (const [client, { runtime, queue }] of this.messages) {
-			this.messages.set(client, {
-				queue: queue.filter((msg) => msg.clientId !== clientId),
-				runtime,
-			});
+		for (const [_, runtime] of this.runtimes) {
+			runtime.sequencedMessages = runtime.sequencedMessages.filter(
+				(msg) => msg.clientId !== clientId,
+			);
 		}
 	}
 }
