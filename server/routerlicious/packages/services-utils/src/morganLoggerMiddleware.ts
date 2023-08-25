@@ -59,8 +59,8 @@ export function jsonMorganLoggerMiddleware(
 				[BaseTelemetryProperties.correlationId]: getCorrelationIdWithHttpFallback(req, res),
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
-				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 				...additionalProperties,
+				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 			};
 			httpMetric.setProperties(properties);
 			if (properties.status?.startsWith("2")) {
