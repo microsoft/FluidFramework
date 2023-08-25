@@ -3065,7 +3065,7 @@ export class ContainerRuntime
 							undefined,
 							{ pendingMessages: this.pendingMessagesCount },
 						);
-						summaryLogger.sendErrorEvent(
+						summaryNumberLogger.sendErrorEvent(
 							{
 								eventName: "SkipFailingIncorrectSummary",
 								referenceSequenceNumber: summaryRefSeqNum,
@@ -3074,9 +3074,14 @@ export class ContainerRuntime
 							error,
 						);
 					} else {
+						// Default retry delay is 1 second. This can be overridden via config so that we can adjust it
+						// based on telemetry while we decide on a stable number.
+						const retryDelayMs =
+							this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
+							1000;
 						const error = new RetriableSummaryError(
 							"PendingMessagesInSummary",
-							1 /* retryAfterSeconds */,
+							retryDelayMs / 1000,
 							{ count: this.pendingMessagesCount },
 						);
 						return {
