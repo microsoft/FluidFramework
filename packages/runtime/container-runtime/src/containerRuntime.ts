@@ -952,6 +952,9 @@ export class ContainerRuntime
 
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.handleContext;
 	}
@@ -1766,6 +1769,7 @@ export class ContainerRuntime
 	/**
 	 * Resolves URI representing handle
 	 * @param request - Request made to the handler.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		try {

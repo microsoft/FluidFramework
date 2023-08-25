@@ -168,7 +168,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // @deprecated (undocumented)
     get IFluidRouter(): this;
@@ -202,6 +202,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     // @deprecated
     request(request: IRequest): Promise<IResponse>;
+    // @deprecated
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get scope(): FluidObject;

@@ -44,6 +44,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly scope: FluidObject;
