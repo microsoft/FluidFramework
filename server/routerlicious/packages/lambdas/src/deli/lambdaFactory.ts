@@ -22,6 +22,8 @@ import {
 	ITenantManager,
 	LambdaCloseType,
 	MongoManager,
+	requestWithRetry,
+	runWithRetry,
 } from "@fluidframework/server-services-core";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
@@ -227,13 +229,29 @@ export class DeliLambdaFactory
 				) {
 					if (document?.isEphemeralContainer) {
 						// Call to historian to delete summaries
-						await gitManager.deleteSummary(false);
+						await requestWithRetry(
+							async () => gitManager.deleteSummary(false),
+							"deliLambda_onClose" /* callName */,
+							getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+							(error) => true /* shouldRetry */,
+							3 /* maxRetries */,
+						);
 
 						// Delete the document metadata
-						await this.documentRepository.deleteOne({
-							documentId,
-							tenantId,
-						});
+						await runWithRetry(
+							async () =>
+								this.documentRepository.deleteOne({
+									documentId,
+									tenantId,
+								}),
+							"deleteDocMetadata",
+							3 /* maxRetries */,
+							1000 /* retryAfterMs */,
+							getLumberBaseProperties(documentId, tenantId),
+							(error) => error.code === 11000 /* shouldIgnoreError */,
+							(error) => true /* shouldRetry */,
+						);
+
 						Lumberjack.info(
 							`Successfully cleaned up ephemeral container`,
 							getLumberBaseProperties(documentId, tenantId),
