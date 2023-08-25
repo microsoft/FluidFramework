@@ -122,13 +122,14 @@ describe("getPendingLocalState", () => {
 		const blob2 = IsoBuffer.from("blob2", "utf8");
 		const handleP2 = runtime.createBlob(blob2);
 		const pendingStateP = runtime.getPendingLocalState(true);
-		await runtime.processHandles();
 		const handleP3 = runtime.createBlob(IsoBuffer.from("blob3", "utf8"));
 		await runtime.processBlobs();
-		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		await assert.doesNotReject(handleP2);
+		(await handleP).attachGraph();
+		(await handleP2).attachGraph();
 		await assert.doesNotReject(handleP3);
+		(await handleP3).attachGraph();
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1];
 		assert.strictEqual(Object.keys(pendingBlobs).length, 3);

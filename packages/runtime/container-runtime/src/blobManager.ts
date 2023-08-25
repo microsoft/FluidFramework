@@ -414,10 +414,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const callback = pending
 			? () => {
 					pending.attached = true;
+					this.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
-					if (this.allBlobsAttached) {
-						this.emit("allBlobsAttached");
-					}
 			  }
 			: undefined;
 		return new BlobHandle(
@@ -925,46 +923,43 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	private async stashPendingBlobs(ids): Promise<void> {
-		for (const localId of ids) {
-			const entry = this.pendingBlobs.get(localId) as PendingBlob;
-			if (!entry.opsent) {
-				this.sendBlobAttachOp(localId, entry.storageId);
-			}
-			entry.handleP.resolve(this.getBlobHandle(localId));
-		}
-		return new Promise<void>((resolve) => {
-			if (this.allBlobsAttached) {
-				resolve();
-			} else {
-				this.once("allBlobsAttached", () => {
-					resolve();
-				});
-			}
-		});
-	}
-
 	public async getPendingBlobs(waitBlobsToAttach?: boolean): Promise<IPendingBlobs> {
 		const blobs = {};
-		const localIds = new Set<string>();
-		while (Object.keys(blobs).length < this.pendingBlobs.size) {
-			const ids = Array.from(this.pendingBlobs.keys()).filter(
-				(localId) => !localIds.has(localId),
-			);
-			if (waitBlobsToAttach) {
-				await this.stashPendingBlobs(ids);
+		const localIds = new Set<PendingBlob>();
+		while (localIds.size < this.pendingBlobs.size && !this.allBlobsAttached) {
+			const newLocalIds = new Set<PendingBlob>();
+			for (const [id, entry] of this.pendingBlobs) {
+				if (!localIds.has(entry)) {
+					localIds.add(entry);
+					newLocalIds.add(entry);
+					if (waitBlobsToAttach) {
+						if (!entry.opsent) {
+							this.sendBlobAttachOp(id, entry.storageId);
+						}
+						entry.handleP.resolve(this.getBlobHandle(id));
+					}
+				}
 			}
-			for (const id of ids) {
-				localIds.add(id);
-				const entry = this.pendingBlobs.get(id) as PendingBlob;
-				blobs[id] = {
-					blob: bufferToString(entry.blob, "base64"),
-					storageId: entry.storageId,
-					attached: entry.attached,
-					acked: entry.acked,
-					minTTLInSeconds: entry.minTTLInSeconds,
-					uploadTime: entry.uploadTime,
-				};
+			for (const [id, entry] of this.pendingBlobs) {
+				if (newLocalIds.has(entry)) {
+					if (waitBlobsToAttach && !entry.attached) {
+						await new Promise<void>((resolve) => {
+							this.on("blobAttached", (attachedEntry) => {
+								if (attachedEntry === entry) {
+									resolve();
+								}
+							});
+						});
+					}
+					blobs[id] = {
+						blob: bufferToString(entry.blob, "base64"),
+						storageId: entry.storageId,
+						attached: entry.attached,
+						acked: entry.acked,
+						minTTLInSeconds: entry.minTTLInSeconds,
+						uploadTime: entry.uploadTime,
+					};
+				}
 			}
 		}
 		return blobs;
