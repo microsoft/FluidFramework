@@ -52,15 +52,15 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			const firstAnchor = getFirstAnchor(initialState.clients[0].channel);
+			const firstAnchor = getFirstAnchor(initialState.clients[0].channel.view);
 			initialState.firstAnchor = firstAnchor;
-			initialState.clients[0].channel.transaction.start();
+			initialState.clients[0].channel.view.transaction.start();
 		});
 
 		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
 			// aborts any transactions that may still be in progress
-			finalState.clients[0].channel.transaction.abort();
-			validateTree(finalState.clients[0].channel, [initialTreeState]);
+			finalState.clients[0].channel.view.transaction.abort();
+			validateTree(finalState.clients[0].channel.view, [initialTreeState]);
 			// validate anchor
 			const expectedPath: UpPath = {
 				parent: {
@@ -72,7 +72,7 @@ describe("Fuzz - anchor stability", () => {
 				parentIndex: 1,
 			};
 			assert(finalState.firstAnchor !== undefined);
-			const anchorPath = finalState.clients[0].channel.locate(finalState.firstAnchor);
+			const anchorPath = finalState.clients[0].channel.view.locate(finalState.firstAnchor);
 			assert(compareUpPaths(expectedPath, anchorPath));
 		});
 

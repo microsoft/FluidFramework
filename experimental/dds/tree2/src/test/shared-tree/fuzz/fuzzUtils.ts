@@ -12,7 +12,7 @@ import {
 } from "../../../core";
 import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTree } from "../../../shared-tree";
+import { SharedTree, ISharedTreeView } from "../../../shared-tree";
 import { namedTreeSchema } from "../../utils";
 
 export const initialTreeState: JsonableTree = {
@@ -42,13 +42,13 @@ export const testSchema: SchemaData = {
 	rootFieldSchema,
 };
 
-export const onCreate = (tree: ISharedTree) => {
+export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(testSchema);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	const field = tree.view.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, singleTextCursor(initialTreeState));
 };
 
-export function getFirstAnchor(tree: ISharedTree): Anchor {
+export function getFirstAnchor(tree: ISharedTreeView): Anchor {
 	// building the anchor for anchor stability test
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
