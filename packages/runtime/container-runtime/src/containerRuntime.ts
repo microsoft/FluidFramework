@@ -1721,6 +1721,20 @@ export class ContainerRuntime
 			}
 			return initializeEntryPoint?.(this);
 		});
+		// this just ensures we have signals, so we catch missing clients
+		// this should not be commited
+		const events = ["connected", "disconnected", "disposed"];
+		const handleHello = () => {
+			if (this.connected) {
+				setTimeout(() => {
+					if (this.connected) {
+						this.submitSignal("test", "hello");
+					}
+				}, 0);
+			}
+			events.forEach((e) => this.off(e, handleHello));
+		};
+		events.forEach((e) => this.once(e, handleHello));
 	}
 
 	/**

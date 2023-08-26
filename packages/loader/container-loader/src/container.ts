@@ -94,6 +94,7 @@ import {
 	formatTick,
 	GenericError,
 	UsageError,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -2324,6 +2325,15 @@ export class Container
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
+			if (
+				typeof message.clientId === "string" &&
+				this.audience.getMember(message.clientId) === undefined
+			) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "SignalFromUnknownClient",
+					...extractSafePropertiesFromMessage(message as any),
+				});
+			}
 			this.runtime.processSignal(message, local);
 		}
 	}
