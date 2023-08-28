@@ -94,9 +94,9 @@
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
 	},
 	"pnpm": {
-    "peerDependencyComments":[
-      "@types/node is not needed at the root, because it is only used for compilation of individual packages. If any of them are missing the dependency, then compilation for that package will fail, so we don't need to check for it."
-    ],
+		"peerDependencyComments": [
+			"@types/node is not needed at the root, because it is only used for compilation of individual packages. If any of them are missing the dependency, then compilation for that package will fail, so we don't need to check for it."
+		],
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"eslint": "8.6.0"

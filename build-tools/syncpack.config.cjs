@@ -98,17 +98,17 @@ module.exports = {
 			range: "~",
 		},
 
-    {
+		{
 			label: "Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
-        "@fluid-internal/readme-command",
+				"@fluid-internal/readme-command",
 				"@fluid-tools/build-cli",
-        "@fluid-tools/version-tools",
+				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
 				"@fluidframework/bundle-size-tools",
 			],
 			packages: ["**"],
-      range: "~",
+			range: "~",
 		},
 
 		// All deps should use caret ranges unless previously overridden
