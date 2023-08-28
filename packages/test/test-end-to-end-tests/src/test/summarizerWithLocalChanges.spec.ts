@@ -173,7 +173,7 @@ const createContainer = async (
 	if (disableSummary) {
 		summaryConfigOverrides = { state: "disabled" };
 	} else {
-		const IdleDetectionTime = 100;
+		const IdleDetectionTime = 20;
 		summaryConfigOverrides = {
 			...DefaultSummaryConfiguration,
 			...{
@@ -212,14 +212,20 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) => {
+describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+
+		// These tests validate client logic. Testing against multiple services won't make a difference.
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
 		settings = [];
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
 		settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = true;
+		settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
 	});
 
 	itExpects(
@@ -310,6 +316,120 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 					return error.message === "NodeDidNotRunGC" && error.data.stage === "upload";
 				},
 				"expected NodeDidNotRunGC",
+			);
+		},
+	);
+
+	itExpects(
+		"ValidateSummaryBeforeUpload = true. Summary should fail if ops are sent before summarize",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
+				beforeGenerate: true,
+			},
+		],
+		async () => {
+			// Wait for 100 ms for pending ops to be saved.
+			const pendingOpsTimeout = 100;
+			settings["Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout"] =
+				pendingOpsTimeout;
+			const mockLogger = new MockLogger();
+			const container1 = await provider.makeTestContainer();
+			const { summarizer, container: summarizerContainer } = await createSummarizer(
+				provider,
+				container1,
+				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+				undefined /* summaryVersion */,
+				mockLogger,
+			);
+
+			const defaultDataStore1 = await requestFluidObject<ITestDataObject>(
+				summarizerContainer,
+				"default",
+			);
+
+			// Pause op processing and send ops so there are pending ops in the summarizer.
+			const pendingOpCount = 10;
+			await provider.opProcessingController.pauseProcessing(summarizerContainer);
+			for (let i = 0; i < pendingOpCount; i++) {
+				defaultDataStore1._root.set(`key${i}`, `value${i}`);
+			}
+
+			await assert.rejects(
+				async () => {
+					await summarizeNow(summarizer);
+				},
+				(error: any) => {
+					// The summary should have failed because of "PendingOpsWhileSummarizing" error in "base" stage.
+					return (
+						error.message === "PendingOpsWhileSummarizing" &&
+						error.data.stage === "base"
+					);
+				},
+				"expected PendingOpsWhileSummarizing",
+			);
+
+			// We should have received a PendingOpsWhileSummarizing event with all the pending ops not saved.
+			mockLogger.assertMatch([
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:PendingOpsWhileSummarizing",
+					saved: false,
+					countBefore: pendingOpCount,
+					countAfter: pendingOpCount,
+					timeout: pendingOpsTimeout,
+				},
+			]);
+		},
+	);
+
+	itExpects(
+		"ValidateSummaryBeforeUpload = true. Summary should fail if ops are sent during summarize",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
+				beforeGenerate: false,
+			},
+		],
+		async () => {
+			const mockLogger = new MockLogger();
+			const container = await createContainer(provider);
+			await waitForContainerConnection(container);
+
+			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const dataObject2 = await dataStoreFactory2.createInstance(
+				rootDataObject.containerRuntime,
+			);
+			rootDataObject._root.set("dataStore2", dataObject2.handle);
+			dataObject2._root.set("op", "value");
+
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container,
+				rootDataObjectFactory,
+				undefined /* summaryVersion */,
+				undefined /* containerRuntimeFactoryType */,
+				registryStoreEntries,
+				mockLogger,
+				mockConfigProvider(settings),
+			);
+			await provider.ensureSynchronized();
+
+			await assert.rejects(
+				async () => {
+					await summarizeNow(summarizer);
+				},
+				(error: any) => {
+					// The summary should have failed because of "PendingOpsWhileSummarizing" error in "base" stage.
+					return (
+						error.message === "PendingOpsWhileSummarizing" &&
+						error.data.stage === "base"
+					);
+				},
+				"expected PendingOpsWhileSummarizing",
 			);
 		},
 	);
@@ -410,47 +530,46 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 	}
 
 	itExpects(
-		"All heuristics summary attempts should fail when there are pending ops",
+		"All heuristics summary attempts should fail when ops are sent during summarize",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 1,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 2,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 3,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 4,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 5,
 				finalAttempt: true,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 		],
 		async () => {
 			settings["Fluid.Summarizer.TryDynamicRetries"] = true;
-			settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
@@ -464,7 +583,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 						resolve(eventProps);
 					} else {
 						assert(
-							eventProps.error?.message === "PendingMessagesInSummary",
+							eventProps.error?.message === "PendingOpsWhileSummarizing",
 							"Unexpected summarization failure",
 						);
 						if (eventProps.currentAttempt === eventProps.maxAttempts) {
@@ -494,35 +613,35 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 	);
 
 	itExpects(
-		"SkipFailingIncorrectSummary = true. Final heuristics summary attempt should pass when there are pending ops",
+		"SkipFailingIncorrectSummary = true. Final summary attempt should pass when ops are sent during summarize",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 1,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 2,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 3,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				clientType: "noninteractive/summarizer",
 				summaryAttempts: 4,
 				finalAttempt: false,
-				error: "PendingMessagesInSummary",
+				error: "PendingOpsWhileSummarizing",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:SkipFailingIncorrectSummary",
@@ -548,7 +667,7 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 						resolve(eventProps);
 					} else {
 						assert(
-							eventProps.error?.message === "PendingMessagesInSummary",
+							eventProps.error?.message === "PendingOpsWhileSummarizing",
 							"Unexpected summarization failure",
 						);
 						if (eventProps.currentAttempt === eventProps.maxAttempts) {
@@ -580,68 +699,4 @@ describeNoCompat("Summarizer with local data stores", (getTestObjectProvider) =>
 			);
 		},
 	);
-
-	it("summarizer has pending ops during summarization", async () => {
-		// Wait for 200 ms for pending ops to be saved.
-		const pendingOpsTimeout = 200;
-		settings["Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout"] =
-			pendingOpsTimeout;
-		const mockLogger = new MockLogger();
-		const container1 = await provider.makeTestContainer();
-		const { summarizer: summarizer1, container: summarizerContainer1 } = await createSummarizer(
-			provider,
-			container1,
-			undefined /* summaryVersion */,
-			undefined /* gcOptions */,
-			mockConfigProvider(settings),
-			mockLogger,
-		);
-
-		const defaultDataStore1 = await requestFluidObject<ITestDataObject>(
-			summarizerContainer1,
-			"default",
-		);
-
-		// Pause op processing and send ops so there are pending ops in the summarizer.
-		const pendingOpCount = 10;
-		await provider.opProcessingController.pauseProcessing(summarizerContainer1);
-		for (let i = 0; i < pendingOpCount; i++) {
-			defaultDataStore1._root.set(`key${i}`, `value${i}`);
-		}
-
-		const result = summarizer1.summarizeOnDemand({ reason: "test" });
-		const submitResult = await timeoutAwait(result.summarySubmitted);
-		if (!submitResult.success) {
-			submitResult.error.data = submitResult.data;
-			throw submitResult.error;
-		}
-		assert(
-			submitResult.data.stage === "submit",
-			"on-demand summary submitted data stage should be submit",
-		);
-		assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
-
-		// Resume op processing after summary has been submitted so that the summary op and ack can be processed.
-		provider.opProcessingController.resumeProcessing(summarizerContainer1);
-
-		// Wait for the summary op and ack to be processed.
-		const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
-		if (!broadcastResult.success) {
-			throw broadcastResult.error;
-		}
-		const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
-		if (!ackNackResult.success) {
-			throw ackNackResult.error;
-		}
-		// We should have received a PendingOpsWhileSummarizing event with all the pending ops not saved.
-		mockLogger.assertMatch([
-			{
-				eventName: "fluid:telemetry:Summarizer:Running:PendingOpsWhileSummarizing",
-				saved: false,
-				countBefore: pendingOpCount,
-				countAfter: pendingOpCount,
-				timeout: pendingOpsTimeout,
-			},
-		]);
-	});
 });
