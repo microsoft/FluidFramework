@@ -943,19 +943,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 									this.sendBlobAttachOp(id, entry.storageId);
 								}
 								entry.handleP.resolve(this.getBlobHandle(id));
-								if (!entry.attached) {
-									attachBlobsP.push(
-										new Promise<void>((resolve) => {
-											const onBlobAttached = (attachedEntry) => {
-												if (attachedEntry === entry) {
-													this.off("blobAttached", onBlobAttached);
-													resolve();
-												}
-											};
+								attachBlobsP.push(
+									new Promise<void>((resolve) => {
+										const onBlobAttached = (attachedEntry) => {
+											if (attachedEntry === entry) {
+												this.off("blobAttached", onBlobAttached);
+												resolve();
+											}
+										};
+										if (!entry.attached) {
 											this.on("blobAttached", onBlobAttached);
-										}),
-									);
-								}
+										} else {
+											resolve();
+										}
+									}),
+								);
 							}
 						}
 					}
