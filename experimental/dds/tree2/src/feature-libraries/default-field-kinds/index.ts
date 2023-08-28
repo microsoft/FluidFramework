@@ -24,4 +24,4 @@ export {
 	SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 
-export { defaultSchemaPolicy, emptyField } from "./defaultSchema";
+export { defaultSchemaPolicy } from "./defaultSchema";

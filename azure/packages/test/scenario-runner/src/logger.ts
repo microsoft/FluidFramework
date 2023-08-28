@@ -13,14 +13,12 @@ import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definition
 
 import { ITelemetryLogger } from "@fluidframework/core-interfaces";
 import { pkgName, pkgVersion } from "./packageVersion";
-import { ScenarioRunnerTelemetryEventNames } from "./utils";
+import { ScenarioRunnerTelemetryEventNames, getAzureClientConnectionConfigFromEnv } from "./utils";
 
 export interface LoggerConfig {
 	scenarioName?: string;
 	namespace?: string;
 	runId?: string;
-	endpoint?: string;
-	region?: string;
 }
 
 export interface IScenarioRunnerTelemetryEvents extends IEvent {
@@ -154,6 +152,7 @@ export async function getLogger(
 	if (transformEvents) {
 		baseLogger.transformEvents(transformEvents);
 	}
+	const connectionConfig = getAzureClientConnectionConfigFromEnv();
 	return createChildLogger({
 		logger: baseLogger,
 		namespace: config.namespace,
@@ -161,8 +160,8 @@ export async function getLogger(
 			all: {
 				runId: config.runId,
 				scenarioName: config.scenarioName,
-				endpoint: config.endpoint,
-				region: config.region,
+				endpoint: connectionConfig.endpoint,
+				region: connectionConfig.region,
 			},
 		},
 	});

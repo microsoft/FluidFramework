@@ -240,8 +240,8 @@ export class SchemaBuilder {
 	public leaf<Name extends string, T extends ValueSchema>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { value: T }> {
-		const schema = new TreeSchema(this, name, { value: t });
+	): TreeSchema<Name, { leafValue: T }> {
+		const schema = new TreeSchema(this, name, { leafValue: t });
 		this.addNodeSchema(schema);
 		return schema;
 	}

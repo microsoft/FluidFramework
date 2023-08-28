@@ -684,6 +684,6 @@ export async function withContainerOffline<TReturn>(
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
 	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
-	assert(pendingLocalState !== undefined, 'pendingLocalState should be defined');
+	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

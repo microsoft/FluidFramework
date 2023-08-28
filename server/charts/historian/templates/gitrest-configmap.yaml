@@ -34,6 +34,9 @@ data:
             "filesystem": {
                 "name": "{{ .Values.gitrest.git.filesystem.name }}"
             },
+            "ephemeralfilesystem": {
+                "name": "{{ .Values.gitrest.git.ephemeralfilesystem.name }}"
+            },
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
             "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }},

@@ -106,10 +106,12 @@ export class KafkaRunner implements IRunner {
 	 */
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
+			Lumberjack.info("KafkaRunner.stop already called, returning early.");
 			return;
 		}
 
 		this.stopped = true;
+		Lumberjack.info("KafkaRunner.stop starting.");
 		try {
 			// Stop listening for new updates
 			await this.consumer.pause();

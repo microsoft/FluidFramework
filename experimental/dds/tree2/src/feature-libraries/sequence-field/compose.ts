@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { brand, fail } from "../../util";
+import { asMutable, brand, fail } from "../../util";
 import {
 	ChangeAtomId,
 	CrossFieldManager,
@@ -38,8 +38,6 @@ import {
 	getCellId,
 	compareLineages,
 	isNewAttach,
-	isExistingCellMark,
-	getMarkLength,
 	isDetachMark,
 	getNodeChange,
 	markHasCellEffect,
@@ -184,7 +182,10 @@ function composeMarks<TNodeChange>(
 		// Modify and Placeholder marks must be muted because the node they target has been deleted.
 		// Detach marks must be muted because the cell is empty.
 		if (newMark.type === "Modify" || newMark.type === "Placeholder" || isDetachMark(newMark)) {
-			assert(newMark.cellId !== undefined, "Invalid node-targeting mark after transient");
+			assert(
+				newMark.cellId !== undefined,
+				0x718 /* Invalid node-targeting mark after transient */,
+			);
 			return baseMark;
 		}
 		if (newMark.type === "ReturnTo") {
@@ -196,7 +197,7 @@ function composeMarks<TNodeChange>(
 			// attempt to move a deleted node end up being muted.
 			assert(
 				newMark.isSrcConflicted ?? false,
-				"Invalid active ReturnTo mark after transient",
+				0x719 /* Invalid active ReturnTo mark after transient */,
 			);
 			return baseMark;
 		}
@@ -205,8 +206,8 @@ function composeMarks<TNodeChange>(
 		// However, the branch being rebased over can't be targeting the cell that the MoveIn is targeting,
 		// because no concurrent change has the ability to refer to such a cell.
 		// Therefore, a MoveIn mark cannot occur after a transient.
-		assert(newMark.type !== "MoveIn", "Invalid MoveIn after transient");
-		assert(newMark.type === NoopMarkType, "Unexpected mark type after transient");
+		assert(newMark.type !== "MoveIn", 0x71a /* Invalid MoveIn after transient */);
+		assert(newMark.type === NoopMarkType, 0x71b /* Unexpected mark type after transient */);
 		return baseMark;
 	}
 
@@ -216,7 +217,7 @@ function composeMarks<TNodeChange>(
 		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
-		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
+		return createModifyMark(newMark.count, nodeChange, getCellId(baseMark, undefined));
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
@@ -300,10 +301,10 @@ function composeMarks<TNodeChange>(
 			return { count: 0 };
 		}
 
-		assert(isDeleteMark(newMark), "Unexpected mark type");
-		assert(isGenerativeMark(baseMark), "Expected generative mark");
+		assert(isDeleteMark(newMark), 0x71c /* Unexpected mark type */);
+		assert(isGenerativeMark(baseMark), 0x71d /* Expected generative mark */);
 		const newMarkRevision = newMark.revision ?? newRev;
-		assert(newMarkRevision !== undefined, "Unable to compose anonymous marks");
+		assert(newMarkRevision !== undefined, 0x71e /* Unable to compose anonymous marks */);
 		return withNodeChange(
 			{
 				...baseMark,
@@ -335,7 +336,7 @@ function composeMarks<TNodeChange>(
 				changes: composeChildChanges(nodeChange, nodeChanges, undefined, composeChild),
 			};
 		}
-		const length = getMarkLength(baseMark);
+		const length = baseMark.count;
 		return createModifyMark(length, nodeChange);
 	}
 }
@@ -350,7 +351,7 @@ function createModifyMark<TNodeChange>(
 	}
 
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
-	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
+	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange, count: 1 };
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
 	}
@@ -382,6 +383,14 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	}
 
 	const cloned = cloneMark(mark);
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
+		asMutable(cloned.cellId).revision = revision;
+	}
+
 	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
 		cloned.revision = revision;
@@ -571,7 +580,7 @@ export class ComposeQueue<T> {
 				baseCellId = { revision: baseIntention, localId: baseMark.id };
 			} else {
 				assert(
-					isExistingCellMark(baseMark) && areInputCellsEmpty(baseMark),
+					areInputCellsEmpty(baseMark),
 					0x696 /* Mark with empty output must either be a detach or also have input empty */,
 				);
 				baseCellId = baseMark.cellId;
@@ -667,7 +676,7 @@ export class ComposeQueue<T> {
 			baseMark !== undefined && newMark !== undefined,
 			0x697 /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
-		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
+		const length = Math.min(newMark.count, baseMark.count);
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
@@ -700,7 +709,7 @@ function getReplacementMark<T>(
 
 	let mark = effect.value.mark;
 	assert(
-		getMarkLength(mark) === effect.length,
+		mark.count === effect.length,
 		0x6ea /* Expected replacement mark to be same length as number of cells replaced */,
 	);
 
@@ -822,7 +831,7 @@ function compareCellPositions(
 	cancelledInserts: Set<RevisionTag>,
 ): number {
 	const newCellId = getCellId(newMark, newIntention);
-	assert(newCellId !== undefined, "Should have cell ID");
+	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
 	if (baseCellId.revision === newCellId.revision) {
 		if (isNewAttach(newMark)) {
 			// There is some change foo that is being cancelled out as part of a rebase sandwich.
@@ -840,9 +849,9 @@ function compareCellPositions(
 		if (
 			areOverlappingIdRanges(
 				baseCellId.localId,
-				getMarkLength(baseMark),
+				baseMark.count,
 				newCellId.localId,
-				getMarkLength(newMark),
+				newMark.count,
 			)
 		) {
 			return baseCellId.localId - newCellId.localId;
@@ -853,7 +862,7 @@ function compareCellPositions(
 		baseCellId.lineage,
 		newCellId.revision,
 		newCellId.localId,
-		getMarkLength(newMark),
+		newMark.count,
 	);
 	if (offsetInBase !== undefined) {
 		return offsetInBase > 0 ? offsetInBase : -Infinity;
@@ -863,7 +872,7 @@ function compareCellPositions(
 		newCellId.lineage,
 		baseCellId.revision,
 		baseCellId.localId,
-		getMarkLength(baseMark),
+		baseMark.count,
 	);
 	if (offsetInNew !== undefined) {
 		return offsetInNew > 0 ? -offsetInNew : Infinity;

@@ -11,6 +11,8 @@ import {
 	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
+	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -41,8 +43,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  */
 export interface IFluidDataStoreRuntime
-	extends IFluidRouter,
-		IEventProvider<IFluidDataStoreRuntimeEvents>,
+	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
 		IDisposable,
 		Partial<IProvideFluidDataStoreRegistry> {
 	readonly id: string;
@@ -137,4 +138,14 @@ export interface IFluidDataStoreRuntime
 	 * the data store's entryPoint.
 	 */
 	readonly entryPoint?: IFluidHandle<FluidObject>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	request(request: IRequest): Promise<IResponse>;
+
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	readonly IFluidRouter: IFluidRouter;
 }

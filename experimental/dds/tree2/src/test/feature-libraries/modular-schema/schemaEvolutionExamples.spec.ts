@@ -13,7 +13,6 @@ import {
 	SchemaBuilder,
 	FieldKinds,
 	defaultSchemaPolicy,
-	emptyField,
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
@@ -23,6 +22,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
+	storedEmptyFieldSchema,
 } from "../../../core";
 import { brand } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
@@ -150,7 +150,7 @@ describe("Schema Evolution Examples", () => {
 		// StoredSchemaRepository defaults to a state that permits no document states at all.
 		// To permit an empty document, we have to define a root field, and permit it to be empty.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
-		assert(stored.tryUpdateRootFieldSchema(emptyField));
+		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
 		{
 			// When we open this document, we should check it's compatibility with our application:

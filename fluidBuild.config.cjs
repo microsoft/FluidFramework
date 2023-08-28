@@ -77,9 +77,18 @@ module.exports = {
 			directory: "build-tools",
 			defaultInterdependencyRange: "workspace:*",
 		},
-		"server": "server/routerlicious",
-		"gitrest": "server/gitrest",
-		"historian": "server/historian",
+		"server": {
+			directory: "server/routerlicious",
+			defaultInterdependencyRange: "workspace:~",
+		},
+		"gitrest": {
+			directory: "server/gitrest",
+			defaultInterdependencyRange: "^",
+		},
+		"historian": {
+			directory: "server/historian",
+			defaultInterdependencyRange: "^",
+		},
 
 		// Independent packages
 		"build": "common/build",

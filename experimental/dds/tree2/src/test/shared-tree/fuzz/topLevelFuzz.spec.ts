@@ -4,6 +4,7 @@
  */
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
@@ -53,6 +54,31 @@ describe("Fuzz - Top-Level", () => {
 		const options = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
+		};
+		createDDSFuzzSuite(model, options);
+	});
+
+	describe("Batch rebasing", () => {
+		const model: DDSFuzzModel<
+			SharedTreeTestFactory,
+			Operation,
+			DDSFuzzTestState<SharedTreeTestFactory>
+		> = {
+			workloadName: "SharedTree rebasing",
+			factory: new SharedTreeTestFactory(onCreate),
+			generatorFactory,
+			reducer: fuzzReducer,
+			validateConsistency: validateTreeConsistency,
+		};
+		const options = {
+			...baseOptions,
+			reconnectProbability: 0.0,
+			defaultTestCount: runsPerBatch,
+			rebaseProbability: 0.2,
+			containerRuntimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			},
 		};
 		createDDSFuzzSuite(model, options);
 	});

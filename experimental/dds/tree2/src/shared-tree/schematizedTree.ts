@@ -78,7 +78,7 @@ export function schematizeView(
 			// Update to intermediate schema
 			tree.storedSchema.update(incrementalSchemaUpdate);
 			// Insert initial tree
-			tree.root = config.initialTree;
+			tree.setContent(config.initialTree);
 
 			// If intermediate schema is not final desired schema, update to the final schema:
 			if (incrementalSchemaUpdate !== config.schema) {

@@ -156,8 +156,16 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore {
     readonly entryPoint?: IFluidHandle<FluidObject>;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
+    request(request: IRequest): Promise<IResponse>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -209,7 +217,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     // @deprecated
@@ -220,9 +228,13 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;

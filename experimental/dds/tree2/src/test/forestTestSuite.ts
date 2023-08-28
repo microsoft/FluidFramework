@@ -23,6 +23,7 @@ import {
 	ITreeCursor,
 	EmptyKey,
 	ValueSchema,
+	FieldUpPath,
 } from "../core";
 import {
 	cursorToJsonObject,
@@ -43,7 +44,7 @@ import {
 	SchemaBuilder,
 	cursorForTypedTreeData,
 } from "../feature-libraries";
-import { MockDependent } from "./utils";
+import { MockDependent, expectEqualFieldPaths } from "./utils";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
 
 /**
@@ -153,20 +154,92 @@ export function testForest(config: ForestTestConfiguration): void {
 
 		it("moving a cursor to the root of an empty forest fails", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-			const dependent = new MockDependent("dependent");
-			recordDependency(dependent, forest);
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
 			assert.equal(cursor.firstNode(), false);
+		});
+
+		it("tryMoveCursorToNode", () => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
+			);
+
+			initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+			const parentPath: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+
+			const childPath1: UpPath = {
+				parent: parentPath,
+				parentField: EmptyKey,
+				parentIndex: 0,
+			};
+
+			const childPath2: UpPath = {
+				parent: parentPath,
+				parentField: EmptyKey,
+				parentIndex: 1,
+			};
+
+			const parentAnchor = forest.anchors.track(parentPath);
+			const childAnchor1 = forest.anchors.track(childPath1);
+			const childAnchor2 = forest.anchors.track(childPath2);
+
+			const cursor = forest.allocateCursor();
+			assert.equal(forest.tryMoveCursorToNode(parentAnchor, cursor), TreeNavigationResult.Ok);
+			assert.equal(cursor.value, undefined);
+			assert.equal(forest.tryMoveCursorToNode(childAnchor1, cursor), TreeNavigationResult.Ok);
+			assert.equal(cursor.value, 1);
+			assert.equal(forest.tryMoveCursorToNode(childAnchor2, cursor), TreeNavigationResult.Ok);
+			assert.equal(cursor.value, 2);
+		});
+
+		it("tryMoveCursorToField", () => {
+			const forest = factory(
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
+			);
+
+			initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+			const parentPath: FieldUpPath = {
+				parent: undefined,
+				field: rootFieldKey,
+			};
+
+			const parentNodePath: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+
+			const childPath: FieldUpPath = {
+				parent: parentNodePath,
+				field: EmptyKey,
+			};
+
+			const parentAnchor = forest.anchors.track(parentNodePath);
+
+			const cursor = forest.allocateCursor();
+			assert.equal(
+				forest.tryMoveCursorToField({ fieldKey: rootFieldKey, parent: undefined }, cursor),
+				TreeNavigationResult.Ok,
+			);
+
+			expectEqualFieldPaths(cursor.getFieldPath(), parentPath);
+			assert.equal(
+				forest.tryMoveCursorToField({ fieldKey: EmptyKey, parent: parentAnchor }, cursor),
+				TreeNavigationResult.Ok,
+			);
+			expectEqualFieldPaths(cursor.getFieldPath(), childPath);
 		});
 
 		it("anchors creation and use", () => {
 			const forest = factory(
 				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
 			);
-			const dependent = new MockDependent("dependent");
-			recordDependency(dependent, forest);
-
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
 
 			const cursor = forest.allocateCursor();
@@ -232,8 +305,6 @@ export function testForest(config: ForestTestConfiguration): void {
 			const forest = factory(
 				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonDocumentSchema),
 			);
-			const dependent = new MockDependent("dependent");
-			recordDependency(dependent, forest);
 
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
 

@@ -39,6 +39,10 @@ export const SystemErrors: Record<string, ISystemError> = {
 		code: "ENOTEMPTY",
 		description: "Directory not empty",
 	},
+	EFBIG: {
+		code: "EFBIG",
+		description: "File too large",
+	},
 	UNKNOWN: {
 		code: "UNKNOWN",
 		description: "Unknown error",

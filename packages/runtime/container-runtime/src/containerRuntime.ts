@@ -608,6 +608,9 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
+	/**
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
@@ -1525,12 +1528,14 @@ export class ContainerRuntime
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = () => {
 					if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-						this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
 						// unregister default to no log on every op after falling behind
 						// and register summary ack handler to re-register this handler
 						// after successful summary
 						this.summaryCollection.once(MessageType.SummaryAck, () => {
-							this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
+							this.mc.logger.sendTelemetryEvent({
+								eventName: "SummaryStatus:CaughtUp",
+							});
 							// we've caught up, so re-register the default action to monitor for
 							// falling behind, and unregister ourself
 							this.summaryCollection.on("default", defaultAction);
@@ -1598,7 +1603,7 @@ export class ContainerRuntime
 			...getDeviceSpec(),
 		});
 
-		this.logger.sendTelemetryEvent({
+		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
 			...this.dataStores.containerLoadStats,
@@ -1649,7 +1654,7 @@ export class ContainerRuntime
 		}
 		this._disposed = true;
 
-		this.logger.sendTelemetryEvent(
+		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
 				isDirty: this.isDirty,
@@ -1673,6 +1678,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
+	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -2198,7 +2204,7 @@ export class ContainerRuntime
 	 */
 	private sendSignalTelemetryEvent(clientSignalSequenceNumber: number) {
 		const duration = Date.now() - this._perfSignalData.signalTimestamp;
-		this.logger.sendPerformanceEvent({
+		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
 			duration,
 			signalsLost: this._perfSignalData.signalsLost,
@@ -2226,7 +2232,7 @@ export class ContainerRuntime
 			) {
 				this._perfSignalData.signalsLost++;
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
-				this.logger.sendErrorEvent({
+				this.mc.logger.sendErrorEvent({
 					eventName: "SignalLost",
 					type: envelope.contents.type,
 					signalsLost: this._perfSignalData.signalsLost,
@@ -2254,6 +2260,12 @@ export class ContainerRuntime
 		this.dataStores.processSignal(envelope.address, transformed, local);
 	}
 
+	/**
+	 * Returns the runtime of the data store.
+	 * @param id - Id supplied during creating the data store.
+	 * @param wait - True if you want to wait for it.
+	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
+	 */
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
 		return this.getRootDataStoreChannel(id, wait);
 	}
@@ -2329,15 +2341,30 @@ export class ContainerRuntime
 		return result;
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-		const internalId = uuid();
-		return channelToDataStore(
-			await this._createDataStore(pkg, internalId),
-			internalId,
-			this,
-			this.dataStores,
-			this.mc.logger,
-		);
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
+	 * data store has been assigned the given alias.
+	 */
+	public async getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined> {
+		await this.dataStores.waitIfPendingAlias(alias);
+		const internalId = this.internalId(alias);
+		const context = await this.dataStores.getDataStoreIfAvailable(internalId, { wait: false });
+		// If the data store is not available or not an alias, return undefined.
+		if (context === undefined || !(await context.isRoot())) {
+			return undefined;
+		}
+
+		const channel = await context.realize();
+		if (channel.entryPoint === undefined) {
+			throw new UsageError(
+				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
+			);
+		}
+		return channel.entryPoint;
 	}
 
 	public createDetachedRootDataStore(
@@ -2354,25 +2381,37 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, false);
 	}
 
+	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+		const id = uuid();
+		return channelToDataStore(
+			await this.dataStores
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				.realize(),
+			id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
+	}
+
+	/**
+	 * @deprecated 0.16 Issue #1537, #3631
+	 * @internal
+	 */
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
 		props?: any,
 		id = uuid(),
 	): Promise<IDataStore> {
-		const fluidDataStore = await this.dataStores
-			._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-			.realize();
-		return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-	}
-
-	private async _createDataStore(
-		pkg: string | string[],
-		id = uuid(),
-		props?: any,
-	): Promise<IFluidDataStoreChannel> {
-		return this.dataStores
-			._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-			.realize();
+		return channelToDataStore(
+			await this.dataStores
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
+				.realize(),
+			id,
+			this,
+			this.dataStores,
+			this.mc.logger,
+		);
 	}
 
 	private canSendOps() {
@@ -2596,7 +2635,7 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",
 				details: telemetryContext.serialize(),
 			});
@@ -3176,7 +3215,7 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
-			this.logger.sendTelemetryEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
 			});
