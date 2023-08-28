@@ -69,7 +69,7 @@
 		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@0.1040.1000",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"prettier": "~2.6.2",
