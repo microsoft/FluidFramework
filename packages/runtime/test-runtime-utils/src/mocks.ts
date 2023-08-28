@@ -145,7 +145,7 @@ interface IInternalMockRuntimeMessage {
 export class MockContainerRuntime {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
-	private readonly deltaManager: MockDeltaManager;
+	public readonly deltaManager: MockDeltaManager;
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: IInternalMockRuntimeMessage[] = [];
@@ -225,9 +225,11 @@ export class MockContainerRuntime {
 			return;
 		}
 
+		let newBatch = true;
 		while (this.outbox.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.submitInternal(this.outbox.shift()!);
+			this.submitInternal(this.outbox.shift()!, newBatch);
+			newBatch = false;
 		}
 	}
 
@@ -255,14 +257,17 @@ export class MockContainerRuntime {
 		);
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage) {
-		this.factory.pushMessage({
-			clientId: this.clientId,
-			clientSequenceNumber: this.clientSequenceNumber,
-			contents: message.content,
-			referenceSequenceNumber: this.referenceSequenceNumber,
-			type: MessageType.Operation,
-		});
+	private submitInternal(message: IInternalMockRuntimeMessage, newBatch: boolean = true) {
+		this.factory.pushMessage(
+			{
+				clientId: this.clientId,
+				clientSequenceNumber: this.clientSequenceNumber,
+				contents: message.content,
+				referenceSequenceNumber: this.referenceSequenceNumber,
+				type: MessageType.Operation,
+			},
+			newBatch,
+		);
 		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
 	}
 
@@ -273,6 +278,14 @@ export class MockContainerRuntime {
 		}
 
 		this.process(message);
+	}
+
+	public processSequencedMessages() {
+		while (this.sequencedMessages.length > 0) {
+			const message = this.sequencedMessages.shift();
+			assert(message !== undefined, "Impossible with length check");
+			this.process(message);
+		}
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -398,11 +411,10 @@ export class MockContainerRuntimeFactory {
 			this.runtimeOptions,
 		);
 		this.runtimes.set(containerRuntime.clientId, containerRuntime);
-		containerRuntime.sequencedMessages = [...this.messages];
 		return containerRuntime;
 	}
 
-	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+	public pushMessage(msg: Partial<ISequencedDocumentMessage>, newBatch: boolean = true) {
 		if (
 			msg.clientId &&
 			msg.referenceSequenceNumber !== undefined &&
@@ -422,7 +434,11 @@ export class MockContainerRuntimeFactory {
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		const message = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
-		this.sequenceNumber++;
+
+		if (newBatch) {
+			this.sequenceNumber++;
+		}
+
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 

@@ -126,11 +126,17 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		);
 
 		this.runtimes.set(containerRuntime.clientId, containerRuntime);
-		containerRuntime.sequencedMessages = [...this.messages];
+
+		containerRuntime.sequencedMessages = [
+			...this.messages.filter(
+				(msg) => msg.sequenceNumber > (overrides?.minimumSequenceNumber ?? 0),
+			),
+		];
 		return containerRuntime;
 	}
 
 	public clearOutstandingClientMessages(clientId: string) {
+		// TODO: Only delete messages past the summarizer's last processed message
 		this.messages = this.messages.filter((msg) => msg.clientId !== clientId);
 
 		// Delete all the messages for client with the given clientId.
