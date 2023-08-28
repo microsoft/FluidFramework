@@ -50,9 +50,9 @@ function getTelemetryContextPropertiesFromRequest(
 	req: Request,
 	res?: Response,
 ): Partial<ITelemetryContextProperties> {
-	const telemetryContextHeader: string | undefined =
-		res?.get(TelemetryContextHeaderName) ?? req.get(TelemetryContextHeaderName);
-	if (!telemetryContextHeader) {
+	const telemetryContextHeader: string | string[] | undefined =
+		req?.get(TelemetryContextHeaderName) ?? res?.get(TelemetryContextHeaderName);
+	if (!telemetryContextHeader || Array.isArray(telemetryContextHeader)) {
 		return {};
 	}
 	// Safely parse and return accepted telemetry properties.
