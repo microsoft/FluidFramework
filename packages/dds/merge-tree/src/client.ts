@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -13,10 +13,8 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -1164,8 +1162,25 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
+	/**
+	 * @deprecated - Use searchForMarker instead.
+	 */
 	findTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();
 		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
+	}
+
+	/**
+	 * Searches a string for the nearest marker in either direction to a given start position.
+	 * The search will include the start position, so markers at the start position are valid
+	 * results of the search. Makes use of block-accelerated search functions for log(n) complexity.
+	 *
+	 * @param startPos - Position at which to start the search
+	 * @param markerLabel - Label of the marker to search for
+	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
+	 */
+	searchForMarker(startPos: number, markerLabel: string, forwards = true) {
+		const clientId = this.getClientId();
+		return this._mergeTree.searchForMarker(startPos, clientId, markerLabel, forwards);
 	}
 }

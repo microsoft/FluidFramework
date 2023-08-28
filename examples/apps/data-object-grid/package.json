@@ -39,6 +39,8 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluentui/react-components": "~9.19.1",
+		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-example/clicker": "workspace:~",
 		"@fluid-example/codemirror": "workspace:~",
 		"@fluid-example/collaborative-textarea": "workspace:~",
@@ -47,7 +49,6 @@
 		"@fluid-example/multiview-slider-coordinate-view": "workspace:~",
 		"@fluid-example/prosemirror": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -55,12 +56,12 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
-		"office-ui-fabric-react": "7.199.6",
 		"prop-types": "^15.8.1",
 		"react": "^17.0.1",
 		"react-collapsible": "^2.7.0",
 		"react-dom": "^17.0.1",
 		"react-grid-layout": "^0.18.3",
+		"scheduler": "^0.20.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Value, TreeSchemaIdentifier, ITreeCursor, isCursor, FieldKey } from "../../core";
 import {
-	PrimitiveValue,
-	typeNameSymbol,
-	valueSymbol,
-	ContextuallyTypedFieldData,
-} from "../contextuallyTyped";
+	Value,
+	TreeSchemaIdentifier,
+	isCursor,
+	FieldKey,
+	ITreeCursorSynchronous,
+} from "../../core";
+import { PrimitiveValue, typeNameSymbol, valueSymbol, NewFieldContent } from "../contextuallyTyped";
 import { LocalNodeKey } from "../node-key";
 import { UntypedField, UntypedTreeCore, parentField } from "../untypedTree";
 import { EditableTreeContext } from "./editableTreeContext";
@@ -32,6 +33,27 @@ export const localNodeKeySymbol: unique symbol = Symbol("editable-tree:localNode
  * @alpha
  */
 export const setField: unique symbol = Symbol("editable-tree:setField()");
+
+/**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * @alpha
+ */
+export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
+	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
+	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
+	Deleted = 2,
+}
 
 /**
  * A tree which can be traversed and edited.
@@ -92,7 +114,7 @@ export interface EditableTree
 	 * Sequences (including empty ones) are always exposed as {@link EditableField}s,
 	 * and everything else is either a single EditableTree or undefined depending on if it's empty.
 	 *
-	 * It is possible to use this indexed access to delete the field using the `delete` operator and
+	 * It is possible to use this indexed access to remove the field using the `remove` operator and
 	 * to set the value of the field or, more precisely, of its existing node using the simple assignment operator (`=`)
 	 * if the field is defined as `optional` or `value`, its node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
@@ -100,7 +122,7 @@ export interface EditableTree
 	 * See `EditableTreeContext.unwrappedRoot` for how to use the simple assignment operator in other cases,
 	 * as it works the same way for all children of the tree starting from its root.
 	 *
-	 * Use with the `delete` operator to delete `optional` or `sequence` fields of this node.
+	 * Use with the `remove` operator to remove `optional` or `sequence` fields of this node.
 	 */
 	// TODO: update docs for concurrently deleting the field.
 	[key: string]: UnwrappedEditableField;
@@ -120,26 +142,13 @@ export interface EditableTree
 }
 
 /**
- * Content to use for a field.
- *
- * When used, this content will be deeply copied into the tree, and must comply with the schema.
- *
- * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
- * - use a single cursor for an `optional` or `value` field;
- * - use array of cursors for a `sequence` field;
- *
- * TODO: this should allow a field cursor instead of an array of cursors.
- * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
- * @alpha
- */
-export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
-
-/**
  * Check if NewFieldContent is made of {@link ITreeCursor}s.
  *
  * Useful when APIs want to take in tree data in multiple formats, including cursors.
  */
-export function areCursors(data: NewFieldContent): data is ITreeCursor | readonly ITreeCursor[] {
+export function areCursors(
+	data: NewFieldContent,
+): data is ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] {
 	if (isCursor(data)) {
 		return true;
 	}
@@ -187,7 +196,7 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * See `EditableTreeContext.unwrappedRoot` for more details, as it works the same way for all
  * children of the tree starting from its root.
  *
- * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+ * It is forbidden to remove the node using the `remvoe` operator, use the `removeNodes()` method instead.
  *
  * TODO: split this interface by field kind.
  * @alpha
@@ -219,14 +228,16 @@ export interface EditableField
 	): void;
 
 	/**
-	 * Sequentially deletes the nodes from this field.
+	 * Sequentially remove the nodes from this field.
 	 * Sequence fields only.
 	 *
-	 * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.
-	 * @param count - the number of nodes to be deleted. If not provided, deletes all nodes
+	 * @param index - the index of the first node to be removed. It must be in a range of existing node indices.
+	 * @param count - the number of nodes to be removed. If not provided, removes all nodes.
 	 * starting from the index and up to the length of the field.
+	 * Once removed, the removed node should return {@link TreeStatus.Deleted} when prompted for its {@link TreeStatus}.
+	 * TODO: The remove apis should eventually be fixed such that it returns {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}.
 	 */
-	deleteNodes(index: number, count?: number): void;
+	removeNodes(index: number, count?: number): void;
 
 	/**
 	 * Sequentially replaces the nodes of this field.
@@ -242,10 +253,12 @@ export interface EditableField
 	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
 
 	/**
-	 * Delete the content of this field.
+	 * Removes the content of this field.
 	 * Only supports field kinds which can be empty.
+	 * Once removed, the removed node should return {@link TreeStatus.Deleted} when prompted for its {@link TreeStatus}.
+	 * TODO: The remove apis should eventually be fixed such that it returns {@link TreeStatus.Removed} when prompted for its {@link TreeStatus}.
 	 */
-	delete(): void;
+	remove(): void;
 
 	/**
 	 * The content of this field.

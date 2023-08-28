@@ -4,8 +4,12 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Type of "valueChanged" event parameter.

@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import {
+	IDisposable,
+	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import {
 	createChildLogger,
 	ITelemetryLoggerExt,
@@ -14,7 +18,16 @@ import {
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IThrottler } from "../throttler";
 import { ISummarizerClientElection } from "./summarizerClientElection";
-import { ISummarizer, SummarizerStopReason } from "./summarizerTypes";
+import {
+	EnqueueSummarizeResult,
+	IEnqueueSummarizeOptions,
+	IOnDemandSummarizeOptions,
+	ISummarizeEventProps,
+	ISummarizeResults,
+	ISummarizer,
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 import { Summarizer } from "./summarizer";
 
@@ -73,7 +86,7 @@ export interface ISummaryManagerConfig {
  * It observes changes in calculated summarizer and reacts to changes by either creating summarizer client or
  * stopping existing summarizer client.
  */
-export class SummaryManager implements IDisposable {
+export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> implements IDisposable {
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly opsToBypassInitialDelay: number;
 	private readonly initialDelayMs: number;
@@ -108,6 +121,8 @@ export class SummaryManager implements IDisposable {
 		}: Readonly<Partial<ISummaryManagerConfig>> = {},
 		private readonly disableHeuristics?: boolean,
 	) {
+		super();
+
 		this.logger = createChildLogger({
 			logger: parentLogger,
 			namespace: "SummaryManager",
@@ -143,6 +158,10 @@ export class SummaryManager implements IDisposable {
 
 	private readonly handleDisconnected = () => {
 		this.refreshSummarizer();
+	};
+
+	private readonly handleSummarizeEvent = (eventProps: ISummarizeEventProps) => {
+		this.emit("summarize", eventProps);
 	};
 
 	private static readonly isStartingOrRunning = (state: SummaryManagerState) =>
@@ -246,6 +265,7 @@ export class SummaryManager implements IDisposable {
 
 				const summarizer = await this.requestSummarizerFn();
 				this.summarizer = summarizer;
+				this.summarizer.on("summarize", this.handleSummarizeEvent);
 
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
@@ -322,6 +342,7 @@ export class SummaryManager implements IDisposable {
 				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
 				this.state = SummaryManagerState.Off;
 
+				this.summarizer?.off("summarize", this.handleSummarizeEvent);
 				this.summarizer?.close();
 				this.summarizer = undefined;
 
@@ -404,26 +425,27 @@ export class SummaryManager implements IDisposable {
 		return startWithInitialDelay;
 	}
 
-	public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.summarizer === undefined) {
 			throw Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
-		return this.summarizer.summarizeOnDemand(...args);
-	};
+		return this.summarizer.summarizeOnDemand(options);
+	}
 
-	public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.summarizer === undefined) {
 			throw Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
-		return this.summarizer.enqueueSummarize(...args);
-	};
+		return this.summarizer.enqueueSummarize(options);
+	}
 
 	public dispose() {
 		this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
+		this.summarizer?.off("summarize", this.handleSummarizeEvent);
 		this._disposed = true;
 	}
 }

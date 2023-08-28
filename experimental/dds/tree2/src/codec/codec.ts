@@ -74,11 +74,12 @@ export interface ICodecOptions {
 
 /**
  * @alpha
+ * @remarks - `TEncoded` should always be valid Json (i.e. not contain functions), but due to Typescript's handling
+ * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
+ * type-system level constraint makes code that uses this interface more difficult to write.
  */
-export interface IJsonCodec<
-	TDecoded,
-	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
-> extends IEncoder<TDecoded, TEncoded>,
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
+	extends IEncoder<TDecoded, TEncoded>,
 		IDecoder<TDecoded, TEncoded> {
 	encodedSchema?: TAnySchema;
 }
@@ -298,11 +299,15 @@ export function makeValueCodec<Schema extends TSchema>(
  * Wraps a codec with JSON schema validation for its encoded type.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
  */
-export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
+export function withSchemaValidation<
+	TInMemoryFormat,
+	EncodedSchema extends TSchema,
+	TEncodedFormat = JsonCompatibleReadOnly,
+>(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat>,
+	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat>,
 	validator?: JsonValidator,
-): IJsonCodec<TInMemoryFormat> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat> {
 	if (!validator) {
 		return codec;
 	}
@@ -315,7 +320,7 @@ export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSch
 			}
 			return encoded;
 		},
-		decode: (encoded: JsonCompatibleReadOnly) => {
+		decode: (encoded: TEncodedFormat) => {
 			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}

@@ -4,10 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { AllowedUpdateType, FieldKey, UpPath, getDepth } from "../../../core";
+import { FieldKey, UpPath, getDepth } from "../../../core";
 import {
-	ContextuallyTypedNodeData,
 	getField,
 	BindPath,
 	BindingType,
@@ -40,7 +38,8 @@ import {
 	isEditableTree,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
+import { ViewEvents } from "../../../shared-tree";
+import { viewWithContent } from "../../utils";
 import { ComplexPhone, Phones, fullSchemaData, personData } from "./mockData";
 
 export const fieldAddress: FieldKey = brand("address");
@@ -1409,21 +1408,14 @@ describe("editable-tree: data binder", () => {
 });
 
 export function retrieveNodes() {
-	const tree = treeView(personData);
+	const tree = viewWithContent({
+		initialTree: personData,
+		schema: fullSchemaData,
+	});
 	const root = tree.context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
 	const phones = address[getField](fieldSequencePhones);
 	return { tree, root, address, phones };
-}
-
-function treeView(initialData: ContextuallyTypedNodeData): ISharedTreeView {
-	const factory = new SharedTreeFactory();
-	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-	return tree.schematize({
-		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: initialData,
-		schema: fullSchemaData,
-	});
 }
 
 export function compareBinderEventsDeleteFirst(

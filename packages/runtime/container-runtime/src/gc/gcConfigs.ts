@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
+import { MonitoringContext, UsageError } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
 	currentGCVersion,
@@ -153,6 +152,8 @@ export function generateGCConfigs(
 		throw new UsageError("inactive timeout should not be greater than the sweep timeout");
 	}
 
+	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
+
 	// Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
 	const testMode =
 		mc.config.getBoolean(gcTestModeKey) ?? createParams.gcOptions.runGCInTestMode === true;
@@ -172,6 +173,7 @@ export function generateGCConfigs(
 		sessionExpiryTimeoutMs,
 		sweepTimeoutMs,
 		inactiveTimeoutMs,
+		throwOnInactiveLoad,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect,
