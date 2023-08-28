@@ -244,6 +244,9 @@ export class SharedTree
  * @alpha
  */
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
+	/**
+	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 */
 	forest?: ForestType;
 }
 

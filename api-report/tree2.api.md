@@ -1763,7 +1763,6 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
-    // (undocumented)
     forest?: ForestType;
 }
 
