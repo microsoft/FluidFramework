@@ -932,38 +932,46 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					return;
 				}
 				const blobs = {};
-				const localIds = new Set<PendingBlob>();
-				while (localIds.size < this.pendingBlobs.size) {
+				const localBlobs = new Set<PendingBlob>();
+				while (localBlobs.size < this.pendingBlobs.size) {
+					const attachBlobsP: Promise<void>[] = [];
 					for (const [id, entry] of this.pendingBlobs) {
-						if (!localIds.has(entry)) {
-							localIds.add(entry);
+						if (!localBlobs.has(entry)) {
+							localBlobs.add(entry);
 							if (waitBlobsToAttach) {
 								if (!entry.opsent) {
 									this.sendBlobAttachOp(id, entry.storageId);
 								}
 								entry.handleP.resolve(this.getBlobHandle(id));
 								if (!entry.attached) {
-									await new Promise<void>((resolve) => {
-										const onBlobAttached = (attachedEntry) => {
-											if (attachedEntry === entry) {
-												this.off("blobAttached", onBlobAttached);
-												resolve();
-											}
-										};
-										this.on("blobAttached", onBlobAttached);
-									});
+									attachBlobsP.push(
+										new Promise<void>((resolve) => {
+											const onBlobAttached = (attachedEntry) => {
+												if (attachedEntry === entry) {
+													this.off("blobAttached", onBlobAttached);
+													resolve();
+												}
+											};
+											this.on("blobAttached", onBlobAttached);
+										}),
+									);
 								}
 							}
-							blobs[id] = {
-								blob: bufferToString(entry.blob, "base64"),
-								storageId: entry.storageId,
-								attached: entry.attached,
-								acked: entry.acked,
-								minTTLInSeconds: entry.minTTLInSeconds,
-								uploadTime: entry.uploadTime,
-							};
 						}
 					}
+					await Promise.all(attachBlobsP);
+				}
+				// another for is needed to correctly mark attach state
+				// future optimization won't add unattached blobs to the list
+				for (const [id, entry] of this.pendingBlobs) {
+					blobs[id] = {
+						blob: bufferToString(entry.blob, "base64"),
+						storageId: entry.storageId,
+						attached: entry.attached,
+						acked: entry.acked,
+						minTTLInSeconds: entry.minTTLInSeconds,
+						uploadTime: entry.uploadTime,
+					};
 				}
 				return blobs;
 			},

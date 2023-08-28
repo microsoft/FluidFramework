@@ -3866,7 +3866,10 @@ export class ContainerRuntime
 	}): Promise<unknown> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
-			{ eventName: "runtime_getPendingLocalState" },
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props?.notifyImminentClosure,
+			},
 			async () => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;

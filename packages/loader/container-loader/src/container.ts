@@ -1103,7 +1103,12 @@ export class Container
 	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
-			{ eventName: "container_getPendingLocalState" },
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props.notifyImminentClosure,
+				savedOpsSize: this.savedOps.length,
+				clientId: this.clientId,
+			},
 			async () => {
 				if (!this.offlineLoadEnabled) {
 					throw new UsageError(
@@ -1136,11 +1141,6 @@ export class Container
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 				};
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "GetPendingLocalState",
-					savedOpsSize: this.savedOps.length,
-					clientId: this.clientId,
-				});
 
 				return JSON.stringify(pendingState);
 			},
