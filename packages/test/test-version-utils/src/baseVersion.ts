@@ -27,3 +27,13 @@ export const baseVersion = resolveVersion(
 	(nconf.get("fluid:test:baseVersion") as string) ?? pkgVersion,
 	false,
 );
+export function testBaseVersion(
+	value: string | number | undefined,
+	base: string = baseVersion,
+	code: string = codeVersion,
+) {
+	if (typeof value === "string" || value === 0 || value === undefined) {
+		return base;
+	}
+	return code;
+}

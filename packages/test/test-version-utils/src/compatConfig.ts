@@ -16,7 +16,7 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion, codeVersion } from "./baseVersion.js";
+import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -260,7 +260,7 @@ export async function mochaGlobalSetup() {
 
 	// Make sure we wait for all before returning, even if one of them has error.
 	const installP = Array.from(versions.values()).map(async (value) => {
-		const version = value === 0 || value === undefined ? baseVersion : codeVersion;
+		const version = testBaseVersion(value);
 		return ensurePackageInstalled(version, value, reinstall);
 	});
 
