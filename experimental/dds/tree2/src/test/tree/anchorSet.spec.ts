@@ -317,28 +317,41 @@ describe("AnchorSet", () => {
 		log.expect([]);
 	});
 
+	// Simple scenario using just anchorSets to validate if cache implementation of the EditableTree.treeStatus api works.
 	it("AnchorNode cache can be set and retrieved.", () => {
 		const anchors = new AnchorSet();
 		anchors.on("treeChanging", () => {
 			anchors.generationNumber += 1;
 		});
-		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const anchorNode0 = anchors.locate(anchor0);
-		assert(anchorNode0 !== undefined);
+
+		// Create and add dummy cache value to the anchorSlot.
 		const detachedField = keyAsDetachedField(rootFieldKey);
 		const cache = {
 			generationNumber: anchors.generationNumber,
 			detachedField,
 		};
-		const fieldSlot = anchorSlot<{
+		const detachedfieldSlot = anchorSlot<{
 			generationNumber: number;
 			detachedField: DetachedField;
 		}>();
-		anchorNode0?.slots.set(fieldSlot, cache);
-		const fieldSlotCache = anchorNode0.slots.get(fieldSlot);
+		anchorNode0?.slots.set(detachedfieldSlot, cache);
+
+		// Checks that we can retrieve the cache that was set in anchorSlot.
+		const fieldSlotCache = anchorNode0?.slots.get(detachedfieldSlot);
 		assert.equal(fieldSlotCache?.generationNumber, anchors.generationNumber);
 		assert.equal(fieldSlotCache, cache);
+
+		// Applies a dummy delta to trigger "treeChanging" event and increment anchorSet generationNumber.
+		anchors.applyDelta(new Map([]));
+
+		// Check that the cache generationNumber is no longer matching anchorSet generationNumber.
+		assert.notEqual(
+			anchors.locate(anchor0)?.slots.get(detachedfieldSlot)?.generationNumber,
+			anchors.generationNumber,
+		);
 	});
 });
 
