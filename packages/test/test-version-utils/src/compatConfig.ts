@@ -260,7 +260,7 @@ export async function mochaGlobalSetup() {
 
 	// Make sure we wait for all before returning, even if one of them has error.
 	const installP = Array.from(versions.values()).map(async (value) => {
-		const version = value === 0 ? baseVersion : codeVersion;
+		const version = value === 0 || value === undefined ? baseVersion : codeVersion;
 		return ensurePackageInstalled(version, value, reinstall);
 	});
 
