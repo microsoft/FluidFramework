@@ -57,7 +57,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^1.0.0",

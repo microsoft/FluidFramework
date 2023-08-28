@@ -30,6 +30,7 @@
 		"docker-clean": "docker-compose down --rmi local -v",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"layer-check": "cd ../.. && npm run layer-check",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
 		"policy-check": "cd ../.. && npm run policy-check",

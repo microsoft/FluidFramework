@@ -11,6 +11,7 @@ import {
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
+
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
 import { ITelemetryLoggerExt } from "../telemetryTypes";
 
@@ -21,17 +22,17 @@ import { ITelemetryLoggerExt } from "../telemetryTypes";
 class TestLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryPerformanceEvent[] = [];
 
-	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {
 		this.events.push(event);
 	}
 
 	send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {
+	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {
+	sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 	supportsTags?: true | undefined;
@@ -232,16 +233,16 @@ describe("SampledTelemetryHelper", () => {
 });
 
 function ensurePropertiesExist(
-	object: unknown,
+	object: ITelemetryPerformanceEvent,
 	propNames: string[],
 	noExtraProperties: boolean = false,
-) {
-	propNames.forEach((name) => {
-		assert.strictEqual((object as any)[name] !== undefined, true);
-	});
+): void {
+	for (const name of propNames) {
+		assert.strictEqual(object[name] !== undefined, true);
+	}
 
 	if (noExtraProperties) {
-		const actualNumberOfProps = Object.keys(object as any).length;
+		const actualNumberOfProps = Object.keys(object).length;
 		const expectedNumberOfProps = propNames.length;
 		if (actualNumberOfProps !== expectedNumberOfProps) {
 			assert.fail(

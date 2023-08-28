@@ -126,6 +126,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		"Load container unsuccessfully",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
