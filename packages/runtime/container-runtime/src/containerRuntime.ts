@@ -2973,7 +2973,7 @@ export class ContainerRuntime
 				this.deltaManager.lastSequenceNumber,
 				this.deltaManager.minimumSequenceNumber,
 				finalAttempt,
-				true /* beforeGenerate */,
+				true /* beforeSummaryGeneration */,
 			);
 			if (pendingMessagesFailResult !== undefined) {
 				return pendingMessagesFailResult;
@@ -3094,7 +3094,7 @@ export class ContainerRuntime
 					this.deltaManager.lastSequenceNumber,
 					this.deltaManager.minimumSequenceNumber,
 					finalAttempt,
-					false /* beforeGenerate */,
+					false /* beforeSummaryGeneration */,
 				);
 				if (pendingMessagesFailResult !== undefined) {
 					return pendingMessagesFailResult;
@@ -3246,7 +3246,7 @@ export class ContainerRuntime
 	 * unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
-	 * @param minimumSequenceNumber  - The minimum sequence number of the summary attempt.
+	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
 	 * @param finalAttempt - Whether this is the final summary attempt.
 	 * @param beforeSummaryGeneration - Whether this is called before summary generation or after.
 	 * @returns failed summarize result (IBaseSummarizeResult) if summary should be failed, undefined otherwise.
