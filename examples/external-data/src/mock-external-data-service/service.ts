@@ -6,7 +6,7 @@
 import { Server } from "http";
 
 import cors from "cors";
-import express from "express";
+import express, { Request } from "express";
 import { isWebUri } from "valid-url";
 
 import { assertValidTaskData, ITaskData } from "../model-interface";
@@ -144,6 +144,56 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			);
 			result.send();
 		}
+	});
+
+	interface UnregisterWebhookRequest extends Request {
+		body: {
+			url: string;
+		};
+	}
+
+	expressApp.post("/unregister-webhook", (request: UnregisterWebhookRequest, result) => {
+		// 1. Validate request data
+		if (typeof request.body?.url !== "string") {
+			const errorMessage = "Missing or unexpected data in request body";
+			console.log(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+			result.send();
+			return;
+		}
+
+		// 1a. Extract SubscriberURL & externalTaskListId from object
+		const subscriberUrl = request.body.url;
+		const externalTaskListId = subscriberUrl.slice(
+			subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
+		);
+
+		// 2. Find cooresponding webook for the given externalTaskListId
+		const webhook = webhookCollection.get(externalTaskListId);
+		if (webhook === undefined) {
+			const errorMessage = "Provided externalTaskListId has no outstanding webhooks";
+			console.log(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else {
+			// 3. Webhook exists, attempt to remove the subscriber from the webhook
+			// 3a. Webhooks exists but the provided subscriber is not subscribed with the webhook.
+			if (!webhook.subscribers.includes(subscriberUrl)) {
+				const errorMessage =
+					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
+				console.log(formatLogMessage(errorMessage));
+				result.status(400).json({ message: errorMessage });
+			} else {
+				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
+				webhook.removeSubscriber(subscriberUrl);
+				console.log(
+					formatLogMessage(
+						`Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`,
+					),
+				);
+			}
+		}
+
+		result.send();
 	});
 
 	/**

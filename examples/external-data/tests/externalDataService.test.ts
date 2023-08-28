@@ -141,6 +141,18 @@ describe("mock-external-data-service", () => {
 			.expect(400);
 	});
 
+	it("unregister-webhook: Unregiserting fron an existing wbhook with a valid URI succeeds", async () => {
+		await request(externalDataService!)
+			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({ url: "https://www.fluidframework.com" })
+			.expect(200);
+
+		await request(externalDataService!)
+			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({ url: "https://www.fluidframework.com" })
+			.expect(200);
+	});
+
 	/* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 });
