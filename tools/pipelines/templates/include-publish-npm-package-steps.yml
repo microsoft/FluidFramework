@@ -146,7 +146,7 @@ steps:
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
                   scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
                   for scope in "${scopes[@]}"; do
-                      if [[ "$packageName" == "$prefix"* ]]; then
+                      if [[ "$packageName" == "$scope"* ]]; then
                           packageName="@${packageName/$scope-/$scope/}"
                       fi
                   done
