@@ -6,159 +6,154 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
+import { v5 as uuidv5 } from "uuid";
 import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainer,
-	createLoader,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-	LoaderContainerTracker,
+    createAndAttachContainer,
+    createLoader,
+    ITestFluidObject,
+    TestFluidObjectFactory,
+    LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import * as _ from "lodash";
 import {
-	StringArrayProperty,
-	PropertyFactory,
-	ArrayProperty,
-	NamedProperty,
+    StringArrayProperty,
+    PropertyFactory,
+    ArrayProperty,
+    NamedProperty,
     Int32Property,
+     StringProperty,
+    Float64Property,
 } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/common-utils";
 import { SharedPropertyTree } from "../propertyTree";
 
+// a "namespace" uuid to generate uuidv5 in fuzz tests
+const namespaceGuid: string = "b6abf2df-d86d-413b-8fd1-359d4aa341f2";
+
 function createLocalLoader(
-	packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
-	deltaConnectionServer: ILocalDeltaConnectionServer,
-	urlResolver: IUrlResolver,
-	options?: ILoaderOptions,
+    packageEntries: Iterable<[IFluidCodeDetails, TestFluidObjectFactory]>,
+    deltaConnectionServer: ILocalDeltaConnectionServer,
+    urlResolver: IUrlResolver,
+    options?: ILoaderOptions,
 ): IHostLoader {
-	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 
-	return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
+    return createLoader(packageEntries, documentServiceFactory, urlResolver, undefined, options);
 }
 
-function createDerivedGuid(referenceGuid: string, identifier: string) {
-	const hash = crypto.createHash("sha1");
-	hash.write(`${referenceGuid}:${identifier}`);
-	hash.end();
-
-	const hexHash = hash.digest("hex");
-	return (
-		`${hexHash.substr(0, 8)}-${hexHash.substr(8, 4)}-` +
-		`${hexHash.substr(12, 4)}-${hexHash.substr(16, 4)}-${hexHash.substr(20, 12)}`
-	);
-}
 console.assert = (condition: boolean, ...data: any[]) => {
-	assert(!!condition, "Console Assert");
+    assert(!!condition, "Console Assert");
 };
 
 function getFunctionSource(fun: any): string {
-	let source = fun.toString() as string;
-	source = source.replace(/^.*=>\s*{?\n?\s*/m, "");
-	source = source.replace(/}\s*$/m, "");
-	source = source.replace(/^\s*/gm, "");
+    let source = fun.toString() as string;
+    source = source.replace(/^.*=>\s*{?\n?\s*/m, "");
+    source = source.replace(/}\s*$/m, "");
+    source = source.replace(/^\s*/gm, "");
 
-	return source;
+    return source;
 }
 
 describe("PropertyDDS", () => {
     const documentId = "localServerTest";
-		const documentLoadUrl = `fluid-test://localhost/${documentId}`;
-		const propertyDdsId = "PropertyTree";
-		const codeDetails: IFluidCodeDetails = {
-			package: "localServerTestPackage",
-			config: {},
-		};
-		const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
+        const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+        const propertyDdsId = "PropertyTree";
+        const codeDetails: IFluidCodeDetails = {
+            package: "localServerTestPackage",
+            config: {},
+        };
+        const factory = new TestFluidObjectFactory([[propertyDdsId, SharedPropertyTree.getFactory()]]);
 
-		let deltaConnectionServer: ILocalDeltaConnectionServer;
-		let urlResolver: LocalResolver;
-		let opProcessingController: LoaderContainerTracker;
-		let container1: IContainer;
-		let container2: IContainer;
-		let dataObject1: ITestFluidObject;
-		let dataObject2: ITestFluidObject;
-		let sharedPropertyTree1: SharedPropertyTree;
-		let sharedPropertyTree2: SharedPropertyTree;
+        let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let urlResolver: LocalResolver;
+        let opProcessingController: LoaderContainerTracker;
+        let container1: IContainer;
+        let container2: IContainer;
+        let dataObject1: ITestFluidObject;
+        let dataObject2: ITestFluidObject;
+        let sharedPropertyTree1: SharedPropertyTree;
+        let sharedPropertyTree2: SharedPropertyTree;
 
-		let errorHandler: (Error) => void;
+        let errorHandler: (Error) => void;
 
-		async function createContainer(): Promise<IContainer> {
-			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-			opProcessingController.add(loader);
-			return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
-		}
+        async function createContainer(): Promise<IContainer> {
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            opProcessingController.add(loader);
+            return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+        }
 
-		async function loadContainer(): Promise<IContainer> {
-			const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
-			opProcessingController.add(loader);
-			return loader.resolve({ url: documentLoadUrl });
-		}
+        async function loadContainer(): Promise<IContainer> {
+            const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+            opProcessingController.add(loader);
+            return loader.resolve({ url: documentLoadUrl });
+        }
 
-		function createRandomTests(
-			operations: {
-				getParameters: (random: DeterministicRandomGenerator) => Record<string, number | (() => void)>;
-				op: (parameters: Record<string, any>) => Promise<void>;
-				probability: number;
-			}[],
-			final: () => Promise<void>,
-			count = 100,
-			startTest = 0,
-			maxOperations = 30,
-		) {
-			for (let i = startTest; i < count; i++) {
-                const seed = createDerivedGuid("", String(i));
+        function createRandomTests(
+            operations: {
+                getParameters: (random: DeterministicRandomGenerator) => Record<string, number | (() => void)>;
+                op: (parameters: Record<string, any>) => Promise<void>;
+                probability: number;
+            }[],
+            final: () => Promise<void>,
+            count = 100,
+            startTest = 0,
+            maxOperations = 30,
+        ) {
+            for (let i = startTest; i < count; i++) {
+                const seed = uuidv5(String(i), namespaceGuid);
                 it(`Generated Test Case #${i} (seed: ${seed})`, async function() {
-					this.timeout(10000);
-					let testString = "";
+                    this.timeout(10000);
+                    let testString = "";
 
-					errorHandler = (err) => {
-						console.error(`Failed Test code: ${testString}`);
-					};
-					const random = new DeterministicRandomGenerator(seed);
-					const operationCumSums = [] as number[];
-					for (const operation of operations) {
-						operationCumSums.push(
-							(operationCumSums[operationCumSums.length - 1] ?? 0) + operation.probability,
-						);
-					}
+                    errorHandler = (err) => {
+                        console.error(`Failed Test code: ${testString}`);
+                    };
+                    const random = new DeterministicRandomGenerator(seed);
+                    const operationCumSums = [] as number[];
+                    for (const operation of operations) {
+                        operationCumSums.push(
+                            (operationCumSums[operationCumSums.length - 1] ?? 0) + operation.probability,
+                        );
+                    }
 
-					try {
-						const numOperations = random.irandom(maxOperations);
-						const maxCount = operationCumSums[operationCumSums.length - 1];
-						for (const j of _.range(numOperations)) {
-							const operationId = 1 + random.irandom(maxCount);
-							const selectedOperation = _.sortedIndex(operationCumSums, operationId);
+                    try {
+                        const numOperations = random.irandom(maxOperations);
+                        const maxCount = operationCumSums[operationCumSums.length - 1];
+                        for (const j of _.range(numOperations)) {
+                            const operationId = 1 + random.irandom(maxCount);
+                            const selectedOperation = _.sortedIndex(operationCumSums, operationId);
 
-							const parameters = operations[selectedOperation].getParameters(random);
+                            const parameters = operations[selectedOperation].getParameters(random);
 
-							// Create the source code for the test
-							let operationSource = getFunctionSource(operations[selectedOperation].op.toString());
-							for (const [key, value] of Object.entries(parameters)) {
-								const valueString = _.isFunction(value) ? getFunctionSource(value) : value.toString();
-								operationSource = operationSource.replace(
-									new RegExp(`parameters.${key}\\(?\\)?`),
-									valueString,
-								);
-							}
-							testString += operationSource;
+                            // Create the source code for the test
+                            let operationSource = getFunctionSource(operations[selectedOperation].op.toString());
+                            for (const [key, value] of Object.entries(parameters)) {
+                                const valueString = _.isFunction(value) ? getFunctionSource(value) : value.toString();
+                                operationSource = operationSource.replace(
+                                    new RegExp(`parameters.${key}\\(?\\)?`),
+                                    valueString,
+                                );
+                            }
+                            testString += operationSource;
 
-							await operations[selectedOperation].op(parameters);
-						}
+                            await operations[selectedOperation].op(parameters);
+                        }
 
-						testString += getFunctionSource(final);
-						await final();
-					} catch (e) {
-						console.error(`Failed Test code: ${testString}`);
-						throw e;
-					}
-				});
-			}
-		}
+                        testString += getFunctionSource(final);
+                        await final();
+                    } catch (e) {
+                        console.error(`Failed Test code: ${testString}`);
+                        throw e;
+                    }
+                });
+            }
+        }
 
         async function setupContainers(mode = true) {
             opProcessingController = new LoaderContainerTracker();
@@ -337,6 +332,79 @@ describe("PropertyDDS", () => {
                     await opProcessingController.ensureSynchronized();
                 });
 
+                it("Should work when intermediate changes cancel", async () => {
+                    sharedPropertyTree1.root.insert(
+                        "test",
+                        PropertyFactory.create("Float64", undefined, 0),
+                    );
+                    sharedPropertyTree1.commit();
+                    await opProcessingController.ensureSynchronized();
+
+                    // Remove the entry in tree 1
+                    sharedPropertyTree1.root.remove("test");
+                    sharedPropertyTree1.commit();
+
+                    // Remove and reinsert in two operations that cancel out in tree2
+                    sharedPropertyTree2.root.remove("test");
+                    sharedPropertyTree2.commit();
+                    await opProcessingController.processOutgoing(container2);
+                    await opProcessingController.processIncoming(container1);
+                    sharedPropertyTree2.root.insert(
+                        "test",
+                        PropertyFactory.create("Float64", undefined, 0),
+                    );
+                    sharedPropertyTree2.commit();
+                    await opProcessingController.processOutgoing(container2);
+                    await opProcessingController.processIncoming(container1);
+
+                    // Now make sure the trees are synchronized
+                    await opProcessingController.ensureSynchronized();
+
+                    expect(sharedPropertyTree1.root.serialize()).to.deep.equal(
+                        sharedPropertyTree2.root.serialize(),
+                    );
+                });
+
+                it("Should work when the type of a primitive variable changes", async () => {
+                    // First we insert a float
+                    sharedPropertyTree1.root.insert(
+                        "test",
+                        PropertyFactory.create("Float64", undefined, 0),
+                    );
+                    sharedPropertyTree1.commit();
+                    await opProcessingController.ensureSynchronized();
+
+                    // Modify the entry in tree 1
+                    sharedPropertyTree1.root.get<Float64Property>("test")?.setValue(10);
+                    sharedPropertyTree1.commit();
+
+                    // Remove and reinsert in two operations changing the type in tree2
+                    sharedPropertyTree2.root.remove("test");
+                    sharedPropertyTree2.commit();
+                    await opProcessingController.processOutgoing(container2);
+                    await opProcessingController.processIncoming(container1);
+                    sharedPropertyTree2.root.insert(
+                        "test",
+                        PropertyFactory.create("String", undefined, "Test"),
+                    );
+                    sharedPropertyTree2.commit();
+                    await opProcessingController.processOutgoing(container2);
+                    await opProcessingController.processIncoming(container1);
+
+                    // Now make sure the trees are synchronized
+                    await opProcessingController.ensureSynchronized();
+
+                    expect(sharedPropertyTree1.root.serialize()).to.deep.equal(
+                        sharedPropertyTree2.root.serialize(),
+                    );
+                    expect(sharedPropertyTree1.root.get<StringProperty>("test")).to.be.instanceof(
+                        StringProperty,
+                    );
+                    expect(sharedPropertyTree1.root.get<StringProperty>("test")?.getValue()).to.equal(
+                        "Test",
+                    );
+                });
+
                 it("works with overlapping sequences", async () => {
                     insertInArray(sharedPropertyTree2, "C");
                     await opProcessingController.processOutgoing(container2);
@@ -373,7 +441,7 @@ describe("PropertyDDS", () => {
                     const logTest = true;
 
                     for (let i = startTest; i < count; i++) {
-                        const seed = createDerivedGuid("", String(i));
+                        const seed = uuidv5(String(i), namespaceGuid);
                         it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
                             const random = new DeterministicRandomGenerator(seed);
                             let testString = "";
@@ -432,7 +500,7 @@ describe("PropertyDDS", () => {
                                 testString +=
                                     "await opProcessingController.ensureSynchronized();\n";
                             }
-                        });
+                        }).timeout(10000);
                     }
                 });
             });
@@ -980,19 +1048,19 @@ describe("PropertyDDS", () => {
             });
         }
 
-	describe("Rebasing", () => {
+    describe("Rebasing", () => {
         beforeEach(async () => {
-			await setupContainers();
-		});
+            await setupContainers();
+        });
 
-		rebaseTests();
-	});
+        rebaseTests();
+    });
 
     describe("Rebasing with reconnection", () => {
         beforeEach(async () => {
-			await setupContainers(false);
-		});
+            await setupContainers(false);
+        });
 
-		rebaseTests();
-	});
+        rebaseTests();
+    });
 });
