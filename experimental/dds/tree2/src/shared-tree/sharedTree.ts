@@ -41,6 +41,8 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	buildChunkedForest,
+	makeTreeChunker,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -88,7 +90,10 @@ export class SharedTree
 	) {
 		const options = { jsonValidator: noopValidator, ...optionsParam };
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema, new AnchorSet());
+		const forest =
+			options.forest === ForestType.Optimized
+				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), new AnchorSet())
+				: buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
@@ -238,7 +243,24 @@ export class SharedTree
 /**
  * @alpha
  */
-export interface SharedTreeOptions extends Partial<ICodecOptions> {}
+export interface SharedTreeOptions extends Partial<ICodecOptions> {
+	forest?: ForestType;
+}
+
+/**
+ * Used to distinguish between different forest types.
+ * @alpha
+ */
+export enum ForestType {
+	/**
+	 * The "ObjectForest" forest type.
+	 */
+	Reference = 0,
+	/**
+	 * The "ChunkedForest" forest type.
+	 */
+	Optimized = 1,
+}
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
