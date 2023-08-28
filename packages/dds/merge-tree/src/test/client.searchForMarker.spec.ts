@@ -276,7 +276,7 @@ describe("TestClient", () => {
 			}
 		});
 
-		it("Should be able to find forward marker position with few segments", () => {
+		it("Should be able to find distant forward marker", () => {
 			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
@@ -296,7 +296,7 @@ describe("TestClient", () => {
 			}
 		});
 
-		it("Should be able to find backward marker position with few segments", () => {
+		it("Should be able to find distant backward marker", () => {
 			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
