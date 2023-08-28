@@ -335,6 +335,26 @@ export function configureWebSocketServices(
 
 			const clientId = generateClientId();
 
+			const room: IRoom = {
+				tenantId: claims.tenantId,
+				documentId: claims.documentId,
+			};
+
+			try {
+				// Subscribe to channels.
+				await Promise.all([
+					socket.join(getRoomId(room)),
+					socket.join(`client#${clientId}`),
+				]);
+			} catch (err) {
+				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
+					err,
+					undefined,
+					2,
+				)}`;
+				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+			}
+
 			const lumberjackProperties = {
 				...getLumberBaseProperties(claims.documentId, claims.tenantId),
 				[CommonProperties.clientId]: clientId,
@@ -373,26 +393,6 @@ export function configureWebSocketServices(
 					false /* isFatal */,
 					5 * 60 * 1000 /* retryAfterMs (5 min) */,
 				);
-			}
-
-			const room: IRoom = {
-				tenantId: claims.tenantId,
-				documentId: claims.documentId,
-			};
-
-			try {
-				// Subscribe to channels.
-				await Promise.all([
-					socket.join(getRoomId(room)),
-					socket.join(`client#${clientId}`),
-				]);
-			} catch (err) {
-				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
-					err,
-					undefined,
-					2,
-				)}`;
-				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
 			}
 
 			const connectedTimestamp = Date.now();
