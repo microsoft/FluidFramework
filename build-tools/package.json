@@ -83,7 +83,7 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
-		"syncpack": "^9.8.6",
+		"syncpack": "^11.2.1",
 		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
@@ -106,8 +106,7 @@
 			]
 		},
 		"overrides": {
-			"json5@<1.0.2": "^1.0.2",
-			"json5@>=2.0.0 <2.2.2": "^2.2.2",
+			"json5": "^2.2.3",
 			"qs": "^6.11.0"
 		}
 	}
