@@ -388,6 +388,29 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * @param cursor - cursor at a field or node.
+ * @param f - Function to invoke for each node.
+ * If `f` moves the cursor, it must put it back to where it was at the beginning of `f` before returning.
+ *
+ * Invokes `f` on each node in the subtree rooted at the current field or node.
+ * Traversal is pre-order.
+ * If the cursor is at a node, `f` will be invoked on that node.
+ *
+ * Returns the `cursor` to its initial position.
+ */
+export function forEachNodeInSubtree<TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	f: (cursor: TCursor) => void,
+): void {
+	if (cursor.mode === CursorLocationType.Nodes) {
+		f(cursor);
+		forEachField(cursor, (c) => forEachNodeInSubtree(c, f));
+	} else {
+		forEachNode(cursor, (c) => forEachNodeInSubtree(c, f));
+	}
+}
+
+/**
  * Casts a cursor to an {@link ITreeCursorSynchronous}.
  *
  * TODO: #1404: Handle this properly for partial data loading support.
