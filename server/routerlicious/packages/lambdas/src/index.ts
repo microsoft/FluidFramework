@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { configureWebSocketServices } from "./alfred";
+export {
+	configureWebSocketServices,
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+} from "./alfred";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
 export {
@@ -15,7 +19,6 @@ export {
 	IDeliLambdaEvents,
 	OpEventType,
 } from "./deli";
-export { IBroadcastSignalEventPayload, ICollaborationSessionEvents } from "./interfaces";
 export { MoiraLambda, MoiraLambdaFactory } from "./moira";
 export {
 	CheckpointManager,
