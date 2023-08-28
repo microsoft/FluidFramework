@@ -3870,7 +3870,7 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props?.notifyImminentClosure,
 			},
-			async () => {
+			async (event) => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;
 				if (this._orderSequentiallyCalls !== 0) {
@@ -3880,13 +3880,6 @@ export class ContainerRuntime
 					waitBlobsToAttach,
 				);
 				const pending = this.pendingStateManager.getLocalState();
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "GetPendingLocalState_Runtime",
-					waitBlobsToAttach,
-					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
-					pendingOpsSize: pending?.pendingStates.length,
-				});
-
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
 					return; // no pending state to save
 				}
@@ -3899,6 +3892,10 @@ export class ContainerRuntime
 					pending,
 					pendingAttachmentBlobs,
 				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pending?.pendingStates.length,
+				});
 				return pendingState;
 			},
 		);
