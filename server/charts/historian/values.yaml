@@ -43,7 +43,7 @@ gitrest:
     accessMode: ReadWriteOnce
   git:
     lib:
-      name: nodegit
+      name: isomorphic-git
     filesystem:
       name: nodeFs
     ephemeralfilesystem:

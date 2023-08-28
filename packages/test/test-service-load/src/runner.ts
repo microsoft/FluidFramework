@@ -219,6 +219,15 @@ async function runnerProcess(
 			runConfig.logger.minLogLevel =
 				loggerLogLevelOptions[runConfig.runId % loggerLogLevelOptions.length];
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			runConfig.logger.sendTelemetryEvent({
+				eventName: "RunConfigOptions",
+				details: JSON.stringify({
+					loaderOptions: runConfig.loaderConfig,
+					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
+					logLevel: runConfig.logger.minLogLevel,
+					configurations: configurations[runConfig.runId % configurations.length],
+				}),
+			});
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
@@ -234,20 +243,8 @@ async function runnerProcess(
 				},
 			});
 
-			let stashedOps = stashedOpP ? await stashedOpP : undefined;
+			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
-
-			// temp fix for #15538: remove clientId from empty stash blobs
-			if (stashedOps !== undefined) {
-				const parsed = JSON.parse(stashedOps);
-				if (
-					parsed.pendingRuntimeState.pending === undefined &&
-					Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0
-				) {
-					parsed.clientId = undefined;
-					stashedOps = JSON.stringify(parsed);
-				}
-			}
 
 			container = await loader.resolve({ url, headers }, stashedOps);
 

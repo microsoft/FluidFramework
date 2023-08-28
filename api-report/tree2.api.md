@@ -570,7 +570,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     // (undocumented)
     readonly editor: TEditor;
     // (undocumented)
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    intoDelta(change: TaggedChange<TChangeset>, deltaFromChild: ToDelta, idAllocator: MemoizedIdRangeAllocator): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
     readonly rebaser: FieldChangeRebaser<TChangeset>;
@@ -833,6 +833,14 @@ export interface IDefaultEditBuilder {
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
 
+// @alpha (undocumented)
+export interface IdRange {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly first: ChangesetLocalId;
+}
+
 // @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
@@ -862,7 +870,7 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 }
 
 // @alpha (undocumented)
-export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
     // (undocumented)
     encodedSchema?: TAnySchema;
 }
@@ -879,6 +887,10 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
 
 // @alpha
 export const indexSymbol: unique symbol;
+
+// @alpha
+export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends TreeContent<TRoot>, SchematizeConfiguration<TRoot> {
+}
 
 // @alpha
 type _InlineTrick = 0;
@@ -1049,7 +1061,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    schematize<TRoot extends FieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
@@ -1284,6 +1296,14 @@ const MarkType: {
 
 // @alpha
 export type MatchPolicy = "subtree" | "path";
+
+// @alpha
+export type MemoizedIdRangeAllocator = (revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number) => IdRange[];
+
+// @alpha (undocumented)
+export const MemoizedIdRangeAllocator: {
+    fromNextId(nextId?: number): MemoizedIdRangeAllocator;
+};
 
 // @alpha
 interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
@@ -1657,6 +1677,11 @@ export class SchemaBuilder {
 }
 
 // @alpha
+export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
+    readonly schema: TypedSchemaCollection<TRoot>;
+}
+
+// @alpha
 export interface SchemaData {
     // (undocumented)
     readonly rootFieldSchema: FieldStoredSchema;
@@ -1696,10 +1721,8 @@ export interface SchemaLintConfiguration {
 }
 
 // @alpha
-export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> {
+export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[];
-    readonly schema: TypedSchemaCollection<TRoot>;
 }
 
 // @alpha
@@ -1803,6 +1826,11 @@ export interface TreeAdapter {
     readonly input: TreeSchemaIdentifier;
     // (undocumented)
     readonly output: TreeSchemaIdentifier;
+}
+
+// @alpha
+export interface TreeContent<TRoot extends FieldSchema = FieldSchema> extends SchemaConfiguration<TRoot> {
+    readonly initialTree: SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple> | readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous;
 }
 
 // @alpha

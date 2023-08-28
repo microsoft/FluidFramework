@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.23.0",
+	"version": "0.24.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,9 +66,9 @@
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "~0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "~0.22.0",
 		"@microsoft/api-documenter": "^7.22.24",
 		"@microsoft/api-extractor": "^7.36.1",
 		"c8": "^7.14.0",
@@ -84,7 +84,7 @@
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.6",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
@@ -94,12 +94,15 @@
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
 	},
 	"pnpm": {
+		"peerDependencyComments": [
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
+		],
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"eslint": "8.6.0"
 			},
 			"ignoreMissing": [
-				"fluid-framework"
+				"@types/node"
 			]
 		},
 		"overrides": {
