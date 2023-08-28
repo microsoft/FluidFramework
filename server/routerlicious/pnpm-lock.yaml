@@ -83,9 +83,9 @@ importers:
       '@fluidframework/protocol-definitions': 2.1.0
       '@fluidframework/server-services-core': link:../services-core
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-kafka-orderer-previous': /@fluidframework/server-kafka-orderer/0.1040.1000
       '@types/node': 18.17.6
@@ -99,7 +99,7 @@ importers:
     specifiers:
       '@fluid-tools/build-cli': ^0.23.0
       '@fluidframework/build-common': ^2.0.0
-      '@fluidframework/build-tools': ^0.22.0
+      '@fluidframework/build-tools': ^0.23.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
@@ -166,9 +166,9 @@ importers:
       sha.js: 2.4.11
       uuid: 9.0.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-lambdas-previous': /@fluidframework/server-lambdas/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -233,9 +233,9 @@ importers:
       nconf: 0.12.0
       serialize-error: 8.1.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-lambdas-driver-previous': /@fluidframework/server-lambdas-driver/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -302,9 +302,9 @@ importers:
       jsrsasign: 10.8.6
       uuid: 9.0.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_dsbdoiloonfjopmmsiqdtk2mza
+      '@fluid-tools/build-cli': 0.23.0_dsbdoiloonfjopmmsiqdtk2mza
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_dsbdoiloonfjopmmsiqdtk2mza
+      '@fluidframework/build-tools': 0.23.0_qiwzlxsc7nv6vcdymu2njnpbxe
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server-previous': /@fluidframework/server-local-server/0.1040.1000
       '@types/jsrsasign': 8.0.13
@@ -385,9 +385,9 @@ importers:
       uuid: 9.0.0
       ws: 7.5.9
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-memory-orderer-previous': /@fluidframework/server-memory-orderer/0.1040.1000
       '@types/mocha': 10.0.1
@@ -430,9 +430,9 @@ importers:
       '@fluidframework/protocol-definitions': 2.1.0
       events: 3.3.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/protocol-base-previous': /@fluidframework/protocol-base/0.1040.1000
       '@microsoft/api-extractor': 7.36.0_@types+node@18.17.6
@@ -504,9 +504,9 @@ importers:
       nconf: 0.12.0
       winston: 3.9.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server': link:../local-server
       '@fluidframework/server-routerlicious-previous': /@fluidframework/server-routerlicious/0.1040.1000
@@ -619,9 +619,9 @@ importers:
       winston: 3.9.0
       ws: 7.5.9
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server': link:../local-server
       '@fluidframework/server-routerlicious-base-previous': /@fluidframework/server-routerlicious-base/0.1040.1000
@@ -726,9 +726,9 @@ importers:
       uuid: 9.0.0
       winston: 3.9.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-previous': /@fluidframework/server-services/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -801,9 +801,9 @@ importers:
       sillyname: 0.1.0
       uuid: 9.0.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-client-previous': /@fluidframework/server-services-client/0.1040.1000
       '@microsoft/api-extractor': 7.36.0_@types+node@18.17.6
@@ -856,9 +856,9 @@ importers:
       events: 3.3.0
       nconf: 0.12.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-core-previous': /@fluidframework/server-services-core/0.1040.1000
       concurrently: 7.6.0
@@ -906,9 +906,9 @@ importers:
       nconf: 0.12.0
       sillyname: 0.1.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-ordering-kafkanode-previous': /@fluidframework/server-services-ordering-kafkanode/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -966,9 +966,9 @@ importers:
       node-rdkafka: 2.16.1
       sillyname: 0.1.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-ordering-rdkafka-previous': /@fluidframework/server-services-ordering-rdkafka/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -1014,9 +1014,9 @@ importers:
       '@fluidframework/server-services-core': link:../services-core
       zookeeper: 5.6.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-ordering-zookeeper-previous': /@fluidframework/server-services-ordering-zookeeper/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -1104,9 +1104,9 @@ importers:
       uuid: 9.0.0
       winston: 3.9.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-shared-previous': /@fluidframework/server-services-shared/0.1040.1000
       '@types/body-parser': 1.19.2
@@ -1158,9 +1158,9 @@ importers:
       serialize-error: 8.1.0
       uuid: 9.0.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-telemetry-previous': /@fluidframework/server-services-telemetry/0.1040.1000
       '@types/mocha': 10.0.1
@@ -1239,9 +1239,9 @@ importers:
       winston: 3.9.0
       winston-transport: 4.5.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-utils-previous': /@fluidframework/server-services-utils/0.1040.1000
       '@fluidframework/server-test-utils': link:../test-utils
@@ -1313,9 +1313,9 @@ importers:
       string-hash: 1.1.3
       uuid: 9.0.0
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluid-tools/build-cli': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-common': 2.0.0
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils-previous': /@fluidframework/server-test-utils/0.1040.1000
       '@types/lodash': 4.14.195
@@ -2443,14 +2443,14 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli/0.22.0_dsbdoiloonfjopmmsiqdtk2mza:
-    resolution: {integrity: sha512-WK7EXIHl4/VVsrdGAUZL5DCK5BSin2PqzA/W5ehDD2JKW4jX+Ys1jxT+8/6g/ptwNws83B3orDU2oUb8VWfu2g==}
+  /@fluid-tools/build-cli/0.23.0_dsbdoiloonfjopmmsiqdtk2mza:
+    resolution: {integrity: sha512-8ytildaeUAPOuI30uGwKdllzbRgQqYP4vzn+mUaImObXCnpugYhgo6U/93oV4GaE1ENEJ030TyP8A9EpHcG6rA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
-      '@fluidframework/build-tools': 0.22.0_dsbdoiloonfjopmmsiqdtk2mza
-      '@fluidframework/bundle-size-tools': 0.22.0_webpack-cli@4.10.0
+      '@fluid-tools/version-tools': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_qiwzlxsc7nv6vcdymu2njnpbxe
+      '@fluidframework/bundle-size-tools': 0.23.0_webpack-cli@4.10.0
       '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-autocomplete': 2.3.2_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-commands': 2.2.18_mmpl2z7rynse2pmynonhikz2qy
@@ -2502,14 +2502,14 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli/0.22.0_mmpl2z7rynse2pmynonhikz2qy:
-    resolution: {integrity: sha512-WK7EXIHl4/VVsrdGAUZL5DCK5BSin2PqzA/W5ehDD2JKW4jX+Ys1jxT+8/6g/ptwNws83B3orDU2oUb8VWfu2g==}
+  /@fluid-tools/build-cli/0.23.0_mmpl2z7rynse2pmynonhikz2qy:
+    resolution: {integrity: sha512-8ytildaeUAPOuI30uGwKdllzbRgQqYP4vzn+mUaImObXCnpugYhgo6U/93oV4GaE1ENEJ030TyP8A9EpHcG6rA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
-      '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
-      '@fluidframework/bundle-size-tools': 0.22.0
+      '@fluid-tools/version-tools': 0.23.0_mmpl2z7rynse2pmynonhikz2qy
+      '@fluidframework/build-tools': 0.23.0_@types+node@18.17.6
+      '@fluidframework/bundle-size-tools': 0.23.0
       '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-autocomplete': 2.3.2_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-commands': 2.2.18_mmpl2z7rynse2pmynonhikz2qy
@@ -2531,7 +2531,9 @@ packages:
       inquirer: 8.2.5
       jssm: 5.89.2
       jssm-viz-cli: 5.89.2
+      latest-version: 5.1.0
       minimatch: 7.4.6
+      node-fetch: 2.6.11
       npm-check-updates: 16.10.16
       oclif: 3.9.1_mmpl2z7rynse2pmynonhikz2qy
       prettier: 2.6.2
@@ -2618,17 +2620,17 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.22.0_mmpl2z7rynse2pmynonhikz2qy:
-    resolution: {integrity: sha512-XA8OC0OQ06EUiYoP12XmuP2u/7xVx6R2dQq0TRUK3XUhv9q1AY6vcvPZzdG8U4wS9tHiCO/ThDf8dTICJf2NOw==}
+  /@fluid-tools/version-tools/0.23.0_i66k3arednklksy2ivodm65s6a:
+    resolution: {integrity: sha512-+ksVApI/kCSDDM8nC9z9CAvkNicQ+TWQtpzZ+fvLQKrOJ2BxfDpx002lZLg9PbJJB7rwn+qfxj+uJ9Dwk2oV7A==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
-      '@oclif/plugin-autocomplete': 2.3.2_mmpl2z7rynse2pmynonhikz2qy
-      '@oclif/plugin-commands': 2.2.18_mmpl2z7rynse2pmynonhikz2qy
-      '@oclif/plugin-help': 5.2.13_mmpl2z7rynse2pmynonhikz2qy
-      '@oclif/plugin-not-found': 2.3.31_mmpl2z7rynse2pmynonhikz2qy
-      '@oclif/plugin-plugins': 3.1.6_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/core': 2.9.3_i66k3arednklksy2ivodm65s6a
+      '@oclif/plugin-autocomplete': 2.3.2_i66k3arednklksy2ivodm65s6a
+      '@oclif/plugin-commands': 2.2.18_i66k3arednklksy2ivodm65s6a
+      '@oclif/plugin-help': 5.2.13_i66k3arednklksy2ivodm65s6a
+      '@oclif/plugin-not-found': 2.3.31_i66k3arednklksy2ivodm65s6a
+      '@oclif/plugin-plugins': 3.1.6_i66k3arednklksy2ivodm65s6a
       chalk: 2.4.2
       semver: 7.5.4
       table: 6.8.1
@@ -2640,17 +2642,17 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/version-tools/0.23.0_h5uvkrtyybtfey7es6cqpq3wum:
+  /@fluid-tools/version-tools/0.23.0_mmpl2z7rynse2pmynonhikz2qy:
     resolution: {integrity: sha512-+ksVApI/kCSDDM8nC9z9CAvkNicQ+TWQtpzZ+fvLQKrOJ2BxfDpx002lZLg9PbJJB7rwn+qfxj+uJ9Dwk2oV7A==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.9.3_h5uvkrtyybtfey7es6cqpq3wum
-      '@oclif/plugin-autocomplete': 2.3.2_h5uvkrtyybtfey7es6cqpq3wum
-      '@oclif/plugin-commands': 2.2.18_h5uvkrtyybtfey7es6cqpq3wum
-      '@oclif/plugin-help': 5.2.13_h5uvkrtyybtfey7es6cqpq3wum
-      '@oclif/plugin-not-found': 2.3.31_h5uvkrtyybtfey7es6cqpq3wum
-      '@oclif/plugin-plugins': 3.1.6_h5uvkrtyybtfey7es6cqpq3wum
+      '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/plugin-autocomplete': 2.3.2_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/plugin-commands': 2.2.18_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/plugin-help': 5.2.13_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/plugin-not-found': 2.3.31_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/plugin-plugins': 3.1.6_mmpl2z7rynse2pmynonhikz2qy
       chalk: 2.4.2
       semver: 7.5.4
       table: 6.8.1
@@ -2711,109 +2713,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.22.0_dsbdoiloonfjopmmsiqdtk2mza:
-    resolution: {integrity: sha512-KqQ6v0ut8dEPpA9x9jGD/MjOzMx9JtMtrLf08vxUQCcQNZqQVELOVeM2wjf1n2NV9Oj8ejlcsL8pkT24oWIETA==}
+  /@fluidframework/build-tools/0.23.0:
+    resolution: {integrity: sha512-eSKSFsN0kaUONy6PIq2O9j1sJ9GI9SMQT9x6zv5J301SaPv8C5oY8KBlbvf9HIuatOxx1sn7v1KxYC+ss/EbuQ==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
-      '@fluidframework/bundle-size-tools': 0.22.0_webpack-cli@4.10.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5_@types+node@18.17.6
-      async: 3.2.4
-      chalk: 2.4.2
-      commander: 6.2.1
-      cosmiconfig: 8.2.0
-      danger: 10.9.0_@octokit+core@4.2.4
-      date-fns: 2.30.0
-      debug: 4.3.4
-      detect-indent: 6.1.0
-      execa: 5.1.1
-      find-up: 5.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      lodash.merge: 4.6.2
-      minimatch: 7.4.6
-      replace-in-file: 6.3.5
-      rimraf: 4.4.1
-      semver: 7.5.4
-      shelljs: 0.8.5
-      sort-package-json: 1.57.0
-      ts-morph: 17.0.1
-      type-fest: 2.19.0
-      yaml: 2.3.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - typescript
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/build-tools/0.22.0_mmpl2z7rynse2pmynonhikz2qy:
-    resolution: {integrity: sha512-KqQ6v0ut8dEPpA9x9jGD/MjOzMx9JtMtrLf08vxUQCcQNZqQVELOVeM2wjf1n2NV9Oj8ejlcsL8pkT24oWIETA==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
-      '@fluidframework/bundle-size-tools': 0.22.0
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5_@types+node@18.17.6
-      async: 3.2.4
-      chalk: 2.4.2
-      commander: 6.2.1
-      cosmiconfig: 8.2.0
-      danger: 10.9.0_@octokit+core@4.2.4
-      date-fns: 2.30.0
-      debug: 4.3.4
-      detect-indent: 6.1.0
-      execa: 5.1.1
-      find-up: 5.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.2.4
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      lodash.merge: 4.6.2
-      minimatch: 7.4.6
-      replace-in-file: 6.3.5
-      rimraf: 4.4.1
-      semver: 7.5.4
-      shelljs: 0.8.5
-      sort-package-json: 1.57.0
-      ts-morph: 17.0.1
-      type-fest: 2.19.0
-      yaml: 2.3.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - typescript
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/build-tools/0.22.0_typescript@4.5.5:
-    resolution: {integrity: sha512-KqQ6v0ut8dEPpA9x9jGD/MjOzMx9JtMtrLf08vxUQCcQNZqQVELOVeM2wjf1n2NV9Oj8ejlcsL8pkT24oWIETA==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.22.0_typescript@4.5.5
-      '@fluidframework/bundle-size-tools': 0.22.0
+      '@fluid-tools/version-tools': 0.23.0_typescript@5.1.6
+      '@fluidframework/bundle-size-tools': 0.23.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.5
@@ -2855,8 +2761,104 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.22.0:
-    resolution: {integrity: sha512-mbwI23lw3AjbfS9TdYMMl2V8VdolDgHJQPR2rPpDrKVyuF7Iny1tHuAX3Y8lAzCGgpgZlL3LxGIMbw/OhmtLmg==}
+  /@fluidframework/build-tools/0.23.0_@types+node@18.17.6:
+    resolution: {integrity: sha512-eSKSFsN0kaUONy6PIq2O9j1sJ9GI9SMQT9x6zv5J301SaPv8C5oY8KBlbvf9HIuatOxx1sn7v1KxYC+ss/EbuQ==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.23.0_i66k3arednklksy2ivodm65s6a
+      '@fluidframework/bundle-size-tools': 0.23.0
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.59.5_@types+node@18.17.6
+      async: 3.2.4
+      chalk: 2.4.2
+      commander: 6.2.1
+      cosmiconfig: 8.2.0
+      danger: 10.9.0_@octokit+core@4.2.4
+      date-fns: 2.30.0
+      debug: 4.3.4
+      detect-indent: 6.1.0
+      execa: 5.1.1
+      find-up: 5.0.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      ignore: 5.2.4
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      lodash.merge: 4.6.2
+      minimatch: 7.4.6
+      replace-in-file: 6.3.5
+      rimraf: 4.4.1
+      semver: 7.5.4
+      shelljs: 0.8.5
+      sort-package-json: 1.57.0
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+      typescript: 5.1.6
+      yaml: 2.3.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/build-tools/0.23.0_qiwzlxsc7nv6vcdymu2njnpbxe:
+    resolution: {integrity: sha512-eSKSFsN0kaUONy6PIq2O9j1sJ9GI9SMQT9x6zv5J301SaPv8C5oY8KBlbvf9HIuatOxx1sn7v1KxYC+ss/EbuQ==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.23.0_i66k3arednklksy2ivodm65s6a
+      '@fluidframework/bundle-size-tools': 0.23.0_webpack-cli@4.10.0
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.59.5_@types+node@18.17.6
+      async: 3.2.4
+      chalk: 2.4.2
+      commander: 6.2.1
+      cosmiconfig: 8.2.0
+      danger: 10.9.0_@octokit+core@4.2.4
+      date-fns: 2.30.0
+      debug: 4.3.4
+      detect-indent: 6.1.0
+      execa: 5.1.1
+      find-up: 5.0.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      ignore: 5.2.4
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      lodash.merge: 4.6.2
+      minimatch: 7.4.6
+      replace-in-file: 6.3.5
+      rimraf: 4.4.1
+      semver: 7.5.4
+      shelljs: 0.8.5
+      sort-package-json: 1.57.0
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+      typescript: 5.1.6
+      yaml: 2.3.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/bundle-size-tools/0.23.0:
+    resolution: {integrity: sha512-5sOGxKlD9oL/cw+kWxn3YAB2D62oU6uucUie9C52c/gg1xZzaFMoe0iQ33nP1nWXFLyBK3KQVzuOdL5LlDR4VQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -4774,6 +4776,47 @@ packages:
       tslib: 2.5.3
     dev: true
 
+  /@oclif/core/2.9.3_i66k3arednklksy2ivodm65s6a:
+    resolution: {integrity: sha512-0KLiVpXCJivAjLoj/LAXQf85MtGzyforyPkgNJQEP6QQugnuq2kHcG+DojWEQYz0sADXT2259EdPibslEThUMg==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@types/cli-progress': 3.11.0
+      ansi-escapes: 4.3.2
+      ansi-styles: 4.3.0
+      cardinal: 2.1.1
+      chalk: 4.1.2
+      clean-stack: 3.0.1
+      cli-progress: 3.12.0
+      debug: 4.3.4_supports-color@8.1.1
+      ejs: 3.1.9
+      fs-extra: 9.1.0
+      get-package-type: 0.1.0
+      globby: 11.1.0
+      hyperlinker: 1.0.0
+      indent-string: 4.0.0
+      is-wsl: 2.2.0
+      js-yaml: 3.14.1
+      natural-orderby: 2.0.3
+      object-treeify: 1.1.33
+      password-prompt: 1.1.2
+      semver: 7.5.4
+      slice-ansi: 4.0.0
+      string-width: 4.2.3
+      strip-ansi: 6.0.1
+      supports-color: 8.1.1
+      supports-hyperlinks: 2.3.0
+      ts-node: 10.9.1_i66k3arednklksy2ivodm65s6a
+      tslib: 2.5.3
+      widest-line: 3.1.0
+      wordwrap: 1.0.0
+      wrap-ansi: 7.0.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
   /@oclif/core/2.9.3_mmpl2z7rynse2pmynonhikz2qy:
     resolution: {integrity: sha512-0KLiVpXCJivAjLoj/LAXQf85MtGzyforyPkgNJQEP6QQugnuq2kHcG+DojWEQYz0sADXT2259EdPibslEThUMg==}
     engines: {node: '>=14.0.0'}
@@ -4804,47 +4847,6 @@ packages:
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
       ts-node: 10.9.1_mmpl2z7rynse2pmynonhikz2qy
-      tslib: 2.5.3
-      widest-line: 3.1.0
-      wordwrap: 1.0.0
-      wrap-ansi: 7.0.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - typescript
-    dev: true
-
-  /@oclif/core/2.9.3_h5uvkrtyybtfey7es6cqpq3wum:
-    resolution: {integrity: sha512-0KLiVpXCJivAjLoj/LAXQf85MtGzyforyPkgNJQEP6QQugnuq2kHcG+DojWEQYz0sADXT2259EdPibslEThUMg==}
-    engines: {node: '>=14.0.0'}
-    dependencies:
-      '@types/cli-progress': 3.11.0
-      ansi-escapes: 4.3.2
-      ansi-styles: 4.3.0
-      cardinal: 2.1.1
-      chalk: 4.1.2
-      clean-stack: 3.0.1
-      cli-progress: 3.12.0
-      debug: 4.3.4_supports-color@8.1.1
-      ejs: 3.1.9
-      fs-extra: 9.1.0
-      get-package-type: 0.1.0
-      globby: 11.1.0
-      hyperlinker: 1.0.0
-      indent-string: 4.0.0
-      is-wsl: 2.2.0
-      js-yaml: 3.14.1
-      natural-orderby: 2.0.3
-      object-treeify: 1.1.33
-      password-prompt: 1.1.2
-      semver: 7.5.4
-      slice-ansi: 4.0.0
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      supports-color: 8.1.1
-      supports-hyperlinks: 2.3.0
-      ts-node: 10.9.1_h5uvkrtyybtfey7es6cqpq3wum
       tslib: 2.5.3
       widest-line: 3.1.0
       wordwrap: 1.0.0
@@ -4897,11 +4899,52 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-autocomplete/2.3.2_mmpl2z7rynse2pmynonhikz2qy:
+  /@oclif/core/2.9.3_typescript@5.1.6:
+    resolution: {integrity: sha512-0KLiVpXCJivAjLoj/LAXQf85MtGzyforyPkgNJQEP6QQugnuq2kHcG+DojWEQYz0sADXT2259EdPibslEThUMg==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@types/cli-progress': 3.11.0
+      ansi-escapes: 4.3.2
+      ansi-styles: 4.3.0
+      cardinal: 2.1.1
+      chalk: 4.1.2
+      clean-stack: 3.0.1
+      cli-progress: 3.12.0
+      debug: 4.3.4_supports-color@8.1.1
+      ejs: 3.1.9
+      fs-extra: 9.1.0
+      get-package-type: 0.1.0
+      globby: 11.1.0
+      hyperlinker: 1.0.0
+      indent-string: 4.0.0
+      is-wsl: 2.2.0
+      js-yaml: 3.14.1
+      natural-orderby: 2.0.3
+      object-treeify: 1.1.33
+      password-prompt: 1.1.2
+      semver: 7.5.4
+      slice-ansi: 4.0.0
+      string-width: 4.2.3
+      strip-ansi: 6.0.1
+      supports-color: 8.1.1
+      supports-hyperlinks: 2.3.0
+      ts-node: 10.9.1_typescript@5.1.6
+      tslib: 2.5.3
+      widest-line: 3.1.0
+      wordwrap: 1.0.0
+      wrap-ansi: 7.0.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
+  /@oclif/plugin-autocomplete/2.3.2_i66k3arednklksy2ivodm65s6a:
     resolution: {integrity: sha512-NoGdP7Mw5j2NdRGhJNGpm6CHSupaxR9Rk/wOccQeiar2b1kjDEXBqRg0rSqrX3fwluKGw8UWohGL2oUSv9EMTw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/core': 2.9.3_i66k3arednklksy2ivodm65s6a
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -4913,11 +4956,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-autocomplete/2.3.2_h5uvkrtyybtfey7es6cqpq3wum:
+  /@oclif/plugin-autocomplete/2.3.2_mmpl2z7rynse2pmynonhikz2qy:
     resolution: {integrity: sha512-NoGdP7Mw5j2NdRGhJNGpm6CHSupaxR9Rk/wOccQeiar2b1kjDEXBqRg0rSqrX3fwluKGw8UWohGL2oUSv9EMTw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.9.3_h5uvkrtyybtfey7es6cqpq3wum
+      '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -4945,11 +4988,27 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-commands/2.2.18_mmpl2z7rynse2pmynonhikz2qy:
+  /@oclif/plugin-autocomplete/2.3.2_typescript@5.1.6:
+    resolution: {integrity: sha512-NoGdP7Mw5j2NdRGhJNGpm6CHSupaxR9Rk/wOccQeiar2b1kjDEXBqRg0rSqrX3fwluKGw8UWohGL2oUSv9EMTw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.9.3_typescript@5.1.6
+      chalk: 4.1.2
+      debug: 4.3.4
+      fs-extra: 9.1.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
+      - typescript
+    dev: true
+
+  /@oclif/plugin-commands/2.2.18_i66k3arednklksy2ivodm65s6a:
     resolution: {integrity: sha512-nY7qQXxhNOUpWL9shKwDD/oEgfp1lVnab5IPB1BPn7Ni5L+5UCgahI8DtyviZbMsi+IUjeBFyX0z5ErNVSlU+Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
+      '@oclif/core': 2.9.3_i66k3arednklksy2ivodm65s6a
       lodash: 4.17.21
     transitivePeerDependencies:
       - '@swc/core'
@@ -4958,11 +5017,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-commands/2.2.18_h5uvkrtyybtfey7es6cqpq3wum:
+  /@oclif/plugin-commands/2.2.18_mmpl2z7rynse2pmynonhikz2qy:
     resolution: {integrity: sha512-nY7qQXxhNOUpWL9shKwDD/oEgfp1lVnab5IPB1BPn7Ni5L+5UCgahI8DtyviZbMsi+IUjeBFyX0z5ErNVSlU+Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.9.3_h5uvkrtyybtfey7es6cqpq3wum
+      '@oclif/core': 2.9.3_mmpl2z7rynse2pmynonhikz2qy
       lodash: 4.17.21
     transitivePeerDependencies:
       - '@swc/core'
@@ -4984,6 +5043,31 @@ packages:
       - typescript
     dev: true
 
+  /@oclif/plugin-commands/2.2.18_typescript@5.1.6:
+    resolution: {integrity: sha512-nY7qQXxhNOUpWL9shKwDD/oEgfp1lVnab5IPB1BPn7Ni5L+5UCgahI8DtyviZbMsi+IUjeBFyX0z5ErNVSlU+Q==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.9.3_typescript@5.1.6
+      lodash: 4.17.21
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
+  /@oclif/plugin-help/5.2.13_i66k3arednklksy2ivodm65s6a:
+    resolution: {integrity: sha512-8+uJ9fxZhb76T+NiHDyLQWmHVhu1ONj+e47w3bMLe3+absfuGsWYZm5+W8ApJxQKoLgB5pW810idO0f7iP/4tw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.9.3_i66k3arednklksy2ivodm65s6a
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
   /@oclif/plugin-help/5.2.13_mmpl2z7rynse2pmynonhikz2qy:
     resolution: {integrity: sha512-8+uJ9fxZhb76T+NiHDyLQWmHVhu1ONj+e47w3bMLe3+absfuGsWYZm5+W8ApJxQKoLgB5pW810idO0f7iP/4tw==}
     engines: {node: '>=12.0.0'}
@@ -4996,11 +5080,11 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-help/5.2.13_h5uvkrtyybtfey7es6cqpq3wum:
+  /@oclif/plugin-help/5.2.13_typescript@4.5.5:
     resolution: {integrity: sha512-8+uJ9fxZhb76T+NiHDyLQWmHVhu1ONj+e47w3bMLe3+absfuGsWYZm5+W8ApJxQKoLgB5pW810idO0f7iP/4tw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.9.3_h5uvkrtyybtfey7es6cqpq3wum
+      '@oclif/core': 2.9.3_typescript@4.5.5
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -5008,11 +5092,25 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-help/5.2.13_typescript@4.5.5:
+  /@oclif/plugin-help/5.2.13_typescript@5.1.6:
     resolution: {integrity: sha512-8+uJ9fxZhb76T+NiHDyLQWmHVhu1ONj+e47w3bMLe3+absfuGsWYZm5+W8ApJxQKoLgB5pW810idO0f7iP/4tw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.9.3_typescript@4.5.5
+      '@oclif/core': 2.9.3_typescript@5.1.6
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
+  /@oclif/plugin-not-found/2.3.31_i66k3arednklksy2ivodm65s6a:
+    resolution: {integrity: sha512-KHBCDJbDrkFc5vuPxg4JZ3wBTrdPPHOQOWp4bLCV4cnVSUHBKnfCqnCg2aXmRb97nbzY3P13/i8Th3KQjArqmg==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/color': 1.0.8
+      '@oclif/core': 2.9.3_i66k3arednklksy2ivodm65s6a
+      fast-levenshtein: 3.0.0
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -5034,20 +5132,6 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-not-found/2.3.31_h5uvkrtyybtfey7es6cqpq3wum:
-    resolution: {integrity: sha512-KHBCDJbDrkFc5vuPxg4JZ3wBTrdPPHOQOWp4bLCV4cnVSUHBKnfCqnCg2aXmRb97nbzY3P13/i8Th3KQjArqmg==}
-    engines: {node: '>=12.0.0'}
-    dependencies:
-      '@oclif/color': 1.0.8
-      '@oclif/core': 2.9.3_h5uvkrtyybtfey7es6cqpq3wum
-      fast-levenshtein: 3.0.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - '@types/node'
-      - typescript
-    dev: true
-
   /@oclif/plugin-not-found/2.3.31_typescript@4.5.5:
     resolution: {integrity: sha512-KHBCDJbDrkFc5vuPxg4JZ3wBTrdPPHOQOWp4bLCV4cnVSUHBKnfCqnCg2aXmRb97nbzY3P13/i8Th3KQjArqmg==}
     engines: {node: '>=12.0.0'}
@@ -5059,6 +5143,46 @@ packages:
       - '@swc/core'
       - '@swc/wasm'
       - '@types/node'
+      - typescript
+    dev: true
+
+  /@oclif/plugin-not-found/2.3.31_typescript@5.1.6:
+    resolution: {integrity: sha512-KHBCDJbDrkFc5vuPxg4JZ3wBTrdPPHOQOWp4bLCV4cnVSUHBKnfCqnCg2aXmRb97nbzY3P13/i8Th3KQjArqmg==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/color': 1.0.8
+      '@oclif/core': 2.9.3_typescript@5.1.6
+      fast-levenshtein: 3.0.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
+  /@oclif/plugin-plugins/3.1.6_i66k3arednklksy2ivodm65s6a:
+    resolution: {integrity: sha512-bri3GHqUs2d9mMoqm0/CIef+u+nJrNDzno5xpnB0cg7x3mAhXM/miuzdNz7D8opupuJeiJMv+A/WSMG2nY2IEw==}
+    engines: {node: '>=16'}
+    dependencies:
+      '@oclif/color': 1.0.8
+      '@oclif/core': 2.9.3_i66k3arednklksy2ivodm65s6a
+      chalk: 4.1.2
+      debug: 4.3.4
+      fs-extra: 9.1.0
+      http-call: 5.3.0
+      load-json-file: 5.3.0
+      npm: 9.8.0
+      npm-run-path: 4.0.1
+      semver: 7.5.4
+      shelljs: 0.8.5
+      tslib: 2.5.3
+      validate-npm-package-name: 5.0.0
+      yarn: 1.22.19
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
       - typescript
     dev: true
 
@@ -5088,12 +5212,12 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-plugins/3.1.6_h5uvkrtyybtfey7es6cqpq3wum:
+  /@oclif/plugin-plugins/3.1.6_typescript@4.5.5:
     resolution: {integrity: sha512-bri3GHqUs2d9mMoqm0/CIef+u+nJrNDzno5xpnB0cg7x3mAhXM/miuzdNz7D8opupuJeiJMv+A/WSMG2nY2IEw==}
     engines: {node: '>=16'}
     dependencies:
       '@oclif/color': 1.0.8
-      '@oclif/core': 2.9.3_h5uvkrtyybtfey7es6cqpq3wum
+      '@oclif/core': 2.9.3_typescript@4.5.5
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -5114,12 +5238,12 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-plugins/3.1.6_typescript@4.5.5:
+  /@oclif/plugin-plugins/3.1.6_typescript@5.1.6:
     resolution: {integrity: sha512-bri3GHqUs2d9mMoqm0/CIef+u+nJrNDzno5xpnB0cg7x3mAhXM/miuzdNz7D8opupuJeiJMv+A/WSMG2nY2IEw==}
     engines: {node: '>=16'}
     dependencies:
       '@oclif/color': 1.0.8
-      '@oclif/core': 2.9.3_typescript@4.5.5
+      '@oclif/core': 2.9.3_typescript@5.1.6
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -15948,6 +16072,39 @@ packages:
       code-block-writer: 11.0.3
     dev: true
 
+  /ts-node/10.9.1_i66k3arednklksy2ivodm65s6a:
+    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': '>=1.2.50'
+      '@swc/wasm': '>=1.2.50'
+      '@types/node': '*'
+      typescript: '>=2.7'
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      '@swc/wasm':
+        optional: true
+      '@types/node':
+        optional: true
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 18.17.6
+      acorn: 8.9.0
+      acorn-walk: 8.2.0
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.1.6
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    dev: true
+
   /ts-node/10.9.1_mmpl2z7rynse2pmynonhikz2qy:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
@@ -15977,37 +16134,6 @@ packages:
       diff: 4.0.2
       make-error: 1.3.6
       typescript: 4.5.5
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-    dev: true
-
-  /ts-node/10.9.1_h5uvkrtyybtfey7es6cqpq3wum:
-    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
-    hasBin: true
-    peerDependencies:
-      '@swc/core': '>=1.2.50'
-      '@swc/wasm': '>=1.2.50'
-      '@types/node': '*'
-      typescript: '>=2.7'
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      '@swc/wasm':
-        optional: true
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.9
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 16.18.36
-      acorn: 8.9.0
-      acorn-walk: 8.2.0
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.1.6
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
     dev: true
@@ -16056,6 +16182,8 @@ packages:
       '@swc/core':
         optional: true
       '@swc/wasm':
+        optional: true
+      '@types/node':
         optional: true
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
