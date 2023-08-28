@@ -40,13 +40,13 @@ export function createSampledLogger(
 	shouldSampleEventCallback: () => boolean,
 ) {
 	const monitoringContext = loggerToMonitoringContext(logger);
-	const isSamplingEnabled = monitoringContext.config.getBoolean(
+	const isSamplingDisabled = monitoringContext.config.getBoolean(
 		"Fluid.Telemetry.DisableSampling",
 	);
 
 	const sampledLogger: ITelemetryBaseLogger = {
 		send: (event: ITelemetryBaseEvent) => {
-			if (isSamplingEnabled && shouldSampleEventCallback() === true) {
+			if (isSamplingDisabled || shouldSampleEventCallback() === true) {
 				logger.send(event);
 			}
 		},
@@ -56,19 +56,15 @@ export function createSampledLogger(
 }
 
 /**
- * sampletext
+ * Given a samplingRate 'n', this function will return true on the very first execution
+ * and then after the first will return true on every n + 1 execution.
  */
 export const createSystematicSamplingCallback = (samplingRate: number) => {
 	const state = {
-		eventsSinceLastSample: 0,
-		isFirstEvent: true,
+		eventsSinceLastSample: -1,
 	};
 	return () => {
 		state.eventsSinceLastSample++;
-		if (state.isFirstEvent) {
-			state.isFirstEvent = false;
-			return true;
-		}
 		const shouldSample = state.eventsSinceLastSample % samplingRate === 0;
 		if (shouldSample) {
 			state.eventsSinceLastSample = 0;

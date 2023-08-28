@@ -93,7 +93,7 @@ describe("Sampling", () => {
 
 	it("Systematic Sampling works as expected", () => {
 		const injectedSettings = {
-			"Fluid.Telemetry.DisableSampling": true,
+			"Fluid.Telemetry.DisableSampling": false,
 		};
 		const logger = getBaseLoggerWithConfig(injectedSettings);
 
@@ -121,13 +121,49 @@ describe("Sampling", () => {
 			events.filter((event) => event.eventName === "noSampling").length,
 			totalEventCount,
 		);
-		assert.equal(events.filter((event) => event.eventName === "oneEveryThree").length, 5);
-		assert.equal(events.filter((event) => event.eventName === "oneEveryFive").length, 3);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryThree").length,
+			totalEventCount / 3,
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			totalEventCount / 5,
+		);
+	});
+
+	it("Sampling does not run if DisableSampling telemetry flag is set to true", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": true,
+		};
+		const logger = getBaseLoggerWithConfig(injectedSettings);
+
+		const loggerWithoutSampling = createSampledLogger(
+			logger,
+			createSystematicSamplingCallback(1),
+		);
+		const loggerWithEvery5Sampling = createSampledLogger(
+			logger,
+			createSystematicSamplingCallback(5),
+		);
+
+		const totalEventCount = 15;
+		for (let i = 0; i < totalEventCount; i++) {
+			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+		}
+		assert.equal(
+			events.filter((event) => event.eventName === "noSampling").length,
+			totalEventCount,
+		);
+		assert.equal(
+			events.filter((event) => event.eventName === "oneEveryFive").length,
+			totalEventCount,
+		);
 	});
 
 	it("Complex Sampling works as expected", () => {
 		const injectedSettings = {
-			"Fluid.Telemetry.DisableSampling": true,
+			"Fluid.Telemetry.DisableSampling": false,
 		};
 		const logger = getBaseLoggerWithConfig(injectedSettings);
 
@@ -136,7 +172,7 @@ describe("Sampling", () => {
 			appNumber1: number;
 			appNumber2: number;
 			appBoolean1: boolean;
-			appMode: string;
+			appModeString: string;
 		}
 
 		let exampleAppDataNumber1 = 0;
@@ -166,8 +202,9 @@ describe("Sampling", () => {
 		);
 
 		const totalEventCount = 20;
+		const eventName = "testEvent";
 		for (let i = 0; i < totalEventCount; i++) {
-			if (i > 0 && i % 2 === 0) {
+			if (i % 2 === 0) {
 				// This will be sampled
 				exampleAppDataNumber1 = -10;
 				exampleAppDataNumber2 = 2;
@@ -183,7 +220,7 @@ describe("Sampling", () => {
 
 			loggerWithSampling.send({
 				category: "generic",
-				eventName: "testEvent",
+				eventName,
 				eventNumber: i,
 				appNumber1: exampleAppDataNumber1,
 				appNumber2: exampleAppDataNumber2,
@@ -192,15 +229,16 @@ describe("Sampling", () => {
 			});
 		}
 
-		assert.equal(events.length === 10, true);
-		for (const event of events) {
+		const emittedEvents = events.filter((event) => event.eventName === eventName);
+		assert.equal(emittedEvents.length === 10, true);
+		for (const event of emittedEvents) {
 			const typedEvent = event as ExampleEvent;
 			assert.equal(
 				shouldSampleEvent(
 					typedEvent.appNumber1,
 					typedEvent.appNumber2,
 					typedEvent.appBoolean1,
-					typedEvent.appMode,
+					typedEvent.appModeString,
 				),
 				true,
 			);
