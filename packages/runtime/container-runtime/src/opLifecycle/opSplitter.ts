@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger, DataCorruptionError } from "@fluidframework/telemetry-utils";
-import { extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import {
+	createChildLogger,
+	DataCorruptionError,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

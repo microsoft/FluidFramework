@@ -28,6 +28,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"start": "pm2 start pm2.ecosystem.config.js",
 		"start:client": "webpack serve --config webpack.config.js",
+		"stop": "pm2 stop pm2.ecosystem.config.js",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
@@ -71,7 +72,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@testing-library/dom": "^8.2.0",

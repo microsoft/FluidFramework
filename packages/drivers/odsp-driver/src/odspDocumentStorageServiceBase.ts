@@ -192,7 +192,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		let id: string;
-		if (!version || !version.id) {
+		if (!version?.id) {
 			const versions = await this.getVersions(null, 1, scenarioName);
 			if (!versions || versions.length === 0) {
 				return null;

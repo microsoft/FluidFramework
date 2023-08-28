@@ -46,6 +46,10 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		this.context.withCursors.delete(this);
 	}
 
+	public isFreed(): boolean {
+		return this.lazyCursor.state === ITreeSubscriptionCursorState.Freed;
+	}
+
 	public get cursor(): ITreeSubscriptionCursor {
 		if (this.lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			assert(
