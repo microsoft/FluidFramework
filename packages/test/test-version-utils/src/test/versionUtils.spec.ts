@@ -6,11 +6,14 @@ import { strict as assert } from "assert";
 import { getRequestedRange, versionHasMovedSparsedMatrix } from "../versionUtils.js";
 
 describe("versionUtils", () => {
-	it.skip("getRequestedRange with adjustPublicMajor = true", () => {
+	it("getRequestedRange with adjustPublicMajor = true", () => {
 		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -1, true), "^1.0.0-0");
 		assert.strictEqual(getRequestedRange("2.0.0-internal.4.1.0", -1, true), "^1.0.0-0");
 		assert.strictEqual(getRequestedRange("2.0.0-internal.4.1.1", -1, true), "^1.0.0-0");
-		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -2, true), "^1.0.0-0");
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -2, true), "^0.59.0-0");
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -3, true), "^0.58.0-0");
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", 1, true), "^3.0.0-0");
+		assert.strictEqual(getRequestedRange("3.0.0-internal.4.0.0", -1, true), "^2.0.0-0");
 	});
 
 	it("Get the major version number above or below the baseVersion", () => {

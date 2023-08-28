@@ -5,6 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
+import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -302,22 +303,22 @@ export function getRequestedRange(
 		return requested;
 	}
 
-	const isInternal = baseVersion.includes("internal");
-	const isDev = baseVersion.includes("dev");
+	const scheme = detectVersionScheme(baseVersion);
 
 	// if the baseVersion passed is an internal version
-	if (isInternal) {
-		const internalVersions = baseVersion.split("-internal.");
-		return internalSchema(internalVersions[0], internalVersions[1], requested);
+	if (scheme === "internal" || scheme === "internalPrerelease") {
+		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
+			baseVersion,
+			true,
+			true,
+		);
+
+		if(adjustPublicMajor === false) {
+			return internalSchema(publicVersion.version, internalVersion.version, requested);
+		}
 	}
 
-	// if the baseVersion passed is a pre-released version
-	if (isDev) {
-		const devVersions = baseVersion.split("-dev.");
-		return internalSchema(devVersions[0], devVersions[1].split(".", 3).join("."), requested);
-	}
-
-	let version;
+	let version: semver.SemVer;
 	try {
 		version = new semver.SemVer(baseVersion);
 	} catch (err: unknown) {
@@ -325,7 +326,6 @@ export function getRequestedRange(
 	}
 
 	// calculate requested major version number
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	const requestedMajorVersion = version.major + requested;
 	// if the major version number is bigger than 0 then return it as normal
 	if (requestedMajorVersion > 0) {
@@ -336,7 +336,6 @@ export function getRequestedRange(
 
 	// Minor number in 0.xx release represent a major change hence different rules
 	// are applied for computing the requested version.
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
 	// too old a version / non existing version requested
 	if (requestedMinorVersion <= 0) {
@@ -346,28 +345,32 @@ export function getRequestedRange(
 	return `^0.${requestedMinorVersion}.0-0`;
 }
 
-export function internalSchema(
-	publicVersion: string,
-	internalVersion: string,
-	requested: number,
-): string {
-	if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) {
-		return `^1.0.0-0`;
+function internalSchema(publicVersion: string, internalVersion: string, requested: number): string {
+	if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+		if (requested === -1) {
+			return `^1.0.0-0`;
+		}
+
+		if (requested === -2) {
+			return `^0.59.0-0`;
+		}
 	}
-	if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) {
-		return `^0.59.0-0`;
-	}
+
 	if (
-		publicVersion === "2.0.0" &&
-		internalVersion >= "2.0.0" &&
-		internalVersion < "3.0.0" &&
+		semver.eq(publicVersion, "2.0.0") &&
+		semver.gte(internalVersion, "2.0.0") &&
+		semver.lt(internalVersion, "3.0.0") &&
 		requested === -2
 	) {
 		return `^1.0.0-0`;
 	}
 
 	// if the version number is for the older version scheme before 1.0.0
-	if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
+	if (
+		semver.eq(publicVersion, "2.0.0") &&
+		semver.lte(internalVersion, "2.0.0") &&
+		requested < -2
+	) {
 		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
 		const requestedMinorVersion = lastPrereleaseVersion.minor + requested + 2;
 		return `^0.${requestedMinorVersion}.0-0`;
@@ -377,9 +380,9 @@ export function internalSchema(
 	let semverInternal: string = internalVersion;
 
 	// applied for all the baseVersion passed as 2.0.0-internal-3.0.0 or greater in 2.0.0 internal series
-	if (internalVersion > publicVersion && requested <= -2) {
-		const version = internalVersion.split(".");
-		semverInternal = (parseInt(version[0], 10) + requested + 1).toString().concat(".0.0");
+	if (semver.gt(internalVersion, publicVersion) && requested <= -2) {
+		const parsed = new semver.SemVer(internalVersion);
+		semverInternal = (parsed.major + requested + 1).toString().concat(".0.0");
 	}
 
 	try {
