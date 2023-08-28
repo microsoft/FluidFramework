@@ -51,8 +51,7 @@
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.ts"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
