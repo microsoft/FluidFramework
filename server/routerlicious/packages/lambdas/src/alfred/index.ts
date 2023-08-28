@@ -300,9 +300,39 @@ export function configureWebSocketServices(
 				throw new NetworkError(403, "Must provide an authorization token");
 			}
 
-			// Validate token signature and claims
+			// Validate token signature and claims, and check if it's revoked
 			const token = message.token;
 			const claims = validateTokenClaims(token, message.id, message.tenantId);
+			try {
+				if (revokedTokenChecker && claims.jti) {
+					const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
+						claims.tenantId,
+						claims.documentId,
+						claims.jti,
+					);
+					if (isTokenRevoked) {
+						throw new core.TokenRevokedError(
+							403,
+							"Permission denied. Token has been revoked",
+							false /* canRetry */,
+							true /* isFatal */,
+						);
+					}
+				}
+				await tenantManager.verifyToken(claims.tenantId, token);
+			} catch (error) {
+				if (isNetworkError(error)) {
+					throw error;
+				}
+				// We don't understand the error, so it is likely an internal service error.
+				const errMsg = `Could not verify connect document token. Error: ${safeStringify(
+					error,
+					undefined,
+					2,
+				)}`;
+				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+			}
+
 			const clientId = generateClientId();
 
 			const lumberjackProperties = {
@@ -343,37 +373,6 @@ export function configureWebSocketServices(
 					false /* isFatal */,
 					5 * 60 * 1000 /* retryAfterMs (5 min) */,
 				);
-			}
-
-			try {
-				// Check if token is revoked
-				if (revokedTokenChecker && claims.jti) {
-					const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
-						claims.tenantId,
-						claims.documentId,
-						claims.jti,
-					);
-					if (isTokenRevoked) {
-						throw new core.TokenRevokedError(
-							403,
-							"Permission denied. Token has been revoked",
-							false /* canRetry */,
-							true /* isFatal */,
-						);
-					}
-				}
-				await tenantManager.verifyToken(claims.tenantId, token);
-			} catch (error) {
-				if (isNetworkError(error)) {
-					throw error;
-				}
-				// We don't understand the error, so it is likely an internal service error.
-				const errMsg = `Could not verify connect document token. Error: ${safeStringify(
-					error,
-					undefined,
-					2,
-				)}`;
-				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
 			}
 
 			const room: IRoom = {
