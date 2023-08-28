@@ -584,9 +584,35 @@ describe("Op Size", () => {
 				expectChildrenValues(tree, editPayload, editNodeCount);
 			};
 
-			describe("an equal distribution of operation type", () => {
-				const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
+			const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
 
+			type Distribution = {
+				+readonly [OpKind in keyof typeof Operation]: number;
+			};
+
+			const distributions: Distribution[] = [
+				{
+					[Operation.Insert]: oneThirdNodeCount,
+					[Operation.Edit]: oneThirdNodeCount,
+					[Operation.Delete]: oneThirdNodeCount,
+				},
+			];
+
+			for (const { description, style, extraDescription } of styles) {
+				describe(description, () => {
+					for (const { percentile, word } of sizes) {
+						it(`${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
+							style === TransactionStyle.Individual
+								? "1 edit"
+								: `${BENCHMARK_NODE_COUNT} edits`
+						}`, () => {
+							benchmarkInsertDeleteEditNodesWithInvidiualTxs(style, percentile);
+						});
+					}
+				});
+			}
+
+			describe("an equal distribution of operation type", () => {
 				it(`insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, () => {
 					benchmarkInsertDeleteEditNodesWithInvidiualTxs(
 						0.01,
