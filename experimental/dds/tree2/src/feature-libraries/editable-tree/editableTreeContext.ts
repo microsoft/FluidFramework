@@ -17,8 +17,8 @@ import {
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyManager } from "../node-key";
-import { FieldGenerator } from "../contextuallyTyped";
-import { EditableField, NewFieldContent, UnwrappedEditableField } from "./editableTreeTypes";
+import { FieldGenerator, NewFieldContent } from "../contextuallyTyped";
+import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
 

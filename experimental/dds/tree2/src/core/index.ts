@@ -65,6 +65,7 @@ export {
 	topDownPath,
 	compareFieldUpPaths,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
 	isSkipMark,

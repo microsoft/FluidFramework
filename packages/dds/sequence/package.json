@@ -71,7 +71,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
@@ -124,6 +123,25 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISerializedInterval": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IntervalLocator": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IntervalRevertible": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceInterval": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SerializedIntervalDelta": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringRevertible": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

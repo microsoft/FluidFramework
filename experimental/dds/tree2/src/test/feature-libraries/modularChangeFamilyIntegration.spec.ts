@@ -21,14 +21,17 @@ import {
 	DefaultEditBuilder,
 	FieldKind,
 	FieldKinds,
+	ModularChangeset,
 	singleTextCursor,
 } from "../../feature-libraries";
 
-import { brand, Mutable } from "../../util";
+import { brand, brandOpaque, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { jsonNumber } from "../../domains";
+// eslint-disable-next-line import/no-internal-modules
+import { MarkMaker } from "./sequence-field/testEdits";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[FieldKinds.sequence].map((f) => [f.identifier, f]),
@@ -214,6 +217,63 @@ describe("ModularChangeFamily integration", () => {
 			const actualDelta = normalizeDelta(family.intoDelta(composed));
 			const expectedDelta = normalizeDelta(family.intoDelta(expected));
 			assert.deepEqual(actualDelta, expectedDelta);
+		});
+	});
+
+	describe("toDelta", () => {
+		it("works when nested changes come from different revisions", () => {
+			const change: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("foo"),
+						{
+							fieldKind: FieldKinds.sequence.identifier,
+							change: brand([
+								MarkMaker.moveOut(1, brand(0)),
+								MarkMaker.moveIn(1, brand(0)),
+							]),
+							revision: tag1,
+						},
+					],
+					[
+						brand("bar"),
+						{
+							fieldKind: FieldKinds.sequence.identifier,
+							change: brand([
+								MarkMaker.moveOut(2, brand(0)),
+								MarkMaker.moveIn(2, brand(0)),
+							]),
+							revision: tag2,
+						},
+					],
+				]),
+			};
+			const moveOut1: Delta.MoveOut = {
+				type: Delta.MarkType.MoveOut,
+				moveId: brandOpaque<Delta.MoveId>(0),
+				count: 1,
+			};
+			const moveIn1: Delta.MoveIn = {
+				type: Delta.MarkType.MoveIn,
+				moveId: brandOpaque<Delta.MoveId>(0),
+				count: 1,
+			};
+			const moveOut2: Delta.MoveOut = {
+				type: Delta.MarkType.MoveOut,
+				moveId: brandOpaque<Delta.MoveId>(1),
+				count: 2,
+			};
+			const moveIn2: Delta.MoveIn = {
+				type: Delta.MarkType.MoveIn,
+				moveId: brandOpaque<Delta.MoveId>(1),
+				count: 2,
+			};
+			const expected: Delta.Root = new Map([
+				[brand("foo"), [moveOut1, moveIn1]],
+				[brand("bar"), [moveOut2, moveIn2]],
+			]);
+			const actual = family.intoDelta(change);
+			assert.deepEqual(actual, expected);
 		});
 	});
 });

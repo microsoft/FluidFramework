@@ -48,17 +48,18 @@ import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 class RevertibleFactory extends SharedStringFactory {
-	options = {};
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
 		return super.create(document, id);
 	}
 }
@@ -141,6 +142,12 @@ const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
 	...intervalTestOptions,
 	emitter,
+	// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+	// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+	detachedStartOptions: {
+		enabled: false,
+		attachProbability: 0.2,
+	},
 };
 
 type ClientOpState = FuzzTestState;

@@ -32,12 +32,16 @@ import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataCorruptionError,
+	DataProcessingError,
+	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -46,12 +50,6 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	UsageError,
-} from "@fluidframework/container-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -155,6 +153,7 @@ import {
 	ISummarizeResults,
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
+	ISummarizerEvents,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -508,9 +507,13 @@ export enum RuntimeHeaders {
 
 /** True if a tombstoned object should be returned without erroring */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+/** [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned";
+/** Inactive error responses will have this header set to true */
+export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
@@ -551,7 +554,7 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-interface IPendingRuntimeState {
+export interface IPendingRuntimeState {
 	/**
 	 * Pending ops from PendingStateManager
 	 */
@@ -656,7 +659,7 @@ export const makeLegacySendBatchFn =
  * It will define the store level mappings.
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
@@ -694,7 +697,6 @@ export class ContainerRuntime
 			context,
 			registryEntries,
 			existing: existingFlag,
-			requestHandler,
 			runtimeOptions,
 			containerScope,
 			containerRuntimeCtor,
@@ -719,16 +721,20 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		runtimeOptions?: IContainerRuntimeOptions;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+			requestHandler?: undefined;
+			initializeEntryPoint: (
+				containerRuntime: IContainerRuntime,
+			) => Promise<FluidObject>;
+		},
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -737,7 +743,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
+			initializeEntryPoint
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -839,7 +845,7 @@ export class ContainerRuntime
 			idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), logger);
+					: IdCompressor.create(logger);
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -872,6 +878,7 @@ export class ContainerRuntime
 			undefined, // summaryConfiguration
 		);
 
+		await runtime.blobManager.processStashedChanges();
 		// It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
 		// at 1, so we won't see a replayed saved op with a sequence number of 0.
 		await runtime.pendingStateManager.applyStashedOpsAt(0);
@@ -1618,6 +1625,9 @@ export class ContainerRuntime
 					},
 					this.heuristicsDisabled,
 				);
+				this.summaryManager.on("summarize", (eventProps) => {
+					this.emit("summarize", eventProps);
+				});
 				this.summaryManager.start();
 			}
 		}
@@ -1790,7 +1800,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.IFluidRouter.request(subRequest);
+				return dataStore.request(subRequest);
 			}
 
 			return create404Response(request);
@@ -1838,6 +1848,7 @@ export class ContainerRuntime
 			dataStoreContext.packagePath,
 			request?.headers,
 		);
+
 		return dataStoreChannel;
 	}
 
@@ -2059,32 +2070,6 @@ export class ContainerRuntime
 				eventName: "UnsuccessfulConnectedTransition",
 			});
 			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
-			return;
-		}
-
-		// If attachment blobs were added while disconnected, we need to delay
-		// propagation of the "connected" event until we have uploaded them to
-		// ensure we don't submit ops referencing a blob that has not been uploaded
-		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
-		const connecting =
-			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
-		if (connecting && this.blobManager.hasPendingOfflineUploads) {
-			assert(
-				!this.delayConnectClientId,
-				0x392 /* Connect event delay must be canceled before subsequent connect event */,
-			);
-			assert(!!clientId, 0x393 /* Must have clientId when connecting */);
-			this.delayConnectClientId = clientId;
-			this.blobManager.onConnected().then(
-				() => {
-					// make sure we didn't reconnect before the promise resolved
-					if (this.delayConnectClientId === clientId && !this.disposed) {
-						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore(connected, clientId);
-					}
-				},
-				(error) => this.closeFn(error),
-			);
 			return;
 		}
 
@@ -2934,7 +2919,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, refreshLatestAck, summaryLogger } = options;
+		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -3052,9 +3037,9 @@ export class ContainerRuntime
 				};
 			}
 
-			// If validateSummaryBeforeUpload is true, validate that the summary generated by the summarizer nodes is
-			// correct before this summary is uploaded.
+			// If validateSummaryBeforeUpload is true, validate that the summary generated is correct before uploading.
 			if (this.validateSummaryBeforeUpload) {
+				// Validate that the summaries generated by summarize nodes is correct.
 				const validateResult = this.summarizerNode.validateSummary();
 				if (!validateResult.success) {
 					const { success, ...loggingProps } = validateResult;
@@ -3069,6 +3054,49 @@ export class ContainerRuntime
 						minimumSequenceNumber,
 						error,
 					};
+				}
+
+				// If there are pending messages, the summary has more data than at the summaryRefSeqNum.
+				if (this.hasPendingMessages()) {
+					// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
+					// This is a fallback to make progress in documents where there are consistently pending ops in
+					// the summarizer.
+					if (
+						finalAttempt &&
+						this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
+					) {
+						const error = DataProcessingError.create(
+							"Pending ops during summarization",
+							"submitSummary",
+							undefined,
+							{ pendingMessages: this.pendingMessagesCount },
+						);
+						summaryNumberLogger.sendErrorEvent(
+							{
+								eventName: "SkipFailingIncorrectSummary",
+								referenceSequenceNumber: summaryRefSeqNum,
+								minimumSequenceNumber,
+							},
+							error,
+						);
+					} else {
+						// Default retry delay is 1 second. This can be overridden via config so that we can adjust it
+						// based on telemetry while we decide on a stable number.
+						const retryDelayMs =
+							this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
+							1000;
+						const error = new RetriableSummaryError(
+							"PendingMessagesInSummary",
+							retryDelayMs / 1000,
+							{ count: this.pendingMessagesCount },
+						);
+						return {
+							stage: "base",
+							referenceSequenceNumber: summaryRefSeqNum,
+							minimumSequenceNumber,
+							error,
+						};
+					}
 				}
 			}
 
@@ -3282,7 +3310,7 @@ export class ContainerRuntime
 				);
 				idRange = this.idCompressor.takeNextCreationRange();
 				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+				idRange = idRange?.ids !== undefined ? idRange : undefined;
 			}
 
 			if (idRange !== undefined) {
@@ -3829,15 +3857,21 @@ export class ContainerRuntime
 			throw new UsageError("can't get state during orderSequentially");
 		}
 		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+
+		if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+			return; // no pending state to save
+		}
+
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
-		return {
+		const pendingState: IPendingRuntimeState = {
 			pending: this.pendingStateManager.getLocalState(),
 			pendingAttachmentBlobs,
 		};
+		return pendingState;
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

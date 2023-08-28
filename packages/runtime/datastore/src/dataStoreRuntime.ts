@@ -4,6 +4,7 @@
  */
 
 import {
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	generateStack,
 	LoggingError,
@@ -11,6 +12,7 @@ import {
 	raiseConnectedEvent,
 	createChildMonitoringContext,
 	tagCodeArtifacts,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -26,7 +28,6 @@ import {
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {

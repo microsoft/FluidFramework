@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
+	createChildLogger,
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/common-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";

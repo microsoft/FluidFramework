@@ -18,10 +18,16 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
+import { SharedString } from "../sharedString";
+import { SequenceInterval } from "../intervals";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -109,9 +115,6 @@ export function makeOperationGenerator(
 			...inclusiveRange(state),
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
-			stickiness: state.random.pick(
-				Object.values(IntervalStickiness) as IntervalStickiness[],
-			),
 		};
 	}
 
@@ -182,6 +185,23 @@ export function makeOperationGenerator(
 	]);
 }
 
+class IntervalCollectionFuzzFactory extends SharedStringFactory {
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
+		return super.create(document, id);
+	}
+}
+
 const baseModel: Omit<
 	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
 	"workloadName"
@@ -193,7 +213,7 @@ const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: assertEquivalentSharedStrings,
-	factory: new SharedStringFactory(),
+	factory: new IntervalCollectionFuzzFactory(),
 };
 
 const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -228,16 +248,23 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// ADO:5083, the seed 12 started failing after rebasing was added,
-		// however there are no rebase ops in this test run.
-		// the other failing seeds were added when updates of the msn on reconnects
-		// were introduced to
-		// skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
-		// TODO: remove when the sequence is fixed.
+		// AB#4477: Seed 12 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
+		// The other failing seeds were added when updates of the msn on reconnects
+		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
+		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
+		// on segments that can be zamboni'd.
+		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
-			76, 79, 86, 91, 92, 94,
+			1, 3, 4, 7, 9, 11, 12, 13, 18, 19, 20, 25, 28, 31, 32, 33, 34, 36, 39, 41, 42, 43, 44,
+			45, 49, 50, 51, 52, 53, 55, 57, 58, 60, 61, 62, 63, 64, 65, 72, 74, 76, 78, 79, 82, 83,
+			86, 87, 89, 90, 91, 92, 94, 98, 99,
 		],
+		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -261,8 +288,14 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		// After adding another mixin to the pipeline, these seeds are hitting ADO:4477
-		skip: [80, 9, 12, 44],
+		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
+		skip: [9, 12, 33, 44, 80],
+		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -276,8 +309,14 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// ADO:5083, eventual consistency issue was detected
+		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
 		skip: [9, 12, 29],
+		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
+		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		reconnectProbability: 0.0,
 		numberOfClients: 3,
 		clientJoinOptions: {

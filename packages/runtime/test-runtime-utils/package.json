@@ -103,6 +103,9 @@
 		"broken": {
 			"ClassDeclaration_MockFluidDataStoreRuntime": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
+				"backCompat": false
 			}
 		}
 	}
