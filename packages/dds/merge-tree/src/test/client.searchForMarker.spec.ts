@@ -99,7 +99,7 @@ describe("TestClient", () => {
 			assert.equal(exp, 4, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding marker based on label", () => {
+		it("Should be able to find forward marker position based on label", () => {
 			const markerLabel = "EOP";
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
@@ -108,8 +108,6 @@ describe("TestClient", () => {
 			});
 
 			client.insertTextLocal(0, "abc");
-
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
@@ -126,7 +124,7 @@ describe("TestClient", () => {
 			assert.equal(exp, 3, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding marker position based on label from client with single marker", () => {
+		it("Should be able to find forward marker position based on label from client with single marker", () => {
 			const markerLabel = "EOP";
 			client.insertTextLocal(0, "abc d");
 
@@ -134,7 +132,6 @@ describe("TestClient", () => {
 				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 6, "length not expected");
 
@@ -150,7 +147,7 @@ describe("TestClient", () => {
 			assert.equal(exp, 1, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find preceding marker position based on label from client with multiple marker", () => {
+		it("Should be able to find backward marker position based on label from client with multiple marker", () => {
 			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
 				[reservedTileLabelsKey]: [markerLabel],
@@ -169,7 +166,6 @@ describe("TestClient", () => {
 				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
@@ -186,7 +182,7 @@ describe("TestClient", () => {
 			assert.equal(exp, 0, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding marker position from client with multiple marker", () => {
+		it("Should be able to find forward marker position from client with multiple marker", () => {
 			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
 				[reservedTileLabelsKey]: [markerLabel],
@@ -205,7 +201,6 @@ describe("TestClient", () => {
 				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
@@ -222,7 +217,7 @@ describe("TestClient", () => {
 			assert.equal(exp, 6, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding marker with multiple segments and markers", () => {
+		it("Should be able to find forward marker position with multiple segments and markers", () => {
 			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
@@ -250,7 +245,7 @@ describe("TestClient", () => {
 			}
 		});
 
-		it("Should be able to find preceding marker with multiple segments and markers", () => {
+		it("Should be able to find backward marker position with multiple segments and markers", () => {
 			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
@@ -278,6 +273,46 @@ describe("TestClient", () => {
 					index - (index % 3),
 					"Marker with label not at expected position",
 				);
+			}
+		});
+
+		it("Should be able to find forward marker position with few segments", () => {
+			const markerLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			for (let i = 10; i > 1; i -= 2) {
+				client.insertMarkerLocal(client.getLength() - i, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [markerLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+
+			for (let index = 0; index < client.getLength(); index++) {
+				const exp = client.slowSearchForMarker(index, markerLabel, true);
+				const actual = client.searchForMarker(index, markerLabel, true);
+
+				assert.equal(exp, actual, "Marker with label not at expected position");
+			}
+		});
+
+		it("Should be able to find backward marker position with few segments", () => {
+			const markerLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			for (let i = 10; i > 1; i -= 2) {
+				client.insertMarkerLocal(client.getLength() - i, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [markerLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+
+			for (let index = client.getLength() - 1; index >= 0; index--) {
+				const exp = client.slowSearchForMarker(index, markerLabel, false);
+				const actual = client.searchForMarker(index, markerLabel, false);
+
+				assert.equal(exp, actual, "Marker with label not at expected position");
 			}
 		});
 
@@ -330,8 +365,6 @@ describe("TestClient", () => {
 				[reservedMarkerIdKey]: "some-id",
 			});
 
-			console.log(client.getText());
-
 			assert.equal(client.getLength(), 1, "length not expected");
 
 			const marker = client.searchForMarker(client.getLength() - 1, markerLabel, false);
@@ -359,7 +392,7 @@ describe("TestClient", () => {
 			assert.equal(exp, 0, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find only preceding but not non preceding marker with index out of bound", () => {
+		it("Should not be able to find marker position with index out of bound", () => {
 			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
 				[reservedTileLabelsKey]: [markerLabel],
@@ -367,7 +400,6 @@ describe("TestClient", () => {
 			});
 
 			client.insertTextLocal(0, "abc");
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
@@ -553,7 +585,6 @@ describe("TestClient", () => {
 		it("Should return undefined when trying to find marker from text without the specified marker", () => {
 			const markerLabel = "EOP";
 			client.insertTextLocal(0, "abc");
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 3, "length not expected");
 
@@ -576,6 +607,24 @@ describe("TestClient", () => {
 			const marker1 = client.searchForMarker(1, markerLabel, false);
 
 			assert.equal(marker1, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should return undefined when trying to find a removed marker", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4, "length not expected");
+
+			client.removeRangeLocal(0, 1);
+
+			assert.equal(client.getLength(), 3, "length not expected");
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined");
 		});
 
 		describe("with remote client", () => {
@@ -624,6 +673,36 @@ describe("TestClient", () => {
 				);
 
 				assert.equal(exp, 0, "Marker with label not at expected position");
+			});
+
+			it("Should not be able to find remotely removed marker", () => {
+				let seq = 0;
+				const textMsg = client.makeOpMessage(client.insertTextLocal(0, "abc"), ++seq);
+				const mInsertMsg = client.makeOpMessage(
+					client.insertMarkerLocal(0, ReferenceType.Tile, {
+						[reservedMarkerIdKey]: "marker",
+						[reservedTileLabelsKey]: ["Eop"],
+					}),
+					seq,
+				);
+				client.applyMsg(textMsg);
+				client2.applyMsg(textMsg);
+				client.applyMsg(mInsertMsg);
+				client2.applyMsg(mInsertMsg);
+
+				assert.equal(client.getLength(), 4, "length not expected - client");
+				assert.equal(client2.getLength(), 4, "length not expected - client 2");
+
+				const mRemoveMsg = client2.makeOpMessage(client2.removeRangeLocal(0, 1), seq);
+				client.applyMsg(mRemoveMsg);
+				client2.applyMsg(mRemoveMsg);
+
+				assert.equal(client.getLength(), 3, "length not expected - client");
+				assert.equal(client2.getLength(), 3, "length not expected - client 2");
+
+				const marker = client.searchForMarker(0, "Eop", true);
+
+				assert.equal(marker, undefined, "Returned marker should be undefined.");
 			});
 		});
 	});
