@@ -74,6 +74,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
+    generationNumber: number;
     internalizePath(originalPath: UpPath): UpPath;
     isEmpty(): boolean;
     // (undocumented)
