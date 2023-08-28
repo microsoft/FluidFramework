@@ -584,9 +584,6 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
 
-// @public (undocumented)
-export const TelemetryContextHeaderName = "x-telemetry-context";
-
 // @public
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
 

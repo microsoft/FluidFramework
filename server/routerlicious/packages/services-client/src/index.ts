@@ -10,12 +10,7 @@ export {
 	validateTokenClaimsExpiration,
 } from "./auth";
 export { convertSortedNumberArrayToRanges } from "./array";
-export {
-	CorrelationIdHeaderName,
-	DriverVersionHeaderName,
-	LatestSummaryId,
-	TelemetryContextHeaderName,
-} from "./constants";
+export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
 export {
 	createFluidServiceNetworkError,
 	INetworkErrorDetails,

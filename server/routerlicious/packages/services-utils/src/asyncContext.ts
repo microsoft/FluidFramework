@@ -6,14 +6,10 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { v4 as uuid } from "uuid";
 import type { RequestHandler, Request, Response } from "express";
-import {
-	CorrelationIdHeaderName,
-	TelemetryContextHeaderName,
-} from "@fluidframework/server-services-client";
+import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
 	ITelemetryContextProperties,
-	Lumberjack,
 	getGlobalTelemetryContext,
 	ITelemetryContext,
 } from "@fluidframework/server-services-telemetry";
@@ -48,30 +44,14 @@ export class AsyncLocalStorageContextProvider<T> {
 
 function getTelemetryContextPropertiesFromRequest(
 	req: Request,
-	res?: Response,
+	res: Response,
 ): Partial<ITelemetryContextProperties> {
-	const telemetryContextHeader: string | string[] | undefined =
-		req?.get(TelemetryContextHeaderName) ?? res?.get(TelemetryContextHeaderName);
-	if (!telemetryContextHeader || Array.isArray(telemetryContextHeader)) {
-		return {};
-	}
+	const correlationIdHeader =
+		req.get(CorrelationIdHeaderName) ?? res.get(CorrelationIdHeaderName);
 	// Safely parse and return accepted telemetry properties.
-	try {
-		const telemetryContextProperties: Partial<ITelemetryContextProperties> =
-			JSON.parse(telemetryContextHeader);
-		return {
-			[BaseTelemetryProperties.correlationId]: telemetryContextProperties.correlationId,
-			[BaseTelemetryProperties.tenantId]: telemetryContextProperties.tenantId,
-			[BaseTelemetryProperties.documentId]: telemetryContextProperties.documentId,
-		};
-	} catch (e) {
-		Lumberjack.error(
-			`Received invalid TelemetryContext header: ${telemetryContextHeader}`,
-			undefined,
-			e,
-		);
-		return {};
-	}
+	return {
+		[BaseTelemetryProperties.correlationId]: correlationIdHeader,
+	};
 }
 
 /**
@@ -94,13 +74,10 @@ export function getTelemetryContextPropertiesWithHttpInfo(
 /**
  * Express.js Middleware that binds the global telemetry context to the request for its lifetime.
  *
- * Telemetry context properties will be set by the incoming request's {@link TelemetryContextHeaderName} header
- * and any existing properties in the global telemetry context, in that order.
+ * Specific telemetry context properties will be set in the response headers.
+ * - {@link CorrelationIdHeaderName}: correlationId
  *
- * Before the response is sent to client, the {@link TelemetryContextHeaderName} response header is set
- * with properties from the global telemetry context.
- * To maintain compatibility with clients that still look for a {@link CorrelationIdHeaderName} header,
- * the {@link CorrelationIdHeaderName} header will be set if correlationId is present in the global telemetry context properties.
+ * Requests from the Fluid client may not include a correlationId, so one is generated when unavailable.
  */
 export const bindTelemetryContext = (): RequestHandler => {
 	return (req, res, next) => {
@@ -108,23 +85,14 @@ export const bindTelemetryContext = (): RequestHandler => {
 		if (!telemetryContext) {
 			return next();
 		}
-		// Hijack res.send to add latest telemetry context before completing response.
-		const _send = res.send;
-		res.send = (body?: any) => {
-			const properties = getGlobalTelemetryContext().getProperties();
-			res.setHeader(TelemetryContextHeaderName, JSON.stringify(properties));
-			if (properties.correlationId) {
-				// Ensure backwards compatibility with correlation-id.
-				res.setHeader(CorrelationIdHeaderName, properties.correlationId);
-			}
-			return _send(body);
-		};
-		// Bind incoming telemetry properties to async context
-		const telemetryContextProperties = getTelemetryContextPropertiesFromRequest(req);
+		// Bind incoming telemetry properties to async context.
+		const telemetryContextProperties = getTelemetryContextPropertiesWithHttpInfo(req, res);
 		// Generate entry correlation-id if not provided in request.
 		if (!telemetryContextProperties.correlationId) {
 			telemetryContextProperties.correlationId = uuid();
 		}
+		// Assign response headers for client telemetry purposes.
+		res.setHeader(CorrelationIdHeaderName, telemetryContextProperties.correlationId);
 		telemetryContext.bindProperties(telemetryContextProperties, () => next());
 	};
 };

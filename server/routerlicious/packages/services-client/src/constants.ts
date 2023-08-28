@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export const TelemetryContextHeaderName = "x-telemetry-context";
 export const CorrelationIdHeaderName = "x-correlation-id";
 export const DriverVersionHeaderName = "x-driver-version";
 
