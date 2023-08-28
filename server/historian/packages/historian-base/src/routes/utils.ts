@@ -121,12 +121,12 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	let isEphemeral = isEphemeralContainer;
+	let isEphemeral = cache ? isEphemeralContainer : false;
 	if (!ignoreEphemeralFlag) {
 		if (isEphemeralContainer !== undefined) {
-			await cache.set(`isEphemeral:${documentId}`, isEphemeralContainer);
+			await cache?.set(`isEphemeral:${documentId}`, isEphemeralContainer);
 		} else {
-			isEphemeral = await cache.get(`isEphemeral:${documentId}`);
+			isEphemeral = await cache?.get(`isEphemeral:${documentId}`);
 			// Todo: If isEphemeral is still undefined fetch the value from database
 		}
 	}
