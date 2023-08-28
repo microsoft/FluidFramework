@@ -1921,7 +1921,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe.only("Creates a SharedTree with specifying the ForestType", () => {
+	describe("Creates a SharedTree with specifying the ForestType", () => {
 		it("unspecified ForestType uses ObjectForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,

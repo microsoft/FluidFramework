@@ -756,9 +756,7 @@ export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @alpha
 export enum ForestType {
-    // (undocumented)
     Optimized = 1,
-    // (undocumented)
     Reference = 0
 }
 
