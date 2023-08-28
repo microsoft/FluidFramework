@@ -12,9 +12,9 @@ importers:
       '@commitlint/cli': ^17.6.6
       '@commitlint/config-conventional': ^17.6.6
       '@commitlint/cz-commitlint': ^17.5.0
-      '@fluid-tools/build-cli': ^0.22.0
+      '@fluid-tools/build-cli': ~0.22.0
       '@fluidframework/build-common': ^2.0.0
-      '@fluidframework/build-tools': ^0.22.0
+      '@fluidframework/build-tools': ~0.22.0
       '@microsoft/api-documenter': ^7.22.24
       '@microsoft/api-extractor': ^7.36.1
       c8: ^7.14.0
@@ -4261,6 +4261,9 @@ packages:
       cosmiconfig: '>=7'
       ts-node: '>=10'
       typescript: '>=3'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
     dependencies:
       '@types/node': 20.4.7
       cosmiconfig: 8.2.0
@@ -4277,6 +4280,9 @@ packages:
       cosmiconfig: '>=7'
       ts-node: '>=10'
       typescript: '>=3'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
     dependencies:
       '@types/node': 14.18.53
       cosmiconfig: 8.2.0
@@ -10337,6 +10343,8 @@ packages:
         optional: true
       '@swc/wasm':
         optional: true
+      '@types/node':
+        optional: true
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.9
@@ -10369,6 +10377,8 @@ packages:
         optional: true
       '@swc/wasm':
         optional: true
+      '@types/node':
+        optional: true
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.9
@@ -10398,6 +10408,8 @@ packages:
       '@swc/core':
         optional: true
       '@swc/wasm':
+        optional: true
+      '@types/node':
         optional: true
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
