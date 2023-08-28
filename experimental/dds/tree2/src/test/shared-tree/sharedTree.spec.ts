@@ -1620,8 +1620,15 @@ describe("SharedTree", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].view;
-			const tree2 = provider.trees[1].view;
+			const content: InitializeAndSchematizeConfiguration = {
+				initialTree: [],
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			};
+			const tree1 = provider.trees[0].schematize(content);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematize(content);
+			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
@@ -1638,7 +1645,13 @@ describe("SharedTree", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].view;
+			const content: InitializeAndSchematizeConfiguration = {
+				initialTree: [],
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			};
+			const tree1 = provider.trees[0].schematize(content);
+			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
@@ -1654,41 +1667,31 @@ describe("SharedTree", () => {
 	});
 
 	describe("Transactions", () => {
-		/** like `pushTestValue`, but does not wrap the operation in a transaction */
-		function pushTestValueDirect(view: ISharedTreeView, value: TreeValue): void {
-			const field = view.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			const nodes = singleTextCursor({ type: brand("Node"), value });
-			field.insert(0, nodes);
-		}
-
 		itView("update the tree while open", (view) => {
 			view.transaction.start();
-			pushTestValueDirect(view, 42);
+			insertFirstNode(view, 42);
 			assert.equal(getTestValue(view), 42);
 		});
 
 		itView("update the tree after committing", (view) => {
 			view.transaction.start();
-			pushTestValueDirect(view, 42);
+			insertFirstNode(view, 42);
 			view.transaction.commit();
 			assert.equal(getTestValue(view), 42);
 		});
 
 		itView("revert the tree after aborting", (view) => {
 			view.transaction.start();
-			pushTestValueDirect(view, 42);
+			insertFirstNode(view, 42);
 			view.transaction.abort();
 			assert.equal(getTestValue(view), undefined);
 		});
 
 		itView("can nest", (view) => {
 			view.transaction.start();
-			pushTestValueDirect(view, "A");
+			insertFirstNode(view, "A");
 			view.transaction.start();
-			pushTestValueDirect(view, "B");
+			insertFirstNode(view, "B");
 			assert.deepEqual(getTestValues(view), ["A", "B"]);
 			view.transaction.commit();
 			assert.deepEqual(getTestValues(view), ["A", "B"]);
@@ -1699,7 +1702,7 @@ describe("SharedTree", () => {
 		itView("can span a view fork and merge", (view) => {
 			view.transaction.start();
 			const fork = view.fork();
-			pushTestValueDirect(fork, 42);
+			insertFirstNode(fork, 42);
 			assert.throws(
 				() => view.merge(fork, false),
 				(e: Error) =>
@@ -1716,8 +1719,8 @@ describe("SharedTree", () => {
 		itView("automatically commit if in progress when view merges", (view) => {
 			const fork = view.fork();
 			fork.transaction.start();
-			pushTestValueDirect(fork, 42);
-			pushTestValueDirect(fork, 43);
+			insertFirstNode(fork, 42);
+			insertFirstNode(fork, 43);
 			view.merge(fork, false);
 			assert.deepEqual(getTestValues(fork), [42, 43]);
 			assert.equal(fork.transaction.inProgress(), false);
@@ -1734,11 +1737,11 @@ describe("SharedTree", () => {
 
 		itView("do not affect pre-existing forks", (view) => {
 			const fork = view.fork();
-			pushTestValueDirect(view, "A");
+			insertFirstNode(view, "A");
 			fork.transaction.start();
-			pushTestValueDirect(view, "B");
+			insertFirstNode(view, "B");
 			fork.transaction.abort();
-			pushTestValueDirect(view, "C");
+			insertFirstNode(view, "C");
 			view.merge(fork);
 			assert.deepEqual(getTestValues(view), ["A", "B", "C"]);
 		});
@@ -1768,35 +1771,35 @@ describe("SharedTree", () => {
 		});
 
 		itView("can handle a complicated scenario", (view) => {
-			pushTestValueDirect(view, "A");
+			insertFirstNode(view, "A");
 			view.transaction.start();
-			pushTestValueDirect(view, "B");
-			pushTestValueDirect(view, "C");
+			insertFirstNode(view, "B");
+			insertFirstNode(view, "C");
 			view.transaction.start();
-			pushTestValueDirect(view, "D");
+			insertFirstNode(view, "D");
 			const fork = view.fork();
-			pushTestValueDirect(fork, "E");
+			insertFirstNode(fork, "E");
 			fork.transaction.start();
-			pushTestValueDirect(fork, "F");
-			pushTestValueDirect(view, "G");
+			insertFirstNode(fork, "F");
+			insertFirstNode(view, "G");
 			fork.transaction.commit();
-			pushTestValueDirect(fork, "H");
+			insertFirstNode(fork, "H");
 			fork.transaction.start();
-			pushTestValueDirect(fork, "I");
+			insertFirstNode(fork, "I");
 			fork.transaction.abort();
 			view.merge(fork);
-			pushTestValueDirect(view, "J");
+			insertFirstNode(view, "J");
 			view.transaction.start();
 			const fork2 = view.fork();
-			pushTestValueDirect(fork2, "K");
+			insertFirstNode(fork2, "K");
 			insertFirstNode(fork2, "L");
 			view.merge(fork2);
 			view.transaction.abort();
-			pushTestValueDirect(view, "M");
+			insertFirstNode(view, "M");
 			view.transaction.commit();
-			pushTestValueDirect(view, "N");
+			insertFirstNode(view, "N");
 			view.transaction.commit();
-			pushTestValueDirect(view, "O");
+			insertFirstNode(view, "O");
 			assert.deepEqual(getTestValues(view), [
 				"A",
 				"B",
@@ -1815,12 +1818,17 @@ describe("SharedTree", () => {
 
 		it("don't send ops before committing", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].view;
+			const tree1 = provider.trees[0].schematize({
+				initialTree: [],
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			});
+			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
 			tree1.transaction.start();
-			pushTestValueDirect(tree1, 42);
+			insertFirstNode(tree1, 42);
 			provider.processMessages();
 			assert.equal(opsReceived, 0);
 			tree1.transaction.commit();
@@ -1831,13 +1839,18 @@ describe("SharedTree", () => {
 
 		it("send only one op after committing", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].view;
+			const tree1 = provider.trees[0].schematize({
+				initialTree: [],
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			});
+			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
 			tree1.transaction.start();
-			pushTestValueDirect(tree1, 42);
-			pushTestValueDirect(tree1, 43);
+			insertFirstNode(tree1, 42);
+			insertFirstNode(tree1, 43);
 			tree1.transaction.commit();
 			provider.processMessages();
 			assert.equal(opsReceived, 1);
@@ -1846,18 +1859,23 @@ describe("SharedTree", () => {
 
 		it("do not send an op after committing if nested", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].view;
+			const tree1 = provider.trees[0].schematize({
+				initialTree: [],
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			});
+			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
 			tree1.transaction.start();
 			tree1.transaction.start();
-			pushTestValueDirect(tree1, 42);
+			insertFirstNode(tree1, 42);
 			tree1.transaction.commit();
 			provider.processMessages();
 			assert.equal(opsReceived, 0);
 			assert.deepEqual(getTestValues(tree2.view), []);
-			pushTestValueDirect(tree1, 43);
+			insertFirstNode(tree1, 43);
 			tree1.transaction.commit();
 			provider.processMessages();
 			assert.equal(opsReceived, 1);
@@ -1866,16 +1884,17 @@ describe("SharedTree", () => {
 
 		it("process changes while detached", async () => {
 			const onCreate = (parentTree: SharedTree) => {
-				const parent = parentTree.view;
-				parent.transaction.start();
-				pushTestValueDirect(parent, "A");
-				parent.transaction.commit();
+				const parent = parentTree.schematize({
+					initialTree: ["A"],
+					schema: jsonSequenceRootSchema,
+					allowedSchemaModifications: AllowedUpdateType.None,
+				});
 				parent.transaction.start();
 				insertFirstNode(parent, "B");
 				parent.transaction.commit();
 				const child = parent.fork();
 				child.transaction.start();
-				pushTestValueDirect(child, "C");
+				insertFirstNode(child, "C");
 				child.transaction.commit();
 				parent.merge(child);
 				assert.deepEqual(getTestValues(parent), ["A", "B", "C"]);
