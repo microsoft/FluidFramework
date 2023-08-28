@@ -179,8 +179,8 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 		await setupContainers(testContainerConfig, featureGates);
 
 		// Force the containers into write-mode
-		dataObject1map.set("key0", "0");
-		dataObject2map.set("key0", "0");
+		dataObject1map.set("Force write", "0");
+		dataObject2map.set("Force write", "0");
 		await provider.ensureSynchronized();
 
 		// Ignore the batch we just sent
