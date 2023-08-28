@@ -9,6 +9,7 @@ import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-defini
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
+	IRoom,
 } from "@fluidframework/server-lambdas";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
@@ -139,7 +140,8 @@ export function create(
 			const tenantId = req.body?.tenantId;
 			const documentId = req.body?.documentId;
 			const signalContent = req.body?.singalContent;
-			const payload: IBroadcastSignalEventPayload = { tenantId, documentId, signalContent };
+			const signalRoom: IRoom = { tenantId, documentId };
+			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 			collaborationSessionEventEmitter.emit("broadcast-signal", payload);
 			res.status(200).send("Triggering debug signal from tinylicious");
 		} catch (error) {

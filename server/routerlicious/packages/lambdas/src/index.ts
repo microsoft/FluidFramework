@@ -7,6 +7,7 @@ export {
 	configureWebSocketServices,
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
+	IRoom,
 } from "./alfred";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
