@@ -20,6 +20,7 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,

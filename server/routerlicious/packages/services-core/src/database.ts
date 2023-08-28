@@ -58,6 +58,11 @@ export interface IDocumentRepository {
 	updateOne(filter: any, update: any, options?: any): Promise<void>;
 
 	/**
+	 * Delete one document in the database
+	 */
+	deleteOne(filter: any): Promise<any>;
+
+	/**
 	 * Find and create a document in the database by following option behavior
 	 */
 	findOneOrCreate(
