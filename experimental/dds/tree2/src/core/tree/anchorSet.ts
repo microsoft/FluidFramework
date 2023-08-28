@@ -198,6 +198,11 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	private anchorCounter = 1;
 
 	/**
+	 * Incrementing number to keep track of how up to date the cache of any anchor may be.
+	 */
+	public generationNumber = 0;
+
+	/**
 	 * Special root node under which all anchors in this anchor set are transitively parented.
 	 * This does not appear in the UpPaths (instead they use undefined for the root).
 	 * Immediate children of this root are in detached fields (which have their identifiers used as the field keys).

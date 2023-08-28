@@ -20,6 +20,7 @@ import {
 	AnchorNode,
 	inCursorField,
 	rootFieldKey,
+	DetachedField,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind } from "../modular-schema";
@@ -45,7 +46,7 @@ import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
 	getStableNodeKey,
-	treeStatusFromPath,
+	treeStatusFromAnchorCache,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
@@ -62,6 +63,13 @@ import { ProxyTarget } from "./ProxyTarget";
 
 const editableTreeSlot = anchorSlot<EditableTree>();
 
+export interface DetachedFieldCache {
+	generationNumber: number;
+	detachedField: DetachedField;
+}
+
+export const detachedFieldSlot = anchorSlot<DetachedFieldCache>();
+
 export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
@@ -76,6 +84,9 @@ export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor)
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	anchorNode.slots.set(editableTreeSlot, output);
 	anchorNode.on("afterDelete", cleanupTree);
+	context.forest.anchors.on("treeChanging", () => {
+		context.forest.anchors.generationNumber += 1;
+	});
 	return output;
 }
 
@@ -249,8 +260,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		if (this.isFreed()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.anchorNode;
-		return treeStatusFromPath(path);
+		return treeStatusFromAnchorCache(this, this.anchorNode);
 	}
 
 	public on<K extends keyof EditableTreeEvents>(

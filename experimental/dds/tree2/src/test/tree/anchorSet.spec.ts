@@ -10,11 +10,14 @@ import {
 	AnchorNode,
 	AnchorSet,
 	Delta,
+	DetachedField,
 	FieldKey,
 	JsonableTree,
 	PathVisitor,
 	UpPath,
+	anchorSlot,
 	clonePath,
+	keyAsDetachedField,
 	rootFieldKey,
 } from "../../core";
 import { brand } from "../../util";
@@ -312,6 +315,30 @@ describe("AnchorSet", () => {
 		unsubscribePathVisitor();
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])));
 		log.expect([]);
+	});
+
+	it("AnchorNode cache can be set and retrieved.", () => {
+		const anchors = new AnchorSet();
+		anchors.on("treeChanging", () => {
+			anchors.generationNumber += 1;
+		});
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+
+		const anchorNode0 = anchors.locate(anchor0);
+		assert(anchorNode0 !== undefined);
+		const detachedField = keyAsDetachedField(rootFieldKey);
+		const cache = {
+			generationNumber: anchors.generationNumber,
+			detachedField,
+		};
+		const fieldSlot = anchorSlot<{
+			generationNumber: number;
+			detachedField: DetachedField;
+		}>();
+		anchorNode0?.slots.set(fieldSlot, cache);
+		const fieldSlotCache = anchorNode0.slots.get(fieldSlot);
+		assert.equal(fieldSlotCache?.generationNumber, anchors.generationNumber);
+		assert.equal(fieldSlotCache, cache);
 	});
 });
 

@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import {
+	AnchorNode,
 	DetachedField,
 	FieldKey,
 	TreeStoredSchema,
@@ -19,6 +20,8 @@ import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { getField } from "../untypedTree";
 import { EditableTree, TreeStatus } from "./editableTreeTypes";
+import { NodeProxyTarget, detachedFieldSlot } from "./editableTree";
+import { FieldProxyTarget } from "./editableField";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -135,4 +138,42 @@ export function treeStatusFromPath(path: UpPath): TreeStatus {
 	return getDetachedFieldContainingPath(path) === rootField
 		? TreeStatus.InDocument
 		: TreeStatus.Removed;
+}
+
+/**
+ * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.
+ * @param detachedField - the detached field you want to check.
+ * @returns the {@link TreeStatus} from the detached field provided.
+ */
+export function treeStatusFromDetachedField(detachedField: DetachedField) {
+	return detachedField === rootField ? TreeStatus.InDocument : TreeStatus.Removed;
+}
+
+export function treeStatusFromAnchorCache(
+	proxy: FieldProxyTarget | NodeProxyTarget,
+	anchorNode: AnchorNode,
+) {
+	const cache = anchorNode.slots.get(detachedFieldSlot);
+	if (cache === undefined) {
+		// If the cache is undefined, set the cache and return the treeStatus based on the detached field.
+		const detachedField = getDetachedFieldContainingPath(anchorNode);
+		anchorNode.slots.set(detachedFieldSlot, {
+			generationNumber: proxy.context.forest.anchors.generationNumber,
+			detachedField,
+		});
+		return treeStatusFromDetachedField(detachedField);
+	} else {
+		// If the cache is up to date, return the treeStatus based on the cached detached field.
+		const currentGenerationNumber = proxy.context.forest.anchors.generationNumber;
+		if (cache.generationNumber === currentGenerationNumber) {
+			return treeStatusFromDetachedField(cache.detachedField);
+		}
+		// If the cache is not up to date, update the cache and return the treeStatus based on the updated detached field.
+		const detachedField = getDetachedFieldContainingPath(anchorNode);
+		anchorNode.slots.set(detachedFieldSlot, {
+			generationNumber: currentGenerationNumber,
+			detachedField,
+		});
+		return treeStatusFromDetachedField(detachedField);
+	}
 }
