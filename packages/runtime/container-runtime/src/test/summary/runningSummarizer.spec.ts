@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -34,7 +35,17 @@ import {
 	SummarizeHeuristicData,
 	ISummarizerRuntime,
 	ISummarizeHeuristicData,
+	SubmitSummaryResult,
+	RetriableSummaryError,
+	IGeneratedSummaryStats,
+	ISummarizeEventProps,
+	ISummaryCancellationToken,
 } from "../../summary";
+import {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../summary/runningSummarizer";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;
@@ -73,7 +84,6 @@ describe("Runtime", () => {
 			let lastSummarySeq: number;
 			let mockRuntime: MockRuntime;
 			let heuristicData: ISummarizeHeuristicData;
-			const maxIterationsForSummarizer = 2; // Currently we are restricting the number of iterations to 2.
 			const summaryCommon = {
 				maxAckWaitTime: 120000, // 2 min
 				maxOpsSinceLastSummary: 7000,
@@ -94,6 +104,17 @@ describe("Runtime", () => {
 			const summaryConfigDisableHeuristics: ISummaryConfiguration = {
 				state: "disableHeuristics",
 				...summaryCommon,
+			};
+
+			const emptySummaryStats: IGeneratedSummaryStats = {
+				treeNodeCount: 0,
+				blobNodeCount: 0,
+				handleNodeCount: 0,
+				totalBlobSize: 0,
+				dataStoreCount: 0,
+				summarizedDataStoreCount: 0,
+				unreferencedBlobSize: 0,
+				summaryNumber: 0,
 			};
 
 			let shouldDeferGenerateSummary: boolean = false;
@@ -198,6 +219,7 @@ describe("Runtime", () => {
 				expectedFullTreeRunCount: number,
 				expectedRefreshLatestAckRunCount: number,
 				errorMessage?: string,
+				expectedStopCount = 0,
 			) {
 				const errorPrefix = errorMessage ? `${errorMessage}: ` : "";
 				assert.strictEqual(
@@ -215,9 +237,47 @@ describe("Runtime", () => {
 					expectedRefreshLatestAckRunCount,
 					`${errorPrefix}unexpected refreshLatestAck count`,
 				);
+				assert.strictEqual(
+					stopCall,
+					expectedStopCount,
+					`${errorPrefix}summarizer should${
+						expectedStopCount === 1 ? "" : " not"
+					} have stopped`,
+				);
 			}
 
-			const startRunningSummarizer = async (disableHeuristics?: boolean): Promise<void> => {
+			async function successfulSubmitSummary(): Promise<SubmitSummaryResult> {
+				// emitBroadcast will increment this number
+				const lastRefSeqBefore = lastRefSeq;
+
+				// immediate broadcast
+				emitBroadcast();
+
+				if (shouldDeferGenerateSummary) {
+					deferGenerateSummary = new Deferred<void>();
+					await deferGenerateSummary.promise;
+					deferGenerateSummary = undefined;
+				}
+				return {
+					stage: "submit",
+					referenceSequenceNumber: lastRefSeqBefore,
+					minimumSequenceNumber: 0,
+					generateDuration: 0,
+					uploadDuration: 0,
+					submitOpDuration: 0,
+					summaryTree: { type: SummaryType.Tree, tree: {} },
+					summaryStats: emptySummaryStats,
+					handle: "test-handle",
+					clientSequenceNumber: lastClientSeq,
+					forcedFullTree: false,
+				} as const;
+			}
+
+			const startRunningSummarizer = async (
+				disableHeuristics?: boolean,
+				submitSummaryCallback: () => Promise<SubmitSummaryResult> = successfulSubmitSummary,
+				cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
+			): Promise<void> => {
 				heuristicData = new SummarizeHeuristicData(0, {
 					refSequenceNumber: 0,
 					summaryTime: Date.now(),
@@ -226,10 +286,8 @@ describe("Runtime", () => {
 					mockLogger,
 					summaryCollection.createWatcher(summarizerClientId),
 					disableHeuristics ? summaryConfigDisableHeuristics : summaryConfig,
-					// submitSummaryCallback
 					async (options) => {
 						runCount++;
-
 						heuristicData.recordAttempt(lastRefSeq);
 
 						const { fullTree = false, refreshLatestAck = false } = options;
@@ -239,45 +297,12 @@ describe("Runtime", () => {
 						if (refreshLatestAck) {
 							refreshLatestAckRunCount++;
 						}
-
-						// emitBroadcast will increment this number
-						const lastRefSeqBefore = lastRefSeq;
-
-						// immediate broadcast
-						emitBroadcast();
-
-						if (shouldDeferGenerateSummary) {
-							deferGenerateSummary = new Deferred<void>();
-							await deferGenerateSummary.promise;
-							deferGenerateSummary = undefined;
-						}
-						return {
-							stage: "submit",
-							referenceSequenceNumber: lastRefSeqBefore,
-							minimumSequenceNumber: 0,
-							generateDuration: 0,
-							uploadDuration: 0,
-							submitOpDuration: 0,
-							summaryTree: { type: SummaryType.Tree, tree: {} },
-							summaryStats: {
-								treeNodeCount: 0,
-								blobNodeCount: 0,
-								handleNodeCount: 0,
-								totalBlobSize: 0,
-								dataStoreCount: 0,
-								summarizedDataStoreCount: 0,
-								unreferencedBlobSize: 0,
-								summaryNumber: 0,
-							},
-							handle: "test-handle",
-							clientSequenceNumber: lastClientSeq,
-							forcedFullTree: false,
-						} as const;
+						return submitSummaryCallback();
 					},
 					async (options) => {},
 					heuristicData,
 					summaryCollection,
-					neverCancelledSummaryToken,
+					cancellationToken,
 					// stopSummarizerCallback
 					(reason) => {
 						stopCall++;
@@ -617,62 +642,6 @@ describe("Runtime", () => {
 						]),
 						"unexpected log sequence",
 					);
-
-					if (maxIterationsForSummarizer > 2) {
-						// Should not run, because of 2 min delay
-						await emitNack();
-						await tickAndFlushPromises(2 * 60 * 1000 - 1);
-						assertRunCounts(2, 0, 1, "retry2 should not start until after delay");
-
-						// Should run with refreshLatestAck after second nack
-						await tickAndFlushPromises(1);
-						assertRunCounts(3, 0, 2, "retry2 should be refreshLatestAck");
-						const retryProps3 = {
-							summarizeCount: 1,
-							summaryAttemptsPerPhase: 1,
-							summaryAttempts: 3,
-							summaryAttemptPhase: 3,
-						};
-						assert(
-							mockLogger.matchEvents([
-								{
-									eventName: "Running:Summarize_cancel",
-									...retryProps2,
-									reason: getFailMessage("summaryNack"),
-								},
-								{ eventName: "Running:Summarize_generate", ...retryProps3 },
-								{ eventName: "Running:Summarize_Op", ...retryProps3 },
-							]),
-							"unexpected log sequence",
-						);
-
-						// Should not run, because of 10 min delay
-						await emitNack();
-						await tickAndFlushPromises(10 * 60 * 1000 - 1);
-						assertRunCounts(3, 0, 2, "retry3 should not start until after delay");
-
-						// Should run with fullTree after third nack
-						await tickAndFlushPromises(1);
-						assertRunCounts(4, 1, 3, "retry3 should be fullTree and refreshLatestAck");
-						const retryProps4 = {
-							summarizeCount: 1,
-							summaryAttemptsPerPhase: 1,
-							summaryAttempts: 4,
-							summaryAttemptPhase: 4,
-						};
-						assert(
-							mockLogger.matchEvents([
-								{
-									eventName: "Running:Summarize_cancel",
-									...retryProps3,
-									reason: "summaryNack",
-								},
-								{ eventName: "Running:Summarize_generate", ...retryProps4 },
-								{ eventName: "Running:Summarize_Op", ...retryProps4 },
-							]),
-							"unexpected log sequence",
-						);
-					}
 					// Should stop after final nack
 					assert.strictEqual(stopCall, 0);
 					await emitNack();
@@ -748,36 +717,6 @@ describe("Runtime", () => {
 						]),
 						"unexpected log sequence",
 					);
-
-					if (maxIterationsForSummarizer > 2) {
-						// should not run, because of specified 30 sec delay
-						await emitNack(30);
-						await tickAndFlushPromises(30 * 1000 - 1);
-						assertRunCounts(2, 0, 0, "wait for another retryAfter delay");
-
-						// should run the next stage with refreshLatestAck after delay
-						await tickAndFlushPromises(1);
-						assertRunCounts(3, 0, 1, "retry again with refreshLatestAck");
-						const retryProps3 = {
-							summarizeCount: 1,
-							summaryAttemptsPerPhase: 1,
-							summaryAttempts: 3,
-							summaryAttemptPhase: 2,
-						};
-						assert(
-							mockLogger.matchEvents([
-								{
-									eventName: "Running:Summarize_cancel",
-									...retryProps2,
-									reason: getFailMessage("summaryNack"),
-								},
-								{ eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
-								{ eventName: "Running:Summarize_generate", ...retryProps3 },
-								{ eventName: "Running:Summarize_Op", ...retryProps3 },
-							]),
-							"unexpected log sequence",
-						);
-					}
 				});
 
 				it("Should wait on 429 from uploadSummaryWithContext", async () => {
@@ -827,14 +766,418 @@ describe("Runtime", () => {
 				});
 			});
 
+			describe("Summarization attempts with retry", () => {
+				beforeEach(async () => {
+					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+					shouldDeferGenerateSummary = false;
+					deferGenerateSummary = undefined;
+				});
+
+				type SummaryStage = SubmitSummaryResult["stage"];
+
+				/**
+				 * Validate that a summary attempt fails as expected, correct events are received and summarization
+				 * stops (or doesn't) as per the given params.
+				 * @param attemptNumber - The current attempt number.
+				 * @param totalAttempts - The total number of attempts. After the last attempt, summarizer should close.
+				 * @param lastSuccessfulStage - The stage after which summarization failed.
+				 * @param retryAfterSeconds - The number of seconds after which the next attempt should be tried.
+				 */
+				const validateSummaryAttemptFails = async (
+					attemptNumber: number,
+					totalAttempts: number,
+					lastSuccessfulStage: SummaryStage,
+					retryAfterSeconds: number | undefined,
+				) => {
+					const finalAttempt = attemptNumber >= totalAttempts;
+					// Nack the summary with "retryAfterSeconds" specified.
+					await emitNack(retryAfterSeconds);
+
+					assertRunCounts(
+						attemptNumber,
+						0,
+						0,
+						`Total run count should be ${attemptNumber}`,
+						finalAttempt ? 1 : 0 /* expectedStopCount */,
+					);
+
+					const retryProps1 = {
+						summarizeCount: 1,
+						summaryAttempts: attemptNumber,
+						stage: lastSuccessfulStage,
+					};
+					const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [
+						{
+							eventName: "Running:Summarize_cancel",
+							...retryProps1,
+							retryAfterSeconds,
+							reason: getFailMessage(
+								lastSuccessfulStage === "submit"
+									? "summaryNack" // if last stage is submit, summarization fails due to summary nack
+									: "submitSummaryFailure", // other stages fail because summary is not submitted
+							),
+						},
+					];
+
+					// After the final attempt, there shouldn't be any delay.
+					if (!finalAttempt) {
+						expectedEvents.push({
+							eventName: "Running:SummarizeAttemptDelay",
+							...retryProps1,
+							duration: retryAfterSeconds,
+							dynamicRetries: true,
+						});
+					}
+					mockLogger.assertMatch(
+						expectedEvents,
+						`Summarizer attempt ${attemptNumber} did not fail as expected`,
+					);
+
+					// After the final attempt, summarizer should stop.
+					assert.strictEqual(
+						stopCall,
+						finalAttempt ? 1 : 0,
+						`Summarizer should${
+							finalAttempt ? "" : " not"
+						} have stopped after ${totalAttempts} attempts`,
+					);
+				};
+
+				// Callback that fails the summary for all stages expect submit. For submit, the summarization
+				// will fail because of summary ack not received withing timeout.
+				const submitSummaryCallback = async (
+					stage: SummaryStage,
+					retryAfterSeconds: number | undefined,
+				): Promise<SubmitSummaryResult> => {
+					if (stage === "submit") {
+						return successfulSubmitSummary();
+					} else {
+						const error = new RetriableSummaryError(
+							`Fail summarization at ${stage}`,
+							retryAfterSeconds,
+						);
+						const failedResult: Partial<SubmitSummaryResult> = {
+							stage,
+							referenceSequenceNumber: lastRefSeq,
+							minimumSequenceNumber: 0,
+							error,
+						};
+						return failedResult as SubmitSummaryResult;
+					}
+				};
+
+				it(`should not retry when summary attempt succeeds`, async () => {
+					await startRunningSummarizer();
+
+					await emitNextOp();
+					// This should run a summarization because max ops has reached.
+					await emitNextOp(summaryConfig.maxOps);
+					assertRunCounts(1, 0, 0, `Total run count should be 1`);
+
+					await emitAck();
+					assertRunCounts(1, 0, 0, `The run count should still be 1`);
+					assert.strictEqual(stopCall, 0, "Summarizer should not have stopped");
+				});
+
+				const failedStages: SummaryStage[] = ["base", "generate", "upload", "submit"];
+				for (const [stageIndex, stage] of failedStages.entries()) {
+					// When stage is "submit", the submit stage was successful and default max attempts is used
+					// for any other failures.
+					const maxAttempts =
+						stage === "submit"
+							? defaultMaxAttempts
+							: defaultMaxAttemptsForSubmitFailures;
+					const titleStage = stage === "submit" ? "nack" : stage;
+
+					it(`should attempt 1 time only on failure without retry specified at ${titleStage} stage`, async () => {
+						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
+							submitSummaryCallback(stage, undefined /* retryAfterSeconds */),
+						);
+
+						await emitNextOp();
+						// This should run a summarization because max ops has reached.
+						await emitNextOp(summaryConfig.maxOps);
+						await validateSummaryAttemptFails(
+							1 /* attemptNumber */,
+							1 /* totalAttempts */,
+							stage,
+							undefined /* retryAfterSeconds */,
+						);
+					});
+
+					it(`should attempt ${maxAttempts} times on failure with retryAfterSeconds at ${titleStage} stage`, async () => {
+						const retryAfterSeconds = 5;
+						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
+							submitSummaryCallback(stage, retryAfterSeconds),
+						);
+
+						await emitNextOp();
+						// This should run a summarization because max ops has reached.
+						await emitNextOp(summaryConfig.maxOps);
+
+						for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber++) {
+							await validateSummaryAttemptFails(
+								attemptNumber,
+								maxAttempts,
+								stage,
+								retryAfterSeconds,
+							);
+							// Wait for "retryAfterSeconds". The next attempt should start after this.
+							await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+						}
+
+						// validate that summarization is not run again.
+						assertRunCounts(
+							maxAttempts,
+							0,
+							0,
+							`Summarization should not have been attempted more than ${maxAttempts} times`,
+							1 /** expectedStopCount */,
+						);
+					});
+
+					it(`should attempt ${maxAttempts} times on failure when stage changes from ${titleStage}`, async () => {
+						// Helper to get a different stage from the current one.
+						const getNewStage = () => {
+							let index = stageIndex + 1;
+							// If the new stage is "submit", get another stage instead. This is because the logic is
+							// different when failure happens after "submit" stage. This is validated in a separate test.
+							if (index > failedStages.length - 2) {
+								index = 0;
+							}
+							return failedStages[index];
+						};
+
+						const retryAfterSeconds = 5;
+						let currentStage: SummaryStage = stage;
+
+						await startRunningSummarizer(
+							undefined /* disableHeuristics */,
+							async () => {
+								if (currentStage === "submit") {
+									return successfulSubmitSummary();
+								} else {
+									const error = new RetriableSummaryError(
+										`Fail summarization at ${currentStage}`,
+										retryAfterSeconds,
+									);
+									const failedResult: Partial<SubmitSummaryResult> = {
+										stage: currentStage,
+										referenceSequenceNumber: lastRefSeq,
+										minimumSequenceNumber: 0,
+										error,
+									};
+									return failedResult as SubmitSummaryResult;
+								}
+							},
+						);
+
+						await emitNextOp();
+						// This should run a summarization because max ops has reached.
+						await emitNextOp(summaryConfig.maxOps);
+
+						for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber++) {
+							await validateSummaryAttemptFails(
+								attemptNumber,
+								maxAttempts,
+								currentStage,
+								retryAfterSeconds,
+							);
+
+							// Change the failure stage after 2 attempts.
+							if (attemptNumber === 2) {
+								currentStage = getNewStage();
+							}
+
+							// Wait for "retryAfterSeconds". The next attempt should start after this.
+							await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+						}
+
+						// Validate summarization is not run again.
+						assertRunCounts(
+							maxAttempts,
+							0,
+							0,
+							`Summarization should not have been attempted more than ${maxAttempts} times`,
+							1 /** expectedStopCount */,
+						);
+					});
+
+					it(`should update max attempts on failure at ${titleStage} stage as per AttemptsForSubmitFailures`, async () => {
+						const retryAfterSeconds = 5;
+						const maxAttemptsOverride =
+							stage === "submit"
+								? defaultMaxAttempts
+								: defaultMaxAttemptsForSubmitFailures - 1;
+						settings["Fluid.Summarizer.AttemptsForSubmitFailures"] =
+							maxAttemptsOverride;
+
+						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
+							submitSummaryCallback(stage, retryAfterSeconds),
+						);
+
+						await emitNextOp();
+						// This should run a summarization because max ops has reached.
+						await emitNextOp(summaryConfig.maxOps);
+
+						for (
+							let attemptNumber = 1;
+							attemptNumber <= maxAttemptsOverride;
+							attemptNumber++
+						) {
+							await validateSummaryAttemptFails(
+								attemptNumber,
+								maxAttemptsOverride,
+								stage,
+								retryAfterSeconds,
+							);
+							// Wait for "retryAfterSeconds". The next attempt should start after this.
+							await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+						}
+
+						// validate that summarization is not run again.
+						assertRunCounts(
+							maxAttemptsOverride,
+							0,
+							0,
+							`Summarization should not have been attempted more than ${maxAttemptsOverride} times`,
+							1 /** expectedStopCount */,
+						);
+					});
+				}
+
+				/**
+				 * This test validates a special case where summarize failures switch from on of the submit stages to
+				 * a nack failure. Submit stage failures are retried more times than nack failures and so when the
+				 * failure switches from submit to nack, only one more retry happens irrespective of what the
+				 * defaultMaxAttempts value is.
+				 */
+				for (
+					let maxAttempts = 1;
+					maxAttempts < defaultMaxAttemptsForSubmitFailures;
+					maxAttempts++
+				) {
+					it(`should attempt one more time when stage changes to nack after ${maxAttempts} failed attempts`, async () => {
+						const retryAfterSeconds = 5;
+						let currentStage: SummaryStage = maxAttempts === 1 ? "submit" : "generate";
+
+						await startRunningSummarizer(
+							undefined /* disableHeuristics */,
+							async () => {
+								if (currentStage === "submit") {
+									return successfulSubmitSummary();
+								} else {
+									const error = new RetriableSummaryError(
+										`Fail summarization at ${currentStage}`,
+										retryAfterSeconds,
+									);
+									const failedResult: Partial<SubmitSummaryResult> = {
+										stage: currentStage,
+										referenceSequenceNumber: lastRefSeq,
+										minimumSequenceNumber: 0,
+										error,
+									};
+									return failedResult as SubmitSummaryResult;
+								}
+							},
+						);
+
+						// Fail at the "generate" stage 2 times.
+						await emitNextOp();
+						// This should run a summarization because max ops has reached.
+						await emitNextOp(summaryConfig.maxOps);
+
+						let attemptNumber = 1;
+						for (; attemptNumber <= maxAttempts; attemptNumber++) {
+							await validateSummaryAttemptFails(
+								attemptNumber,
+								maxAttempts + 1,
+								currentStage,
+								retryAfterSeconds,
+							);
+
+							// In the third attempt, fail at "submit" stage. This will trigger a nack failure. It should
+							// not retry attempts anymore because "defaultMaxAttempts" attempts have already been done.
+							if (attemptNumber === maxAttempts - 1) {
+								currentStage = "submit";
+							}
+
+							// Wait for "retryAfterSeconds". The next attempt should start after this.
+							await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+						}
+
+						// Wait for "retryAfterSeconds". The next attempt should start after this.
+						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+
+						await validateSummaryAttemptFails(
+							attemptNumber++,
+							maxAttempts + 1,
+							currentStage,
+							retryAfterSeconds,
+						);
+
+						// Wait for "retryAfterSeconds". There shouldn't be any more attempts.
+						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+
+						// Validate summarization is not run again.
+						assertRunCounts(
+							maxAttempts + 1,
+							0,
+							0,
+							`Summarization should not have been attempted more than ${
+								maxAttempts + 1
+							} times`,
+							1 /** expectedStopCount */,
+						);
+					});
+				}
+
+				it("Should not retry last summary", async () => {
+					const stage: SummaryStage = "base";
+					const retryAfterSeconds = 10;
+					await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
+						submitSummaryCallback(stage, retryAfterSeconds),
+					);
+
+					// This should trigger last summary when summarizer stops.
+					await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
+					const stopP = summarizer.waitStop(true /* allowLastSummary */);
+					await flushPromises();
+					await stopP;
+					summarizer.dispose();
+
+					assertRunCounts(1, 0, 0, "should perform lastSummary");
+					const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [
+						{
+							eventName: "Running:Summarize_cancel",
+							retryAfterSeconds,
+							summarizeCount: 1,
+							stage,
+						},
+					];
+					mockLogger.assertMatch(
+						expectedEvents,
+						`last summary attempt did not fail as expected`,
+					);
+
+					// Wait for "retryAfterSeconds". There shouldn't be any more attempts.
+					await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+					assertRunCounts(1, 0, 0, "should not retry lastSummary");
+				});
+			});
+
 			describe("On-demand Summaries", () => {
+				const reason = "test";
+				// This is used to validate the summarizeReason property in telemetry.
+				const summarizeReason = `onDemand/${reason}`;
+
 				beforeEach(async () => {
 					await startRunningSummarizer();
 				});
 
 				it("Should create an on-demand summary", async () => {
 					await emitNextOp(2); // set ref seq to 2
-					const result = summarizer.summarizeOnDemand(undefined, { reason: "test" });
+					const result = summarizer.summarizeOnDemand({ reason });
 
 					const submitResult = await result.summarySubmitted;
 					assertRunCounts(1, 0, 0, "on-demand should run");
@@ -871,8 +1214,16 @@ describe("Runtime", () => {
 
 					assert(
 						mockLogger.matchEvents([
-							{ eventName: "Running:Summarize_generate", summarizeCount: runCount },
-							{ eventName: "Running:Summarize_Op", summarizeCount: runCount },
+							{
+								eventName: "Running:Summarize_generate",
+								summarizeCount: runCount,
+								summarizeReason,
+							},
+							{
+								eventName: "Running:Summarize_Op",
+								summarizeCount: runCount,
+								summarizeReason,
+							},
 						]),
 						"unexpected log sequence",
 					);
@@ -901,7 +1252,7 @@ describe("Runtime", () => {
 
 					let resolved = false;
 					try {
-						summarizer.summarizeOnDemand(undefined, { reason: "test" });
+						summarizer.summarizeOnDemand({ reason });
 						resolved = true;
 					} catch {}
 
@@ -911,7 +1262,7 @@ describe("Runtime", () => {
 
 				it("On-demand summary should fail on nack", async () => {
 					await emitNextOp(2); // set ref seq to 2
-					const result = summarizer.summarizeOnDemand(undefined, { reason: "test" });
+					const result = summarizer.summarizeOnDemand({ reason });
 
 					const submitResult = await result.summarySubmitted;
 					assertRunCounts(1, 0, 0, "on-demand should run");
@@ -948,8 +1299,16 @@ describe("Runtime", () => {
 
 					assert(
 						mockLogger.matchEvents([
-							{ eventName: "Running:Summarize_generate", summarizeCount: runCount },
-							{ eventName: "Running:Summarize_Op", summarizeCount: runCount },
+							{
+								eventName: "Running:Summarize_generate",
+								summarizeCount: runCount,
+								summarizeReason,
+							},
+							{
+								eventName: "Running:Summarize_Op",
+								summarizeCount: runCount,
+								summarizeReason,
+							},
 						]),
 						"unexpected log sequence",
 					);
@@ -975,16 +1334,16 @@ describe("Runtime", () => {
 				it("Should fail an on-demand summary if stopping", async () => {
 					summarizer.waitStop(true).catch(() => {});
 					const [refreshLatestAck, fullTree] = [true, true];
-					const result1 = summarizer.summarizeOnDemand(undefined, { reason: "test1" });
-					const result2 = summarizer.summarizeOnDemand(undefined, {
+					const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
+					const result2 = summarizer.summarizeOnDemand({
 						reason: "test2",
 						refreshLatestAck,
 					});
-					const result3 = summarizer.summarizeOnDemand(undefined, {
+					const result3 = summarizer.summarizeOnDemand({
 						reason: "test3",
 						fullTree,
 					});
-					const result4 = summarizer.summarizeOnDemand(undefined, {
+					const result4 = summarizer.summarizeOnDemand({
 						reason: "test4",
 						refreshLatestAck,
 						fullTree,
@@ -1017,16 +1376,16 @@ describe("Runtime", () => {
 				it("Should fail an on-demand summary if disposed", async () => {
 					summarizer.dispose();
 					const [refreshLatestAck, fullTree] = [true, true];
-					const result1 = summarizer.summarizeOnDemand(undefined, { reason: "test1" });
-					const result2 = summarizer.summarizeOnDemand(undefined, {
+					const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
+					const result2 = summarizer.summarizeOnDemand({
 						reason: "test2",
 						refreshLatestAck,
 					});
-					const result3 = summarizer.summarizeOnDemand(undefined, {
+					const result3 = summarizer.summarizeOnDemand({
 						reason: "test3",
 						fullTree,
 					});
-					const result4 = summarizer.summarizeOnDemand(undefined, {
+					const result4 = summarizer.summarizeOnDemand({
 						reason: "test4",
 						refreshLatestAck,
 						fullTree,
@@ -1058,6 +1417,10 @@ describe("Runtime", () => {
 			});
 
 			describe("Enqueue Summaries", () => {
+				const reason = "test";
+				// This is used to validate the summarizeReason property in telemetry.
+				const summarizeReason = `enqueuedSummary/enqueue;${reason}`;
+
 				beforeEach(async () => {
 					await startRunningSummarizer();
 				});
@@ -1066,7 +1429,7 @@ describe("Runtime", () => {
 					await emitNextOp(2); // set ref seq to 2
 					const afterSequenceNumber = 9;
 					const result = summarizer.enqueueSummarize({
-						reason: "test",
+						reason,
 						afterSequenceNumber,
 					});
 					assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
@@ -1110,8 +1473,16 @@ describe("Runtime", () => {
 
 					assert(
 						mockLogger.matchEvents([
-							{ eventName: "Running:Summarize_generate", summarizeCount: runCount },
-							{ eventName: "Running:Summarize_Op", summarizeCount: runCount },
+							{
+								eventName: "Running:Summarize_generate",
+								summarizeCount: runCount,
+								summarizeReason,
+							},
+							{
+								eventName: "Running:Summarize_Op",
+								summarizeCount: runCount,
+								summarizeReason,
+							},
 						]),
 						"unexpected log sequence",
 					);
@@ -1141,7 +1512,7 @@ describe("Runtime", () => {
 					assertRunCounts(1, 0, 0);
 
 					const result = summarizer.enqueueSummarize({
-						reason: "test",
+						reason,
 						afterSequenceNumber,
 					});
 					assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
@@ -1228,7 +1599,7 @@ describe("Runtime", () => {
 					await emitNextOp(2); // set ref seq to 2
 					const afterSequenceNumber = 9;
 					const result = summarizer.enqueueSummarize({
-						reason: "test",
+						reason,
 						afterSequenceNumber,
 					});
 					assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
@@ -1382,7 +1753,7 @@ describe("Runtime", () => {
 								eventName: "Running:Summarize_end",
 								summarizeCount: runCount,
 								summarizerSuccessfulAttempts: runCount,
-								reason: "maxOps",
+								summarizeReason: "maxOps",
 							},
 						]),
 						"unexpected log sequence 3",
@@ -1470,6 +1841,174 @@ describe("Runtime", () => {
 
 					await emitNextOp(summaryConfig.maxOps + 1);
 					assertRunCounts(0, 0, 0, "Should not run summarizer");
+				});
+			});
+
+			describe("Summarize events", () => {
+				/**
+				 * Helper function that creates a promise that would resolve when "summarize" event is emitted.
+				 */
+				async function getSummarizeEventPromise() {
+					return new Promise<ISummarizeEventProps>((resolve) => {
+						const handler = (props: ISummarizeEventProps) => {
+							summarizer.off("summarize", handler);
+							resolve(props);
+						};
+						summarizer.on("summarize", handler);
+					});
+				}
+
+				beforeEach(async () => {
+					// Currently, summarize events are only logged with this feature.
+					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+				});
+
+				it("should emit summarize event with success result", async () => {
+					await startRunningSummarizer();
+					const summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+					await emitAck();
+
+					const eventProps = await summarizePromiseP;
+					const expectedEventProps: ISummarizeEventProps = {
+						result: "success",
+						currentAttempt: 1,
+						maxAttempts: defaultMaxAttempts,
+					};
+					assert.deepStrictEqual(
+						eventProps,
+						expectedEventProps,
+						"Summarize event not as expected",
+					);
+				});
+
+				it("should emit summarize event with failed result", async () => {
+					await startRunningSummarizer();
+					const summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+					await emitNack();
+
+					const { error, ...eventProps } = await summarizePromiseP;
+					const expectedEventProps: ISummarizeEventProps = {
+						result: "failure",
+						currentAttempt: 1,
+						maxAttempts: defaultMaxAttempts,
+					};
+					assert.deepStrictEqual(
+						eventProps,
+						expectedEventProps,
+						"Summarize event not as expected",
+					);
+				});
+
+				it("should emit summarize event with canceled result", async () => {
+					await startRunningSummarizer(
+						undefined /* disableHeuristics */,
+						undefined /* submitSummaryCallback */,
+						{
+							cancelled: true,
+							waitCancelled: new Promise(() => {}),
+						},
+					);
+					const summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+					await emitNack();
+
+					const eventProps = await summarizePromiseP;
+					const expectedEventProps: ISummarizeEventProps = {
+						result: "canceled",
+						currentAttempt: 1,
+						maxAttempts: defaultMaxAttempts,
+					};
+					assert.deepStrictEqual(
+						eventProps,
+						expectedEventProps,
+						"Summarize event not as expected",
+					);
+				});
+
+				it("should emit summarize event for every attempt with nack failure", async () => {
+					await startRunningSummarizer();
+					const retryAfterSeconds = 5;
+					let summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+
+					// Nack failures are attempted defaultMaxAttempts times. Each attempt should emit "summarize" event.
+					for (
+						let attemptNumber = 1;
+						attemptNumber <= defaultMaxAttempts;
+						attemptNumber++
+					) {
+						await emitNack(retryAfterSeconds);
+						const { error, ...eventProps } = await summarizePromiseP;
+						const expectedEventProps: ISummarizeEventProps = {
+							result: "failure",
+							currentAttempt: attemptNumber,
+							maxAttempts: defaultMaxAttempts,
+						};
+						assert.deepStrictEqual(
+							eventProps,
+							expectedEventProps,
+							`Summarize event for attempt ${attemptNumber} not as expected`,
+						);
+
+						summarizePromiseP = getSummarizeEventPromise();
+
+						// Wait for "retryAfterSeconds". The next attempt should start after this.
+						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+					}
+				});
+
+				it("should emit summarize event for every attempt with submit failure", async () => {
+					const retryAfterSeconds = 5;
+					// Callback that would result in summarization failed during submit.
+					const submitSummaryCallback = async (): Promise<SubmitSummaryResult> => {
+						const error = new RetriableSummaryError(
+							`Fail summarization at base stage`,
+							retryAfterSeconds,
+						);
+						const failedResult: Partial<SubmitSummaryResult> = {
+							stage: "base",
+							referenceSequenceNumber: lastRefSeq,
+							minimumSequenceNumber: 0,
+							error,
+						};
+						return failedResult as SubmitSummaryResult;
+					};
+
+					await startRunningSummarizer(
+						undefined /* disableHeuristics */,
+						submitSummaryCallback,
+					);
+					let summarizePromiseP = getSummarizeEventPromise();
+					await emitNextOp(summaryConfig.maxOps + 1);
+
+					// Submit failures are attempted defaultMaxAttemptsForSubmitFailures times.
+					// Each attempt should emit "summarize" event.
+					for (
+						let attemptNumber = 1;
+						attemptNumber <= defaultMaxAttemptsForSubmitFailures;
+						attemptNumber++
+					) {
+						const { error, ...eventProps } = await summarizePromiseP;
+						const expectedEventProps: ISummarizeEventProps = {
+							result: "failure",
+							currentAttempt: attemptNumber,
+							maxAttempts: defaultMaxAttemptsForSubmitFailures,
+						};
+						assert.deepStrictEqual(
+							eventProps,
+							expectedEventProps,
+							`Summarize event for attempt ${attemptNumber} not as expected`,
+						);
+						summarizePromiseP = getSummarizeEventPromise();
+						// Wait for "retryAfterSeconds". The next attempt should start after this.
+						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+					}
 				});
 			});
 		});

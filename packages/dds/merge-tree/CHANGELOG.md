@@ -1,5 +1,49 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Deprecate getStackContext and associated NestBegin/End ([#16877](https://github.com/microsoft/FluidFramework/issues/16877)) [8e743fe1dd](https://github.com/microsoft/FluidFramework/commits/8e743fe1dde9adb3a1240971987d3abd51ab2fbe)
+
+    Deprecate SharedSegmentSequence.getStackContext and Client.getStackContext (and the enums ReferenceType.NestBegin and NestEnd they use).
+    This functionality is unused, poorly tested, and incurs performance overhead.
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+-   Deprecation of findTile in favor of searchForMarker, which uses depthFirstNodeWalk to locate the nearest marker. ([#16517](https://github.com/microsoft/FluidFramework/issues/16517)) [e928b1f185](https://github.com/microsoft/FluidFramework/commits/e928b1f185ca32123eff9d4bfc5bce28ba1b95c1)
+
+    findTile has a decent amount of buggy behavior, which leads partners who want to use it to implement workarounds for the odd behavior. searchForMarker is being introduced as a replacement. It performs the same basic functionality of searching for the nearest marker to a given start position in the indicated direction. However, it includes the start position as one of the nodes to search, so markers at the start position will be returned as the nearest marker to that position. Notably, positions 0 and length-1 will be included in the search as well, so searching forwards from position 0 or backwards from position length-1 would allow the entire string to be searched.
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.6.0.0
 
 ### Major Changes

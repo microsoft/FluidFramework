@@ -13,6 +13,13 @@ export {
 	loggerToMonitoringContext,
 } from "./config";
 export {
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	GenericError,
+	UsageError,
+} from "./error";
+export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
 	generateStack,
@@ -55,6 +62,7 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
+	TelemetryNullLogger,
 } from "./logger";
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";

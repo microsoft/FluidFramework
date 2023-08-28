@@ -402,8 +402,6 @@ describe("SharedDirectory fuzz", () => {
 	createDDSFuzzSuite(
 		{ ...model, workloadName: "default directory 2 with rebasing" },
 		{
-			// ADO:5083, eventual consistency issue was detected
-			skip: [22],
 			validationStrategy: {
 				type: "fixedInterval",
 				interval: defaultOptions.validateInterval,

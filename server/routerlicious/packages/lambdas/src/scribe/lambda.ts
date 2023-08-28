@@ -408,6 +408,8 @@ export class ScribeLambda implements IPartitionLambda {
 									ex,
 								);
 							} else {
+								// Throwing error here leads to document being marked as corrupt in document partition
+								this.isDocumentCorrupt = true;
 								throw ex;
 							}
 						}
@@ -819,7 +821,10 @@ export class ScribeLambda implements IPartitionLambda {
 
 			// verify that the current scribe message matches the message that started this timer
 			// same implementation as in Deli
-			if (initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
+			if (
+				initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage &&
+				!this.isDocumentCorrupt
+			) {
 				this.checkpoint(CheckpointReason.IdleTime);
 				if (initialScribeCheckpointMessage) {
 					this.checkpointCore(

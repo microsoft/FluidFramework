@@ -403,7 +403,7 @@ describe("Matrix", () => {
 			});
 		}
 
-		it("stress-loop", async function () {
+		it.skip("stress-loop", async function () {
 			// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
 			this.timeout(0); // Disable timeouts for stress loop
 

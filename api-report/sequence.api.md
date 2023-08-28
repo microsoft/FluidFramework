@@ -12,8 +12,8 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { ICombiningOp } from '@fluidframework/merge-tree';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
@@ -144,25 +144,24 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     attachIndex(index: IntervalIndex<TInterval>): void;
     change(id: string, start?: number, end?: number): TInterval | undefined;
     changeProperties(id: string, props: PropertySet): any;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // @deprecated (undocumented)
+    // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // @deprecated (undocumented)
+    // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    // @deprecated
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
     map(fn: (interval: TInterval) => void): void;
-    // @deprecated (undocumented)
+    // (undocumented)
     nextInterval(pos: number): TInterval | undefined;
-    // @deprecated (undocumented)
+    // (undocumented)
     previousInterval(pos: number): TInterval | undefined;
     removeIntervalById(id: string): TInterval | undefined;
 }
@@ -184,7 +183,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IJSONRunSegment<T> extends IJSONSegment {
     // (undocumented)
     items: Serializable<T>[];
@@ -547,10 +546,12 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number | undefined;
         posAfterEnd: number | undefined;
     };
-    // (undocumented)
+    // @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
-    // (undocumented)
+    // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
+    // @internal
+    protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
     // (undocumented)
     id: string;
     // (undocumented)
@@ -580,14 +581,14 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    // (undocumented)
+    // @deprecated (undocumented)
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, specToSegment: (spec: IJSONSegment) => ISegment);
     getItemCount(): number;
@@ -653,7 +654,7 @@ export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertib
 // @public (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class SubSequence<T> extends BaseSegment {
     constructor(items: Serializable<T>[]);
     // (undocumented)

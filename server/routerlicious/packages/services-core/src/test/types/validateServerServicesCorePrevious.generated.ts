@@ -841,6 +841,7 @@ declare function get_old_InterfaceDeclaration_IDocumentRepository():
 declare function use_current_InterfaceDeclaration_IDocumentRepository(
     use: TypeOnly<current.IDocumentRepository>);
 use_current_InterfaceDeclaration_IDocumentRepository(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentRepository());
 
 /*
@@ -1816,6 +1817,7 @@ declare function get_current_InterfaceDeclaration_ISequencedOperationMessage():
 declare function use_old_InterfaceDeclaration_ISequencedOperationMessage(
     use: TypeOnly<old.ISequencedOperationMessage>);
 use_old_InterfaceDeclaration_ISequencedOperationMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedOperationMessage());
 
 /*
@@ -2743,6 +2745,7 @@ declare function get_old_ClassDeclaration_MongoDocumentRepository():
 declare function use_current_ClassDeclaration_MongoDocumentRepository(
     use: TypeOnly<current.MongoDocumentRepository>);
 use_current_ClassDeclaration_MongoDocumentRepository(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MongoDocumentRepository());
 
 /*

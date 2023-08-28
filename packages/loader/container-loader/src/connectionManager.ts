@@ -10,7 +10,6 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IAnyDriverError,
 	IDocumentService,
@@ -42,7 +41,13 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, formatTick, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+	formatTick,
+	GenericError,
+	ITelemetryLoggerExt,
+	normalizeError,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import {
 	ReconnectMode,
 	IConnectionManager,
@@ -356,7 +361,7 @@ export class ConnectionManager implements IConnectionManager {
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
 		public readonly containerDirty: () => boolean,
-		private client: IClient,
+		private readonly client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,

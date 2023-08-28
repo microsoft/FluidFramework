@@ -1,5 +1,49 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+## 2.0.0-internal.6.1.0
+
+### Minor Changes
+
+-   Removed `TelemetryNullLogger` class is again exported from @fluidframework/telemetry-utils ([#16841](https://github.com/microsoft/FluidFramework/issues/16841)) [697f46a838](https://github.com/microsoft/FluidFramework/commits/697f46a838706a046c402ba96624b8f07ebc3b07)
+
+    The `TelemetryNullLogger` class has been brought back to ease the transition to `2.0.0-internal.6.x`
+    _but is still deprecated_ and will be removed in `2.0.0-internal.7.0.0`.
+
+    For internal use within the FluidFramework codebase, use `createChildLogger()` with no arguments instead.
+    For external consumers we recommend writing a trivial implementation of `ITelemetryBaseLogger`
+    (from the `@fluidframework/core-interfaces` package) where the `send()` method does nothing and using that.
+
 ## 2.0.0-internal.6.0.0
 
 ### Major Changes

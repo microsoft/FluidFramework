@@ -295,7 +295,7 @@ export function downCast<TSchema extends TreeSchema>(
 	schema: TSchema,
 	tree: UntypedTreeCore<any, any>,
 ): tree is TypedNode<TSchema> {
-	assert(typeof tree === "object", "downCast only valid on wrapped nodes");
+	assert(typeof tree === "object", 0x72b /* downCast only valid on wrapped nodes */);
 
 	const contextSchema = tree[contextSymbol].schema;
 	const lookedUp = contextSchema.treeSchema.get(schema.name);

@@ -28,7 +28,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/protocol-definitions": "^2.1.0",
 		"@fluidframework/server-services-core": "workspace:~"
 	},
 	"devDependencies": {
@@ -37,7 +37,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-kafka-orderer-previous": "npm:@fluidframework/server-kafka-orderer@0.1040.1000",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"prettier": "~2.6.2",
