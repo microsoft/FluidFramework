@@ -6,12 +6,20 @@ import { strict as assert } from "assert";
 import { getRequestedRange, versionHasMovedSparsedMatrix } from "../versionUtils.js";
 
 describe("versionUtils", () => {
+	it.skip("getRequestedRange with adjustPublicMajor = true", () => {
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -1, true), "^1.0.0-0");
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.1.0", -1, true), "^1.0.0-0");
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.1.1", -1, true), "^1.0.0-0");
+		assert.strictEqual(getRequestedRange("2.0.0-internal.4.0.0", -2, true), "^1.0.0-0");
+	});
+
 	it("Get the major version number above or below the baseVersion", () => {
 		// assert for major bumps
 		assert.strictEqual(getRequestedRange("1.0.0", -1), "^0.59.0-0");
 		assert.strictEqual(getRequestedRange("1.0.0", -2), "^0.58.0-0");
 		assert.strictEqual(getRequestedRange("1.0.0", 1), "^2.0.0-0");
 		assert.strictEqual(getRequestedRange("2.0.0", -1), "^1.0.0-0");
+		assert.strictEqual(getRequestedRange("2.3.5", -1), "^1.0.0-0");
 
 		// assert for internal release
 		assert.strictEqual(getRequestedRange("2.0.0-internal.1.0.0", -1), "^1.0.0-0");
@@ -82,6 +90,19 @@ describe("versionUtils", () => {
 		);
 		assert.strictEqual(
 			getRequestedRange("2.0.0-internal.6.0.0", -3),
+			">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+		);
+
+		assert.strictEqual(
+			getRequestedRange("2.0.0-internal.7.0.0", -1),
+			">=2.0.0-internal.6.0.0 <2.0.0-internal.7.0.0",
+		);
+		assert.strictEqual(
+			getRequestedRange("2.0.0-internal.6.2.0", -2),
+			">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		);
+		assert.strictEqual(
+			getRequestedRange("2.0.0-internal.6.2.0", -3),
 			">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
 		);
 

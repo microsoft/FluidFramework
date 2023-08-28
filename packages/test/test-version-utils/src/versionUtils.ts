@@ -264,14 +264,37 @@ export function checkInstalled(requested: string) {
 
 export const loadPackage = async (modulePath: string, pkg: string): Promise<any> =>
 	import(pathToFileURL(path.join(modulePath, "node_modules", pkg, "dist", "index.js")).href);
+
 /**
- * Used to get the major version number above or below the baseVersion.
+ * Given a version, returns a caret-equivalent prerelease RANGE for the version. The version provided can be adjusted to
+ * the next or previous major versions by providing positive/negative integers in the `requested` parameter.
+ *
  * @param baseVersion - The base version to move from (eg. "0.60.0")
- * @param requested - Number representing the major version to move from. These are
- * generally negative to move back versions (eg. -1).
- * Note: If the requested number is a string then that will be the returned value
+ * @param requested - If the value is a number, the baseVersion will be adjusted up (for positive values) or down (for
+ * negative values). If the value is a string then it will be returned as-is.
+ * @param adjustPublicMajor - If `baseVersion` is a Fluid internal version, then this boolean controls whether the
+ * public or internal version is adjusted by the `requested` value. This parameter has no effect if `requested` is a
+ * string value or if `baseVersion` is not a Fluid internal version.
+ *
+ * @remarks
+ *
+ * In typical use, the `requested` values are negative values to return ranges for previous versions (e.g. "-1").
+ *
+ * @example
+ * ```typescript
+ * const newRange = getRequestedRange("2.3.5", -1); // "^1.0.0-0"
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const newRange = getRequestedRange("2.3.5", -2); // "^0.59.0-0"
+ * ```
  */
-export function getRequestedRange(baseVersion: string, requested?: number | string): string {
+export function getRequestedRange(
+	baseVersion: string,
+	requested?: number | string,
+	adjustPublicMajor = false,
+): string {
 	if (requested === undefined || requested === 0) {
 		return baseVersion;
 	}
@@ -284,12 +307,6 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 
 	// if the baseVersion passed is an internal version
 	if (isInternal) {
-		if (requested === -10) {
-			return "^1.3.6";
-		} else if (requested === -20) {
-			return "0.59.0";
-		}
-
 		const internalVersions = baseVersion.split("-internal.");
 		return internalSchema(internalVersions[0], internalVersions[1], requested);
 	}
