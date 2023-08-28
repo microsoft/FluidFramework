@@ -1932,6 +1932,7 @@ describe("SharedTree", () => {
 			);
 			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
 		});
+
 		it("ForestType.Reference uses ObjectForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
@@ -1942,6 +1943,7 @@ describe("SharedTree", () => {
 			);
 			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
 		});
+
 		it("ForestType.Optimized uses ChunkedForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
