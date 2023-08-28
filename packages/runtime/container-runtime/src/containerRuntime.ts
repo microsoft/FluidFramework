@@ -721,20 +721,16 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(
-		params: {
-			context: IContainerContext;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			existing: boolean;
-			runtimeOptions?: IContainerRuntimeOptions;
-			containerScope?: FluidObject;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-			requestHandler?: undefined;
-			initializeEntryPoint: (
-				containerRuntime: IContainerRuntime,
-			) => Promise<FluidObject>;
-		},
-	): Promise<ContainerRuntime> {
+	public static async loadRuntime(params: {
+		context: IContainerContext;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		existing: boolean;
+		runtimeOptions?: IContainerRuntimeOptions;
+		containerScope?: FluidObject;
+		containerRuntimeCtor?: typeof ContainerRuntime;
+		requestHandler?: undefined;
+		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -743,7 +739,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint
+			initializeEntryPoint,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
