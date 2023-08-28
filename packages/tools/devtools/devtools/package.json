@@ -60,7 +60,6 @@
 	"dependencies": {
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
 	},

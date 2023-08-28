@@ -12,11 +12,14 @@ import {
 import { performance } from "@fluidframework/common-utils";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
+/**
+ * @privateRemarks
+ *
+ * The names of the properties in this interface are the ones that will get stamped in the
+ * telemetry event, changes should be considered carefully. The optional properties should
+ * only be populated if 'includeAggregateMetrics' is true.
+ */
 interface Measurements {
-	// The names of the properties in this interface are the ones that will get stamped in the
-	// telemetry event, changes should be considered carefully. The optional properties should
-	// only be populated if 'includeAggregateMetrics' is true.
-
 	/**
 	 * The duration of the latest execution.
 	 */
@@ -82,12 +85,13 @@ export class SampledTelemetryHelper implements IDisposable {
 	) {}
 
 	/**
-	 * @param codeToMeasure -
-	 * The code to be executed and measured.
-	 * @param bucket -
-	 * A key to track executions of the code block separately. Each different value of this parameter has a separate
-	 * set of executions and metrics tracked by the class. If no such distinction needs to be made, do not provide a
-	 * value.
+	 * Executes the specified code and keeps track of execution time statistics.
+	 * If it's been called enough times (the sampleThreshold for the class) then it generates a log message with the necessary information.
+	 *
+	 * @param codeToMeasure - The code to be executed and measured.
+	 * @param bucket - A key to track executions of the code block separately.
+	 * Each different value of this parameter has a separate set of executions and metrics tracked by the class.
+	 * If no such distinction needs to be made, do not provide a value.
 	 * @returns Whatever the passed-in code block returns.
 	 */
 	public measure<T>(codeToMeasure: () => T, bucket: string = ""): T {
@@ -116,7 +120,7 @@ export class SampledTelemetryHelper implements IDisposable {
 		return returnValue;
 	}
 
-	private flushBucket(bucket: string) {
+	private flushBucket(bucket: string): void {
 		const measurements = this.measurementsMap.get(bucket);
 		if (measurements === undefined) {
 			return;
@@ -137,6 +141,6 @@ export class SampledTelemetryHelper implements IDisposable {
 	}
 
 	public dispose(error?: Error | undefined): void {
-		this.measurementsMap.forEach((_, k) => this.flushBucket(k));
+		for (const [k] of this.measurementsMap.entries()) this.flushBucket(k);
 	}
 }

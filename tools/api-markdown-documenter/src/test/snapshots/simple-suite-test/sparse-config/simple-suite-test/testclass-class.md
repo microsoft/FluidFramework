@@ -1,8 +1,8 @@
-# TestClass
+## TestClass
 
 Test class
 
-## Signature {#testclass-signature}
+### Signature {#testclass-signature}
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
@@ -10,42 +10,42 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 **Extends:** [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
 
-### Type Parameters
+#### Type Parameters
 
 | Parameter | Description |
 | --- | --- |
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
-## Remarks {#testclass-remarks}
+### Remarks {#testclass-remarks}
 
 Here are some remarks about the class
 
-## Constructors
+### Constructors
 
 | Constructor | Description |
 | --- | --- |
 | [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass-_constructor_-constructor) | Test class constructor |
 
-## Static Properties
+### Static Properties
 
 | Property | Type | Description |
 | --- | --- | --- |
 | [testClassStaticProperty](docs/simple-suite-test/testclass-testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
 
-## Static Methods
+### Static Methods
 
 | Method | Return Type | Description |
 | --- | --- | --- |
 | [testClassStaticMethod(foo)](docs/simple-suite-test/testclass-testclassstaticmethod-method) | string | Test class static method |
 
-## Events
+### Events
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
 | [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
 
-## Properties
+### Properties
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
@@ -53,7 +53,7 @@ Here are some remarks about the class
 | [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | `readonly`, `virtual` | number | Test class getter-only property |
 | [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
-## Methods
+### Methods
 
 | Method | Modifiers | Return Type | Description |
 | --- | --- | --- | --- |
@@ -61,6 +61,6 @@ Here are some remarks about the class
 | [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
 | [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method). |
 
-## See Also {#testclass-see-also}
+### See Also {#testclass-see-also}
 
 [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)

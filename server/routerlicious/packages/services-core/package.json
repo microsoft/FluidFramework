@@ -96,6 +96,12 @@
 			},
 			"InterfaceDeclaration_ISequencedOperationMessage": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IDocumentRepository": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MongoDocumentRepository": {
+				"forwardCompat": false
 			}
 		}
 	}

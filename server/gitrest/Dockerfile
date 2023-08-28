@@ -9,12 +9,6 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    python3 \
-    libcurl4-openssl-dev
-
 # Copy over and build the server
 WORKDIR /home/node/server
 
