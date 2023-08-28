@@ -55,7 +55,7 @@ export const onCreate = (tree: SharedTree) => {
 };
 
 export function validateAnchors(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
 ) {
@@ -71,7 +71,7 @@ export function validateAnchors(
 	}
 }
 
-export function createAnchors(tree: ISharedTree): Map<Anchor, [UpPath, Value]> {
+export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value]> {
 	const anchors: Map<Anchor, [UpPath, Value]> = new Map();
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
