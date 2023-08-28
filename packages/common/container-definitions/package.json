@@ -70,6 +70,12 @@
 			},
 			"InterfaceDeclaration_IUsageError": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IRuntime": {
+				"forwardCompat": false
 			}
 		}
 	}

@@ -149,7 +149,7 @@ export interface IDataStore {
 	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
 	 * the data store's entryPoint.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
 	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
@@ -362,7 +362,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
 	 * the component's entryPoint.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md

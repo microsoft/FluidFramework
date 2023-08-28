@@ -31,18 +31,20 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+		requestHandlers: [innerRequestHandler],
 		// Disable summaries so the summarizer client doesn't interfere with the audience
-		{
+		runtimeOptions: {
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
 			},
 		},
-	);
+		initializeEntryPoint: () => {
+			throw new Error("TODO");
+		},
+	});
 
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);

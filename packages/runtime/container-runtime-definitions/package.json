@@ -53,6 +53,10 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

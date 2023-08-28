@@ -497,7 +497,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * request() method), this method will no longer be optional, and it will become the only way to access
 	 * the entryPoint for the container.
 	 */
-	getEntryPoint?(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject | undefined>;
 }
 
 /**

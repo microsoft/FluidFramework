@@ -139,15 +139,17 @@ describeFullCompat("bindToContext tests", (getTestObjectProvider, apis) => {
 	});
 
 	it("Requesting data store during before outer data store completes initialization", async () => {
-		const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			outerDataObjectFactory,
-			[
+		const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: outerDataObjectFactory,
+			registryEntries: [
 				[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 				[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 			],
-			undefined,
-			[innerRequestHandler],
-		);
+			requestHandlers: [innerRequestHandler],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		const loader = provider.createLoader([
 			[provider.defaultCodeDetails, containerRuntimeFactory],
@@ -162,15 +164,17 @@ describeFullCompat("bindToContext tests", (getTestObjectProvider, apis) => {
 	});
 
 	it("Requesting data store during before outer data store (non-root) completes initialization", async () => {
-		const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			innerDataObjectFactory,
-			[
+		const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: innerDataObjectFactory,
+			registryEntries: [
 				[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 				[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 			],
-			undefined,
-			[innerRequestHandler],
-		);
+			requestHandlers: [innerRequestHandler],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		const loader = provider.createLoader([
 			[provider.defaultCodeDetails, containerRuntimeFactory],

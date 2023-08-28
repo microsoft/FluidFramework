@@ -116,11 +116,13 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	async function createContainer(): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			testDataObjectFactory,
-			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: testDataObjectFactory,
+			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -138,14 +140,16 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 
 	async function loadContainer(
 		containerUrl: IResolvedUrl | undefined,
-		factory: IFluidDataStoreFactory,
+		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -160,11 +164,13 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	}
 
 	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			testDataObjectFactory,
-			[[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			undefined,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: testDataObjectFactory,
+			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
 			provider.documentServiceFactory,

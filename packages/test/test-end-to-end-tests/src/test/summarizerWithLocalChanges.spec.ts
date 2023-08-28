@@ -146,13 +146,14 @@ const createContainer = async (
 			summaryConfigOverrides,
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		rootDataObjectFactory,
-		registryStoreEntries,
-		undefined /* dependencyContainer */,
-		undefined /* requestHandlers */,
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: rootDataObjectFactory,
+		registryEntries: registryStoreEntries,
 		runtimeOptions,
-	);
+		initializeEntryPoint: () => {
+			throw new Error("TODO");
+		},
+	});
 	return provider.createContainer(runtimeFactory, {
 		logger,
 		configProvider: mockConfigProvider(settings),

@@ -106,6 +106,10 @@
 	},
 	"module:es5": "es5/index.js",
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDataObjectProps": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

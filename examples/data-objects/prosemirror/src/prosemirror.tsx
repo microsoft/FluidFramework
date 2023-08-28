@@ -175,6 +175,9 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			() => {
+				throw new Error("TODO");
+			},
 		);
 		const routerP = ProseMirror.load(runtime, context, existing);
 

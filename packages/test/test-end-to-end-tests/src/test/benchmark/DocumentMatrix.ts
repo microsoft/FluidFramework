@@ -163,13 +163,16 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			[SharedMatrix.getFactory(), SharedString.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			this.dataObjectFactory,
-			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-			undefined,
-			undefined,
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: this.dataObjectFactory,
+			registryEntries: [
+				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
+			],
 			runtimeOptions,
-		);
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 
 		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);
 		// Now TypeScript knows that info.documentTypeInfo is either DocumentMapInfo or DocumentMultipleDataStoresInfo

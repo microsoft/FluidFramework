@@ -124,7 +124,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint?: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
 	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -243,7 +243,7 @@ export class FluidDataStoreRuntime
 		private readonly dataStoreContext: IFluidDataStoreContext,
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
-		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		initializeEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -328,14 +328,11 @@ export class FluidDataStoreRuntime
 			});
 		}
 
-		if (initializeEntryPoint) {
-			const promise = new LazyPromise(async () => initializeEntryPoint(this));
-			this.entryPoint = new FluidObjectHandle<FluidObject>(
-				promise,
-				"",
-				this.objectsRoutingContext,
-			);
-		}
+		this.entryPoint = new FluidObjectHandle<FluidObject>(
+			new LazyPromise(async () => initializeEntryPoint(this)),
+			"",
+			this.objectsRoutingContext,
+		);
 
 		this.attachListener();
 		this._attachState = dataStoreContext.attachState;

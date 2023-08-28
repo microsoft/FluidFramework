@@ -117,6 +117,9 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			() => {
+				throw new Error("TODO");
+			},
 		);
 		const routerP = CodeMirrorComponent.load(runtime, context, existing);
 		return runtime;

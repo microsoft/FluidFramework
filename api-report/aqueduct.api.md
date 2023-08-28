@@ -42,7 +42,13 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined, initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined);
+    constructor(props: {
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        dependencyContainer?: IFluidDependencySynthesizer;
+        requestHandlers?: RuntimeRequestHandler[];
+        runtimeOptions?: IContainerRuntimeOptions;
+        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    });
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -57,7 +63,14 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 
 // @public
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions, initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>);
+    constructor(props: {
+        defaultFactory: IFluidDataStoreFactory;
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        dependencyContainer?: IFluidDependencySynthesizer;
+        requestHandlers?: RuntimeRequestHandler[];
+        runtimeOptions?: IContainerRuntimeOptions;
+        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    });
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";

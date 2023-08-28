@@ -81,13 +81,15 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 const containerRuntimeFactoryWithDefaultDataStore =
 	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
 
-const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
-	dataStoreFactory1,
-	registryStoreEntries,
-	undefined,
-	[innerRequestHandler],
+const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore({
+	defaultFactory: dataStoreFactory1,
+	registryEntries: registryStoreEntries,
+	requestHandlers: [innerRequestHandler],
 	runtimeOptions,
-);
+	initializeEntryPoint: () => {
+		throw new Error("TODO");
+	},
+});
 
 async function createSummarizer(
 	provider: ITestObjectProvider,

@@ -26,6 +26,8 @@ const defaultDataStoreId = "default";
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;
 
+	protected readonly defaultFactory: IFluidDataStoreFactory;
+
 	/**
 	 * Constructor
 	 * @param defaultFactory -
@@ -35,21 +37,22 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	 * @param runtimeOptions -
 	 * @param initializeEntryPoint -
 	 */
-	constructor(
-		protected readonly defaultFactory: IFluidDataStoreFactory,
-		registryEntries: NamedFluidDataStoreRegistryEntries,
-		dependencyContainer?: IFluidDependencySynthesizer,
-		requestHandlers: RuntimeRequestHandler[] = [],
-		runtimeOptions?: IContainerRuntimeOptions,
-		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
-	) {
-		super(
-			registryEntries,
-			dependencyContainer,
-			[defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
-			runtimeOptions,
-			initializeEntryPoint,
-		);
+	constructor(props: {
+		defaultFactory: IFluidDataStoreFactory;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		dependencyContainer?: IFluidDependencySynthesizer;
+		requestHandlers?: RuntimeRequestHandler[];
+		runtimeOptions?: IContainerRuntimeOptions;
+		initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	}) {
+		const requestHandlers = props.requestHandlers ?? [];
+
+		super({
+			...props,
+			requestHandlers: [defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
+		});
+
+		this.defaultFactory = props.defaultFactory;
 	}
 
 	/**

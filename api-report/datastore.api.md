@@ -42,7 +42,7 @@ export enum DataStoreMessageType {
 
 // @public
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -73,7 +73,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get disposed(): boolean;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)

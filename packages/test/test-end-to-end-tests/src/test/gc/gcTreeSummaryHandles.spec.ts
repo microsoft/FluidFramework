@@ -188,20 +188,22 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 
 	let provider: ITestObjectProvider;
 	// TODO:#4670: Make this compat-version-specific.
-	const dataObjectFactory = new TestFluidObjectFactory([]);
+	const defaultFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
+		initializeEntryPoint: () => {
+			throw new Error("TODO");
+		},
+	});
 	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.
@@ -307,12 +309,12 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 
 			// Create data stores B and C, and mark them as referenced.
 			dataStoreB = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type),
+				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
 				"",
 			);
 			dataStoreA.root.set("dataStoreB", dataStoreB.handle);
 			dataStoreC = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type),
+				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
 				"",
 			);
 			dataStoreA.root.set("dataStoreC", dataStoreC.handle);

@@ -107,9 +107,15 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 	constructor() {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
-		super(registryEntries, undefined, [
-			mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
-		]);
+		super({
+			registryEntries,
+			requestHandlers: [
+				mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
+			],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 	}
 
 	/**

@@ -45,7 +45,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	} = apis;
 	let provider: ITestObjectProvider;
 	// TODO:#4670: Make this compat-version-specific.
-	const dataObjectFactory = new TestFluidObjectFactory([]);
+	const defaultFactory = new TestFluidObjectFactory([]);
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
 			summaryConfigOverrides: {
@@ -58,13 +58,15 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
+		initializeEntryPoint: () => {
+			throw new Error("TODO");
+		},
+	});
 
 	let mainContainer: IContainer;
 	let dataStore1Id: string;
@@ -138,12 +140,12 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 
 		// Create couple more data stores and mark them as referenced.
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(
-			await dataStore1.context.containerRuntime.createDataStore(dataObjectFactory.type),
+			await dataStore1.context.containerRuntime.createDataStore(defaultFactory.type),
 			"",
 		);
 		dataStore1.root.set("dataStore2", dataStore2.handle);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			await dataStore1.context.containerRuntime.createDataStore(dataObjectFactory.type),
+			await dataStore1.context.containerRuntime.createDataStore(defaultFactory.type),
 			"",
 		);
 		dataStore1.root.set("dataStore3", dataStore3.handle);
@@ -159,7 +161,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 
 		// Create a summarizer client.
 		const { summarizer: summarizer1, container: container1 } =
-			await createSummarizerFromFactory(provider, mainContainer, dataObjectFactory);
+			await createSummarizerFromFactory(provider, mainContainer, defaultFactory);
 		// Setup the summarizer container's GC version in summary to be decremented by 1. Containers that load from
 		// this summary will have newer GC version.
 		await setupGCVersionUpdateInMetadata(container1, -1 /* gcVersionDiff */);
@@ -184,7 +186,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
-			dataObjectFactory,
+			defaultFactory,
 			summaryVersion,
 		);
 
@@ -204,7 +206,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 
 		// Create a summarizer client.
 		const { summarizer: summarizer1, container: container1 } =
-			await createSummarizerFromFactory(provider, mainContainer, dataObjectFactory);
+			await createSummarizerFromFactory(provider, mainContainer, defaultFactory);
 		// Setup the summarizer container's GC version in summary to be incremented by 1. Containers that load from
 		// this summary will have older GC version.
 		await setupGCVersionUpdateInMetadata(container1, 1 /* gcVersionDiff */);
@@ -229,7 +231,7 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 		const { summarizer: summarizer2 } = await createSummarizerFromFactory(
 			provider,
 			mainContainer,
-			dataObjectFactory,
+			defaultFactory,
 			summaryVersion,
 		);
 

@@ -54,6 +54,13 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDataStore": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

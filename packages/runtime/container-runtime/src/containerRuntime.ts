@@ -698,6 +698,9 @@ export class ContainerRuntime
 			runtimeOptions,
 			containerScope,
 			containerRuntimeCtor,
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
 		});
 	}
 
@@ -724,7 +727,7 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -864,9 +867,9 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			context.storage,
 			idCompressor,
+			initializeEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
-			initializeEntryPoint,
 		);
 
 		// It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
@@ -1155,6 +1158,7 @@ export class ContainerRuntime
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
+		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1165,7 +1169,6 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -1688,7 +1691,7 @@ export class ContainerRuntime
 				);
 				return this._summarizer;
 			}
-			return initializeEntryPoint?.(this);
+			return initializeEntryPoint(this);
 		});
 	}
 
@@ -1799,10 +1802,10 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
 	 */
-	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+	public async getEntryPoint(): Promise<FluidObject> {
 		return this.entryPoint;
 	}
-	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
+	private readonly entryPoint: LazyPromise<FluidObject>;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;

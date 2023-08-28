@@ -113,6 +113,9 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
+			() => {
+				throw new Error("TODO");
+			},
 		);
 		const routerP = SmdeDataObject.load(runtime, existing);
 

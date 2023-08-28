@@ -50,13 +50,14 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 			gcAllowed: true,
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		undefined,
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		runtimeOptions,
-	);
+		initializeEntryPoint: () => {
+			throw new Error("TODO");
+		},
+	});
 
 	let mockLogger: MockLogger;
 

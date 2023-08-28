@@ -12,14 +12,18 @@ import { SharedStringFactory } from "@fluidframework/sequence";
 
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}
-	const doFactory = new DataObjectFactory(
+	const defaultFactory = new DataObjectFactory(
 		"BundleTestDo",
 		BundleTestDo,
 		[new SharedStringFactory(), new DirectoryFactory()],
 		{},
 	);
 
-	new ContainerRuntimeFactoryWithDefaultDataStore(doFactory, [
-		["BundleTestDo", Promise.resolve(doFactory)],
-	]);
+	new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		registryEntries: [["BundleTestDo", Promise.resolve(defaultFactory)]],
+		initializeEntryPoint: () => {
+			throw new Error("TODO");
+		},
+	});
 }

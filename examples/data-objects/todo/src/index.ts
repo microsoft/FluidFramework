@@ -82,9 +82,13 @@ const todoRequestHandler = async (request: RequestParser, runtime: IContainerRun
 
 class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	constructor() {
-		super(new Map([TodoFactory.registryEntry]), undefined, [
-			mountableViewRequestHandler(MountableView, [todoRequestHandler]),
-		]);
+		super({
+			registryEntries: new Map([TodoFactory.registryEntry]),
+			requestHandlers: [mountableViewRequestHandler(MountableView, [todoRequestHandler])],
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 	}
 
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {

@@ -126,6 +126,9 @@ export class ReplayDataStoreFactory
 			context,
 			new Map(allDdsFactories.map((factory) => [factory.type, factory])),
 			true /* existing */,
+			() => {
+				throw new Error("TODO");
+			},
 		);
 	}
 }

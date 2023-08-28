@@ -38,6 +38,12 @@ export class BaseContainerRuntimeFactory
 	}
 	private readonly registry: IFluidDataStoreRegistry;
 
+	private readonly registryEntries: NamedFluidDataStoreRegistryEntries;
+	private readonly dependencyContainer?: IFluidDependencySynthesizer;
+	private readonly requestHandlers: RuntimeRequestHandler[];
+	private readonly runtimeOptions?: IContainerRuntimeOptions;
+	private readonly initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+
 	/**
 	 * @param registryEntries - The data store registry for containers produced
 	 * @param dependencyContainer - deprecated, will be removed in a future release
@@ -46,17 +52,24 @@ export class BaseContainerRuntimeFactory
 	 * @param initializeEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
 	 * created with this factory
 	 */
-	constructor(
-		private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
-		private readonly dependencyContainer?: IFluidDependencySynthesizer,
-		private readonly requestHandlers: RuntimeRequestHandler[] = [],
-		private readonly runtimeOptions?: IContainerRuntimeOptions,
-		private readonly initializeEntryPoint?: (
-			runtime: IContainerRuntime,
-		) => Promise<FluidObject>,
-	) {
+	constructor(props: {
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		dependencyContainer?: IFluidDependencySynthesizer;
+		requestHandlers?: RuntimeRequestHandler[];
+		runtimeOptions?: IContainerRuntimeOptions;
+		initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	}) {
 		super();
-		this.registry = new FluidDataStoreRegistry(registryEntries);
+
+		({
+			registryEntries: this.registryEntries,
+			dependencyContainer: this.dependencyContainer,
+			runtimeOptions: this.runtimeOptions,
+			initializeEntryPoint: this.initializeEntryPoint,
+		} = props);
+		this.requestHandlers = props.requestHandlers ?? [];
+
+		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
 	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

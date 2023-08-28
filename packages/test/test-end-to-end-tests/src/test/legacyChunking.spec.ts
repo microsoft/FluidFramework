@@ -52,19 +52,18 @@ describeInstallVersions(
 	 */
 	const createOldContainer = async (): Promise<IContainer> => {
 		const oldDataRuntimeApi = getDataRuntimeApi(versionWithChunking);
-		const oldDataObjectFactory = new oldDataRuntimeApi.TestFluidObjectFactory(
+		const defaultFactory = new oldDataRuntimeApi.TestFluidObjectFactory(
 			[[mapId, oldDataRuntimeApi.dds.SharedMap.getFactory()]],
 			"default",
 		);
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore_Old(
-			oldDataObjectFactory,
-			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
-			undefined,
-			[innerRequestHandler],
-			{
+		const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore_Old({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions: {
 				// Chunking did not work with FlushMode.TurnBased,
 				// as it was breaking batching semantics. So we need
 				// to force the container to flush the ops as soon as
@@ -74,7 +73,10 @@ describeInstallVersions(
 					gcAllowed: true,
 				},
 			},
-		);
+			initializeEntryPoint: () => {
+				throw new Error("TODO");
+			},
+		});
 
 		return provider.createContainer(oldRuntimeFactory);
 	};
