@@ -99,7 +99,7 @@ The operations available in the editing API (e.g., insert, delete) are rolled ou
 Supporting larger-than-memory data sets in the tree requires efficiently handling trees that contain large numbers of strong identifiers (UUIDs).
 To meet this requirement, Shared Tree leverages a novel distributed compression scheme that reduces the average storage cost of the identifiers to that of a small integer.
 This enables better scaling in scenarios where large numbers of these compressed IDs are needed (e.g., graph-like references).
-The id compressor now lives in the Fluid container runtime.
+The ID compressor now lives in the Fluid container runtime.
 Its documentation can be found [here](../../../../packages/runtime/container-runtime/src/id-compressor/idCompressor.ts#L206).
 
 ## Data model specification
