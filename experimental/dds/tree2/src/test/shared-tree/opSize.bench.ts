@@ -534,7 +534,7 @@ describe("Op Size", () => {
 		const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
 
 		type OpKindDistribution = {
-			+readonly [OpKind in keyof typeof Operation]: number;
+			readonly [OpKind in keyof typeof Operation]: number;
 		};
 
 		const distributions: OpKindDistribution[] = [
