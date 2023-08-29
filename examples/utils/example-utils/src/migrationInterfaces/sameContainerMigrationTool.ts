@@ -5,7 +5,6 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import type { IContainer } from "@fluidframework/container-definitions";
-import { ISameContainerMigratableModel } from "./sameContainerMigratableModel";
 
 /**
  * The collaboration session may be in one of these states:
@@ -28,7 +27,6 @@ export type SameContainerMigrationState =
 	| "collaborating"
 	| "proposingMigration"
 	| "stoppingCollaboration"
-	| "loadingV1PausedContainer"
 	// TODO: "waitingForV2Proposal"?  Not a guarantee that we will issue a proposal here, if we see the proposal during catch up?
 	| "proposingV2Code"
 	| "waitingForV2ProposalCompletion"
@@ -90,11 +88,8 @@ export interface ISameContainerMigrationTool
 	readonly setContainerRef: (container: IContainer) => void;
 
 	/**
-	 * Give a callback to IModelLoader.loadExistingPaused().  The migration tool must have this reference in order to
-	 * complete the migration flow.
-	 * @param fn - the callback function that calls IModelLoader.loadExistingPaused()
+	 * The sequence number that the proposal was accepted at. It will be defined once we reach the "proposingV2Code" migration state,
+	 * and undefined before reaching that state.
 	 */
-	readonly setLoadPausedContainerFn: (
-		fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>,
-	) => void;
+	get acceptedSeqNum(): number | undefined;
 }

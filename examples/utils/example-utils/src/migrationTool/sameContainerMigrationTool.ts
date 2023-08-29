@@ -10,11 +10,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
 
-import { assert } from "@fluidframework/common-utils";
-import type {
-	ISameContainerMigratableModel,
-	ISameContainerMigrationTool,
-} from "../migrationInterfaces";
+import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";
@@ -28,9 +24,6 @@ const newVersionKey = "newVersion";
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 	private readonly _containerP: Promise<IContainer>;
-	private readonly _loadPausedContainerFnP: Promise<
-		(sequenceNumber: number) => Promise<ISameContainerMigratableModel>
-	>;
 
 	private _setContainerRef: ((container: IContainer) => void) | undefined;
 	public get setContainerRef(): (container: IContainer) => void {
@@ -40,29 +33,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		return this._setContainerRef;
 	}
 
-	private _setLoadPausedContainerFn:
-		| ((fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>) => void)
-		| undefined;
-	public get setLoadPausedContainerFn(): (
-		fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>,
-	) => void {
-		if (this._setLoadPausedContainerFn === undefined) {
-			throw new Error("_setloadPausedContainerFn did not initialize properly");
-		}
-		return this._setLoadPausedContainerFn;
-	}
-
-	/**
-	 * The sequence number that the proposal was accepted at, or undefined if it was not yet accepted.
-	 */
 	private _acceptedSeqNum: number | undefined;
-	/**
-	 * The sequence number that the proposal was accepted at.
-	 */
-	private get acceptedSeqNum(): number {
-		if (this._acceptedSeqNum === undefined) {
-			throw new Error("_acceptedSeqNum did not initialize properly");
-		}
+	public get acceptedSeqNum(): number | undefined {
 		return this._acceptedSeqNum;
 	}
 
@@ -80,10 +52,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 * A promise that will resolve when the proposal is accepted.
 	 */
 	private _acceptedP: Promise<void> | undefined;
-	/**
-	 * This boolean will make it easier to synchronously determine if the v1 pause is done.
-	 */
-	private _v1PauseDone: boolean = false;
 	/**
 	 * A promise that will resolve upon seeing the _first_ proposal, even before it is approved.  This lets us know that we don't need to submit our own proposal.
 	 */
@@ -127,11 +95,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			return "readyForMigration";
 		} else if (this._anyQuorumProposalSeen) {
 			return "waitingForV2ProposalCompletion";
-		} else if (this._v1PauseDone) {
-			return "proposingV2Code";
 		} else if (this.acceptedVersion !== undefined) {
-			// TODO: other phases of v1 paused container?
-			return "loadingV1PausedContainer";
+			return "proposingV2Code";
 		} else if (this.proposedVersion !== undefined) {
 			return "stoppingCollaboration";
 		} else if (this._proposalP !== undefined) {
@@ -145,13 +110,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		super(props);
 		this._containerP = new Promise<IContainer>((resolve) => {
 			this._setContainerRef = (container: IContainer) => resolve(container);
-		});
-		this._loadPausedContainerFnP = new Promise<
-			(sequenceNumber: number) => Promise<ISameContainerMigratableModel>
-		>((resolve) => {
-			this._setLoadPausedContainerFn = (
-				fn: (sequenceNumber: number) => Promise<ISameContainerMigratableModel>,
-			) => resolve(fn);
 		});
 	}
 
@@ -233,18 +191,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	private readonly stopCollaboration = () => {
 		// TODO Actually force the container to go silent and kill summarizers
 		this.emit("stoppingCollaboration");
-	};
-
-	private readonly loadV1PausedContainer = async () => {
-		// TODO: Error handling/retry logic
-		const loadPausedContainerFn = await this._loadPausedContainerFnP;
-		const pausedModel = await loadPausedContainerFn(this.acceptedSeqNum);
-		assert(
-			pausedModel.container.deltaManager.lastSequenceNumber === this.acceptedSeqNum,
-			"paused container should be paused at this.acceptedSeqNum",
-		);
-		this._v1PauseDone = true;
-		this.emit("loadingV1PausedContainer");
 	};
 
 	private readonly ensureQuorumCodeDetails = async () => {
@@ -425,7 +371,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				// random ack.  Probably means storing the Quorum code accept sequence number and verifying the summary is based on that sequence number.
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
-				if (this._v1PauseDone && op.type === MessageType.SummaryAck) {
+				if (this.acceptedSeqNum !== undefined && op.type === MessageType.SummaryAck) {
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.
@@ -452,9 +398,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// in between the microtasks - bearing in mind that we still need to send out our accept op.
 		this.stopCollaboration();
 		await this._acceptedP;
-
-		// After the proposal is detected to be accepted, we need to load a paused container with the v1 data.
-		await this.loadV1PausedContainer();
 
 		// The last step to prepare for the migration phase is to put the new code details into the quorum.  We have to
 		// do this here to ensure the correct summary is produced for services that have server-produced .protocol trees.

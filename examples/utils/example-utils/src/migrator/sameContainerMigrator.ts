@@ -72,14 +72,6 @@ export class SameContainerMigrator
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
 		this._currentModel.migrationTool.setContainerRef(this._currentModel.container);
-		const loadPausedContainerCallback = async (sequenceNumber: number) => {
-			this._pausedModel = await this.modelLoader.loadExistingPaused(
-				this._currentModelId,
-				sequenceNumber,
-			);
-			return this.pausedModel;
-		};
-		this._currentModel.migrationTool.setLoadPausedContainerFn(loadPausedContainerCallback);
 		this.takeAppropriateActionForCurrentMigratable();
 	}
 
@@ -160,6 +152,16 @@ export class SameContainerMigrator
 				const detachedModel = await this.modelLoader.createDetached(acceptedVersion);
 				const migratedModel = detachedModel.model;
 
+				const acceptedSeqNum = this.currentModel.migrationTool.acceptedSeqNum;
+				assert(acceptedSeqNum !== undefined, "acceptedSeqNum should be defined");
+				this._pausedModel = await this.modelLoader.loadExistingPaused(
+					this._currentModelId,
+					acceptedSeqNum,
+				);
+				assert(
+					this.pausedModel.container.deltaManager.lastSequenceNumber === acceptedSeqNum,
+					"paused model should be at accepted sequence number",
+				);
 				const exportedData = await this.pausedModel.exportData();
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the

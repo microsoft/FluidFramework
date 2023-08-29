@@ -90,7 +90,6 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 				{migrationState === "collaborating" && " Normal collaboration"}
 				{migrationState === "proposingMigration" && " Proposing to migrate"}
 				{migrationState === "stoppingCollaboration" && " Stopping collaboration"}
-				{migrationState === "loadingV1PausedContainer" && " Generating v1 paused container"}
 				{migrationState === "proposingV2Code" && " Proposing v2 code"}
 				{migrationState === "waitingForV2ProposalCompletion" &&
 					" Waiting for v2 code proposal completion"}
