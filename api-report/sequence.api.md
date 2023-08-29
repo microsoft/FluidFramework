@@ -142,7 +142,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, start?: number, end?: number): TInterval | undefined;
+    change(id: string, start?: SequencePlace, end?: SequencePlace): TInterval | undefined;
     changeProperties(id: string, props: PropertySet): any;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
@@ -224,7 +224,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     getProperties(): PropertySet;
     // @internal
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval | undefined;
+    modify(label: string, start?: SequencePlace, end?: SequencePlace, op?: ISequencedDocumentMessage): Interval | undefined;
     // (undocumented)
     overlaps(b: Interval): boolean;
     properties: PropertySet;
