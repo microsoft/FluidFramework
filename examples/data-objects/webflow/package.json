@@ -42,7 +42,6 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml --exit",
 		"test:mocha": "cross-env NODE_OPTIONS=\"--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs dist/test/**/*.spec.js",
-		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"webpack": "webpack --env production",
