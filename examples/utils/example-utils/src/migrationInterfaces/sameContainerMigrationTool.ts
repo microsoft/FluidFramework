@@ -29,8 +29,6 @@ export type SameContainerMigrationState =
 	| "proposingMigration"
 	| "stoppingCollaboration"
 	| "loadingV1PausedContainer"
-	| "uploadingV1Summary"
-	| "submittingV1Summary"
 	// TODO: "waitingForV2Proposal"?  Not a guarantee that we will issue a proposal here, if we see the proposal during catch up?
 	| "proposingV2Code"
 	| "waitingForV2ProposalCompletion"
@@ -45,9 +43,6 @@ export interface ISameContainerMigrationToolEvents extends IEvent {
 		event:
 			| "proposingMigration"
 			| "stoppingCollaboration"
-			| "generatingV1Summary"
-			| "uploadingV1Summary"
-			| "submittingV1Summary"
 			| "proposingV2Code"
 			| "waitingForV2ProposalCompletion"
 			| "readyForMigration"
