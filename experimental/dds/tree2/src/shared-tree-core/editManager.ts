@@ -319,11 +319,11 @@ export class EditManager<
 			const trunkSize = getPathFromBase(this.trunk.getHead(), this.trunkBase).length;
 			assert(
 				this.sequenceMap.size === trunkSize + 1,
-				"The size of the sequenceMap must have one element more than the trunk",
+				0x744 /* The size of the sequenceMap must have one element more than the trunk */,
 			);
 			assert(
 				this.trunkMetadata.size === trunkSize,
-				"The size of the trunkMetadata must be the same as the trunk",
+				0x745 /* The size of the trunkMetadata must be the same as the trunk */,
 			);
 		}
 	}
@@ -610,7 +610,7 @@ export class EditManager<
 				: searchBy;
 
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceId);
-		assert(commit !== undefined, "sequence id has been evicted");
+		assert(commit !== undefined, 0x746 /* sequence id has been evicted */);
 		return commit;
 	}
 
