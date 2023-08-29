@@ -54,6 +54,11 @@ export enum OdspErrorType {
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
 	serviceReadOnly = "serviceReadOnly",
+
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress = "blockedIPAddress",
 }
 
 export interface IOdspErrorAugmentations {
