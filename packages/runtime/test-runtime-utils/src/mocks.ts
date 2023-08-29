@@ -493,6 +493,12 @@ export class MockContainerRuntimeFactory {
 			}
 		}
 
+		for (const [client, runtime] of this.runtimes) {
+			while (runtime.sequencedMessages.length > 0) {
+				this.processMessageOnClient(client);
+			}
+		}
+
 		this.messages.length = 0;
 	}
 }
