@@ -230,7 +230,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it.skip("second client should see first client in audience when it connects immediately after", async () => {
+	it("second client should see first client in audience when it connects immediately after", async () => {
 		const loader = provider.makeTestLoader();
 		const containerUrl = await provider.driver.createContainerUrl(provider.documentId);
 

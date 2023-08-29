@@ -62,7 +62,7 @@ describe("Audience correctness", () => {
 		}
 	}
 
-	it.skip("second client should see first client in audience when it connects immediately after", async () => {
+	it("second client should see first client in audience when it connects immediately after", async () => {
 		const codeLoader: ICodeDetailsLoader = {
 			// The code loader we pass to a loader just needs to ensure we get the runtime factory for our desired container
 			// so we don't need to use the code details parameter in this case.
