@@ -94,7 +94,6 @@ import {
 	formatTick,
 	GenericError,
 	UsageError,
-	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -2329,9 +2328,13 @@ export class Container
 				typeof message.clientId === "string" &&
 				this.audience.getMember(message.clientId) === undefined
 			) {
+				// Right now this will just tell us if a signal comes form a client
+				// this client doesn't recognize. In the future we may decided to do something
+				// like disconnect and reconnect to refresh the audience, but we should see
+				// how often it hits before we decided to add that kind of recovery.
 				this.mc.logger.sendErrorEvent({
 					eventName: "SignalFromUnknownClient",
-					...extractSafePropertiesFromMessage(message as any),
+					messageClientId: message.clientId,
 				});
 			}
 			this.runtime.processSignal(message, local);
