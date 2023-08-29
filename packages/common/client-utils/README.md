@@ -1,6 +1,7 @@
 # @fluid-internal/client-utils
 
-This package is intended for sharing and promoting utility functions across packages in the Fluid Framework repo.
+This package is intended for sharing and promoting utility functions across packages in the Fluid Framework repo,
+primarily within the client release group.
 
 Use outside of the Fluid Framework repo is not supported or recommended.
 
