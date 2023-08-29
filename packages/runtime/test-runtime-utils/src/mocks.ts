@@ -411,6 +411,7 @@ export class MockContainerRuntimeFactory {
 			this.runtimeOptions,
 		);
 		this.runtimes.set(containerRuntime.clientId, containerRuntime);
+		containerRuntime.sequencedMessages = [...this.messages];
 		return containerRuntime;
 	}
 
