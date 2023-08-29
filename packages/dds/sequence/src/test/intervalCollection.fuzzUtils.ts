@@ -15,6 +15,7 @@ import { IntervalType } from "../intervals";
 import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
+import { Side } from "../intervalCollection";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -52,11 +53,15 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	// what happened to an interval over the course of its lifetime based on the history
 	// file, which is useful for debugging test failures.
 	id: string;
+	startSide: Side;
+	endSide: Side;
 }
 
 export interface ChangeInterval extends IntervalCollectionSpec, Partial<RangeSpec> {
 	type: "changeInterval";
 	id: string;
+	startSide: Side;
+	endSide: Side;
 }
 
 export interface DeleteInterval extends IntervalCollectionSpec {
@@ -203,17 +208,32 @@ export function makeReducer(
 		removeRange: async ({ channel }, { start, end }) => {
 			channel.removeRange(start, end);
 		},
-		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
+		addInterval: async (
+			{ channel },
+			{ start, end, collectionName, id, startSide, endSide },
+		) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
+			collection.add(
+				{ pos: start, side: startSide },
+				{ pos: end, side: endSide },
+				IntervalType.SlideOnRemove,
+				{ intervalId: id },
+			);
 		},
 		deleteInterval: async ({ channel }, { id, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
+		changeInterval: async (
+			{ channel },
+			{ id, start, end, collectionName, startSide, endSide },
+		) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.change(id, start, end);
+			collection.change(
+				id,
+				start === undefined ? undefined : { pos: start, side: startSide },
+				end === undefined ? undefined : { pos: end, side: endSide },
+			);
 		},
 		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);

@@ -217,10 +217,23 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.removeRange(0, 1);
 		clients[0].sharedString.insertText(0, "D");
 		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
-		collection_1.add("start", 1, IntervalType.SlideOnRemove, {
+		collection_1.add({ pos: 0, side: Side.After }, 1, IntervalType.SlideOnRemove, {
 			intervalId: "1",
 		});
 		clients[2].sharedString.removeRange(1, 2);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("maintains sliding preference on references after reconnect with special endpoint segment", () => {
+		clients[0].sharedString.insertText(0, "D");
+		clients[0].containerRuntime.connected = false;
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		const interval = collection_1.add("start", 0, IntervalType.SlideOnRemove, {
+			intervalId: "1",
+		});
+		assert.equal(interval.stickiness, IntervalStickiness.FULL);
+		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
@@ -229,9 +242,15 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "D");
 		clients[0].containerRuntime.connected = false;
 		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_1.add("start", 0, IntervalType.SlideOnRemove, {
-			intervalId: "1",
-		});
+		const interval = collection_1.add(
+			{ pos: 0, side: Side.After },
+			0,
+			IntervalType.SlideOnRemove,
+			{
+				intervalId: "1",
+			},
+		);
+		assert.equal(interval.stickiness, IntervalStickiness.FULL);
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);

@@ -206,9 +206,6 @@ export class SequenceInterval implements ISerializableInterval {
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
 		}
-		if (this.stickiness !== IntervalStickiness.END) {
-			serializedInterval.stickiness = this.stickiness;
-		}
 
 		return serializedInterval;
 	}

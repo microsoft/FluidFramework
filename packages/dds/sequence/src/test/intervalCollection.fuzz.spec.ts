@@ -24,7 +24,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IIntervalCollection } from "../intervalCollection";
+import { IIntervalCollection, Side } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import { SequenceInterval } from "../intervals";
@@ -115,6 +115,8 @@ export function makeOperationGenerator(
 			...inclusiveRange(state),
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
 		};
 	}
 
@@ -131,6 +133,8 @@ export function makeOperationGenerator(
 			type: "changeInterval",
 			start: state.random.integer(0, 5) === 5 ? undefined : start,
 			end: state.random.integer(0, 5) === 5 ? undefined : end,
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
 			...interval(state),
 		};
 	}
@@ -266,7 +270,7 @@ describe("IntervalCollection fuzz testing", () => {
 			attachProbability: 0.2,
 		},
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
+		// replay: 67,
 	});
 });
 
