@@ -351,6 +351,9 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
@@ -392,6 +395,9 @@ importers:
       '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.6.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
       nock: 10.0.6
       nyc: 15.1.0
       rimraf: 4.4.1
