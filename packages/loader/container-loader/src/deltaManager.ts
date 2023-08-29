@@ -411,8 +411,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
-			readonlyChangeHandler: (readonly?: boolean) =>
-				safeRaiseEvent(this, this.logger, "readonly", readonly),
+			readonlyChangeHandler: (readonly?: boolean, reason?: string) => {
+				safeRaiseEvent(this, this.logger, "readonly", readonly, reason);
+			},
 			establishConnectionHandler: (reason: IConnectionStateChangeReason) =>
 				this.establishingConnection(reason),
 			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>

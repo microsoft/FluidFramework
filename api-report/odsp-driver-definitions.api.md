@@ -211,6 +211,7 @@ export enum OdspErrorType {
     fetchTokenError = "fetchTokenError",
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
+    // @deprecated (undocumented)
     outOfStorageError = "outOfStorageError",
     serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"

@@ -114,7 +114,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `readonly`: Whether or not the delta manager is now read-only.
 	 */
-	(event: "readonly", listener: (readonly: boolean) => void);
+	(event: "readonly", listener: (readonly: boolean, reason?: string) => void);
 }
 
 /**
