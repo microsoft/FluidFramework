@@ -307,7 +307,7 @@ export function createOdspNetworkError(
 		case 507:
 			error = new NonRetryableError(
 				errorMessage,
-				OdspErrorType.outOfStorageError,
+				DriverErrorType.outOfStorageError,
 				driverProps,
 			);
 			break;
