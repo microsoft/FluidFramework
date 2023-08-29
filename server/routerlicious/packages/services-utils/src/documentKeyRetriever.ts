@@ -25,18 +25,18 @@ export class DocumentKeyRetriever {
 		keyName: string,
 		tenantId: string,
 		documentId: string,
-		useCosmosCache: boolean = true,
+		useCachedDocument: boolean = true,
 	): Promise<ValType> {
 		this.infoLog(`Retrieving value of ${keyName} from cosmosDB.`, documentId, tenantId);
 
 		// Retrieve the cached document details, if it exists for this document
-		const cachedDetails: Record<string, any> | undefined = useCosmosCache
+		const cachedDetails: Record<string, any> | undefined = useCachedDocument
 			? await this.getCachedDocumentDetails(documentId)
 			: undefined;
 
 		let val: ValType = cachedDetails?.[keyName];
 		if (val) {
-			// If the cached document details contain the key and useCosmosCache is true, use the cached value
+			// If the cached document details contain the key and useCachedDocument is true, use the cached value
 			this.infoLog("Using cached cosmosDB document details.", documentId, tenantId);
 		} else {
 			// Otherwise, call cosmosDB, and cache the result
@@ -62,7 +62,7 @@ export class DocumentKeyRetriever {
 		keyNameBase: string,
 		tenantId: string,
 		documentId: string,
-		useCosmosCache: boolean = true,
+		useCachedDocument: boolean = true,
 	): Promise<ValType> {
 		const redisKeyName: string = `${keyNameBase}:${documentId}}`;
 		const cosmosKeyName: string = keyNameBase;
@@ -84,7 +84,7 @@ export class DocumentKeyRetriever {
 				cosmosKeyName,
 				tenantId,
 				documentId,
-				useCosmosCache,
+				useCachedDocument,
 			);
 			await this.redis.set(redisKeyName, val);
 			return val;
