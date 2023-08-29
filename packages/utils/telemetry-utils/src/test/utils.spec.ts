@@ -5,9 +5,10 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createSampledLogger, createSystematicSamplingCallback, logIfFalse } from "../utils";
+import { createSampledLogger, createSystematicEventSampler, logIfFalse } from "../utils";
 import { TelemetryDataTag, tagData } from "../logger";
 import { ConfigTypes, IConfigProviderBase, mixinMonitoringContext } from "../config";
+import { MockLogger } from "../mockLogger";
 
 class TestLogger implements ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent): void {
@@ -72,24 +73,14 @@ describe("tagData", () => {
 });
 
 describe("Sampling", () => {
-	let events: ITelemetryBaseEvent[] = [];
-	function getBaseLoggerWithConfig(
-		configDictionary?: Record<string, ConfigTypes>,
-	): ITelemetryBaseLogger {
-		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
-				events.push(event);
-			},
-		};
+	function getBaseLoggerWithConfig(configDictionary?: Record<string, ConfigTypes>): MockLogger {
+		const logger = new MockLogger();
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
+
 		return mixinMonitoringContext(logger, configProvider(configDictionary ?? {})).logger;
 	}
-
-	beforeEach(() => {
-		events = [];
-	});
 
 	it("Systematic Sampling works as expected", () => {
 		const injectedSettings = {
@@ -98,16 +89,16 @@ describe("Sampling", () => {
 		const logger = getBaseLoggerWithConfig(injectedSettings);
 
 		const loggerWithoutSampling = createSampledLogger(
-			logger,
-			createSystematicSamplingCallback(1),
+			logger as ITelemetryBaseLogger,
+			createSystematicEventSampler({ samplingRate: 1 }),
 		);
 		const loggerWithEvery3Sampling = createSampledLogger(
 			logger,
-			createSystematicSamplingCallback(3),
+			createSystematicEventSampler({ samplingRate: 3 }),
 		);
 		const loggerWithEvery5Sampling = createSampledLogger(
 			logger,
-			createSystematicSamplingCallback(5),
+			createSystematicEventSampler({ samplingRate: 5 }),
 		);
 
 		const totalEventCount = 15;
@@ -118,17 +109,48 @@ describe("Sampling", () => {
 		}
 
 		assert.equal(
-			events.filter((event) => event.eventName === "noSampling").length,
+			logger.events.filter((event) => event.eventName === "noSampling").length,
 			totalEventCount,
 		);
 		assert.equal(
-			events.filter((event) => event.eventName === "oneEveryThree").length,
+			logger.events.filter((event) => event.eventName === "oneEveryThree").length,
 			totalEventCount / 3,
 		);
 		assert.equal(
-			events.filter((event) => event.eventName === "oneEveryFive").length,
+			logger.events.filter((event) => event.eventName === "oneEveryFive").length,
 			totalEventCount / 5,
 		);
+	});
+
+	it("Systematic Sampling works with externally controlled state", () => {
+		const injectedSettings = {
+			"Fluid.Telemetry.DisableSampling": false,
+		};
+		const logger = getBaseLoggerWithConfig(injectedSettings);
+
+		const samplerState = {
+			eventCount: 3,
+		};
+
+		const loggerWithControlledSampling = createSampledLogger(
+			logger,
+			createSystematicEventSampler({
+				samplingRate: 5,
+				defaultState: samplerState,
+				autoIncrementCounter: false,
+			}),
+		);
+
+		loggerWithControlledSampling.send({ category: "generic", eventName: "shouldNotAppear" });
+		loggerWithControlledSampling.send({ category: "generic", eventName: "shouldNotAppear" });
+		samplerState.eventCount = 5;
+		loggerWithControlledSampling.send({ category: "generic", eventName: "shouldAppear" });
+
+		assert.equal(
+			logger.events.filter((event) => event.eventName === "shouldNotAppear").length,
+			0,
+		);
+		assert.equal(logger.events.filter((event) => event.eventName === "shouldAppear").length, 1);
 	});
 
 	it("Sampling does not run if DisableSampling telemetry flag is set to true", () => {
@@ -139,11 +161,11 @@ describe("Sampling", () => {
 
 		const loggerWithoutSampling = createSampledLogger(
 			logger,
-			createSystematicSamplingCallback(1),
+			createSystematicEventSampler({ samplingRate: 1 }),
 		);
 		const loggerWithEvery5Sampling = createSampledLogger(
 			logger,
-			createSystematicSamplingCallback(5),
+			createSystematicEventSampler({ samplingRate: 5 }),
 		);
 
 		const totalEventCount = 15;
@@ -152,11 +174,11 @@ describe("Sampling", () => {
 			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
 		}
 		assert.equal(
-			events.filter((event) => event.eventName === "noSampling").length,
+			logger.events.filter((event) => event.eventName === "noSampling").length,
 			totalEventCount,
 		);
 		assert.equal(
-			events.filter((event) => event.eventName === "oneEveryFive").length,
+			logger.events.filter((event) => event.eventName === "oneEveryFive").length,
 			totalEventCount,
 		);
 	});
@@ -192,14 +214,15 @@ describe("Sampling", () => {
 			return shouldSample;
 		};
 
-		const loggerWithSampling = createSampledLogger(logger, () =>
-			shouldSampleEvent(
-				exampleAppDataNumber1,
-				exampleAppDataNumber2,
-				exampleAppDataBoolean1,
-				exampleAppDataModeString,
-			),
-		);
+		const loggerWithSampling = createSampledLogger(logger, {
+			poll: () =>
+				shouldSampleEvent(
+					exampleAppDataNumber1,
+					exampleAppDataNumber2,
+					exampleAppDataBoolean1,
+					exampleAppDataModeString,
+				),
+		});
 
 		const totalEventCount = 20;
 		const eventName = "testEvent";
@@ -229,7 +252,7 @@ describe("Sampling", () => {
 			});
 		}
 
-		const emittedEvents = events.filter((event) => event.eventName === eventName);
+		const emittedEvents = logger.events.filter((event) => event.eventName === eventName);
 		assert.equal(emittedEvents.length === 10, true);
 		for (const event of emittedEvents) {
 			const typedEvent = event as ExampleEvent;
@@ -244,4 +267,22 @@ describe("Sampling", () => {
 			);
 		}
 	});
+
+	// it("Tonys function", () => {
+	// 	const injectedSettings = {
+	// 		"Fluid.Telemetry.DisableSampling": true,
+	// 	};
+	// 	const logger = getBaseLoggerWithConfig(injectedSettings);
+
+	// 	const sampler = buildEventSampler(
+	// 		logger,
+	// 		{ eventName: "testEvent" },
+	// 		(message: { clientSequenceNumber: number },) => {
+	// 			if (message.clientSequenceNumber % 500 === 0) {
+	// 				return "send";
+	// 			}
+	// 			return "continue";
+	// 		},
+	// 	);
+	// });
 });

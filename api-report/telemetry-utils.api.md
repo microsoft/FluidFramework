@@ -45,6 +45,28 @@ export function createMultiSinkLogger(props: {
     tryInheritProperties?: true;
 }): ITelemetryLoggerExt;
 
+// @public
+export function createSampledLoggerExt(logger: ITelemetryLoggerExt, eventSampler: {
+    poll: () => boolean;
+}): {
+    send: (event: ITelemetryBaseEvent) => void;
+    sendTelemetryEvent: (event: ITelemetryGenericEventExt) => void;
+    sendErrorEvent: (event: ITelemetryGenericEventExt) => void;
+    sendPerformanceEvent: (event: ITelemetryGenericEventExt) => void;
+    eventSampler: {
+        poll: () => boolean;
+    };
+};
+
+// @public
+export const createSystematicEventSampler: (options: {
+    samplingRate: number;
+    defaultState?: {
+        eventCount: number;
+    };
+    autoIncrementCounter?: boolean;
+}) => SystematicEventSampler;
+
 // @public (undocumented)
 export const disconnectedEventName = "disconnected";
 
@@ -304,6 +326,18 @@ export class SampledTelemetryHelper implements IDisposable {
 
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
+
+// @public (undocumented)
+export interface SystematicEventSampler {
+    // (undocumented)
+    poll: () => boolean;
+    // (undocumented)
+    state: {
+        eventCount: number;
+    };
+    // (undocumented)
+    willSample: (eventCount: number) => boolean;
+}
 
 // @public (undocumented)
 export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {
