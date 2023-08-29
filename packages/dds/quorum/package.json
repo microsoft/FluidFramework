@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/quorum",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "private": true,
   "description": "Distributed data structure for key-value pairs using quorum consensus",
   "homepage": "https://fluidframework.com",

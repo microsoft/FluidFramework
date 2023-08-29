@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/request-handler",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "A simple request handling library for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {

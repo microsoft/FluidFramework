@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-inspector",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
   "homepage": "https://fluidframework.com",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-adapters",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "View adapters for rendering views of alternate or unknown UI frameworks",
   "homepage": "https://fluidframework.com",
   "repository": {
