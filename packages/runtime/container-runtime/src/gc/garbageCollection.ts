@@ -847,7 +847,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * is downloaded and should be used to update the state.
 	 */
 	public async refreshLatestSummary(result: RefreshSummaryResult): Promise<void> {
-		await this.summaryStateTracker.refreshLatestSummary(result);
+		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
 	/**
