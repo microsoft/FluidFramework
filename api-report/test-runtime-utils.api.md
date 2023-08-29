@@ -110,6 +110,8 @@ export class MockContainerRuntime {
     // (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
     // (undocumented)
+    readonly deltaManager: MockDeltaManager;
+    // (undocumented)
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
@@ -122,9 +124,15 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    processNextSequencedMessage(): void;
+    // (undocumented)
+    processSequencedMessages(): void;
     rebase(): void;
     protected get referenceSequenceNumber(): number;
     protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
+    // (undocumented)
+    sequencedMessages: ISequencedDocumentMessage[];
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
@@ -136,21 +144,23 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     getMinSeq(): number;
-    protected messages: ISequencedDocumentMessage[];
+    messages: ISequencedDocumentMessage[];
     // (undocumented)
     minSeq: Map<string, number>;
     // (undocumented)
     get outstandingMessageCount(): number;
-    processAllMessages(clients?: string[]): void;
+    processAllMessages(): void;
+    // (undocumented)
+    processMessageOnClient(client: string): void;
     processOneMessage(): void;
     processSomeMessages(count: number): void;
     // (undocumented)
-    pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
+    pushMessage(msg: Partial<ISequencedDocumentMessage>, newBatch?: boolean): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
-    protected readonly runtimes: Map<string, MockContainerRuntime>;
+    readonly runtimes: Map<string, MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
 }
