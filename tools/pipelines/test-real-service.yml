@@ -191,7 +191,7 @@ stages:
               displayName: Retrieve buildId results
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(toolAbsolutePath)
+                workingDirectory: $(Build.SourcesDirectory)/tools/telemetry-generator
                 script: |
                   echo "creating output folder"
                   mkdir -p ${{ variables.testWorkspace }}/timingOutput
