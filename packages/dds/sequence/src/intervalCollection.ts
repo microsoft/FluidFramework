@@ -676,29 +676,21 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
 
 	/**
 	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
 
 	/**
 	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
 
 	/**
 	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
 
@@ -709,9 +701,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param iteratesForward - whether or not iteration should be in the forward direction
 	 * @param start - If provided, only match intervals whose start point is equal to `start`.
 	 * @param end - If provided, only match intervals whose end point is equal to `end`.
-	 *
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `OverlappingIntervalsIndex`.
-	 * We would like the user to attach the index to the collection on their own.
 	 */
 	gatherIterationResults(
 		results: TInterval[],
@@ -723,9 +712,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * @returns an array of all intervals in this collection that overlap with the interval
 	 * `[startPosition, endPosition]`.
-	 *
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `OverlappingIntervalsIndex`.
-	 * We would like the user to attach the index to the collection on their own.
 	 */
 	findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
 
@@ -734,16 +720,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	map(fn: (interval: TInterval) => void): void;
 
-	/**
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `EndpointIndex`.
-	 * We would like the user to attach the index to the collection on their own.
-	 */
 	previousInterval(pos: number): TInterval | undefined;
 
-	/**
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `EndpointIndex`.
-	 * We would like the user to attach the index to the collection on their own.
-	 */
 	nextInterval(pos: number): TInterval | undefined;
 }
 
@@ -1593,8 +1571,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateForwardIteratorWithStartPosition(
 		startPosition: number,
@@ -1605,8 +1581,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithStartPosition}
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateBackwardIteratorWithStartPosition(
 		startPosition: number,
@@ -1617,8 +1591,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithEndPosition}
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateForwardIteratorWithEndPosition(
 		endPosition: number,
@@ -1634,8 +1606,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithEndPosition}
-	 *
-	 * @deprecated - The sequence order of collection order will not be supported
 	 */
 	public CreateBackwardIteratorWithEndPosition(
 		endPosition: number,
@@ -1651,8 +1621,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.gatherIterationResults}
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `OverlappingIntervalsIndex`.
-	 * We would like the user to attach the index to the collection on their own.
 	 */
 	public gatherIterationResults(
 		results: TInterval[],
@@ -1674,8 +1642,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.findOverlappingIntervals}
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `OverlappingIntervalsIndex`.
-	 * We would like the user to attach the index to the collection on their own.
 	 */
 	public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
 		if (!this.localCollection) {
@@ -1703,9 +1669,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.previousInterval}
-	 *
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `EndpointIndex`.
-	 * We would like the user to attach the index to the collection on their own.
 	 */
 	public previousInterval(pos: number): TInterval | undefined {
 		if (!this.localCollection) {
@@ -1717,9 +1680,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.nextInterval}
-	 *
-	 * @deprecated - This API will be deprecated as its functionality will be moved to the `EndpointIndex`.
-	 * We would like the user to attach the index to the collection on their own.
 	 */
 	public nextInterval(pos: number): TInterval | undefined {
 		if (!this.localCollection) {

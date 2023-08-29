@@ -331,6 +331,7 @@ export class SchemaBuilder {
 	 */
 	public static fieldRecursive<
 		Kind extends FieldKindTypes,
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 		T extends FlexList<RecursiveTreeSchema>,
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
 		return new FieldSchema(kind, allowedTypes);
