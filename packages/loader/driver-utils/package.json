@@ -103,9 +103,6 @@
 			"ClassDeclaration_AuthorizationError": {
 				"backCompat": false
 			},
-			"ClassDeclaration_BlobTreeEntry": {
-				"forwardCompat": false
-			},
 			"ClassDeclaration_DeltaStreamConnectionForbiddenError": {
 				"backCompat": false
 			},
