@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-definitions",
-	"version": "2.0.0-internal.5.4.0",
+	"version": "2.0.0-internal.6.2.0",
 	"description": "Fluid driver definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,15 +37,14 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.21.0",
-		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.21.0",
-		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.5.2.0",
+		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.6.1.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"concurrently": "^7.6.0",

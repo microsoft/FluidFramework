@@ -1,5 +1,111 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.6.2.0
+
+### Minor Changes
+
+-   Deprecate getStackContext and associated NestBegin/End ([#16877](https://github.com/microsoft/FluidFramework/issues/16877)) [8e743fe1dd](https://github.com/microsoft/FluidFramework/commits/8e743fe1dde9adb3a1240971987d3abd51ab2fbe)
+
+    Deprecate SharedSegmentSequence.getStackContext and Client.getStackContext (and the enums ReferenceType.NestBegin and NestEnd they use).
+    This functionality is unused, poorly tested, and incurs performance overhead.
+
+-   Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+
+    The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+    imported from the **@fluidframework/core-interfaces** package:
+
+    -   interface IDisposable
+    -   interface IErrorEvent
+    -   interface IErrorEvent
+    -   interface IEvent
+    -   interface IEventProvider
+    -   interface ILoggingError
+    -   interface ITaggedTelemetryPropertyType
+    -   interface ITelemetryBaseEvent
+    -   interface ITelemetryBaseLogger
+    -   interface ITelemetryErrorEvent
+    -   interface ITelemetryGenericEvent
+    -   interface ITelemetryLogger
+    -   interface ITelemetryPerformanceEvent
+    -   interface ITelemetryProperties
+    -   type ExtendEventProvider
+    -   type IEventThisPlaceHolder
+    -   type IEventTransformer
+    -   type ReplaceIEventThisPlaceHolder
+    -   type ReplaceIEventThisPlaceHolder
+    -   type TelemetryEventCategory
+    -   type TelemetryEventPropertyType
+
+-   Deprecate SharedSequence, SubSequence, and IJSONRunSegment ([#16829](https://github.com/microsoft/FluidFramework/issues/16829)) [0cf2b6d909](https://github.com/microsoft/FluidFramework/commits/0cf2b6d9098c7ef4234b66c5d7d169192db40d15)
+
+    The types SharedSequence, SubSequence, and IJSONRunSegment are being deprecated and moved.
+
+    They are now, and will continue to be exposed from the @fluid-experimental/sequence-deprecated package.
+
+    New usages of these types should not be added, but they may be necessary for migration.
+
+## 2.0.0-internal.6.1.0
+
+Dependency updates only.
+
+## 2.0.0-internal.6.0.0
+
+### Major Changes
+
+-   IntervalConflictResolver removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    IntervalConflictResolver has been removed. Any lingering usages in application code can be removed as well. This change also marks APIs deprecated in #14318 as internal.
+
+-   Remove ISegment.parent [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    This change removed the parent property on the ISegment interface. The property will still exist, but should not generally be used by outside consumers.
+
+    There are some circumstances where a consumer may wish to know if a segment is still in the underlying tree and were using the parent property to determine that.
+
+    Please change those checks to use the following `"parent" in segment && segment.parent !== undefined`
+
+-   Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+
+    Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+
+## 2.0.0-internal.5.4.0
+
+### Minor Changes
+
+-   Some interval-related APIs are deprecated ([#16573](https://github.com/microsoft/FluidFramework/issues/16573)) [82de148126](https://github.com/microsoft/FluidFramework/commits/82de14812617e4d305bdb621737a0d94a5392d25)
+
+    The following APIs are now deprecated from `IntervalCollection`:
+
+    -   `findOverlappingIntervals` and `gatherIterationResults` - these functions are moved to
+        the `OverlappingIntervalsIndex`. Users are advised to independently attach the index to the collection and utilize the
+        API accordingly, for instance:
+
+        ```typescript
+        const overlappingIntervalsIndex = createOverlappingIntervalsIndex(client, helpers);
+        collection.attachIndex(overlappingIntervalsIndex);
+        const result1 = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+
+        const result2 = [];
+        overlappingIntervalsIndex.gatherIterationResults(result2, true);
+        ```
+
+    -   `CreateBackwardIteratorWithEndPosition`, `CreateBackwardIteratorWithStartPosition`,
+        `CreateForwardIteratorWithEndPosition` and `CreateForwardIteratorWithStartPosition` - only the default iterator will be
+        supported in the future, and it will no longer preserve sequence order.
+
+        Equivalent functionality to these four methods is provided by `IOverlappingIntervalIndex.gatherIterationResults`.
+
+    -   `previousInterval` and `nextInterval` - These functionalities are moved to the `EndpointIndex`. Users are advised to
+        independently attach the index to the collection and utilize the API accordingly, for instance:
+
+        ```typescript
+        const endpointIndex = createEndpointIndex(client, helpers);
+        collection.attachIndex(endpointIndex);
+
+        const result1 = endpointIndex.previousInterval(pos);
+        const result2 = endpointIndex.nextInterval(pos);
+        ```
+
 ## 2.0.0-internal.5.3.0
 
 Dependency updates only.

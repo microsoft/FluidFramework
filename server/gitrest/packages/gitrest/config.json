@@ -17,10 +17,13 @@
 	},
 	"git": {
 		"lib": {
-			"name": "nodegit"
+			"name": "isomorphic-git"
 		},
 		"filesystem": {
 			"name": "nodeFs"
+		},
+		"ephemeralfilesystem": {
+			"name": "redisFs"
 		},
 		"persistLatestFullSummary": false,
 		"repoPerDocEnabled": false,
@@ -30,7 +33,8 @@
 		"enableOptimizedInitialSummary": false,
 		"enableSlimGitInit": false,
 		"enableRedisFsMetrics": true,
-		"redisApiMetricsSamplingPeriod": 0
+		"redisApiMetricsSamplingPeriod": 0,
+		"enforceStrictPersistedFullSummaryReads": false
 	},
 	"redis": {
 		"host": "redis",

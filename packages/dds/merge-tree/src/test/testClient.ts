@@ -19,7 +19,7 @@ import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
 import { List } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
+import { IMergeBlock, IMergeLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -28,9 +28,10 @@ import { TextSegment } from "../textSegment";
 import { getSlideToSegoff, MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { DetachedReferencePosition } from "../referencePositions";
+import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
+import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
+import { ReferencePosition } from "..";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -148,7 +149,8 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			d.deltaSegments.forEach((s) => {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					assert.notEqual(s.segment.parent, undefined);
+					const seg: IMergeLeaf = s.segment;
+					assert.notEqual(seg.parent, undefined);
 				}
 			});
 		});
@@ -513,6 +515,45 @@ export class TestClient extends Client {
 				this.maxWindowTime = elapsed;
 			}
 		}
+	}
+
+	slowSearchForMarker(
+		startPos: number,
+		markerLabel: string,
+		forwards = true,
+	): ReferencePosition | undefined {
+		let foundMarker: Marker | undefined;
+
+		const { segment } = this.getContainingSegment(startPos);
+		const segWithParent: IMergeLeaf = segment as IMergeLeaf;
+
+		if (Marker.is(segWithParent)) {
+			if (refHasTileLabel(segWithParent, markerLabel)) {
+				foundMarker = segWithParent;
+			}
+		} else {
+			if (forwards) {
+				forwardExcursion(segWithParent, (seg) => {
+					if (Marker.is(seg)) {
+						if (refHasTileLabel(seg, markerLabel)) {
+							foundMarker = seg;
+							return false;
+						}
+					}
+				});
+			} else {
+				backwardExcursion(segWithParent, (seg) => {
+					if (Marker.is(seg)) {
+						if (refHasTileLabel(seg, markerLabel)) {
+							foundMarker = seg;
+							return false;
+						}
+					}
+				});
+			}
+		}
+
+		return foundMarker;
 	}
 }
 

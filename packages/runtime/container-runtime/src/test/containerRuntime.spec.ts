@@ -8,11 +8,10 @@ import { createSandbox } from "sinon";
 import {
 	AttachState,
 	ContainerErrorType,
+	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
-	IErrorBase,
 } from "@fluidframework/container-definitions";
-import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
@@ -22,20 +21,28 @@ import {
 import {
 	ConfigTypes,
 	IConfigProviderBase,
+	isFluidError,
+	isILoggingError,
 	mixinMonitoringContext,
 	MockLogger,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IRequest,
+	IResponse,
+	FluidObject,
+	IGenericError,
+} from "@fluidframework/core-interfaces";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
+	ContainerRuntimeMessage,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessageOld, PendingStateManager } from "../pendingStateManager";
+import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -43,29 +50,37 @@ describe("Runtime", () => {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
+	let submittedOps: any[] = [];
+	let opFakeSequenceNumber = 1;
+
+	beforeEach(() => {
+		submittedOps = [];
+		opFakeSequenceNumber = 1;
+	});
+
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
-		logger: ITelemetryLoggerExt = new MockLogger(),
+		logger = new MockLogger(),
 	): Partial<IContainerContext> => ({
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
 		quorum: new MockQuorumClients(),
-		taggedLogger: mixinMonitoringContext(
-			logger,
-			configProvider(settings),
-		) as unknown as MockLogger,
+		taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (_error?: ICriticalContainerError): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
 		getLoadedFromVersion: () => undefined,
+		submitFn: (_type: MessageType, contents: any, _batch: boolean, appData?: any) => {
+			submittedOps.push(contents);
+			return opFakeSequenceNumber++;
+		},
+		clientId: "fakeClientId",
 	});
 
 	describe("Container Runtime", () => {
 		describe("flushMode setting", () => {
-			let containerRuntime: ContainerRuntime;
-
 			it("Default flush mode", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
+				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
 					existing: false,
@@ -76,7 +91,7 @@ describe("Runtime", () => {
 			});
 
 			it("Override default flush mode using options", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
+				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
 					existing: false,
@@ -86,6 +101,43 @@ describe("Runtime", () => {
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
+			});
+
+			it("Replaying ops should resend in correct order", async () => {
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+					},
+				});
+
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(containerRuntime as any).dataStores = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					resubmitDataStoreOp: (envelope, localOpMetadata) => {
+						containerRuntime.submitDataStoreOp(
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} as DataStores;
+
+				containerRuntime.setConnectionState(false);
+
+				containerRuntime.submitDataStoreOp("1", "test");
+				(containerRuntime as any).flush();
+
+				containerRuntime.submitDataStoreOp("2", "test");
+				containerRuntime.setConnectionState(true);
+				(containerRuntime as any).flush();
+
+				assert.strictEqual(submittedOps.length, 2);
+				assert.strictEqual(submittedOps[0].contents.address, "1");
+				assert.strictEqual(submittedOps[1].contents.address, "2");
 			});
 		});
 
@@ -102,7 +154,6 @@ describe("Runtime", () => {
 					let mockContext: Partial<IContainerContext>;
 					const submittedOpsMetdata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
-					let opFakeSequenceNumber = 1;
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
 						return {
 							attachState: AttachState.Attached,
@@ -163,7 +214,6 @@ describe("Runtime", () => {
 						});
 						containerErrors.length = 0;
 						submittedOpsMetdata.length = 0;
-						opFakeSequenceNumber = 1;
 					});
 
 					it("Can't call flush() inside orderSequentially's callback", () => {
@@ -174,7 +224,7 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
 					});
 
@@ -188,7 +238,7 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
 					});
 
@@ -204,7 +254,7 @@ describe("Runtime", () => {
 						});
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
 					});
 
@@ -216,9 +266,10 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert(isFluidError(error));
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual(error.error.message, "Any");
+						assert.strictEqual((error as IGenericError).error.message, "Any");
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -231,9 +282,10 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
-						assert.ok(error instanceof GenericError);
+						assert(isFluidError(error));
+						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
 						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual(error.error.message, "Any");
+						assert.strictEqual((error as IGenericError).error.message, "Any");
 					});
 
 					it("Batching property set properly", () => {
@@ -740,11 +792,12 @@ describe("Runtime", () => {
 					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
 					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
-					assert.ok(error instanceof DataProcessingError);
+					assert.strictEqual(error.errorType, ContainerErrorTypes.dataProcessingError);
 					assert.strictEqual(
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
+					assert(isILoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -873,7 +926,7 @@ describe("Runtime", () => {
 						containerRuntime.process(
 							{
 								type: "op",
-								clientId: "clientId",
+								clientId: "a unique, remote clientId",
 								sequenceNumber: 0,
 								contents: {
 									address: "address",
@@ -902,11 +955,12 @@ describe("Runtime", () => {
 					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
 					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
-					assert.ok(error instanceof DataProcessingError);
+					assert.strictEqual(error.errorType, ContainerErrorTypes.dataProcessingError);
 					assert.strictEqual(
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
+					assert(isILoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -921,6 +975,83 @@ describe("Runtime", () => {
 					]);
 				},
 			);
+		});
+
+		describe("Future op type compatibility", () => {
+			let containerRuntime: ContainerRuntime;
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {},
+				});
+			});
+			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" },
+				};
+
+				const packedOp: Partial<ISequencedDocumentMessage> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				containerRuntime.process(packedOp as ISequencedDocumentMessage, false /* local */);
+			});
+
+			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+				};
+
+				const packedOp: Partial<ISequencedDocumentMessage> = {
+					type: MessageType.Operation,
+					contents: JSON.stringify(futureRuntimeMessage),
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							packedOp as ISequencedDocumentMessage,
+							false /* local */,
+						),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorType.dataProcessingError,
+					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
+				);
+			});
+
+			it("process remote op with unrecognized type and no compat behavior", async () => {
+				const futureRuntimeMessage: ContainerRuntimeMessage = {
+					type: "FROM_THE_FUTURE" as ContainerMessageType,
+					contents: "Hello",
+					compatDetails: { behavior: "FailToProcess" },
+				};
+
+				const packedOp: Partial<ISequencedDocumentMessage> = {
+					contents: JSON.stringify(futureRuntimeMessage),
+					type: MessageType.Operation,
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							packedOp as ISequencedDocumentMessage,
+							false /* local */,
+						),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorType.dataProcessingError,
+					"Ops with unrecognized type and no specified compat behavior should fail to process",
+				);
+			});
 		});
 
 		describe("User input validations", () => {
@@ -1063,7 +1194,7 @@ describe("Runtime", () => {
 		describe("EntryPoint initialized correctly", () => {
 			it("when using old load method", async () => {
 				const myResponse: IResponse = {
-					mimeType: "myMimeType",
+					mimeType: "fluid/object",
 					value: "hello!",
 					status: 200,
 				};
@@ -1086,13 +1217,13 @@ describe("Runtime", () => {
 					"request method in runtime did not return the expected object",
 				);
 
-				// The entryPoint should be undefined because the deprecated load() method was used
-				assert(containerRuntime.getEntryPoint !== undefined); // The function should exist, though
+				// The entryPoint should use the request handler we passed in the runtime's constructor
+				assert(containerRuntime.getEntryPoint !== undefined);
 				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.strictEqual(
+				assert.notStrictEqual(
 					actualEntryPoint,
 					undefined,
-					"entryPoint was not undefined as expected",
+					"entryPoint was not the expected object",
 				);
 			});
 
@@ -1144,7 +1275,8 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					(state?.pendingStates[0] as IPendingMessageOld).content.contents,
+					JSON.parse((state?.pendingStates[0] as IPendingMessageNew).content).contents
+						.contents,
 					{
 						prop1: 1,
 					},
@@ -1219,7 +1351,7 @@ describe("Runtime", () => {
 
 				mockLogger.assertMatchAny([
 					{
-						eventName: "ContainerLoadStats",
+						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({
@@ -1246,7 +1378,7 @@ describe("Runtime", () => {
 
 				mockLogger.assertMatchAny([
 					{
-						eventName: "ContainerLoadStats",
+						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({

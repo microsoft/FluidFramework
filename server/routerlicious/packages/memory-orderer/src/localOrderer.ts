@@ -38,6 +38,7 @@ import {
 	ICheckpointRepository,
 	CheckpointService,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
@@ -401,29 +402,57 @@ export class LocalOrderer implements IOrderer {
 	}
 
 	private startLambdas() {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(this.documentId, this.tenantId),
+		};
 		if (this.deliLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.deliLambda.start();
+			this.deliLambda.start().catch((err) => {
+				Lumberjack.error(
+					"Error starting memory orderer deli lambda",
+					lumberjackProperties,
+					err,
+				);
+			});
 		}
 
 		if (this.scriptoriumLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.scriptoriumLambda.start();
+			this.scriptoriumLambda.start().catch((err) => {
+				Lumberjack.error(
+					"Error starting memory orderer scriptorium lambda",
+					lumberjackProperties,
+					err,
+				);
+			});
 		}
 
 		if (this.scribeLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.scribeLambda.start();
+			this.scribeLambda.start().catch((err) => {
+				Lumberjack.error(
+					"Error starting memory orderer scribe lambda",
+					lumberjackProperties,
+					err,
+				);
+			});
 		}
 
 		if (this.broadcasterLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.broadcasterLambda.start();
+			this.broadcasterLambda.start().catch((err) => {
+				Lumberjack.error(
+					"Error starting memory orderer broadcaster lambda",
+					lumberjackProperties,
+					err,
+				);
+			});
 		}
 
 		if (this.moiraLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.moiraLambda.start();
+			this.moiraLambda.start().catch((err) => {
+				Lumberjack.error(
+					"Error starting memory orderer moira lambda",
+					lumberjackProperties,
+					err,
+				);
+			});
 		}
 	}
 

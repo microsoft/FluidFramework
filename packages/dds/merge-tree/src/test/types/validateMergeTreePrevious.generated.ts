@@ -64,54 +64,6 @@ use_old_ClassDeclaration_BaseSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_BlockAction": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_BlockAction():
-    TypeOnly<old.BlockAction<any>>;
-declare function use_current_InterfaceDeclaration_BlockAction(
-    use: TypeOnly<current.BlockAction<any>>);
-use_current_InterfaceDeclaration_BlockAction(
-    get_old_InterfaceDeclaration_BlockAction());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_BlockAction": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_BlockAction():
-    TypeOnly<current.BlockAction<any>>;
-declare function use_old_InterfaceDeclaration_BlockAction(
-    use: TypeOnly<old.BlockAction<any>>);
-use_old_InterfaceDeclaration_BlockAction(
-    get_current_InterfaceDeclaration_BlockAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_BlockUpdateActions": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_BlockUpdateActions():
-    TypeOnly<old.BlockUpdateActions>;
-declare function use_current_InterfaceDeclaration_BlockUpdateActions(
-    use: TypeOnly<current.BlockUpdateActions>);
-use_current_InterfaceDeclaration_BlockUpdateActions(
-    get_old_InterfaceDeclaration_BlockUpdateActions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_BlockUpdateActions": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_BlockUpdateActions():
-    TypeOnly<current.BlockUpdateActions>;
-declare function use_old_InterfaceDeclaration_BlockUpdateActions(
-    use: TypeOnly<old.BlockUpdateActions>);
-use_old_InterfaceDeclaration_BlockUpdateActions(
-    get_current_InterfaceDeclaration_BlockUpdateActions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Client": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Client():
@@ -119,6 +71,7 @@ declare function get_old_ClassDeclaration_Client():
 declare function use_current_ClassDeclaration_Client(
     use: TypeOnly<current.Client>);
 use_current_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Client());
 
 /*
@@ -376,30 +329,6 @@ use_old_InterfaceDeclaration_IConsensusValue(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IHierBlock": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IHierBlock():
-    TypeOnly<old.IHierBlock>;
-declare function use_current_InterfaceDeclaration_IHierBlock(
-    use: TypeOnly<current.IHierBlock>);
-use_current_InterfaceDeclaration_IHierBlock(
-    get_old_InterfaceDeclaration_IHierBlock());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IHierBlock": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IHierBlock():
-    TypeOnly<current.IHierBlock>;
-declare function use_old_InterfaceDeclaration_IHierBlock(
-    use: TypeOnly<old.IHierBlock>);
-use_old_InterfaceDeclaration_IHierBlock(
-    get_current_InterfaceDeclaration_IHierBlock());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IIntegerRange": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IIntegerRange():
@@ -540,54 +469,6 @@ declare function use_old_InterfaceDeclaration_IMarkerModifiedAction(
     use: TypeOnly<old.IMarkerModifiedAction>);
 use_old_InterfaceDeclaration_IMarkerModifiedAction(
     get_current_InterfaceDeclaration_IMarkerModifiedAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IMergeBlock": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IMergeBlock():
-    TypeOnly<old.IMergeBlock>;
-declare function use_current_InterfaceDeclaration_IMergeBlock(
-    use: TypeOnly<current.IMergeBlock>);
-use_current_InterfaceDeclaration_IMergeBlock(
-    get_old_InterfaceDeclaration_IMergeBlock());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IMergeBlock": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IMergeBlock():
-    TypeOnly<current.IMergeBlock>;
-declare function use_old_InterfaceDeclaration_IMergeBlock(
-    use: TypeOnly<old.IMergeBlock>);
-use_old_InterfaceDeclaration_IMergeBlock(
-    get_current_InterfaceDeclaration_IMergeBlock());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IMergeNode": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_IMergeNode():
-    TypeOnly<old.IMergeNode>;
-declare function use_current_TypeAliasDeclaration_IMergeNode(
-    use: TypeOnly<current.IMergeNode>);
-use_current_TypeAliasDeclaration_IMergeNode(
-    get_old_TypeAliasDeclaration_IMergeNode());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IMergeNode": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_IMergeNode():
-    TypeOnly<current.IMergeNode>;
-declare function use_old_TypeAliasDeclaration_IMergeNode(
-    use: TypeOnly<old.IMergeNode>);
-use_old_TypeAliasDeclaration_IMergeNode(
-    get_current_TypeAliasDeclaration_IMergeNode());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1120,30 +1001,6 @@ use_old_InterfaceDeclaration_ISegmentAction(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISegmentChanges": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ISegmentChanges():
-    TypeOnly<old.ISegmentChanges>;
-declare function use_current_InterfaceDeclaration_ISegmentChanges(
-    use: TypeOnly<current.ISegmentChanges>);
-use_current_InterfaceDeclaration_ISegmentChanges(
-    get_old_InterfaceDeclaration_ISegmentChanges());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISegmentChanges": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ISegmentChanges():
-    TypeOnly<current.ISegmentChanges>;
-declare function use_old_InterfaceDeclaration_ISegmentChanges(
-    use: TypeOnly<old.ISegmentChanges>);
-use_old_InterfaceDeclaration_ISegmentChanges(
-    get_current_InterfaceDeclaration_ISegmentChanges());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITrackingGroup": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITrackingGroup():
@@ -1164,150 +1021,6 @@ declare function use_old_InterfaceDeclaration_ITrackingGroup(
     use: TypeOnly<old.ITrackingGroup>);
 use_old_InterfaceDeclaration_ITrackingGroup(
     get_current_InterfaceDeclaration_ITrackingGroup());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalBlockAction": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IncrementalBlockAction():
-    TypeOnly<old.IncrementalBlockAction<any>>;
-declare function use_current_InterfaceDeclaration_IncrementalBlockAction(
-    use: TypeOnly<current.IncrementalBlockAction<any>>);
-use_current_InterfaceDeclaration_IncrementalBlockAction(
-    get_old_InterfaceDeclaration_IncrementalBlockAction());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalBlockAction": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IncrementalBlockAction():
-    TypeOnly<current.IncrementalBlockAction<any>>;
-declare function use_old_InterfaceDeclaration_IncrementalBlockAction(
-    use: TypeOnly<old.IncrementalBlockAction<any>>);
-use_old_InterfaceDeclaration_IncrementalBlockAction(
-    get_current_InterfaceDeclaration_IncrementalBlockAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_IncrementalExecOp": {"forwardCompat": false}
-*/
-declare function get_old_EnumDeclaration_IncrementalExecOp():
-    TypeOnly<old.IncrementalExecOp>;
-declare function use_current_EnumDeclaration_IncrementalExecOp(
-    use: TypeOnly<current.IncrementalExecOp>);
-use_current_EnumDeclaration_IncrementalExecOp(
-    get_old_EnumDeclaration_IncrementalExecOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_IncrementalExecOp": {"backCompat": false}
-*/
-declare function get_current_EnumDeclaration_IncrementalExecOp():
-    TypeOnly<current.IncrementalExecOp>;
-declare function use_old_EnumDeclaration_IncrementalExecOp(
-    use: TypeOnly<old.IncrementalExecOp>);
-use_old_EnumDeclaration_IncrementalExecOp(
-    get_current_EnumDeclaration_IncrementalExecOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IncrementalMapState": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_IncrementalMapState():
-    TypeOnly<old.IncrementalMapState<any>>;
-declare function use_current_ClassDeclaration_IncrementalMapState(
-    use: TypeOnly<current.IncrementalMapState<any>>);
-use_current_ClassDeclaration_IncrementalMapState(
-    get_old_ClassDeclaration_IncrementalMapState());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IncrementalMapState": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_IncrementalMapState():
-    TypeOnly<current.IncrementalMapState<any>>;
-declare function use_old_ClassDeclaration_IncrementalMapState(
-    use: TypeOnly<old.IncrementalMapState<any>>);
-use_old_ClassDeclaration_IncrementalMapState(
-    get_current_ClassDeclaration_IncrementalMapState());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentAction": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IncrementalSegmentAction():
-    TypeOnly<old.IncrementalSegmentAction<any>>;
-declare function use_current_InterfaceDeclaration_IncrementalSegmentAction(
-    use: TypeOnly<current.IncrementalSegmentAction<any>>);
-use_current_InterfaceDeclaration_IncrementalSegmentAction(
-    get_old_InterfaceDeclaration_IncrementalSegmentAction());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentAction": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IncrementalSegmentAction():
-    TypeOnly<current.IncrementalSegmentAction<any>>;
-declare function use_old_InterfaceDeclaration_IncrementalSegmentAction(
-    use: TypeOnly<old.IncrementalSegmentAction<any>>);
-use_old_InterfaceDeclaration_IncrementalSegmentAction(
-    get_current_InterfaceDeclaration_IncrementalSegmentAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentActions": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IncrementalSegmentActions():
-    TypeOnly<old.IncrementalSegmentActions<any>>;
-declare function use_current_InterfaceDeclaration_IncrementalSegmentActions(
-    use: TypeOnly<current.IncrementalSegmentActions<any>>);
-use_current_InterfaceDeclaration_IncrementalSegmentActions(
-    get_old_InterfaceDeclaration_IncrementalSegmentActions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentActions": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IncrementalSegmentActions():
-    TypeOnly<current.IncrementalSegmentActions<any>>;
-declare function use_old_InterfaceDeclaration_IncrementalSegmentActions(
-    use: TypeOnly<old.IncrementalSegmentActions<any>>);
-use_old_InterfaceDeclaration_IncrementalSegmentActions(
-    get_current_InterfaceDeclaration_IncrementalSegmentActions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_InsertContext": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_InsertContext():
-    TypeOnly<old.InsertContext>;
-declare function use_current_InterfaceDeclaration_InsertContext(
-    use: TypeOnly<current.InsertContext>);
-use_current_InterfaceDeclaration_InsertContext(
-    get_old_InterfaceDeclaration_InsertContext());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_InsertContext": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_InsertContext():
-    TypeOnly<current.InsertContext>;
-declare function use_old_InterfaceDeclaration_InsertContext(
-    use: TypeOnly<old.InsertContext>);
-use_old_InterfaceDeclaration_InsertContext(
-    get_current_InterfaceDeclaration_InsertContext());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1452,54 +1165,6 @@ declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
     get_current_ClassDeclaration_Marker());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_MaxNodesInBlock": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_MaxNodesInBlock():
-    TypeOnly<typeof old.MaxNodesInBlock>;
-declare function use_current_VariableDeclaration_MaxNodesInBlock(
-    use: TypeOnly<typeof current.MaxNodesInBlock>);
-use_current_VariableDeclaration_MaxNodesInBlock(
-    get_old_VariableDeclaration_MaxNodesInBlock());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_MaxNodesInBlock": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_MaxNodesInBlock():
-    TypeOnly<typeof current.MaxNodesInBlock>;
-declare function use_old_VariableDeclaration_MaxNodesInBlock(
-    use: TypeOnly<typeof old.MaxNodesInBlock>);
-use_old_VariableDeclaration_MaxNodesInBlock(
-    get_current_VariableDeclaration_MaxNodesInBlock());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MergeBlock": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_MergeBlock():
-    TypeOnly<old.MergeBlock>;
-declare function use_current_ClassDeclaration_MergeBlock(
-    use: TypeOnly<current.MergeBlock>);
-use_current_ClassDeclaration_MergeBlock(
-    get_old_ClassDeclaration_MergeBlock());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MergeBlock": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_MergeBlock():
-    TypeOnly<current.MergeBlock>;
-declare function use_old_ClassDeclaration_MergeBlock(
-    use: TypeOnly<old.MergeBlock>);
-use_old_ClassDeclaration_MergeBlock(
-    get_current_ClassDeclaration_MergeBlock());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1764,54 +1429,6 @@ declare function use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
     use: TypeOnly<old.MergeTreeRevertibleDriver>);
 use_old_InterfaceDeclaration_MergeTreeRevertibleDriver(
     get_current_InterfaceDeclaration_MergeTreeRevertibleDriver());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_MinListener": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_MinListener():
-    TypeOnly<old.MinListener>;
-declare function use_current_InterfaceDeclaration_MinListener(
-    use: TypeOnly<current.MinListener>);
-use_current_InterfaceDeclaration_MinListener(
-    get_old_InterfaceDeclaration_MinListener());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_MinListener": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_MinListener():
-    TypeOnly<current.MinListener>;
-declare function use_old_InterfaceDeclaration_MinListener(
-    use: TypeOnly<old.MinListener>);
-use_old_InterfaceDeclaration_MinListener(
-    get_current_InterfaceDeclaration_MinListener());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_NodeAction": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_NodeAction():
-    TypeOnly<old.NodeAction<any>>;
-declare function use_current_InterfaceDeclaration_NodeAction(
-    use: TypeOnly<current.NodeAction<any>>);
-use_current_InterfaceDeclaration_NodeAction(
-    get_old_InterfaceDeclaration_NodeAction());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_NodeAction": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_NodeAction():
-    TypeOnly<current.NodeAction<any>>;
-declare function use_old_InterfaceDeclaration_NodeAction(
-    use: TypeOnly<old.NodeAction<any>>);
-use_old_InterfaceDeclaration_NodeAction(
-    get_current_InterfaceDeclaration_NodeAction());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2176,30 +1793,6 @@ use_old_EnumDeclaration_ReferenceType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SearchResult": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_SearchResult():
-    TypeOnly<old.SearchResult>;
-declare function use_current_InterfaceDeclaration_SearchResult(
-    use: TypeOnly<current.SearchResult>);
-use_current_InterfaceDeclaration_SearchResult(
-    get_old_InterfaceDeclaration_SearchResult());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SearchResult": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_SearchResult():
-    TypeOnly<current.SearchResult>;
-declare function use_old_InterfaceDeclaration_SearchResult(
-    use: TypeOnly<old.SearchResult>);
-use_old_InterfaceDeclaration_SearchResult(
-    get_current_InterfaceDeclaration_SearchResult());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_SegmentAccumulator": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_SegmentAccumulator():
@@ -2220,30 +1813,6 @@ declare function use_old_InterfaceDeclaration_SegmentAccumulator(
     use: TypeOnly<old.SegmentAccumulator>);
 use_old_InterfaceDeclaration_SegmentAccumulator(
     get_current_InterfaceDeclaration_SegmentAccumulator());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SegmentActions": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_SegmentActions():
-    TypeOnly<old.SegmentActions<any>>;
-declare function use_current_InterfaceDeclaration_SegmentActions(
-    use: TypeOnly<current.SegmentActions<any>>);
-use_current_InterfaceDeclaration_SegmentActions(
-    get_old_InterfaceDeclaration_SegmentActions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SegmentActions": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_SegmentActions():
-    TypeOnly<current.SegmentActions<any>>;
-declare function use_old_InterfaceDeclaration_SegmentActions(
-    use: TypeOnly<old.SegmentActions<any>>);
-use_old_InterfaceDeclaration_SegmentActions(
-    get_current_InterfaceDeclaration_SegmentActions());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -3160,6 +2729,30 @@ use_old_FunctionDeclaration_extendIfUndefined(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getSlideToSegoff": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getSlideToSegoff():
+    TypeOnly<typeof old.getSlideToSegoff>;
+declare function use_current_FunctionDeclaration_getSlideToSegoff(
+    use: TypeOnly<typeof current.getSlideToSegoff>);
+use_current_FunctionDeclaration_getSlideToSegoff(
+    get_old_FunctionDeclaration_getSlideToSegoff());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getSlideToSegoff": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getSlideToSegoff():
+    TypeOnly<typeof current.getSlideToSegoff>;
+declare function use_old_FunctionDeclaration_getSlideToSegoff(
+    use: TypeOnly<typeof old.getSlideToSegoff>);
+use_old_FunctionDeclaration_getSlideToSegoff(
+    get_current_FunctionDeclaration_getSlideToSegoff());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_internedSpaces": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_internedSpaces():
@@ -3276,30 +2869,6 @@ declare function use_old_FunctionDeclaration_minReferencePosition(
     use: TypeOnly<typeof old.minReferencePosition>);
 use_old_FunctionDeclaration_minReferencePosition(
     get_current_FunctionDeclaration_minReferencePosition());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_ordinalToArray": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_ordinalToArray():
-    TypeOnly<typeof old.ordinalToArray>;
-declare function use_current_FunctionDeclaration_ordinalToArray(
-    use: TypeOnly<typeof current.ordinalToArray>);
-use_current_FunctionDeclaration_ordinalToArray(
-    get_old_FunctionDeclaration_ordinalToArray());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_ordinalToArray": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_ordinalToArray():
-    TypeOnly<typeof current.ordinalToArray>;
-declare function use_old_FunctionDeclaration_ordinalToArray(
-    use: TypeOnly<typeof old.ordinalToArray>);
-use_old_FunctionDeclaration_ordinalToArray(
-    get_current_FunctionDeclaration_ordinalToArray());
 
 /*
 * Validate forward compat by using old type in place of current type

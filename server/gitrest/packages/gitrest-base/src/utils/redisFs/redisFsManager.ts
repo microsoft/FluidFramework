@@ -237,17 +237,34 @@ export class RedisFs implements IFileSystemPromises {
 		options?: Mode | MakeDirectoryOptions | null,
 	): Promise<undefined | string | void> {
 		const folderpathString = folderpath.toString();
+		const recursive = options && typeof options === "object" && options.recursive;
 
-		await executeRedisFsApi(
-			async () => this.redisFsClient.set(folderpathString, RedisFSConstants.Folder),
-			RedisFsApis.Mkdir,
-			RedisFSConstants.RedisFsApi,
-			this.redisFsConfig.enableRedisFsMetrics,
-			this.redisFsConfig.redisApiMetricsSamplingPeriod,
-			{
-				folderpathString,
-			},
-		);
+		if (recursive) {
+			const folderSeparator = "/";
+			const subfolders = folderpathString.split(folderSeparator);
+
+			for (let i = 1; i <= subfolders.length; i++) {
+				const currentPath = subfolders.slice(0, i).join(folderSeparator);
+				await setDirPath(currentPath, this.redisFsClient, this.redisFsConfig);
+			}
+		} else {
+			await setDirPath(folderpathString, this.redisFsClient, this.redisFsConfig);
+		}
+
+		async function setDirPath(
+			path: string,
+			redisFsClient: Redis,
+			redisFsConfig: RedisFsConfig,
+		): Promise<void> {
+			await executeRedisFsApi(
+				async (): Promise<void> => redisFsClient.set(path, ""),
+				RedisFsApis.Mkdir,
+				RedisFSConstants.RedisFsApi,
+				redisFsConfig.enableRedisFsMetrics,
+				redisFsConfig.redisApiMetricsSamplingPeriod,
+				{ folderpathString: path },
+			);
+		}
 	}
 
 	/**
@@ -261,7 +278,7 @@ export class RedisFs implements IFileSystemPromises {
 
 		const keysToRemove = await executeRedisFsApi(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
-			RedisFsApis.Rmdir,
+			RedisFsApis.KeysByPrefix,
 			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
@@ -270,8 +287,21 @@ export class RedisFs implements IFileSystemPromises {
 			},
 		);
 
-		keysToRemove.forEach((key) => {
-			void this.redisFsClient.delete(key);
+		const deleteP = keysToRemove.map(async (key) => {
+			return executeRedisFsApi(
+				async () => this.redisFsClient.delete(key, false),
+				RedisFsApis.Rmdir,
+				RedisFSConstants.RedisFsApi,
+				this.redisFsConfig.enableRedisFsMetrics,
+				this.redisFsConfig.redisApiMetricsSamplingPeriod,
+				{
+					key,
+				},
+			);
+		});
+
+		await Promise.all(deleteP).catch((error) => {
+			Lumberjack.error("An error occurred while deleting keys", null, error);
 		});
 	}
 
@@ -312,10 +342,13 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (!data) {
+		if (data === null) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
-		return getStats();
+
+		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+
+		return getStats(fsEntityType);
 	}
 
 	/**
@@ -330,6 +363,10 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	public async rm(filepath: PathLike, options?: RmOptions): Promise<void> {
 		const filepathString = filepath.toString();
+		if (options?.recursive) {
+			return this.rmdir(filepath);
+		}
+
 		await executeRedisFsApi(
 			async () => this.redisFsClient.delete(filepathString),
 			RedisFsApis.Removefile,
@@ -432,10 +469,12 @@ enum RedisFsApis {
 	Stat = "Stat",
 	Mkdir = "Mkdir",
 	Rmdir = "Rmdir",
+	KeysByPrefix = "keysByPrefix",
 }
 
 enum RedisFSConstants {
-	Folder = "Folder",
+	file = "file",
+	directory = "directory",
 	RedisFsApi = "RedisFsApi",
 }
 

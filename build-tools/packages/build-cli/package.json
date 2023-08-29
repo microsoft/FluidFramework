@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.22.0",
+	"version": "0.23.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -43,7 +43,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "nyc npm run test:mocha:report",
 		"tsc": "tsc"
@@ -93,7 +93,9 @@
 		"inquirer": "^8.2.5",
 		"jssm": "^5.89.2",
 		"jssm-viz-cli": "^5.89.2",
+		"latest-version": "^5.1.0",
 		"minimatch": "^7.4.6",
+		"node-fetch": "^2.6.9",
 		"npm-check-updates": "^16.10.15",
 		"oclif": "^3.9.1",
 		"prettier": "~2.6.2",
@@ -120,6 +122,8 @@
 		"@types/inquirer": "^8.2.6",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.53",
+		"@types/node-fetch": "^2.5.10",
+		"@types/prettier": "^2.7.3",
 		"@types/prompts": "^2.4.4",
 		"@types/semver": "^7.5.0",
 		"@types/semver-utils": "^1.1.1",
@@ -141,7 +145,7 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"engines": {
 		"node": ">=14.17.0"
@@ -183,6 +187,7 @@
 	"pnpm": {
 		"updateConfig": {
 			"ignoreDependencies": [
+				"latest-version",
 				"read-pkg-up",
 				"type-fest",
 				"typescript"

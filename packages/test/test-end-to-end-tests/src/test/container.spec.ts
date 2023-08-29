@@ -8,8 +8,8 @@ import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IPendingLocalState,
 	ContainerErrorType,
+	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
 	LoaderHeader,
@@ -26,7 +26,7 @@ import {
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-	IFluidResolvedUrl,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	LocalCodeLoader,
@@ -48,10 +48,13 @@ import {
 	itExpects,
 } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	DataCorruptionError,
+	IConfigProviderBase,
+} from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { DataCorruptionError } from "@fluidframework/container-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -123,6 +126,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		"Load container unsuccessfully",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -335,12 +339,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
 			testContainerConfig,
 		);
-
-		const pendingLocalState: IPendingLocalState = JSON.parse(
-			container.closeAndGetPendingLocalState(),
-		);
+		const pendingString = await container.closeAndGetPendingLocalState?.();
+		assert.ok(pendingString);
+		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
+		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IResolvedUrl).url);
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {

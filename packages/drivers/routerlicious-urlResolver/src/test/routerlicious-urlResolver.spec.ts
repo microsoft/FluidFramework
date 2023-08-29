@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { Provider } from "nconf";
 import { RouterliciousUrlResolver } from "../urlResolver";
@@ -20,7 +20,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		const url: string =
 			"https://www.wu2.prague.office-int.com/loader/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146";
-		const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
+		const resolved = (await urlResolver.resolve({ url })) as IResolvedUrl;
 		assert.equal(resolved.tokens.jwt, token, "Token does not match");
 		assert.equal(
 			resolved.endpoints.storageUrl,
@@ -52,7 +52,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		const url: string =
 			"http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
-		const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
+		const resolved = (await urlResolver.resolve({ url })) as IResolvedUrl;
 		assert.equal(resolved.tokens.jwt, token, "Token does not match");
 		assert.equal(
 			resolved.endpoints.storageUrl,
@@ -104,7 +104,7 @@ describe("Routerlicious Url Resolver", () => {
 			hostUrl,
 		);
 
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -151,7 +151,7 @@ describe("Routerlicious Url Resolver", () => {
 			async () => Promise.resolve(token),
 			hostUrl,
 		);
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -197,7 +197,7 @@ describe("Routerlicious Url Resolver", () => {
 			async () => Promise.resolve(token),
 			hostUrl,
 		);
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -248,7 +248,7 @@ describe("Routerlicious Url Resolver", () => {
 			async () => Promise.resolve(token),
 			hostUrl,
 		);
-		const { endpoints, url } = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+		const { endpoints, url } = (await urlResolver.resolve(request)) as IResolvedUrl;
 
 		assert.equal(
 			endpoints.storageUrl,
@@ -280,7 +280,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		const url: string =
 			"http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
-		const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
+		const resolved = (await urlResolver.resolve({ url })) as IResolvedUrl;
 		const absoluteUrl = await urlResolver.getAbsoluteUrl(resolved, "relative");
 		assert.strictEqual(
 			absoluteUrl,

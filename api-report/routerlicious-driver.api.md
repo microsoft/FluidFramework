@@ -34,13 +34,13 @@ export class DocumentPostCreateError extends Error {
 // @public (undocumented)
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
-    enableDiscovery?: boolean;
+    enableDiscovery: boolean;
     enableInternalSummaryCaching: boolean;
     enableLongPollingDowngrade: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer?: boolean;
+    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
 }

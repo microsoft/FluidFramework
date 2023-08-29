@@ -6,20 +6,23 @@
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
+	IContainerRuntimeMessageCompatDetails,
+	CompatModeBehavior,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	IRootSummaryTreeWithStats,
 	isRuntimeMessage,
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
 	RuntimeHeaders,
 	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
+	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
@@ -69,6 +72,8 @@ export {
 	ICancellableSummarizerController,
 	SubmitSummaryFailureData,
 	SummaryStage,
+	IRetriableFailureResult,
+	ISummarizeEventProps,
 } from "./summary";
+export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
-export { generateStableId, isStableId, assertIsStableId } from "./id-compressor";

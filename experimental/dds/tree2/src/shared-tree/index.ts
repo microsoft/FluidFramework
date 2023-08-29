@@ -9,8 +9,14 @@ export {
 	createSharedTreeView,
 	ISharedTreeView,
 	runSynchronous,
-	SharedTreeView,
 	ViewEvents,
+	ITransaction,
+	ISharedTreeBranchView,
 } from "./sharedTreeView";
 
-export { SchematizeConfiguration } from "./schematizedTree";
+export {
+	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
+} from "./schematizedTree";

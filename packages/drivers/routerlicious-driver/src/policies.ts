@@ -36,7 +36,7 @@ export interface IRouterliciousDriverPolicies {
 	 * Enable service endpoint discovery when creating or joining a session.
 	 * Default: false
 	 */
-	enableDiscovery?: boolean;
+	enableDiscovery: boolean;
 	/**
 	 * Enable using RestLess which avoids CORS preflight requests.
 	 * Default: true
@@ -59,5 +59,5 @@ export interface IRouterliciousDriverPolicies {
 	 * Artifacts relates to the container are limited to container lifetime.
 	 * Default: false
 	 */
-	isEphemeralContainer?: boolean;
+	isEphemeralContainer: boolean;
 }

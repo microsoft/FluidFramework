@@ -408,6 +408,8 @@ export class ScribeLambda implements IPartitionLambda {
 									ex,
 								);
 							} else {
+								// Throwing error here leads to document being marked as corrupt in document partition
+								this.isDocumentCorrupt = true;
 								throw ex;
 							}
 						}
@@ -598,15 +600,28 @@ export class ScribeLambda implements IPartitionLambda {
 			this.pendingCheckpointOffset = queuedMessage;
 			return;
 		}
-
+		let databaseCheckpointFailed = false;
 		this.pendingP = clearCache
 			? this.checkpointManager.delete(this.protocolHead, true)
-			: this.writeCheckpoint(checkpoint);
+			: this.writeCheckpoint(checkpoint).catch((error) => {
+					databaseCheckpointFailed = true;
+					Lumberjack.error(
+						`Error writing database checkpoint.`,
+						getLumberBaseProperties(this.documentId, this.tenantId),
+						error,
+					);
+			  });
 		this.pendingP
 			.then(() => {
 				this.pendingP = undefined;
-				if (!skipKafkaCheckpoint) {
+				if (!skipKafkaCheckpoint && !databaseCheckpointFailed) {
 					this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
+				} else if (databaseCheckpointFailed) {
+					Lumberjack.info(
+						`Skipping kafka checkpoint due to database checkpoint failure.`,
+						getLumberBaseProperties(this.documentId, this.tenantId),
+					);
+					databaseCheckpointFailed = false;
 				}
 				const pendingScribe = this.pendingCheckpointScribe;
 				const pendingOffset = this.pendingCheckpointOffset;
@@ -806,7 +821,10 @@ export class ScribeLambda implements IPartitionLambda {
 
 			// verify that the current scribe message matches the message that started this timer
 			// same implementation as in Deli
-			if (initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
+			if (
+				initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage &&
+				!this.isDocumentCorrupt
+			) {
 				this.checkpoint(CheckpointReason.IdleTime);
 				if (initialScribeCheckpointMessage) {
 					this.checkpointCore(

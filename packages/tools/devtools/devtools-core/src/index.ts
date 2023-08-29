@@ -22,11 +22,20 @@
  */
 
 export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
-export { ContainerKey, FluidObjectId, HasContainerKey, HasFluidObjectId } from "./CommonInterfaces";
+export {
+	ContainerKey,
+	EditType,
+	FluidObjectId,
+	HasContainerKey,
+	HasFluidObjectId,
+} from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerStateMetadata } from "./ContainerMetadata";
 export {
+	Edit,
+	EditData,
+	EditSharedObject,
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -35,6 +44,7 @@ export {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
+	SharedObjectEdit,
 	TreeNodeBase,
 	ValueNodeBase,
 	VisualChildNode,
@@ -45,12 +55,7 @@ export {
 	VisualValueNode,
 	UnknownObjectNode,
 } from "./data-visualization";
-export {
-	ContainerDevtoolsFeature,
-	ContainerDevtoolsFeatureFlags,
-	DevtoolsFeature,
-	DevtoolsFeatureFlags,
-} from "./Features";
+export { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features";
 export { IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtoolsProps, initializeDevtools } from "./FluidDevtools";
@@ -68,6 +73,7 @@ export {
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
+	DataEdit,
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,

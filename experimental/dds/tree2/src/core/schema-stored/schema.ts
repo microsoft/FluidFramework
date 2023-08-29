@@ -71,16 +71,14 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
  * @alpha
  */
 export enum ValueSchema {
-	Nothing,
 	Number,
 	String,
 	Boolean,
 	/**
 	 * Any Fluid serializable data.
 	 *
-	 * This includes Nothing / undefined.
+	 * This does not include Nothing / undefined.
 	 *
-	 * If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset` would need adjusting.
 	 */
 	Serializable,
 }
@@ -180,19 +178,16 @@ export interface TreeStoredSchema {
 
 	/**
 	 * Constraint for fields not mentioned in `structFields`.
+	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this FieldStoredSchema.
 	 *
-	 * To forbid this map like usage, use {@link emptyField} here.
-	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
-	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
-	 * and can be useful in special cases (like a default stored schema when none is specified).
 	 */
-	readonly mapFields: FieldStoredSchema;
+	readonly mapFields?: FieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree
@@ -206,20 +201,8 @@ export interface TreeStoredSchema {
 	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
 	 * This is simply one approach that can work for modeling them in the internal schema representation.
 	 */
-	readonly value: ValueSchema;
+	readonly leafValue?: ValueSchema;
 }
-
-/**
- * @alpha
- */
-export interface Named<TName> {
-	readonly name: TName;
-}
-
-/**
- * @alpha
- */
-export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
 
 /**
  * View of schema data that can be stored in a document.

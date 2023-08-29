@@ -72,7 +72,10 @@ describe("Summary Manager", () => {
 	const summarizerClientId = "test";
 
 	// Fake objects
-	const summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
+	const summaryCollection = new SummaryCollection(
+		mockDeltaManager,
+		mockLogger.toTelemetryLogger(),
+	);
 	const throttler = {
 		delayMs: 0,
 		numAttempts: 0,

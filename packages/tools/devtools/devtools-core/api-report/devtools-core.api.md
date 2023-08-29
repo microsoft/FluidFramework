@@ -9,11 +9,13 @@ import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -68,14 +70,12 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 }
 
 // @internal
-export enum ContainerDevtoolsFeature {
-    ContainerData = "container-data"
+export interface ContainerDevtoolsFeatureFlags {
+    // @deprecated
+    "container-data"?: boolean;
+    "containerDataEditing"?: boolean;
+    "containerDataVisualization"?: boolean;
 }
-
-// @internal
-export type ContainerDevtoolsFeatureFlags = {
-    [Feature in ContainerDevtoolsFeature]?: boolean;
-};
 
 // @internal
 export namespace ContainerDevtoolsFeatures {
@@ -156,6 +156,18 @@ export interface ContainerStateMetadata extends HasContainerKey {
 }
 
 // @internal
+export namespace DataEdit {
+    const MessageType = "DATA_EDIT";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerKey {
+        edit: SharedObjectEdit;
+    }
+}
+
+// @internal
 export namespace DataVisualization {
     const MessageType = "DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
@@ -177,14 +189,10 @@ export namespace DevtoolsDisposed {
 }
 
 // @internal
-export enum DevtoolsFeature {
-    Telemetry = "telemetry"
+export interface DevtoolsFeatureFlags {
+    opLatencyTelemetry?: boolean;
+    telemetry?: boolean;
 }
-
-// @internal
-export type DevtoolsFeatureFlags = {
-    [Feature in DevtoolsFeature]?: boolean;
-};
 
 // @internal
 export namespace DevtoolsFeatures {
@@ -217,6 +225,30 @@ export namespace DisconnectContainer {
     }
     export type MessageData = HasContainerKey;
 }
+
+// @internal
+export interface Edit {
+    data: EditData;
+    type?: EditType | string;
+}
+
+// @internal
+export type EditData = Serializable<unknown> | null | undefined;
+
+// @internal
+export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
+
+// @internal
+export const EditType: {
+    readonly Boolean: "boolean";
+    readonly Number: "number";
+    readonly String: "string";
+    readonly Undefined: "undefined";
+    readonly Null: "null";
+};
+
+// @internal (undocumented)
+export type EditType = typeof EditType[keyof typeof EditType];
 
 // @public
 export interface FluidDevtoolsProps {
@@ -428,6 +460,10 @@ export namespace RootDataVisualizations {
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @internal
+export interface SharedObjectEdit extends Edit, HasFluidObjectId {
+}
+
+// @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }
@@ -479,6 +515,9 @@ export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | Fl
 
 // @internal
 export interface VisualNodeBase {
+    editProps?: {
+        editTypes?: EditType[];
+    };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
     typeMetadata?: string;

@@ -17,6 +17,7 @@ historian:
   cert: historian_cert
   ingressClass: ingress_class
   riddler: riddler_url
+  ignoreEphemeralFlag: true
   storageUrl: historian_storage_url
   error:
     track: true
@@ -42,9 +43,11 @@ gitrest:
     accessMode: ReadWriteOnce
   git:
     lib:
-      name: nodegit
+      name: isomorphic-git
     filesystem:
       name: nodeFs
+    ephemeralfilesystem:
+      name: redisFs
     persistLatestFullSummary: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false

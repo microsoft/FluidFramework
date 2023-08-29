@@ -113,7 +113,7 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
-    flush?(): void;
+    flush(): void;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -122,7 +122,7 @@ export class MockContainerRuntime {
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
-    rebase?(): void;
+    rebase(): void;
     protected get referenceSequenceNumber(): number;
     protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
@@ -380,6 +380,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     constructor(overrides?: {
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
+        id?: string;
+        logger?: ITelemetryLoggerExt;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -408,7 +410,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     createChannel(id: string, type: string): IChannel;
     // (undocumented)
-    createDeltaConnection?(): MockDeltaConnection;
+    createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     deltaManager: MockDeltaManager;
     // (undocumented)
@@ -441,7 +443,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
@@ -466,7 +468,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorumClients;
-    // (undocumented)
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;

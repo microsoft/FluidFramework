@@ -5,7 +5,6 @@
 
 import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	generateStack,
 	ITelemetryLoggerExt,
@@ -211,7 +210,7 @@ export class GCTelemetryTracker {
 				const { id: taggedId, fromId: taggedFromId, ...otherProps } = eventProps;
 				const event = {
 					eventName: `${state}Object_${nodeUsageProps.usageType}`,
-					pkg: packagePathToTelemetryProperty(nodeUsageProps.packagePath),
+					pkg: tagCodeArtifacts({ pkg: nodeUsageProps.packagePath?.join("/") }).pkg,
 					stack: generateStack(),
 					id: taggedId,
 					fromId: taggedFromId,

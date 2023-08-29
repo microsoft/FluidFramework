@@ -27,7 +27,7 @@ import {
 	ValueSchema,
 } from "../core";
 import { brand } from "../util";
-import { expectEqualPaths } from "./utils";
+import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
 const schemaBuilder = new SchemaBuilder("Cursor Test Suite");
 const leaf = schemaBuilder.leaf("Leaf", ValueSchema.Serializable);
@@ -35,6 +35,10 @@ export const emptySchema = schemaBuilder.struct("Empty Struct", {});
 const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
 const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
 export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.fieldSequence(Any));
+// Struct with fixed shape
+export const structSchema = schemaBuilder.struct("struct", {
+	child: SchemaBuilder.fieldValue(leaf),
+});
 
 export const testTreeSchema = schemaBuilder.intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
 
@@ -101,11 +105,66 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 			fields: {
 				X: [
 					{
-						type: emptySchema.name,
+						type: mapSchema.name,
 						// Inner node so that when navigating up from it,
 						// The cursor's siblings value needs to be restored.
 						fields: { q: [{ type: emptySchema2.name }] },
 					},
+					{ type: emptySchema3.name },
+				],
+			},
+		},
+	],
+	[
+		"fixed shape struct",
+		{
+			type: structSchema.name,
+			fields: {
+				child: [
+					{
+						type: leaf.name,
+						value: 1,
+					},
+				],
+			},
+		},
+	],
+	[
+		"nested struct",
+		{
+			type: mapSchema.name,
+			fields: {
+				X: [
+					{ type: emptySchema2.name },
+					{
+						type: structSchema.name,
+						fields: {
+							child: [
+								{
+									type: leaf.name,
+									value: 1,
+								},
+							],
+						},
+					},
+					{ type: emptySchema3.name },
+				],
+			},
+		},
+	],
+	[
+		"longer sequence",
+		{
+			type: mapSchema.name,
+			fields: {
+				X: [
+					{ type: emptySchema3.name },
+					{ type: emptySchema3.name },
+					{ type: emptySchema2.name },
+					{ type: emptySchema3.name },
+					{ type: emptySchema3.name },
+					{ type: emptySchema3.name },
+					{ type: leaf.name, value: 1 },
 					{ type: emptySchema3.name },
 				],
 			},
@@ -434,7 +493,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 					const cursor = factory({
 						type: emptySchema.name,
 					});
-					assert.deepEqual(cursor.getPath(), parent);
+					expectEqualPaths(cursor.getPath(), parent);
 				});
 
 				it("getFieldPath in root field", () => {
@@ -442,9 +501,9 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						type: emptySchema.name,
 					});
 					cursor.enterField(brand("key"));
-					assert.deepEqual(cursor.getFieldPath(), {
+					expectEqualFieldPaths(cursor.getFieldPath(), {
 						parent,
-						field: "key",
+						field: brand("key"),
 					});
 				});
 
@@ -455,7 +514,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 					});
 					cursor.enterField(brand("key"));
 					cursor.firstNode();
-					assert.deepEqual(cursor.getPath(), {
+					expectEqualPaths(cursor.getPath(), {
 						parent,
 						parentField: brand<FieldKey>("key"),
 						parentIndex: 0,
@@ -474,7 +533,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 					});
 					cursor.enterField(brand("key"));
 					cursor.enterNode(1);
-					assert.deepEqual(cursor.getPath(), {
+					expectEqualPaths(cursor.getPath(), {
 						parent,
 						parentField: brand<FieldKey>("key"),
 						parentIndex: 1,
@@ -500,17 +559,17 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 					cursor.enterField(brand("a"));
 					cursor.enterNode(1);
 					cursor.enterField(EmptyKey);
-					const initialPath = {
+					const initialPath: UpPath = {
 						parent,
-						parentField: "a",
+						parentField: brand("a"),
 						parentIndex: 1,
 					};
-					assert.deepEqual(cursor.getFieldPath(), {
+					expectEqualFieldPaths(cursor.getFieldPath(), {
 						parent: initialPath,
 						field: EmptyKey,
 					});
 					cursor.enterNode(0);
-					assert.deepEqual(cursor.getPath(), {
+					expectEqualPaths(cursor.getPath(), {
 						parent: initialPath,
 						parentField: EmptyKey,
 						parentIndex: 0,
