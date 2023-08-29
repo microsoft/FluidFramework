@@ -99,7 +99,7 @@ export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorT
  * Driver Error types
  * Lists types that are likely to be used by all drivers
  *
- * @deprecated Use {@link DriverErrorTypes} instead.
+ * @deprecated Use {@link (DriverErrorTypes:type)} instead.
  */
 export enum DriverErrorType {
 	/**
