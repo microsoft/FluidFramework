@@ -3818,9 +3818,9 @@ export class ContainerRuntime
 			},
 		);
 
-		// We choose to close the summarizer after the snapshot cache is updated to avoid
-		// situations which the main client (which is likely to be re-elected as the leader again)
-		// loads the summarizer from cache.
+		// We wait to close the summarizer until after the snapshot cache is updated.
+		// It's likely that this client will be re-elected as leader, in which case
+		// it will have the latest snapshot available in the cache (not the stale one it used this time)
 		this.mc.logger.sendTelemetryEvent(
 			{
 				...event,
