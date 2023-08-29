@@ -37,6 +37,7 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
@@ -769,6 +770,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -1074,7 +1076,7 @@ export class ContainerRuntime
 	private readonly validateSummaryBeforeUpload: boolean;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private _perfSignalData: IPerfSignalReport = {
+	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
@@ -3869,27 +3871,41 @@ export class ContainerRuntime
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;
 	}): Promise<unknown> {
-		this.verifyNotClosed();
-		const waitBlobsToAttach = props?.notifyImminentClosure;
-		if (this._orderSequentiallyCalls !== 0) {
-			throw new UsageError("can't get state during orderSequentially");
-		}
-		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props?.notifyImminentClosure,
+			},
+			async (event) => {
+				this.verifyNotClosed();
+				const waitBlobsToAttach = props?.notifyImminentClosure;
+				if (this._orderSequentiallyCalls !== 0) {
+					throw new UsageError("can't get state during orderSequentially");
+				}
+				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
+					waitBlobsToAttach,
+				);
+				const pending = this.pendingStateManager.getLocalState();
+				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+					return; // no pending state to save
+				}
+				// Flush pending batch.
+				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+				// to close current batch.
+				this.flush();
 
-		if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-			return; // no pending state to save
-		}
-
-		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-		// to close current batch.
-		this.flush();
-
-		const pendingState: IPendingRuntimeState = {
-			pending: this.pendingStateManager.getLocalState(),
-			pendingAttachmentBlobs,
-		};
-		return pendingState;
+				const pendingState: IPendingRuntimeState = {
+					pending,
+					pendingAttachmentBlobs,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pending?.pendingStates.length,
+				});
+				return pendingState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

@@ -1105,39 +1105,50 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
-		if (!this.offlineLoadEnabled) {
-			throw new UsageError("Can't get pending local state unless offline load is enabled");
-		}
-		if (this.closed || this._disposed) {
-			throw new UsageError(
-				"Pending state cannot be retried if the container is closed or disposed",
-			);
-		}
-		assert(
-			this.attachState === AttachState.Attached,
-			0x0d1 /* "Container should be attached before close" */,
-		);
-		assert(
-			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			0x0d2 /* "resolved url should be valid Fluid url" */,
-		);
-		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
-		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
-		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-		const pendingState: IPendingContainerState = {
-			pendingRuntimeState,
-			baseSnapshot: this.baseSnapshot,
-			snapshotBlobs: this.baseSnapshotBlobs,
-			savedOps: this.savedOps,
-			url: this.resolvedUrl.url,
-			term: OnlyValidTermValue,
-			// no need to save this if there is no pending runtime state
-			clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
-		};
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props.notifyImminentClosure,
+				savedOpsSize: this.savedOps.length,
+				clientId: this.clientId,
+			},
+			async () => {
+				if (!this.offlineLoadEnabled) {
+					throw new UsageError(
+						"Can't get pending local state unless offline load is enabled",
+					);
+				}
+				if (this.closed || this._disposed) {
+					throw new UsageError(
+						"Pending state cannot be retried if the container is closed or disposed",
+					);
+				}
+				assert(
+					this.attachState === AttachState.Attached,
+					0x0d1 /* "Container should be attached before close" */,
+				);
+				assert(
+					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+					0x0d2 /* "resolved url should be valid Fluid url" */,
+				);
+				assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+				assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+				const pendingState: IPendingContainerState = {
+					pendingRuntimeState,
+					baseSnapshot: this.baseSnapshot,
+					snapshotBlobs: this.baseSnapshotBlobs,
+					savedOps: this.savedOps,
+					url: this.resolvedUrl.url,
+					term: OnlyValidTermValue,
+					// no need to save this if there is no pending runtime state
+					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+				};
 
-		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
-
-		return JSON.stringify(pendingState);
+				return JSON.stringify(pendingState);
+			},
+		);
 	}
 
 	public get attachState(): AttachState {

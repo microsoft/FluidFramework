@@ -48,7 +48,7 @@ export function initializeForest(
 	forest: IEditableForest,
 	content: readonly ITreeCursorSynchronous[],
 ): void {
-	assert(forest.isEmpty, "forest must be empty");
+	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
 	forest.applyDelta(new Map([[rootFieldKey, [insert]]]));
 }
