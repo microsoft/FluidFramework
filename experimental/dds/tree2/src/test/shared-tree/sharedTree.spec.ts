@@ -25,6 +25,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	jsonSequenceRootSchema,
 	namedTreeSchema,
 } from "../utils";
 import {
@@ -1259,7 +1260,11 @@ describe("SharedTree", () => {
 
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a");
+			provider.trees[0].schematize({
+				initialTree: ["a"],
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			});
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
