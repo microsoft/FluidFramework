@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/shared-object-base",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Fluid base class for shared distributed data structures",
   "homepage": "https://fluidframework.com",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/cell",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Distributed data structure for a single value",
   "homepage": "https://fluidframework.com",
   "repository": {

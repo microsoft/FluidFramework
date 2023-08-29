@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-query-service",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "private": true,
   "description": "Moira service",
   "homepage": "https://fluidframework.com",

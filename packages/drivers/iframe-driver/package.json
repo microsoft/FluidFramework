@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/iframe-driver",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Connection Fluid service API that crosses iframe boundary",
   "homepage": "https://fluidframework.com",
   "repository": {

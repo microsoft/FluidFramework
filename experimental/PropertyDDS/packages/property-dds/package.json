@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-dds",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "definition of the property distributed data store",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -31,7 +31,7 @@
     "test": "npm run test:mocha",
     "test:mocha": "mocha \"dist/**/*.spec.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha-ts": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=\"./src/test/tsconfig.json\" mocha --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --timeout 1500000",
-	"test:mocha-ts-inspect": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=\"./src/test/tsconfig.json\" mocha --inspect-brk --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --timeout 1500000",
+    "test:mocha-ts-inspect": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=\"./src/test/tsconfig.json\" mocha --inspect-brk --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --timeout 1500000",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc"
   },
