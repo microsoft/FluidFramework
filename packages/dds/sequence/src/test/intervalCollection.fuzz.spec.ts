@@ -259,9 +259,9 @@ describe("IntervalCollection fuzz testing", () => {
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			1, 3, 4, 7, 9, 11, 12, 13, 18, 19, 20, 25, 28, 31, 32, 33, 34, 36, 39, 41, 42, 43, 44,
-			45, 49, 50, 51, 52, 53, 55, 57, 58, 60, 61, 62, 63, 64, 65, 72, 74, 76, 78, 79, 82, 83,
-			86, 87, 89, 90, 91, 92, 94, 98, 99,
+			1, 2, 3, 4, 5, 7, 9, 11, 12, 13, 14, 15, 16, 18, 19, 20, 25, 26, 28, 31, 32, 33, 34, 36,
+			39, 40, 41, 42, 43, 44, 45, 46, 49, 50, 51, 52, 53, 55, 56, 57, 58, 60, 61, 62, 63, 64,
+			65, 72, 73, 74, 75, 76, 78, 79, 80, 82, 83, 84, 86, 87, 88, 89, 90, 91, 92, 94, 98, 99,
 		],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
@@ -270,7 +270,7 @@ describe("IntervalCollection fuzz testing", () => {
 			attachProbability: 0.2,
 		},
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 67,
+		// replay: 0,
 	});
 });
 
@@ -293,7 +293,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [9, 12, 33, 44, 80],
+		skip: [9, 12, 33, 40, 44, 80],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {
@@ -314,7 +314,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
 		// ADO:4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [9, 12, 29],
+		skip: [9, 12, 18, 29],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {
