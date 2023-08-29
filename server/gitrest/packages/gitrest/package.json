@@ -51,7 +51,7 @@
 		"@types/lorem-ipsum": "^1.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",

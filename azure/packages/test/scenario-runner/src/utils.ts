@@ -6,6 +6,7 @@ import child_process from "child_process";
 import commander from "commander";
 import {
 	AzureClient,
+	// eslint-disable-next-line import/no-deprecated
 	AzureFunctionTokenProvider,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
@@ -63,7 +64,9 @@ export function createAzureTokenProvider(
 	fnUrl: string,
 	userID?: string,
 	userName?: string,
+	// eslint-disable-next-line import/no-deprecated
 ): AzureFunctionTokenProvider {
+	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
 		userId: userID ?? "foo",
 		userName: userName ?? "bar",
