@@ -104,6 +104,7 @@ export const after = (
 		options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
 		if (options.mode !== "tinylicious") {
 			options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
+
 			options.enableWholeSummaryUpload =
 				options.enableWholeSummaryUpload ??
 				config.get("fluid:webpack:enableWholeSummaryUpload") ??
@@ -111,12 +112,22 @@ export const after = (
 			if (typeof options.enableWholeSummaryUpload === "string") {
 				options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
 			}
+
+			options.isEphemeralContainer =
+				options.isEphemeralContainer ??
+				config.get("fluid:webpack:isEphemeralContainer") ??
+				false;
+			if (typeof options.isEphemeralContainer === "string") {
+				options.isEphemeralContainer = options.isEphemeralContainer === "true";
+			}
+
 			options.tenantSecret =
 				options.mode === "docker"
 					? options.tenantSecret ??
 					  config.get("fluid:webpack:docker:tenantSecret") ??
 					  "create-new-tenants-if-going-to-production"
 					: options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
+
 			if (options.mode === "r11s") {
 				options.discoveryEndpoint =
 					options.discoveryEndpoint ?? config.get("fluid:webpack:discoveryEndpoint");
