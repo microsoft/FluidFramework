@@ -6,7 +6,6 @@
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 
 /**
  * Return type of refreshSummaryAck function. There can be three different scenarios based on the passed params:
@@ -21,7 +20,6 @@ import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 export type RefreshSummaryResult =
 	| {
 			latestSummaryUpdated: false;
-			networkFetchMade: false;
 	  }
 	| {
 			latestSummaryUpdated: true;
@@ -29,8 +27,8 @@ export type RefreshSummaryResult =
 			summaryRefSeq: number;
 	  }
 	| {
-			latestSummaryUpdated: false;
-			networkFetchMade: true;
+			latestSummaryUpdated: true;
+			wasSummaryTracked: false;
 	  };
 
 /**
@@ -71,9 +69,6 @@ export interface ISummarizerNodeRootContract {
 	refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
-		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
-		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLoggerExt,
 	): Promise<RefreshSummaryResult>;
 }
 

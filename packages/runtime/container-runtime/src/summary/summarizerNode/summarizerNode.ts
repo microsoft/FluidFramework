@@ -30,16 +30,10 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import {
-	convertToSummaryTree,
-	calculateStats,
-	mergeStats,
-	ReadAndParseBlob,
-} from "@fluidframework/runtime-utils";
+import { convertToSummaryTree, calculateStats, mergeStats } from "@fluidframework/runtime-utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,
-	IFetchSnapshotResult,
 	IInitialSummary,
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
@@ -386,7 +380,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 	public async refreshLatestSummary(
 		proposalHandle: string | undefined,
 		summaryRefSeq: number,
-		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
 	): Promise<RefreshSummaryResult> {
 		const eventProps: {
 			proposalHandle: string | undefined;
@@ -448,18 +441,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 				if (this.referenceSequenceNumber >= summaryRefSeq) {
 					eventProps.latestSummaryUpdated = false;
 					event.end(eventProps);
-					return { latestSummaryUpdated: false, networkFetchMade: false };
+					return { latestSummaryUpdated: false };
 				}
 
 				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
 				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-				await fetchLatestSnapshot();
-
-				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
-				// snapshot is older than the latest tracked summary, ignore it.
-				eventProps.latestSummaryUpdated = false;
+				eventProps.latestSummaryUpdated = true;
+				eventProps.wasSummaryTracked = false;
 				event.end(eventProps);
-				return { latestSummaryUpdated: false, networkFetchMade: false };
+				return { latestSummaryUpdated: true, wasSummaryTracked: false };
 			},
 			{ start: true, end: true, cancel: "error" },
 		);
@@ -499,59 +489,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		for (const child of this.children.values()) {
 			child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
 		}
-	}
-
-	protected async refreshLatestSummaryFromSnapshot(
-		referenceSequenceNumber: number,
-		snapshotTree: ISnapshotTree,
-		basePath: EscapedPath | undefined,
-		localPath: EscapedPath,
-		correlatedSummaryLogger: ITelemetryLoggerExt,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
-		// Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
-		if (this.referenceSequenceNumber >= referenceSequenceNumber) {
-			return;
-		}
-
-		this.refreshLatestSummaryCore(referenceSequenceNumber);
-
-		this._latestSummary = new SummaryNode({
-			referenceSequenceNumber,
-			basePath,
-			localPath,
-		});
-
-		const pathParts: string[] = [];
-		const { childrenTree, childrenPathPart } = parseSummaryForSubtrees(snapshotTree);
-		if (childrenPathPart !== undefined) {
-			pathParts.push(childrenPathPart);
-		}
-
-		if (pathParts.length > 0) {
-			this._latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
-		}
-
-		// Propagate update to all child nodes
-		const pathForChildren = this._latestSummary.fullPathForChildren;
-		await Promise.all(
-			Array.from(this.children)
-				.filter(([id]) => {
-					// Assuming subtrees missing from snapshot are newer than the snapshot,
-					// but might be nice to assert this using earliest seq for node.
-					return childrenTree.trees[id] !== undefined;
-				})
-				.map(async ([id, child]) => {
-					return child.refreshLatestSummaryFromSnapshot(
-						referenceSequenceNumber,
-						childrenTree.trees[id],
-						pathForChildren,
-						EscapedPath.create(id),
-						correlatedSummaryLogger,
-						readAndParseBlob,
-					);
-				}),
-		);
 	}
 
 	private refreshLatestSummaryCore(referenceSequenceNumber: number): void {

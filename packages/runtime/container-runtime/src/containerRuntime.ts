@@ -1066,7 +1066,6 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
-	private readonly summaryStateUpdateMethod: string | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	/**
 	 * If true, summary generated is validate before uploading it to the server. With single commit summaries,
@@ -1546,9 +1545,6 @@ export class ContainerRuntime
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._audience = audience!;
 
-		this.summaryStateUpdateMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
-		);
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
@@ -1703,7 +1699,6 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				idCompressorEnabled: this.idCompressorEnabled,
-				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -3733,10 +3728,11 @@ export class ContainerRuntime
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
-			fetchLatestSnapshot,
-			readAndParseBlob,
-			summaryLogger,
 		);
+
+		if (result.latestSummaryUpdated && !result.wasSummaryTracked) {
+			await fetchLatestSnapshot();
+		}
 
 		// Notify the garbage collector so it can update its latest summary state.
 		await this.garbageCollector.refreshLatestSummary(result);
@@ -3752,7 +3748,7 @@ export class ContainerRuntime
 		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { snapshotTree, versionId, latestSnapshotRefSeq } =
+		const { versionId, latestSnapshotRefSeq } =
 			await this.fetchSnapshotFromStorageAndMaybeClose(
 				summaryLogger,
 				{
@@ -3761,16 +3757,10 @@ export class ContainerRuntime
 				readAndParseBlob,
 				null,
 			);
-		const fetchLatestSnapshot: IFetchSnapshotResult = {
-			snapshotTree,
-			snapshotRefSeq: latestSnapshotRefSeq,
-		};
+
 		const result = await this.summarizerNode.refreshLatestSummary(
 			undefined /* proposalHandle */,
 			latestSnapshotRefSeq,
-			async () => fetchLatestSnapshot,
-			readAndParseBlob,
-			summaryLogger,
 		);
 
 		// Notify the garbage collector so it can update its latest summary state.
