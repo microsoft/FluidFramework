@@ -25,7 +25,6 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
-	jsonSequenceRootSchema,
 	namedTreeSchema,
 } from "../utils";
 import {
@@ -54,6 +53,7 @@ import {
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
+import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -1260,11 +1260,7 @@ describe("SharedTree", () => {
 
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-			provider.trees[0].schematize({
-				initialTree: ["a"],
-				schema: jsonSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			});
+			insert(provider.trees[0], 0, "a");
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
@@ -1823,6 +1819,36 @@ describe("SharedTree", () => {
 			const [tree] = provider.trees;
 			assert.deepEqual(getTestValues(tree), ["A", "B", "C"]);
 		});
+	});
+
+	describe("Stashed ops", () => {
+		it("can apply and resubmit stashed schema ops", async () => {
+			const provider = await TestTreeProvider.create(2);
+
+			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const pausedTree = provider.trees[0];
+			await provider.opProcessingController.pauseProcessing(pausedContainer);
+			pausedTree.storedSchema.update(testSchema);
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			provider.opProcessingController.resumeProcessing();
+
+			const loader = provider.makeTestLoader();
+			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			await waitForContainerConnection(loadedContainer, true);
+			await provider.ensureSynchronized();
+
+			const otherLoadedTree = provider.trees[1];
+			expectSchemaEquality(tree.storedSchema, testSchema);
+			expectSchemaEquality(otherLoadedTree.storedSchema, testSchema);
+		});
+
+		function expectSchemaEquality(actual: SchemaData, expected: SchemaData): void {
+			const codec = makeSchemaCodec({ jsonValidator: noopValidator });
+			assert.deepEqual(codec.encode(actual), codec.encode(expected));
+		}
 	});
 
 	describe.skip("Fuzz Test fail cases", () => {
