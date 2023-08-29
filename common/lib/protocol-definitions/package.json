@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "2.2.0",
+	"version": "3.0.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1"
+		"@fluidframework/common-definitions": "^1.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
@@ -66,6 +66,16 @@
 			"tsc": [
 				"...",
 				"typetests:gen"
+			]
+		}
+	},
+	"pnpm": {
+		"peerDependencyComments": [
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
+		],
+		"peerDependencyRules": {
+			"ignoreMissing": [
+				"@types/node"
 			]
 		}
 	},
