@@ -59,12 +59,14 @@ export class DocumentKeyRetriever {
 	}
 
 	public async getKeyRedisFallback<ValType>(
-		redisKeyName: string,
-		cosmosKeyName: string,
+		keyNameBase: string,
 		tenantId: string,
 		documentId: string,
 		useCosmosCache: boolean = true,
 	): Promise<ValType> {
+		const redisKeyName: string = `${keyNameBase}:${documentId}}`;
+		const cosmosKeyName: string = keyNameBase;
+
 		let val: ValType = await this.getKeyRedis<ValType>(redisKeyName);
 		if (val !== undefined && val !== null) {
 			// Return the value if redis has it
