@@ -25,6 +25,7 @@ const app = express();
 const compiler = webpack(config);
 
 app.use(
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	webpackDevMiddleware(compiler, {
 		publicPath: config.output.publicPath,
 	}),

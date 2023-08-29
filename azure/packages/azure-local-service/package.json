@@ -38,7 +38,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",

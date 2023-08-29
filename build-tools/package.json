@@ -95,7 +95,7 @@
 	},
 	"pnpm": {
 		"peerDependencyComments": [
-			"@types/node is not needed at the root, because it is only used for compilation of individual packages. If any of them are missing the dependency, then compilation for that package will fail, so we don't need to check for it."
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {

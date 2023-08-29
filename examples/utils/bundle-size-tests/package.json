@@ -44,7 +44,7 @@
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/bundle-size-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
 		"@types/node": "^16.18.38",
 		"@types/puppeteer": "1.3.0",
