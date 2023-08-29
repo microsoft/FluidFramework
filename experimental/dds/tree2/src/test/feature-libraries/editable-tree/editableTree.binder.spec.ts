@@ -4,10 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { AllowedUpdateType, FieldKey, UpPath, getDepth } from "../../../core";
+import { FieldKey, UpPath, getDepth } from "../../../core";
 import {
-	ContextuallyTypedNodeData,
 	getField,
 	BindPath,
 	BindingType,
@@ -37,9 +35,11 @@ import {
 	BindTree,
 	InvalidationBindingContext,
 	setField,
+	isEditableTree,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
+import { ViewEvents } from "../../../shared-tree";
+import { viewWithContent } from "../../utils";
 import { fullSchemaData, personData } from "./mockData";
 
 export const fieldAddress: FieldKey = brand("address");
@@ -1189,7 +1189,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index. Triggers step === undefined in getListeners.accumulateMatching", () => {
-			const { tree, root, address } = retrieveNodes();
+			const { tree, root } = retrieveNodes();
 			const options: BinderOptions = createBinderOptions({
 				matchPolicy: "subtree",
 			});
@@ -1218,6 +1218,8 @@ describe("editable-tree: data binder", () => {
 				},
 			);
 			root[setField](fieldAddress, { zip: "33428", phones: ["12345"] });
+			const address = root.address;
+			assert(isEditableTree(address));
 			address[setField](fieldPhones, [111, 112]);
 			address.zip = "66566";
 			assert.deepEqual(addrLog, [
@@ -1312,21 +1314,14 @@ describe("editable-tree: data binder", () => {
 });
 
 export function retrieveNodes() {
-	const tree = treeView(personData);
+	const tree = viewWithContent({
+		initialTree: personData,
+		schema: fullSchemaData,
+	});
 	const root = tree.context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
 	const phones = address[getField](fieldSequencePhones);
 	return { tree, root, address, phones };
-}
-
-function treeView(initialData: ContextuallyTypedNodeData): ISharedTreeView {
-	const factory = new SharedTreeFactory();
-	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-	return tree.schematize({
-		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: initialData,
-		schema: fullSchemaData,
-	});
 }
 
 export function compareBinderEventsDeleteFirst(

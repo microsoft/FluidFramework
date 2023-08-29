@@ -9,8 +9,8 @@ import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
@@ -190,6 +190,7 @@ export namespace DevtoolsDisposed {
 
 // @internal
 export interface DevtoolsFeatureFlags {
+    opLatencyTelemetry?: boolean;
     telemetry?: boolean;
 }
 
@@ -227,9 +228,12 @@ export namespace DisconnectContainer {
 
 // @internal
 export interface Edit {
-    data: Serializable<unknown>;
+    data: EditData;
     type?: EditType | string;
 }
+
+// @internal
+export type EditData = Serializable<unknown> | null | undefined;
 
 // @internal
 export type EditSharedObject = (sharedObject: ISharedObject, edit: Edit) => Promise<void>;
@@ -239,6 +243,8 @@ export const EditType: {
     readonly Boolean: "boolean";
     readonly Number: "number";
     readonly String: "string";
+    readonly Undefined: "undefined";
+    readonly Null: "null";
 };
 
 // @internal (undocumented)

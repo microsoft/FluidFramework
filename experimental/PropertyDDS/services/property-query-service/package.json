@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query-service",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"private": true,
 	"description": "Moira service",
 	"homepage": "https://fluidframework.com",
@@ -35,7 +35,7 @@
 		"start": "node server.js",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"nyc": {
@@ -55,7 +55,7 @@
 		"async": "^3.2.2",
 		"basicauth-middleware": "2.0.0",
 		"body-parser": "^1.18.3",
-		"chalk": "2.4.1",
+		"chalk": "^2.4.2",
 		"cls-hooked": "4.2.2",
 		"empty-dir": "0.2.1",
 		"express": "^4.16.3",

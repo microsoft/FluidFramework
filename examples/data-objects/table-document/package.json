@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-document",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,7 +31,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml --exit",
 		"test:mocha": "mocha --config src/test/.mocharc.js dist/test",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -54,7 +54,6 @@
 	"dependencies": {
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -67,10 +66,10 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/test-version-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",

@@ -22,30 +22,21 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	public constructor(
 		public readonly context: ProxyContext,
 		cursor: ITreeSubscriptionCursor,
-		private anchor?: T,
+		private readonly anchor: T,
 	) {
 		this.lazyCursor = cursor.fork();
 		context.withCursors.add(this);
-		if (anchor !== undefined) {
-			this.context.withAnchors.add(this);
-		}
+		this.context.withAnchors.add(this);
 	}
 
 	public free(): void {
 		this.lazyCursor.free();
 		this.context.withCursors.delete(this);
-		if (this.anchor !== undefined) {
-			this.forgetAnchor(this.anchor);
-			this.context.withAnchors.delete(this);
-			this.anchor = undefined;
-		}
+		this.forgetAnchor(this.anchor);
+		this.context.withAnchors.delete(this);
 	}
 
 	public getAnchor(): T {
-		if (this.anchor === undefined) {
-			this.anchor = this.buildAnchor();
-			this.context.withAnchors.add(this);
-		}
 		return this.anchor;
 	}
 
@@ -55,8 +46,16 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		this.context.withCursors.delete(this);
 	}
 
+	public isFreed(): boolean {
+		return this.lazyCursor.state === ITreeSubscriptionCursorState.Freed;
+	}
+
 	public get cursor(): ITreeSubscriptionCursor {
-		if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
+		if (this.lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
+			assert(
+				this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
+				0x749 /* Unset cursor should be in cleared state */,
+			);
 			assert(
 				this.anchor !== undefined,
 				0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
@@ -70,8 +69,6 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		}
 		return this.lazyCursor;
 	}
-
-	protected abstract buildAnchor(): T;
 
 	protected abstract tryMoveCursorToAnchor(
 		anchor: T,

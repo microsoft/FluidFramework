@@ -52,7 +52,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
@@ -73,12 +72,12 @@
 		"nconf": "^0.12.0",
 		"semver": "^7.5.3",
 		"sha.js": "^2.4.11",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.23.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@0.1040.1000",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -87,9 +86,9 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
-		"@types/uuid": "^8.3.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",

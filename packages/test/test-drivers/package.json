@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-drivers",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,13 +70,13 @@
 		"@fluidframework/tool-utils": "workspace:~",
 		"axios": "^0.26.0",
 		"semver": "^7.5.3",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",

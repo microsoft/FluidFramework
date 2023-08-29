@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { createChildMonitoringContext, MonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	createChildMonitoringContext,
+	GenericError,
+	MonitoringContext,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
@@ -63,9 +67,8 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 	if (
 		(
 			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
-			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit") ||
-			{}
-		).writable !== true
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit")
+		)?.writable !== true
 	) {
 		return action();
 	}
@@ -111,12 +114,12 @@ export class Outbox {
 		this.blobAttachBatch = new BatchManager({ hardLimit });
 	}
 
+	public get messageCount(): number {
+		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+	}
+
 	public get isEmpty(): boolean {
-		return (
-			this.attachFlowBatch.length === 0 &&
-			this.mainBatch.length === 0 &&
-			this.blobAttachBatch.length === 0
-		);
+		return this.messageCount === 0;
 	}
 
 	/**

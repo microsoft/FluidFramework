@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/gitrest",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Entry point of the GitRest core services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -26,7 +26,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/gitrest-base": "^0.1.0",
+		"@fluidframework/gitrest-base": "workspace:~",
 		"@fluidframework/server-services-shared": "^0.1040.1000-148023",
 		"@fluidframework/server-services-utils": "^0.1040.1000-148023",
 		"axios": "^0.26.0",
@@ -38,7 +38,6 @@
 		"isomorphic-git": "^1.14.0",
 		"json-stringify-safe": "^5.0.1",
 		"nconf": "^0.11.4",
-		"nodegit": "^0.27.0",
 		"uuid": "^3.3.2",
 		"winston": "^3.6.0"
 	},
@@ -52,8 +51,7 @@
 		"@types/lorem-ipsum": "^1.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^16.18.16",
-		"@types/nodegit": "^0.27.3",
+		"@types/node": "^18.17.1",
 		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",

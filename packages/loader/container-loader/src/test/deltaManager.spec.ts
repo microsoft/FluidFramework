@@ -454,13 +454,22 @@ describe("Loader", () => {
 				it("Should override readonly", async () => {
 					await startDeltaManager();
 
-					assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
+					// TS 5.1.6: Workaround 'TS2339: Property 'readonly' does not exist on type 'never'.'
+					//
+					//           After observering that 'forceReadonly' has been asserted to be both true and
+					//           false, TypeScript coerces 'connectionManager' to 'never'.  Wrapping the
+					//           assertion in lambda avoids this.
+					const assertReadonlyIs = (expected: boolean) => {
+						assert.strictEqual(deltaManager.readOnlyInfo.readonly, expected);
+					};
+
+					assertReadonlyIs(false);
 
 					deltaManager.connectionManager.forceReadonly(true);
-					assert.strictEqual(deltaManager.readOnlyInfo.readonly, true);
+					assertReadonlyIs(true);
 
 					deltaManager.connectionManager.forceReadonly(false);
-					assert.strictEqual(deltaManager.readOnlyInfo.readonly, false);
+					assertReadonlyIs(false);
 				});
 
 				it("Should raise readonly event when container was not readonly", async () => {

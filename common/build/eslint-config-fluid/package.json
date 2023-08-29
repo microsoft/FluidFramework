@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.0.0",
+	"version": "2.2.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config",
+		"build": "npm run print-config && npm run prettier",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",

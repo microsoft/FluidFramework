@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDisposable,
+	IEvent,
 	IFluidHandle,
 	IFluidLoadable,
 	IProvideFluidHandle,
@@ -212,11 +212,18 @@ export class DataVisualizerGraph
 		const result: Record<string, RootHandleNode> = {};
 		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
-				const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
-				result[key] =
-					fluidObjectId === undefined
-						? unknownObjectNode
-						: createHandleNode(fluidObjectId);
+				if (value.handle !== undefined) {
+					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
+					result[key] =
+						fluidObjectId === undefined
+							? unknownObjectNode
+							: createHandleNode(fluidObjectId);
+				} else {
+					console.error(
+						`Container data includes a non-Fluid object under key ${key}. Cannot visualize!`,
+					);
+					result[key] = unknownObjectNode;
+				}
 			}),
 		);
 		return result;
@@ -493,7 +500,6 @@ export async function visualizeChildData(
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;
 		const fluidObjectId = await resolveHandle(handle);
-
 		// If no ID was found, then the data is not a SharedObject.
 		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
 		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable tsdoc/syntax */
 /* eslint-disable no-bitwise */
-
 import { assert } from "@fluidframework/common-utils";
-import { fail } from "./utils";
 
 /**
  * A map in which entries are always added in key-sorted order.
@@ -133,7 +132,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * Adds a new key/value pair to the map. `key` must be \> to all keys in the map.
+	 * Adds a new key/value pair to the map. `key` must be > to all keys in the map.
 	 * @param key - the key to add.
 	 * @param value - the value to add.
 	 */
@@ -141,7 +140,27 @@ export class AppendOnlySortedMap<K, V> {
 		const { elements } = this;
 		const { length } = elements;
 		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
-			fail("Inserted key must be > all others in the map.");
+			throw new Error("Inserted key must be > all others in the map.");
+		}
+		elements.push(key);
+		elements.push(value);
+	}
+
+	/**
+	 * Replaces the last key/value pair with the given one. If the map is empty, it simply appends.
+	 * `key` must be > to all keys in the map prior to the one replaced.
+	 * @param key - the key to add.
+	 * @param value - the value to add.
+	 */
+	public replaceLast(key: K, value: V): void {
+		const { elements, comparator } = this;
+		const { length } = elements;
+		if (length !== 0) {
+			elements.pop();
+			elements.pop();
+			if (comparator(key, this.maxKey() as K) <= 0) {
+				throw new Error("Inserted key must be > all others in the map.");
+			}
 		}
 		elements.push(key);
 		elements.push(value);
@@ -217,7 +236,7 @@ export class AppendOnlySortedMap<K, V> {
 			if (prev !== undefined) {
 				assert(
 					this.comparator(kv[0], prev[0]) > 0,
-					0x47f /* Keys in map must be sorted. */,
+					0x752 /* Keys in map must be sorted. */,
 				);
 			}
 			prev = kv;
@@ -338,90 +357,10 @@ export class AppendOnlySortedMap<K, V> {
 			} else if (c === 0) {
 				return keyIndex;
 			} else {
-				fail("Invalid comparator.");
+				throw new Error("Invalid comparator.");
 			}
 			mid = (low + high) >> 1;
 		}
 		return (mid * 2) ^ AppendOnlySortedMap.failureXor;
-	}
-}
-
-/**
- * A map in which entries are always added in both key-sorted and value-sorted order.
- * Supports appending and searching.
- */
-export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V> {
-	public constructor(
-		keyComparator: (a: K, b: K) => number,
-		private readonly extractSearchValue: (value: V) => S,
-		private readonly valueComparator: (search: S, value: S) => number,
-	) {
-		super(keyComparator);
-	}
-
-	public override append(key: K, value: V): void {
-		if (
-			this.elements.length !== 0 &&
-			this.valueComparator(
-				this.extractSearchValue(value),
-				this.extractSearchValue(this.maxValue() as V),
-			) <= 0
-		) {
-			fail("Inserted value must be > all others in the map.");
-		}
-		super.append(key, value);
-	}
-
-	private readonly compareValues = (search: S, _: K, value: V): number => {
-		return this.valueComparator(search, this.extractSearchValue(value));
-	};
-
-	// /**
-	//  * @param value - the value to lookup.
-	//  * @returns the key associated with `value` if such an entry exists, and undefined otherwise.
-	//  */
-	// public getByValue(value: S): K | undefined {
-	//     const index = AppendOnlySortedMap.keyIndexOf(this.elements, value, this.compareValues);
-	//     return this.elements[index]?.[0];
-	// }
-
-	/**
-	 * @param searchValue - the search value to lookup.
-	 * @returns the entry who's value, when run through the extractor provided to the constructor, matches
-	 * `searchValue`. If no such entry exists, this method returns the next lower entry as determined by the value
-	 * comparator provided to the constructor. If no such entry exists, this method returns undefined.
-	 */
-	public getPairOrNextLowerByValue(searchValue: S): readonly [K, V] | undefined {
-		return this.getPairOrNextLowerBy(searchValue, this.compareValues);
-	}
-
-	/**
-	 * @param searchValue - the search value to lookup.
-	 * @returns the entry who's value, when run through the extractor provided to the constructor, matches `searchValue`. If no such entry
-	 * exists, this method returns the next higher entry as determined by the value comparator provided to the constructor. If no such entry
-	 * exists, this method returns undefined.
-	 */
-	public getPairOrNextHigherByValue(searchValue: S): readonly [K, V] | undefined {
-		return this.getPairOrNextHigherBy(searchValue, this.compareValues);
-	}
-
-	/**
-	 * Test-only expensive assertions to check the internal validity of the data structure.
-	 */
-	public override assertValid(): void {
-		super.assertValid();
-		let prev: readonly [unknown, V] | undefined;
-		for (const kv of this.entries()) {
-			if (prev !== undefined) {
-				assert(
-					this.valueComparator(
-						this.extractSearchValue(kv[1]),
-						this.extractSearchValue(prev[1]),
-					) > 0,
-					0x480 /* Values in map must be sorted. */,
-				);
-			}
-			prev = kv;
-		}
 	}
 }

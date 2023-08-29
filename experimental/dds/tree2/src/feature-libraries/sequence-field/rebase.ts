@@ -6,9 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "../../util";
-import { RevisionTag, TaggedChange } from "../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import {
-	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
@@ -23,15 +22,26 @@ import {
 	areInputCellsEmpty,
 	markEmptiesCells,
 	markFillsCells,
-	getCellId,
 	getOffsetInCellRange,
 	compareLineages,
 	withNodeChange,
 	getMarkMoveId,
 	areOverlappingIdRanges,
+	cloneCellId,
 	areOutputCellsEmpty,
+	getDetachCellId,
+	getInputCellId,
 } from "./utils";
-import { Changeset, Mark, MarkList, NoopMark, MoveId, NoopMarkType, HasLineage } from "./format";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	NoopMark,
+	MoveId,
+	NoopMarkType,
+	HasLineage,
+	IdRange,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 import {
@@ -115,9 +125,10 @@ function rebaseMarkList<TNodeChange>(
 	// At the time we process an attach we don't know about detaches of later nodes,
 	// so we record marks which should have their lineage updated if we encounter a detach.
 	const lineageRecipients: Mark<TNodeChange>[] = [];
+	const lineageEntries: LineageEntry[] = [];
 
 	// List of IDs of detaches encountered in the base changeset which are adjacent to the current position.
-	const lineageEntries: IdRange[] = [];
+	let detachBlock: IdRange[] = [];
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
 		if ("revision" in baseMark) {
@@ -127,8 +138,10 @@ function rebaseMarkList<TNodeChange>(
 				0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
 			);
 		}
+
+		const length = getInputLength(baseMark);
 		assert(
-			getInputLength(baseMark) === getInputLength(currMark),
+			length === getInputLength(currMark),
 			0x4f6 /* The two marks should be the same size */,
 		);
 
@@ -147,20 +160,45 @@ function rebaseMarkList<TNodeChange>(
 		// `rebasedMark` should already have a detach event for `baseMark`.
 		if (markEmptiesCells(baseMark)) {
 			assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
-			addLineageToRecipients(lineageRecipients, baseIntention, baseMark.id, baseMark.count);
+			const detachId = getDetachCellId(baseMark, baseIntention);
+			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
+			addLineageToRecipients(lineageRecipients, detachId.revision, detachId.localId, length);
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
-			handleLineage(rebasedMark, lineageRecipients, lineageEntries, baseIntention);
+			if (markEmptiesCells(baseMark)) {
+				assert(isDetachMark(baseMark), 0x74b /* Only detaches empty cells */);
+				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
+					setMarkAdjacentCells(rebasedMark, detachBlock);
+				}
+			} else {
+				handleLineage(
+					rebasedMark,
+					lineageRecipients,
+					baseIntention,
+					detachBlock,
+					lineageEntries,
+				);
+			}
 		}
 		factory.push(rebasedMark);
 
 		if (markEmptiesCells(baseMark)) {
 			assert(isDetachMark(baseMark), 0x70a /* Only detach marks should empty cells */);
-			lineageEntries.push({ id: baseMark.id, count: baseMark.count });
+			const detachId = getDetachCellId(baseMark, baseIntention);
+			if (detachId.revision === baseIntention) {
+				addIdRange(detachBlock, { id: baseMark.id, count: baseMark.count });
+			} else {
+				assert(detachId.revision !== undefined, 0x74c /* Detach ID should have revision */);
+				lineageEntries.push({
+					revision: detachId.revision,
+					id: detachId.localId,
+					count: length,
+				});
+			}
 		} else if (!areOutputCellsEmpty(baseMark)) {
 			lineageRecipients.length = 0;
-			lineageEntries.length = 0;
+			detachBlock = [];
 		}
 	}
 
@@ -175,13 +213,8 @@ function rebaseMarkList<TNodeChange>(
  */
 function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark<T> {
 	const length = mark.count;
-	const cellId = getCellId(mark, revision);
+	const cellId = getInputCellId(mark, revision);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
-}
-
-interface IdRange {
-	id: ChangesetLocalId;
-	count: number;
 }
 
 class RebaseQueue<T> {
@@ -295,7 +328,6 @@ function rebaseMark<TNodeChange>(
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
 	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
-	const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
 	if (markEmptiesCells(baseMark)) {
 		const moveId = getMarkMoveId(baseMark);
 		if (moveId !== undefined) {
@@ -343,7 +375,10 @@ function rebaseMark<TNodeChange>(
 			}
 		}
 		assert(isDetachMark(baseMark), 0x70b /* Only detach marks should empty cells */);
-		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseMark.id);
+		const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
+
+		const baseCellId = getDetachCellId(baseMark, baseMarkIntention);
+		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
 		if (isMoveMark(baseMark)) {
 			const movedMark = getMovedMark(
@@ -518,13 +553,9 @@ function rebaseNodeChange<TNodeChange>(
 	return withNodeChange(currMark, nodeRebaser(currChange, baseChange));
 }
 
-function makeDetachedMark<T>(
-	mark: Mark<T>,
-	detachIntention: RevisionTag,
-	detachId: ChangesetLocalId,
-): Mark<T> {
+function makeDetachedMark<T>(mark: Mark<T>, cellId: ChangeAtomId): Mark<T> {
 	assert(mark.cellId === undefined, 0x69f /* Expected mark to be attached */);
-	return { ...mark, cellId: { revision: detachIntention, localId: detachId } };
+	return { ...mark, cellId };
 }
 
 function withoutCellId<T, TMark extends Mark<T>>(mark: TMark): TMark {
@@ -605,13 +636,7 @@ function amendRebaseI<TNodeChange>(
 		}
 	}
 
-	// We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
-	// A second pass through MarkListFactory will handle any remaining merges.
-	const factory2 = new MarkListFactory<TNodeChange>();
-	for (const mark of factory.list) {
-		factory2.push(mark);
-	}
-	return factory2.list;
+	return factory.list;
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
@@ -648,11 +673,18 @@ function getMovedMark<T>(
 	return undefined;
 }
 
+interface LineageEntry {
+	revision: RevisionTag;
+	id: ChangesetLocalId;
+	count: number;
+}
+
 function handleLineage<T>(
 	rebasedMark: Mark<T>,
 	lineageRecipients: Mark<T>[],
-	lineageEntries: IdRange[],
 	baseIntention: RevisionTag,
+	detachBlock: IdRange[],
+	lineageEntries: LineageEntry[],
 ) {
 	// If the changeset we are rebasing over has the same intention as an event in rebasedMark's lineage,
 	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
@@ -662,8 +694,17 @@ function handleLineage<T>(
 	const lineageHolder = getLineageHolder(rebasedMark);
 	tryRemoveLineageEvents(lineageHolder, baseIntention);
 
+	const cellRevision = getInputCellId(rebasedMark, undefined)?.revision;
+	if (baseIntention !== cellRevision) {
+		for (const entry of detachBlock) {
+			addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
+		}
+	}
+
 	for (const entry of lineageEntries) {
-		addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
+		if (entry.revision !== cellRevision) {
+			addLineageEntry(lineageHolder, entry.revision, entry.id, entry.count, entry.count);
+		}
 	}
 
 	lineageRecipients.push(rebasedMark);
@@ -676,7 +717,9 @@ function addLineageToRecipients(
 	count: number,
 ) {
 	for (const mark of recipients) {
-		addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
+		if (getInputCellId(mark, undefined)?.revision !== revision) {
+			addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
+		}
 	}
 }
 
@@ -727,9 +770,30 @@ function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: Rev
 	}
 }
 
+function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
+	if (lineageEntries.length > 0) {
+		const lastEntry = lineageEntries[lineageEntries.length - 1];
+		if ((lastEntry.id as number) + lastEntry.count === range.id) {
+			lastEntry.count += range.count;
+			return;
+		}
+	}
+
+	lineageEntries.push(range);
+}
+
 function getLineageHolder(mark: Mark<unknown>): HasLineage {
 	assert(mark.cellId !== undefined, 0x723 /* Attached cells cannot have lineage */);
 	return mark.cellId;
+}
+
+function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): void {
+	assert(
+		mark.cellId !== undefined,
+		0x74d /* Can only set adjacent cells on a mark with cell ID */,
+	);
+	assert(mark.cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
+	mark.cellId.adjacentCells = adjacentCells;
 }
 
 /**
@@ -745,14 +809,22 @@ function compareCellPositions(
 	baseMark: EmptyInputCellMark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
 ): number {
-	const baseId = getCellId(baseMark, baseIntention);
+	const baseId = getInputCellId(baseMark, baseIntention);
 	const baseLength = baseMark.count;
 	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
-	const newId = getCellId(newMark, undefined);
+	const newId = getInputCellId(newMark, undefined);
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {
 		if (areOverlappingIdRanges(baseId.localId, baseLength, newId.localId, newLength)) {
 			return baseId.localId - newId.localId;
+		}
+
+		const adjacentCells = baseId.adjacentCells ?? newId.adjacentCells;
+		if (adjacentCells !== undefined) {
+			return (
+				getPositionAmongAdjacentCells(adjacentCells, baseId.localId) -
+				getPositionAmongAdjacentCells(adjacentCells, newId.localId)
+			);
 		}
 	}
 
@@ -796,8 +868,23 @@ function compareCellPositions(
 		0x6a1 /* Lineage should determine order of marks unless one is a new attach */,
 	);
 
+	// BUG 5351: The following assumption is incorrect as `newMark` may be targeting cells which were created on its branch,
+	// which will come after `baseMark` in the final sequence order.
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	// TODO: Use specified tiebreak instead of always tiebreaking left.
 	return -Infinity;
+}
+
+function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
+	let priorCells = 0;
+	for (const range of adjacentCells) {
+		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
+			return priorCells + (id - range.id);
+		}
+
+		priorCells += range.count;
+	}
+
+	fail("Could not find id in adjacentCells");
 }

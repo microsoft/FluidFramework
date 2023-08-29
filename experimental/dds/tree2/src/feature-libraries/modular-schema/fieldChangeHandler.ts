@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
 import { fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
-import { ChangesetLocalId, NodeChangeset, RevisionInfo } from "./modularChangeTypes";
+import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -22,7 +23,11 @@ export interface FieldChangeHandler<
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+	intoDelta(
+		change: TaggedChange<TChangeset>,
+		deltaFromChild: ToDelta,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.MarkList;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field

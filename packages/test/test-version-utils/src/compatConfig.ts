@@ -273,7 +273,7 @@ export async function mochaGlobalSetup() {
 		ensurePackageInstalled(baseVersion, value, reinstall),
 	);
 
-	let error: unknown | undefined;
+	let error: unknown;
 	for (const p of installP) {
 		try {
 			await p;

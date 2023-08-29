@@ -70,12 +70,12 @@
 		"jwt-decode": "^3.0.0",
 		"querystring": "^0.2.0",
 		"sillyname": "^0.1.0",
-		"uuid": "^8.3.1"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.23.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@0.1040.1000",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -83,7 +83,7 @@
 		"@types/jsrsasign": "^8.0.8",
 		"@types/jwt-decode": "^2.2.1",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"axios-mock-adapter": "^1.19.0",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",

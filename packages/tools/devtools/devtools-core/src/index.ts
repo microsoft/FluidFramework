@@ -34,6 +34,7 @@ export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	Edit,
+	EditData,
 	EditSharedObject,
 	FluidHandleNode,
 	FluidObjectNode,

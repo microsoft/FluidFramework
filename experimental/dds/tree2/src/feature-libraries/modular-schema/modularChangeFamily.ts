@@ -21,9 +21,11 @@ import {
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	ChangesetLocalId,
 } from "../../core";
 import { brand, getOrAddEmptyToMap, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -47,7 +49,6 @@ import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./g
 import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 import {
-	ChangesetLocalId,
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
@@ -721,7 +722,8 @@ export class ModularChangeFamily
 			return new Map();
 		}
 
-		return this.intoDeltaImpl(change.fieldChanges);
+		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
+		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
 	}
 
 	/**
@@ -730,25 +732,35 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
+	private intoDeltaImpl(
+		change: FieldChangeMap,
+		revision: RevisionTag | undefined,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
+			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-				fieldChange.change,
-				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
+				tagChange(fieldChange.change, fieldRevision),
+				(childChange): Delta.Modify =>
+					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
+				idAllocator,
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+	private deltaFromNodeChange(
+		{ change, revision }: TaggedChange<NodeChangeset>,
+		idAllocator: MemoizedIdRangeAllocator,
+	): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
 
 		return modify;

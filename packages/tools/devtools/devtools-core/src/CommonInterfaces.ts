@@ -66,6 +66,16 @@ export const EditType = {
 	 * Indicates that the data associated with an edit is or must be a `string`.
 	 */
 	String: "string",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `undefined`.
+	 */
+	Undefined: "undefined",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `null`.
+	 */
+	Null: "null",
 } as const;
 
 /**

@@ -30,27 +30,35 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer, generateStableId } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ISharedTree,
 	ISharedTreeView,
 	SharedTreeFactory,
+	TreeContent,
+	ViewEvents,
 	createSharedTreeView,
 } from "../shared-tree";
 import {
+	buildForest,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
+	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
+	NodeKeyIndex,
+	NodeKeyManager,
 	NodeReviver,
+	normalizeNewFieldContent,
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
+	SchemaBuilder,
 	singleTextCursor,
 } from "../feature-libraries";
 import {
@@ -74,18 +82,21 @@ import {
 	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
-	InMemoryStoredSchemaRepository,
 	TaggedChange,
 	TreeSchemaBuilder,
-	Named,
-	NamedTreeSchema,
 	treeSchema,
 	FieldUpPath,
+	TreeSchemaIdentifier,
+	TreeStoredSchema,
+	IForestSubscription,
+	InMemoryStoredSchemaRepository,
+	initializeForest,
 } from "../core";
-import { JsonCompatible, Mutable, brand, makeArray } from "../util";
+import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities
 
@@ -326,7 +337,7 @@ export class TestTreeProvider {
 }
 
 /**
- * A test helper class that creates one or more SharedTrees connected to a mock runtime.
+ * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
@@ -353,8 +364,10 @@ export class TestTreeProviderLite {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
-			const runtime = new MockFluidDataStoreRuntime({ clientId: generateStableId() });
-			(runtime as Mutable<MockFluidDataStoreRuntime>).id = "tree-provider-lite-data-store";
+			const runtime = new MockFluidDataStoreRuntime({
+				clientId: `test-client-${i}`,
+				id: "test",
+			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
@@ -445,7 +458,6 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				default:
 					unreachableCase(type);
 			}
-			return false;
 		}
 	}
 	return false;
@@ -560,35 +572,53 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
 }
 
-export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
-	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-	return makeTreeFromCursor(cursors, jsonSchema);
+export function viewWithContent(
+	content: TreeContent,
+	args?: {
+		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyIndex?: NodeKeyIndex;
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	},
+): ISharedTreeView {
+	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, content.schema);
+	const forest = buildForest(schema);
+	initializeForest(
+		forest,
+		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
+	);
+	const view = createSharedTreeView({ ...args, forest, schema });
+	return view;
 }
 
+const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
+export const jsonSequenceRootSchema = new SchemaBuilder(
+	"JsonSequenceRoot",
+	{},
+	jsonSchema,
+).intoDocumentSchema(jsonSequenceRootField);
+
 /**
- * @remarks Remove this once schematize can do the work.
+ * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
+ *
+ * If the root is not an array, a single item root sequence is used.
  */
-export function makeTreeFromCursor(
-	cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
-	schemaData: SchemaData,
-): ISharedTreeView {
-	const schemaPolicy = defaultSchemaPolicy;
-	const tree: ISharedTreeView = createSharedTreeView();
-	// TODO: use ISharedTreeView.schematize once it supports cursors
-	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
-	const field = tree.editor.sequenceField({
-		parent: undefined,
-		field: rootFieldKey,
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
+	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
+	const tree = viewWithContent({
+		schema: jsonSequenceRootSchema,
+		initialTree: cursors,
 	});
-	if (!Array.isArray(cursor) || cursor.length > 0) {
-		field.insert(0, cursor);
-	}
 	return tree;
 }
 
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	return jsonableTreeFromForest(tree.forest);
+}
+
+export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
 	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
 	return jsonable;
@@ -606,7 +636,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 }
 
 /**
- * Helper function to insert node at a given index.
+ * Helper function to insert a jsonString at a given index of the documents root field.
  *
  * @param tree - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
@@ -844,9 +874,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link NamedTreeSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
  */
-export function namedTreeSchema(data: TreeSchemaBuilder & Named<string>): NamedTreeSchema {
+export function namedTreeSchema(
+	data: TreeSchemaBuilder & Named<string>,
+): Named<TreeSchemaIdentifier> & TreeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),

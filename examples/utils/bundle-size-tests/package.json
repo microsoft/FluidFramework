@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -40,11 +40,11 @@
 	},
 	"devDependencies": {
 		"@cerner/duplicate-package-checker-webpack-plugin": "^2.3.0",
-		"@fluid-tools/version-tools": "^0.22.0",
+		"@fluid-tools/version-tools": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/bundle-size-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/bundle-size-tools": "^0.23.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
 		"@types/node": "^16.18.38",
 		"@types/puppeteer": "1.3.0",

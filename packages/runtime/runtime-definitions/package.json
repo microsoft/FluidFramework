@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,7 +32,6 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -40,11 +39,11 @@
 		"@fluidframework/protocol-definitions": "^1.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.6.0.0",
+		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
+		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.6.1.1",
 		"@microsoft/api-extractor": "^7.34.4",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
@@ -55,6 +54,123 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAliasDeclaration_CompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_FinalCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IIdCompressorCore": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IdCreationRange.HasOverrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRange.Ids": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRange.Override": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRange.Overrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LocalCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_OpSpaceCompressedId": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedCluster": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedClusterOverrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedLocalOverrides": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedLocalState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedSessionData": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedSessionIdNormalizer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SessionSpaceCompressedId": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SessionUnique": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_StableId": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_UnackedLocalId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_UuidString": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IIdCompressor": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SessionId": {
+				"backCompat": false
+			}
+		}
 	}
 }

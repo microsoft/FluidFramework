@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
 import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
@@ -1234,6 +1234,9 @@ export class MergeTree {
 		return DetachedReferencePosition;
 	}
 
+	/**
+	 * @deprecated - this functionality is no longer supported and will be removed
+	 */
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {
 			mergeTree: this,
@@ -1254,6 +1257,7 @@ export class MergeTree {
 	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
+	 * @deprecated - Use searchForMarker instead.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
@@ -1302,6 +1306,63 @@ export class MergeTree {
 		}
 
 		return undefined;
+	}
+
+	/**
+	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `forwards`.
+	 * Uses depthFirstNodeWalk in addition to block-accelerated functionality. The search position will be included in
+	 * the nodes to walk, so searching on all positions, including the endpoints, can be considered inclusive.
+	 * Any out of bound search positions will return undefined, so in order to search the whole string, a forward
+	 * search can begin at 0, or a backward search can begin at length-1.
+	 *
+	 * @param startPos - Position at which to start the search
+	 * @param clientId - clientId dictating the perspective to search from
+	 * @param markerLabel - Label of the marker to search for
+	 * @param forwards - Whether the string should be searched in the forward or backward direction
+	 */
+	public searchForMarker(
+		startPos: number,
+		clientId: number,
+		markerLabel: string,
+		forwards = true,
+	): Marker | undefined {
+		let foundMarker: Marker | undefined;
+
+		const { segment } = this.getContainingSegment(startPos, UniversalSequenceNumber, clientId);
+		const segWithParent: IMergeLeaf | undefined = segment;
+		if (segWithParent?.parent === undefined) {
+			return undefined;
+		}
+
+		depthFirstNodeWalk(
+			segWithParent.parent,
+			segWithParent,
+			(seg) => {
+				if (seg.isLeaf()) {
+					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
+						foundMarker = seg;
+					}
+				} else {
+					const block = <IHierBlock>seg;
+					const marker = forwards
+						? block.leftmostTiles[markerLabel]
+						: block.rightmostTiles[markerLabel];
+					if (marker !== undefined) {
+						assert(
+							marker.isLeaf() && Marker.is(marker),
+							0x751 /* Object returned is not a valid marker */,
+						);
+						foundMarker = marker;
+					}
+				}
+				return foundMarker !== undefined ? NodeAction.Exit : NodeAction.Skip;
+			},
+			undefined,
+			undefined,
+			forwards,
+		);
+
+		return foundMarker;
 	}
 
 	private search<TClientData>(
