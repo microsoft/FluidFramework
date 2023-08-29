@@ -1,0 +1,158 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { assert } from "@fluidframework/common-utils";
+import {
+	IEditableForest,
+	moveToDetachedField,
+	ForestEvents,
+	FieldStoredSchema,
+	FieldKey,
+} from "../../core";
+import { ISubscribable } from "../../events";
+import { DefaultEditBuilder } from "../default-field-kinds";
+import { NodeKeyManager } from "../node-key";
+import { FieldGenerator } from "../contextuallyTyped";
+import { TypedSchemaCollection } from "../typed-schema";
+import { UntypedField } from "./editableTreeTypes";
+import { makeField } from "./lazyField";
+import { LazyEntity } from "./lazyEntity";
+
+/**
+ * A common context of a "forest" of EditableTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ * @alpha
+ */
+export interface TreeContext extends ISubscribable<ForestEvents> {
+	/**
+	 * Gets the root field of the tree.
+	 */
+	get root(): UntypedField;
+
+	/**
+	 * Schema used within this context.
+	 * All data must conform to these schema.
+	 */
+	readonly schema: TypedSchemaCollection;
+
+	/**
+	 * Call before editing.
+	 *
+	 * Note that after performing edits, EditableTrees for nodes that no longer exist are invalid to use.
+	 * TODO: maybe add an API to check if a specific EditableTree still exists,
+	 * and only make use other than that invalid.
+	 */
+	prepareForEdit(): void;
+
+	/**
+	 * Call to free resources.
+	 * It is invalid to use the context after this.
+	 */
+	free(): void;
+
+	/**
+	 * Release any cursors and anchors held by EditableTrees created in this context.
+	 * The EditableTrees are invalid to use after this, but the context may still be used
+	 * to create new trees starting from the root.
+	 */
+	clear(): void;
+
+	/**
+	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
+	 */
+	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+}
+
+/**
+ * Implementation of `EditableTreeContext`.
+ *
+ * An editor is required to edit the EditableTrees.
+ */
+export class Context implements TreeContext {
+	public readonly withCursors: Set<LazyEntity> = new Set();
+	public readonly withAnchors: Set<LazyEntity> = new Set();
+
+	private readonly eventUnregister: (() => void)[];
+
+	/**
+	 * @param forest - the Forest
+	 * @param editor - an editor that makes changes to the forest.
+	 * @param nodeKeys - an object which handles node key generation and conversion
+	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
+	 */
+	public constructor(
+		public readonly schema: TypedSchemaCollection,
+		public readonly forest: IEditableForest,
+		public readonly editor: DefaultEditBuilder,
+		public readonly nodeKeys: NodeKeyManager,
+		public readonly nodeKeyFieldKey?: FieldKey,
+	) {
+		this.eventUnregister = [
+			this.forest.on("beforeDelta", () => {
+				this.prepareForEdit();
+			}),
+		];
+	}
+
+	public prepareForEdit(): void {
+		for (const target of this.withCursors) {
+			target.prepareForEdit();
+		}
+		assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
+	}
+
+	public free(): void {
+		this.clear();
+		for (const unregister of this.eventUnregister) {
+			unregister();
+		}
+		this.eventUnregister.length = 0;
+	}
+
+	public clear(): void {
+		for (const target of this.withCursors) {
+			target.free();
+		}
+		for (const target of this.withAnchors) {
+			target.free();
+		}
+		assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
+		assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
+	}
+
+	public get root(): UntypedField {
+		const cursor = this.forest.allocateCursor();
+		moveToDetachedField(this.forest, cursor);
+		const field = makeField(this, this.schema.rootFieldSchema, cursor);
+		cursor.free();
+		return field;
+	}
+
+	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+		return this.forest.on(eventName, listener);
+	}
+}
+
+/**
+ * A simple API for a Forest to interact with the tree.
+ *
+ * @param forest - the Forest
+ * @param editor - an editor that makes changes to the forest.
+ * @param nodeKeyManager - an object which handles node key generation and conversion
+ * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
+ * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
+ * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
+ */
+export function getEditableTreeContext(
+	schema: TypedSchemaCollection,
+	forest: IEditableForest,
+	editor: DefaultEditBuilder,
+	nodeKeyManager: NodeKeyManager,
+	nodeKeyFieldKey?: FieldKey,
+): TreeContext {
+	return new Context(schema, forest, editor, nodeKeyManager, nodeKeyFieldKey);
+}

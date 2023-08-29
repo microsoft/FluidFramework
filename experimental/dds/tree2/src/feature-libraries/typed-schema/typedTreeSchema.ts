@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
+import { EmptyKey, FieldKey, TreeSchemaIdentifier, TreeTypeSet, ValueSchema } from "../../core";
 import {
 	MakeNominal,
 	Assume,
@@ -45,7 +45,7 @@ export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStruc
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
- * @sealed @alpha
+ * @alpha
  */
 export class TreeSchema<
 	Name extends string = string,
@@ -86,6 +86,33 @@ export class TreeSchema<
 			undefined
 		>;
 	}
+}
+
+export type MapSchema = TreeSchema & MapSchemaSpecification;
+export type LeafSchema = TreeSchema & LeafSchemaSpecification;
+export type StructSchema = TreeSchema & {
+	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
+};
+// TODO: Split TreeSchema into union of node schema interface types, and make FieldNodeSchema not subset of StructSchema
+// Then replace bellow type checks with instance of tests.
+export type FieldNodeSchema = StructSchema & {
+	structFields: { [""]: FieldSchema };
+};
+
+export function schemaIsMap(schema: TreeSchema): schema is MapSchema {
+	return schema.mapFields !== undefined;
+}
+
+export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
+	return schema.leafValue !== undefined;
+}
+
+export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
+	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey) !== undefined;
+}
+
+export function schemaIsStruct(schema: TreeSchema): schema is StructSchema {
+	return schema.structFields !== undefined && !schemaIsFieldNode(schema);
 }
 
 /**
@@ -167,8 +194,15 @@ export interface StructSchemaSpecification {
  * @alpha
  */
 export interface MapSchemaSpecification {
-	readonly mapFields: FieldSchema;
+	readonly mapFields: MapFieldSchema;
 }
+
+/**
+ * Subset of FieldSchema thats legal in maps.
+ * This requires empty to be a valid value for the map.
+ * @alpha
+ */
+export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
  * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.

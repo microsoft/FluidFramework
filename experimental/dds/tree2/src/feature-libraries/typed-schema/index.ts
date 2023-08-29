@@ -18,6 +18,14 @@ export {
 	allowedTypesToTypeSet,
 	AllowedTypes,
 	LazyTreeSchema,
+	FieldNodeSchema,
+	LeafSchema,
+	MapSchema,
+	StructSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsStruct,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";

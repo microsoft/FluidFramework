@@ -930,6 +930,7 @@ declare namespace InternalTypedSchemaTypes {
         StructSchemaSpecification,
         MapSchemaSpecification,
         LeafSchemaSpecification,
+        MapFieldSchema,
         FlexList,
         FlexListToNonLazyArray,
         ConstantFlexListToNonLazyArray,
@@ -1260,9 +1261,12 @@ interface MakeNominal {
 }
 
 // @alpha
+type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
+
+// @alpha
 interface MapSchemaSpecification {
     // (undocumented)
-    readonly mapFields: FieldSchema;
+    readonly mapFields: MapFieldSchema;
 }
 
 // @alpha
@@ -1854,7 +1858,7 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
-// @alpha @sealed
+// @alpha
 export class TreeSchema<Name extends string = string, T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification> {
     constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)

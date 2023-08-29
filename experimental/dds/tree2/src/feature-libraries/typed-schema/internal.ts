@@ -17,6 +17,7 @@ export {
 	StructSchemaSpecification,
 	MapSchemaSpecification,
 	LeafSchemaSpecification,
+	MapFieldSchema,
 } from "./typedTreeSchema";
 
 export {
