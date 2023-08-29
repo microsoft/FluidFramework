@@ -62,8 +62,6 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		featureGates: Record<string, ConfigTypes> = {},
 	) => {
 		const configWithFeatureGates = {
-			// AB#3986 track work to removing this exception using simulateReadConnectionUsingDelay
-			simulateReadConnectionUsingDelay: false,
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};
@@ -377,8 +375,10 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					outOfOrderObservations.push(changed.key);
 				});
 
-				sharedMap1.set("key1", "1");
 				sharedMap2.set("key2", "2");
+				await provider.ensureSynchronized();
+
+				sharedMap1.set("key1", "1");
 				await provider.ensureSynchronized();
 
 				// The offending container is not closed
@@ -390,7 +390,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 				assert.equal(sharedMap2.get("key2"), "1 updated");
 
 				// The second event handler didn't receive the events in the actual order of changes
-				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
+				assert.deepEqual(outOfOrderObservations, ["key2", "key2", "key1"]);
 				assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 			});
 
