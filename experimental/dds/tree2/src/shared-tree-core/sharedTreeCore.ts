@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { isStableId } from "@fluidframework/container-runtime";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -22,24 +21,23 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IMultiFormatCodec } from "../codec";
+import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	ChangeFamily,
 	AnchorSet,
 	Delta,
-	RevisionTag,
 	ChangeFamilyEditor,
 	IRepairDataStoreProvider,
 	GraphCommit,
 } from "../core";
-import { brand, isJsonObject, JsonCompatibleReadOnly, generateStableId } from "../util";
+import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager";
-// TODO:AB#4500: The commit import here is used to write `parseCommit`, which should probably share
-// similar validation to decoding a commit as part of the summary.
-import { Commit, SeqNumber } from "./editManagerFormat";
+import { SeqNumber } from "./editManagerFormat";
+import { DecodedMessage } from "./messageTypes";
+import { makeMessageCodec } from "./messageCodecs";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -117,7 +115,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	/**
-	 * Used to encode and decode changes.
+	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
 	 * @remarks - Since there is currently only one format, this can just be cached on the class.
 	 * With more write formats active, it may make sense to keep around the "usual" format codec
@@ -125,7 +123,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
 	 * and an op needs to be interpreted which isn't written with the current configuration).
 	 */
-	private readonly changeCodec: IMultiFormatCodec<TChange>;
+	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -204,7 +202,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.changeCodec = changeFamily.codecs.resolve(formatVersion);
+		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -271,11 +269,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 		}
-		const message: Message = {
-			revision: commit.revision,
-			originatorId: this.editManager.localSessionId,
-			changeset: this.changeCodec.json.encode(commit.change),
-		};
+		const message = this.messageCodec.encode({
+			commit,
+			sessionId: this.editManager.localSessionId,
+		});
 		this.submitLocalMessage(message);
 	}
 
@@ -284,10 +281,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const commit = parseCommit(message.contents as JsonCompatibleReadOnly, this.changeCodec);
+		const { commit, sessionId } = this.messageCodec.decode(message.contents);
 
 		this.editManager.addSequencedChange(
-			commit,
+			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
@@ -327,7 +324,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		const { revision } = parseCommit(content, this.changeCodec);
+		const {
+			commit: { revision },
+		} = this.messageCodec.decode(content);
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit);
 	}
@@ -337,7 +336,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			!this.getLocalBranch().isTransacting(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
-		const { revision, change } = parseCommit(content, this.changeCodec);
+		const {
+			commit: { revision, change },
+		} = this.messageCodec.decode(content);
 		this.submitOps = false;
 		this.editManager.localBranch.apply(change, revision);
 		this.submitOps = true;
@@ -359,24 +360,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			gcNodes,
 		};
 	}
-}
-
-/**
- * The format of messages that SharedTree sends and receives.
- */
-interface Message {
-	/**
-	 * The revision tag for the change in this message
-	 */
-	readonly revision: RevisionTag;
-	/**
-	 * The stable ID that identifies the originator of the message.
-	 */
-	readonly originatorId: string;
-	/**
-	 * The changeset to be applied.
-	 */
-	readonly changeset: JsonCompatibleReadOnly;
 }
 
 /**
@@ -457,24 +440,4 @@ function scopeStorageService(
 			return service.list(`${scope}${path}`);
 		},
 	};
-}
-
-/**
- * validates that the message contents is an object which contains valid revisionId, sessionId, and changeset and returns a Commit
- * @param content - message contents
- * @returns a Commit object
- */
-function parseCommit<TChange>(
-	content: JsonCompatibleReadOnly,
-	codec: IMultiFormatCodec<TChange>,
-): Commit<TChange> {
-	assert(isJsonObject(content), 0x5e4 /* expected content to be an object */);
-	assert(
-		typeof content.revision === "string" && isStableId(content.revision),
-		0x5e5 /* expected revision id to be valid stable id */,
-	);
-	assert(content.changeset !== undefined, 0x5e7 /* expected changeset to be defined */);
-	assert(typeof content.originatorId === "string", 0x5e8 /* expected changeset to be defined */);
-	const change = codec.json.decode(content.changeset);
-	return { revision: content.revision, sessionId: content.originatorId, change };
 }

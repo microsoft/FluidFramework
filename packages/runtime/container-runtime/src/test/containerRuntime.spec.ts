@@ -925,7 +925,7 @@ describe("Runtime", () => {
 						containerRuntime.process(
 							{
 								type: "op",
-								clientId: "clientId",
+								clientId: "a unique, remote clientId",
 								sequenceNumber: 0,
 								contents: {
 									address: "address",
@@ -1193,7 +1193,7 @@ describe("Runtime", () => {
 		describe("EntryPoint initialized correctly", () => {
 			it("when using old load method", async () => {
 				const myResponse: IResponse = {
-					mimeType: "myMimeType",
+					mimeType: "fluid/object",
 					value: "hello!",
 					status: 200,
 				};
@@ -1216,13 +1216,13 @@ describe("Runtime", () => {
 					"request method in runtime did not return the expected object",
 				);
 
-				// The entryPoint should be undefined because the deprecated load() method was used
-				assert(containerRuntime.getEntryPoint !== undefined); // The function should exist, though
+				// The entryPoint should use the request handler we passed in the runtime's constructor
+				assert(containerRuntime.getEntryPoint !== undefined);
 				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.strictEqual(
+				assert.notStrictEqual(
 					actualEntryPoint,
 					undefined,
-					"entryPoint was not undefined as expected",
+					"entryPoint was not the expected object",
 				);
 			});
 

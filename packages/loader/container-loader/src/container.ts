@@ -430,7 +430,11 @@ export class Container
 								// Depending where error happens, we can be attempting to connect to web socket
 								// and continuously retrying (consider offline mode)
 								// Host has no container to close, so it's prudent to do it here
+								// Note: We could only dispose the container instead of just close but that would
+								// the telemetry where users sometimes search for ContainerClose event to look
+								// for load failures. So not removing this at this time.
 								container.close(err);
+								container.dispose(err);
 								onClosed(err);
 							},
 						);
@@ -753,6 +757,7 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
+		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -1126,7 +1131,8 @@ export class Container
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
 			term: OnlyValidTermValue,
-			clientId: this.clientId,
+			// no need to save this if there is no pending runtime state
+			clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 		};
 
 		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
@@ -1674,7 +1680,8 @@ export class Container
 		await this.instantiateRuntime(
 			codeDetails,
 			snapshot,
-			pendingLocalState?.pendingRuntimeState,
+			// give runtime a dummy value so it knows we're loading from a stash blob
+			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 		);
 
 		// replay saved ops
@@ -1686,13 +1693,6 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
-
-			// now set clientId to stashed clientId so live ops are correctly processed as local
-			assert(
-				this.clientId === undefined,
-				0x5d6 /* Unexpected clientId when setting stashed clientId */,
-			);
-			this._clientId = pendingLocalState?.clientId;
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
@@ -1750,10 +1750,11 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
+		timings.end = performance.now();
 		this.subLogger.sendTelemetryEvent(
 			{
 				eventName: "LoadStagesTimings",
-				...timings,
+				details: JSON.stringify(timings),
 			},
 			undefined,
 			LogLevel.verbose,

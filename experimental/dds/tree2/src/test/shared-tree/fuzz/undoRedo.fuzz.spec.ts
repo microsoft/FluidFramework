@@ -12,8 +12,7 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { compareUpPaths, rootFieldKey, UpPath, Anchor, JsonableTree } from "../../../core";
-import { brand } from "../../../util";
+import { UpPath, Anchor, JsonableTree, Value } from "../../../core";
 import {
 	SharedTreeTestFactory,
 	toJsonableTree,
@@ -22,7 +21,7 @@ import {
 } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { getFirstAnchor, onCreate } from "./fuzzUtils";
+import { createAnchors, onCreate, validateAnchors } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -30,7 +29,7 @@ import { Operation } from "./operationTypes";
  */
 interface UndoRedoFuzzTestState extends FuzzTestState {
 	initialTreeState?: JsonableTree[];
-	firstAnchors?: Anchor[];
+	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
 describe("Fuzz - undo/redo", () => {
@@ -59,11 +58,11 @@ describe("Fuzz - undo/redo", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
-			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel);
-			initialState.firstAnchors = [];
-			// creates an initial anchor for each tree
+			const tree = initialState.clients[0].channel;
+			initialState.initialTreeState = toJsonableTree(tree);
+			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				initialState.firstAnchors.push(getFirstAnchor(client.channel));
+				initialState.anchors.push(createAnchors(client.channel));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
@@ -89,24 +88,12 @@ describe("Fuzz - undo/redo", () => {
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();
 
+			assert(finalState.anchors !== undefined);
 			// validate the current state of the clients with the initial state, and check anchor stability
 			for (const [i, client] of clients.entries()) {
 				assert(finalState.initialTreeState !== undefined);
 				validateTree(client.channel, finalState.initialTreeState);
-				// check anchor stability
-				const expectedPath: UpPath = {
-					parent: {
-						parent: undefined,
-						parentIndex: 0,
-						parentField: rootFieldKey,
-					},
-					parentField: brand("foo"),
-					parentIndex: 1,
-				};
-				assert(finalState.firstAnchors !== undefined);
-				assert(finalState.firstAnchors[i] !== undefined);
-				const anchorPath = client.channel.locate(finalState.firstAnchors[i]);
-				assert(compareUpPaths(expectedPath, anchorPath));
+				validateAnchors(client.channel, finalState.anchors[i], true);
 			}
 
 			// redo all of the undone changes and validate against the finalTreeState for each tree
@@ -142,10 +129,10 @@ describe("Fuzz - undo/redo", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
 			initialState.initialTreeState = toJsonableTree(initialState.clients[0].channel);
-			initialState.firstAnchors = [];
+			initialState.anchors = [];
 			// creates an initial anchor for each tree
 			for (const client of initialState.clients) {
-				initialState.firstAnchors.push(getFirstAnchor(client.channel));
+				initialState.anchors.push(createAnchors(client.channel));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
@@ -168,23 +155,11 @@ describe("Fuzz - undo/redo", () => {
 			finalState.containerRuntimeFactory.processAllMessages();
 
 			// validate the current state of the clients with the initial state, and check anchor stability
+			assert(finalState.anchors !== undefined);
 			for (const [i, client] of clients.entries()) {
 				assert(finalState.initialTreeState !== undefined);
 				validateTree(client.channel, finalState.initialTreeState);
-				// check anchor stability
-				const expectedPath: UpPath = {
-					parent: {
-						parent: undefined,
-						parentIndex: 0,
-						parentField: rootFieldKey,
-					},
-					parentField: brand("foo"),
-					parentIndex: 1,
-				};
-				assert(finalState.firstAnchors !== undefined);
-				assert(finalState.firstAnchors[i] !== undefined);
-				const anchorPath = client.channel.locate(finalState.firstAnchors[i]);
-				assert(compareUpPaths(expectedPath, anchorPath));
+				validateAnchors(client.channel, finalState.anchors[i], true);
 			}
 		});
 		createDDSFuzzSuite(model, {
