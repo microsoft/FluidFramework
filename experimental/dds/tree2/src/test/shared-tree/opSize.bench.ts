@@ -530,8 +530,8 @@ describe("Op Size", () => {
 
 	describe("Insert, Delete & Edit Nodes", () => {
 		const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
-		const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-		const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+		const seventyPercentCount = Math.floor(BENCHMARK_NODE_COUNT * 0.7);
+		const fifteenPercentCount = Math.floor(BENCHMARK_NODE_COUNT * 0.15);
 
 		type OpKindDistribution = {
 			readonly [OpKind in keyof typeof Operation]: number;
