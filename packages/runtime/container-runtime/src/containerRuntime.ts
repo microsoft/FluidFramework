@@ -3657,7 +3657,7 @@ export class ContainerRuntime
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
 		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
+			let fetchResult = await this.fetchSnapshotFromStorageAndClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3675,7 +3675,7 @@ export class ContainerRuntime
 			 * change that started fetching latest snapshot always.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
+				fetchResult = await this.fetchSnapshotFromStorageAndClose(
 					summaryLogger,
 					{
 						eventName: "RefreshLatestSummaryAckFetchBackCompat",
@@ -3748,23 +3748,14 @@ export class ContainerRuntime
 		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { versionId, latestSnapshotRefSeq } =
-			await this.fetchSnapshotFromStorageAndMaybeClose(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryFromServerFetch",
-				},
-				readAndParseBlob,
-				null,
-			);
-
-		const result = await this.summarizerNode.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			latestSnapshotRefSeq,
+		const { versionId, latestSnapshotRefSeq } = await this.fetchSnapshotFromStorageAndClose(
+			summaryLogger,
+			{
+				eventName: "RefreshLatestSummaryFromServerFetch",
+			},
+			readAndParseBlob,
+			null,
 		);
-
-		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(result);
 
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
 	}
@@ -3774,7 +3765,7 @@ export class ContainerRuntime
 	 * By default, it also closes the container after downloading the snapshot. However, this may be
 	 * overridden via options.
 	 */
-	private async fetchSnapshotFromStorageAndMaybeClose(
+	private async fetchSnapshotFromStorageAndClose(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
