@@ -38,9 +38,9 @@
 		"sillyname": "^0.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.23.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@0.1040.1000",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -48,7 +48,7 @@
 		"@types/debug": "^4.1.5",
 		"@types/lru-cache": "^5.1.0",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",

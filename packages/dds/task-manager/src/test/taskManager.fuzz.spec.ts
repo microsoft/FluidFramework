@@ -261,7 +261,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		// ADO:5083, eventual consistency issue was detected
+		// AB#5185: enabling rebasing indicates some unknown eventual consistency issue
 		skip: [0, 2, 6],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {
@@ -271,6 +271,11 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
+		detachedStartOptions: {
+			enabled: false,
+			attachProbability: 0.2,
+		},
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.

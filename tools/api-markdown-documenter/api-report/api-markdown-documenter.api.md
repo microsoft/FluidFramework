@@ -265,6 +265,9 @@ export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemT
 export function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
 
 // @public
+export function getMarkdownRenderersWithDefaults(customRenderers?: MarkdownRenderers): MarkdownRenderers;
+
+// @public
 export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public
@@ -365,6 +368,7 @@ export type LoggingFunction = (message: string | Error, ...args: unknown[]) => v
 export interface MarkdownRenderConfiguration extends ConfigurationBase {
     readonly newlineKind?: NewlineKind;
     readonly renderers?: MarkdownRenderers;
+    readonly startingHeadingLevel?: number;
 }
 
 // @public

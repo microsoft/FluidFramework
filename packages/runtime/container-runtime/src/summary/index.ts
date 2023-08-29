@@ -11,7 +11,7 @@ export {
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection";
-export { RunningSummarizer } from "./runningSummarizer";
+export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
@@ -65,6 +65,7 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureResult,
+	ISummarizeEventProps,
 } from "./summarizerTypes";
 export {
 	IAckedSummary,

@@ -22,14 +22,25 @@ import {
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
-/** @returns true if value is an object but neither null nor an array */
-const isRegularObject = (value: any): boolean => {
+/**
+ * Determines if the provided value is an object but neither null nor an array.
+ */
+const isRegularObject = (value: unknown): boolean => {
 	return value !== null && !Array.isArray(value) && typeof value === "object";
 };
 
-/** Inspect the given error for common "safe" props and return them */
-export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
-	const removeMessageFromStack = (stack: string, errorName?: string) => {
+/**
+ * Inspect the given error for common "safe" props and return them.
+ */
+export function extractLogSafeErrorProperties(
+	error: unknown,
+	sanitizeStack: boolean,
+): {
+	message: string;
+	errorType?: string | undefined;
+	stack?: string | undefined;
+} {
+	const removeMessageFromStack = (stack: string, errorName?: string): string => {
 		if (!sanitizeStack) {
 			return stack;
 		}
@@ -41,14 +52,17 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 		return stackFrames.join("\n");
 	};
 
-	const message = typeof error?.message === "string" ? (error.message as string) : String(error);
+	const message =
+		typeof (error as Partial<Error>)?.message === "string"
+			? (error as Error).message
+			: String(error);
 
 	const safeProps: { message: string; errorType?: string; stack?: string } = {
 		message,
 	};
 
 	if (isRegularObject(error)) {
-		const { errorType, stack, name } = error;
+		const { errorType, stack, name } = error as Partial<IFluidErrorBase>;
 
 		if (typeof errorType === "string") {
 			safeProps.errorType = errorType;
@@ -63,12 +77,19 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 	return safeProps;
 }
 
-/** type guard for ILoggingError interface */
-export const isILoggingError = (x: any): x is ILoggingError =>
-	typeof x?.getTelemetryProperties === "function";
+/**
+ * type guard for ILoggingError interface
+ */
+export const isILoggingError = (x: unknown): x is ILoggingError =>
+	typeof (x as Partial<ILoggingError>)?.getTelemetryProperties === "function";
 
-/** Copy props from source onto target, but do not overwrite an existing prop that matches */
-function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {
+/**
+ * Copy props from source onto target, but do not overwrite an existing prop that matches
+ */
+function copyProps(
+	target: ITelemetryProperties | LoggingError,
+	source: ITelemetryProperties,
+): void {
 	for (const key of Object.keys(source)) {
 		if (target[key] === undefined) {
 			target[key] = source[key];
@@ -76,16 +97,23 @@ function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemet
 	}
 }
 
-/** Metadata to annotate an error object when annotating or normalizing it */
+/**
+ * Metadata to annotate an error object when annotating or normalizing it
+ */
 export interface IFluidErrorAnnotations {
-	/** Telemetry props to log with the error */
+	/**
+	 * Telemetry props to log with the error
+	 */
 	props?: ITelemetryProperties;
 }
 
-/** For backwards compatibility with pre-errorInstanceId valid errors */
+/**
+ * For backwards compatibility with pre-errorInstanceId valid errors
+ */
 function patchLegacyError(
 	legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
 	const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
 	if (patchMe.errorInstanceId === undefined) {
 		patchMe.errorInstanceId = uuid();
@@ -180,8 +208,8 @@ export function generateErrorWithStack(): Error {
 
 	try {
 		throw err;
-	} catch (e) {
-		return e as Error;
+	} catch (error) {
+		return error as Error;
 	}
 }
 
@@ -230,12 +258,16 @@ export function wrapError<T extends LoggingError>(
 	return newError;
 }
 
-/** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
+/**
+ * The same as wrapError, but also logs the innerError, including the wrapping error's instance ID.
+ *
+ * @typeParam T - The kind of wrapper error to create.
+ */
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
 	logger: ITelemetryLoggerExt,
-) {
+): T {
 	const newError = wrapError(innerError, newErrorFn);
 
 	// This will match innerError.errorInstanceId if present (see wrapError)
@@ -256,11 +288,11 @@ export function wrapErrorAndLog<T extends LoggingError>(
 	return newError;
 }
 
-function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
+function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
 	// supposedly setting stack on an Error can throw.
 	try {
 		Object.assign(error, { stack });
-	} catch (errorSettingStack) {
+	} catch {
 		error.addTelemetryProperties({ stack2: stack });
 	}
 }
@@ -270,17 +302,17 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
  * False for any error we created and raised within the FF codebase via LoggingError base class,
  * or wrapped in a well-known error type
  */
-export function isExternalError(e: any): boolean {
+export function isExternalError(error: unknown): boolean {
 	// LoggingErrors are an internal FF error type. However, an external error can be converted
 	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin flag to
 	// determine whether the original error was infact external.
-	if (LoggingError.typeCheck(e)) {
-		if ((e as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
-			return e.getTelemetryProperties().untrustedOrigin === 1;
+	if (LoggingError.typeCheck(error)) {
+		if ((error as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
+			return error.getTelemetryProperties().untrustedOrigin === 1;
 		}
 		return false;
 	}
-	return !isValidLegacyError(e);
+	return !isValidLegacyError(error);
 }
 
 /**
@@ -289,7 +321,7 @@ export function isExternalError(e: any): boolean {
 export function isTaggedTelemetryPropertyValue(
 	x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,
 ): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt {
-	return typeof (x as any)?.tag === "string";
+	return typeof (x as Partial<ITaggedTelemetryPropertyTypeExt>)?.tag === "string";
 }
 
 /**
@@ -298,7 +330,7 @@ export function isTaggedTelemetryPropertyValue(
  * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
  * otherwise returns null since this is what we support at the moment.
  */
-function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyType {
+function filterValidTelemetryProps(x: unknown, key: string): TelemetryEventPropertyType {
 	if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
 		return JSON.stringify(x);
 	}
@@ -311,7 +343,7 @@ function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyT
 }
 
 // checking type of x, returns false if x is null
-function isTelemetryEventPropertyValue(x: any): x is TelemetryEventPropertyType {
+function isTelemetryEventPropertyValue(x: unknown): x is TelemetryEventPropertyType {
 	switch (typeof x) {
 		case "string":
 		case "number":
@@ -325,13 +357,13 @@ function isTelemetryEventPropertyValue(x: any): x is TelemetryEventPropertyType 
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
+function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetryProperties {
 	const props: ITelemetryProperties = {};
 	for (const key of Object.keys(obj)) {
 		if (keysToOmit.has(key)) {
 			continue;
 		}
-		const val = obj[key];
+		const val = obj[key] as ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt;
 
 		// ensure only valid props get logged, since props of logging error could be in any shape
 		if (isTaggedTelemetryPropertyValue(val)) {
@@ -353,9 +385,11 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
  * Not ideal, as will cut values that are not necessarily circular references.
  * Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
  */
-export const getCircularReplacer = () => {
+// TODO: Use `unknown` instead (API breaking change)
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export const getCircularReplacer = (): ((key: string, value: unknown) => any) => {
 	const seen = new WeakSet();
-	return (key: string, value: any): any => {
+	return (key: string, value: unknown): any => {
 		if (typeof value === "object" && value !== null) {
 			if (seen.has(value)) {
 				return "<removed/circular>";
@@ -365,6 +399,7 @@ export const getCircularReplacer = () => {
 		return value;
 	};
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Base class for "trusted" errors we create, whose properties can generally be logged to telemetry safely.
@@ -378,15 +413,18 @@ export class LoggingError
 	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
 {
 	private _errorInstanceId = uuid();
-	get errorInstanceId() {
+	get errorInstanceId(): string {
 		return this._errorInstanceId;
 	}
-	overwriteErrorInstanceId(id: string) {
+	overwriteErrorInstanceId(id: string): void {
 		this._errorInstanceId = id;
 	}
 
-	/** Back-compat to appease isFluidError typeguard in old code that may handle this error */
+	/**
+	 * Backwards compatibility to appease {@link isFluidError} in old code that may handle this error.
+	 */
 	// @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
+	// eslint-disable-next-line @typescript-eslint/prefer-as-const
 	private readonly fluidErrorCode: "-" = "-";
 
 	/**
@@ -430,7 +468,7 @@ export class LoggingError
 	/**
 	 * Add additional properties to be logged
 	 */
-	public addTelemetryProperties(props: ITelemetryProperties) {
+	public addTelemetryProperties(props: ITelemetryProperties): void {
 		copyProps(this, props);
 	}
 
@@ -449,7 +487,9 @@ export class LoggingError
 	}
 }
 
-/** The Error class used when normalizing an external error */
+/**
+ * The Error class used when normalizing an external error
+ */
 export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.

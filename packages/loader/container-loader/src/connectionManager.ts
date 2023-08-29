@@ -10,7 +10,6 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IAnyDriverError,
 	IDocumentService,
@@ -42,7 +41,13 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, formatTick, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+	formatTick,
+	GenericError,
+	ITelemetryLoggerExt,
+	normalizeError,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import {
 	ReconnectMode,
 	IConnectionManager,
@@ -356,7 +361,7 @@ export class ConnectionManager implements IConnectionManager {
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
 		public readonly containerDirty: () => boolean,
-		private client: IClient,
+		private readonly client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
@@ -395,6 +400,7 @@ export class ConnectionManager implements IConnectionManager {
 			error,
 		};
 
+		const oldReadonlyValue = this.readonly;
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);
 
@@ -402,7 +408,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true);
+			this.set_readonlyPermissions(true, oldReadonlyValue);
 		}
 	}
 
@@ -477,10 +483,12 @@ export class ConnectionManager implements IConnectionManager {
 		}
 	}
 
-	private set_readonlyPermissions(readonly: boolean) {
-		const oldValue = this.readonly;
-		this._readonlyPermissions = readonly;
-		if (oldValue !== this.readonly) {
+	private set_readonlyPermissions(
+		newReadonlyValue: boolean,
+		oldReadonlyValue: boolean | undefined,
+	) {
+		this._readonlyPermissions = newReadonlyValue;
+		if (oldReadonlyValue !== this.readonly) {
 			this.props.readonlyChangeHandler(this.readonly);
 		}
 	}
@@ -770,6 +778,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.pendingConnection = undefined;
 
+		const oldReadonlyValue = this.readonly;
 		this.connection = connection;
 
 		// Does information in scopes & mode matches?
@@ -795,7 +804,7 @@ export class ConnectionManager implements IConnectionManager {
 			0x0e8 /* "readonly perf with write connection" */,
 		);
 
-		this.set_readonlyPermissions(readonly);
+		this.set_readonlyPermissions(readonly, oldReadonlyValue);
 
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.
