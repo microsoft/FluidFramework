@@ -47,3 +47,4 @@ export {
 } from "./tokenRevocationManager";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { IApiCounters, InMemoryApiCounters } from "./apiCounters";
+export { DocumentKeyRetriever } from "./documentKeyRetriever";
