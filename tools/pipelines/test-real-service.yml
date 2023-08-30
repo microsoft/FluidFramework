@@ -27,6 +27,9 @@ variables:
 - name: testPackage
   value: "@fluid-internal/test-end-to-end-tests"
   readonly: true
+- name: toolAbsolutePath
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
 
 lockBehavior: sequential
 stages:
@@ -187,7 +190,7 @@ stages:
               displayName: Retrieve buildId results
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Build.SourcesDirectory)/tools/telemetry-generator
+                workingDirectory: $(toolAbsolutePath)
                 script: |
                   echo "creating output folder"
                   mkdir -p ${{ variables.testWorkspace }}/timingOutput
