@@ -766,11 +766,8 @@ export class ModularChangeFamily
 		return modify;
 	}
 
-	public buildEditor(
-		changeReceiver: (change: ModularChangeset) => void,
-		anchors: AnchorSet,
-	): ModularEditBuilder {
-		return new ModularEditBuilder(this, changeReceiver, anchors);
+	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
+		return new ModularEditBuilder(this, changeReceiver);
 	}
 }
 
@@ -1007,9 +1004,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
-		anchors: AnchorSet,
 	) {
-		super(family, changeReceiver, anchors);
+		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
 	}
 
