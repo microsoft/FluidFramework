@@ -14,7 +14,10 @@
 				"tinylicious": {
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [45000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
+						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					},
 					"container": {
 						"gcOptions": {
@@ -30,7 +33,10 @@
 				"odsp": {
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [45000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
+						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					},
 					"container": {
 						"gcOptions": {
@@ -59,7 +65,10 @@
 					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
+						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					},
 					"container": {
 						"gcOptions": {
@@ -77,7 +86,10 @@
 					"configurations": {
 						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000],
-						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
+						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true],
+						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					},
 					"container": {
 						"gcOptions": {
@@ -105,7 +117,10 @@
 				"tinylicious": {
 					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000]
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
+						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					},
 					"container": {
 						"gcOptions": {
@@ -122,7 +137,10 @@
 					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 25 mins. Sweep Timeout: 26 mins.",
 					"configurations": {
 						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000]
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000],
+						"Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload": [true, false],
+						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					},
 					"container": {
 						"gcOptions": {
