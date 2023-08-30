@@ -145,6 +145,11 @@ export interface IDriverErrorBase {
 	 * See OnlineStatus enum in driver-utils package for expected values.
 	 */
 	online?: string;
+
+	/**
+	 * Whether service was reachable and we got some response from service.
+	 */
+	endpointReached?: boolean;
 }
 
 export interface IThrottlingWarning extends IDriverErrorBase {

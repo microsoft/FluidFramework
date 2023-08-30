@@ -56,7 +56,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 				docId: hashedDocumentId,
 				resolvedUrl,
 			},
-			logger,
+			logger.toTelemetryLogger(),
 		);
 	});
 

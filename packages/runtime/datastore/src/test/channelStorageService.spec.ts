@@ -22,7 +22,7 @@ describe("ChannelStorageService", () => {
 			},
 		};
 		const logger = new MockLogger();
-		const ss = new ChannelStorageService(tree, storage, logger);
+		const ss = new ChannelStorageService(tree, storage, logger.toTelemetryLogger());
 
 		assert.strictEqual(await ss.contains("/"), false);
 		assert.deepStrictEqual(await ss.list(""), []);
@@ -42,7 +42,7 @@ describe("ChannelStorageService", () => {
 			},
 		};
 		const logger = new MockLogger();
-		const ss = new ChannelStorageService(tree, storage, logger);
+		const ss = new ChannelStorageService(tree, storage, logger.toTelemetryLogger());
 
 		assert.strictEqual(await ss.contains("foo"), true);
 		assert.deepStrictEqual(await ss.list(""), ["foo"]);
@@ -68,7 +68,7 @@ describe("ChannelStorageService", () => {
 			},
 		};
 		const logger = new MockLogger();
-		const ss = new ChannelStorageService(tree, storage, logger);
+		const ss = new ChannelStorageService(tree, storage, logger.toTelemetryLogger());
 
 		assert.strictEqual(await ss.contains("nested/foo"), true);
 		assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);

@@ -14,8 +14,9 @@ import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -38,6 +39,8 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getAliasedDataStoreEntryPoint?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+    // @deprecated
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     readonly isDirty: boolean;
     // (undocumented)

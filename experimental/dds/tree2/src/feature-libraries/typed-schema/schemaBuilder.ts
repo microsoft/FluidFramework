@@ -4,26 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-	Adapters,
-	FieldAdapter,
-	GlobalFieldKey,
-	rootFieldKey,
-	TreeAdapter,
-	TreeSchemaIdentifier,
-	ValueSchema,
-} from "../../core";
-import { Sourced, SchemaCollection } from "../modular-schema";
+import { Adapters, TreeAdapter, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
+import { FullSchemaPolicy } from "../modular-schema";
+import { Sourced } from "./view";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
-import {
-	AllowedTypes,
-	TreeSchema,
-	TreeSchemaSpecification,
-	GlobalFieldSchema,
-	FieldSchema,
-} from "./typedTreeSchema";
+import { AllowedTypes, TreeSchema, TreeSchemaSpecification, FieldSchema } from "./typedTreeSchema";
 import { FlexList } from "./flexList";
 
 // TODO: tests and examples for this file
@@ -61,6 +48,7 @@ export type RecursiveTreeSchemaSpecification = unknown;
  * @sealed @alpha
  */
 export class SchemaBuilder {
+	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
 	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
@@ -68,9 +56,15 @@ export class SchemaBuilder {
 
 	/**
 	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema.
+	 * @param lint - Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
 	 * @param libraries - Libraries to include in this one. See `addLibraries` for details.
 	 */
-	public constructor(public readonly name: string, ...libraries: SchemaLibrary[]) {
+	public constructor(
+		public readonly name: string,
+		lint: Partial<SchemaLintConfiguration> = {},
+		...libraries: SchemaLibrary[]
+	) {
+		this.lintConfiguration = { ...schemaLintDefault, ...lint };
 		this.libraries = new Set();
 		this.addLibraries(...libraries);
 	}
@@ -82,7 +76,7 @@ export class SchemaBuilder {
 	 * If a single library is added multiple times (even indirectly via libraries it was added into),
 	 * only a single copy will be included, so they will not conflict.
 	 * This allows adding any library this one depends on without risk of conflicts for users of this library.
-	 * Contents withing the added libraries can still conflict however.
+	 * Contents within the added libraries can still conflict however.
 	 * Such errors will be reported when finalizing this builder into a library of document schema.
 	 */
 	public addLibraries(...libraries: SchemaLibrary[]) {
@@ -119,8 +113,8 @@ export class SchemaBuilder {
 	public struct<Name extends string, T extends RestrictiveReadonlyRecord<string, FieldSchema>>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: T }> {
-		const schema = new TreeSchema(this, name, { local: t });
+	): TreeSchema<Name, { structFields: T }> {
+		const schema = new TreeSchema(this, name, { structFields: t });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -134,11 +128,11 @@ export class SchemaBuilder {
 	public structRecursive<Name extends string, T>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: T }> {
+	): TreeSchema<Name, { structFields: T }> {
 		return this.struct(
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, FieldSchema>,
-		) as unknown as TreeSchema<Name, { local: T }>;
+		) as unknown as TreeSchema<Name, { structFields: T }>;
 	}
 
 	/**
@@ -159,8 +153,8 @@ export class SchemaBuilder {
 	public map<Name extends string, T extends FieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): TreeSchema<Name, { extraLocalFields: T }> {
-		const schema = new TreeSchema(this, name, { extraLocalFields: fieldSchema });
+	): TreeSchema<Name, { mapFields: T }> {
+		const schema = new TreeSchema(this, name, { mapFields: fieldSchema });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -174,10 +168,10 @@ export class SchemaBuilder {
 	public mapRecursive<Name extends string, T>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { extraLocalFields: T }> {
+	): TreeSchema<Name, { mapFields: T }> {
 		return this.map(name, t as unknown as FieldSchema) as unknown as TreeSchema<
 			Name,
-			{ extraLocalFields: T }
+			{ mapFields: T }
 		>;
 	}
 
@@ -216,8 +210,8 @@ export class SchemaBuilder {
 	public fieldNode<Name extends string, T extends FieldSchema>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: { [""]: T } }> {
-		const schema = new TreeSchema(this, name, { local: { [""]: t } });
+	): TreeSchema<Name, { structFields: { [""]: T } }> {
+		const schema = new TreeSchema(this, name, { structFields: { [""]: t } });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -231,10 +225,10 @@ export class SchemaBuilder {
 	public fieldNodeRecursive<Name extends string, T>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { local: { [""]: T } }> {
+	): TreeSchema<Name, { structFields: { [""]: T } }> {
 		return this.fieldNode(name, t as unknown as FieldSchema) as unknown as TreeSchema<
 			Name,
-			{ local: { [""]: T } }
+			{ structFields: { [""]: T } }
 		>;
 	}
 
@@ -254,8 +248,8 @@ export class SchemaBuilder {
 	public leaf<Name extends string, T extends ValueSchema>(
 		name: Name,
 		t: T,
-	): TreeSchema<Name, { value: T }> {
-		const schema = new TreeSchema(this, name, { value: t });
+	): TreeSchema<Name, { leafValue: T }> {
+		const schema = new TreeSchema(this, name, { leafValue: t });
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -295,7 +289,7 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * Define a schema for an value field.
+	 * Define a schema for a value field.
 	 * Shorthand or passing `FieldKinds.value` to {@link SchemaBuilder.field}.
 	 *
 	 * Value fields hold a single child.
@@ -337,6 +331,7 @@ export class SchemaBuilder {
 	 */
 	public static fieldRecursive<
 		Kind extends FieldKindTypes,
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 		T extends FlexList<RecursiveTreeSchema>,
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
 		return new FieldSchema(kind, allowedTypes);
@@ -347,7 +342,7 @@ export class SchemaBuilder {
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			globalFieldSchema: new Map(),
+			rootFieldSchema: undefined,
 			treeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
@@ -361,7 +356,7 @@ export class SchemaBuilder {
 		this.finalize();
 
 		// Check for errors:
-		const collection = buildViewSchemaCollection([...this.libraries]);
+		const collection = buildViewSchemaCollection(this.lintConfiguration, this.libraries);
 
 		return { ...collection, libraries: this.libraries };
 	}
@@ -374,25 +369,39 @@ export class SchemaBuilder {
 	 */
 	public intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(
 		root: FieldSchema<Kind, Types>,
-	): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>> {
+	): TypedSchemaCollection<FieldSchema<Kind, Types>> {
 		this.finalize();
-		const rootField = new GlobalFieldSchema(this, rootFieldKey, root);
 		const rootLibrary: SchemaLibraryData = {
 			name: this.name,
-			globalFieldSchema: new Map<GlobalFieldKey, GlobalFieldSchema>([
-				[rootField.key, rootField],
-			]),
+			rootFieldSchema: root,
 			treeSchema: new Map(),
 			adapters: {},
 		};
-		const collection = buildViewSchemaCollection([rootLibrary, ...this.libraries]);
-		const typed: TypedSchemaCollection<GlobalFieldSchema<Kind, Types>> = {
+		const collection = buildViewSchemaCollection(this.lintConfiguration, [
+			rootLibrary,
+			...this.libraries,
+		]);
+		const typed: TypedSchemaCollection<FieldSchema<Kind, Types>> = {
 			...collection,
-			root: rootField,
+			rootFieldSchema: root,
 		};
 		return typed;
 	}
 }
+
+/**
+ * Allows opting into and out of errors for some unusual schema patterns which are usually bugs.
+ * @alpha
+ */
+export interface SchemaLintConfiguration {
+	readonly rejectForbidden: boolean;
+	readonly rejectEmpty: boolean;
+}
+
+const schemaLintDefault: SchemaLintConfiguration = {
+	rejectForbidden: true,
+	rejectEmpty: true,
+};
 
 /**
  * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
@@ -400,20 +409,27 @@ export class SchemaBuilder {
  */
 export interface SchemaLibraryData {
 	readonly name: string;
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
+	readonly rootFieldSchema?: FieldSchema;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly adapters: Adapters;
 }
 
 /**
+ * Schema data that can be be used to view a document.
+ * Strongly typed over its rootFieldSchema.
+ *
+ * @remarks
+ * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
+ * The actual type used will include detailed schema information for all the types in the collection.
+ * This pattern is used to implement SchemaAware APIs.
+ *
  * @alpha
  */
-export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {
-	/**
-	 * Root field.
-	 * Also in globalFieldSchema under the key {@link rootFieldKey}.
-	 */
-	readonly root: T;
+export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+	readonly rootFieldSchema: T;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly policy: FullSchemaPolicy;
+	readonly adapters: Adapters;
 }
 
 /**
@@ -421,7 +437,7 @@ export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends Sche
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface SchemaLibrary extends SchemaCollection {
+export interface SchemaLibrary extends TypedSchemaCollection {
 	/**
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */
@@ -434,7 +450,6 @@ export interface SchemaLibrary extends SchemaCollection {
  */
 export interface SourcedAdapters {
 	readonly tree: (Sourced & TreeAdapter)[];
-	readonly fieldAdapters: Map<GlobalFieldKey, Sourced & FieldAdapter>;
 }
 
 {

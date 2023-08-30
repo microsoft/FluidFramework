@@ -14,7 +14,6 @@ import {
 	TabValue,
 } from "@fluentui/react-components";
 import {
-	ContainerDevtoolsFeature,
 	ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
@@ -26,6 +25,7 @@ import {
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
 import { useLogger } from "../TelemetryUtils";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
@@ -101,6 +101,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
 				if (message.data.containerKey === containerKey) {
 					setSupportedFeatures(message.data.features);
+
 					return true;
 				}
 				return false;
@@ -154,7 +155,9 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
-		supportedFeatures[ContainerDevtoolsFeature.ContainerData] === true
+		supportedFeatures.containerDataVisualization === true ||
+			// Backwards compatibility check, needed until we require at least devtools-core/devtools v2.0.0-internal.6.1.0
+			supportedFeatures["container-data"] === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);
@@ -162,7 +165,13 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
-			innerView = <DataObjectsView containerKey={containerKey} />;
+			innerView = (
+				<ContainerFeatureFlagContext.Provider
+					value={{ containerFeatureFlags: supportedFeatures }}
+				>
+					<DataObjectsView containerKey={containerKey} />
+				</ContainerFeatureFlagContext.Provider>
+			);
 			break;
 		case PanelView.Audience:
 			innerView = <AudienceView containerKey={containerKey} />;

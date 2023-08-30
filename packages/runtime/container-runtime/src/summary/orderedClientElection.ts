@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable @rushstack/no-new-null */
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { summarizerClientType } from "./summarizerClientElection";
 
@@ -101,7 +104,7 @@ export class OrderedClientCollection
 	}
 
 	constructor(
-		logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
 		quorum: Pick<IQuorumClients, "getMembers" | "on">,
 	) {

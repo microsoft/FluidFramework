@@ -72,11 +72,15 @@ export function create(
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("alfred", (tokens, req, res) => {
-				return {
+				const additionalProperties: Record<string, any> = {
 					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 				};
+				if (req.body?.isEphemeralContainer !== undefined) {
+					additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+				}
+				return additionalProperties;
 			}),
 		);
 	} else {

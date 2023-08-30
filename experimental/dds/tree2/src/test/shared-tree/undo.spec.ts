@@ -4,14 +4,14 @@
  */
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { rootFieldKeySymbol, UpPath } from "../../core";
+import { rootFieldKey, UpPath } from "../../core";
 import { ISharedTreeView } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
 import { expectJsonTree, makeTreeFromJson } from "../utils";
 
 const rootPath: UpPath = {
 	parent: undefined,
-	parentField: rootFieldKeySymbol,
+	parentField: rootFieldKey,
 	parentIndex: 0,
 };
 
@@ -44,7 +44,7 @@ const testCases: {
 		edit: (undoRedoBranch) => {
 			const field = undoRedoBranch.editor.sequenceField({
 				parent: undefined,
-				field: rootFieldKeySymbol,
+				field: rootFieldKey,
 			});
 			field.move(0, 2, 2);
 		},
@@ -57,7 +57,7 @@ const testCases: {
 			insert(otherBranch, 1, "x");
 			const field = undoRedoBranch.editor.sequenceField({
 				parent: undefined,
-				field: rootFieldKeySymbol,
+				field: rootFieldKey,
 			});
 			field.move(1, 1, 3);
 		},
@@ -81,7 +81,7 @@ const testCases: {
 				.valueField({ parent: rootPath, field: brand("child") })
 				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
 			undoRedoBranch.editor
-				.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
+				.sequenceField({ parent: undefined, field: rootFieldKey })
 				.delete(0, 1);
 		},
 		initialState: [{ child: "x" }],
@@ -150,7 +150,7 @@ describe("Undo and redo", () => {
 
 			const field = fork2.editor.sequenceField({
 				parent: undefined,
-				field: rootFieldKeySymbol,
+				field: rootFieldKey,
 			});
 			field.move(0, 2, 2);
 
@@ -234,13 +234,13 @@ describe("Undo and redo", () => {
  * @param value - The value of the inserted node.
  */
 function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
 }
 

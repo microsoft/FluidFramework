@@ -27,8 +27,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { delay } from "@fluidframework/common-utils";
-import { IContainer, IErrorBase, LoaderHeader } from "@fluidframework/container-definitions";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IErrorBase, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -85,9 +85,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		return createSummarizer(
 			provider,
 			container,
+			{
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 			summaryVersion,
-			gcOptions,
-			mockConfigProvider(settings),
 		);
 	};
 	const summarize = async (summarizer: ISummarizer) => {

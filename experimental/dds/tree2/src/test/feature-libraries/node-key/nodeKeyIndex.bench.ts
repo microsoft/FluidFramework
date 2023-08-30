@@ -19,7 +19,7 @@ import {
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
 import {
-	rootFieldKeySymbol,
+	rootFieldKey,
 	ITreeCursor,
 	moveToDetachedField,
 	JsonableTree,
@@ -28,7 +28,7 @@ import {
 import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("node key index benchmarks", nodeKeySchema);
+const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
 const nodeSchema = builder.structRecursive("node", {
 	child: SchemaBuilder.fieldRecursive(
 		FieldKinds.optional,
@@ -64,7 +64,7 @@ describe("Node Key Index Benchmarks", () => {
 				});
 				const field = tree.editor.sequenceField({
 					parent: undefined,
-					field: rootFieldKeySymbol,
+					field: rootFieldKey,
 				});
 
 				return [tree, field, provider];

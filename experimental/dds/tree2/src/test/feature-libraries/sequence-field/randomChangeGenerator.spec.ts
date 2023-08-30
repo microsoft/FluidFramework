@@ -8,6 +8,7 @@ import { NodeChangeset } from "../../../feature-libraries";
 import { FieldKey } from "../../../core";
 import { brand } from "../../../util";
 import { generateRandomChange } from "./randomChangeGenerator";
+import { MarkMaker as Mark } from "./testEdits";
 
 const testSeed = 432167897;
 const maxIndex = 3;
@@ -39,7 +40,7 @@ describe("SequenceField - generateRandomChange", () => {
 
 	it("Generates a change", () => {
 		const change = generateRandomChange(testSeed, maxIndex, childGen);
-		const expected = [{ count: 2 }, { type: "Delete", id: 0, count: 5 }];
+		const expected = [{ count: 2 }, Mark.delete(5, brand(0))];
 		assert.deepStrictEqual(change, expected);
 	});
 });

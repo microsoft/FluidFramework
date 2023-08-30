@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 export class BatchTracker {
 	private readonly logger: ITelemetryLoggerExt;
@@ -16,7 +17,7 @@ export class BatchTracker {
 
 	constructor(
 		private readonly batchEventEmitter: EventEmitter,
-		logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		batchLengthThreshold: number,
 		batchCountSamplingRate: number,
 		dateTimeProvider: () => number = () => performance.now(),
@@ -71,7 +72,7 @@ export class BatchTracker {
  * Track batch sizes in terms of op counts and processing times
  *
  * @param batchEventEmitter - event emitter which tracks the lifecycle of batch operations
- * @param logger - See {@link @fluidframework/common-definitions#ITelemetryLoggerExt}
+ * @param logger - See {@link @fluidframework/core-interfaces#ITelemetryLoggerExt}
  * @param batchLengthThreshold - threshold for the length of a batch when to send an error event
  * @param batchCountSamplingRate - rate for batches for which to send an event with its characteristics
  */

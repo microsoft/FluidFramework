@@ -5,11 +5,11 @@
 
 import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	generateStack,
 	ITelemetryLoggerExt,
 	MonitoringContext,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { ICreateContainerMetadata } from "../summary";
 import {
@@ -23,6 +23,7 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+// eslint-disable-next-line import/no-deprecated
 import { tagAsCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
@@ -161,7 +162,6 @@ export class GCTelemetryTracker {
 		const { usageType, currentReferenceTimestampMs, packagePath, id, fromId, ...propsToLog } =
 			nodeUsageProps;
 		const eventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
-			id: tagAsCodeArtifact(id),
 			type: nodeType,
 			unrefTime: nodeStateTracker.unreferencedTimestampMs,
 			age:
@@ -171,7 +171,7 @@ export class GCTelemetryTracker {
 				state === UnreferencedState.Inactive
 					? this.configs.inactiveTimeoutMs
 					: this.configs.sweepTimeoutMs,
-			fromId: fromId ? tagAsCodeArtifact(fromId) : undefined,
+			...tagCodeArtifacts({ id, fromId }),
 			...propsToLog,
 			...this.createContainerMetadata,
 		};
@@ -184,6 +184,7 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
+					// eslint-disable-next-line import/no-deprecated
 					url: tagAsCodeArtifact(id),
 					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 				},
@@ -211,7 +212,7 @@ export class GCTelemetryTracker {
 				const { id: taggedId, fromId: taggedFromId, ...otherProps } = eventProps;
 				const event = {
 					eventName: `${state}Object_${nodeUsageProps.usageType}`,
-					pkg: packagePathToTelemetryProperty(nodeUsageProps.packagePath),
+					pkg: tagCodeArtifacts({ pkg: nodeUsageProps.packagePath?.join("/") }).pkg,
 					stack: generateStack(),
 					id: taggedId,
 					fromId: taggedFromId,
@@ -277,8 +278,10 @@ export class GCTelemetryTracker {
 			if (missingExplicitRoutes.length > 0) {
 				logger.sendErrorEvent({
 					eventName: "gcUnknownOutboundReferences",
-					id: tagAsCodeArtifact(nodeId),
-					routes: tagAsCodeArtifact(JSON.stringify(missingExplicitRoutes)),
+					...tagCodeArtifacts({
+						id: nodeId,
+						routes: JSON.stringify(missingExplicitRoutes),
+					}),
 				});
 			}
 		}
@@ -318,8 +321,10 @@ export class GCTelemetryTracker {
 					}),
 					id,
 					fromId,
-					pkg: pkg ? tagAsCodeArtifact(pkg.join("/")) : undefined,
-					fromPkg: fromPkg ? tagAsCodeArtifact(fromPkg.join("/")) : undefined,
+					...tagCodeArtifacts({
+						pkg: pkg?.join("/"),
+						fromPkg: fromPkg?.join("/"),
+					}),
 				};
 
 				if (state === UnreferencedState.Inactive) {
@@ -379,7 +384,7 @@ export class GCTelemetryTracker {
 					lastSummaryTime,
 					...this.createContainerMetadata,
 				}),
-				id: tagAsCodeArtifact(JSON.stringify(deletedNodeIds)),
+				...tagCodeArtifacts({ id: JSON.stringify(deletedNodeIds) }),
 			});
 		}
 	}
@@ -398,7 +403,7 @@ export function sendGCUnexpectedUsageEvent(
 	packagePath: readonly string[] | undefined,
 	error?: unknown,
 ) {
-	event.pkg = packagePathToTelemetryProperty(packagePath);
+	event.pkg = tagCodeArtifacts({ pkg: packagePath?.join("/") })?.pkg;
 	event.tombstoneFlags = JSON.stringify({
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),

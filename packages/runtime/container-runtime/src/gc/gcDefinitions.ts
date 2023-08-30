@@ -228,11 +228,7 @@ export interface IGarbageCollector {
 	/** Returns the GC details generated from the base snapshot. */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void>;
+	refreshLatestSummary(result: RefreshSummaryResult): Promise<void>;
 	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
 	nodeUpdated(
 		nodePath: string,
@@ -349,6 +345,8 @@ export interface IGarbageCollectorConfigs {
 	readonly sweepTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
+	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
+	readonly throwOnInactiveLoad: boolean | undefined;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**

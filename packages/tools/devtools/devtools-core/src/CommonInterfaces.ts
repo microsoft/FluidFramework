@@ -29,7 +29,7 @@ export interface HasContainerKey {
 /**
  * A unique ID for a Fluid object
  *
- * @public
+ * @internal
  */
 export type FluidObjectId = string;
 
@@ -45,3 +45,40 @@ export interface HasFluidObjectId {
 	 */
 	fluidObjectId: FluidObjectId;
 }
+
+/**
+ * Represents the type selection for an edit being applied to a Shared Object.
+ *
+ * @internal
+ */
+export const EditType = {
+	/**
+	 * Indicates that the data associated with an edit is or must be a `boolean`.
+	 */
+	Boolean: "boolean",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `number`.
+	 */
+	Number: "number",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `string`.
+	 */
+	String: "string",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `undefined`.
+	 */
+	Undefined: "undefined",
+
+	/**
+	 * Indicates that the data associated with an edit is or must be a `null`.
+	 */
+	Null: "null",
+} as const;
+
+/**
+ * @internal
+ */
+export type EditType = typeof EditType[keyof typeof EditType];

@@ -15,7 +15,8 @@ import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
 } from "../sharedIntervalCollection";
-import { Interval, IIntervalCollection, IntervalType } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
+import { Interval, IntervalType } from "../intervals";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,

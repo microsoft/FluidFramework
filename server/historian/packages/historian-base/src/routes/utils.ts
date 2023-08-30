@@ -11,7 +11,13 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
-import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
+import {
+	ICache,
+	ITenantService,
+	RestGitService,
+	ITenantCustomDataExternal,
+	IDenyList,
+} from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
 /**
@@ -32,8 +38,8 @@ export function handleResponse<T>(
 	successStatus: number = 200,
 	onSuccess: (value: T) => void = () => {},
 ) {
-	resultP.then(
-		(result) => {
+	resultP
+		.then((result) => {
 			if (allowClientCache === true) {
 				response.setHeader("Cache-Control", "public, max-age=31536000");
 			} else if (allowClientCache === false) {
@@ -49,8 +55,8 @@ export function handleResponse<T>(
 			onSuccess(result);
 			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
-		},
-		(error) => {
+		})
+		.catch((error) => {
 			// Only log unexpected errors on the assumption that explicitly thrown
 			// NetworkErrors have additional logging in place at the source.
 			if (error instanceof Error && error?.name === "NetworkError") {
@@ -63,8 +69,7 @@ export function handleResponse<T>(
 				Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
 				response.status(errorStatus ?? 400).json("Internal Server Error");
 			}
-		},
-	);
+		});
 }
 
 export class createGitServiceArgs {
@@ -78,6 +83,9 @@ export class createGitServiceArgs {
 	initialUpload?: boolean = false;
 	storageName?: string;
 	allowDisabledTenant?: boolean = false;
+	isEphemeralContainer?: boolean = false;
+	ignoreEphemeralFlag?: boolean = true;
+	denyList?: IDenyList;
 }
 
 export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
@@ -92,6 +100,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		initialUpload,
 		storageName,
 		allowDisabledTenant,
+		isEphemeralContainer,
+		ignoreEphemeralFlag,
+		denyList,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
 	const decoded = decode(token) as ITokenClaims;
@@ -100,10 +111,25 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		// Prevent attempted directory traversal.
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
 	}
+	if (denyList?.isDenied(tenantId, documentId)) {
+		throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
+	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
+	const maxCacheableSummarySize: number =
+		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
+
+	let isEphemeral = cache ? isEphemeralContainer : false;
+	if (!ignoreEphemeralFlag) {
+		if (isEphemeralContainer !== undefined) {
+			await cache?.set(`isEphemeral:${documentId}`, isEphemeralContainer);
+		} else {
+			isEphemeral = await cache?.get(`isEphemeral:${documentId}`);
+			// Todo: If isEphemeral is still undefined fetch the value from database
+		}
+	}
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
@@ -117,6 +143,8 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		asyncLocalStorage,
 		calculatedStorageName,
 		storageUrl,
+		isEphemeral,
+		maxCacheableSummarySize,
 	);
 	return service;
 }

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { EmptyKey, Value, FieldKey, rootFieldKeySymbol, JsonableTree } from "../../../core";
+import { EmptyKey, Value, FieldKey, rootFieldKey, JsonableTree } from "../../../core";
 import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
 	EditableTree,
@@ -114,8 +114,8 @@ describe("editable-tree: read-only", () => {
 		// which are otherwise "hidden" behind a proxy.
 		// Usefull for debugging.
 		if (isEditableTree(addressDescriptor.value)) {
-			addressDescriptor.value = clone(addressDescriptor.value);
-			expected = clone(expected);
+			addressDescriptor.value = clone(addressDescriptor.value, { lossy: true });
+			expected = clone(expected, { lossy: true });
 		}
 		assert.deepEqual(addressDescriptor, {
 			configurable: true,
@@ -385,7 +385,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("primitives under node are unwrapped, but may be accessed without unwrapping", () => {
-		const builder = new SchemaBuilder("test", personSchemaLibrary);
+		const builder = new SchemaBuilder("test", {}, personSchemaLibrary);
 		const parentSchema = builder.struct("parent", {
 			child: SchemaBuilder.field(FieldKinds.value, stringSchema),
 		});
@@ -455,7 +455,7 @@ describe("editable-tree: read-only", () => {
 			assert.equal(index, 0);
 			expectFieldEquals(context.schema, rootParent, [personJsonableTree()]);
 			assert.equal(rootParent.parent, undefined);
-			assert.equal(rootParent.fieldKey, rootFieldKeySymbol);
+			assert.equal(rootParent.fieldKey, rootFieldKey);
 		});
 
 		it("child field", () => {
@@ -487,7 +487,7 @@ describe("editable-tree: read-only", () => {
 		assert.equal(proxy.name, "Adam");
 		assert.equal(proxy.age, 35);
 		assert.equal(proxy.salary, 10420.2);
-		const cloned = clone(proxy.friends);
+		const cloned = clone(proxy.friends, { lossy: true });
 		assert.deepEqual(cloned, { Mat: "Mat" });
 		assert(proxy.address !== undefined);
 		assert.deepEqual(Object.keys(proxy.address), ["zip", "street", "phones", "sequencePhones"]);
@@ -530,7 +530,7 @@ describe("editable-tree: read-only", () => {
 			} else if (isEditableField(phone)) {
 				assert.deepEqual([...phone], expectedPhone);
 			} else {
-				const cloned = clone(phone);
+				const cloned = clone(phone, { lossy: true });
 				assert.deepEqual(cloned, expectedPhone);
 			}
 		}
@@ -556,7 +556,7 @@ describe("editable-tree: read-only", () => {
 				} else if (isEditableField(phone)) {
 					return [...phone];
 				} else {
-					const cloned = clone(phone);
+					const cloned = clone(phone, { lossy: true });
 					return cloned;
 				}
 			},
@@ -590,10 +590,9 @@ describe("editable-tree: read-only", () => {
 		// assert its schema follows the primary field schema and get the primary key from it
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
-		assert.deepEqual(simplePhonesSchema.extraLocalFields.types, new Set());
-		assert.deepEqual([...simplePhonesSchema.globalFields], []);
-		assert.equal(simplePhonesSchema.localFields.size, 1);
-		const simplePhonesPrimaryKey = [...simplePhonesSchema.localFields.keys()][0];
+		assert.equal(simplePhonesSchema.mapFields, undefined);
+		assert.equal(simplePhonesSchema.structFields.size, 1);
+		const simplePhonesPrimaryKey = [...simplePhonesSchema.structFields.keys()][0];
 		// primary key must be the same across the schema
 		assert.equal(simplePhonesPrimaryKey, phonesPrimary.key);
 		// get the primary field

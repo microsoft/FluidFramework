@@ -50,11 +50,7 @@ export function spyOnMethod(
 
 describe("MergeTree.Revertibles", () => {
 	it("revert insert", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-		);
+		const clients = createClientsAtInitialState({ initialState: "123", options: {} }, "A", "B");
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
@@ -94,7 +90,7 @@ describe("MergeTree.Revertibles", () => {
 			const clients = createClientsAtInitialState(
 				{
 					initialState: "",
-					options: { mergeTreeUseNewLengthCalculations: true },
+					options: {},
 				},
 				"A",
 			);
@@ -151,11 +147,7 @@ describe("MergeTree.Revertibles", () => {
 	});
 
 	it("revert remove", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-		);
+		const clients = createClientsAtInitialState({ initialState: "123", options: {} }, "A", "B");
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
@@ -195,7 +187,7 @@ describe("MergeTree.Revertibles", () => {
 	]) {
 		it(name, () => {
 			const clients = createClientsAtInitialState(
-				{ initialState: "1-23", options: { mergeTreeUseNewLengthCalculations: true } },
+				{ initialState: "1-23", options: {} },
 				"A",
 				"B",
 				"C",
@@ -231,7 +223,7 @@ describe("MergeTree.Revertibles", () => {
 
 	it("revert two overlapping removes", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "123", options: {} },
 			"A",
 			"B",
 			"C",
@@ -272,11 +264,7 @@ describe("MergeTree.Revertibles", () => {
 	});
 
 	it("revert annotate", () => {
-		const clients = createClientsAtInitialState(
-			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
-			"A",
-			"B",
-		);
+		const clients = createClientsAtInitialState({ initialState: "123", options: {} }, "A", "B");
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
@@ -306,7 +294,7 @@ describe("MergeTree.Revertibles", () => {
 
 	it("Remove All Original Text and Insert then Revert", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "1-2--", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "1-2--", options: {} },
 			"A",
 			"B",
 			"C",
@@ -343,7 +331,7 @@ describe("MergeTree.Revertibles", () => {
 
 	it("Re-Insert at position 0 in empty string", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "BBC-", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "BBC-", options: {} },
 			"A",
 			"B",
 			"C",
@@ -379,7 +367,7 @@ describe("MergeTree.Revertibles", () => {
 
 	it("Revert remove to empty with annotate", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "1-23--", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "1-23--", options: {} },
 			"A",
 			"B",
 			"C",
@@ -420,7 +408,7 @@ describe("MergeTree.Revertibles", () => {
 
 	it("Revert Local annotate and remove with intersecting remote annotate", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "1234-----", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "1234-----", options: {} },
 			"A",
 			"B",
 			"C",
@@ -483,7 +471,7 @@ describe("MergeTree.Revertibles", () => {
 		}).forEach((options) => {
 			it(JSON.stringify(options), () => {
 				const clients = createClientsAtInitialState(
-					{ initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
+					{ initialState: "", options: {} },
 					"A",
 					"B",
 				);

@@ -619,24 +619,6 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		});
 	});
 
-	describe("Batch validation when using getPendingLocalState()", () => {
-		beforeEach(async () => {
-			await setupContainers();
-		});
-		it("cannot capture the pending local state during ordersequentially", async () => {
-			dataObject1.context.containerRuntime.orderSequentially(() => {
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-				assert.throws(
-					() => container1.closeAndGetPendingLocalState(),
-					/can't get state during orderSequentially/,
-				);
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-			});
-		});
-	});
-
 	describe("Document Dirty State when batches are flushed", () => {
 		// Verifies that the document dirty state for the given document is as expected.
 		function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {

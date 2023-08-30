@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
@@ -14,24 +13,26 @@ import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { IUsageError } from '@fluidframework/core-interfaces';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
@@ -53,7 +54,7 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @public
+// @public @deprecated
 export enum ContainerErrorType {
     clientSessionExpiredError = "clientSessionExpiredError",
     dataCorruptionError = "dataCorruptionError",
@@ -62,6 +63,19 @@ export enum ContainerErrorType {
     throttlingError = "throttlingError",
     usageError = "usageError"
 }
+
+// @public
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type ContainerErrorTypes = typeof ContainerErrorTypes[keyof typeof ContainerErrorTypes];
 
 // @public
 export interface ContainerWarning extends IErrorBase {
@@ -93,12 +107,6 @@ export interface IBatchMessage {
     referenceSequenceNumber?: number;
 }
 
-// @public @deprecated
-export interface ICodeAllowList {
-    // @deprecated (undocumented)
-    testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
-}
-
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
@@ -115,18 +123,6 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @public @deprecated
-export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
-    // @deprecated (undocumented)
-    reason: string;
-    // @deprecated (undocumented)
-    version: string;
-}
-
 // @public
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
     attach(request: IRequest): Promise<void>;
@@ -134,8 +130,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
-    // @deprecated (undocumented)
-    closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
@@ -150,9 +144,16 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
+    request(request: {
+        url: "/";
+        headers?: undefined;
+    }): Promise<IResponse>;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
     serialize(): string;
@@ -175,14 +176,8 @@ export interface IContainerContext {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
-    // @deprecated (undocumented)
-    readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
@@ -199,8 +194,6 @@ export interface IContainerContext {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    // @deprecated (undocumented)
-    readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
@@ -224,8 +217,6 @@ export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void): any;
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
-    // @deprecated (undocumented)
-    (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     (event: "disconnected", listener: () => void): any;
     (event: "attaching", listener: () => void): any;
     (event: "attached", listener: () => void): any;
@@ -242,28 +233,17 @@ export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
     // (undocumented)
-    opsBeforeReturn?: undefined | "cached" | "all";
+    opsBeforeReturn?: undefined | "sequenceNumber" | "cached" | "all";
+    pauseAfterLoad?: boolean;
 }
 
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @public @deprecated
-export interface IDeltaHandlerStrategy {
-    // @deprecated
-    process: (message: ISequencedDocumentMessage) => void;
-    // @deprecated
-    processSignal: (message: ISignalMessage) => void;
-}
-
 // @public
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
-    // @deprecated (undocumented)
-    dispose(error?: Error): void;
-    // @deprecated (undocumented)
-    readonly disposed: boolean;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -288,11 +268,7 @@ export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
-    // @deprecated (undocumented)
-    (event: "allSentOpsAckd", listener: () => void): any;
     (event: "pong", listener: (latency: number) => void): any;
-    // @deprecated (undocumented)
-    (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;
@@ -325,14 +301,7 @@ export interface IDeltaSender {
     flush(): void;
 }
 
-// @public
-export interface IErrorBase extends Partial<Error> {
-    readonly errorType: string;
-    getTelemetryProperties?(): ITelemetryProperties;
-    readonly message: string;
-    readonly name?: string;
-    readonly stack?: string;
-}
+export { IErrorBase }
 
 // @public
 export interface IFluidBrowserPackage extends IFluidPackage {
@@ -406,13 +375,7 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public
-export interface IGenericError extends IErrorBase {
-    // (undocumented)
-    error?: any;
-    // (undocumented)
-    readonly errorType: ContainerErrorType.genericError;
-}
+export { IGenericError }
 
 // @public
 export interface IHostLoader extends ILoader {
@@ -421,7 +384,11 @@ export interface IHostLoader extends ILoader {
 }
 
 // @public
-export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
+export interface ILoader extends Partial<IProvideLoader> {
+    // @deprecated (undocumented)
+    readonly IFluidRouter: IFluidRouter;
+    // @deprecated (undocumented)
+    request(request: IRequest): Promise<IResponse>;
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
@@ -433,7 +400,6 @@ export interface ILoaderHeader {
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
-    // (undocumented)
     [LoaderHeader.sequenceNumber]: number;
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
@@ -486,12 +452,15 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint?(): Promise<FluidObject | undefined>;
-    getPendingLocalState(): unknown;
+    getPendingLocalState(props?: {
+        notifyImminentClosure?: boolean;
+    }): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
@@ -526,19 +495,9 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     };
 }
 
-// @public
-export interface IThrottlingWarning extends IErrorBase {
-    // (undocumented)
-    readonly errorType: ContainerErrorType.throttlingError;
-    // (undocumented)
-    readonly retryAfterSeconds: number;
-}
+export { IThrottlingWarning }
 
-// @public
-export interface IUsageError extends IErrorBase {
-    // (undocumented)
-    readonly errorType: ContainerErrorType.usageError;
-}
+export { IUsageError }
 
 // @public
 export enum LoaderHeader {
@@ -549,7 +508,6 @@ export enum LoaderHeader {
     loadMode = "loadMode",
     // (undocumented)
     reconnect = "fluid-reconnect",
-    // (undocumented)
     sequenceNumber = "fluid-sequence-number",
     version = "version"
 }

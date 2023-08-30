@@ -4,7 +4,7 @@
  */
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -22,6 +22,7 @@ import {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
+	// eslint-disable-next-line import/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 	ISharedDirectory,
@@ -88,6 +89,7 @@ export interface IDirectorySetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -215,6 +217,7 @@ export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	storage?: { [key: string]: ISerializableValue };
 
 	/**
@@ -735,6 +738,7 @@ export class SharedDirectory
 	private makeLocal(
 		key: string,
 		absolutePath: string,
+		// eslint-disable-next-line import/no-deprecated
 		serializable: ISerializableValue,
 	): ILocalValue {
 		assert(
@@ -960,6 +964,7 @@ export class SharedDirectory
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
 				}
+				// eslint-disable-next-line import/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
 					value: value.value && (JSON.parse(value.value) as object),
@@ -1250,7 +1255,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const isNew = this.createSubDirectoryCore(
 			subdirName,
 			true,
-			-1,
+			this.getLocalSeq(),
 			this.runtime.clientId ?? "detached",
 		);
 		const subDir = this._subdirectories.get(subdirName);
@@ -1272,6 +1277,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		return subDir;
+	}
+
+	/**
+	 * @returns A sequenceNumber which should be used for local changes.
+	 * @remarks - While detached, 0 is used rather than -1 to represent a change which should be universally known (as opposed to known
+	 * only by the local client). This ensures that if the directory is later attached, none of its data needs to be updated (the values
+	 * last set while detached will now be known to any new client, until they are changed).
+	 * TODO: Convert these conventions to named constants. The semantics used here match those for merge-tree.
+	 */
+	private getLocalSeq(): number {
+		return this.directory.isAttached() ? -1 : 0;
 	}
 
 	/**
@@ -1661,7 +1677,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): ICreateSubDirLocalOpMetadata {
 		this.throwIfDisposed();
 		// Create the sub directory locally first.
-		this.createSubDirectoryCore(op.subdirName, true, -1, this.runtime.clientId ?? "detached");
+		this.createSubDirectoryCore(
+			op.subdirName,
+			true,
+			this.getLocalSeq(),
+			this.runtime.clientId ?? "detached",
+		);
 		this.updatePendingSubDirMessageCount(op);
 
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
@@ -2232,7 +2253,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (op.type === "createSubDirectory") {
 				const dir = this._subdirectories.get(op.subdirName);
 				// Child sub directory create seq number can't be lower than the parent subdirectory.
-				if (this.sequenceNumber !== -1 && this.sequenceNumber < msg.sequenceNumber) {
+				// The sequence number for multiple ops can be the same when multiple createSubDirectory occurs with grouped batching enabled, thus <= and not just <.
+				if (this.sequenceNumber !== -1 && this.sequenceNumber <= msg.sequenceNumber) {
 					if (dir?.sequenceNumber === -1) {
 						// Only set the seq on the first message, could be more
 						dir.sequenceNumber = msg.sequenceNumber;
