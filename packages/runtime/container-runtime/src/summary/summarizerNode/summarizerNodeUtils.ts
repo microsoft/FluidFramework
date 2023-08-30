@@ -14,8 +14,8 @@ import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime
  *
  * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
  *
- * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
- * latest snapshot is fetched and the latest summary state is updated based on it.
+ * 3. The latest summary was updated but the summary corresponding to the params was not tracked. The client should
+ * close
  */
 export type RefreshSummaryResult =
 	| {
