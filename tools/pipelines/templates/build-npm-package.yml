@@ -156,7 +156,7 @@ stages:
         # Setup
         - checkout: self
           clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
+          lfs: true
           submodules: ${{ parameters.checkoutSubmodules }}
 
         - task: Bash@3
