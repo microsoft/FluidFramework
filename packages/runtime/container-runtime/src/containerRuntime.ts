@@ -3664,7 +3664,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			await this.fetchSnapshotFromStorageAndClose(
+			const fetchResult = await this.fetchSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3674,6 +3674,33 @@ export class ContainerRuntime
 				readAndParseBlob,
 				null,
 			);
+
+			/**
+			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
+			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
+			 * However, there are couple of scenarios where it's possible:
+			 * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
+			 * the document being unusable and we should not proceed.
+			 * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
+			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
+			 * state.
+			 */
+			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
+				const error = DataProcessingError.create(
+					"Fetched snapshot is older than the received ack",
+					"RefreshLatestSummaryAck",
+					undefined /* sequencedMessage */,
+					{
+						ackHandle,
+						summaryRefSeq,
+						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
+					},
+				);
+				this.disposeFn(error);
+				throw error;
+			}
+
+			await this.closeStaleSummarizer();
 			return;
 		}
 
@@ -3691,7 +3718,7 @@ export class ContainerRuntime
 		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { versionId, latestSnapshotRefSeq } = await this.fetchSnapshotFromStorageAndClose(
+		const { versionId, latestSnapshotRefSeq } = await this.fetchSnapshotFromStorage(
 			summaryLogger,
 			{
 				eventName: "RefreshLatestSummaryFromServerFetch",
@@ -3700,7 +3727,16 @@ export class ContainerRuntime
 			null,
 		);
 
+		await this.closeStaleSummarizer();
+
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
+	}
+
+	private async closeStaleSummarizer(): Promise<void> {
+		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.disposeFn();
 	}
 
 	/**
@@ -3708,13 +3744,13 @@ export class ContainerRuntime
 	 * By default, it also closes the container after downloading the snapshot. However, this may be
 	 * overridden via options.
 	 */
-	private async fetchSnapshotFromStorageAndClose(
+	private async fetchSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const snapshotResults = await PerformanceEvent.timedExecAsync(
+		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
 			async (perfEvent: {
@@ -3760,28 +3796,6 @@ export class ContainerRuntime
 				};
 			},
 		);
-
-		// We wait to close the summarizer until after the snapshot cache is updated.
-		// It's likely that this client will be re-elected as leader, in which case
-		// it will have the latest snapshot available in the cache (not the stale one it used this time)
-		this.mc.logger.sendTelemetryEvent(
-			{
-				...event,
-				eventName: "ClosingSummarizerOnSummaryStale",
-				codePath: event.eventName,
-				message: "Stopping fetch from storage",
-				versionId: versionId != null ? versionId : undefined,
-				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-			},
-			new GenericError("Restarting summarizer instead of refreshing"),
-		);
-
-		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
-		await delay(this.closeSummarizerDelayMs);
-		this._summarizer?.stop("latestSummaryStateStale");
-		this.disposeFn();
-
-		return snapshotResults;
 	}
 
 	public notifyAttaching() {} // do nothing (deprecated method)

@@ -443,8 +443,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 					return { latestSummaryUpdated: false };
 				}
 
-				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
-				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
+				// Note that we did not track this summary, but that the latest summary was updated.
 				eventProps.latestSummaryUpdated = true;
 				eventProps.wasSummaryTracked = false;
 				event.end(eventProps);
