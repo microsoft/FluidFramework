@@ -224,7 +224,9 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
  */
 export interface IDriverErrorBase {
 	/**
-	 * Classification of what type of error this is, used programmatically by consumers to interpret the error
+	 * Classification of what type of error this is, used programmatically by consumers to interpret the error.
+	 *
+	 * @privateRemarks TODO: use {@link DriverErrorTypes} instead (breaking change).
 	 */
 	readonly errorType: DriverErrorType;
 
