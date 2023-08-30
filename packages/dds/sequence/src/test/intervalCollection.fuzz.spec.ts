@@ -196,7 +196,7 @@ const baseModel: Omit<
 	factory: new SharedStringFactory(),
 };
 
-const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
+export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	validationStrategy: { type: "fixedInterval", interval: 10 },
 	reconnectProbability: 0.1,
 	numberOfClients: 3,
@@ -229,15 +229,7 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
 		// AB#4477: Seed 12 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		// The other failing seeds were added when updates of the msn on reconnects
-		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
-		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
-		// on segments that can be zamboni'd.
-		// TODO:AB#5337: re-enable these seeds.
-		skip: [
-			3, 4, 9, 11, 12, 13, 19, 20, 32, 39, 41, 42, 43, 44, 45, 49, 52, 53, 55, 58, 61, 63, 74,
-			76, 79, 86, 91, 92, 94,
-		],
+		skip: [4, 12, 41, 53, 58, 76, 91],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {

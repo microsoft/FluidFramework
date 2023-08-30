@@ -808,39 +808,22 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return true;
 	}
 
-	private rebasePositionWithSegmentSlide(
-		pos: number,
-		seqNumberFrom: number,
-		localSeq: number,
-	): number | undefined {
+	private rebaseLocalReferencePosition(ref: LocalReferencePosition, localSeq: number): number {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
 		}
-		const { clientId } = this.client.getCollabWindow();
-		const { segment, offset } = this.client.getContainingSegment(
-			pos,
-			{
-				referenceSequenceNumber: seqNumberFrom,
-				clientId: this.client.getLongClientId(clientId),
-			},
-			localSeq,
-		);
 
-		// if segment is undefined, it slid off the string
-		assert(segment !== undefined, 0x54e /* No segment found */);
-
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
+		const segment = ref.getSegment();
+		const offset = ref.getOffset();
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
-		if (segoff.segment === undefined || segoff.offset === undefined) {
+		if (segment === undefined || offset === undefined) {
 			return DetachedReferencePosition;
 		}
 
-		assert(
-			offset !== undefined && 0 <= offset && offset < segment.cachedLength,
-			0x54f /* Invalid offset */,
-		);
-		return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+		assert(0 <= offset && offset < segment.cachedLength, 0x54f /* Invalid offset */);
+
+		return this.client.findReconnectionPosition(segment, localSeq) + offset;
 	}
 
 	private computeRebasedPositions(
@@ -856,13 +839,20 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			0x551 /* Failed to store pending serialized interval info for this localSeq. */,
 		);
 		const rebased = { ...original };
-		const { start, end, sequenceNumber } = original;
-		if (start !== undefined) {
-			rebased.start = this.rebasePositionWithSegmentSlide(start, sequenceNumber, localSeq);
+		const { start, end, properties } = original;
+
+		const id = properties?.intervalId;
+		assert(id !== undefined, "expected interval to have id");
+		const interval = this.getIntervalById(id);
+
+		if (interval instanceof SequenceInterval && start !== undefined) {
+			rebased.start = this.rebaseLocalReferencePosition(interval.start, localSeq);
 		}
-		if (end !== undefined) {
-			rebased.end = this.rebasePositionWithSegmentSlide(end, sequenceNumber, localSeq);
+
+		if (interval instanceof SequenceInterval && end !== undefined) {
+			rebased.end = this.rebaseLocalReferencePosition(interval.end, localSeq);
 		}
+
 		return rebased;
 	}
 
@@ -1333,17 +1323,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		) {
 			this.removePendingChange(serializedInterval);
 			this.addPendingChange(intervalId, rebased);
-		}
-
-		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
-		if (
-			startRebased === DetachedReferencePosition ||
-			endRebased === DetachedReferencePosition
-		) {
-			if (localInterval) {
-				this.localCollection?.removeExistingInterval(localInterval);
-			}
-			return undefined;
 		}
 
 		if (localInterval !== undefined) {

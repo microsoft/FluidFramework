@@ -70,8 +70,8 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not crash when entire string on which interval lies is concurrently removed", () => {
-		clients[0].sharedString.insertText(0, "a");
-		clients[1].sharedString.insertText(0, "a");
+		clients[0].sharedString.insertText(0, "A");
+		clients[1].sharedString.insertText(0, "B");
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[0].containerRuntime.connected = false;
@@ -84,8 +84,8 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not crash when interval is removed before reconnect when string is concurrently removed", () => {
-		clients[0].sharedString.insertText(0, "a");
-		clients[1].sharedString.insertText(0, "a");
+		clients[0].sharedString.insertText(0, "A");
+		clients[1].sharedString.insertText(0, "B");
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[0].containerRuntime.connected = false;
@@ -109,9 +109,7 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 		clients[0].sharedString.insertText(0, "ABCDEFGHIJKLMN");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(20, 20, IntervalType.SlideOnRemove, {
-			intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
-		});
+		collection_0.add(20, 20, IntervalType.SlideOnRemove, { intervalId: "0" });
 		clients[2].sharedString.removeRange(13, 15);
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
@@ -129,9 +127,7 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "C");
 
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(0, 1, IntervalType.SlideOnRemove, {
-			intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
-		});
+		collection_0.add(0, 1, IntervalType.SlideOnRemove, { intervalId: "0" });
 
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
@@ -157,6 +153,92 @@ describe("interval rebasing", () => {
 			intervalId: "2",
 		});
 
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("does not crash when endpoint segment is deleted during combination by zamboni", () => {
+		// C-AB
+		// D-C-AB
+		// HIJ-FG-E-D-C-AB
+		//   ^--------^
+		clients[2].sharedString.insertText(0, "AB");
+		clients[0].sharedString.insertText(0, "C");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = false;
+		clients[2].sharedString.insertText(0, "D");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = false;
+		clients[2].sharedString.insertText(0, "E");
+		clients[1].sharedString.insertText(0, "FG");
+		clients[1].sharedString.insertText(0, "HIJ");
+		const collection_0 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_0.add(0, 7, IntervalType.SlideOnRemove, {
+			intervalId: "0",
+		});
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = true;
+	});
+
+	it("slides to correct segment when inserting segment while disconnected after changing interval", () => {
+		// B-A
+		clients[0].sharedString.insertText(0, "A");
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_0.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "0" });
+		collection_0.change("0", 0, 0);
+		clients[0].containerRuntime.connected = false;
+		clients[0].sharedString.insertText(0, "B");
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("...", () => {
+		// B-A
+		// ^
+		// (B)-A
+		//     ^
+		// (B)-(A)-C
+		//         ^
+		clients[0].sharedString.insertText(0, "A");
+		clients[2].sharedString.insertText(0, "B");
+		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
+		collection_0.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "0" });
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].sharedString.removeRange(0, 1);
+		clients[0].containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].sharedString.removeRange(0, 1);
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_1.change("0", 0, 0);
+		clients[2].sharedString.insertText(0, "C");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("changing detached interval while disconnected doesn't delete it entirely from interval collection", () => {
+		// A
+		// (A)
+		clients[2].sharedString.insertText(0, "A");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_0.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "0" });
+		clients[0].containerRuntime.connected = false;
+		clients[1].sharedString.removeRange(0, 1);
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_1.change("0", 0, 0);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});

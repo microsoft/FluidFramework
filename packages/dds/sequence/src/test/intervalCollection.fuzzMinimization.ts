@@ -14,6 +14,7 @@ import { DDSFuzzModel, replayTest } from "@fluid-internal/test-dds-utils";
 import { SharedStringFactory } from "../sequenceFactory";
 import { LoggingInfo, Operation, FuzzTestState, makeReducer } from "./intervalCollection.fuzzUtils";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { defaultFuzzOptions } from "./intervalCollection.fuzz.spec";
 
 const directory = path.join(__dirname, "../../src/test/results/default-interval-collection");
 
@@ -195,6 +196,10 @@ export class PassManager {
 					break;
 				case "removeRange":
 				case "addInterval":
+				case "changeInterval":
+					if (op.start === undefined || op.end === undefined) {
+						return;
+					}
 					op.start -= 1;
 					op.end -= 1;
 					break;
@@ -209,6 +214,10 @@ export class PassManager {
 					break;
 				case "removeRange":
 				case "addInterval":
+				case "changeInterval":
+					if (op.start === undefined || op.end === undefined) {
+						return;
+					}
 					op.start += 1;
 					op.end += 1;
 					break;
@@ -220,16 +229,33 @@ export class PassManager {
 
 	_shrinkRange: OpMinimizationPass = {
 		applyTo(op) {
-			if (op.type !== "removeRange" && op.type !== "addInterval") {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "addInterval" &&
+				op.type !== "changeInterval"
+			) {
+				return;
+			}
+
+			if (op.start === undefined || op.end === undefined) {
 				return;
 			}
 
 			op.end -= 1;
 		},
 		undo(op) {
-			if (op.type !== "removeRange" && op.type !== "addInterval") {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "addInterval" &&
+				op.type !== "changeInterval"
+			) {
 				return;
 			}
+
+			if (op.start === undefined || op.end === undefined) {
+				return;
+			}
+
 			op.end += 1;
 		},
 	};
@@ -280,6 +306,10 @@ export class PassManager {
 				break;
 			case "removeRange":
 			case "addInterval":
+			case "changeInterval":
+				if (op.start === undefined || op.end === undefined) {
+					return;
+				}
 				while (op.start > 0) {
 					op.start -= 1;
 					op.end -= 1;
@@ -301,7 +331,14 @@ export class PassManager {
 	}
 
 	async shrinkRangeSingle(op: Operation) {
-		if (op.type === "removeRange" || op.type === "addInterval") {
+		if (
+			op.type === "removeRange" ||
+			op.type === "addInterval" ||
+			op.type === "changeInterval"
+		) {
+			if (op.start === undefined || op.end === undefined) {
+				return;
+			}
 			while (op.start < op.end) {
 				op.end -= 1;
 				if (!(await this.runTest())) {
@@ -329,10 +366,22 @@ export class PassManager {
 		};
 
 		try {
-			await replayTest(ddsModel, this.seed, this.operations, {
-				saveOnFailure: false,
-				filepath: this.path,
-			});
+			await replayTest(
+				ddsModel,
+				this.seed,
+				this.operations,
+				{
+					saveOnFailure: false,
+					filepath: this.path,
+				},
+				{
+					...defaultFuzzOptions,
+					detachedStartOptions: {
+						enabled: false,
+						attachProbability: 0.2,
+					},
+				},
+			);
 			return false;
 		} catch (e: any) {
 			// ignore these errors as they generally don't indicate a bug in the program,
