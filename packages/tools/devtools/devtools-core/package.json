@@ -34,7 +34,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "npm run test:mocha:coverage",
-		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
+		"test:mocha": "mocha dist/**/*.test.js --exit",
 		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",

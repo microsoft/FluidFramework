@@ -29,7 +29,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "cross-env FLUID_TEST_COVERAGE=1 npm run test:mocha",
-		"test:mocha": "mocha dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --exit",
+		"test:mocha": "mocha dist/test -r node_modules/@fluidframework/mocha-test-setup --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"nyc": {

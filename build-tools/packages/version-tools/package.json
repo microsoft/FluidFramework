@@ -40,7 +40,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "nyc npm run test:mocha:report",
 		"tsc": "tsc"

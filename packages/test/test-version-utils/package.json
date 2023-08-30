@@ -29,7 +29,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --unhandled-rejections=strict  --recursive dist/test/*.spec.js --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha  --recursive dist/test/*.spec.js --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
