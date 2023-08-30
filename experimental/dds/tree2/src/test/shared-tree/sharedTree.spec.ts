@@ -1927,7 +1927,6 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Reference,
 				}),
 			);
 			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
