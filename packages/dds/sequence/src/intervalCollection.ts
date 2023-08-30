@@ -812,11 +812,11 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * Changes the endpoints of an existing interval.
 	 * @param id - Id of the interval to change
-	 * @param start - New start value, if defined. `undefined` signifies this endpoint should be left unchanged.
-	 * @param end - New end value, if defined. `undefined` signifies this endpoint should be left unchanged.
+	 * @param start - New start value.
+	 * @param end - New end value.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
-	change(id: string, start?: number, end?: number): TInterval | undefined;
+	change(id: string, start: number, end: number): TInterval | undefined;
 
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
@@ -1288,7 +1288,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * {@inheritdoc IIntervalCollection.change}
 	 */
-	public change(id: string, start?: SequencePlace, end?: SequencePlace): TInterval | undefined {
+	public change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}

@@ -54,7 +54,7 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	id: string;
 }
 
-export interface ChangeInterval extends IntervalCollectionSpec, Partial<RangeSpec> {
+export interface ChangeInterval extends IntervalCollectionSpec, RangeSpec {
 	type: "changeInterval";
 	id: string;
 }
