@@ -205,7 +205,6 @@ export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
 // @public
 export enum OdspErrorType {
-    blockedIPAddress = "blockedIPAddress",
     cannotCatchUp = "cannotCatchUp",
     fetchTimeout = "fetchTimeout",
     // (undocumented)
