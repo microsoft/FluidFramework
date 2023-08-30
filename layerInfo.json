@@ -2,13 +2,13 @@
 	"Definitions": {
 		"dotGroup": false,
 		"layers": {
-			"Base-Definitions": {
+			"Common-Definitions": {
 				"dotSameRank": true,
-				"packages": [
-					"@fluidframework/common-definitions",
-					"@fluidframework/core-interfaces",
-					"@fluidframework/gitresources"
-				]
+				"packages": ["@fluidframework/common-definitions", "@fluidframework/gitresources"]
+			},
+			"Core-Interfaces": {
+				"packages": ["@fluidframework/core-interfaces"],
+				"deps": []
 			},
 			"Protocol-Definitions": {
 				"packages": ["@fluidframework/protocol-definitions"],
@@ -19,27 +19,31 @@
 					"@fluidframework/driver-definitions",
 					"@fluidframework/odsp-driver-definitions"
 				],
-				"deps": ["Protocol-Definitions", "@fluidframework/core-interfaces"]
+				"deps": ["Protocol-Definitions", "Core-Interfaces"]
 			},
 			"Container-Definitions": {
 				"packages": ["@fluidframework/container-definitions"],
-				"deps": ["Driver-Definitions", "@fluidframework/core-interfaces"]
+				"deps": ["Driver-Definitions", "Core-Interfaces"]
 			}
 		}
 	},
 	"Utils": {
 		"layers": {
-			"Base-Utils": {
+			"Common-Utils": {
 				"packages": ["@fluidframework/common-utils"],
-				"deps": ["Base-Definitions"]
+				"deps": ["Common-Definitions"]
 			},
 			"Core-Utils": {
 				"packages": ["@fluidframework/core-utils"],
 				"deps": []
 			},
+			"Client-Utils": {
+				"packages": ["@fluid-internal/client-utils"],
+				"deps": ["Core-Interfaces", "Core-Utils"]
+			},
 			"Protocol-Utils": {
 				"packages": ["@fluidframework/protocol-base"],
-				"deps": ["Base-Utils", "Protocol-Definitions"]
+				"deps": ["Common-Utils", "Protocol-Definitions"]
 			},
 			"Driver-Utils": {
 				"packages": ["@fluidframework/driver-utils"],
@@ -47,7 +51,7 @@
 			},
 			"Framework-Utils": {
 				"packages": ["@fluidframework/view-adapters", "@fluidframework/view-interfaces"],
-				"deps": ["Base-Definitions"]
+				"deps": ["Core-Interfaces"]
 			},
 			"Other-Utils": {
 				"dot": false,
@@ -57,11 +61,11 @@
 			"Tool-Utils": {
 				"dot": false,
 				"packages": ["@fluidframework/tool-utils"],
-				"deps": ["Base-Utils", "Other-Utils"]
+				"deps": ["Common-Utils", "Other-Utils"]
 			},
 			"Telemetry-Utils": {
 				"packages": ["@fluidframework/telemetry-utils"],
-				"deps": ["Base-Utils", "Base-Definitions", "Core-Utils", "Protocol-Definitions"]
+				"deps": ["Common-Utils", "Core-Interfaces", "Core-Utils", "Protocol-Definitions"]
 			}
 		}
 	},
@@ -70,7 +74,7 @@
 		"layers": {
 			"Driver": {
 				"dirs": ["packages/drivers/"],
-				"deps": ["Driver-Utils", "@fluidframework/core-interfaces", "Other-Utils"]
+				"deps": ["Driver-Utils", "Core-Interfaces", "Other-Utils"]
 			},
 			"Loader": {
 				"dirs": ["packages/loader/"],
@@ -183,8 +187,8 @@
 				"dirs": ["server/gitrest/", "server/gitrest/packages/"],
 				"deps": [
 					"Server-Libs",
-					"Base-Utils",
-					"Base-Definitions",
+					"Common-Utils",
+					"Common-Definitions",
 					"Protocol-Utils",
 					"Protocol-Definitions",
 					"Server-Shared-Utils"
@@ -194,8 +198,8 @@
 				"dirs": ["server/historian/", "server/historian/packages/"],
 				"deps": [
 					"Server-Libs",
-					"Base-Utils",
-					"Base-Definitions",
+					"Common-Utils",
+					"Common-Definitions",
 					"Protocol-Utils",
 					"Protocol-Definitions",
 					"Server-Shared-Utils"
