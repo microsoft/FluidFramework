@@ -45,7 +45,6 @@ import {
 import {
 	formatTick,
 	GenericError,
-	IFluidErrorBase,
 	isFluidError,
 	ITelemetryLoggerExt,
 	normalizeError,
@@ -117,11 +116,11 @@ class NoDeltaStream
 	/**
 	 * Connection which is not connected to socket.
 	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
-	 * @param error - Error if any which lead to using NoDeltaStream.
+	 * @param readonlyConnectionReason - reason/error if any which lead to using NoDeltaStream.
 	 */
 	constructor(
 		public readonly storageOnlyReason?: string,
-		public readonly error?: IFluidErrorBase,
+		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
 	) {
 		super();
 	}
@@ -419,7 +418,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true, oldReadonlyValue);
+			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
 		}
 	}
 
@@ -497,11 +496,11 @@ export class ConnectionManager implements IConnectionManager {
 	private set_readonlyPermissions(
 		newReadonlyValue: boolean,
 		oldReadonlyValue: boolean | undefined,
-		reason?: string,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
 	) {
 		this._readonlyPermissions = newReadonlyValue;
 		if (oldReadonlyValue !== this.readonly) {
-			this.props.readonlyChangeHandler(this.readonly, reason);
+			this.props.readonlyChangeHandler(this.readonly, readonlyConnectionReason);
 		}
 	}
 
@@ -600,7 +599,10 @@ export class ConnectionManager implements IConnectionManager {
 				}
 			} catch (origError: any) {
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new NoDeltaStream(origError.storageOnlyReason, origError);
+					connection = new NoDeltaStream(origError.storageOnlyReason, {
+						text: origError.message,
+						error: origError,
+					});
 					requestedMode = "read";
 					break;
 				} else if (
@@ -609,7 +611,10 @@ export class ConnectionManager implements IConnectionManager {
 				) {
 					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
 					// that user can at least load the container.
-					connection = new NoDeltaStream(undefined, origError);
+					connection = new NoDeltaStream(undefined, {
+						text: origError.message,
+						error: origError,
+					});
 					requestedMode = "read";
 					break;
 				}
@@ -828,7 +833,7 @@ export class ConnectionManager implements IConnectionManager {
 		this.set_readonlyPermissions(
 			readonly,
 			oldReadonlyValue,
-			isNoDeltaStreamConnection(connection) ? connection.error?.errorType : undefined,
+			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
 		);
 
 		if (this._disposed) {

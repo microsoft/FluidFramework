@@ -179,9 +179,12 @@ export interface IConnectionManagerFactoryArgs {
 	 *
 	 * @param readonly - Whether or not the container is now read-only.
 	 * `undefined` indicates that user permissions are not yet known.
-	 * @param reason - reason if any for the change
+	 * @param readonlyConnectionReason - reason/error if any for the change
 	 */
-	readonly readonlyChangeHandler: (readonly?: boolean, reason?: string) => void;
+	readonly readonlyChangeHandler: (
+		readonly?: boolean,
+		readonlyConnectionReason?: IConnectionStateChangeReason,
+	) => void;
 
 	/**
 	 * Called whenever we try to start establishing a new connection.

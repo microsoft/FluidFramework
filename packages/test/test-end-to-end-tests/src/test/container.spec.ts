@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IPendingLocalState,
@@ -653,15 +653,21 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		const readOnlyPromise = new Deferred<boolean>();
-		container.deltaManager.on("readonly", (readonly?: boolean, reason?: string) => {
-			assert(readonly, "Readonly should be true");
-			assert.strictEqual(
-				reason,
-				DriverErrorType.outOfStorageError,
-				"Error should be outOfStorageError",
-			);
-			readOnlyPromise.resolve(true);
-		});
+		container.deltaManager.on(
+			"readonly",
+			(
+				readonly?: boolean,
+				readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+			) => {
+				assert(readonly, "Readonly should be true");
+				assert.strictEqual(
+					readonlyConnectionReason?.error?.errorType,
+					DriverErrorType.outOfStorageError,
+					"Error should be outOfStorageError",
+				);
+				readOnlyPromise.resolve(true);
+			},
+		);
 
 		container.connect();
 		assert(
