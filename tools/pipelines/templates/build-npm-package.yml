@@ -161,7 +161,6 @@ stages:
 
         # Initialize Git LFS to ensure test assets have been downloaded
         - script: |
-            git lfs install
             git lfs fetch
             git lfs pull
           displayName: git-lfs
