@@ -32,6 +32,8 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		this.context.withAnchors.add(this);
 	}
 
+	public abstract [Symbol.iterator](): Iterator<UntypedEntity>;
+
 	public abstract treeStatus(): TreeStatus;
 
 	public free(): void {

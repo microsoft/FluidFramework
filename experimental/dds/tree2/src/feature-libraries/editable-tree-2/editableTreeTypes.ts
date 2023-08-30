@@ -23,7 +23,7 @@ import { TreeStatus } from "../editable-tree";
 import { TreeContext } from "./editableTreeContext";
 
 // TODO: would be nice to make this Iterable<UntypedEntity>, but TypeScript can't handle it.
-export interface UntypedEntity<TSchema = unknown> {
+export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -52,7 +52,7 @@ export interface UntypedEntity<TSchema = unknown> {
  * Down-casting (via {@link UntypedTree.is}) is required to access Schema-Aware APIs, including editing.
  */
 // TODO: design and document iterator invalidation rules and ordering rules. Maybe provide custom iterator with an anchor semantics.
-export interface UntypedTree extends UntypedEntity<TreeSchema>, Iterable<UntypedField> {
+export interface UntypedTree extends UntypedEntity<TreeSchema> {
 	/**
 	 * Value stored on this node.
 	 */
@@ -80,6 +80,8 @@ export interface UntypedTree extends UntypedEntity<TreeSchema>, Iterable<Untyped
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
 	is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
+
+	[Symbol.iterator](): Iterator<UntypedField>;
 }
 
 /**
@@ -106,6 +108,8 @@ export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<Untyp
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
+
+	[Symbol.iterator](): Iterator<UntypedTree>;
 }
 
 // #region Node Kinds
@@ -114,9 +118,11 @@ export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
 	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
 	// TODO: maybe remove this since it can be done in terms of editing result from `get` which prov ides better control over merge semantics.
 	set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+
+	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
 }
 export interface FieldNode<TSchema extends FieldNodeSchema> extends UntypedTree {
-	readonly content: TypedField<TSchema["structFields"][""]>;
+	readonly content: TypedField<TSchema["structFieldsObject"][""]>;
 }
 
 export interface Struct extends UntypedTree {
@@ -190,6 +196,8 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 		count: number,
 		content: Iterable<FlexibleNodeContent<TTypes>>,
 	): void;
+
+	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
 }
 
 export interface ValueField<TTypes extends AllowedTypes> extends UntypedField {

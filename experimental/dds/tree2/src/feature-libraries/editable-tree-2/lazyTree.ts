@@ -320,6 +320,10 @@ class LazyMap<TSchema extends MapSchema> extends LazyTree<TSchema> implements Ma
 			field.replaceRange(0, field.length, content as Iterable<ContextuallyTypedNodeData>);
 		}
 	}
+
+	public [Symbol.iterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
+		return super[Symbol.iterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	}
 }
 
 class LazyLeaf<TSchema extends LeafSchema> extends LazyTree<TSchema> implements Leaf<TSchema> {
@@ -332,8 +336,8 @@ class LazyFieldNode<TSchema extends FieldNodeSchema>
 	extends LazyTree<TSchema>
 	implements FieldNode<TSchema>
 {
-	public get content(): TypedField<TSchema["structFields"][""]> {
-		return this.getField(EmptyKey) as TypedField<TSchema["structFields"][""]>;
+	public get content(): TypedField<TSchema["structFieldsObject"][""]> {
+		return this.getField(EmptyKey) as TypedField<TSchema["structFieldsObject"][""]>;
 	}
 }
 

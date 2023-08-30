@@ -1868,7 +1868,7 @@ export class TreeSchema<Name extends string = string, T extends RecursiveTreeSch
     // (undocumented)
     readonly leafValue: WithDefault<Assume<T, TreeSchemaSpecification>["leafValue"], undefined>;
     // (undocumented)
-    readonly mapFields?: FieldSchema;
+    readonly mapFields: WithDefault<Assume<T, TreeSchemaSpecification>["mapFields"], undefined>;
     // (undocumented)
     readonly name: Name & TreeSchemaIdentifier;
     // (undocumented)

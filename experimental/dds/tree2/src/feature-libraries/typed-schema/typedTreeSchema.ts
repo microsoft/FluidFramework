@@ -62,7 +62,10 @@ export class TreeSchema<
 		Assume<T, TreeSchemaSpecification>["structFields"]
 	>;
 
-	public readonly mapFields?: FieldSchema;
+	public readonly mapFields: WithDefault<
+		Assume<T, TreeSchemaSpecification>["mapFields"],
+		undefined
+	>;
 	// WithDefault is needed to convert unknown to undefined here (missing properties show up as unknown in types).
 	public readonly leafValue: WithDefault<
 		Assume<T, TreeSchemaSpecification>["leafValue"],
@@ -80,7 +83,10 @@ export class TreeSchema<
 			Assume<T, TreeSchemaSpecification>["structFields"]
 		>(this.info.structFields);
 		this.structFields = objectToMapTyped(this.structFieldsObject);
-		this.mapFields = this.info.mapFields;
+		this.mapFields = this.info.mapFields as WithDefault<
+			Assume<T, TreeSchemaSpecification>["mapFields"],
+			undefined
+		>;
 		this.leafValue = this.info.leafValue as WithDefault<
 			Assume<T, TreeSchemaSpecification>["leafValue"],
 			undefined
@@ -90,13 +96,15 @@ export class TreeSchema<
 
 export type MapSchema = TreeSchema & MapSchemaSpecification;
 export type LeafSchema = TreeSchema & LeafSchemaSpecification;
+
+// TODO: this includes FieldNodeSchema when it shouldn't
 export type StructSchema = TreeSchema & {
 	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
 };
 // TODO: Split TreeSchema into union of node schema interface types, and make FieldNodeSchema not subset of StructSchema
 // Then replace bellow type checks with instance of tests.
 export type FieldNodeSchema = StructSchema & {
-	structFields: { [""]: FieldSchema };
+	structFieldsObject: { [""]: FieldSchema };
 };
 
 export function schemaIsMap(schema: TreeSchema): schema is MapSchema {
@@ -108,11 +116,11 @@ export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
 }
 
 export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
-	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey) !== undefined;
+	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
 }
 
 export function schemaIsStruct(schema: TreeSchema): schema is StructSchema {
-	return schema.structFields !== undefined && !schemaIsFieldNode(schema);
+	return !schemaIsMap(schema) && !schemaIsLeaf(schema) && !schemaIsFieldNode(schema);
 }
 
 /**
