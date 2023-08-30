@@ -311,7 +311,6 @@ export function createSharedTreeView(args?: {
 			changeFamily,
 			repairDataStoreProvider,
 			undoRedoManager,
-			forest.anchors,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
@@ -433,6 +432,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
+				this.forest.anchors.applyDelta(delta);
 				this.forest.applyDelta(delta);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
@@ -485,7 +485,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			storedSchema,
 			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
 		);
-		const branch = this.branch.fork(repairDataStoreProvider, anchors);
+		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
 			branch.editor,
