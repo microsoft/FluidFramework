@@ -44,9 +44,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.23.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.6.1",
 		"@types/async": "^3.2.9",
@@ -55,7 +55,7 @@
 		"@types/lorem-ipsum": "^1.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.17.1",
 		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",
@@ -79,7 +79,7 @@
 			"@yarnpkg/parsers is a transitive dependency of lerna via nx, but versions >3.0.0-rc.48.1 require node 18, while we use 16."
 		],
 		"overrides": {
-			"@types/node": "^16.18.16",
+			"@types/node": "^18.17.1",
 			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0"
 		}

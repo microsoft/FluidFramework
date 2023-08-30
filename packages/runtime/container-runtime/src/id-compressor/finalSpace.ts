@@ -29,7 +29,7 @@ export class FinalSpace {
 			lastCluster === undefined ||
 				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				newCluster.baseFinalId === lastCluster.baseFinalId + lastCluster.capacity,
-			"Cluster insert to final_space is out of order.",
+			0x753 /* Cluster insert to final_space is out of order. */,
 		);
 		this.clusterList.push(newCluster);
 	}
