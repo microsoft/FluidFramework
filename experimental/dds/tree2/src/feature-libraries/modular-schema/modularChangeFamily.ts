@@ -10,7 +10,6 @@ import {
 	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
-	AnchorSet,
 	Delta,
 	FieldKey,
 	UpPath,
@@ -710,10 +709,6 @@ export class ModularChangeFamily
 		}
 
 		return rebasedChange;
-	}
-
-	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
-		anchors.applyDelta(this.intoDelta(over));
 	}
 
 	public intoDelta(change: ModularChangeset): Delta.Root {

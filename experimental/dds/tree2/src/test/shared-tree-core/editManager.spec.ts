@@ -583,7 +583,6 @@ describe("EditManager", () => {
 						rebaser.composedCount,
 						trunkEditCount * (rebasedEditCount * 2 + 1),
 					);
-					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});
 			}
 		});
@@ -600,7 +599,6 @@ describe("EditManager", () => {
 
 					assert.equal(rebaser.invertedCount, rebasedEditCount - 1);
 					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
-					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});
 			}
 		});
