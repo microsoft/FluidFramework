@@ -548,9 +548,9 @@ const DefaultMongoDbMonitoringEvents = [
 	"connectionPoolCreated",
 	"connectionPoolReady",
 	"connectionPoolClosed",
-	"connectionCreated",
-	"connectionReady",
-	"connectionClosed",
+	// "connectionCreated", Comment out because this will be too often
+	// "connectionReady", Comment out because this will be too often
+	// "connectionClosed", Comment out because this will be too often
 	// "connectionCheckOutStarted", Comment out because this will be too often
 	"connectionCheckOutFailed",
 	// "connectionCheckedOut", Comment out because this will be too often
