@@ -65,7 +65,7 @@ describe("editable-tree: editing", () => {
 
 		// create optional root
 		tree.setContent({ name: "Mike" });
-		assert.deepEqual(clone(tree.root), { name: "Mike" });
+		assert.deepEqual(clone(tree.root, { lossy: true }), { name: "Mike" });
 
 		// replace optional root
 		tree.setContent({ name: "Peter", adult: true });
@@ -159,7 +159,7 @@ describe("editable-tree: editing", () => {
 			}
 		}
 
-		const clonedPerson = clone(maybePerson);
+		const clonedPerson = clone(maybePerson, { lossy: true });
 		assert.deepEqual(clonedPerson, {
 			name: "Peter",
 			age: 150,
@@ -190,7 +190,7 @@ describe("editable-tree: editing", () => {
 
 		// check initial data
 		{
-			const clonedPerson = clone(person);
+			const clonedPerson = clone(person, { lossy: true });
 			assert.deepEqual(clonedPerson, {
 				name: "Adam",
 				age: 35,
@@ -240,7 +240,7 @@ describe("editable-tree: editing", () => {
 			// replace value field
 			person.address.zip = zip;
 
-			const clonedAddress = clone(person.address);
+			const clonedAddress = clone(person.address, { lossy: true });
 			assert.deepEqual(clonedAddress, {
 				street: "foo",
 				zip: 123,
@@ -262,7 +262,7 @@ describe("editable-tree: editing", () => {
 			person.address.phones[1] = simplePhones;
 			// create primitive node
 			person.address.phones[2] = brand(3);
-			const clonedPerson = clone(person);
+			const clonedPerson = clone(person, { lossy: true });
 			assert.deepEqual(clonedPerson, {
 				name: "Adam",
 				age: 32,
@@ -293,7 +293,7 @@ describe("editable-tree: editing", () => {
 				prefix: "456",
 				extraPhones: ["1234567"],
 			} as unknown as ComplexPhone; // TODO: fix up these strong types to reflect unwrapping
-			assert.deepEqual(clone(person.address.phones), {
+			assert.deepEqual(clone(person.address.phones, { lossy: true }), {
 				"0": "54321",
 				"1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
 				"2": 3,
