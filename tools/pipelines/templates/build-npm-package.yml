@@ -158,6 +158,10 @@ stages:
           clean: true
           lfs: true
           submodules: ${{ parameters.checkoutSubmodules }}
+          
+        - script: |
+          git lfs install
+        displayName: git-lfs
 
         - task: Bash@3
           displayName: Parameters
