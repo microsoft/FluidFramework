@@ -423,17 +423,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 							summaryRefSeq,
 						};
 					}
-
-					const props = {
-						summaryRefSeq,
-						pendingSize: this.pendingSummaries.size ?? undefined,
-					};
-					this.logger.sendTelemetryEvent({
-						eventName: "PendingSummaryNotFound",
-						proposalHandle,
-						referenceSequenceNumber: this.referenceSequenceNumber,
-						details: JSON.stringify(props),
-					});
 				}
 
 				// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
