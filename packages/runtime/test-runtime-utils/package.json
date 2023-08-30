@@ -30,7 +30,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
