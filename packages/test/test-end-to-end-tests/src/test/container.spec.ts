@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IPendingLocalState,
@@ -93,7 +93,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	afterEach(() => {
 		loaderContainerTracker.reset();
 	});
-	async function loadContainer(props?: Partial<ILoaderProps>) {
+	async function loadContainer(props?: Partial<ILoaderProps>, headers?: IRequestHeader) {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -106,7 +106,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		});
 		loaderContainerTracker.add(loader);
 
-		return loader.resolve(testRequest);
+		return loader.resolve({
+			url: testRequest.url,
+			headers: { ...testRequest.headers, ...headers },
+		});
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {

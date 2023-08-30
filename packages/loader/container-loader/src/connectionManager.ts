@@ -411,6 +411,7 @@ export class ConnectionManager implements IConnectionManager {
 			error,
 		};
 
+		const oldReadonlyValue = this.readonly;
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);
 
@@ -418,7 +419,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
-			this.set_readonlyPermissions(true);
+			this.set_readonlyPermissions(true, oldReadonlyValue);
 		}
 	}
 
