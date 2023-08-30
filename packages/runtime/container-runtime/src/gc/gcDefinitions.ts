@@ -228,11 +228,7 @@ export interface IGarbageCollector {
 	/** Returns the GC details generated from the base snapshot. */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void>;
+	refreshLatestSummary(result: RefreshSummaryResult): Promise<void>;
 	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
 	nodeUpdated(
 		nodePath: string,
