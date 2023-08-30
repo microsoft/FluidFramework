@@ -12,12 +12,15 @@ import {
 	jsonNumber,
 	jsonObject,
 	jsonRoot,
+	jsonSchema,
 	jsonString,
 } from "../../../domains";
 
 import {
 	Sequence,
+	TypedNode,
 	UntypedField,
+	ValueField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
@@ -65,11 +68,47 @@ describe("editableTreeTypes", () => {
 		}
 	}
 
-	const builder = new SchemaBuilder("test");
+	const builder = new SchemaBuilder("test", {}, jsonSchema);
 	const emptyStruct = builder.struct("empty", {});
 	const basicStruct = builder.struct("basicStruct", { foo: SchemaBuilder.fieldOptional(Any) });
 	const basicFieldNode = builder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
+
+	const mixedStruct = builder.struct("field", {
+		leaf: SchemaBuilder.fieldValue(jsonNumber),
+		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
+		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
+		optionalObject: SchemaBuilder.fieldOptional(jsonObject),
+		sequence: SchemaBuilder.fieldSequence(jsonNumber),
+	});
+	type Mixed = TypedNode<typeof mixedStruct>;
+
+	const recursiveStruct = builder.structRecursive("field", SchemaBuilder.fieldOptional(Any));
+
+	/**
+	 * All combinations of boxed and unboxed access.
+	 */
+	function boxingExample(mixed: Mixed): void {
+		const leaf: number = mixed.leaf;
+		const leafBoxed: TypedNode<typeof jsonNumber> = mixed.boxedLeaf.content;
+
+		// Current policy is to box polymorphic values so they can be checked for type with `is`.
+		// Note that this still unboxes the value field.
+		const polymorphic: TypedNode<typeof jsonNumber> | TypedNode<typeof jsonString> =
+			mixed.polymorphic;
+
+		// Fully boxed, including the value field.
+		const boxedPolymorphic: ValueField<[typeof jsonNumber, typeof jsonString]> =
+			mixed.boxedPolymorphic;
+
+		const optionalLeaf: number | undefined = mixed.optionalLeaf;
+		const boxedOptionalLeaf: TypedNode<typeof jsonNumber> | undefined =
+			mixed.boxedOptionalLeaf.content;
+		const sequence: Sequence<[typeof jsonNumber]> = mixed.sequence;
+
+		const child: number = sequence.at(0);
+		const childBoxed: TypedNode<typeof jsonNumber> = sequence.boxedAt(0);
+	}
 
 	it("schema is", () => {
 		/* eslint-disable @typescript-eslint/strict-boolean-expressions */
