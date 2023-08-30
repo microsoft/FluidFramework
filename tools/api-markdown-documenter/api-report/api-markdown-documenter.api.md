@@ -219,6 +219,10 @@ export type DocumentBoundaries = ApiMemberKind[];
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(props: DocumentNodeProps);
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "apiItemName"
+    //
+    // (undocumented)
+    readonly apiItemName: string;
     readonly children: SectionNode[];
     readonly filePath: string;
     readonly frontMatter?: string;
@@ -227,6 +231,7 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
+    readonly apiItemName: string;
     readonly children: SectionNode[];
     readonly filePath: string;
     readonly frontMatter?: string;
