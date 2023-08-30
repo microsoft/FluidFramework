@@ -98,6 +98,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
+	postbase: boolean = false,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
@@ -112,6 +113,8 @@ function rebase(
 		idAllocator,
 		moveEffects,
 		metadata,
+		undefined,
+		postbase,
 	);
 }
 
@@ -122,6 +125,18 @@ function rebaseTagged(
 	let currChange = change;
 	for (const base of baseChanges) {
 		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+	}
+
+	return currChange;
+}
+
+function postbaseTagged(
+	change: TaggedChange<OptionalChangeset>,
+	...baseChanges: TaggedChange<OptionalChangeset>[]
+): TaggedChange<OptionalChangeset> {
+	let currChange = change;
+	for (const base of baseChanges) {
+		currChange = tagChange(rebase(currChange.change, base, true), currChange.revision);
 	}
 
 	return currChange;
@@ -257,6 +272,22 @@ describe.only("OptionalField - Rebaser Axioms", () => {
 				const delta = toDelta(actual);
 				assert.equal(isDeltaVisible(delta), false);
 			});
+		}
+	});
+
+	describe("postbase", () => {
+		for (const [name1, untaggedChange1] of testChanges) {
+			for (const [name2, untaggedChange2] of testChanges) {
+				const title = `${name2} ○ (${name1} ↷ ${name2}) === ${name1} ○ (${name2} ↷' ${name1})`;
+
+				it(title, () => {
+					const change1 = tagChange(untaggedChange1, tag6);
+					const change2 = tagChange(untaggedChange2, tag3);
+					const lhs = compose([change2, rebaseTagged(change1, change2)]);
+					const rhs = compose([change1, postbaseTagged(change2, change1)]); // TODO: Tagging is weird here.
+					assert.deepEqual(toDelta(lhs), toDelta(rhs));
+				});
+			}
 		}
 	});
 });

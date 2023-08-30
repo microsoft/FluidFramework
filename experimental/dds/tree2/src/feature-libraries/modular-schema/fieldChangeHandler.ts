@@ -102,6 +102,9 @@ export interface FieldChangeRebaser<TChangeset> {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
+		// default: false.
+		// When true, `change` should be interpreted as occurring before `over`
+		postbase?: boolean,
 	): TChangeset;
 
 	/**

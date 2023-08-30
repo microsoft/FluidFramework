@@ -70,6 +70,11 @@ export interface OutputType<TChange> {
 	 * otherwise a change that violates the axiom.
 	 */
 	emptyInverseIsEmpty: Failure<TChange>[];
+	/**
+	 * "Passed" iff `B ○ (A ↷ B) = A ○ (B ↷' A)`
+	 * where ↷' signifies postbase.
+	 */
+	rebasePostbase: Failure<[TChange, TChange]>[];
 }
 
 export const noFailure: OutputType<unknown> = {
@@ -83,6 +88,7 @@ export const noFailure: OutputType<unknown> = {
 	rebaseOverEmptyIsNoOp: [],
 	rebaseEmptyIsEmpty: [],
 	emptyInverseIsEmpty: [],
+	rebasePostbase: [],
 };
 
 /**
@@ -113,6 +119,7 @@ export function verifyChangeRebaser<TChange>(
 		rebaseOverEmptyIsNoOp: [],
 		rebaseEmptyIsEmpty: [],
 		emptyInverseIsEmpty: [],
+		rebasePostbase: [],
 	};
 
 	for (const changeA of changes) {
@@ -159,10 +166,38 @@ export function verifyChangeRebaser<TChange>(
 					output.rebaseRightDistributivity.push(requirement10);
 				}
 			}
+			const requirement11 = doesPostbaseResultAlignWithRebase(changeA, changeB);
+			if (requirement11 !== true) {
+				output.rebasePostbase.push(requirement11);
+			}
 		}
 	}
 
 	return output;
+
+	function doesPostbaseResultAlignWithRebase(
+		changeA: TChange,
+		changeB: TChange,
+	): true | Failure<[TChange, TChange]> {
+		try {
+			// One of these should be postbase
+			const lhs = compose([changeA, rebase(changeB, changeA)]);
+			const rhs = compose([changeB, rebase(changeA, changeB)]);
+			if (isEquivalent(lhs, rhs)) {
+				return true;
+			}
+			return {
+				type: "Violation",
+				case: [changeA, changeB],
+			};
+		} catch (error) {
+			return {
+				type: "Error",
+				case: [changeA, changeB],
+				error,
+			};
+		}
+	}
 
 	// Requirement testing the rebasing of composed changes and rebased changes.
 	function isRebaseLeftDistributive(

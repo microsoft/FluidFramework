@@ -71,7 +71,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 
 				// The previous changes applied to a different value, so we discard them.
-				// TODO: Represent muted changes
+				// TODO:AB#4622: Represent muted changes
 				newNodeChanges.length = 0;
 
 				if (change.fieldChange.newContent?.changes !== undefined) {
@@ -150,14 +150,108 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	amendInvert: () => fail("Not implemented"),
 
+	// last-write wins
 	rebase: (
+		// TODO: Tagging here isn't doable when postbase is true.
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
+		existenceState?: NodeExistenceState,
+		postbase: boolean = false,
 	): OptionalChangeset => {
+		if (postbase) {
+			const over = overTagged.change;
+			if (change.fieldChange !== undefined) {
+				if (over.fieldChange !== undefined) {
+					const wasEmpty = change.fieldChange.newContent === undefined;
+
+					// TODO: Handle rebasing child changes over `over.childChange`.
+					return {
+						...change,
+						fieldChange: { ...over.fieldChange, wasEmpty },
+					};
+				}
+
+				const rebasedChange = { ...change };
+				const overChildChange =
+					change.deletedBy === over.deletedBy ? over.childChange : undefined;
+				const rebasedChildChange = rebaseChild(change.childChange, overChildChange); // TODO: This should plumb postbase through
+				if (rebasedChildChange !== undefined) {
+					rebasedChange.childChange = rebasedChildChange;
+				} else {
+					delete rebasedChange.childChange;
+				}
+
+				return rebasedChange;
+			}
+
+			if (change.childChange !== undefined) {
+				if (over.fieldChange !== undefined) {
+					const overIntention = getIntention(
+						over.fieldChange.revision ?? overTagged.revision,
+						revisionMetadata,
+					);
+					if (change.deletedBy === undefined) {
+						// `change.childChange` refers to the node being deleted by `over`.
+						return {
+							childChange: rebaseChild(
+								change.childChange,
+								over.deletedBy === undefined ? undefined : over.childChange,
+								NodeExistenceState.Dead,
+							),
+							deletedBy: {
+								revision: overIntention,
+								localId: over.fieldChange.id,
+							},
+						};
+					} else if (over.fieldChange.newContent !== undefined) {
+						// Bug is in test: this case isn't hit because it assumes childChange can only make sense when field is non-empty
+						const overContent = over.fieldChange.newContent;
+						const rebasingOverRollback =
+							overIntention === change.deletedBy.revision &&
+							over.fieldChange.id === change.deletedBy.localId;
+						const rebasingOverUndo =
+							"revert" in overContent &&
+							overContent.changeId.revision === change.deletedBy.revision &&
+							overContent.changeId.localId === change.deletedBy.localId;
+						if (rebasingOverRollback || rebasingOverUndo) {
+							// Over is reviving the node that change.childChange is referring to.
+							// Rebase change.childChange and remove deletedBy
+							// because we revived the node that childChange refers to
+							return {
+								childChange: rebaseChild(
+									change.childChange,
+									overContent.changes,
+									NodeExistenceState.Alive,
+								),
+							};
+						}
+					}
+				}
+			}
+
+			{
+				const rebasedChange = { ...change };
+
+				let overChildChange: NodeChangeset | undefined;
+				if (change.deletedBy === undefined && over.deletedBy === undefined) {
+					overChildChange = over.childChange;
+				}
+
+				const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
+				if (rebasedChildChange !== undefined) {
+					rebasedChange.childChange = rebasedChildChange;
+				} else {
+					delete rebasedChange.childChange;
+				}
+
+				return rebasedChange;
+			}
+		}
+
 		const over = overTagged.change;
 		if (change.fieldChange !== undefined) {
 			if (over.fieldChange !== undefined) {
@@ -203,6 +297,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						},
 					};
 				} else if (over.fieldChange.newContent !== undefined) {
+					// Bug is in test: this case isn't hit because it assumes childChange can only make sense when field is non-empty
 					const overContent = over.fieldChange.newContent;
 					const rebasingOverRollback =
 						overIntention === change.deletedBy.revision &&
@@ -250,6 +345,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
+		// TODO: should probably have postbase here too
 	) => {
 		const amendedChildChange = rebaseChild(change.childChange, overTagged.change.childChange);
 		const amended = { ...change };

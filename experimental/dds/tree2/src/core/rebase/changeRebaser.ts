@@ -82,8 +82,12 @@ export interface ChangeRebaser<TChangeset> {
 	 * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
 	 * - `rebase(a, compose([]))` is equal to `a`.
 	 * - `rebase(compose([]), a)` is equal to `compose([])`.
+	 *
+	 * TODO: explain postbase. The above statement is still true for postbase, but some types of conflicts have
+	 * inherent asymmetry in terms of which change occurred 'first' (first-write-wins, last-write-wins) and
+	 * thus need to know which change is actually intended to happen 'first'.
 	 */
-	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
+	rebase(change: TChangeset, over: TaggedChange<TChangeset>, postbase?: boolean): TChangeset;
 
 	// TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
 	// This isn't ideal, but it might be fine?
