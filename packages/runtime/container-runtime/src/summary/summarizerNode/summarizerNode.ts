@@ -366,7 +366,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
 	 * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
-	 * we skip the update. Otherwise, we fetch the latest snapshot and update latest summary based off of that.
+	 * we skip the update. If the current summary is behind, then we do not refresh.
 	 *
 	 * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
 	 *
@@ -374,8 +374,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 *
 	 * 2. The latest summary was updated and the summary corresponding to the params was being tracked.
 	 *
-	 * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this
-	 * case, the latest summary is updated based on the downloaded snapshot which is also returned.
+	 * 3. The latest summary was updated but the summary corresponding to the params was not tracked.
 	 */
 	public async refreshLatestSummary(
 		proposalHandle: string | undefined,

@@ -126,7 +126,6 @@ import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	idCompressorBlobName,
-	IFetchSnapshotResult,
 	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
@@ -3653,11 +3652,19 @@ export class ContainerRuntime
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		// The call to fetch the snapshot is very expensive and not always needed.
-		// It should only be done by the summarizerNode, if required.
-		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.fetchSnapshotFromStorageAndClose(
+		const result = await this.summarizerNode.refreshLatestSummary(
+			proposalHandle,
+			summaryRefSeq,
+		);
+
+		/**
+		 * When refreshing a summary ack, this check indicates a new ack of a summary that was newer than the
+		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
+		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
+		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
+		 */
+		if (result.latestSummaryUpdated && !result.wasSummaryTracked) {
+			await this.fetchSnapshotFromStorageAndClose(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3667,71 +3674,7 @@ export class ContainerRuntime
 				readAndParseBlob,
 				null,
 			);
-
-			/**
-			 * back-compat - Older loaders and drivers (pre 2.0.0-internal.1.4) don't have fetchSource as a param in the
-			 * getVersions API. So, they will not fetch the latest snapshot from network in the previous fetch call. For
-			 * these scenarios, fetch the snapshot corresponding to the ack handle to have the same behavior before the
-			 * change that started fetching latest snapshot always.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorageAndClose(
-					summaryLogger,
-					{
-						eventName: "RefreshLatestSummaryAckFetchBackCompat",
-						ackHandle,
-						targetSequenceNumber: summaryRefSeq,
-					},
-					readAndParseBlob,
-					ackHandle,
-				);
-			}
-
-			/**
-			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
-			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
-			 * However, there are couple of scenarios where it's possible:
-			 * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
-			 * the document being unusable and we should not proceed.
-			 * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
-			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
-			 * state.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
-					{
-						ackHandle,
-						summaryRefSeq,
-						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-					},
-				);
-				this.disposeFn(error);
-				throw error;
-			}
-
-			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
-			// wait for the delta manager to catch up before refreshing the latest Summary.
-			await this.waitForDeltaManagerToCatchup(
-				fetchResult.latestSnapshotRefSeq,
-				summaryLogger,
-			);
-
-			return {
-				snapshotTree: fetchResult.snapshotTree,
-				snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-			};
-		};
-
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-		);
-
-		if (result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			await fetchLatestSnapshot();
+			return;
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.

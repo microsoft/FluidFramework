@@ -84,6 +84,9 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing with two clients",
 		[
 			{
+				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+			},
+			{
 				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
 			},
