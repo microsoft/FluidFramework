@@ -39,6 +39,7 @@ import {
 } from "../../../feature-libraries/typed-schema";
 import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 import { EmptyKey } from "../../../core";
+import { FieldKinds } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
 	/**
@@ -75,6 +76,9 @@ describe("editableTreeTypes", () => {
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
 	const mixedStruct = builder.struct("field", {
+		/**
+		 * Test doc comment.
+		 */
 		leaf: SchemaBuilder.fieldValue(jsonNumber),
 		polymorphic: SchemaBuilder.fieldValue(jsonNumber, jsonString),
 		optionalLeaf: SchemaBuilder.fieldOptional(jsonNumber),
@@ -83,7 +87,17 @@ describe("editableTreeTypes", () => {
 	});
 	type Mixed = TypedNode<typeof mixedStruct>;
 
-	const recursiveStruct = builder.structRecursive("field", SchemaBuilder.fieldOptional(Any));
+	const recursiveStruct = builder.structRecursive("field", {
+		/**
+		 * Test Recursive Field.
+		 */
+		foo: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveStruct),
+		/**
+		 * Data field.
+		 */
+		x: SchemaBuilder.fieldValue(jsonNumber),
+	});
+	type Recursive = TypedNode<typeof recursiveStruct>;
 
 	/**
 	 * All combinations of boxed and unboxed access.
@@ -110,8 +124,19 @@ describe("editableTreeTypes", () => {
 		const childBoxed: TypedNode<typeof jsonNumber> = sequence.boxedAt(0);
 	}
 
+	function recursiveStructExample(struct: Recursive): void {
+		const child: Recursive | undefined = struct.foo;
+		const data = struct.x + (struct.foo?.foo?.foo?.x ?? 0);
+		assert(child);
+		child.foo?.foo?.foo?.foo?.setX(5);
+		child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
+
+		struct.boxedFoo.setContent(undefined);
+		// Shorthand for the above.
+		struct.setFoo(undefined);
+	}
+
 	it("schema is", () => {
-		/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 		assert(schemaIsLeaf(jsonBoolean));
 		assert(!schemaIsFieldNode(jsonBoolean));
 		assert(!schemaIsStruct(jsonBoolean));
@@ -136,7 +161,6 @@ describe("editableTreeTypes", () => {
 		assert(!schemaIsFieldNode(basicStruct));
 		assert(schemaIsStruct(basicStruct));
 		assert(!schemaIsMap(basicStruct));
-		/* eslint-enable @typescript-eslint/strict-boolean-expressions */
 	});
 
 	{
