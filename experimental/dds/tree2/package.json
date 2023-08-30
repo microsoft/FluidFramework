@@ -75,7 +75,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@sinclair/typebox": "^0.29.4",
-		"@ungap/structured-clone": "^0.3.4",
+		"@ungap/structured-clone": "^1.2.0",
 		"sorted-btree": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
