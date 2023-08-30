@@ -819,8 +819,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * Changes the endpoints of an existing interval.
 	 * @param id - Id of the interval to change
-	 * @param start - New start value.
-	 * @param end - New end value.
+	 * @param start - New start value. This can be the existing position to keep it unchanged.
+	 * @param end - New end value. This can be the existing position to keep it unchanged.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
 	change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
