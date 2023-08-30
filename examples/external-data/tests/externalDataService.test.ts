@@ -178,6 +178,7 @@ describe("mock-external-data-service", () => {
 			.send({ url: "not a url" })
 			.expect(400);
 	});
+
 	it("unregister-webhook: Invalid request with missing url fails", async () => {
 		await request(externalDataService!)
 			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)

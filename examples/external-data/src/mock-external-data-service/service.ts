@@ -41,6 +41,17 @@ class InvalidRequestError extends ApiError {
 }
 
 /**
+ * Expected shape of the request that is handled by the
+ * webook unregister endpoint
+ */
+export interface UnregisterWebhookRequest extends express.Request {
+	body: {
+		// The target URL to unsubscribe from change notifications
+		url: string;
+	};
+}
+
+/**
  * {@link initializeExternalDataService} input properties.
  */
 export interface ServiceProps {
@@ -180,12 +191,6 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		result.send();
 	});
 
-	interface UnregisterWebhookRequest extends express.Request {
-		body: {
-			// The target URL to unsubscribe from change notifications
-			url: string;
-		};
-	}
 	/**
 	 * Unregisters the senders URL from receiving notifications when this endpoint is called at the end of a collaboration session
 	 *
@@ -224,7 +229,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 				const resultMessage =
 					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
 				result.status(200).json({ message: resultMessage });
-				console.warn(formatLogMessage(resultMessage));
+				console.info(formatLogMessage(resultMessage));
 			} else {
 				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
 				webhook.removeSubscriber(subscriberUrl);
