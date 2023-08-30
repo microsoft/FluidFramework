@@ -13,6 +13,7 @@ import {
 	IMapClearOperation,
 	IMapKeyEditLocalOpMetadata,
 	IMapKeyAddLocalOpMetadata,
+	IMapKeyDeleteLocalOpMetadata,
 	IMapClearLocalOpMetadata,
 } from "./internalInterfaces";
 import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
@@ -69,7 +70,10 @@ export interface IMapDataObjectSerialized {
 	[key: string]: ISerializedValue;
 }
 
-type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+type MapKeyLocalOpMetadata =
+	| IMapKeyEditLocalOpMetadata
+	| IMapKeyAddLocalOpMetadata
+	| IMapKeyDeleteLocalOpMetadata;
 type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
@@ -78,7 +82,7 @@ function isMapKeyLocalOpMetadata(metadata: any): metadata is MapKeyLocalOpMetada
 	return (
 		metadata !== undefined &&
 		typeof metadata.pendingMessageId === "number" &&
-		(metadata.type === "add" || metadata.type === "edit")
+		(metadata.type === "add" || metadata.type === "edit" || metadata.type === "delete")
 	);
 }
 
@@ -94,7 +98,10 @@ function isMapLocalOpMetadata(metadata: any): metadata is MapLocalOpMetadata {
 	return (
 		metadata !== undefined &&
 		typeof metadata.pendingMessageId === "number" &&
-		(metadata.type === "add" || metadata.type === "edit" || metadata.type === "clear")
+		(metadata.type === "add" ||
+			metadata.type === "edit" ||
+			metadata.type === "clear" ||
+			metadata.type === "delete")
 	);
 }
 
@@ -104,11 +111,13 @@ function createClearLocalOpMetadata(
 	op: IMapClearOperation,
 	pendingClearMessageId: number,
 	previousMap?: Map<string, ILocalValue>,
+	firstUnackedKey?: string,
 ): IMapClearLocalOpMetadata {
 	const localMetadata: IMapClearLocalOpMetadata = {
 		type: "clear",
 		pendingMessageId: pendingClearMessageId,
 		previousMap,
+		firstUnackedKey,
 	};
 	return localMetadata;
 }
@@ -117,9 +126,12 @@ function createKeyLocalOpMetadata(
 	op: IMapKeyOperation,
 	pendingMessageId: number,
 	previousValue?: ILocalValue,
+	previousCreationIndex?: number,
 ): MapKeyLocalOpMetadata {
 	const localMetadata: MapKeyLocalOpMetadata = previousValue
-		? { type: "edit", pendingMessageId, previousValue }
+		? previousCreationIndex
+			? { type: "delete", pendingMessageId, previousValue, previousCreationIndex }
+			: { type: "edit", pendingMessageId, previousValue }
 		: { type: "add", pendingMessageId };
 	return localMetadata;
 }
@@ -166,6 +178,31 @@ export class MapKernel {
 	private readonly localValueMaker: LocalValueMaker;
 
 	/**
+	 * Object to maintain the creation order of unack'd entries
+	 */
+	private unackedCreationOrderTracker: string[] = [];
+
+	/**
+	 * Object to maintain the creation order of ack'd entries
+	 */
+	private readonly ackedCreationOrderTracker: string[] = [];
+
+	/**
+	 * Object to store the unack'd delete op
+	 */
+	private readonly unackedDeletionCounts: Map<string, number> = new Map();
+
+	/**
+	 *
+	 */
+	// private readonly ackedRemoteInsertedKeys: Set<string> = new Set();
+
+	/**
+	 *
+	 */
+	// private readonly ackedRemoteDeletedKeys: Set<string> = new Set();
+
+	/**
 	 * Create a new shared map kernel.
 	 * @param serializer - The serializer to serialize / parse handles
 	 * @param handle - The handle of the shared object using the kernel
@@ -190,7 +227,21 @@ export class MapKernel {
 	 * @returns The iterator
 	 */
 	public keys(): IterableIterator<string> {
-		return this.data.keys();
+		const keysInOrder = this.getKeysInOrder();
+		const iterator = {
+			index: 0,
+			next(): IteratorResult<string> {
+				if (this.index < keysInOrder.length) {
+					return { value: keysInOrder[this.index++], done: false };
+				}
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator](): IterableIterator<string> {
+				return this;
+			},
+		};
+		return iterator;
+		// return this.data.keys();
 	}
 
 	/**
@@ -200,7 +251,24 @@ export class MapKernel {
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public entries(): IterableIterator<[string, any]> {
-		const localEntriesIterator = this.data.entries();
+		const keysInOrder = this.getKeysInOrder();
+		const localEntriesIterator = {
+			index: 0,
+			map: this.data,
+			next(): IteratorResult<[string, any]> {
+				if (this.index < keysInOrder.length) {
+					const key = keysInOrder[this.index++];
+					const localValue = this.map.get(key);
+					return { value: [key, localValue], done: false };
+				}
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator](): IterableIterator<[string, any]> {
+				return this;
+			},
+		};
+
+		// const localEntriesIterator = this.data.entries();
 		const iterator = {
 			next(): IteratorResult<[string, unknown]> {
 				const nextVal = localEntriesIterator.next();
@@ -223,7 +291,23 @@ export class MapKernel {
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public values(): IterableIterator<any> {
-		const localValuesIterator = this.data.values();
+		const keysInOrder = this.getKeysInOrder();
+		const localValuesIterator = {
+			index: 0,
+			map: this.data,
+			next(): IteratorResult<any> {
+				if (this.index < keysInOrder.length) {
+					const key = keysInOrder[this.index++];
+					const localValue = this.map.get(key);
+					return { value: localValue, done: false };
+				}
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator](): IterableIterator<any> {
+				return this;
+			},
+		};
+
 		const iterator = {
 			next(): IteratorResult<unknown> {
 				const nextVal = localValuesIterator.next();
@@ -257,9 +341,14 @@ export class MapKernel {
 		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
 		// eslint-disable-next-line unicorn/no-array-for-each
+		const keysInOrder = this.getKeysInOrder();
+		keysInOrder.forEach((key) => {
+			callbackFn(this.data.get(key)?.value, key, this.data);
+		});
+		/*
 		this.data.forEach((localValue, key, m) => {
 			callbackFn(localValue.value, key, m);
-		});
+		}); */
 	}
 
 	/**
@@ -297,6 +386,9 @@ export class MapKernel {
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
 
+		// Store the "creation index" of this set op, no matter it is an insertion or a value update
+		this.addUnackedCreationIndex(key);
+
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
 			return;
@@ -319,6 +411,24 @@ export class MapKernel {
 		// Delete the key locally first.
 		const previousValue = this.deleteCore(key, true);
 
+		// Delete the creation index, but need to verify whether the deleted key is ack'd or unack'd
+		/*
+		const unackedDeletion = this.unackedCreationOrderTracker.includes(key);
+		const previousCreationIndex = unackedDeletion
+			? this.deleteUnackedCreationIndex(key)
+			: this.deleteAckedCreationIndex(key); */
+		/*
+		this.deleteAckedCreationIndex(key);
+		this.deleteUnackedCreationIndex(key); */
+		const ackedDeletion = this.ackedCreationOrderTracker.includes(key);
+		let previousCreationIndex: number | undefined;
+		if (ackedDeletion) {
+			previousCreationIndex = this.deleteAckedCreationIndex(key);
+			this.deleteUnackedCreationIndex(key);
+		} else {
+			previousCreationIndex = this.deleteUnackedCreationIndex(key);
+		}
+
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
 			return previousValue !== undefined;
@@ -328,7 +438,20 @@ export class MapKernel {
 			key,
 			type: "delete",
 		};
-		this.submitMapKeyMessage(op, previousValue);
+		this.submitMapKeyMessage(
+			op,
+			previousValue,
+			!ackedDeletion && previousCreationIndex
+				? -(previousCreationIndex + 1)
+				: previousCreationIndex,
+		);
+
+		if (this.unackedDeletionCounts.has(key)) {
+			const count = this.unackedDeletionCounts.get(key) as number;
+			this.unackedDeletionCounts.set(key, count + 1);
+		} else {
+			this.unackedDeletionCounts.set(key, 1);
+		}
 
 		return previousValue !== undefined;
 	}
@@ -337,10 +460,17 @@ export class MapKernel {
 	 * Clear all data from the map.
 	 */
 	public clear(): void {
-		const copy = this.isAttached() ? new Map<string, ILocalValue>(this.data) : undefined;
+		const copy = this.isAttached() ? new Map<string, ILocalValue>(this.entries()) : undefined;
 
 		// Clear the data locally first.
 		this.clearCore(true);
+
+		const firstUnackedKey =
+			this.unackedCreationOrderTracker.length > 0
+				? this.unackedCreationOrderTracker[0]
+				: undefined;
+		this.clearUnackedCreationIndex();
+		this.clearAckedCreationIndex();
 
 		// Clear the pendingKeys immediately, the local unack'd operations are aborted
 		this.pendingKeys.clear();
@@ -353,7 +483,7 @@ export class MapKernel {
 		const op: IMapClearOperation = {
 			type: "clear",
 		};
-		this.submitMapClearMessage(op, copy);
+		this.submitMapClearMessage(op, copy, firstUnackedKey);
 	}
 
 	/**
@@ -459,8 +589,15 @@ export class MapKernel {
 			if (localOpMetadata.previousMap === undefined) {
 				throw new Error("Cannot rollback without previous map");
 			}
+			let iterateUnackedData: boolean = false;
 			for (const [key, localValue] of localOpMetadata.previousMap.entries()) {
 				this.setCore(key, localValue, true);
+				iterateUnackedData = key === localOpMetadata.firstUnackedKey ? true : false;
+				if (iterateUnackedData) {
+					this.addUnackedCreationIndex(key);
+				} else {
+					this.addAckedCreationIndex(key);
+				}
 			}
 
 			const lastPendingClearId = this.pendingClearMessageIds.pop();
@@ -472,11 +609,33 @@ export class MapKernel {
 			}
 		} else if (op.type === "delete" || op.type === "set") {
 			if (localOpMetadata.type === "add") {
+				if (this.ackedCreationOrderTracker.includes(op.key as string)) {
+					this.deleteAckedCreationIndex(op.key as string);
+				} else {
+					this.deleteUnackedCreationIndex(op.key as string);
+				}
 				this.deleteCore(op.key as string, true);
 			} else if (
 				localOpMetadata.type === "edit" &&
 				localOpMetadata.previousValue !== undefined
 			) {
+				this.setCore(op.key as string, localOpMetadata.previousValue, true);
+			} else if (
+				localOpMetadata.type === "delete" &&
+				localOpMetadata.previousValue !== undefined &&
+				localOpMetadata.previousCreationIndex !== undefined
+			) {
+				if (localOpMetadata.previousCreationIndex < 0) {
+					this.addUnackedCreationIndex(
+						op.key as string,
+						-(localOpMetadata.previousCreationIndex + 1),
+					);
+				} else {
+					this.addAckedCreationIndex(
+						op.key as string,
+						localOpMetadata.previousCreationIndex,
+					);
+				}
 				this.setCore(op.key as string, localOpMetadata.previousValue, true);
 			} else {
 				throw new Error("Cannot rollback without previous value");
@@ -557,8 +716,10 @@ export class MapKernel {
 			}
 		}
 		this.clearCore(false);
+		this.clearUnackedCreationIndex();
 		for (const [key, value] of temp.entries()) {
 			this.setCore(key, value, true);
+			this.addUnackedCreationIndex(key);
 		}
 	}
 
@@ -629,7 +790,41 @@ export class MapKernel {
 				if (pendingMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
+
+				if (op.type === "delete") {
+					if (this.ackedCreationOrderTracker.includes(op.key)) {
+						this.deleteAckedCreationIndex(op.key);
+					} else {
+						const count = this.unackedDeletionCounts.get(op.key) as number;
+						this.unackedDeletionCounts.set(op.key, count - 1);
+						if (count === 1) {
+							this.unackedDeletionCounts.delete(op.key);
+						}
+					}
+				}
+
+				if (op.type === "set") {
+					if (!this.ackedCreationOrderTracker.includes(op.key) && this.data.has(op.key)) {
+						this.addAckedCreationIndex(op.key);
+					}
+					if (!this.unackedDeletionCounts.has(op.key)) {
+						this.deleteUnackedCreationIndex(op.key, true);
+					}
+				}
+			} else {
+				// remote messages
+				if (op.type === "delete" && this.ackedCreationOrderTracker.includes(op.key)) {
+					this.deleteAckedCreationIndex(op.key);
+				}
+				if (
+					op.type === "set" &&
+					!this.ackedCreationOrderTracker.includes(op.key) &&
+					this.data.has(op.key)
+				) {
+					this.addAckedCreationIndex(op.key);
+				}
 			}
+
 			return false;
 		}
 
@@ -662,6 +857,8 @@ export class MapKernel {
 					return;
 				}
 				this.clearCore(local);
+				this.clearAckedCreationIndex();
+				this.clearUnackedCreationIndex();
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
 				assert(
@@ -689,6 +886,7 @@ export class MapKernel {
 					return;
 				}
 				this.deleteCore(op.key, local);
+				this.deleteAckedCreationIndex(op.key);
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -696,7 +894,13 @@ export class MapKernel {
 			applyStashedOp: (op: IMapDeleteOperation) => {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const previousValue = this.deleteCore(op.key, true);
-				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
+				const previousCreationIndex = this.deleteUnackedCreationIndex(op.key);
+				return createKeyLocalOpMetadata(
+					op,
+					this.getMapKeyMessageId(op),
+					previousValue,
+					previousCreationIndex,
+				);
 			},
 		});
 		messageHandlers.set("set", {
@@ -708,6 +912,15 @@ export class MapKernel {
 				// needProcessKeyOperation should have returned false if local is true
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
+
+				// The op is a fresh insertion, and there is no remote insertion (which might not be processed though)
+				// occurring in the earlier time.
+				if (!this.ackedCreationOrderTracker.includes(op.key)) {
+					this.addAckedCreationIndex(op.key);
+					if (local) {
+						this.deleteUnackedCreationIndex(op.key, true);
+					}
+				}
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -716,6 +929,12 @@ export class MapKernel {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const context = this.makeLocal(op.key, op.value);
 				const previousValue = this.setCore(op.key, context, true);
+				// Set unack'd creation index
+				this.addUnackedCreationIndex(op.key);
+				/*
+				if (!this.unackedCreationOrderTracker.includes(op.key)) {
+					this.addUnackedCreationIndex(op.key);
+				} */
 				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
@@ -736,8 +955,14 @@ export class MapKernel {
 	private submitMapClearMessage(
 		op: IMapClearOperation,
 		previousMap?: Map<string, ILocalValue>,
+		firstUnackedKey?: string,
 	): void {
-		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
+		const metadata = createClearLocalOpMetadata(
+			op,
+			this.getMapClearMessageId(),
+			previousMap,
+			firstUnackedKey,
+		);
 		this.submitMessage(op, metadata);
 	}
 
@@ -757,11 +982,16 @@ export class MapKernel {
 	 * @param op - The map key message
 	 * @param previousValue - The value of the key before this op
 	 */
-	private submitMapKeyMessage(op: IMapKeyOperation, previousValue?: ILocalValue): void {
+	private submitMapKeyMessage(
+		op: IMapKeyOperation,
+		previousValue?: ILocalValue,
+		previousCreationIndex?: number,
+	): void {
 		const localMetadata = createKeyLocalOpMetadata(
 			op,
 			this.getMapKeyMessageId(op),
 			previousValue,
+			previousCreationIndex,
 		);
 		this.submitMessage(op, localMetadata);
 	}
@@ -800,4 +1030,100 @@ export class MapKernel {
 				: { type: "add", pendingMessageId };
 		this.submitMessage(op, localMetadata);
 	}
+
+	/**
+	 *
+	 * @param key -
+	 * @param index -
+	 */
+	private addAckedCreationIndex(key: string, index?: number): void {
+		if (index) {
+			this.ackedCreationOrderTracker.splice(index, 0, key);
+		} else {
+			this.ackedCreationOrderTracker.push(key);
+		}
+		return;
+	}
+
+	/**
+	 *
+	 * @param key -
+	 */
+	private deleteAckedCreationIndex(key: string): number {
+		const index = this.ackedCreationOrderTracker.indexOf(key);
+		this.ackedCreationOrderTracker.splice(index, 1);
+		return index;
+	}
+
+	/**
+	 *
+	 * @param key -
+	 * @param index -
+	 * @returns -
+	 */
+	private addUnackedCreationIndex(key: string, index?: number): void {
+		if (index) {
+			this.unackedCreationOrderTracker.splice(index, 0, key);
+		} else {
+			this.unackedCreationOrderTracker.push(key);
+		}
+		return;
+	}
+
+	/**
+	 *
+	 * @param key -
+	 * @returns -
+	 */
+	private deleteUnackedCreationIndex(key: string, remote?: boolean): number | undefined {
+		const index = this.unackedCreationOrderTracker.indexOf(key);
+		if (index === -1) {
+			return undefined;
+		}
+		if (remote) {
+			this.unackedCreationOrderTracker.splice(index, 1);
+		} else {
+			this.unackedCreationOrderTracker = this.unackedCreationOrderTracker.filter(
+				(item) => item !== key,
+			);
+		}
+		return -(index + 1);
+	}
+
+	/**
+	 *
+	 * @returns -
+	 */
+	private clearUnackedCreationIndex(): void {
+		this.unackedCreationOrderTracker.length = 0;
+	}
+
+	/**
+	 *
+	 * @returns -
+	 */
+	private clearAckedCreationIndex(): void {
+		this.ackedCreationOrderTracker.length = 0;
+	}
+
+	private getKeysInOrder(): string[] {
+		const keysInOrder: string[] = [...this.ackedCreationOrderTracker];
+		for (const key of this.unackedCreationOrderTracker) {
+			if (!keysInOrder.includes(key)) {
+				keysInOrder.push(key);
+			}
+		}
+		return keysInOrder;
+	}
+	/*
+	private clearCreationIndex(): string | undefined {
+		const firstUnackedKey = this.unackedCreationOrderTracker.length > 0 ? this.unackedCreationOrderTracker[0] : undefined;
+		
+		if (local) {
+			this.unackedCreationOrderTracker.length = 0;
+		} 
+		this.unackedCreationOrderTracker.length = 0;
+		this.ackedCreationOrderTracker.length = 0;
+		return firstUnackedKey;
+	} */
 }

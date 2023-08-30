@@ -21,6 +21,7 @@ import {
 	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
 	MapLocalOpMetadata,
+	IMapKeyDeleteLocalOpMetadata,
 } from "../../internalInterfaces";
 import { MapFactory, SharedMap } from "../../map";
 import { IMapOperation } from "../../mapKernel";
@@ -40,6 +41,16 @@ function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFact
 function createLocalMap(id: string): SharedMap {
 	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
 	return map;
+}
+
+function assertMapIterationOrder(map: SharedMap, keys: string[], values?: any[]) {
+	// assert.equal(map.size, keys.length);
+	// assert.equal(map.size, values?.length);
+
+	assert.deepEqual(Array.from(map.keys()), keys);
+	if (values) {
+		assert.deepEqual(Array.from(map.values()), values);
+	}
 }
 
 class TestSharedMap extends SharedMap {
@@ -411,16 +422,32 @@ describe("Map", () => {
 				assert.equal(metadata.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
-				assert.equal(metadata.type, "edit");
+				metadata = map1.testApplyStashedOp(op3) as IMapKeyDeleteLocalOpMetadata;
+				assert.equal(metadata.type, "delete");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
+				// assert.equal(metadata.previousCreationIndex, -3);
 				const op4: IMapClearOperation = { type: "clear" };
 				metadata = map1.testApplyStashedOp(op4) as IMapClearLocalOpMetadata;
 				assert.equal(metadata.pendingMessageId, 4);
 				assert.equal(metadata.type, "clear");
 				assert.equal(metadata.previousMap?.get("key")?.value, "value");
 				assert.equal(metadata.previousMap?.has("key2"), false);
+			});
+		});
+
+		describe("Iteration order", () => {
+			it("should iterate the data with creation order", () => {
+				map.set("1", 1);
+				map.set("2", 2);
+				map.set("3", 3);
+				assertMapIterationOrder(map, ["1", "2", "3"]);
+
+				map.set("1", 4);
+				assertMapIterationOrder(map, ["1", "2", "3"], [4, 2, 3]);
+
+				map.delete("2");
+				assertMapIterationOrder(map, ["1", "3"], [4, 3]);
 			});
 		});
 	});
@@ -856,6 +883,109 @@ describe("Map", () => {
 					assert.equal(map1.size, 0);
 					assert.equal(map2.size, 0);
 				});
+			});
+		});
+
+		describe("Iteration order", () => {
+			it("Should iterate with creation order with different timing of ack", () => {
+				map1.set("1", 1);
+				map2.set("2", 1);
+				map1.set("2", 2);
+				map1.set("3", 1);
+
+				assertMapIterationOrder(map1, ["1", "2", "3"]);
+				assertMapIterationOrder(map2, ["2"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["1", "2", "3"]);
+				assertMapIterationOrder(map2, ["1", "2"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["1", "2", "3"]);
+				assertMapIterationOrder(map2, ["1", "2"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assertMapIterationOrder(map1, ["1", "2", "3"]);
+				assertMapIterationOrder(map2, ["1", "2", "3"]);
+			});
+
+			it("Should iterate with creation order with remote/delete deletions", () => {
+				map1.set("1", 1);
+				map2.set("2", 1);
+				map1.set("2", 2);
+				map1.set("3", 1);
+				map1.delete("2");
+
+				assertMapIterationOrder(map1, ["1", "3"]);
+				assertMapIterationOrder(map2, ["2"]);
+
+				containerRuntimeFactory.processAllMessages();
+				assertMapIterationOrder(map1, ["1", "3"]);
+				assertMapIterationOrder(map2, ["1", "3"]);
+			});
+
+			it("Should distinguish if a local set op is a fresh insertion or value update while a remote delete op occurs", () => {
+				map1.set("1", 1);
+				map2.set("1", 2);
+				map2.set("2", 3);
+				map2.delete("1");
+				map2.set("1", 4);
+				map2.set("3", 5);
+
+				assertMapIterationOrder(map1, ["1"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assertMapIterationOrder(map1, ["1"]);
+				assertMapIterationOrder(map2, ["1", "2", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["1", "2"]);
+				assertMapIterationOrder(map2, ["1", "2", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2", "1"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2", "1", "3"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+			});
+
+			it("Should distinguish if a local set op is a fresh insertion or value update while a remote set op occurs", () => {
+				map2.set("1", 2);
+				map2.set("2", 3);
+				map2.delete("1");
+				map2.set("1", 4);
+				map2.set("3", 5);
+				map1.set("1", 1);
+
+				assertMapIterationOrder(map1, ["1"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assertMapIterationOrder(map1, ["1", "2"]);
+				assertMapIterationOrder(map2, ["1", "2", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2", "1"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2", "1"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2", "1", "3"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assertMapIterationOrder(map1, ["2", "1", "3"]);
+				assertMapIterationOrder(map2, ["2", "1", "3"]);
 			});
 		});
 	});

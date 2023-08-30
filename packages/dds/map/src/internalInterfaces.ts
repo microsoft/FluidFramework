@@ -87,6 +87,31 @@ export interface IMapKeyAddLocalOpMetadata {
 }
 
 /**
+ * Metadata for an local `delete` operation.
+ */
+export interface IMapKeyDeleteLocalOpMetadata {
+	/**
+	 * String identifier of the operation type.
+	 */
+	type: "delete";
+
+	/**
+	 * Unique identifier for the local operation.
+	 */
+	pendingMessageId: number;
+
+	/**
+	 * Local value prior to the deletion.
+	 */
+	previousValue: ILocalValue;
+
+	/**
+	 * Creation index prior to the deletion
+	 */
+	previousCreationIndex: number;
+}
+
+/**
  * Metadata for an local `clear` operation.
  */
 export interface IMapClearLocalOpMetadata {
@@ -104,12 +129,20 @@ export interface IMapClearLocalOpMetadata {
 	 * Local map contents prior to clearing it.
 	 */
 	previousMap?: Map<string, ILocalValue>;
+
+	/**
+	 * The order of map keys is iterated from the ack'd keys then unack'd keys, this string represents the unack'd keys is being traversed right now
+	 */
+	firstUnackedKey?: string;
 }
 
 /**
  * Metadata for a local operation associated with a specific key entry in the map.
  */
-export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+export type MapKeyLocalOpMetadata =
+	| IMapKeyEditLocalOpMetadata
+	| IMapKeyAddLocalOpMetadata
+	| IMapKeyDeleteLocalOpMetadata;
 
 /**
  * Metadata for a local operation.
