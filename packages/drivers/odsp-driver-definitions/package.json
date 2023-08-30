@@ -54,6 +54,16 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_OdspErrorType": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IOdspError": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_OdspError": {
+				"backCompat": false
+			}
+		}
 	}
 }
