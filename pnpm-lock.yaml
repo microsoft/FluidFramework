@@ -7814,7 +7814,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -7862,7 +7862,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -30632,7 +30632,7 @@ packages:
       '@types/sinon': 7.5.2
       lodash: 4.17.21
       mock-stdin: 1.0.0
-      nock: 13.3.1
+      nock: 13.3.3
       stdout-stderr: 0.1.13
     transitivePeerDependencies:
       - supports-color
@@ -37479,8 +37479,8 @@ packages:
       - supports-color
     dev: true
 
-  /nock/13.3.1:
-    resolution: {integrity: sha512-vHnopocZuI93p2ccivFyGuUfzjq2fxNyNurp7816mlT5V5HF4SzXu8lvLrVzBbNqzs+ODooZ6OksuSUNM7Njkw==}
+  /nock/13.3.3:
+    resolution: {integrity: sha512-z+KUlILy9SK/RjpeXDiDUEAq4T94ADPHE3qaRkf66mpEhzc/ytOMm3Bwdrbq6k1tMWkbdujiKim3G2tfQARuJw==}
     engines: {node: '>= 10.13'}
     dependencies:
       debug: 4.3.4
