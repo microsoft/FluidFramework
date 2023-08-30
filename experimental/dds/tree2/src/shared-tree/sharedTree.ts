@@ -88,7 +88,7 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		const options = { jsonValidator: noopValidator, ...optionsParam };
+		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest =
 			options.forest === ForestType.Optimized
@@ -264,6 +264,11 @@ export enum ForestType {
 	 */
 	Optimized = 1,
 }
+
+export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
+	jsonValidator: noopValidator,
+	forest: ForestType.Reference,
+};
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
