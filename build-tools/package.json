@@ -44,7 +44,7 @@
 		"test:coverage": "c8 npm run test:mocha:report",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
-		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:multireport -- --timeout 4s",
+		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:report -- --timeout 4s",
 		"tsc": "fluid-build --task tsc",
 		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"watch": "pnpm run -r --parallel tsc --watch"
