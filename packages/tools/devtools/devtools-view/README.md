@@ -111,6 +111,23 @@ Note: Since we're using Git LFS to store the screenshot assets, performing the d
 Fortunately, Github's LFS diffing works pretty well.
 If you are unsure of the screenshot changes you're seeing, you can always view the commit in Github to see a side-by-side comparison.
 
+##### Common issues
+
+If you see test failures where images are being unexpectedly regenerated, you may need to re-install Git LFS.
+
+An easy way to verify is to stage the generated changes and run `git lfs status` from the terminal.
+If you see output that includes something like the following, it is likely indicative that Git LFS has not been initialized correctly:
+
+```shell
+__screenshots__/AudienceHistoryTable/EmptyList (Dark, 400x600).png (LFS: ed03154 -> GIT: ed03154)
+```
+
+Specifically, the interesting part here is the `(LFS: ... -> GIT: ...)` part.
+This indicates that Git is trying to track the files normally, and they aren't being intercepted by Git LFS, indicating that Git LFS is not actually running.
+
+In this case, run `git lfs install`.
+The diffs should at this point disappear.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
