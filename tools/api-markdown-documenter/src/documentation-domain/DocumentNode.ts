@@ -49,7 +49,7 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProps
 	public readonly type = DocumentationNodeType.Document;
 
 	/**
-	 * {@inheritDoc DocumentationNode.apiItemName}
+	 * {@inheritDoc DocumentNodeProps.apiItemName}
 	 */
 	public readonly apiItemName: string;
 
