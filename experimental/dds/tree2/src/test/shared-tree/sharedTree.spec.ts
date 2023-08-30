@@ -84,10 +84,10 @@ describe("SharedTree", () => {
 		const provider = new TestTreeProviderLite();
 		const view = viewWithContent({ schema: jsonSequenceRootSchema, initialTree: [] });
 		runSynchronous(view, (t) => {
-			t.context.root.insertNodes(0, 5);
+			t.context.root.insertNodes(0, [5]);
 		});
 
-		assert.deepEqual(toJsonableTree(view), { type: jsonNumber.name, value: 5 });
+		assert.deepEqual(toJsonableTree(view), [{ type: jsonNumber.name, value: 5 }]);
 	});
 
 	it("can be connected to another tree", async () => {
