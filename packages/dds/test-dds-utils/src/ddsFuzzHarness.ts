@@ -84,7 +84,7 @@ export interface AddClient {
 
 export interface Synchronize {
 	type: "synchronize";
-	clients?: Set<string>;
+	clients?: string[];
 }
 
 interface HasWorkloadName {
@@ -302,7 +302,8 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	validationStrategy:
 		| { type: "random"; probability: number }
-		| { type: "fixedInterval"; interval: number };
+		| { type: "fixedInterval"; interval: number }
+		| { type: "partialSynchronization"; probability: number; clientProbability: number };
 	parseOperations: (serialized: string) => BaseOperation[];
 
 	/**
@@ -672,6 +673,30 @@ export function mixinSynchronization<
 				);
 			};
 			break;
+		case "partialSynchronization":
+			// passing 1 here causes infinite loops. passing close to 1 is wasteful
+			// as synchronization + eventual consistency validation should be idempotent.
+			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
+			assert(
+				validationStrategy.probability < 0.5,
+				"Use a lower synchronization probability.",
+			);
+			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
+				const baseGenerator = model.generatorFactory();
+				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
+					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
+						const connectedClients = state.clients
+							.filter(() => state.random.bool(validationStrategy.clientProbability))
+							.filter((client) => client.containerRuntime.connected)
+							.map((client) => client.containerRuntime.clientId);
+
+						return { type: "synchronize", clients: connectedClients };
+					} else {
+						return baseGenerator(state);
+					}
+				};
+			};
+			break;
 		default:
 			unreachableCase(validationStrategy);
 	}
@@ -679,27 +704,58 @@ export function mixinSynchronization<
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		if (isSynchronizeOp(operation)) {
-			const connectedClients = state.clients.filter(
-				(client) => client.containerRuntime.connected,
-			);
-
-			for (const client of connectedClients) {
-				assert(
-					client.containerRuntime.flush !== undefined,
-					"Unsupported mock runtime version",
+			if (operation.clients !== undefined) {
+				const connectedClients = state.clients.filter(
+					(client) => client.containerRuntime.connected,
 				);
-				client.containerRuntime.flush();
-			}
 
-			state.containerRuntimeFactory.processAllMessages();
-			if (connectedClients.length > 0) {
-				const readonlyChannel = state.summarizerClient.channel;
-				for (const { channel } of connectedClients) {
-					model.validateConsistency(readonlyChannel, channel);
+				for (const client of connectedClients) {
+					assert(
+						client.containerRuntime.flush !== undefined,
+						"Unsupported mock runtime version",
+					);
+					client.containerRuntime.flush();
 				}
-			}
 
-			return state;
+				state.containerRuntimeFactory.processAllMessages([
+					state.summarizerClient.containerRuntime.clientId,
+					...connectedClients.map((client) => client.containerRuntime.clientId),
+				]);
+
+				const readonlyChannel = state.summarizerClient.channel;
+				// TODO: Fix time complexity here
+				for (const { channel, containerRuntime } of connectedClients) {
+					for (const client of operation.clients) {
+						if (containerRuntime.clientId === client) {
+							model.validateConsistency(readonlyChannel, channel);
+						}
+					}
+				}
+
+				return state;
+			} else {
+				const connectedClients = state.clients.filter(
+					(client) => client.containerRuntime.connected,
+				);
+
+				for (const client of connectedClients) {
+					assert(
+						client.containerRuntime.flush !== undefined,
+						"Unsupported mock runtime version",
+					);
+					client.containerRuntime.flush();
+				}
+
+				state.containerRuntimeFactory.processAllMessages();
+				if (connectedClients.length > 0) {
+					const readonlyChannel = state.summarizerClient.channel;
+					for (const { channel } of connectedClients) {
+						model.validateConsistency(readonlyChannel, channel);
+					}
+				}
+
+				return state;
+			}
 		}
 		return model.reducer(state, operation);
 	};

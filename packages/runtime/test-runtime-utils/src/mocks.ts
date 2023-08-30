@@ -336,8 +336,8 @@ export class MockContainerRuntimeFactory {
 	protected readonly runtimes = new Map<string, MockContainerRuntime>();
 
 	// Client mapping to index in message array
-	private readonly clientToIndex = new Map<string, number>();
-	private frontIndex: number = 0;
+	protected readonly clientToIndex = new Map<string, number>();
+	protected frontIndex: number = 0;
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -399,7 +399,13 @@ export class MockContainerRuntimeFactory {
 		) {
 			this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
 		}
-		this.messages.push(msg as ISequencedDocumentMessage);
+
+		// Explicitly JSON clone the value to match the behavior of going thru the wire.
+		const message = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
+		message.sequenceNumber = ++this.sequenceNumber;
+		message.minimumSequenceNumber = this.getMinSeq();
+
+		this.messages.push(message);
 	}
 
 	private lastProcessedMessage?: ISequencedDocumentMessage;
@@ -414,10 +420,6 @@ export class MockContainerRuntimeFactory {
 				const messageAtIndex = JSON.parse(
 					JSON.stringify(this.messages[mutableIndex]),
 				) as ISequencedDocumentMessage;
-				this.minSeq.set(messageAtIndex.clientId, messageAtIndex.referenceSequenceNumber);
-				messageAtIndex.sequenceNumber =
-					this.sequenceNumber - (this.frontIndex - mutableIndex);
-				messageAtIndex.minimumSequenceNumber = this.getMinSeq();
 
 				this.runtimes.get(client)?.process(messageAtIndex);
 
@@ -436,11 +438,8 @@ export class MockContainerRuntimeFactory {
 				const messageAtIndex = JSON.parse(
 					JSON.stringify(this.messages[index]),
 				) as ISequencedDocumentMessage;
-				this.minSeq.set(messageAtIndex.clientId, messageAtIndex.referenceSequenceNumber);
-				messageAtIndex.sequenceNumber = this.sequenceNumber - index;
-				messageAtIndex.minimumSequenceNumber = this.getMinSeq();
 
-				this.runtimes[client].process(messageAtIndex);
+				this.runtimes.get(client)?.process(messageAtIndex);
 
 				index++;
 			}
@@ -451,7 +450,7 @@ export class MockContainerRuntimeFactory {
 
 	private advanceClient(client: string) {
 		assert(
-			this.clientToIndex[client] === undefined,
+			this.clientToIndex.get(client) === undefined,
 			"Client should be caught up before trying to advance",
 		);
 
@@ -461,23 +460,10 @@ export class MockContainerRuntimeFactory {
 			}
 		}
 
-		const message = JSON.parse(
-			JSON.stringify(this.messages[this.frontIndex]),
-		) as ISequencedDocumentMessage;
-
-		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		if (
-			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			this.lastProcessedMessage?.clientId !== message.clientId
-		) {
-			this.sequenceNumber++;
-		}
-		message.sequenceNumber = this.sequenceNumber;
-		message.minimumSequenceNumber = this.getMinSeq();
-		this.lastProcessedMessage = message;
+		const message = this.messages[this.frontIndex];
+		// Advance the front index
 		this.frontIndex++;
+
 		this.runtimes.get(client)?.process(message);
 	}
 
@@ -557,6 +543,20 @@ export class MockContainerRuntimeFactory {
 				}
 			}
 		}
+	}
+
+	public updateRuntimeClientId(oldClientId: string, newClientId: string) {
+		const index = this.clientToIndex.get(oldClientId);
+		const runtime = this.runtimes.get(oldClientId);
+
+		if (index !== undefined) {
+			this.clientToIndex.set(newClientId, index);
+			this.clientToIndex.delete(oldClientId);
+		}
+
+		assert(runtime !== undefined, "No runtime entry for this clientId");
+		this.runtimes.set(newClientId, runtime);
+		this.runtimes.delete(oldClientId);
 	}
 }
 

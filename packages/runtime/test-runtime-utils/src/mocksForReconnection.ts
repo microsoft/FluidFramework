@@ -40,17 +40,16 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			}
 			this.pendingRemoteMessages.length = 0;
 			this.clientSequenceNumber = 0;
+			const oldId = this.clientId;
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
 			this.dataStoreRuntime.clientId = this.clientId;
+			this.factory.updateRuntimeClientId(oldId, this.clientId);
 			this.factory.quorum.addMember(this.clientId, {});
 			// On reconnection, ask the DDSes to resubmit pending messages.
 			this.reSubmitMessages();
 		} else {
-			const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
-			// On disconnection, clear any outstanding messages for this client because it will be resent.
-			factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
 		}
 
@@ -120,12 +119,5 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		);
 		this.runtimes.set(containerRuntime.clientId, containerRuntime);
 		return containerRuntime;
-	}
-
-	public clearOutstandingClientMessages(clientId: string) {
-		// Delete all the messages for client with the given clientId.
-		this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
-			return message.clientId !== clientId;
-		});
 	}
 }
