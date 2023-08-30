@@ -159,6 +159,7 @@ stages:
           lfs: true
           submodules: ${{ parameters.checkoutSubmodules }}
 
+        # Initialize Git LFS to ensure test assets have been downloaded
         - script: |
             git lfs install
             git lfs fetch
