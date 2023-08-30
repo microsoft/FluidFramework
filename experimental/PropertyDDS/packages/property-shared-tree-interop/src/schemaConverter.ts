@@ -282,7 +282,7 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 	allChildrenByType: InheritingChildrenByType,
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
-): FieldSchema {
+): FieldSchema<Kind> {
 	const allowedTypes: Set<LazyTreeSchema> = new Set();
 	let isAny = false;
 	for (const typeid of fieldTypes) {
