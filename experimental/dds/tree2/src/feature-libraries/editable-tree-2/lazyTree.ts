@@ -20,7 +20,7 @@ import {
 	rootFieldKey,
 	EmptyKey,
 } from "../../core";
-import { fail } from "../../util";
+import { fail, getOrCreate } from "../../util";
 import { FieldKind } from "../modular-schema";
 import {
 	FieldSchema,
@@ -347,12 +347,83 @@ abstract class LazyStruct<TSchema extends StructSchema>
 
 function buildLazyStruct<TSchema extends StructSchema>(
 	context: Context,
-	schema: TreeSchema,
+	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
 ): LazyStruct<TSchema> & StructTyped<TSchema> {
-	fail("todo");
+	const structClass = getOrCreate(cachedStructClasses, schema, () => buildStructClass(schema));
+	return new structClass(context, cursor, anchorNode, anchor) as LazyStruct<TSchema> &
+		StructTyped<TSchema>;
+}
+
+const cachedStructClasses = new WeakMap<
+	StructSchema,
+	new (
+		context: Context,
+		cursor: ITreeSubscriptionCursor,
+		anchorNode: AnchorNode,
+		anchor: Anchor,
+	) => LazyStruct<StructSchema>
+>();
+
+function capitalize<S extends string>(s: S): Capitalize<S> {
+	if (s === "") {
+		return s as Capitalize<S>;
+	}
+
+	return (s[0].toUpperCase() + s.slice(1)) as Capitalize<S>;
+}
+
+function buildStructClass<TSchema extends StructSchema>(
+	schema: TSchema,
+): new (
+	context: Context,
+	cursor: ITreeSubscriptionCursor,
+	anchorNode: AnchorNode,
+	anchor: Anchor,
+) => LazyStruct<TSchema> {
+	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
+	class CustomStruct extends LazyStruct<TSchema> {
+		public constructor(
+			context: Context,
+			cursor: ITreeSubscriptionCursor,
+			anchorNode: AnchorNode,
+			anchor: Anchor,
+		) {
+			super(context, schema, cursor, anchorNode, anchor);
+		}
+	}
+
+	const propertyDescriptorMap: PropertyDescriptorMap = {};
+
+	for (const [key, _field] of schema.structFields) {
+		// TODO: custom field identifiers
+		propertyDescriptorMap[key] = {
+			enumerable: true,
+			get(this: CustomStruct) {
+				return this.getField(key);
+			},
+		};
+
+		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
+			enumerable: false,
+			get(this: CustomStruct) {
+				return this.getField(key);
+			},
+		};
+
+		propertyDescriptorMap[`set${capitalize(key)}`] = {
+			enumerable: false,
+			get(this: CustomStruct) {
+				fail("TODO: implement or remove this API");
+			},
+		};
+	}
+
+	Object.defineProperties(CustomStruct.prototype, propertyDescriptorMap);
+
+	return CustomStruct;
 }
 
 export function getFieldSchema(field: FieldKey, schema: TreeSchema): FieldSchema {

@@ -38,28 +38,6 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 	readonly schema: TypedSchemaCollection;
 
 	/**
-	 * Call before editing.
-	 *
-	 * Note that after performing edits, EditableTrees for nodes that no longer exist are invalid to use.
-	 * TODO: maybe add an API to check if a specific EditableTree still exists,
-	 * and only make use other than that invalid.
-	 */
-	prepareForEdit(): void;
-
-	/**
-	 * Call to free resources.
-	 * It is invalid to use the context after this.
-	 */
-	free(): void;
-
-	/**
-	 * Release any cursors and anchors held by EditableTrees created in this context.
-	 * The EditableTrees are invalid to use after this, but the context may still be used
-	 * to create new trees starting from the root.
-	 */
-	clear(): void;
-
-	/**
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
 	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
@@ -97,13 +75,20 @@ export class Context implements TreeContext {
 		];
 	}
 
-	public prepareForEdit(): void {
+	/**
+	 * Call before editing.
+	 */
+	private prepareForEdit(): void {
 		for (const target of this.withCursors) {
 			target.prepareForEdit();
 		}
 		assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
 	}
 
+	/**
+	 * Call to free resources.
+	 * It is invalid to use the context after this.
+	 */
 	public free(): void {
 		this.clear();
 		for (const unregister of this.eventUnregister) {
@@ -112,6 +97,11 @@ export class Context implements TreeContext {
 		this.eventUnregister.length = 0;
 	}
 
+	/**
+	 * Release any cursors and anchors held by EditableTrees created in this context.
+	 * The EditableTrees are invalid to use after this, but the context may still be used
+	 * to create new trees starting from the root.
+	 */
 	public clear(): void {
 		for (const target of this.withCursors) {
 			target.free();
