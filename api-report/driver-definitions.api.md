@@ -67,8 +67,6 @@ export const DriverErrorTypes: {
     readonly fileIsLocked: "fileIsLocked";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
-    readonly dataCorruptionError: "dataCorruptionError";
-    readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
 };
 

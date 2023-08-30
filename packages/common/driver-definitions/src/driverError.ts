@@ -7,11 +7,17 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
 import { IResolvedUrl } from "./urlResolver";
 
+// Omit `dataCorruptionError` and `dataProcessingError` from the list of values inherited from FluidErrorTypes
+const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTypes } =
+	FluidErrorTypes;
+
 /**
  * Different error types the Driver may report out to the Host.
  */
 export const DriverErrorTypes = {
-	...FluidErrorTypes,
+	// Inherit base error types
+	...FluidErrorTypesExceptDataTypes,
+
 	/**
 	 * Some non-categorized (below) networking error
 	 * Include errors like  fatal server error (usually 500).
