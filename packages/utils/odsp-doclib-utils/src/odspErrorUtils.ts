@@ -208,15 +208,6 @@ export function createOdspNetworkError(
 					OdspErrorType.serviceReadOnly,
 					driverProps,
 				);
-			} else if (
-				innerMostErrorCode === "blockedIPAddress" ||
-				innerMostErrorCode === "conditionalAccessPolicyEnforced"
-			) {
-				error = new NonRetryableError(
-					"IP Address is blocked",
-					OdspErrorType.blockedIPAddress,
-					driverProps,
-				);
 			} else {
 				const claims = response?.headers
 					? parseAuthErrorClaims(response.headers)
