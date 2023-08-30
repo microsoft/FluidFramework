@@ -191,11 +191,18 @@ function toSequencePlace(pos: number | "start" | "end", side: Side): SequencePla
 	return typeof pos === "number" ? { pos, side } : pos;
 }
 
+function toOptionalSequencePlace(
+	pos: number | "start" | "end" | undefined,
+	side: Side = Side.Before,
+): SequencePlace | undefined {
+	return typeof pos === "number" ? { pos, side } : pos;
+}
+
 export function computeStickinessFromSide(
-	startPos: number | "start" | "end" | undefined,
-	startSide: Side,
-	endPos: number | "start" | "end" | undefined,
-	endSide: Side,
+	startPos: number | "start" | "end" | undefined = -1,
+	startSide: Side = Side.Before,
+	endPos: number | "start" | "end" | undefined = -1,
+	endSide: Side = Side.Before,
 ): IntervalStickiness {
 	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
 
@@ -816,7 +823,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param end - New end value.
 	 * @returns the interval that was changed, if it existed in the collection.
 	 */
-	change(id: string, start: number, end: number): TInterval | undefined;
+	change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
 
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
@@ -1305,8 +1312,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				return undefined;
 			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
-			serializedInterval.start = typeof start === "object" ? start.pos : start;
-			serializedInterval.end = typeof end === "object" ? end.pos : end;
+			const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
+			const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+			serializedInterval.start = startPos;
+			serializedInterval.end = endPos;
+			serializedInterval.startSide = startSide;
+			serializedInterval.endSide = endSide;
+			serializedInterval.stickiness = stickiness;
 			// Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
 			serializedInterval.properties = {
 				[reservedIntervalIdKey]: interval.getIntervalId(),
@@ -1443,7 +1455,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				// If changeInterval gives us a new interval, work with that one. Otherwise keep working with
 				// the one we originally found in the tree.
 				newInterval =
-					this.localCollection.changeInterval(interval, start, end, op) ?? interval;
+					this.localCollection.changeInterval(
+						interval,
+						toOptionalSequencePlace(start, serializedInterval.startSide),
+						toOptionalSequencePlace(end, serializedInterval.endSide),
+						op,
+					) ?? interval;
 			}
 			const deltaProps = newInterval.addProperties(newProps, true, op.sequenceNumber);
 			if (this.onDeserialize) {
@@ -1547,8 +1564,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			// updates the local client's state to be consistent with the emitted op.
 			this.localCollection?.changeInterval(
 				localInterval,
-				startRebased,
-				endRebased,
+				toOptionalSequencePlace(startRebased, startSide),
+				toOptionalSequencePlace(endRebased, endSide),
 				undefined,
 				localSeq,
 			);

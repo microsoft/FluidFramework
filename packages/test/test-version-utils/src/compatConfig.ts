@@ -282,7 +282,6 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- Rethrows caught value
 		throw error;
 	}
 }

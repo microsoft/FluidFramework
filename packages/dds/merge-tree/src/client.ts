@@ -15,6 +15,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+// eslint-disable-next-line import/no-deprecated
 import { IIntegerRange } from "./base";
 import { List, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -36,6 +37,7 @@ import {
 import {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
@@ -45,6 +47,7 @@ import {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
 	IMergeTreeRemoveMsg,
@@ -534,6 +537,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private getValidOpRange(
 		op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
 		clientArgs: IMergeTreeClientSequenceArgs,
+		// eslint-disable-next-line import/no-deprecated
 	): IIntegerRange {
 		let start: number | undefined = op.pos1;
 		if (start === undefined && op.relativePos1) {
@@ -594,7 +598,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 
 		// start and end are guaranteed to be non-null here, otherwise we throw above.
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, import/no-deprecated
 		return { start, end } as IIntegerRange;
 	}
 
@@ -835,6 +839,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
@@ -932,6 +937,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
 					// sometimes we rebase to an empty op
+					// eslint-disable-next-line import/no-deprecated
 					return createGroupOp();
 				}
 				firstGroup = segmentGroup[0];
@@ -986,6 +992,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
+		// eslint-disable-next-line import/no-deprecated
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
@@ -1059,6 +1066,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const segWindow = this.getCollabWindow();
 		return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
 	}
+
+	// eslint-disable-next-line import/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg) {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {

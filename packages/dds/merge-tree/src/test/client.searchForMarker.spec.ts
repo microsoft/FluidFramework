@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { UniversalSequenceNumber } from "../constants";
 import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes";
-import { ReferenceType } from "../ops";
+import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
@@ -32,60 +32,7 @@ describe("TestClient", () => {
 	});
 
 	describe(".searchForMarker", () => {
-		it("Should not return tile when searching past the end of a string length 1", () => {
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-
-			assert.equal(client.getLength(), 1);
-			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should not return tile when searching before the start of a string length 1", () => {
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-
-			assert.equal(client.getLength(), 1);
-
-			const foundTile = client.searchForMarker(-1, "Eop", false);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should not return tile when searching past the end of a string length > 1", () => {
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-			client.insertTextLocal(0, "abc");
-
-			assert.equal(client.getLength(), 4);
-
-			const foundTile = client.searchForMarker(client.getLength(), "Eop", true);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should not return tile when searching before the start of a string length > 1", () => {
-			client.insertTextLocal(0, "abc");
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedMarkerIdKey]: "marker",
-				[reservedTileLabelsKey]: ["Eop"],
-			});
-
-			assert.equal(client.getLength(), 4);
-
-			const foundTile = client.searchForMarker(-1, "Eop", false);
-
-			assert.equal(foundTile, undefined, "Returned tile should be undefined.");
-		});
-
-		it("Should return tile at the search position in either direction", () => {
+		it("Should return marker at the search position in either direction", () => {
 			client.insertTextLocal(0, "abcdefg");
 			client.insertMarkerLocal(4, ReferenceType.Tile, {
 				[reservedMarkerIdKey]: "marker",
@@ -93,32 +40,32 @@ describe("TestClient", () => {
 			});
 			assert.equal(client.getLength(), 8);
 
-			const tile1 = client.searchForMarker(4, "Eop", true);
+			const marker1 = client.searchForMarker(4, "Eop", true);
 
-			assert(tile1, "Returned tile undefined.");
+			assert(marker1, "Returned marker undefined.");
 
 			let exp = client.mergeTree.referencePositionToLocalPosition(
-				tile1,
+				marker1,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 4, "Tile with label not at expected position");
+			assert.equal(exp, 4, "Marker with label not at expected position");
 
-			const tile2 = client.searchForMarker(4, "Eop", false);
+			const marker2 = client.searchForMarker(4, "Eop", false);
 
-			assert(tile2, "Returned tile undefined.");
+			assert(marker2, "Returned marker undefined.");
 
 			exp = client.mergeTree.referencePositionToLocalPosition(
-				tile2,
+				marker2,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 4, "Tile with label not at expected position");
+			assert.equal(exp, 4, "Marker with label not at expected position");
 		});
 
-		it("Should return the tile at the search position in either direction from multiple blocks", () => {
+		it("Should return the marker at the search position in either direction from multiple blocks", () => {
 			client.insertTextLocal(0, "abcd");
 			client.insertTextLocal(4, "efg");
 			client.insertMarkerLocal(4, ReferenceType.Tile, {
@@ -127,212 +74,250 @@ describe("TestClient", () => {
 			});
 			assert.equal(client.getLength(), 8);
 
-			const tile1 = client.searchForMarker(4, "Eop", true);
+			const marker1 = client.searchForMarker(4, "Eop", true);
 
-			assert(tile1, "Returned tile undefined.");
+			assert(marker1, "Returned marker undefined.");
 
 			let exp = client.mergeTree.referencePositionToLocalPosition(
-				tile1,
+				marker1,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 4, "Tile with label not at expected position");
+			assert.equal(exp, 4, "Marker with label not at expected position");
 
-			const tile2 = client.searchForMarker(4, "Eop", false);
+			const marker2 = client.searchForMarker(4, "Eop", false);
 
-			assert(tile2, "Returned tile undefined.");
+			assert(marker2, "Returned marker undefined.");
 
 			exp = client.mergeTree.referencePositionToLocalPosition(
-				tile2,
+				marker2,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 4, "Tile with label not at expected position");
+			assert.equal(exp, 4, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding tile based on label", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find forward marker position based on label", () => {
+			const markerLabel = "EOP";
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(0, "abc");
 
-			console.log(client.getText());
-
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const tile = client.searchForMarker(0, tileLabel, true);
+			const marker = client.searchForMarker(0, markerLabel, true);
 
-			assert(tile, "Returned tile undefined.");
+			assert(marker, "Returned marker undefined.");
 
 			const exp = client.mergeTree.referencePositionToLocalPosition(
-				tile,
+				marker,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 3, "Tile with label not at expected position");
+			assert.equal(exp, 3, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding tile position based on label from client with single tile", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find forward marker position based on label from client with single marker", () => {
+			const markerLabel = "EOP";
 			client.insertTextLocal(0, "abc d");
 
 			client.insertMarkerLocal(1, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 6, "length not expected");
 
-			const tile = client.searchForMarker(0, tileLabel, true);
+			const marker = client.searchForMarker(0, markerLabel, true);
 
-			assert(tile, "Returned tile undefined.");
+			assert(marker, "Returned marker undefined.");
 
 			const exp = client.mergeTree.referencePositionToLocalPosition(
-				tile,
+				marker,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
-			assert.equal(exp, 1, "Tile with label not at expected position");
-			// assert.equal(tile.tile, ref, "not equal");
+			assert.equal(exp, 1, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find preceding tile position based on label from client with multiple tile", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find backward marker position based on label from client with multiple marker", () => {
+			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(0, "abc d");
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(7, "ef");
 			client.insertMarkerLocal(8, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
-			const tile = client.searchForMarker(5, tileLabel, false);
+			const marker = client.searchForMarker(5, markerLabel, false);
 
-			assert(tile, "Returned tile undefined.");
+			assert(marker, "Returned marker undefined.");
 
 			const exp = client.mergeTree.referencePositionToLocalPosition(
-				tile,
+				marker,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 0, "Tile with label not at expected position");
+			assert.equal(exp, 0, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding tile position from client with multiple tile", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find forward marker position from client with multiple marker", () => {
+			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(0, "abc d");
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(7, "ef");
 			client.insertMarkerLocal(8, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
-			const tile = client.searchForMarker(5, tileLabel, true);
+			const marker = client.searchForMarker(5, markerLabel, true);
 
-			assert(tile, "Returned tile undefined.");
+			assert(marker, "Returned marker undefined.");
 
 			const exp = client.mergeTree.referencePositionToLocalPosition(
-				tile,
+				marker,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 6, "Tile with label not at expected position");
+			assert.equal(exp, 6, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find non preceding tile with multiple segments and tiles", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find forward marker position with multiple segments and markers", () => {
+			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
 			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
 			for (let i = 0; i <= client.getLength(); i += 3) {
 				client.insertMarkerLocal(i, ReferenceType.Tile, {
-					[reservedTileLabelsKey]: [tileLabel],
+					[reservedTileLabelsKey]: [markerLabel],
 					[reservedMarkerIdKey]: "some-id",
 				});
 			}
 			for (let index = 0; index < client.getLength(); index++) {
-				const tile = client.searchForMarker(index, tileLabel, true);
+				const marker = client.searchForMarker(index, markerLabel, true);
 
-				assert(tile, `Returned tile undefined @ ${index}.`);
+				assert(marker, `Returned marker undefined @ ${index}.`);
 
 				const exp = client.mergeTree.referencePositionToLocalPosition(
-					tile,
+					marker,
 					UniversalSequenceNumber,
 					client.getClientId(),
 				);
 
 				const offset = index % 3 === 0 ? index % 3 : 3 - (index % 3);
-				assert.equal(exp, index + offset, "Tile with label not at expected position");
+				assert.equal(exp, index + offset, "Marker with label not at expected position");
 			}
 		});
 
-		it("Should be able to find preceding tile with multiple segments and tiles", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find backward marker position with multiple segments and markers", () => {
+			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
 			// pad the string with markers on both ends so we never get undefined solely for convenience of this test
 			for (let i = 0; i <= client.getLength(); i += 3) {
 				client.insertMarkerLocal(i, ReferenceType.Tile, {
-					[reservedTileLabelsKey]: [tileLabel],
+					[reservedTileLabelsKey]: [markerLabel],
 					[reservedMarkerIdKey]: "some-id",
 				});
 			}
 			for (let index = client.getLength() - 1; index >= 0; index--) {
-				const tile = client.searchForMarker(index, tileLabel, false);
+				const marker = client.searchForMarker(index, markerLabel, false);
 
-				assert(tile, `Returned tile undefined @ ${index}.`);
+				assert(marker, `Returned marker undefined @ ${index}.`);
 
 				const exp = client.mergeTree.referencePositionToLocalPosition(
-					tile,
+					marker,
 					UniversalSequenceNumber,
 					client.getClientId(),
 				);
 
-				assert.equal(exp, index - (index % 3), "Tile with label not at expected position");
+				assert.equal(
+					exp,
+					index - (index % 3),
+					"Marker with label not at expected position",
+				);
+			}
+		});
+
+		it("Should be able to find distant forward marker", () => {
+			const markerLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			for (let i = 10; i > 1; i -= 2) {
+				client.insertMarkerLocal(client.getLength() - i, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [markerLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+
+			for (let index = 0; index < client.getLength(); index++) {
+				const exp = client.slowSearchForMarker(index, markerLabel, true);
+				const actual = client.searchForMarker(index, markerLabel, true);
+
+				assert.equal(exp, actual, "Marker with label not at expected position");
+			}
+		});
+
+		it("Should be able to find distant backward marker", () => {
+			const markerLabel = "EOP";
+			Array.from({ length: MaxNodesInBlock ** 3 * 2 }).forEach((_, i) =>
+				client.insertTextLocal(0, i.toString()),
+			);
+			for (let i = 10; i > 1; i -= 2) {
+				client.insertMarkerLocal(client.getLength() - i, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: [markerLabel],
+					[reservedMarkerIdKey]: "some-id",
+				});
+			}
+
+			for (let index = client.getLength() - 1; index >= 0; index--) {
+				const exp = client.slowSearchForMarker(index, markerLabel, false);
+				const actual = client.searchForMarker(index, markerLabel, false);
+
+				assert.equal(exp, actual, "Marker with label not at expected position");
 			}
 		});
 
 		it("Should match results from forwardExcursion for many segments", () => {
-			const tileLabel = "EOP";
+			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
@@ -340,20 +325,20 @@ describe("TestClient", () => {
 			for (let i = 0; i <= client.getLength() / 6; i++) {
 				const pos = random.integer(0, client.getLength() - 1);
 				client.insertMarkerLocal(pos, ReferenceType.Tile, {
-					[reservedTileLabelsKey]: [tileLabel],
+					[reservedTileLabelsKey]: [markerLabel],
 					[reservedMarkerIdKey]: "some-id",
 				});
 			}
 			for (let index = 0; index < client.getLength(); index++) {
-				const exp = client.slowSearchForMarker(index, tileLabel, true);
-				const actual = client.searchForMarker(index, tileLabel, true);
+				const exp = client.slowSearchForMarker(index, markerLabel, true);
+				const actual = client.searchForMarker(index, markerLabel, true);
 
-				assert.equal(exp, actual, "Tile with label not at expected position");
+				assert.equal(exp, actual, "Marker with label not at expected position");
 			}
 		});
 
 		it("Should match results from backwardExcursion for many segments", () => {
-			const tileLabel = "EOP";
+			const markerLabel = "EOP";
 			Array.from({ length: MaxNodesInBlock * 3 }).forEach((_, i) =>
 				client.insertTextLocal(0, i.toString()),
 			);
@@ -361,105 +346,364 @@ describe("TestClient", () => {
 			for (let i = 0; i <= client.getLength() / 6; i++) {
 				const pos = random.integer(0, client.getLength() - 1);
 				client.insertMarkerLocal(pos, ReferenceType.Tile, {
-					[reservedTileLabelsKey]: [tileLabel],
+					[reservedTileLabelsKey]: [markerLabel],
 					[reservedMarkerIdKey]: "some-id",
 				});
 			}
 			for (let index = 0; index < client.getLength(); index++) {
-				const exp = client.slowSearchForMarker(index, tileLabel, false);
-				const actual = client.searchForMarker(index, tileLabel, false);
+				const exp = client.slowSearchForMarker(index, markerLabel, false);
+				const actual = client.searchForMarker(index, markerLabel, false);
 
-				assert.equal(exp, actual, "Tile with label not at expected position");
+				assert.equal(exp, actual, "Marker with label not at expected position");
 			}
 		});
 
-		it("Should be able to find tile from client with text length 1", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find marker from client with text length 1", () => {
+			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
-
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 1, "length not expected");
 
-			const tile = client.searchForMarker(client.getLength() - 1, tileLabel, false);
+			const marker = client.searchForMarker(client.getLength() - 1, markerLabel, false);
 
-			assert(tile, "Returned tile undefined.");
+			assert(marker, "Returned marker undefined.");
 
 			let exp = client.mergeTree.referencePositionToLocalPosition(
-				tile,
+				marker,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 0, "Tile with label not at expected position");
+			assert.equal(exp, 0, "Marker with label not at expected position");
 
-			const tile1 = client.searchForMarker(0, tileLabel, true);
+			const marker1 = client.searchForMarker(0, markerLabel, true);
 
-			assert(tile1, "Returned tile undefined.");
+			assert(marker1, "Returned marker undefined.");
 
 			exp = client.mergeTree.referencePositionToLocalPosition(
-				tile,
+				marker,
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
 
-			assert.equal(exp, 0, "Tile with label not at expected position");
+			assert.equal(exp, 0, "Marker with label not at expected position");
 		});
 
-		it("Should be able to find only preceding but not non preceding tile with index out of bound", () => {
-			const tileLabel = "EOP";
+		it("Should not be able to find marker position with index out of bound", () => {
+			const markerLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [tileLabel],
+				[reservedTileLabelsKey]: [markerLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(0, "abc");
-			console.log(client.getText());
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const tile = client.searchForMarker(5, tileLabel, true);
+			const marker = client.searchForMarker(5, markerLabel, true);
 
-			assert.equal(tile, undefined, "Returned tile should be undefined.");
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
 
-			const tile1 = client.searchForMarker(5, tileLabel, false);
+			const marker1 = client.searchForMarker(5, markerLabel, false);
 
-			assert.equal(tile1, undefined, "Returned tile should be undefined.");
+			assert.equal(marker1, undefined, "Returned marker should be undefined.");
 
-			const tile2 = client.searchForMarker(-1, tileLabel, false);
+			const marker2 = client.searchForMarker(-1, markerLabel, false);
 
-			assert.equal(tile2, undefined, "Returned tile should be undefined.");
+			assert.equal(marker2, undefined, "Returned marker should be undefined.");
 		});
 
-		it("Should return undefined when trying to find tile from text without the specified tile", () => {
-			const tileLabel = "EOP";
+		it("Should be able to find a deleted and rolled back marker", () => {
 			client.insertTextLocal(0, "abc");
-			console.log(client.getText());
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			client.removeRangeLocal(0, 1);
+
+			client.rollback?.(
+				{ type: MergeTreeDeltaType.REMOVE },
+				client.peekPendingSegmentGroups(),
+			);
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert(marker, "Returned marker undefined.");
+
+			const exp = client.mergeTree.referencePositionToLocalPosition(
+				marker,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Marker with label not at expected position");
+		});
+
+		it("Should not be able to find an inserted and rolled back marker", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			client.rollback?.(
+				{ type: MergeTreeDeltaType.INSERT },
+				client.peekPendingSegmentGroups(),
+			);
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should be able to find a marker at 0 searching at 0 in both directions", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4);
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert(marker, "Returned marker undefined.");
+
+			let exp = client.mergeTree.referencePositionToLocalPosition(
+				marker,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Marker with label not at expected position");
+
+			const marker2 = client.searchForMarker(0, "Eop", false);
+
+			assert(marker2, "Returned marker undefined.");
+
+			exp = client.mergeTree.referencePositionToLocalPosition(
+				marker2,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, 0, "Marker with label not at expected position");
+		});
+
+		it("Should be able to find a marker at length-1 searching at length-1 in both directions", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+			client.insertTextLocal(0, "abc");
+
+			const length = client.getLength();
+			assert.equal(length, 4);
+
+			const marker = client.searchForMarker(length - 1, "Eop", true);
+
+			assert(marker, "Returned marker undefined.");
+
+			let exp = client.mergeTree.referencePositionToLocalPosition(
+				marker,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, length - 1, "Marker with label not at expected position");
+
+			const marker2 = client.searchForMarker(length - 1, "Eop", false);
+
+			assert(marker2, "Returned marker undefined.");
+
+			exp = client.mergeTree.referencePositionToLocalPosition(
+				marker2,
+				UniversalSequenceNumber,
+				client.getClientId(),
+			);
+
+			assert.equal(exp, length - 1, "Marker with label not at expected position");
+		});
+
+		it("Should return undefined when searching past the end of a string length 1", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 1);
+			const marker = client.searchForMarker(client.getLength(), "Eop", true);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should return undefined when searching before the start of a string length 1", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 1);
+
+			const marker = client.searchForMarker(-1, "Eop", false);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should return undefined when searching past the end of a string length > 1", () => {
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+			client.insertTextLocal(0, "abc");
+
+			assert.equal(client.getLength(), 4);
+
+			const marker = client.searchForMarker(client.getLength(), "Eop", true);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should return undefined when searching before the start of a string length > 1", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4);
+
+			const marker = client.searchForMarker(-1, "Eop", false);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should return undefined when trying to find marker from text without the specified marker", () => {
+			const markerLabel = "EOP";
+			client.insertTextLocal(0, "abc");
 
 			assert.equal(client.getLength(), 3, "length not expected");
 
-			const tile = client.searchForMarker(1, tileLabel);
+			const marker = client.searchForMarker(1, markerLabel);
 
-			assert.equal(tile, undefined, "Returned tile should be undefined.");
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
 
-			const tile1 = client.searchForMarker(1, tileLabel, false);
+			const marker1 = client.searchForMarker(1, markerLabel, false);
 
-			assert.equal(tile1, undefined, "Returned tile should be undefined.");
+			assert.equal(marker1, undefined, "Returned marker should be undefined.");
 		});
 
-		it("Should return undefined when trying to find tile from null text", () => {
-			const tileLabel = "EOP";
+		it("Should return undefined when trying to find marker from null text", () => {
+			const markerLabel = "EOP";
 
-			const tile = client.searchForMarker(1, tileLabel);
+			const marker = client.searchForMarker(1, markerLabel);
 
-			assert.equal(tile, undefined, "Returned tile should be undefined.");
+			assert.equal(marker, undefined, "Returned marker should be undefined.");
 
-			const tile1 = client.searchForMarker(1, tileLabel, false);
+			const marker1 = client.searchForMarker(1, markerLabel, false);
 
-			assert.equal(tile1, undefined, "Returned tile should be undefined.");
+			assert.equal(marker1, undefined, "Returned marker should be undefined.");
+		});
+
+		it("Should return undefined when trying to find a removed marker", () => {
+			client.insertTextLocal(0, "abc");
+			client.insertMarkerLocal(0, ReferenceType.Tile, {
+				[reservedMarkerIdKey]: "marker",
+				[reservedTileLabelsKey]: ["Eop"],
+			});
+
+			assert.equal(client.getLength(), 4, "length not expected");
+
+			client.removeRangeLocal(0, 1);
+
+			assert.equal(client.getLength(), 3, "length not expected");
+
+			const marker = client.searchForMarker(0, "Eop", true);
+
+			assert.equal(marker, undefined, "Returned marker should be undefined");
+		});
+
+		describe("with remote client", () => {
+			const remoteUserLongId = "remoteUser";
+			let client2: TestClient;
+			beforeEach(() => {
+				client2 = new TestClient();
+				insertSegments({
+					mergeTree: client2.mergeTree,
+					pos: 0,
+					segments: [TextSegment.make("")],
+					refSeq: UniversalSequenceNumber,
+					clientId: client2.getClientId(),
+					seq: UniversalSequenceNumber,
+					opArgs: undefined,
+				});
+				client2.startOrUpdateCollaboration(remoteUserLongId);
+			});
+
+			it("Should be able to find remotely inserted marker", () => {
+				let seq = 0;
+				const textMsg = client.makeOpMessage(client.insertTextLocal(0, "abc"), ++seq);
+				const markerMsg = client2.makeOpMessage(
+					client2.insertMarkerLocal(0, ReferenceType.Tile, {
+						[reservedMarkerIdKey]: "marker",
+						[reservedTileLabelsKey]: ["Eop"],
+					}),
+					++seq,
+				);
+				client.applyMsg(textMsg);
+				client2.applyMsg(textMsg);
+				client.applyMsg(markerMsg);
+				client2.applyMsg(markerMsg);
+
+				assert.equal(client.getLength(), 4, "length not expected - client");
+				assert.equal(client2.getLength(), 4, "length not expected - client 2");
+
+				const marker = client.searchForMarker(0, "Eop", true);
+
+				assert(marker, "Returned marker undefined");
+
+				const exp = client.mergeTree.referencePositionToLocalPosition(
+					marker,
+					UniversalSequenceNumber,
+					client.getClientId(),
+				);
+
+				assert.equal(exp, 0, "Marker with label not at expected position");
+			});
+
+			it("Should not be able to find remotely removed marker", () => {
+				let seq = 0;
+				const textMsg = client.makeOpMessage(client.insertTextLocal(0, "abc"), ++seq);
+				const mInsertMsg = client.makeOpMessage(
+					client.insertMarkerLocal(0, ReferenceType.Tile, {
+						[reservedMarkerIdKey]: "marker",
+						[reservedTileLabelsKey]: ["Eop"],
+					}),
+					seq,
+				);
+				client.applyMsg(textMsg);
+				client2.applyMsg(textMsg);
+				client.applyMsg(mInsertMsg);
+				client2.applyMsg(mInsertMsg);
+
+				assert.equal(client.getLength(), 4, "length not expected - client");
+				assert.equal(client2.getLength(), 4, "length not expected - client 2");
+
+				const mRemoveMsg = client2.makeOpMessage(client2.removeRangeLocal(0, 1), seq);
+				client.applyMsg(mRemoveMsg);
+				client2.applyMsg(mRemoveMsg);
+
+				assert.equal(client.getLength(), 3, "length not expected - client");
+				assert.equal(client2.getLength(), 3, "length not expected - client 2");
+
+				const marker = client.searchForMarker(0, "Eop", true);
+
+				assert.equal(marker, undefined, "Returned marker should be undefined.");
+			});
 		});
 	});
 });

@@ -33,6 +33,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		private readonly ctor: new (
 			context: IFluidDataStoreContext,
 			runtime: IFluidDataStoreRuntime,
+			// eslint-disable-next-line @typescript-eslint/no-shadow
 			root: ISharedObject,
 		) => T,
 		public readonly root: IChannelFactory,

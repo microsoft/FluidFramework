@@ -1386,7 +1386,7 @@ export class MergeTree {
 					if (marker !== undefined) {
 						assert(
 							marker.isLeaf() && Marker.is(marker),
-							"Object returned is not a valid marker",
+							0x751 /* Object returned is not a valid marker */,
 						);
 						foundMarker = marker;
 					}
