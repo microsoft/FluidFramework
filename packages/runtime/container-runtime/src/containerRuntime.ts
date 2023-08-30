@@ -2967,8 +2967,40 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
-		if (this.validateSummaryBeforeUpload) {
-			const pendingMessagesFailResult = await this.shouldFailOnPendingOps(
+		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
+		// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
+		// within the timeout, check if it should be failed or can continue.
+		if (this.validateSummaryBeforeUpload && this.hasPendingMessages()) {
+			const countBefore = this.pendingMessagesCount;
+			// The timeout for waiting for pending ops can be overridden via configurations.
+			const pendingOpsTimeout =
+				this.mc.config.getNumber(
+					"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout",
+				) ?? defaultPendingOpsWaitTimeoutMs;
+			await new Promise<void>((resolve, reject) => {
+				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
+				this.once("saved", () => {
+					clearTimeout(timeoutId);
+					resolve();
+				});
+				this.once("dispose", () => {
+					clearTimeout(timeoutId);
+					reject(new Error("Runtime is disposed while summarizing"));
+				});
+			});
+
+			// Log that there are pending ops while summarizing. This will help us gather data on how often this
+			// happens, whether we attempted to wait for these ops to be acked and what was the result.
+			summaryNumberLogger.sendTelemetryEvent({
+				eventName: "PendingOpsWhileSummarizing",
+				saved: this.hasPendingMessages() ? false : true,
+				timeout: pendingOpsTimeout,
+				countBefore,
+				countAfter: this.pendingMessagesCount,
+			});
+
+			// There could still be pending ops. Check if summary should fail or continue.
+			const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
 				summaryNumberLogger,
 				this.deltaManager.lastSequenceNumber,
 				this.deltaManager.minimumSequenceNumber,
@@ -3089,7 +3121,7 @@ export class ContainerRuntime
 					};
 				}
 
-				const pendingMessagesFailResult = await this.shouldFailOnPendingOps(
+				const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
 					summaryNumberLogger,
 					this.deltaManager.lastSequenceNumber,
 					this.deltaManager.minimumSequenceNumber,
@@ -3240,10 +3272,8 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This helper is called during summary submission. If there are pending ops, it does the following:
-	 * 1. If beforeSummaryGeneration is true, it will wait for pending ops to be processed.
-	 * 2. If there are still pending ops, it will return a failed summarize result (IBaseSummarizeResult)
-	 * unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * This helper is called during summarization. If there are pending ops, it will return a failed summarize result
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -3251,7 +3281,7 @@ export class ContainerRuntime
 	 * @param beforeSummaryGeneration - Whether this is called before summary generation or after.
 	 * @returns failed summarize result (IBaseSummarizeResult) if summary should be failed, undefined otherwise.
 	 */
-	private async shouldFailOnPendingOps(
+	private async shouldFailSummaryOnPendingOps(
 		logger: ITelemetryLoggerExt,
 		referenceSequenceNumber: number,
 		minimumSequenceNumber: number,
@@ -3260,44 +3290,6 @@ export class ContainerRuntime
 	): Promise<IBaseSummarizeResult | undefined> {
 		if (!this.hasPendingMessages()) {
 			return;
-		}
-
-		// If called before generating summary, wait for pending ops to be processed before proceeding.
-		if (beforeSummaryGeneration) {
-			const pendingOpsTimeout =
-				this.mc.config.getNumber(
-					"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout",
-				) ?? defaultPendingOpsWaitTimeoutMs;
-			const countBefore = this.pendingMessagesCount;
-			// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
-			// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
-			// within the timeout, continue summarizing in order to make progress. We will measure how often this
-			// happens and decide what the next steps are.
-			await new Promise<void>((resolve, reject) => {
-				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
-				this.once("saved", () => {
-					clearTimeout(timeoutId);
-					resolve();
-				});
-				this.once("dispose", () => {
-					clearTimeout(timeoutId);
-					reject(new Error("Runtime is disposed while summarizing"));
-				});
-			});
-
-			// Log that there are pending ops while summarizing. This will help us gather data on how often this
-			// happens, whether we attempted to wait for these ops to be acked and what was the result.
-			logger.sendTelemetryEvent({
-				eventName: "PendingOpsWhileSummarizing",
-				saved: this.dirtyContainer ? false : true,
-				timeout: pendingOpsTimeout,
-				countBefore,
-				countAfter: this.pendingMessagesCount,
-			});
-
-			if (!this.hasPendingMessages()) {
-				return;
-			}
 		}
 
 		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
@@ -3318,11 +3310,12 @@ export class ContainerRuntime
 					eventName: "SkipFailingIncorrectSummary",
 					referenceSequenceNumber,
 					minimumSequenceNumber,
+					beforeGenerate: beforeSummaryGeneration,
 				},
 				error,
 			);
 		} else {
-			// Default retry delay is 1 second. This can be overridden via config so that we can adjust it
+			// The retry delay when there are pending ops can be overridden via config so that we can adjust it
 			// based on telemetry while we decide on a stable number.
 			const retryDelayMs =
 				this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
