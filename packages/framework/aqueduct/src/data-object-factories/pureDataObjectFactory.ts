@@ -59,8 +59,7 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-			const maybeRouter: FluidObject<IFluidRouter> =
-				await runtimeArg.entryPoint.get();
+			const maybeRouter: FluidObject<IFluidRouter> = await runtimeArg.entryPoint.get();
 			assert(
 				maybeRouter !== undefined,
 				0x468 /* entryPoint should have been initialized by now */,

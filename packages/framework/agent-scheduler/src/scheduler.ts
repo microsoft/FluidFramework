@@ -470,8 +470,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	): Promise<AgentScheduler> {
 		const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
 		const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
-		const entryPoint: FluidObject<IAgentScheduler> =
-			await dataStore.entryPoint.get();
+		const entryPoint: FluidObject<IAgentScheduler> = await dataStore.entryPoint.get();
 
 		// AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
 		// while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.

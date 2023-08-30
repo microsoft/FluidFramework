@@ -700,9 +700,7 @@ export class ContainerRuntime
 			runtimeOptions,
 			containerScope,
 			containerRuntimeCtor,
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
+			requestHandler,
 		});
 	}
 
@@ -721,16 +719,30 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		runtimeOptions?: IContainerRuntimeOptions;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		requestHandler?: undefined;
-		initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		} & (
+			| {
+					requestHandler?: (
+						request: IRequest,
+						runtime: IContainerRuntime,
+					) => Promise<IResponse>;
+					initializeEntryPoint?: undefined;
+			  }
+			| {
+					requestHandler?: undefined;
+					initializeEntryPoint: (
+						containerRuntime: IContainerRuntime,
+					) => Promise<FluidObject>;
+			  }
+		),
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -739,8 +751,13 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
 		} = params;
+
+		const initializeEntryPoint =
+			params.initializeEntryPoint ??
+			(() => {
+				throw new UsageError("initializeEntryPoint was not provided");
+			});
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
