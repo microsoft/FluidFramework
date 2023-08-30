@@ -6,7 +6,6 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
-import { EventEmitter } from 'events';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
@@ -95,7 +94,7 @@ export enum ContainerMessageType {
 }
 
 // @public
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     // Warning: (ae-forgotten-export) The symbol "IContainerRuntimeMetadata" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ISerializedElection" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
@@ -180,12 +179,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
         existing: boolean;
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
         runtimeOptions?: IContainerRuntimeOptions;
         containerScope?: FluidObject;
         containerRuntimeCtor?: typeof ContainerRuntime;
-        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-    }): Promise<ContainerRuntime>;
+    } & ({
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+        initializeEntryPoint?: undefined;
+    } | {
+        requestHandler?: undefined;
+        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    })): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
@@ -481,7 +484,20 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
+    readonly finalAttempt?: boolean;
     readonly summaryLogger: ITelemetryLoggerExt;
+}
+
+// @public (undocumented)
+export interface ISummarizeEventProps {
+    // (undocumented)
+    currentAttempt: number;
+    // (undocumented)
+    error?: any;
+    // (undocumented)
+    maxAttempts: number;
+    // (undocumented)
+    result: "success" | "failure" | "canceled";
 }
 
 // @public
@@ -513,7 +529,8 @@ export interface ISummarizeResults {
 
 // @public (undocumented)
 export interface ISummarizerEvents extends IEvent {
-    (event: "summarizingError", listener: (error: ISummarizingWarning) => void): any;
+    // (undocumented)
+    (event: "summarize", listener: (props: ISummarizeEventProps) => void): any;
 }
 
 // @public (undocumented)
@@ -686,7 +703,7 @@ export interface SubmitSummaryFailureData extends IRetriableFailureResult {
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @public
-export class Summarizer extends EventEmitter implements ISummarizer {
+export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
