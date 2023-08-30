@@ -36,7 +36,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/tree": "^1.3.6",
+    "@fluid-experimental/tree": "^1.3.7",
     "@fluidframework/common-utils": "^0.32.2",
     "@graphql-codegen/plugin-helpers": "^1.18.2",
     "@graphql-codegen/visitor-plugin-common": "^1.18.2",
@@ -44,8 +44,8 @@
     "graphql-tools": "^7.0.2"
   },
   "devDependencies": {
-    "@fluidframework/mocha-test-setup": "^1.3.6",
-    "@fluidframework/test-runtime-utils": "^1.3.6",
+    "@fluidframework/mocha-test-setup": "^1.3.7",
+    "@fluidframework/test-runtime-utils": "^1.3.7",
     "@graphql-codegen/cli": "1.20.1",
     "@graphql-codegen/typescript": "1.20.2",
     "@microsoft/api-extractor": "^7.22.2",

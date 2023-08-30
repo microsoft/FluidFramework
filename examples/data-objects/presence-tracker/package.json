@@ -37,11 +37,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-experimental/data-objects": "^1.3.6",
+    "@fluid-experimental/data-objects": "^1.3.7",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.2",
-    "@fluidframework/tinylicious-client": "^1.3.6",
-    "fluid-framework": "^1.3.6"
+    "@fluidframework/tinylicious-client": "^1.3.7",
+    "fluid-framework": "^1.3.7"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",

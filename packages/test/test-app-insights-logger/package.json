@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-driver-definitions": "^1.3.6",
+    "@fluidframework/test-driver-definitions": "^1.3.7",
     "applicationinsights": "^2.1.9"
   },
   "devDependencies": {
