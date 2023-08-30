@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorType,
 	IPendingLocalState,
@@ -55,6 +55,8 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import { Deferred } from "@fluidframework/common-utils";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -88,7 +90,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	afterEach(() => {
 		loaderContainerTracker.reset();
 	});
-	async function loadContainer(props?: Partial<ILoaderProps>) {
+	async function loadContainer(props?: Partial<ILoaderProps>, headers?: IRequestHeader) {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -101,7 +103,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		});
 		loaderContainerTracker.add(loader);
 
-		return loader.resolve(testRequest);
+		return loader.resolve({
+			url: testRequest.url,
+			headers: { ...testRequest.headers, ...headers },
+		});
 	}
 
 	async function createConnectedContainer(): Promise<IContainer> {
@@ -587,6 +592,40 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
 		container.close();
 		assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
+	});
+
+	it("DeltaStreamConnectionForbidden error on connectToDeltaStream sends deltamanager readonly event", async () => {
+		const documentServiceFactory = provider.documentServiceFactory;
+
+		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+		mockFactory.createDocumentService = async (resolvedUrl) => {
+			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+			const realDeltaStream = service.connectToDeltaStream;
+			service.connectToDeltaStream = async (client) => {
+				throw new DeltaStreamConnectionForbiddenError(
+					"deltaStreamConnectionForbidden",
+					{ driverVersion: "1" },
+					"deltaStreamConnectionForbidden",
+				);
+			};
+			return service;
+		};
+		const container = await loadContainer(
+			{ documentServiceFactory: mockFactory },
+			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+		);
+
+		const readOnlyPromise = new Deferred<boolean>();
+		container.deltaManager.on("readonly", (readonly?: boolean) => {
+			assert(readonly, "Readonly should be true");
+			readOnlyPromise.resolve(true);
+		});
+
+		container.connect();
+		assert(
+			await readOnlyPromise.promise,
+			"DeltaManager should send readonly event on DeltaStreamConnectionForbidden error",
+		);
 	});
 
 	itExpects(

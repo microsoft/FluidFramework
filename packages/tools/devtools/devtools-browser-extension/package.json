@@ -36,7 +36,7 @@
 		"test:end-to-end": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
-		"test:mocha": "npm run mocha",
+		"test:mocha:fail": "npm run mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:unit": "npm run test:mocha",
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",

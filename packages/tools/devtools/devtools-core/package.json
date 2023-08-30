@@ -36,7 +36,6 @@
 		"test:coverage": "npm run test:mocha:coverage",
 		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
 		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
