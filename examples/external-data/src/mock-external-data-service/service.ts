@@ -46,7 +46,9 @@ class InvalidRequestError extends ApiError {
  */
 export interface UnregisterWebhookRequest extends express.Request {
 	body: {
-		// The target URL to unsubscribe from change notifications
+		/**
+		 * The target URL to unsubscribe from change notifications
+		 */
 		url: string;
 	};
 }
