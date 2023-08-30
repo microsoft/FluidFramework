@@ -63,14 +63,14 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	): Promise<FluidDataStoreRuntime> {
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const maybeRouter: FluidObject<IProvideFluidRouter> | undefined =
-					await rt.entryPoint?.get();
+				const maybeRouter: FluidObject<IProvideFluidRouter> =
+					await rt.entryPoint.get();
 				assert(
 					maybeRouter !== undefined,
 					0x46c /* entryPoint should have been initialized by now */,
 				);
 				assert(
-					maybeRouter?.IFluidRouter !== undefined,
+					maybeRouter.IFluidRouter !== undefined,
 					0x46d /* Data store runtime entryPoint is not an IFluidRouter */,
 				);
 				return maybeRouter.IFluidRouter.request(request);

@@ -123,7 +123,7 @@ export class RootDataObject
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-		const entryPoint = await dataStore.entryPoint?.get();
+		const entryPoint = await dataStore.entryPoint.get();
 		return entryPoint as unknown as T;
 	}
 
