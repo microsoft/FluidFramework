@@ -133,7 +133,11 @@ export class MockContainerRuntime {
 export class MockContainerRuntimeFactory {
     constructor(mockContainerRuntimeOptions?: IMockContainerRuntimeOptions);
     // (undocumented)
+    protected readonly clientToIndex: Map<string, number>;
+    // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
+    // (undocumented)
+    protected frontIndex: number;
     // (undocumented)
     getMinSeq(): number;
     protected messages: ISequencedDocumentMessage[];
@@ -153,12 +157,12 @@ export class MockContainerRuntimeFactory {
     protected readonly runtimes: Map<string, MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
+    // (undocumented)
+    updateRuntimeClientId(oldClientId: string, newClientId: string): void;
 }
 
 // @public
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
-    // (undocumented)
-    clearOutstandingClientMessages(clientId: string): void;
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
