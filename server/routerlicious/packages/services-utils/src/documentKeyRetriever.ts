@@ -120,9 +120,11 @@ export class DocumentKeyRetriever {
 
 	private infoLog(message: string, documentId?: string, tenantId?: string) {
 		if (this.loggingEnabled) {
-			documentId && tenantId
-				? Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId))
-				: Lumberjack.info(message);
+			if (documentId && tenantId) {
+				Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+			} else {
+				Lumberjack.info(message);
+			}
 		}
 	}
 }
