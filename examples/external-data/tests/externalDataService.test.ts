@@ -94,7 +94,7 @@ describe("mock-external-data-service", () => {
 			.expect(200, { taskList: expectedData });
 	});
 
-	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
+	// // TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
@@ -141,7 +141,7 @@ describe("mock-external-data-service", () => {
 			.expect(400);
 	});
 
-	it("unregister-webhook: Unregiserting fron an existing wbhook with a valid URI succeeds", async () => {
+	it("unregister-webhook: Unregistering from an existing webhook with a valid URI succeeds", async () => {
 		await request(externalDataService!)
 			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
 			.send({ url: "https://www.fluidframework.com" })
@@ -151,6 +151,38 @@ describe("mock-external-data-service", () => {
 			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)
 			.send({ url: "https://www.fluidframework.com" })
 			.expect(200);
+	});
+
+	it("unregister-webhook: Unregistering from an webhook that doesn't exist fails", async () => {
+		await request(externalDataService!)
+			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({ url: "https://www.theSecondSubscriber.com" })
+			.expect(400);
+	});
+
+	it("unregister-webhook: Unregistering from an webhook that exists but the provided subscriber is not subscribed to succeeds", async () => {
+		await request(externalDataService!)
+			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({ url: "https://www.thefirstSubscriber.com" })
+			.expect(200);
+
+		await request(externalDataService!)
+			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({ url: "https://www.theSecondSubscriber.com" })
+			.expect(200);
+	});
+
+	it("unregister-webhook: Invalid request with malformed url fails", async () => {
+		await request(externalDataService!)
+			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({ url: "not a url" })
+			.expect(400);
+	});
+	it("unregister-webhook: Invalid request with missing url fails", async () => {
+		await request(externalDataService!)
+			.post(`/unregister-webhook?externalTaskListId=${externalTaskListId}`)
+			.send({})
+			.expect(400);
 	});
 
 	/* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
@@ -197,7 +229,7 @@ describe("mock-external-data-service: webhook", () => {
 		try {
 			// Register with the external service for notifications
 			const webhookRegistrationResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/register-for-webhook`,
+				`http://localhost:${externalDataServicePort}/register-for-webhook?externalTaskListId=${externalTaskListId}`,
 				{
 					method: "POST",
 					headers: {

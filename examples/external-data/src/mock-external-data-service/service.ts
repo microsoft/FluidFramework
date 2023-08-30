@@ -6,7 +6,7 @@
 import { Server } from "http";
 
 import cors from "cors";
-import express, { Request } from "express";
+import express from "express";
 import { isWebUri } from "valid-url";
 
 import { assertValidTaskData, ITaskData } from "../model-interface";
@@ -18,6 +18,27 @@ import { ExternalDataSource } from "./externalDataSource";
  * This is the URL or the id of the external resource that the customer service needs to subscribe for at the external service.
  */
 type ExternalTaskListId = string;
+
+/**
+ * Internally used errors used for streamlining error handling
+ */
+class ApiError extends Error {
+	code: number;
+	constructor(message: string, code: number) {
+		super(message);
+		this.code = code;
+	}
+}
+
+/**
+ * Api Error thrown when something is wrong with the request data
+ */
+class InvalidRequestError extends ApiError {
+	static ERROR_CODE = 400;
+	constructor(message: string, code = InvalidRequestError.ERROR_CODE) {
+		super(message, code);
+	}
+}
 
 /**
  * {@link initializeExternalDataService} input properties.
@@ -59,6 +80,11 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 */
 	function formatLogMessage(message: string): string {
 		return `EXTERNAL DATA SERVICE (${port}): ${message}`;
+	}
+
+	function getRequestSearchParams(request: express.Request): URLSearchParams {
+		return new URL(`${request.protocol}://${request.hostname}:${port}${request.url}`)
+			.searchParams;
 	}
 
 	/**
@@ -111,24 +137,24 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * ```
 	 */
 	expressApp.post("/register-for-webhook", (request, result) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const subscriberUrl = request.body?.url as string;
-		if (subscriberUrl === undefined) {
-			const errorMessage = 'No subscription URL provided. Expected under "url" property.';
-			console.log(formatLogMessage(errorMessage));
-			result.status(400).json({ message: errorMessage });
-		} else if (isWebUri(subscriberUrl) === undefined) {
-			const errorMessage = "Provided subscription URL is invalid.";
-			console.log(formatLogMessage(errorMessage));
-			result.status(400).json({ message: errorMessage });
-		} else {
-			// TODO: use a query string parser here instead of this hacky lookup of '=externalTaskListId'
-			// Tried using node:querystring and node:url but that is not allowed by
-			// the rules and haven't found another one that works in a simple search so far.
-			// This method is incredibly brittle and will break if we add any other qs param
-			const externalTaskListId = subscriberUrl.slice(
-				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
-			);
+		try {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const subscriberUrl = request.body?.url as string;
+			if (subscriberUrl === undefined) {
+				throw new InvalidRequestError(
+					'No subscription URL provided. Expected under "url" property.',
+				);
+			} else if (isWebUri(subscriberUrl) === undefined) {
+				throw new InvalidRequestError("Provided subscription URL is invalid.");
+			}
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const externalTaskListId = getRequestSearchParams(request).get("externalTaskListId")!;
+			if (externalTaskListId === undefined) {
+				throw new InvalidRequestError(
+					`Missing or malformed externalTaskListId in request url: ${externalTaskListId}`,
+				);
+			}
+
 			console.log(`externalTaskListId: ${externalTaskListId}`);
 			console.log(`subscriberUrl: ${subscriberUrl}`);
 			let webhook = webhookCollection.get(externalTaskListId);
@@ -142,61 +168,76 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					`Registered for webhook notifications at URL: "${subscriberUrl}".`,
 				),
 			);
-			result.send();
+		} catch (error) {
+			if (error instanceof ApiError) {
+				console.warn(formatLogMessage(error.message));
+				result.status(error.code).json({ message: error.message });
+			} else {
+				throw error;
+			}
 		}
+
+		result.send();
 	});
 
-	interface UnregisterWebhookRequest extends Request {
+	interface UnregisterWebhookRequest extends express.Request {
 		body: {
 			// The target URL to unsubscribe from change notifications
 			url: string;
 		};
 	}
 	/**
-	 * Unregister's the sender's URL from receiving notifications when the external task-list data changes.
+	 * Unregisters the senders URL from receiving notifications when this endpoint is called at the end of a collaboration session
 	 *
 	 * Expected input data format: {@link UnregisterWebhookRequest}
 	 */
 	expressApp.post("/unregister-webhook", (request: UnregisterWebhookRequest, result) => {
-		// 1. Validate request data
-		if (typeof request.body?.url !== "string") {
-			const errorMessage = "Missing or unexpected data in request body";
-			console.log(formatLogMessage(errorMessage));
-			result.status(400).json({ message: errorMessage });
-		} else if (isWebUri(request.body?.url) === undefined) {
-			const errorMessage = "Provided subscription URL is invalid.";
-			console.log(formatLogMessage(errorMessage));
-			result.status(400).json({ message: errorMessage });
-		} else {
-			// 2. Extract SubscriberURL & externalTaskListId from object
+		try {
+			// 1. Validate request data
 			const subscriberUrl = request.body.url;
-			const externalTaskListId = subscriberUrl.slice(
-				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
-			);
+			if (typeof subscriberUrl !== "string") {
+				throw new InvalidRequestError("Missing or unexpected data in request body");
+			} else if (isWebUri(subscriberUrl) === undefined) {
+				throw new InvalidRequestError(
+					`Provided subscriber URL is invalid ${subscriberUrl}`,
+				);
+			}
+			const externalTaskListId = getRequestSearchParams(request).get("externalTaskListId");
+			if (externalTaskListId === undefined) {
+				throw new InvalidRequestError(
+					`Missing or malformed externalTaskListId in request url: ${externalTaskListId}`,
+				);
+			}
 
-			// 3. Find cooresponding webook for the given externalTaskListId
-			const webhook = webhookCollection.get(externalTaskListId);
+			// 2. Find cooresponding webook for the given externalTaskListId
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const webhook = webhookCollection.get(externalTaskListId!);
 			if (webhook === undefined) {
-				const errorMessage = "Provided externalTaskListId has no outstanding webhooks";
-				console.log(formatLogMessage(errorMessage));
-				result.status(400).json({ message: errorMessage });
+				throw new InvalidRequestError(
+					"Provided externalTaskListId has no outstanding webhooks",
+				);
+			}
+
+			// 3. Webhook exists, attempt to remove the subscriber from the webhook
+			if (!webhook.subscribers.includes(subscriberUrl)) {
+				// 3a. Webhook exists but the provided subscriber is not subscribed with the webhook.
+				const resultMessage =
+					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
+				result.status(200).json({ message: resultMessage });
+				console.warn(formatLogMessage(resultMessage));
 			} else {
-				// 4. Webhook exists, attempt to remove the subscriber from the webhook
-				if (!webhook.subscribers.includes(subscriberUrl)) {
-					// 4a. Webhooks exists but the provided subscriber is not subscribed with the webhook.
-					const errorMessage =
-						"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
-					console.log(formatLogMessage(errorMessage));
-					result.status(400).json({ message: errorMessage });
-				} else {
-					// 4b. Webhook exists and the provided subcriber is currently subscribed to it.
-					webhook.removeSubscriber(subscriberUrl);
-					console.log(
-						formatLogMessage(
-							`Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`,
-						),
-					);
-				}
+				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
+				webhook.removeSubscriber(subscriberUrl);
+				const resultMessage = `Unregistered webhook notification for externalTaskListId ${externalTaskListId} at subscriberUrl: "${subscriberUrl}".`;
+				console.info(formatLogMessage(resultMessage));
+				result.status(200).json({ message: resultMessage });
+			}
+		} catch (error) {
+			if (error instanceof ApiError) {
+				console.warn(formatLogMessage(error.message));
+				result.status(error.code).json({ message: error.message });
+			} else {
+				throw error;
 			}
 		}
 
