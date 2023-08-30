@@ -16,7 +16,7 @@ import {
  * @returns - The outcome of the condition
  */
 export function logIfFalse(
-	condition: any,
+	condition: unknown,
 	logger: ITelemetryBaseLogger,
 	event: string | ITelemetryGenericEvent,
 ): condition is true {

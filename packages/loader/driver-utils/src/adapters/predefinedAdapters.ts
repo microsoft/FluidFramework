@@ -47,7 +47,9 @@ export function applyStorageCompression(
  */
 function applyStorageCompressionInternal(
 	constructor: new (
+		// eslint-disable-next-line @typescript-eslint/no-shadow
 		documentServiceFactory: IDocumentServiceFactory,
+		// eslint-disable-next-line @typescript-eslint/no-shadow
 		config: ICompressionStorageConfig,
 	) => IDocumentServiceFactory,
 	documentServiceFactory: IDocumentServiceFactory,

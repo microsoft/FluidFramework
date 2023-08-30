@@ -37,6 +37,7 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
@@ -153,6 +154,7 @@ import {
 	ISummarizeResults,
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
+	ISummarizerEvents,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -658,7 +660,7 @@ export const makeLegacySendBatchFn =
  * It will define the store level mappings.
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
@@ -718,16 +720,30 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		runtimeOptions?: IContainerRuntimeOptions;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		} & (
+			| {
+					requestHandler?: (
+						request: IRequest,
+						runtime: IContainerRuntime,
+					) => Promise<IResponse>;
+					initializeEntryPoint?: undefined;
+			  }
+			| {
+					requestHandler?: undefined;
+					initializeEntryPoint: (
+						containerRuntime: IContainerRuntime,
+					) => Promise<FluidObject>;
+			  }
+		),
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -736,14 +752,25 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
 		} = params;
+
+		const initializeEntryPoint =
+			params.initializeEntryPoint ??
+			(async (containerRuntime: IContainerRuntime) => ({
+				get IFluidRouter() {
+					return this;
+				},
+				async request(req) {
+					return containerRuntime.request(req);
+				},
+			}));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -1049,7 +1076,7 @@ export class ContainerRuntime
 	private readonly validateSummaryBeforeUpload: boolean;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private _perfSignalData: IPerfSignalReport = {
+	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
@@ -1618,6 +1645,9 @@ export class ContainerRuntime
 					},
 					this.heuristicsDisabled,
 				);
+				this.summaryManager.on("summarize", (eventProps) => {
+					this.emit("summarize", eventProps);
+				});
 				this.summaryManager.start();
 			}
 		}
@@ -1790,7 +1820,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.IFluidRouter.request(subRequest);
+				return dataStore.request(subRequest);
 			}
 
 			return create404Response(request);
@@ -3061,7 +3091,7 @@ export class ContainerRuntime
 							undefined,
 							{ pendingMessages: this.pendingMessagesCount },
 						);
-						summaryLogger.sendErrorEvent(
+						summaryNumberLogger.sendErrorEvent(
 							{
 								eventName: "SkipFailingIncorrectSummary",
 								referenceSequenceNumber: summaryRefSeqNum,
@@ -3070,9 +3100,14 @@ export class ContainerRuntime
 							error,
 						);
 					} else {
+						// Default retry delay is 1 second. This can be overridden via config so that we can adjust it
+						// based on telemetry while we decide on a stable number.
+						const retryDelayMs =
+							this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
+							1000;
 						const error = new RetriableSummaryError(
 							"PendingMessagesInSummary",
-							1 /* retryAfterSeconds */,
+							retryDelayMs / 1000,
 							{ count: this.pendingMessagesCount },
 						);
 						return {
@@ -3836,27 +3871,41 @@ export class ContainerRuntime
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;
 	}): Promise<unknown> {
-		this.verifyNotClosed();
-		const waitBlobsToAttach = props?.notifyImminentClosure;
-		if (this._orderSequentiallyCalls !== 0) {
-			throw new UsageError("can't get state during orderSequentially");
-		}
-		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props?.notifyImminentClosure,
+			},
+			async (event) => {
+				this.verifyNotClosed();
+				const waitBlobsToAttach = props?.notifyImminentClosure;
+				if (this._orderSequentiallyCalls !== 0) {
+					throw new UsageError("can't get state during orderSequentially");
+				}
+				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
+					waitBlobsToAttach,
+				);
+				const pending = this.pendingStateManager.getLocalState();
+				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+					return; // no pending state to save
+				}
+				// Flush pending batch.
+				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+				// to close current batch.
+				this.flush();
 
-		if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-			return; // no pending state to save
-		}
-
-		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-		// to close current batch.
-		this.flush();
-
-		const pendingState: IPendingRuntimeState = {
-			pending: this.pendingStateManager.getLocalState(),
-			pendingAttachmentBlobs,
-		};
-		return pendingState;
+				const pendingState: IPendingRuntimeState = {
+					pending,
+					pendingAttachmentBlobs,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pending?.pendingStates.length,
+				});
+				return pendingState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
