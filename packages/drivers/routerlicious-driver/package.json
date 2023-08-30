@@ -110,6 +110,7 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IRouterliciousDriverPolicies": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}
