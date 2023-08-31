@@ -17,7 +17,6 @@ import {
 	ContextuallyTypedNodeData,
 	buildForest,
 	cursorsFromContextualData,
-	defaultSchemaPolicy,
 	getEditableTreeContext,
 	FieldSchema,
 	SchemaBuilder,
@@ -254,7 +253,7 @@ export function setupForest<T extends FieldSchema>(
 	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
-	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
+	const schemaRepo = new InMemoryStoredSchemaRepository(schema);
 	const forest = buildForest(schemaRepo);
 	const root = cursorsFromContextualData(
 		{
