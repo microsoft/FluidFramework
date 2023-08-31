@@ -170,7 +170,7 @@ function toDelta(change: TestChange): Delta.Modify {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [

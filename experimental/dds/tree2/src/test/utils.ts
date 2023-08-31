@@ -452,7 +452,7 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				}
 				case Delta.MarkType.MoveOut:
 				case Delta.MarkType.MoveIn:
-				case Delta.MarkType.Delete:
+				case Delta.MarkType.Remove:
 					return true;
 					break;
 				default:

@@ -101,8 +101,8 @@ describe("visit", () => {
 	});
 
 	it("delete root", () => {
-		const mark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const mark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 10,
 		};
 		testTreeVisit(
@@ -116,8 +116,8 @@ describe("visit", () => {
 	});
 
 	it("delete child", () => {
-		const mark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const mark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 10,
 		};
 		const delta: Delta.MarkList = [
@@ -143,8 +143,8 @@ describe("visit", () => {
 	});
 
 	it("delete under insert", () => {
-		const mark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const mark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 10,
 		};
 		const delta: Delta.MarkList = [
@@ -172,8 +172,8 @@ describe("visit", () => {
 	});
 
 	it("the lot on a field", () => {
-		const del: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const del: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 10,
 		};
 		const ins: Delta.Insert = {
@@ -446,7 +446,7 @@ describe("visit", () => {
 				rootKey,
 				[
 					{
-						type: Delta.MarkType.Delete,
+						type: Delta.MarkType.Remove,
 						count: 1,
 						fields: new Map([[fooKey, [moveIn]]]),
 					},
@@ -495,7 +495,7 @@ describe("visit", () => {
 				rootKey,
 				[
 					{
-						type: Delta.MarkType.Delete,
+						type: Delta.MarkType.Remove,
 						count: 1,
 						fields: new Map([[fooKey, [moveOut]]]),
 					},
@@ -594,8 +594,8 @@ describe("visit", () => {
 			moveId: moveId1,
 		};
 
-		const del: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const del: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 2,
 		};
 

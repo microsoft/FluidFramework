@@ -89,7 +89,7 @@ function cellDeltaFromMark<TNodeChange>(
 			case "Delete": {
 				return [
 					{
-						type: Delta.MarkType.Delete,
+						type: Delta.MarkType.Remove,
 						count: mark.count,
 					},
 				];

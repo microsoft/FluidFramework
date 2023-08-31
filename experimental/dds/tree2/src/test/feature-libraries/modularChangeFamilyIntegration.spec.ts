@@ -326,7 +326,7 @@ function normalizeDeltaField(
 
 		switch (mark.type) {
 			case Delta.MarkType.Modify:
-			case Delta.MarkType.Delete:
+			case Delta.MarkType.Remove:
 			case Delta.MarkType.Insert:
 			case Delta.MarkType.MoveOut: {
 				if (mark.fields !== undefined) {

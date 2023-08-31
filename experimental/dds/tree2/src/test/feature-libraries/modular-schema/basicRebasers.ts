@@ -85,7 +85,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		change === 0
 			? []
 			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Remove, count: 1 },
 					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
 			  ],
 

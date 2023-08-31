@@ -46,7 +46,7 @@ describe("DeltaUtils", () => {
 							fields: nestedCursorInsert,
 						},
 						{
-							type: Delta.MarkType.Delete,
+							type: Delta.MarkType.Remove,
 							count: 1,
 							fields: nestedCursorInsert,
 						},
@@ -87,7 +87,7 @@ describe("DeltaUtils", () => {
 							fields: nestedMapTreeInsert,
 						},
 						{
-							type: Delta.MarkType.Delete,
+							type: Delta.MarkType.Remove,
 							count: 1,
 							fields: nestedMapTreeInsert,
 						},

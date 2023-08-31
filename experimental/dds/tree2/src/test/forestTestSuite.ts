@@ -341,7 +341,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			const firstNodeAnchor = cursor.buildAnchor();
 			cursor.clear();
 
-			const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
+			const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
 			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			forest.applyDelta(delta);
 			forest.anchors.applyDelta(delta);
@@ -427,7 +427,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			initializeForest(forest, content.map(singleTextCursor));
 
 			const clone = forest.clone(forest.schema, forest.anchors);
-			const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
+			const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
 			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			clone.applyDelta(delta);
 
@@ -454,7 +454,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const cursor = forest.allocateCursor();
 					moveToDetachedField(forest, cursor);
 
-					const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
+					const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
 					const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 					assert.throws(() => forest.applyDelta(delta));
 				});
@@ -472,7 +472,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[
 							xField,
 							[
-								{ type: Delta.MarkType.Delete, count: 1 },
+								{ type: Delta.MarkType.Remove, count: 1 },
 								{
 									type: Delta.MarkType.Insert,
 									content: [
@@ -504,7 +504,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const content: JsonCompatible[] = [1, 2];
 				initializeForest(forest, content.map(singleJsonCursor));
 
-				const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
+				const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
 				const delta: Delta.Root = new Map([[rootFieldKey, [0, mark]]]);
 				forest.applyDelta(delta);
 
@@ -529,7 +529,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				cursor.clear();
 
 				const skip: Delta.Skip = 1;
-				const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
+				const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
 				const delta: Delta.Root = new Map([[rootFieldKey, [skip, mark]]]);
 				forest.applyDelta(delta);
 
@@ -684,8 +684,8 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(forest, [singleJsonCursor(nestedContent)]);
 
 				const moveId = brandOpaque<Delta.MoveId>(0);
-				const mark: Delta.Delete = {
-					type: Delta.MarkType.Delete,
+				const mark: Delta.Remove = {
+					type: Delta.MarkType.Remove,
 					count: 1,
 					fields: new Map([
 						[xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
@@ -725,7 +725,7 @@ export function testForest(config: ForestTestConfiguration): void {
 										[
 											fooField,
 											[
-												{ type: Delta.MarkType.Delete, count: 1 },
+												{ type: Delta.MarkType.Remove, count: 1 },
 												{
 													type: Delta.MarkType.Insert,
 													content: [singleJsonCursor(2)],
@@ -814,7 +814,7 @@ export function testForest(config: ForestTestConfiguration): void {
 										xField,
 										[
 											{
-												type: Delta.MarkType.Delete,
+												type: Delta.MarkType.Remove,
 												count: 1,
 											},
 										],

@@ -67,7 +67,7 @@ describe("TestChange", () => {
 				[
 					fooField,
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [

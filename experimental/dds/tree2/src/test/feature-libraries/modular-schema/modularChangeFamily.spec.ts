@@ -586,7 +586,7 @@ describe("ModularChangeFamily", () => {
 		it("fieldChanges", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Delete,
+					type: Delta.MarkType.Remove,
 					count: 1,
 				},
 				{
@@ -597,7 +597,7 @@ describe("ModularChangeFamily", () => {
 
 			const valueDelta2: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Delete,
+					type: Delta.MarkType.Remove,
 					count: 1,
 				},
 				{

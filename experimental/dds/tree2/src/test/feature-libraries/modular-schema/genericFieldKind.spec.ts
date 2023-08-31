@@ -128,7 +128,7 @@ const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 			[
 				valueFieldKey,
 				[
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Remove, count: 1 },
 					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(valueChange.new)] },
 				],
 			],
@@ -381,7 +381,7 @@ describe("Generic FieldKind", () => {
 				[
 					valueFieldKey,
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(1)] },
 					],
 				],
@@ -394,7 +394,7 @@ describe("Generic FieldKind", () => {
 				[
 					valueFieldKey,
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(2)] },
 					],
 				],

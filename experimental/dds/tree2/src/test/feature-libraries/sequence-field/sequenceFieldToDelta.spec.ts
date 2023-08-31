@@ -147,8 +147,8 @@ describe("SequenceField - toDelta", () => {
 
 	it("delete", () => {
 		const changeset = Change.delete(0, 10);
-		const mark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const mark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 10,
 		};
 		const expected: Delta.MarkList = [mark];
@@ -228,8 +228,8 @@ describe("SequenceField - toDelta", () => {
 			Change.insert(3, 1),
 			Change.modify(5, childChange1),
 		]);
-		const del: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const del: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 10,
 		};
 		const ins: Delta.Insert = {
@@ -242,7 +242,7 @@ describe("SequenceField - toDelta", () => {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -275,7 +275,7 @@ describe("SequenceField - toDelta", () => {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -296,14 +296,14 @@ describe("SequenceField - toDelta", () => {
 
 	it("modify and delete => delete", () => {
 		const changeset = [Mark.delete(1, brand(0), { changes: childChange1 })];
-		const mark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const mark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 1,
 			fields: new Map([
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -332,7 +332,7 @@ describe("SequenceField - toDelta", () => {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [

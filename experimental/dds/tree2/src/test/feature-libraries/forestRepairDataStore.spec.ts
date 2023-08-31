@@ -72,7 +72,7 @@ describe("ForestRepairDataStore", () => {
 								[
 									1,
 									{
-										type: Delta.MarkType.Delete,
+										type: Delta.MarkType.Remove,
 										count: 2,
 									},
 								],
@@ -95,7 +95,7 @@ describe("ForestRepairDataStore", () => {
 								fooKey,
 								[
 									{
-										type: Delta.MarkType.Delete,
+										type: Delta.MarkType.Remove,
 										count: 2,
 									},
 								],

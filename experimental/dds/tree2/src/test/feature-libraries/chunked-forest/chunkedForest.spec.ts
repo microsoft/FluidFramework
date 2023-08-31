@@ -134,7 +134,7 @@ describe("ChunkedForest", () => {
 
 				const repairStore = new ForestRepairDataStore(forest, mockIntoDelta);
 				const delta: Delta.Root = new Map([
-					[rootFieldKey, [{ type: Delta.MarkType.Delete, count: 1 }]],
+					[rootFieldKey, [{ type: Delta.MarkType.Remove, count: 1 }]],
 				]);
 
 				const revision = mintRevisionTag();

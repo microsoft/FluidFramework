@@ -86,7 +86,7 @@ describe("AnchorSet", () => {
 	it("can rebase over delete", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		const deleteMark = {
-			type: Delta.MarkType.Delete,
+			type: Delta.MarkType.Remove,
 			count: 1,
 		};
 
@@ -101,7 +101,7 @@ describe("AnchorSet", () => {
 	it("can rebase over delete of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 		const deleteMark = {
-			type: Delta.MarkType.Delete,
+			type: Delta.MarkType.Remove,
 			count: 1,
 		};
 
@@ -226,8 +226,8 @@ describe("AnchorSet", () => {
 		anchors.on("childrenChanging", log.logger("root childrenChange"));
 		anchors.on("treeChanging", log.logger("root treeChange"));
 
-		const deleteMark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const deleteMark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 1,
 		};
 
@@ -279,8 +279,8 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Insert,
 			content: [node].map(singleTextCursor),
 		};
-		const deleteMark: Delta.Delete = {
-			type: Delta.MarkType.Delete,
+		const deleteMark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
 			count: 1,
 		};
 		const log = new UnorderedTestLogger();

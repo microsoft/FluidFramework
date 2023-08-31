@@ -333,7 +333,7 @@ function deltaForDelete(
 		return [];
 	}
 
-	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
+	const deleteDelta: Mutable<Delta.Remove> = { type: Delta.MarkType.Remove, count: 1 };
 	if (nodeChange !== undefined) {
 		const modify = deltaFromNode(nodeChange);
 		deleteDelta.fields = modify.fields;

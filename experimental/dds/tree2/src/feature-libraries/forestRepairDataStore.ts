@@ -85,7 +85,7 @@ export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> 
 					const type = mark.type;
 					switch (type) {
 						case Delta.MarkType.MoveOut:
-						case Delta.MarkType.Delete: {
+						case Delta.MarkType.Remove: {
 							cursor.enterNode(index);
 							const child = parent.getOrCreateChild(key, index, repairDataFactory);
 							visitModify(mark, child);

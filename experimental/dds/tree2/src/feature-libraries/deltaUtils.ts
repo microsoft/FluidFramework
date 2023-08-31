@@ -85,9 +85,9 @@ export function mapMark<TIn, TOut>(
 				...mapModifications(mark, func),
 			};
 		}
-		case Delta.MarkType.Delete: {
+		case Delta.MarkType.Remove: {
 			return {
-				type: Delta.MarkType.Delete,
+				type: Delta.MarkType.Remove,
 				count: mark.count,
 				...mapModifications(mark, func),
 			};

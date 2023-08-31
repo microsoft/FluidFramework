@@ -18,7 +18,7 @@ export function inputLength(mark: Mark<unknown>): number {
 	// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 	const type = mark.type;
 	switch (type) {
-		case MarkType.Delete:
+		case MarkType.Remove:
 		case MarkType.MoveOut:
 			return mark.count;
 		case MarkType.Modify:

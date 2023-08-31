@@ -61,7 +61,7 @@ const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
 			[
 				fooKey,
 				[
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Remove, count: 1 },
 					{
 						type: Delta.MarkType.Insert,
 						content: [testTreeCursor("nodeChange1")],
@@ -80,7 +80,7 @@ const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
 			[
 				fooKey,
 				[
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Remove, count: 1 },
 					{
 						type: Delta.MarkType.Insert,
 						content: [testTreeCursor("nodeChange2")],
@@ -337,7 +337,7 @@ describe("optionalField", () => {
 						[
 							fooKey,
 							[
-								{ type: Delta.MarkType.Delete, count: 1 },
+								{ type: Delta.MarkType.Remove, count: 1 },
 								{
 									type: Delta.MarkType.Insert,
 									content: [testTreeCursor("nodeChange1")],
@@ -353,7 +353,7 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta when restoring content", () => {
 			const expected: Delta.MarkList = [
-				{ type: Delta.MarkType.Delete, count: 1 },
+				{ type: Delta.MarkType.Remove, count: 1 },
 				{ type: Delta.MarkType.Insert, content: [testTreeCursor("tree1")] },
 			];
 
@@ -369,7 +369,7 @@ describe("optionalField", () => {
 						[
 							fooKey,
 							[
-								{ type: Delta.MarkType.Delete, count: 1 },
+								{ type: Delta.MarkType.Remove, count: 1 },
 								{
 									type: Delta.MarkType.Insert,
 									content: [testTreeCursor("nodeChange2")],
