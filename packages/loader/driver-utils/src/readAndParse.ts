@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
