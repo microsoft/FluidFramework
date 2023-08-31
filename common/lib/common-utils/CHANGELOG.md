@@ -1,5 +1,11 @@
 # @fluidframework/common-utils Changelog
 
+## [3.0.0](https://github.com/microsoft/FluidFramework/releases/tag/common-utils_v3.0.0)
+
+### Updated @fluidframework/common-definitions
+
+The @fluidframework/common-definitions dependency has been upgraded to v1.0.0.
+
 ## [2.0.0](https://github.com/microsoft/FluidFramework/releases/tag/common-utils_v2.0.0)
 
 ### Deprecated classes and functions
