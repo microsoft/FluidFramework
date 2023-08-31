@@ -11,7 +11,6 @@ import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { LocalPersistentCache } from "../odspCache";
 import { EpochTracker } from "../epochTracker";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchOk } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
@@ -234,7 +233,6 @@ describe("DeltaStorageService", () => {
 				async (from, to) => getCached(from, to),
 				(from, to) => [],
 				(ops) => {},
-				() => ({ isFirstSnapshotFromNetwork: false } as any as OdspDocumentStorageService),
 			);
 
 			const messages = odspDeltaStorageServiceWithCache.fetchMessages(1, undefined);
