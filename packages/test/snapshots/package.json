@@ -29,11 +29,10 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --experimental-worker dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha --experimental-worker dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:new": "mocha --experimental-worker dist/test/generate/new.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:update": "mocha --experimental-worker dist/test/generate/update.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:new": "mocha --experimental-worker dist/test/generate/new.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:update": "mocha --experimental-worker dist/test/generate/update.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"tsc": "tsc"
 	},
 	"nyc": {

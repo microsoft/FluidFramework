@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
@@ -18,7 +18,7 @@ import {
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { IFetchSnapshotResult, ValidateSummaryResult } from "../summary/summarizerNode";
+import { ValidateSummaryResult } from "../summary/summarizerNode";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
@@ -402,40 +402,6 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 
 		let summaryRefSeq = 123;
-		const blobs = {
-			protocolAttributes: { sequenceNumber: summaryRefSeq },
-		} as const;
-		const readAndParseBlob = async <T>(id: string) => blobs[id] as T;
-
-		const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
-		const protocolTree: ISnapshotTree = {
-			blobs: { attributes: "protocolAttributes" },
-			trees: {},
-		};
-		const coreSnapshot: ISnapshotTree = {
-			blobs: {},
-			trees: {
-				[ids[1]]: {
-					blobs: {},
-					trees: {
-						[ids[2]]: emptySnapshot,
-					},
-				},
-			},
-		};
-		const simpleSnapshot: ISnapshotTree = {
-			blobs: {},
-			trees: {
-				...coreSnapshot.trees,
-				".protocol": protocolTree,
-			},
-		};
-		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			return {
-				snapshotTree: simpleSnapshot,
-				snapshotRefSeq: summaryRefSeq,
-			};
-		};
 
 		it("Should add GC pending summary node created after parent node was summarized with non-empty used routes", async () => {
 			createRoot();
@@ -448,13 +414,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await midNode?.summarize(false);
 			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
-			let result = await rootNode.refreshLatestSummary(
-				"test-handle1",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
-			);
+			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
 
@@ -469,13 +429,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary(
-				"test-handle2",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
-			);
+			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
@@ -498,13 +452,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await midNode?.summarize(false);
 			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
-			let result = await rootNode.refreshLatestSummary(
-				"test-handle1",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
-			);
+			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
 
@@ -519,13 +467,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary(
-				"test-handle2",
-				summaryRefSeq,
-				fetchLatestSnapshot,
-				readAndParseBlob,
-				logger,
-			);
+			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;

@@ -38,9 +38,8 @@
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha",
-		"test:mocha:multireport": "npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r @fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r @fluidframework/mocha-test-setup",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -76,7 +75,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@sinclair/typebox": "^0.29.4",
-		"@ungap/structured-clone": "^0.3.4",
+		"@ungap/structured-clone": "^1.2.0",
 		"sorted-btree": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
