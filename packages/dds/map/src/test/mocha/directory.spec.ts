@@ -396,7 +396,7 @@ describe("Directory", () => {
 				}, "Should throw for key of null");
 			});
 
-			it("Rejects subDirectories with undefined and null names", () => {
+			it("Rejects subdirectories with undefined and null names", () => {
 				assert.throws(() => {
 					directory.createSubDirectory(undefined as unknown as string);
 				}, "Should throw for undefined subDirectory name");
@@ -412,7 +412,7 @@ describe("Directory", () => {
 				assert.equal(serialized, '{"ci":{"csn":0,"ccIds":[]}}');
 			});
 
-			it("Should serialize a directory without subDirectories as a JSON object", () => {
+			it("Should serialize a directory without subdirectories as a JSON object", () => {
 				directory.set("first", "second");
 				directory.set("third", "fourth");
 				directory.set("fifth", "sixth");
@@ -426,7 +426,7 @@ describe("Directory", () => {
 				assert.equal(serialized, expected);
 			});
 
-			it("Should serialize a directory with subDirectories as a JSON object", () => {
+			it("Should serialize a directory with subdirectories as a JSON object", () => {
 				directory.set("first", "second");
 				directory.set("third", "fourth");
 				directory.set("fifth", "sixth");
@@ -441,7 +441,7 @@ describe("Directory", () => {
 
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				const serialized = serialize(directory);
-				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subDirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subDirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subDirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
 				assert.equal(serialized, expected);
 			});
 
@@ -463,7 +463,7 @@ describe("Directory", () => {
 
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				const serialized = serialize(directory);
-				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subDirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subDirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subDirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
 				assert.equal(serialized, expected);
 			});
 		});
@@ -492,7 +492,7 @@ describe("Directory", () => {
 							value: "testValue5",
 						},
 					},
-					subDirectories: {
+					subdirectories: {
 						foo: {
 							storage: {
 								testKey: {
@@ -542,7 +542,7 @@ describe("Directory", () => {
 							type: "Plain",
 						},
 					},
-					subDirectories: {
+					subdirectories: {
 						foo: {
 							storage: {
 								testKey: {
@@ -1285,7 +1285,7 @@ describe("Directory", () => {
 		});
 
 		describe("SubDirectory", () => {
-			it("Can iterate over the subDirectories in the root", () => {
+			it("Can iterate over the subdirectories in the root", () => {
 				directory1.createSubDirectory("foo");
 				directory1.createSubDirectory("bar");
 
@@ -1849,7 +1849,7 @@ describe("Directory", () => {
 				assert.ok(expectedEntries2.size === 0);
 			});
 
-			it("Can iterate over its subDirectories", () => {
+			it("Can iterate over its subdirectories", () => {
 				const fooDirectory = directory1.createSubDirectory("foo");
 				fooDirectory.createSubDirectory("bar");
 				fooDirectory.createSubDirectory("baz");
@@ -1883,7 +1883,7 @@ describe("Directory", () => {
 				assert.strictEqual(
 					fooDirectory,
 					fooDirectory2,
-					"Created two separate subDirectories",
+					"Created two separate subdirectories",
 				);
 				assert.strictEqual(
 					fooDirectory.get("testKey2"),
