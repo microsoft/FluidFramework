@@ -43,7 +43,7 @@ describe("SharedString interval collection event spec", () => {
 		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -53,7 +53,7 @@ describe("SharedString interval collection event spec", () => {
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
-			deltaConnection: containerRuntime2.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 

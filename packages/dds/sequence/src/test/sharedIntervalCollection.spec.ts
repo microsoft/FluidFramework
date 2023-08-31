@@ -70,7 +70,7 @@ function createConnectedIntervalCollection(
 	);
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	intervals.connect(services);
