@@ -626,14 +626,6 @@ export function createSequenceInterval(
 	return ival;
 }
 
-export const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
-	compareReferencePositions(a.end, b.end);
-
-export const compareSequenceIntervalStarts = (a: SequenceInterval, b: SequenceInterval): number =>
-	compareReferencePositions(a.start, b.start);
-
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
-	compareEnds: compareSequenceIntervalEnds,
-	compareStarts: compareSequenceIntervalStarts,
 	create: createSequenceInterval,
 };

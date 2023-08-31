@@ -191,8 +191,6 @@ export type CompressedSerializedInterval =
  * @sealed
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-	compareEnds(a: TInterval, b: TInterval): number;
-	compareStarts?(a: TInterval, b: TInterval): number;
 	/**
 	 *
 	 * @param label - label of the interval collection this interval is being added to. This parameter is

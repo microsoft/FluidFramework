@@ -140,6 +140,12 @@
 			},
 			"TypeAliasDeclaration_SharedStringRevertible": {
 				"forwardCompat": false
+			},
+			"VariableDeclaration_sequenceIntervalHelpers": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IIntervalHelpers": {
+				"backCompat": false
 			}
 		}
 	}

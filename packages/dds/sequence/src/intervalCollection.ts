@@ -219,7 +219,6 @@ export function computeStickinessFromSide(
 
 export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
-		compareEnds: (a: Interval, b: Interval) => a.end - b.end,
 		create: createInterval,
 	};
 	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
@@ -505,7 +504,6 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 		options?: Partial<SequenceOptions>,
 	): IntervalCollection<Interval> {
 		const helpers: IIntervalHelpers<Interval> = {
-			compareEnds: (a: Interval, b: Interval) => a.end - b.end,
 			create: createInterval,
 		};
 		const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw, options);
