@@ -120,7 +120,14 @@ data:
             "socketIo" : {
                 "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
             },
-            "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }}
+            "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }},
+            "getDeltasEndingGapDisableFallback": {{ .Values.alfred.getDeltasEndingGapDisableFallback }},
+            "getDeltasDbRetryConfig": {
+                "enable": {{ Values.alfred.getDeltasDbRetryConfig.enable }},
+                "retryCount" : {{ Values.alfred.getDeltasDbRetryConfig.retryCount }}
+                "retryIntervalMs" : {{ Values.alfred.getDeltasDbRetryConfig.retryIntervalMs }}
+            },
+            "getDeltasOptimizationTenants": {{ toJson .Values.alfred.getDeltasOptimizationTenants }}
         },
         "client": {
             "type": "browser",

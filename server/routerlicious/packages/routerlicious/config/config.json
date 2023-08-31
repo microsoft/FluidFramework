@@ -117,7 +117,14 @@
 		"jwtTokenCache": {
 			"enable": true
 		},
-		"getDeltasRequestMaxOpsRange": 2000
+		"getDeltasRequestMaxOpsRange": 2000,
+		"getDeltasEndingGapDisableFallback": false,
+		"getDeltasDbRetryConfig": {
+			"enable": false,
+			"retryCount": 3,
+			"retryIntervalMs": 100
+		},
+		"getDeltasOptimizationTenants": []
 	},
 	"client": {
 		"type": "browser",
