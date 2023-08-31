@@ -354,7 +354,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -398,7 +398,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -436,7 +436,7 @@ importers:
       eslint: ~8.6.0
       js-yaml: ^4.1.0
       mocha: ^10.2.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -482,7 +482,7 @@ importers:
       '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.6.0
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -4598,7 +4598,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -4631,7 +4631,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -4667,7 +4667,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       murmurhash3js: 3.0.1
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -4706,7 +4706,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -4987,7 +4987,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -5020,7 +5020,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -5100,7 +5100,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       semver: ^7.5.3
@@ -5128,7 +5128,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       sinon: 7.5.0
@@ -7754,7 +7754,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -7779,7 +7779,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
-      nock: 10.0.6
+      nock: 13.3.3
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -7820,7 +7820,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -7868,7 +7868,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -9694,7 +9694,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -9754,7 +9754,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -10161,7 +10161,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -10239,7 +10239,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -10529,7 +10529,7 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       nconf: ^0.12.0
-      nock: ^10.0.1
+      nock: ^13.3.3
       nyc: ^15.1.0
       prettier: ~2.6.2
       proper-lockfile: ^4.1.2
@@ -10591,7 +10591,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      nock: 10.0.6
+      nock: 13.3.3
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -30602,7 +30602,7 @@ packages:
       '@types/sinon': 7.5.2
       lodash: 4.17.21
       mock-stdin: 1.0.0
-      nock: 13.3.1
+      nock: 13.3.3
       stdout-stderr: 0.1.13
     transitivePeerDependencies:
       - supports-color
@@ -37432,25 +37432,8 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /nock/10.0.6:
-    resolution: {integrity: sha512-b47OWj1qf/LqSQYnmokNWM8D88KvUl2y7jT0567NB3ZBAZFz2bWp2PC81Xn7u8F2/vJxzkzNZybnemeFa7AZ2w==}
-    engines: {node: '>= 6.0'}
-    dependencies:
-      chai: 4.3.7
-      debug: 4.3.4
-      deep-equal: 1.1.1
-      json-stringify-safe: 5.0.1
-      lodash: 4.17.21
-      mkdirp: 0.5.6
-      propagate: 1.0.0
-      qs: 6.11.2
-      semver: 5.7.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /nock/13.3.1:
-    resolution: {integrity: sha512-vHnopocZuI93p2ccivFyGuUfzjq2fxNyNurp7816mlT5V5HF4SzXu8lvLrVzBbNqzs+ODooZ6OksuSUNM7Njkw==}
+  /nock/13.3.3:
+    resolution: {integrity: sha512-z+KUlILy9SK/RjpeXDiDUEAq4T94ADPHE3qaRkf66mpEhzc/ytOMm3Bwdrbq6k1tMWkbdujiKim3G2tfQARuJw==}
     engines: {node: '>= 10.13'}
     dependencies:
       debug: 4.3.4
@@ -39770,11 +39753,6 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
-
-  /propagate/1.0.0:
-    resolution: {integrity: sha512-T/rqCJJaIPYObiLSmaDsIf4PGA7y+pkgYFHmwoXQyOHiDDSO1YCxcztNiRBmV4EZha4QIbID3vQIHkqKu5k0Xg==}
-    engines: {'0': node >= 0.8.1}
-    dev: true
 
   /propagate/2.0.1:
     resolution: {integrity: sha512-vGrhOavPSTz4QVNuBNdcNXePNdNMaO1xj9yBeH1ScQPjk/rhg9sSlCXPhMkFuaNNW/syTvYqsnbIJxMBfRbbag==}

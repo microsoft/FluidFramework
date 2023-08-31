@@ -755,6 +755,12 @@ export interface ForestEvents {
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @alpha
+export enum ForestType {
+    Optimized = 1,
+    Reference = 0
+}
+
+// @alpha
 export interface FullSchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
@@ -1757,6 +1763,7 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
+    forest?: ForestType;
 }
 
 // @alpha
