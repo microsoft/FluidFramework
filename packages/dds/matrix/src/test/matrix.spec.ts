@@ -681,7 +681,7 @@ describe("Matrix", () => {
 			//           length = 3
 			//           end    = -1 + 3 = 2
 			//
-			//       In which case, pass the empty segment into 'findReconnectionPostilion()'.
+			//       In which case, pass the empty segment into 'findReconnectionPosition()'.
 
 			matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
 
