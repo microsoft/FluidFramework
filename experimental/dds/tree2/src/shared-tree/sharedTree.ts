@@ -216,7 +216,7 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if (!this.schema.tryHandleOp(message)) {
+		if (!this.schema.tryHandleOp(message.contents)) {
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
@@ -227,6 +227,12 @@ export class SharedTree
 	): void {
 		if (!this.schema.tryResubmitOp(content)) {
 			super.reSubmitCore(content, localOpMetadata);
+		}
+	}
+
+	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		if (!this.schema.tryApplyStashedOp(content)) {
+			return super.applyStashedOp(content);
 		}
 	}
 
