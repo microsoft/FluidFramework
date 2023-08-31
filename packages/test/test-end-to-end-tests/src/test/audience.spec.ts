@@ -231,22 +231,8 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	});
 
 	it("second client should see first client in audience when it connects immediately after", async () => {
-		const loader = provider.makeTestLoader();
-		const containerUrl = await provider.driver.createContainerUrl(provider.documentId);
-
-		// Create container in first client
-		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		await container1.attach({
-			url: containerUrl,
-			headers: {
-				createNew: true,
-			},
-		});
-
-		// Load container from a second client *immediately after attaching it on the first client*
-		const container2 = await loader.resolve({
-			url: containerUrl,
-		});
+		const container1 = await provider.makeTestContainer();
+		const container2 = await provider.loadTestContainer();
 
 		await waitForContainerConnection(container1);
 		await waitForContainerConnection(container2);
