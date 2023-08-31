@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { Trace } from "@fluidframework/common-utils";
+import { Trace } from "@fluid-internal/client-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
 import { List } from "../collections";
