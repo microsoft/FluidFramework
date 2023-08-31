@@ -62,15 +62,12 @@ describeFullCompat(
 			private readonly innerDataStoreKey = "innerDataStore";
 
 			protected async initializingFirstTime(): Promise<void> {
-				const innerDataStoreRouter = await this._context.containerRuntime.createDataStore(
+				const innerDataStore = await this._context.containerRuntime.createDataStore(
 					innerDataObjectFactory.type,
 				);
-				const innerDataStore = await requestFluidObject<ITestDataObject>(
-					innerDataStoreRouter,
-					"",
-				);
-
-				this.root.set(this.innerDataStoreKey, innerDataStore.handle);
+				const innerDataObject = (await innerDataStore.entryPoint?.get()) as ITestDataObject;
+				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
+				await innerDataObject.handle.get();
 			}
 
 			protected async hasInitialized(): Promise<void> {
@@ -103,15 +100,16 @@ describeFullCompat(
 			const mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 
 			// Create another data store and bind it by adding its handle in the root data store's DDS.
-			const dataStore2 = await requestFluidObject<ITestDataObject>(
-				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-				"",
+			const dataStore2 = await mainDataStore._context.containerRuntime.createDataStore(
+				TestDataObjectType,
 			);
-			mainDataStore._root.set("dataStore2", dataStore2.handle);
+			const dataObject2 = (await dataStore2.entryPoint?.get()) as ITestDataObject;
+			assert(dataObject2 !== undefined, "could not create dataStore2");
+			mainDataStore._root.set("dataStore2", dataObject2.handle);
 
 			// Request the new data store via the request API on the container.
 			const dataStore2Response = await container.request({
-				url: dataStore2.handle.absolutePath,
+				url: dataObject2.handle.absolutePath,
 			});
 			assert(
 				dataStore2Response.mimeType === "fluid/object" && dataStore2Response.status === 200,

@@ -7,4 +7,4 @@
 
 `bindToContext` API removed
 
-`bindToContext` has been removed from `IDataObjectProps`, `FluidDataStoreRuntime`, `IFluidDataStoreContext` and `MockFluidDataStoreContext`. This has been deprecated for a while and cannot be used anymore.
+`bindToContext` has been removed from `FluidDataStoreRuntime`, `IFluidDataStoreContext` and `MockFluidDataStoreContext`. This has been deprecated for a while and cannot be used anymore.

@@ -390,5 +390,47 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
 			},
 		);
+
+		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async () => {
+			const dataStore = await runtimeOf(dataObject1).createDataStore(packageName);
+			const dataObject = (await dataStore.entryPoint?.get()) as ITestFluidObject;
+			assert(dataObject !== undefined, "could not create data store");
+
+			let aliasedDataStore: FluidObject | undefined;
+			let error: unknown;
+			try {
+				aliasedDataStore = await getAliasedDataStoreEntryPoint(
+					dataObject1,
+					dataObject.runtime.id,
+				);
+			} catch (e) {
+				// back-compat - getRootDataStore throws an error if the data store doesn't exist.
+				error = e;
+			}
+			assert(
+				aliasedDataStore === undefined || error !== undefined,
+				"Expected getAliasedDataStoreEntryPoint to fail as the datastore is not yet a root datastore",
+			);
+
+			// Alias the datastore
+			const aliasResult1 = await dataStore.trySetAlias(alias);
+			assert(
+				aliasResult1 === "Success",
+				`Expected an successful aliasing. Got: ${aliasResult1}`,
+			);
+			await provider.ensureSynchronized();
+
+			// Should be able to retrieve root datastore from remote
+			assert.doesNotThrow(
+				async () => getAliasedDataStoreEntryPoint(dataObject2, alias),
+				"A remote aliased datastore should be a root datastore",
+			);
+
+			// Should be able to retrieve local root datastore
+			assert.doesNotThrow(
+				async () => getAliasedDataStoreEntryPoint(dataObject1, alias),
+				"A local aliased datastore should be a root datastore",
+			);
+		});
 	});
 });
