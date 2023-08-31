@@ -56,7 +56,7 @@ import {
 	RefreshSummaryResult,
 } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
-import { configProvider, parseNothing } from "./gcUnitTestHelpers";
+import { configProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -931,86 +931,6 @@ describe("Garbage Collection Tests", () => {
 					"Expecting 1 deleted node",
 				);
 			});
-
-			it("reads all GC data from when refreshing from snapshot with same GC version", async () => {
-				const garbageCollector = createGCOverride(stableGCVersion);
-				await garbageCollector.initializeBaseState();
-
-				// Get a snapshot with the current GC version and refresh latest summary state from it.
-				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(stableGCVersion);
-				const refreshSummaryResult: RefreshSummaryResult = {
-					latestSummaryUpdated: true,
-					wasSummaryTracked: false, // Indicates that state has to be updated from the snapshot in the result.
-					summaryRefSeq: 0,
-					snapshotTree,
-				};
-				await garbageCollector.refreshLatestSummary(
-					undefined,
-					refreshSummaryResult,
-					async <T>(id: string) => gcBlobsMap.get(id) as T,
-				);
-
-				// The latest summary state should all be updated from the snapshot.
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData !== undefined,
-					"Latest summary data not updated",
-				);
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData.serializedGCState !==
-						undefined,
-					"Latest summary GC state not updated",
-				);
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData.serializedTombstones !==
-						undefined,
-					"Latest summary tombstone state not updated",
-				);
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData
-						.serializedDeletedNodes !== undefined,
-					"Latest summary deleted nodes not updated",
-				);
-			});
-
-			it("discards all GC data from when refreshing from snapshot with different GC version", async () => {
-				const garbageCollector = createGCOverride(stableGCVersion);
-				await garbageCollector.initializeBaseState();
-
-				// Get a snapshot with different GC version from current and refresh latest summary state from it.
-				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(stableGCVersion + 1);
-				const refreshSummaryResult: RefreshSummaryResult = {
-					latestSummaryUpdated: true,
-					wasSummaryTracked: false, // Indicates that state has to be updated from the snapshot in the result.
-					summaryRefSeq: 0,
-					snapshotTree,
-				};
-				await garbageCollector.refreshLatestSummary(
-					undefined,
-					refreshSummaryResult,
-					async <T>(id: string) => gcBlobsMap.get(id) as T,
-				);
-
-				// Only the deleted nodes state should be updated from this snapshot since the GC version changed.
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData !== undefined,
-					"Latest summary data not updated",
-				);
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData.serializedGCState ===
-						undefined,
-					"Latest summary GC state should now be undefined",
-				);
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData.serializedTombstones ===
-						undefined,
-					"Latest summary tombstone state should now be undefined",
-				);
-				assert(
-					garbageCollector.summaryStateTracker.latestSummaryData
-						.serializedDeletedNodes !== undefined,
-					"Latest summary GC deleted nodes should be updated",
-				);
-			});
 		});
 
 		it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
@@ -1183,11 +1103,7 @@ describe("Garbage Collection Tests", () => {
 				wasSummaryTracked: true,
 				summaryRefSeq: 0,
 			};
-			await garbageCollector.refreshLatestSummary(
-				undefined,
-				refreshSummaryResult,
-				parseNothing,
-			);
+			await garbageCollector.refreshLatestSummary(refreshSummaryResult);
 
 			// Run GC and summarize again. The whole GC summary should now be a summary handle.
 			await garbageCollector.collectGarbage({});
@@ -1781,11 +1697,11 @@ describe("Garbage Collection Tests", () => {
 
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-			await garbageCollector.refreshLatestSummary(
-				undefined,
-				{ wasSummaryTracked: true, latestSummaryUpdated: true, summaryRefSeq: 0 },
-				parseNothing,
-			);
+			await garbageCollector.refreshLatestSummary({
+				wasSummaryTracked: true,
+				latestSummaryUpdated: true,
+				summaryRefSeq: 0,
+			});
 
 			await garbageCollector.collectGarbage({});
 			const tree2 = garbageCollector.summarize(fullTree, trackState);

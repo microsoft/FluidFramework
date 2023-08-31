@@ -8,6 +8,7 @@ import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base"
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
@@ -65,6 +66,7 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IMapDataObjectSerializable {
+	// eslint-disable-next-line import/no-deprecated
 	[key: string]: ISerializableValue;
 }
 
@@ -650,6 +652,7 @@ export class AttributableMapKernel {
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
 		if (
 			serializable.type === ValueType[ValueType.Plain] ||

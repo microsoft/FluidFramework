@@ -31,6 +31,7 @@ import {
 	wrongSchema,
 } from "../utils";
 import {
+	ForestType,
 	ISharedTree,
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
@@ -57,6 +58,7 @@ import {
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
 import { jsonNumber, jsonSchema } from "../../domains";
+import { noopValidator } from "../../codec";
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -1706,6 +1708,36 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Stashed ops", () => {
+		it("can apply and resubmit stashed schema ops", async () => {
+			const provider = await TestTreeProvider.create(2);
+
+			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
+			const pausedTree = provider.trees[0];
+			await provider.opProcessingController.pauseProcessing(pausedContainer);
+			pausedTree.storedSchema.update(testSchema);
+			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			provider.opProcessingController.resumeProcessing();
+
+			const loader = provider.makeTestLoader();
+			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			await waitForContainerConnection(loadedContainer, true);
+			await provider.ensureSynchronized();
+
+			const otherLoadedTree = provider.trees[1];
+			expectSchemaEquality(tree.storedSchema, testSchema);
+			expectSchemaEquality(otherLoadedTree.storedSchema, testSchema);
+		});
+
+		function expectSchemaEquality(actual: SchemaData, expected: SchemaData): void {
+			const codec = makeSchemaCodec({ jsonValidator: noopValidator });
+			assert.deepEqual(codec.encode(actual), codec.encode(expected));
+		}
+	});
+
 	describe.skip("Fuzz Test fail cases", () => {
 		it("Anchor Stability fails when root node is deleted", async () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
@@ -1814,6 +1846,40 @@ describe("SharedTree", () => {
 			readCursor.free();
 			anchorPath = tree.locate(firstAnchor);
 			assert(compareUpPaths(expectedPath, anchorPath));
+		});
+	});
+
+	describe("Creates a SharedTree using specific ForestType", () => {
+		it("unspecified ForestType uses ObjectForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+				}),
+			);
+			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
+		});
+
+		it("ForestType.Reference uses ObjectForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Reference,
+				}),
+			);
+			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
+		});
+
+		it("ForestType.Optimized uses ChunkedForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Optimized,
+				}),
+			);
+			assert.equal(trees[0].forest.computationName, "object-forest.ChunkedForest");
 		});
 	});
 });

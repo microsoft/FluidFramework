@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.23.0",
+	"version": "0.24.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -44,7 +44,7 @@
 		"test:coverage": "c8 npm run test:mocha:report",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
-		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:multireport -- --timeout 4s",
+		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:report -- --timeout 4s",
 		"tsc": "fluid-build --task tsc",
 		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"watch": "pnpm run -r --parallel tsc --watch"
@@ -95,7 +95,7 @@
 	},
 	"pnpm": {
 		"peerDependencyComments": [
-			"@types/node is not needed at the root, because it is only used for compilation of individual packages. If any of them are missing the dependency, then compilation for that package will fail, so we don't need to check for it."
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {

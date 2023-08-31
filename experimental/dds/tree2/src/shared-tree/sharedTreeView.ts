@@ -98,7 +98,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
 	 *
 	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if its an unwrapped node.
+	 * so holding onto this root object across edits will only work if it's an unwrapped node.
 	 * TODO: Fix this issue.
 	 *
 	 * Currently any access to this view of the tree may allocate cursors and thus require
@@ -288,7 +288,6 @@ export function createSharedTreeView(args?: {
 			changeFamily,
 			repairDataStoreProvider,
 			undoRedoManager,
-			forest.anchors,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
@@ -410,6 +409,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
+				this.forest.anchors.applyDelta(delta);
 				this.forest.applyDelta(delta);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
@@ -463,7 +463,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			storedSchema,
 			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
 		);
-		const branch = this.branch.fork(repairDataStoreProvider, anchors);
+		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
 			branch.editor,

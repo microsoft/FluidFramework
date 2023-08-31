@@ -65,6 +65,10 @@ export async function renderDocumentsAsMarkdown(
 	config: MarkdownRenderConfiguration,
 	outputDirectoryPath: string,
 ): Promise<void> {
+	const { logger } = config;
+
+	logger?.verbose("Rendering documents as Markdown and writing to disk...");
+
 	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(config);
 
 	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
@@ -80,5 +84,6 @@ export async function renderDocumentsAsMarkdown(
 			});
 		}),
 	);
-	console.log("Documents written to disk.");
+
+	logger?.success("Markdown documents written to disk.");
 }

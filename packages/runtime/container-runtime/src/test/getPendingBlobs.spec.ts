@@ -112,4 +112,39 @@ describe("getPendingLocalState", () => {
 		assert.strictEqual(summaryData2.ids.length, 2);
 		assert.strictEqual(summaryData2.redirectTable.size, 2);
 	});
+
+	it("upload blob while getting pending state", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		const blob = IsoBuffer.from("blob", "utf8");
+		const handleP = runtime.createBlob(blob);
+		await runtime.processBlobs();
+		const blob2 = IsoBuffer.from("blob2", "utf8");
+		const handleP2 = runtime.createBlob(blob2);
+		const pendingStateP = runtime.getPendingLocalState(true);
+		await runtime.processHandles();
+		const handleP3 = runtime.createBlob(IsoBuffer.from("blob3", "utf8"));
+		await runtime.processBlobs();
+		await runtime.processHandles();
+		await assert.doesNotReject(handleP);
+		await assert.doesNotReject(handleP2);
+		await assert.doesNotReject(handleP3);
+		const pendingState = await pendingStateP;
+		const pendingBlobs = pendingState[1] ?? {};
+		assert.strictEqual(Object.keys(pendingBlobs).length, 3);
+
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
+		assert.strictEqual(summaryData.redirectTable, undefined);
+
+		const runtime2 = new MockRuntime(mc, summaryData, false, pendingState);
+		await runtime2.attach();
+		await runtime2.processStashed();
+		await runtime2.connect();
+		await runtime2.processAll();
+
+		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 3);
+		assert.strictEqual(summaryData2.redirectTable.size, 3);
+	});
 });

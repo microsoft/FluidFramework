@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	AnchorSet,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	findAncestor,
@@ -128,19 +127,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * repair data. This must be provided in order to use features that require repair data such as undo/redo or constraints.
 	 * @param undoRedoManager - an optional {@link UndoRedoManager} to manage the undo/redo operations of this
 	 * branch. This must be provided in order to use the `undo` and `redo` methods of this branch.
-	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		public repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
-		private readonly anchors?: AnchorSet,
 	) {
 		super();
-		this.editor = this.changeFamily.buildEditor(
-			(change) => this.apply(change, mintRevisionTag()),
-			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
+		this.editor = this.changeFamily.buildEditor((change) =>
+			this.apply(change, mintRevisionTag()),
 		);
 	}
 
@@ -194,7 +190,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.emit("revertible", undoRedoType);
 		}
 
-		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
+		this.emit("change", { type: "append", change, newCommits: [this.head] });
 		return [change, this.head];
 	}
 
@@ -285,7 +281,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// then update the repair data store for that transaction
 		this.transactions.repairStore?.capture(this.head.change, revision);
 
-		this.emitAndRebaseAnchors({
+		this.emit("change", {
 			type: "replace",
 			change: undefined,
 			removedCommits: commits,
@@ -321,7 +317,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
 
-		this.emitAndRebaseAnchors({
+		this.emit("change", {
 			type: "remove",
 			change,
 			removedCommits: commits,
@@ -402,13 +398,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
 	 * provided, then it will be cloned from this branch.
-	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
 	 *
 	 * @remarks Forks created during a transaction will be disposed when the transaction ends.
 	 */
 	public fork(
 		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
-		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
@@ -416,7 +410,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.changeFamily,
 			repairDataStoreProvider ?? this.repairDataStoreProvider?.clone(),
 			this.undoRedoManager?.clone(),
-			anchors,
 		);
 		this.emit("fork", fork);
 		return fork;
@@ -466,7 +459,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
-		this.emitAndRebaseAnchors({
+		this.emit("change", {
 			type: "replace",
 			change,
 			removedCommits: deletedSourceCommits,
@@ -521,7 +514,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
-		this.emitAndRebaseAnchors({
+		this.emit("change", {
 			type: "append",
 			change,
 			newCommits: sourceCommits,
@@ -573,14 +566,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 		this.disposed = true;
 		this.emit("dispose");
-	}
-
-	private emitAndRebaseAnchors(change: SharedTreeBranchChange<TChange>): void {
-		if (this.anchors !== undefined && change.change !== undefined) {
-			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change.change);
-		}
-
-		this.emit("change", change);
 	}
 
 	private assertNotDisposed(): void {

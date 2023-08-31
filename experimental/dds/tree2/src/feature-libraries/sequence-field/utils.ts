@@ -117,7 +117,7 @@ export function getOutputCellId(
 	revision: RevisionTag | undefined,
 ): CellId | undefined {
 	if (markEmptiesCells(mark)) {
-		assert(isDetachMark(mark), "Only detaches can empty cells");
+		assert(isDetachMark(mark), 0x750 /* Only detaches can empty cells */);
 		return getDetachCellId(mark, revision);
 	} else if (markFillsCells(mark)) {
 		return undefined;

@@ -461,7 +461,6 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				default:
 					unreachableCase(type);
 			}
-			return false;
 		}
 	}
 	return false;
