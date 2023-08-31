@@ -1,5 +1,4 @@
 ---
-"@fluidframework/aqueduct": major
 "@fluidframework/datastore": major
 "@fluidframework/runtime-definitions": major
 "@fluidframework/test-runtime-utils": major
