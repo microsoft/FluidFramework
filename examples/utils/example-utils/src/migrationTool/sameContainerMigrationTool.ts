@@ -10,6 +10,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
 
+import { assert } from "@fluidframework/common-utils";
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
 const pactMapKey = "pact-map";
@@ -371,7 +372,11 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				// random ack.  Probably means storing the Quorum code accept sequence number and verifying the summary is based on that sequence number.
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
-				if (this.acceptedSeqNum !== undefined && op.type === MessageType.SummaryAck) {
+				if (op.type === MessageType.SummaryAck) {
+					assert(
+						this.acceptedSeqNum !== undefined,
+						"this.acceptedSeqNum should be defined",
+					);
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.

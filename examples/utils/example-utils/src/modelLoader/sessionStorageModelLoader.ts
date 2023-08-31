@@ -59,12 +59,11 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
 	}
 	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
-		const documentId = id;
 		const modelLoader = new ModelLoader<ModelType>({
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(documentId),
+			documentServiceFactory: getDocumentServiceFactory(id),
 			codeLoader: this.codeLoader,
-			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
+			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(id),
 		});
 		return modelLoader.loadExistingPaused(`${window.location.origin}/${id}`, sequenceNumber);
 	}
