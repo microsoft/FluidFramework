@@ -98,6 +98,12 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 }
 
 export interface DeltaVisitor {
+	/**
+	 * Forks the current visitor.
+	 * Any fork produced this way is freed before the visit terminates.
+	 */
+	fork(): DeltaVisitor;
+	free(): void;
 	onDelete(index: number, count: number): void;
 	onInsert(index: number, content: Delta.ProtoNodes): void;
 	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
