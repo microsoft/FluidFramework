@@ -36,11 +36,6 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 	 * All data must conform to these schema.
 	 */
 	readonly schema: TypedSchemaCollection;
-
-	/**
-	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
-	 */
-	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -124,6 +119,12 @@ export class Context implements TreeContext {
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
 		return this.forest.on(eventName, listener);
 	}
+
+	/**
+	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
+	 */
+	// TODO: Use this to automatically provide node keys where required.
+	public fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**

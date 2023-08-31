@@ -341,11 +341,11 @@ class LazyFieldNode<TSchema extends FieldNodeSchema>
 	}
 }
 
-abstract class LazyStruct<TSchema extends StructSchema>
+export abstract class LazyStruct<TSchema extends StructSchema>
 	extends LazyTree<TSchema>
 	implements Struct {}
 
-function buildLazyStruct<TSchema extends StructSchema>(
+export function buildLazyStruct<TSchema extends StructSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

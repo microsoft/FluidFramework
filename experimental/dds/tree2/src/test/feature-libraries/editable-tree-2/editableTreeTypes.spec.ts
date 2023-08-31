@@ -75,7 +75,7 @@ describe("editableTreeTypes", () => {
 	const basicFieldNode = builder.fieldNode("field", SchemaBuilder.fieldOptional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
-	const mixedStruct = builder.struct("field", {
+	const mixedStruct = builder.struct("mixedStruct", {
 		/**
 		 * Test doc comment.
 		 */
@@ -87,7 +87,7 @@ describe("editableTreeTypes", () => {
 	});
 	type Mixed = TypedNode<typeof mixedStruct>;
 
-	const recursiveStruct = builder.structRecursive("field", {
+	const recursiveStruct = builder.structRecursive("recursiveStruct", {
 		/**
 		 * Test Recursive Field.
 		 */
