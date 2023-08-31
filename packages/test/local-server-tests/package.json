@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-tests",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"private": true,
 	"description": "Tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -29,8 +29,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "cross-env FLUID_TEST_COVERAGE=1 npm run test:mocha",
-		"test:mocha": "mocha dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --exit",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha dist/test -r node_modules/@fluidframework/mocha-test-setup --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"nyc": {
@@ -104,7 +103,7 @@
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"nock": "^10.0.1",
+		"nock": "^13.3.3",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",

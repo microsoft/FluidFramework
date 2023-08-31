@@ -31,8 +31,7 @@
 		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
 		"stop": "forever stop dist/index.js",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"tsc": "tsc"
 	},
 	"dependencies": {

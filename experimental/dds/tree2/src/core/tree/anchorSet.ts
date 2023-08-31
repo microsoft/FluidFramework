@@ -76,7 +76,7 @@ export interface AnchorEvents {
 	 *
 	 * @remarks
 	 * When this happens depends entirely on how the anchorSet is used.
-	 * It's possible nodes removed from the tree will be kept indefinably, and thus never trigger this event, or they may be discarded immediately.
+	 * It's possible nodes removed from the tree will be kept indefinitely, and thus never trigger this event, or they may be discarded immediately.
 	 */
 	afterDelete(anchor: AnchorNode): void;
 
@@ -90,7 +90,7 @@ export interface AnchorEvents {
 
 	/**
 	 * Something in this tree is changing.
-	 * The event can optionally return a {@link PathVisitor} to traverse the subtree
+	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 */
@@ -127,7 +127,7 @@ export interface AnchorSetRootEvents {
 }
 
 /**
- * Node in an tree of anchors.
+ * Node in a tree of anchors.
  * @alpha
  */
 export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
@@ -151,7 +151,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	child(key: FieldKey, index: number): UpPath<AnchorNode>;
 
 	/**
-	 * Gets a child AnchorNode (creating it if needed), and a Anchor owning a ref to it.
+	 * Gets a child AnchorNode (creating it if needed), and an Anchor owning a ref to it.
 	 * Caller is responsible for freeing the returned Anchor, and must not use the AnchorNode after that.
 	 */
 	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
@@ -182,8 +182,8 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  *
  * See `Rebaser` for how to update across revisions.
  *
- * TODO: this should either not be package exported.
- * If its needed outside the package an Interface should be used instead which can reduce its
+ * TODO: this should not be package exported.
+ * If it's needed outside the package an Interface should be used instead which can reduce its
  * API surface to a small subset.
  *
  * @sealed

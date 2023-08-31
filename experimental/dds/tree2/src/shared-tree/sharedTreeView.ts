@@ -98,7 +98,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
 	 *
 	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if its an unwrapped node.
+	 * so holding onto this root object across edits will only work if it's an unwrapped node.
 	 * TODO: Fix this issue.
 	 *
 	 * Currently any access to this view of the tree may allocate cursors and thus require
@@ -245,7 +245,7 @@ export interface ISharedTreeView extends AnchorLocator {
 
 	/**
 	 * Takes in a tree and returns a view of it that conforms to the view schema.
-	 * The returned view referees to and can edit the provided one: it is not a fork of it.
+	 * The returned view refers to and can edit the provided one: it is not a fork of it.
 	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
 	 *
 	 * If the tree is uninitialized (has no nodes or schema at all),
@@ -254,16 +254,16 @@ export interface ISharedTreeView extends AnchorLocator {
 	 *
 	 * @remarks
 	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
-	 * Other approach tend to have leave easy to make mistakes.
+	 * Other approaches tend to have easy-to-make mistakes.
 	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
 	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+	 * It also would require the schema to be passed in to separate places and could cause issues if they didn't match.
 	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
 	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
 	 * on the create code-path (for example how a schematized factory might do it),
 	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 * this initialization could become just another out of schema content adapter: at that point it clearly belongs here in schematize.
 	 *
 	 * TODO:
 	 * - Implement schema-aware API for return type.
@@ -311,7 +311,6 @@ export function createSharedTreeView(args?: {
 			changeFamily,
 			repairDataStoreProvider,
 			undoRedoManager,
-			forest.anchors,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
@@ -433,6 +432,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
+				this.forest.anchors.applyDelta(delta);
 				this.forest.applyDelta(delta);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
@@ -485,7 +485,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			storedSchema,
 			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
 		);
-		const branch = this.branch.fork(repairDataStoreProvider, anchors);
+		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
 			branch.editor,

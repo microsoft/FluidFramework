@@ -6,7 +6,7 @@ import * as path from "path";
 import * as ts from "typescript";
 import { sha256 } from "./hash";
 
-const defaultTscUtil = getTscUtil(ts);
+const defaultTscUtil = createTscUtil(ts);
 export const parseCommandLine = defaultTscUtil.parseCommandLine;
 export const findConfigFile = defaultTscUtil.findConfigFile;
 export const readConfigFile = defaultTscUtil.readConfigFile;
@@ -79,9 +79,11 @@ const incrementalOptions = [
 	"skipLibCheck",
 	"skipdefaultlibcheck",
 	"strict",
+	"strictBindCallApply",
+	"strictFunctionTypes",
 ].sort(); // sort it so that the result of the filter is sorted as well.
 
-export function filterIncrementalOptions(options: any) {
+function filterIncrementalOptions(options: any) {
 	const newOptions: any = {};
 	for (const key of incrementalOptions) {
 		if (options[key] !== undefined) {
@@ -91,7 +93,7 @@ export function filterIncrementalOptions(options: any) {
 	return newOptions;
 }
 
-export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
+function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
 	// Shallow clone 'CompilerOptions' before modifying.
 	const result = { ...options };
 
@@ -138,8 +140,6 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 					: x;
 }
 
-export const getCanonicalFileName = createGetCanonicalFileName(ts);
-
 function createGetSourceFileVersion(tsLib: typeof ts) {
 	// The TypeScript compiler performs some light preprocessing of the source file
 	// text before calculating the file hashes that appear in *.tsbuildinfo.
@@ -151,9 +151,12 @@ function createGetSourceFileVersion(tsLib: typeof ts) {
 	const maybeGetHash = tsLib["getSourceFileVersionAsHashFromText"];
 
 	if (!maybeGetHash) {
-		console.warn(
-			`Warning: TypeScript compiler has changed.  Incremental builds likely broken.`,
-		);
+		// This internal function is added 5.0+
+		if (parseInt(tsLib.versionMajorMinor.split(".")[0]) >= 5) {
+			console.warn(
+				`Warning: TypeScript compiler has changed.  Incremental builds likely broken.`,
+			);
+		}
 
 		// Return 'sha256' for compatibility with older versions of TypeScript while we're
 		// transitioning.
@@ -170,10 +173,9 @@ function createGetSourceFileVersion(tsLib: typeof ts) {
 	};
 }
 
-export const getSourceFileVersion = createGetSourceFileVersion(ts);
-
-export function getTscUtil(tsLib: typeof ts) {
+function createTscUtil(tsLib: typeof ts) {
 	return {
+		tsLib,
 		parseCommandLine: (command: string) => {
 			// TODO: parse the command line for real, split space for now.
 			const args = command.split(" ");
@@ -212,8 +214,34 @@ export function getTscUtil(tsLib: typeof ts) {
 			}
 			return configFile.config;
 		},
+		filterIncrementalOptions,
 		convertToOptionsWithAbsolutePath,
-		getCanonicalFileName: getCanonicalFileName,
-		getSourceFileVersion: getSourceFileVersion,
+		getCanonicalFileName: createGetCanonicalFileName(tsLib),
+		getSourceFileVersion: createGetSourceFileVersion(tsLib),
 	};
+}
+
+export type TscUtil = ReturnType<typeof createTscUtil>;
+
+const tscUtilPathCache = new Map<string, TscUtil>();
+const tscUtilLibPathCache = new Map<string, TscUtil>();
+
+export function getTscUtils(path: string): TscUtil {
+	const tscUtilFromPath = tscUtilPathCache.get(path);
+	if (tscUtilFromPath) {
+		return tscUtilFromPath;
+	}
+
+	const tsPath = require.resolve("typescript", { paths: [path] });
+	const tscUtilFromLibPath = tscUtilLibPathCache.get(tsPath);
+	if (tscUtilFromLibPath) {
+		tscUtilPathCache.set(path, tscUtilFromLibPath);
+		return tscUtilFromLibPath;
+	}
+
+	const tsLib: typeof ts = require(tsPath);
+	const tscUtil = createTscUtil(tsLib);
+	tscUtilPathCache.set(path, tscUtil);
+	tscUtilLibPathCache.set(tsPath, tscUtil);
+	return tscUtil;
 }
