@@ -11,13 +11,8 @@ import {
 	createChildLogger,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import {
-	assert,
-	delay,
-	Deferred,
-	PromiseTimer,
-	TypedEventEmitter,
-} from "@fluidframework/common-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
