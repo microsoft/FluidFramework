@@ -179,6 +179,7 @@ declare function get_current_InterfaceDeclaration_IOdspError():
 declare function use_old_InterfaceDeclaration_IOdspError(
     use: TypeOnly<old.IOdspError>);
 use_old_InterfaceDeclaration_IOdspError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IOdspError());
 
 /*
@@ -540,6 +541,7 @@ declare function get_current_EnumDeclaration_OdspErrorType():
 declare function use_old_EnumDeclaration_OdspErrorType(
     use: TypeOnly<old.OdspErrorType>);
 use_old_EnumDeclaration_OdspErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_OdspErrorType());
 
 /*
