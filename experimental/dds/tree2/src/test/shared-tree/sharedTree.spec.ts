@@ -36,6 +36,7 @@ import {
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
+	SharedTreeFactory,
 	TreeContent,
 	runSynchronous,
 } from "../../shared-tree";
@@ -1716,7 +1717,7 @@ describe("SharedTree", () => {
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
-			pausedTree.storedSchema.update(testSchema);
+			pausedTree.storedSchema.update(jsonSequenceRootSchema);
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
@@ -1728,8 +1729,8 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEquality(tree.storedSchema, testSchema);
-			expectSchemaEquality(otherLoadedTree.storedSchema, testSchema);
+			expectSchemaEquality(tree.view.storedSchema, jsonSequenceRootSchema);
+			expectSchemaEquality(otherLoadedTree.storedSchema, jsonSequenceRootSchema);
 		});
 
 		function expectSchemaEquality(actual: SchemaData, expected: SchemaData): void {
@@ -1857,7 +1858,7 @@ describe("SharedTree", () => {
 					jsonValidator: typeboxValidator,
 				}),
 			);
-			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
+			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
 		});
 
 		it("ForestType.Reference uses ObjectForest", () => {
@@ -1868,7 +1869,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
+			assert.equal(trees[0].view.forest.computationName, "object-forest.ObjectForest");
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1879,7 +1880,7 @@ describe("SharedTree", () => {
 					forest: ForestType.Optimized,
 				}),
 			);
-			assert.equal(trees[0].forest.computationName, "object-forest.ChunkedForest");
+			assert.equal(trees[0].view.forest.computationName, "object-forest.ChunkedForest");
 		});
 	});
 });
