@@ -114,8 +114,8 @@ describe("editable-tree: read-only", () => {
 		// which are otherwise "hidden" behind a proxy.
 		// Usefull for debugging.
 		if (isEditableTree(addressDescriptor.value)) {
-			addressDescriptor.value = clone(addressDescriptor.value);
-			expected = clone(expected);
+			addressDescriptor.value = clone(addressDescriptor.value, { lossy: true });
+			expected = clone(expected, { lossy: true });
 		}
 		assert.deepEqual(addressDescriptor, {
 			configurable: true,
@@ -487,7 +487,7 @@ describe("editable-tree: read-only", () => {
 		assert.equal(proxy.name, "Adam");
 		assert.equal(proxy.age, 35);
 		assert.equal(proxy.salary, 10420.2);
-		const cloned = clone(proxy.friends);
+		const cloned = clone(proxy.friends, { lossy: true });
 		assert.deepEqual(cloned, { Mat: "Mat" });
 		assert(proxy.address !== undefined);
 		assert.deepEqual(Object.keys(proxy.address), ["zip", "street", "phones", "sequencePhones"]);
@@ -530,7 +530,7 @@ describe("editable-tree: read-only", () => {
 			} else if (isEditableField(phone)) {
 				assert.deepEqual([...phone], expectedPhone);
 			} else {
-				const cloned = clone(phone);
+				const cloned = clone(phone, { lossy: true });
 				assert.deepEqual(cloned, expectedPhone);
 			}
 		}
@@ -556,7 +556,7 @@ describe("editable-tree: read-only", () => {
 				} else if (isEditableField(phone)) {
 					return [...phone];
 				} else {
-					const cloned = clone(phone);
+					const cloned = clone(phone, { lossy: true });
 					return cloned;
 				}
 			},
