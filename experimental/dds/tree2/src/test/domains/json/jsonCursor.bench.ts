@@ -57,7 +57,7 @@ function bench(
 		{},
 		jsonSchema,
 	).intoDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schemaCollection);
+	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
 			let json: JsonCompatible;

@@ -114,7 +114,7 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const schema = new InMemoryStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), new AnchorSet())

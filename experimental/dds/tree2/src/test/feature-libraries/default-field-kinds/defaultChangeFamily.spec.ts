@@ -24,7 +24,6 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
@@ -109,7 +108,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+	const schema = new InMemoryStoredSchemaRepository();
 	const forest = buildForest(schema);
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);

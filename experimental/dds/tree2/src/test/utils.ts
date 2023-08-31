@@ -48,7 +48,6 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
 	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
@@ -96,6 +95,7 @@ import {
 	InMemoryStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
+	IEditableForest,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -608,14 +608,19 @@ export function viewWithContent(
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 	},
 ): ISharedTreeView {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, content.schema);
+	const forest = forestWithContent(content);
+	const view = createSharedTreeView({ ...args, forest, schema: forest.schema });
+	return view;
+}
+
+export function forestWithContent(content: TreeContent): IEditableForest {
+	const schema = new InMemoryStoredSchemaRepository(content.schema);
 	const forest = buildForest(schema);
 	initializeForest(
 		forest,
 		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
 	);
-	const view = createSharedTreeView({ ...args, forest, schema });
-	return view;
+	return forest;
 }
 
 const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
