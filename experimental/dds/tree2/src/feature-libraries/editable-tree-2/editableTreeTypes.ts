@@ -5,7 +5,7 @@
 
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, TreeValue } from "../../core";
-import { Assume, FlattenKeys, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
+import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey } from "../node-key";
 import {
 	FieldSchema,
@@ -22,7 +22,22 @@ import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { TreeStatus } from "../editable-tree";
 import { TreeContext } from "./editableTreeContext";
 
-// TODO: would be nice to make this Iterable<UntypedEntity>, but TypeScript can't handle it.
+/**
+ * Part of a tree.
+ * Iterates over children.
+ *
+ * @privateRemarks
+ * This exists mainly as a place to share common members between nodes and fields.
+ * It is not expected to be useful or common to write code which handles this type directly.
+ * If this assumption turns out to be false, and generically processing `UntypedEntity`s is useful,
+ * then this interface should probably be extended with some down casting functionality (like `is`).
+ *
+ * TODO:
+ * Design and document iterator invalidation rules and ordering rules.
+ * Providing a custom iterator type with place anchor semantics would be a good approach.
+ *
+ * @alpha
+ */
 export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity> {
 	/**
 	 * Schema for this entity.
@@ -50,8 +65,9 @@ export interface UntypedEntity<TSchema = unknown> extends Iterable<UntypedEntity
  * All content of the tree is accessible via this API.
  *
  * Down-casting (via {@link UntypedTree.is}) is required to access Schema-Aware APIs, including editing.
+ *
+ * @alpha
  */
-// TODO: design and document iterator invalidation rules and ordering rules. Maybe provide custom iterator with an anchor semantics.
 export interface UntypedTree extends UntypedEntity<TreeSchema> {
 	/**
 	 * Value stored on this node.
@@ -91,7 +107,6 @@ export interface UntypedTree extends UntypedEntity<TreeSchema> {
  *
  * @alpha
  */
-// TODO: design and document iterator invalidation. Maybe provide custom iterator with an anchor semantics.
 export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<UntypedTree> {
 	/**
 	 * The `FieldKey` this field is under.
@@ -114,6 +129,10 @@ export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<Untyp
 
 // #region Node Kinds
 
+/**
+ * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
+ * @alpha
+ */
 export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
 	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
 	// TODO: maybe remove this since it can be done in terms of editing result from `get` which provides better control over merge semantics.
@@ -121,10 +140,28 @@ export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
 
 	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
 }
+
+/**
+ * A node that behaves like a `{ content: Field }` for a specific `Field` type.
+ *
+ * @remarks
+ * FieldNodes unbox to their content, so in schema aware APIs which do unboxing, the FieldNode itself will be skipped over.
+ *
+ * @alpha
+ */
 export interface FieldNode<TSchema extends FieldNodeSchema> extends UntypedTree {
 	readonly content: TypedField<TSchema["structFieldsObject"][""]>;
 }
 
+/**
+ * A node that behaves like struct, providing properties to access its fields.
+ *
+ * @remarks
+ * Struct nodes require complex typing, and have been split into two parts for implementation purposes.
+ * See {@link StructTyped} for the schema aware extensions to this.
+ *
+ * @alpha
+ */
 export interface Struct extends UntypedTree {
 	/**
 	 * {@link LocalNodeKey} that identifies this node.
@@ -142,32 +179,42 @@ export interface Leaf<TSchema extends LeafSchema> extends UntypedTree {
 	readonly value: SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
 }
 
+/**
+ * A node that behaves like struct, providing properties to access its fields.
+ *
+ * @alpha
+ */
 export type StructTyped<TSchema extends StructSchema> = Struct &
 	StructFields<TSchema["structFieldsObject"]>;
 
-// TODO: custom field identifiers
+/**
+ * Properties to access a struct nodes fields. See {@link StructTyped}.
+ *
+ * @privateRemarks
+ * TODO: custom field identifiers
+ *
+ * @alpha
+ */
 export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> =
-	FlattenKeys<
-		// Getters
-		{
-			readonly [key in keyof TFields]: UnboxField<TFields[key]>;
-		} & {
-			readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-			[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
-		} & /*
-		 * Setter methods (TODO: constrain `this`?)
-		 * TODO: maybe remove this since it can be done in terms of editing result from `boxed` which provides better control over merge semantics.
-		 */ {
-			readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
-				content: FlexibleFieldContent<TFields[key]>,
-			) => void;
-		}
-		// This could be enabled to allow assignment via `=` in some cases.
-		// & {
-		// 	// Setter properties (when the type system permits)
-		// 	[key in keyof TFields]: UnwrappedField<TFields[key]> & StructSetContent<TFields[key]>;
-		// }
-	>;
+	// Getters
+	{
+		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
+	} & {
+		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+	} & /*
+	 * Setter methods (TODO: constrain `this`?)
+	 * TODO: maybe remove this since it can be done in terms of editing result from `boxed` which provides better control over merge semantics.
+	 */ {
+		readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
+			content: FlexibleFieldContent<TFields[key]>,
+		) => void;
+	};
+// This could be enabled to allow assignment via `=` in some cases.
+// & {
+// 	// Setter properties (when the type system permits)
+// 	[key in keyof TFields]: UnwrappedField<TFields[key]> & StructSetContent<TFields[key]>;
+// }
 
 // #endregion
 
@@ -185,10 +232,15 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 
 export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 	/**
-	 * Gets a node of this field by its index without unwrapping.
+	 * Gets a node of this field by its index with unboxing.
 	 * Note that a node must exist at the given index.
 	 */
 	at(index: number): UnboxNodeUnion<TTypes>;
+
+	/**
+	 * Gets a boxed node of this field by its index.
+	 * Note that a node must exist at the given index.
+	 */
 	boxedAt(index: number): TypedNodeUnion<TTypes>;
 
 	readonly length: number;
