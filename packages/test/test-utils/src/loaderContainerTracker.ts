@@ -76,6 +76,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param container - container to add
 	 */
 	private addContainer(container: IContainer) {
+		// don't add container that is already tracked
+		if (this.containers.has(container)) {
+			return;
+		}
+
 		// Container has a `clone` method that can be used to create another container without going through
 		// the Loader. Such containers won't be added by the `add` method so do it here. For example, summarizer
 		// containers are created via the `clone` method.
@@ -106,11 +111,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			!container.deltaManager.clientDetails.capabilities.interactive &&
 			!this.syncSummarizerClients
 		) {
-			return;
-		}
-
-		// don't add container that is already tracked
-		if (this.containers.has(container)) {
 			return;
 		}
 
