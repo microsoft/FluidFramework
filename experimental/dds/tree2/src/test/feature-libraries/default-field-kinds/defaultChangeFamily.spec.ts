@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	AnchorSet,
 	Delta,
 	FieldKey,
 	mintRevisionTag,
@@ -118,17 +117,13 @@ function initializeEditableForest(data?: JsonableTree): {
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
-	const builder = new DefaultEditBuilder(
-		family,
-		(change) => {
-			changes.push({ revision: currentRevision, change });
-			const delta = defaultChangeFamily.intoDelta(change);
-			deltas.push(delta);
-			forest.applyDelta(delta);
-			currentRevision = mintRevisionTag();
-		},
-		new AnchorSet(),
-	);
+	const builder = new DefaultEditBuilder(family, (change) => {
+		changes.push({ revision: currentRevision, change });
+		const delta = defaultChangeFamily.intoDelta(change);
+		deltas.push(delta);
+		forest.applyDelta(delta);
+		currentRevision = mintRevisionTag();
+	});
 	return {
 		forest,
 		builder,

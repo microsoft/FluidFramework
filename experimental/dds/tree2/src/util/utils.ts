@@ -42,9 +42,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
 
-export function clone<T>(original: T): T {
-	return structuredClone(original);
-}
+export const clone = structuredClone;
 
 /**
  * @alpha

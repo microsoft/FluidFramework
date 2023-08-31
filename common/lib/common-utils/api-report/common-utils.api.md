@@ -17,7 +17,7 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { TransformedEvent } from '@fluidframework/common-definitions';
 
-// @public
+// @public @deprecated
 export function assert(condition: boolean, message: string | number): asserts condition;
 
 // @public @deprecated
@@ -25,7 +25,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @public @deprecated
 export class Buffer extends Uint8Array {
     // (undocumented)
     static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
@@ -35,10 +35,10 @@ export class Buffer extends Uint8Array {
     toString(encoding?: string): string;
 }
 
-// @public
+// @public @deprecated
 export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
-// @public
+// @public @deprecated
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;
@@ -47,18 +47,18 @@ export class Deferred<T> {
     resolve(value: T | PromiseLike<T>): void;
 }
 
-// @public
+// @public @deprecated
 export const delay: (timeMs: number) => Promise<void>;
 
 // @public @deprecated
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
 
-// @public
+// @public @deprecated
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
 
-// @public
+// @public @deprecated
 export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
     constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
     // (undocumented)
@@ -73,19 +73,19 @@ export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> i
     protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
 }
 
-// @public
+// @public @deprecated
 export const fromBase64ToUtf8: (input: string) => string;
 
-// @public
+// @public @deprecated
 export const fromUtf8ToBase64: (input: string) => string;
 
-// @public
+// @public @deprecated
 export function gitHashFile(file: IsoBuffer): Promise<string>;
 
-// @public
+// @public @deprecated
 export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
-// @public
+// @public @deprecated
 export class Heap<T> {
     constructor(comp: IComparer<T>);
     add(x: T): IHeapNode<T>;
@@ -98,13 +98,13 @@ export class Heap<T> {
     update(node: IHeapNode<T>): void;
 }
 
-// @public
+// @public @deprecated
 export interface IComparer<T> {
     compare(a: T, b: T): number;
     min: T;
 }
 
-// @public
+// @public @deprecated
 export interface IHeapNode<T> {
     // (undocumented)
     position: number;
@@ -112,18 +112,18 @@ export interface IHeapNode<T> {
     value: T;
 }
 
-// @public
+// @public @deprecated
 export interface IPromiseTimer extends ITimer {
     start(): Promise<IPromiseTimerResult>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPromiseTimerResult {
     // (undocumented)
     timerResult: "timeout" | "cancel";
 }
 
-// @public
+// @public @deprecated
 export interface IRange {
     // (undocumented)
     length: number;
@@ -133,7 +133,7 @@ export interface IRange {
     secondary: number | undefined;
 }
 
-// @public
+// @public @deprecated
 export interface IRangeTrackerSnapshot {
     // (undocumented)
     lastPrimary: number;
@@ -143,23 +143,23 @@ export interface IRangeTrackerSnapshot {
     ranges: IRange[];
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const IsoBuffer: typeof Buffer;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type IsoBuffer = Buffer;
 
-// @public
+// @public @deprecated
 export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ITimer {
     clear(): void;
     readonly hasTimer: boolean;
     start(): void;
 }
 
-// @public
+// @public @deprecated
 export interface ITraceEvent {
     readonly duration: number;
     readonly tick: number;
@@ -186,10 +186,10 @@ export class LazyPromise<T> implements Promise<T> {
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
 }
 
-// @public
+// @public @deprecated
 export const NumberComparer: IComparer<number>;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
@@ -219,7 +219,7 @@ export interface PromiseCacheOptions {
     removeOnError?: (e: any) => boolean;
 }
 
-// @public
+// @public @deprecated
 export class PromiseTimer implements IPromiseTimer {
     constructor(defaultTimeout: number, defaultHandler: () => void);
     // (undocumented)
@@ -230,7 +230,7 @@ export class PromiseTimer implements IPromiseTimer {
     protected wrapHandler(handler: () => void): void;
 }
 
-// @public
+// @public @deprecated
 export class RangeTracker {
     constructor(primary: IRangeTrackerSnapshot);
     constructor(primary: number, secondary: number);
@@ -250,13 +250,13 @@ export class RateLimiter {
     filter(clientId: string, messages: string[]): string[];
 }
 
-// @public
+// @public @deprecated
 export function safelyParseJSON(json: string): any | undefined;
 
-// @public
+// @public @deprecated
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
 
-// @public
+// @public @deprecated
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
 
 // @public @deprecated
@@ -271,7 +271,7 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 }
 
-// @public
+// @public @deprecated
 export class Timer implements ITimer {
     constructor(defaultTimeout: number, defaultHandler: () => void, getCurrentTick?: () => number);
     clear(): void;
@@ -280,10 +280,10 @@ export class Timer implements ITimer {
     start(ms?: number, handler?: () => void): void;
 }
 
-// @public
+// @public @deprecated
 export const toUtf8: (input: string, encoding: string) => string;
 
-// @public
+// @public @deprecated
 export class Trace {
     protected constructor(startTick: number);
     // (undocumented)
@@ -296,7 +296,7 @@ export class Trace {
     trace(): ITraceEvent;
 }
 
-// @public
+// @public @deprecated
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor();
     // (undocumented)
@@ -315,16 +315,16 @@ export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventPro
     readonly removeListener: TypedEventTransform<this, TEvent>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> & IEventTransformer<TThis, TEvent & IEvent> & TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
-// @public
+// @public @deprecated
 export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer;
 
-// @public
+// @public @deprecated
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
 
-// @public
+// @public @deprecated
 export function unreachableCase(_: never, message?: string): never;
 
 ```

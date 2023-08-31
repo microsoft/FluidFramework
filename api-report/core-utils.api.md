@@ -4,8 +4,68 @@
 
 ```ts
 
+// @public
+export function assert(condition: boolean, message: string | number): asserts condition;
+
 // @internal
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
+
+// @public
+export class Deferred<T> {
+    constructor();
+    get isCompleted(): boolean;
+    get promise(): Promise<T>;
+    reject(error: any): void;
+    resolve(value: T | PromiseLike<T>): void;
+}
+
+// @public
+export const delay: (timeMs: number) => Promise<void>;
+
+// @public
+export class Heap<T> {
+    constructor(comp: IComparer<T>);
+    add(x: T): IHeapNode<T>;
+    // (undocumented)
+    comp: IComparer<T>;
+    count(): number;
+    get(): T;
+    peek(): IHeapNode<T>;
+    remove(node: IHeapNode<T>): void;
+    update(node: IHeapNode<T>): void;
+}
+
+// @public
+export interface IComparer<T> {
+    compare(a: T, b: T): number;
+    min: T;
+}
+
+// @public
+export interface IHeapNode<T> {
+    // (undocumented)
+    position: number;
+    // (undocumented)
+    value: T;
+}
+
+// @public
+export interface IPromiseTimer extends ITimer {
+    start(): Promise<IPromiseTimerResult>;
+}
+
+// @public (undocumented)
+export interface IPromiseTimerResult {
+    // (undocumented)
+    timerResult: "timeout" | "cancel";
+}
+
+// @public (undocumented)
+export interface ITimer {
+    clear(): void;
+    readonly hasTimer: boolean;
+    start(): void;
+}
 
 // @public
 export class Lazy<T> {
@@ -26,6 +86,9 @@ export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
 }
+
+// @public
+export const NumberComparer: IComparer<number>;
 
 // @public
 export class PromiseCache<TKey, TResult> {
@@ -52,6 +115,32 @@ export interface PromiseCacheOptions {
     expiry?: PromiseCacheExpiry;
     removeOnError?: (e: any) => boolean;
 }
+
+// @public
+export class PromiseTimer implements IPromiseTimer {
+    constructor(defaultTimeout: number, defaultHandler: () => void);
+    // (undocumented)
+    clear(): void;
+    get hasTimer(): boolean;
+    start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult>;
+    // (undocumented)
+    protected wrapHandler(handler: () => void): void;
+}
+
+// @public
+export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
+
+// @public
+export class Timer implements ITimer {
+    constructor(defaultTimeout: number, defaultHandler: () => void, getCurrentTick?: () => number);
+    clear(): void;
+    get hasTimer(): boolean;
+    restart(ms?: number, handler?: () => void): void;
+    start(ms?: number, handler?: () => void): void;
+}
+
+// @public
+export function unreachableCase(_: never, message?: string): never;
 
 // (No @packageDocumentation comment for this package)
 

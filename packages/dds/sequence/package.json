@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,11 +39,10 @@
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:memory": "mocha --config src/test/memory/.mocharc.js",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.js",
-		"test:mocha": "mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup",
 		"testfarm": "node dist/test/testFarm.js",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",

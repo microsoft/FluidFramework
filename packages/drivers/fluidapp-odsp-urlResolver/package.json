@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fluidapp-odsp-urlresolver",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "Url Resolver for Fluid app urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -29,8 +29,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",

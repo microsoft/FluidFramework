@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-core",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -34,9 +34,8 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "npm run test:mocha:coverage",
-		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
+		"test:mocha": "mocha dist/**/*.test.js --exit",
 		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",

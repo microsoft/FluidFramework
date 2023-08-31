@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -37,7 +37,7 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest",
 		"test:jest:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
-		"test:mocha": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
+		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
 		"tsc": "tsc",

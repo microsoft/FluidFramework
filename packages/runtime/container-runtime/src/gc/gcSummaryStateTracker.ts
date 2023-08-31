@@ -12,10 +12,10 @@ import {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats, ReadAndParseBlob, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeMetadata, metadataBlobName, RefreshSummaryResult } from "../summary";
+import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { RefreshSummaryResult } from "../summary";
 import { GCVersion, IGCStats } from "./gcDefinitions";
-import { getGCDataFromSnapshot, generateSortedGCState, getGCVersion } from "./gcHelpers";
+import { generateSortedGCState } from "./gcHelpers";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { IGarbageCollectorConfigs } from ".";
 
@@ -267,11 +267,7 @@ export class GCSummaryStateTracker {
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
 	 * is downloaded and should be used to update the state.
 	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<IGarbageCollectionSnapshotData | undefined> {
+	public async refreshLatestSummary(result: RefreshSummaryResult): Promise<void> {
 		// If the latest summary was updated and the summary was tracked, this client is the one that generated this
 		// summary. So, update wasGCRunInLatestSummary.
 		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
@@ -281,7 +277,7 @@ export class GCSummaryStateTracker {
 		}
 
 		if (!result.latestSummaryUpdated || !this.configs.shouldRunGC) {
-			return undefined;
+			return;
 		}
 
 		// If the summary was tracked by this client, it was the one that generated the summary in the first place.
@@ -291,45 +287,8 @@ export class GCSummaryStateTracker {
 			this.latestSummaryData = this.pendingSummaryData;
 			this.pendingSummaryData = undefined;
 			this.updatedDSCountSinceLastSummary = 0;
-			return undefined;
+			return;
 		}
-
-		// If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
-		const snapshotTree = result.snapshotTree;
-		const metadataBlobId = snapshotTree.blobs[metadataBlobName];
-		const metadata = metadataBlobId
-			? await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId)
-			: undefined;
-		this.latestSummaryGCVersion = getGCVersion(metadata);
-
-		const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
-		// If GC ran in the container that generated this snapshot, it will have a GC tree.
-		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
-
-		if (gcSnapshotTree === undefined) {
-			return undefined;
-		}
-
-		let snapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-
-		// If the GC version in the snapshot does not match the GC version currently in effect, the GC data
-		// in the snapshot cannot be interpreted correctly. Set everything to undefined except for deletedNodes
-		// because irrespective of GC versions, these nodes have been deleted and cannot be brought back. The
-		// deletedNodes info is needed to identify when these nodes are used.
-		if (getGCVersion(metadata) !== this.configs.gcVersionInEffect) {
-			snapshotData = {
-				gcState: undefined,
-				tombstones: undefined,
-				deletedNodes: snapshotData.deletedNodes,
-			};
-		}
-
-		this.latestSummaryData = {
-			serializedGCState: JSON.stringify(snapshotData.gcState),
-			serializedTombstones: JSON.stringify(snapshotData.tombstones),
-			serializedDeletedNodes: JSON.stringify(snapshotData.deletedNodes),
-		};
-		return snapshotData;
 	}
 
 	/**
