@@ -352,54 +352,6 @@ use_old_TypeAliasDeclaration_IAzureAudience(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
-    TypeOnly<old.ITelemetryBaseEvent>;
-declare function use_current_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<current.ITelemetryBaseEvent>);
-use_current_InterfaceDeclaration_ITelemetryBaseEvent(
-    get_old_InterfaceDeclaration_ITelemetryBaseEvent());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
-    TypeOnly<current.ITelemetryBaseEvent>;
-declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<old.ITelemetryBaseEvent>);
-use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    get_current_InterfaceDeclaration_ITelemetryBaseEvent());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryBaseLogger": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ITelemetryBaseLogger():
-    TypeOnly<old.ITelemetryBaseLogger>;
-declare function use_current_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<current.ITelemetryBaseLogger>);
-use_current_InterfaceDeclaration_ITelemetryBaseLogger(
-    get_old_InterfaceDeclaration_ITelemetryBaseLogger());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryBaseLogger": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ITelemetryBaseLogger():
-    TypeOnly<current.ITelemetryBaseLogger>;
-declare function use_old_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<old.ITelemetryBaseLogger>);
-use_old_InterfaceDeclaration_ITelemetryBaseLogger(
-    get_current_InterfaceDeclaration_ITelemetryBaseLogger());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenClaims": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenClaims():
@@ -420,54 +372,6 @@ declare function use_old_InterfaceDeclaration_ITokenClaims(
     use: TypeOnly<old.ITokenClaims>);
 use_old_InterfaceDeclaration_ITokenClaims(
     get_current_InterfaceDeclaration_ITokenClaims());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ITokenProvider():
-    TypeOnly<old.ITokenProvider>;
-declare function use_current_InterfaceDeclaration_ITokenProvider(
-    use: TypeOnly<current.ITokenProvider>);
-use_current_InterfaceDeclaration_ITokenProvider(
-    get_old_InterfaceDeclaration_ITokenProvider());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITokenProvider": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ITokenProvider():
-    TypeOnly<current.ITokenProvider>;
-declare function use_old_InterfaceDeclaration_ITokenProvider(
-    use: TypeOnly<old.ITokenProvider>);
-use_old_InterfaceDeclaration_ITokenProvider(
-    get_current_InterfaceDeclaration_ITokenProvider());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITokenResponse": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ITokenResponse():
-    TypeOnly<old.ITokenResponse>;
-declare function use_current_InterfaceDeclaration_ITokenResponse(
-    use: TypeOnly<current.ITokenResponse>);
-use_current_InterfaceDeclaration_ITokenResponse(
-    get_old_InterfaceDeclaration_ITokenResponse());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITokenResponse": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ITokenResponse():
-    TypeOnly<current.ITokenResponse>;
-declare function use_old_InterfaceDeclaration_ITokenResponse(
-    use: TypeOnly<old.ITokenResponse>);
-use_old_InterfaceDeclaration_ITokenResponse(
-    get_current_InterfaceDeclaration_ITokenResponse());
 
 /*
 * Validate forward compat by using old type in place of current type

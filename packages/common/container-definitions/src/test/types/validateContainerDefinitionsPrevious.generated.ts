@@ -184,6 +184,54 @@ use_old_EnumDeclaration_ContainerErrorType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_ContainerErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_ContainerErrorTypes():
+    TypeOnly<typeof old.ContainerErrorTypes>;
+declare function use_current_VariableDeclaration_ContainerErrorTypes(
+    use: TypeOnly<typeof current.ContainerErrorTypes>);
+use_current_VariableDeclaration_ContainerErrorTypes(
+    get_old_VariableDeclaration_ContainerErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_ContainerErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_ContainerErrorTypes():
+    TypeOnly<typeof current.ContainerErrorTypes>;
+declare function use_old_VariableDeclaration_ContainerErrorTypes(
+    use: TypeOnly<typeof old.ContainerErrorTypes>);
+use_old_VariableDeclaration_ContainerErrorTypes(
+    get_current_VariableDeclaration_ContainerErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ContainerErrorTypes():
+    TypeOnly<old.ContainerErrorTypes>;
+declare function use_current_TypeAliasDeclaration_ContainerErrorTypes(
+    use: TypeOnly<current.ContainerErrorTypes>);
+use_current_TypeAliasDeclaration_ContainerErrorTypes(
+    get_old_TypeAliasDeclaration_ContainerErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ContainerErrorTypes():
+    TypeOnly<current.ContainerErrorTypes>;
+declare function use_old_TypeAliasDeclaration_ContainerErrorTypes(
+    use: TypeOnly<old.ContainerErrorTypes>);
+use_old_TypeAliasDeclaration_ContainerErrorTypes(
+    get_current_TypeAliasDeclaration_ContainerErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ContainerWarning": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ContainerWarning():
@@ -568,30 +616,6 @@ use_old_InterfaceDeclaration_IDeltaSender(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IErrorBase": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IErrorBase():
-    TypeOnly<old.IErrorBase>;
-declare function use_current_InterfaceDeclaration_IErrorBase(
-    use: TypeOnly<current.IErrorBase>);
-use_current_InterfaceDeclaration_IErrorBase(
-    get_old_InterfaceDeclaration_IErrorBase());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IErrorBase": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IErrorBase():
-    TypeOnly<current.IErrorBase>;
-declare function use_old_InterfaceDeclaration_IErrorBase(
-    use: TypeOnly<old.IErrorBase>);
-use_old_InterfaceDeclaration_IErrorBase(
-    get_current_InterfaceDeclaration_IErrorBase());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidBrowserPackage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidBrowserPackage():
@@ -852,31 +876,6 @@ declare function use_old_InterfaceDeclaration_IFluidPackageEnvironment(
     use: TypeOnly<old.IFluidPackageEnvironment>);
 use_old_InterfaceDeclaration_IFluidPackageEnvironment(
     get_current_InterfaceDeclaration_IFluidPackageEnvironment());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IGenericError():
-    TypeOnly<old.IGenericError>;
-declare function use_current_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<current.IGenericError>);
-use_current_InterfaceDeclaration_IGenericError(
-    get_old_InterfaceDeclaration_IGenericError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGenericError": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IGenericError():
-    TypeOnly<current.IGenericError>;
-declare function use_old_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<old.IGenericError>);
-use_old_InterfaceDeclaration_IGenericError(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IGenericError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1189,56 +1188,6 @@ declare function use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
     use: TypeOnly<old.ISnapshotTreeWithBlobContents>);
 use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
     get_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IThrottlingWarning():
-    TypeOnly<old.IThrottlingWarning>;
-declare function use_current_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<current.IThrottlingWarning>);
-use_current_InterfaceDeclaration_IThrottlingWarning(
-    get_old_InterfaceDeclaration_IThrottlingWarning());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IThrottlingWarning():
-    TypeOnly<current.IThrottlingWarning>;
-declare function use_old_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<old.IThrottlingWarning>);
-use_old_InterfaceDeclaration_IThrottlingWarning(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IThrottlingWarning());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IUsageError": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IUsageError():
-    TypeOnly<old.IUsageError>;
-declare function use_current_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<current.IUsageError>);
-use_current_InterfaceDeclaration_IUsageError(
-    get_old_InterfaceDeclaration_IUsageError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IUsageError": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IUsageError():
-    TypeOnly<current.IUsageError>;
-declare function use_old_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<old.IUsageError>);
-use_old_InterfaceDeclaration_IUsageError(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IUsageError());
 
 /*
 * Validate forward compat by using old type in place of current type
