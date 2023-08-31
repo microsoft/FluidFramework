@@ -647,6 +647,15 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 		stickiness?: IntervalStickiness,
 	): TInterval;
 	/**
+	 * overload of add
+	 */
+	add(
+		start: number,
+		end: number,
+		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval;
+	/**
 	 * Removes an interval from the collection.
 	 * @param id - Id of the interval to remove
 	 * @returns the removed interval
@@ -966,20 +975,46 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.add}
+	 * @deprecated - call IntervalCollection.add without specifying an intervalType
 	 */
 	public add(
 		start: number,
 		end: number,
 		intervalType: IntervalType,
 		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval;
+
+	public add(
+		start: number,
+		end: number,
+		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval;
+
+	public add(
+		start: number,
+		end: number,
+		intervalType: IntervalType | PropertySet | undefined,
+		props?: PropertySet | IntervalStickiness,
 		stickiness: IntervalStickiness = IntervalStickiness.END,
-	): TInterval {
+	) {
+		let type: IntervalType;
+		let properties: PropertySet | undefined;
+		if (intervalType !== undefined && typeof intervalType === "number") {
+			type = intervalType;
+			if (props === undefined || typeof props !== "number") {
+				properties = props;
+			}
+		} else {
+			type = IntervalType.SlideOnRemove;
+			properties = intervalType;
+		}
+
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}
-		if (intervalType & IntervalType.Transient) {
-			throw new LoggingError("Can not add transient intervals");
-		}
+
 		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
 			throw new UsageError(
 				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
@@ -989,8 +1024,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		const interval: TInterval = this.localCollection.addInterval(
 			start,
 			end,
-			intervalType,
-			props,
+			type,
+			properties,
 			undefined,
 			stickiness,
 		);
@@ -998,7 +1033,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (interval) {
 			const serializedInterval = {
 				end,
-				intervalType,
+				intervalType: type,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				start,
