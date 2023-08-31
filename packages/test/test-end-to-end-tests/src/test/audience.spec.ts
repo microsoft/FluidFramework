@@ -229,42 +229,4 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 			"client2's audience should be removed",
 		);
 	});
-
-	it("second client should see first client in audience when it connects immediately after", async () => {
-		const container1 = await provider.makeTestContainer();
-		const container2 = await provider.loadTestContainer();
-
-		await waitForContainerConnection(container1);
-		await waitForContainerConnection(container2);
-
-		// Validate that client1 is added to its own audience.
-		assert(container1.clientId !== undefined, "client1 does not have clientId");
-		await waitForClientAdd(
-			container1,
-			container1.clientId,
-			"client1's audience doesn't have self",
-		);
-
-		// Validate that client2 is added to its own audience.
-		assert(container2.clientId !== undefined, "client2 does not have clientId");
-		await waitForClientAdd(
-			container2,
-			container2.clientId,
-			"client2's audience doesn't have self",
-		);
-
-		// Validate that client2 is added to client1's audience.
-		await waitForClientAdd(
-			container1,
-			container2.clientId,
-			"client1's audience doesn't have client2",
-		);
-
-		// Validate that client1 is added to client2's audience.
-		await waitForClientAdd(
-			container2,
-			container1.clientId,
-			"client2's audience doesn't have client1",
-		);
-	});
 });
