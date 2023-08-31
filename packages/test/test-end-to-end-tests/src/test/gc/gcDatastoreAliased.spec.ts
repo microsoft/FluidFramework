@@ -53,7 +53,8 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 			TestDataObjectType,
 		);
 		const dataObject2 = (await dataStore2.entryPoint?.get()) as ITestDataObject;
-		mainDataStore1._root.set("dataStore2", dataStore2);
+		mainDataStore1._root.set("dataStore2", dataObject2);
+		mainDataStore1._root.delete("dataStore2");
 		await provider.ensureSynchronized();
 
 		// We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
