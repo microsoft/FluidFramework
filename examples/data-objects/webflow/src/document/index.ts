@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	LazyLoadedDataObject,

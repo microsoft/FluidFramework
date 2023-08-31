@@ -38,10 +38,11 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
