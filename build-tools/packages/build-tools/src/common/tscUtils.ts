@@ -93,11 +93,15 @@ function filterIncrementalOptions(options: any) {
 	return newOptions;
 }
 
-function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
+function convertOptionPaths(
+	options: ts.CompilerOptions,
+	base: string,
+	convert: (base: string, path: string) => string,
+) {
 	// Shallow clone 'CompilerOptions' before modifying.
 	const result = { ...options };
 
-	// Expand 'string' properties that potentially contain relative paths.
+	// Convert 'string' properties that potentially contain paths.
 	for (const key of [
 		"baseUrl",
 		"configFilePath",
@@ -108,23 +112,23 @@ function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: stri
 	]) {
 		const value = result[key] as string;
 		if (value !== undefined) {
-			result[key] = path.resolve(cwd, value);
+			result[key] = convert(base, value);
 		}
 	}
 
-	// Expand 'string[]' properties that potentially contain relative paths.
+	// Convert 'string[]' properties that potentially contain paths.
 	for (const key of ["typeRoots"]) {
 		const value = result[key] as string[];
 		if (value !== undefined) {
 			// Note that this also shallow clones the array.
-			result[key] = value.map((relative) => path.resolve(cwd, relative));
+			result[key] = value.map((value) => convert(base, value));
 		}
 	}
 
 	return result;
 }
 
-// This is a duplicate of how tsc deal with case insenitive file system as keys (in tsBuildInfo)
+// This is a duplicate of how tsc deal with case insensitive file system as keys (in tsBuildInfo)
 function toLowerCase(x: string) {
 	return x.toLowerCase();
 }
@@ -215,7 +219,7 @@ function createTscUtil(tsLib: typeof ts) {
 			return configFile.config;
 		},
 		filterIncrementalOptions,
-		convertToOptionsWithAbsolutePath,
+		convertOptionPaths,
 		getCanonicalFileName: createGetCanonicalFileName(tsLib),
 		getSourceFileVersion: createGetSourceFileVersion(tsLib),
 	};
