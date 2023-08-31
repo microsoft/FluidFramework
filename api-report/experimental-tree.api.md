@@ -21,7 +21,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import type { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export function areRevisionViewsSemanticallyEqual(treeViewA: TreeView, idConverterA: NodeIdConverter, treeViewB: TreeView, idConverterB: NodeIdConverter): boolean;

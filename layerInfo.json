@@ -56,20 +56,26 @@
 			"Other-Utils": {
 				"dot": false,
 				"packages": ["@fluidframework/odsp-doclib-utils"],
-				"deps": ["Driver-Definitions", "Driver-Utils", "Server-Shared-Utils"]
+				"deps": ["Driver-Definitions", "Driver-Utils", "Server-Shared-Utils", "Client-Utils"]
 			},
 			"Tool-Utils": {
 				"dot": false,
 				"packages": ["@fluidframework/tool-utils"],
-				"deps": ["Common-Utils", "Other-Utils"]
+				"deps": ["Common-Utils", "Client-Utils", "Other-Utils"]
 			},
 			"Telemetry-Utils": {
 				"packages": ["@fluidframework/telemetry-utils"],
-				"deps": ["Common-Utils", "Core-Interfaces", "Core-Utils", "Protocol-Definitions"]
+				"deps": [
+					"Common-Utils",
+					"Core-Interfaces",
+					"Core-Utils",
+					"Client-Utils",
+					"Protocol-Definitions"
+				]
 			},
 			"Container-Utils": {
 				"packages": ["@fluidframework/container-utils"],
-				"deps": ["Telemetry-Utils", "Container-Definitions"]
+				"deps": ["Telemetry-Utils", "Container-Definitions", "Client-Utils"]
 			}
 		}
 	},
@@ -78,15 +84,21 @@
 		"layers": {
 			"Driver": {
 				"dirs": ["packages/drivers/"],
-				"deps": ["Driver-Utils", "@fluidframework/core-interfaces", "Other-Utils"]
+				"deps": ["Driver-Utils", "Core-Interfaces", "Client-Utils", "Other-Utils"]
 			},
 			"Loader": {
 				"dirs": ["packages/loader/"],
-				"deps": ["Container-Definitions", "Driver-Utils", "Container-Utils"]
+				"deps": ["Container-Definitions", "Driver-Utils", "Client-Utils", "Container-Utils"]
 			},
 			"Runtime": {
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": ["Container-Definitions", "Container-Utils", "Core-Utils", "Driver-Utils"]
+				"deps": [
+					"Container-Definitions",
+					"Container-Utils",
+					"Core-Utils",
+					"Client-Utils",
+					"Driver-Utils"
+				]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],
@@ -95,7 +107,7 @@
 					"experimental/PropertyDDS/packages/",
 					"packages/framework/"
 				],
-				"deps": ["Framework-Utils", "Loader", "Runtime"]
+				"deps": ["Framework-Utils", "Loader", "Runtime", "Client-Utils"]
 			},
 			"ServiceClients": {
 				"packages": ["@fluidframework/tinylicious-client"],
