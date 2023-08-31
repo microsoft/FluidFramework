@@ -379,6 +379,9 @@ importers:
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       cross-env: 7.0.3
       mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
       prettier: 2.6.2
       sinon: 7.5.0
       start-server-and-test: 1.15.5
@@ -395,9 +398,6 @@ importers:
       '@types/uuid': 9.0.2
       concurrently: 7.6.0
       eslint: 8.6.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
       nock: 13.3.3
       nyc: 15.1.0
       rimraf: 4.4.1
