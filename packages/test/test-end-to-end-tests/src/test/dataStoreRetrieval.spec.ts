@@ -92,14 +92,14 @@ describeFullCompat(
 			provider = getTestObjectProvider();
 		});
 
-		it("Requesting not bound data stores in detached container", async () => {
+		it("Requesting not visible data stores in detached container", async () => {
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.makeTestLoader();
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			// Get the default (root) dataStore from the detached container.
 			const mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 
-			// Create another data store and bind it by adding its handle in the root data store's DDS.
+			// Create another data store and make it visible by adding its handle in the root data store's DDS.
 			const dataStore2 = await mainDataStore._context.containerRuntime.createDataStore(
 				TestDataObjectType,
 			);
@@ -161,7 +161,7 @@ describeFullCompat(
 			// Get the default dataStore from the detached container.
 			const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 
-			// Create another data store and bind it by adding its handle in the root data store's DDS.
+			// Create another data store and make it visible by adding its handle in the root data store's DDS.
 			const dataStore2 = await outerDataObjectFactory.createInstance(
 				defaultDataStore._context.containerRuntime,
 			);
