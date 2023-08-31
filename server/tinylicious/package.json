@@ -32,7 +32,6 @@
 		"stop": "forever stop dist/index.js",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
 		"tsc": "tsc"
 	},
 	"dependencies": {
