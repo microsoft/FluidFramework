@@ -582,16 +582,23 @@ export function viewWithContent(
 	},
 ): ISharedTreeView {
 	const forest = forestWithContent(content);
-	const view = createSharedTreeView({ ...args, forest, schema: forest.schema });
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
 	return view;
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
-	const schema = new InMemoryStoredSchemaRepository(content.schema);
-	const forest = buildForest(schema);
+	const forest = buildForest();
 	initializeForest(
 		forest,
-		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
+		normalizeNewFieldContent(
+			{ schema: content.schema },
+			content.schema.rootFieldSchema,
+			content.initialTree,
+		),
 	);
 	return forest;
 }

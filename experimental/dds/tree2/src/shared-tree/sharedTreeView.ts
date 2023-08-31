@@ -291,7 +291,7 @@ export function createSharedTreeView(args?: {
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
-	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
+	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
 	const repairDataStoreProvider =
@@ -314,6 +314,7 @@ export function createSharedTreeView(args?: {
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
 		forest,
+		schema,
 		branch.editor,
 		nodeKeyManager,
 		brand(nodeKeyFieldKey),
@@ -488,6 +489,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
+			storedSchema,
 			branch.editor,
 			this.nodeKeyManager,
 			this.nodeKeyIndex.fieldKey,

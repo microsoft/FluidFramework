@@ -10,7 +10,6 @@ import {
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
@@ -108,8 +107,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
-	const schema = new InMemoryStoredSchemaRepository();
-	const forest = buildForest(schema);
+	const forest = buildForest();
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
