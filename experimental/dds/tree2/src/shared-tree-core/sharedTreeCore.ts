@@ -14,6 +14,7 @@ import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -89,6 +90,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 > {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
+	private readonly idCompressor?: IIdCompressor;
 
 	/** Iff false, calls to `submitOp` will have no effect */
 	private submitOps = true;
@@ -152,7 +154,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		const localSessionId = generateStableId();
+		this.idCompressor = runtime.idCompressor;
+		const localSessionId = this.idCompressor?.localSessionId ?? generateStableId();
 		this.editManager = new EditManager(changeFamily, localSessionId, repairDataStoreProvider);
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
