@@ -9,7 +9,7 @@ import { ChangeRebaser, RevisionTag } from "../../core";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { GraphCommit, rebaseBranch } from "../../core/rebase";
+import { GraphCommit, mintRevisionTag, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
 import { MockRepairDataStoreProvider } from "../utils";
@@ -132,6 +132,7 @@ describe("rebaser", () => {
 				const [result] = rebaseBranch(
 					new DummyChangeRebaser(),
 					new MockRepairDataStoreProvider(),
+					mintRevisionTag,
 					tester.branch,
 					base,
 					tester.main,

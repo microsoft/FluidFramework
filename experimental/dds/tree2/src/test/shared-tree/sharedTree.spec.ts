@@ -51,6 +51,7 @@ import {
 	AllowedUpdateType,
 	LocalCommitSource,
 	storedEmptyFieldSchema,
+	mintRevisionTag,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
@@ -2171,7 +2172,7 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 		// Test an actual SharedTree...
 		fn(provider.trees[0]);
 		// ...as well as a reference view
-		fn(createSharedTreeView());
+		fn(createSharedTreeView(mintRevisionTag));
 	});
 
 	it(`${title} (forked view)`, () => {
@@ -2179,6 +2180,6 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 		// Test an actual SharedTree fork...
 		fn(provider.trees[0].fork());
 		// ...as well as a reference fork
-		fn(createSharedTreeView().fork());
+		fn(createSharedTreeView(mintRevisionTag).fork());
 	});
 }

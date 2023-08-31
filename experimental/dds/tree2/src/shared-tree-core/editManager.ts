@@ -5,6 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	assertIsRevisionTag,
@@ -144,6 +145,7 @@ export class EditManager<
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
+		private readonly idGenerator: () => StableId,
 	) {
 		super("EditManager");
 		this.trunkBase = {
@@ -156,12 +158,14 @@ export class EditManager<
 		this.trunk = new SharedTreeBranch(
 			this.trunkBase,
 			changeFamily,
+			this.idGenerator,
 			repairDataStoreProvider.clone(),
 			this.trunkUndoRedoManager,
 		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
+			this.idGenerator,
 			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
 		);
@@ -429,7 +433,11 @@ export class EditManager<
 
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(branch.commits.reduce(mintCommit, commit), this.changeFamily),
+				new SharedTreeBranch(
+					branch.commits.reduce(mintCommit, commit),
+					this.changeFamily,
+					this.idGenerator,
+				),
 			);
 		}
 	}
@@ -528,7 +536,7 @@ export class EditManager<
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			newCommit.sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily),
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.idGenerator),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
@@ -543,6 +551,7 @@ export class EditManager<
 				newCommit.change,
 				peerLocalBranch.getHead(),
 				this.trunk.getHead(),
+				this.idGenerator,
 			);
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);

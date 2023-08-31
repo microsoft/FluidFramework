@@ -5,7 +5,12 @@
 import { strict as assert } from "assert";
 import { SchemaBuilder, Any } from "../../feature-libraries";
 import { createSharedTreeView } from "../../shared-tree";
-import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import {
+	ValueSchema,
+	AllowedUpdateType,
+	storedEmptyFieldSchema,
+	mintRevisionTag,
+} from "../../core";
 
 const builder = new SchemaBuilder("Schematize Tree Tests");
 const root = builder.leaf("root", ValueSchema.Number);
@@ -18,7 +23,7 @@ const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fi
 describe("sharedTreeView", () => {
 	describe("schematize", () => {
 		it("initialize tree", () => {
-			const tree = createSharedTreeView();
+			const tree = createSharedTreeView(mintRevisionTag);
 			assert.equal(tree.storedSchema.rootFieldSchema, storedEmptyFieldSchema);
 
 			tree.schematize({
@@ -30,7 +35,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("noop upgrade", () => {
-			const tree = createSharedTreeView();
+			const tree = createSharedTreeView(mintRevisionTag);
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
@@ -44,7 +49,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("incompatible upgrade errors", () => {
-			const tree = createSharedTreeView();
+			const tree = createSharedTreeView(mintRevisionTag);
 			tree.storedSchema.update(schemaGeneralized);
 			assert.throws(() => {
 				tree.schematize({
@@ -56,7 +61,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("upgrade schema", () => {
-			const tree = createSharedTreeView();
+			const tree = createSharedTreeView(mintRevisionTag);
 			tree.storedSchema.update(schema);
 			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,

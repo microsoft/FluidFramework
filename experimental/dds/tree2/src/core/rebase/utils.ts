@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IIdCompressor, StableId } from "@fluidframework/runtime-definitions";
 import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
 import { fail } from "../../util";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
@@ -84,6 +85,7 @@ export interface RebasedCommits<TChange> {
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
+	idGenerator: () => StableId,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): [
@@ -133,6 +135,7 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
+	idGenerator: () => StableId,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -144,6 +147,7 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
+	idGenerator: () => StableId,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
@@ -276,7 +280,7 @@ export function rebaseBranch<TChange>(
 				tagRollbackInverse(
 					nonTaggedInverses.pop() ??
 						fail("The commits in source path should not be modified."),
-					mintRevisionTag(),
+					idGenerator(),
 					c.revision,
 				),
 			);
@@ -309,6 +313,7 @@ export function rebaseChange<TChange>(
 	change: TChange,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	generateId: () => StableId,
 ): TChange {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -321,7 +326,13 @@ export function rebaseChange<TChange>(
 		(newChange, branchCommit) =>
 			changeRebaser.rebase(
 				newChange,
-				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData, true),
+				inverseFromCommit(
+					changeRebaser,
+					branchCommit,
+					generateId,
+					branchCommit.repairData,
+					true,
+				),
 			),
 		change,
 	);
@@ -340,6 +351,7 @@ function rebaseChangeOverChanges<TChange>(
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
+	idGenerator: () => StableId,
 	repairData?: ReadonlyRepairDataStore,
 	cache?: boolean,
 ): TaggedChange<TChange> {
@@ -348,7 +360,7 @@ function inverseFromCommit<TChange>(
 		commit.inverse = inverse;
 	}
 
-	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
+	return tagRollbackInverse(inverse, idGenerator(), commit.revision);
 }
 
 /**

@@ -15,7 +15,7 @@ import {
 } from "../../../feature-libraries";
 import { nodeKeyField, nodeKeySchema } from "../../../domains";
 import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
-import { AllowedUpdateType, ValueSchema } from "../../../core";
+import { AllowedUpdateType, ValueSchema, mintRevisionTag } from "../../../core";
 import { brand } from "../../../util";
 
 const builder = new SchemaBuilder("EditableTree Node Keys", {}, nodeKeySchema);
@@ -42,7 +42,9 @@ function addKey(view: ISharedTreeView, key: LocalNodeKey): { [nodeKeyFieldKey]: 
 describe("editable-tree: node keys", () => {
 	/** Creates or populates a view with a parent node and two children, each with node keys */
 	function initializeView(
-		view = createSharedTreeView({ nodeKeyManager: createMockNodeKeyManager() }),
+		view = createSharedTreeView(mintRevisionTag, {
+			nodeKeyManager: createMockNodeKeyManager(),
+		}),
 	) {
 		const parentKey = view.nodeKey.generate();
 		const childAKey = view.nodeKey.generate();

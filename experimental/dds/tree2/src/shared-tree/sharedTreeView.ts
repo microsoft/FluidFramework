@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/common-utils";
+import { StableId } from "@fluidframework/runtime-definitions";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -281,16 +282,19 @@ export interface ISharedTreeView extends AnchorLocator {
  * @remarks This does not create a {@link SharedTree}, but rather a view with the minimal state
  * and functionality required to implement {@link ISharedTreeView}.
  */
-export function createSharedTreeView(args?: {
-	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	changeFamily?: DefaultChangeFamily;
-	schema?: InMemoryStoredSchemaRepository;
-	forest?: IEditableForest;
-	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
-	nodeKeyManager?: NodeKeyManager;
-	nodeKeyIndex?: NodeKeyIndex;
-	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
-}): ISharedTreeView {
+export function createSharedTreeView(
+	idGenerator: () => StableId,
+	args?: {
+		branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+		changeFamily?: DefaultChangeFamily;
+		schema?: InMemoryStoredSchemaRepository;
+		forest?: IEditableForest;
+		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyIndex?: NodeKeyIndex;
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	},
+): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
 	const changeFamily =
@@ -309,6 +313,7 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			changeFamily,
+			idGenerator,
 			repairDataStoreProvider,
 			undoRedoManager,
 		);

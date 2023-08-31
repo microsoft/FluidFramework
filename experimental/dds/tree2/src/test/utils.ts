@@ -91,12 +91,14 @@ import {
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
+	mintRevisionTag,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 
 // Testing utilities
 
@@ -587,7 +589,7 @@ export function viewWithContent(
 		forest,
 		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
 	);
-	const view = createSharedTreeView({ ...args, forest, schema });
+	const view = createSharedTreeView(mintRevisionTag, { ...args, forest, schema });
 	return view;
 }
 

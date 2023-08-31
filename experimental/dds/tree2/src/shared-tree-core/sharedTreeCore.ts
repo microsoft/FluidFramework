@@ -29,6 +29,7 @@ import {
 	ChangeFamilyEditor,
 	IRepairDataStoreProvider,
 	GraphCommit,
+	mintRevisionTag,
 } from "../core";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -156,7 +157,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		this.idCompressor = runtime.idCompressor;
 		const localSessionId = this.idCompressor?.localSessionId ?? generateStableId();
-		this.editManager = new EditManager(changeFamily, localSessionId, repairDataStoreProvider);
+		const genId =
+			this.idCompressor !== undefined
+				? () => this.idCompressor?.generateCompressedId()
+				: mintRevisionTag;
+		this.editManager = new EditManager(
+			changeFamily,
+			localSessionId,
+			repairDataStoreProvider,
+			genId,
+		);
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});

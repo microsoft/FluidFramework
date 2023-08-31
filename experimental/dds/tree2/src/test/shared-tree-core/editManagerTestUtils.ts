@@ -34,7 +34,7 @@ export function editManagerFactory(options: {
 		ChangeFamilyEditor,
 		TestChange,
 		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? "0", new MockRepairDataStoreProvider());
+	>(family, options.sessionId ?? "0", new MockRepairDataStoreProvider(), mintRevisionTag);
 	return { manager, family };
 }
 

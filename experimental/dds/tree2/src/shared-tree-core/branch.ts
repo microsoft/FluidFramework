@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IIdCompressor, StableId } from "@fluidframework/runtime-definitions";
 import {
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -131,13 +132,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly idGenerator: () => StableId,
 		public repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 	) {
 		super();
-		this.editor = this.changeFamily.buildEditor((change) =>
-			this.apply(change, mintRevisionTag()),
-		);
+		this.editor = this.changeFamily.buildEditor((change) => this.apply(change, idGenerator()));
 	}
 
 	/**
@@ -255,7 +255,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
 		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
-		const revision = mintRevisionTag();
+		const revision = this.idGenerator();
 
 		let repairData: RepairDataStore<TChange> | undefined;
 		if (!this.isTransacting() && this.repairDataStoreProvider !== undefined) {
@@ -312,7 +312,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);
-			inverses.push(tagChange(inverse, mintRevisionTag()));
+			inverses.push(tagChange(inverse, this.idGenerator()));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -364,7 +364,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const undoChange = this.undoRedoManager?.undo(this.getHead());
 		if (undoChange !== undefined) {
-			return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
+			return this.applyChange(undoChange, this.idGenerator(), LocalCommitSource.Undo);
 		}
 
 		return undefined;
@@ -387,7 +387,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const redoChange = this.undoRedoManager?.redo(this.getHead());
 		if (redoChange !== undefined) {
-			return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
+			return this.applyChange(redoChange, this.idGenerator(), LocalCommitSource.Redo);
 		}
 
 		return undefined;
@@ -408,6 +408,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.changeFamily,
+			this.idGenerator,
 			repairDataStoreProvider ?? this.repairDataStoreProvider?.clone(),
 			this.undoRedoManager?.clone(),
 		);
@@ -536,6 +537,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = rebaseBranch(
 			this.changeFamily.rebaser,
 			repairDataStoreProvider,
+			this.idGenerator,
 			head,
 			upTo,
 			onto.getHead(),

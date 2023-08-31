@@ -21,6 +21,7 @@ import {
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
 	IForestSubscription,
+	mintRevisionTag,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -45,7 +46,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand } from "../util";
+import { JsonCompatibleReadOnly, brand, generateStableId } from "../util";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeBranchView,
@@ -115,7 +116,11 @@ export class SharedTree
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
 		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
-		this.view = createSharedTreeView({
+		const idGenerator =
+			runtime.idCompressor !== undefined
+				? () => runtime.idCompressor?.generateCompressedId()
+				: () => mintRevisionTag();
+		this.view = createSharedTreeView(idGenerator, {
 			branch: this.getLocalBranch(),
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.

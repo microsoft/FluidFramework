@@ -21,7 +21,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import {
+	AllowedUpdateType,
+	TreeSchemaIdentifier,
+	ValueSchema,
+	mintRevisionTag,
+} from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -461,7 +466,7 @@ describe("SchemaAware Editing", () => {
 		const schema = builder.intoDocumentSchema(
 			SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
 		);
-		const view = createSharedTreeView().schematize({
+		const view = createSharedTreeView(mintRevisionTag).schematize({
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: { children: [] },

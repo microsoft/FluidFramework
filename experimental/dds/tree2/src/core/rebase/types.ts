@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { StableId } from "@fluidframework/runtime-definitions";
+import { IIdCompressor, StableId } from "@fluidframework/runtime-definitions";
 import { Brand, brandedStringType, generateStableId } from "../../util";
 import { ReadonlyRepairDataStore } from "../repair";
 
@@ -21,7 +21,7 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  * @alpha
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
-export type RevisionTag = StableId;
+export type RevisionTag = any;
 export const RevisionTagSchema = brandedStringType<StableId>();
 
 /**

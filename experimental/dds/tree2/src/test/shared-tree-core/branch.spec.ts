@@ -13,6 +13,7 @@ import {
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	mintRevisionTag,
 	rootFieldKey,
 } from "../../core";
 import {
@@ -622,6 +623,7 @@ describe("Branches", () => {
 		const branch = new SharedTreeBranch(
 			initCommit,
 			defaultChangeFamily,
+			mintRevisionTag,
 			new MockRepairDataStoreProvider(),
 		);
 		if (onChange !== undefined) {
@@ -635,6 +637,7 @@ describe("Branches", () => {
 		return new SharedTreeBranch(
 			from.getHead(),
 			defaultChangeFamily,
+			mintRevisionTag,
 			new MockRepairDataStoreProvider(),
 			UndoRedoManager.create(defaultChangeFamily),
 		);

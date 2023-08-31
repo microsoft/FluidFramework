@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AllowedUpdateType } from "../../../core";
+import { AllowedUpdateType, mintRevisionTag } from "../../../core";
 import { isEditableTree } from "../../../feature-libraries";
 import { createSharedTreeView } from "../../../shared-tree";
 
@@ -16,7 +16,7 @@ import { fullSchemaData, personData } from "./mockData";
 
 describe("editable-tree context", () => {
 	it("can free anchors", () => {
-		const view = createSharedTreeView().schematize({
+		const view = createSharedTreeView(mintRevisionTag).schematize({
 			schema: fullSchemaData,
 			initialTree: personData,
 			allowedSchemaModifications: AllowedUpdateType.None,
@@ -34,7 +34,7 @@ describe("editable-tree context", () => {
 	});
 
 	it("can create fields while clearing the context in afterHandlers", () => {
-		const view = createSharedTreeView().schematize({
+		const view = createSharedTreeView(mintRevisionTag).schematize({
 			schema: fullSchemaData,
 			initialTree: personData,
 			allowedSchemaModifications: AllowedUpdateType.None,
