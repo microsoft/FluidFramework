@@ -340,8 +340,9 @@ export function testForest(config: ForestTestConfiguration): void {
 
 		describe("can clone", () => {
 			it("an empty forest", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository());
-				const clone = forest.clone(forest.schema, forest.anchors);
+				const schema = new InMemoryStoredSchemaRepository();
+				const forest = factory(schema);
+				const clone = forest.clone(schema, forest.anchors);
 				const reader = clone.allocateCursor();
 				moveToDetachedField(clone, reader);
 				// Expect no nodes under the detached field
@@ -349,11 +350,12 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("primitive nodes", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+				const schema = new InMemoryStoredSchemaRepository(jsonDocumentSchema);
+				const forest = factory(schema);
 				const content: JsonCompatible[] = [1, true, "test"];
 				initializeForest(forest, content.map(singleJsonCursor));
 
-				const clone = forest.clone(forest.schema, forest.anchors);
+				const clone = forest.clone(schema, forest.anchors);
 				const reader = clone.allocateCursor();
 				moveToDetachedField(clone, reader);
 				assert(reader.firstNode());
@@ -366,10 +368,11 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("multiple fields", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+				const schema = new InMemoryStoredSchemaRepository(jsonDocumentSchema);
+				const forest = factory(schema);
 				initializeForest(forest, [singleJsonCursor(nestedContent)]);
 
-				const clone = forest.clone(forest.schema, forest.anchors);
+				const clone = forest.clone(schema, forest.anchors);
 				const reader = clone.allocateCursor();
 				moveToDetachedField(clone, reader);
 				assert(reader.firstNode());
@@ -378,7 +381,8 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("with anchors", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
+				const schema = new InMemoryStoredSchemaRepository(jsonDocumentSchema);
+				const forest = factory(schema);
 				initializeForest(forest, [singleJsonCursor(nestedContent)]);
 
 				const forestReader = forest.allocateCursor();
@@ -388,7 +392,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert(forestReader.firstNode());
 				const anchor = forestReader.buildAnchor();
 
-				const clone = forest.clone(forest.schema, forest.anchors);
+				const clone = forest.clone(schema, forest.anchors);
 				const reader = clone.allocateCursor();
 				clone.tryMoveCursorToNode(anchor, reader);
 				assert.equal(reader.value, undefined);
@@ -396,7 +400,8 @@ export function testForest(config: ForestTestConfiguration): void {
 		});
 
 		it("editing a cloned forest does not modify the original", () => {
-			const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
+			const schema = new InMemoryStoredSchemaRepository(jsonSchema);
+			const forest = factory(schema);
 			const content: JsonableTree[] = [
 				{ type: jsonNumber.name, value: 1 },
 				{ type: jsonBoolean.name, value: true },
@@ -404,7 +409,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			];
 			initializeForest(forest, content.map(singleTextCursor));
 
-			const clone = forest.clone(forest.schema, forest.anchors);
+			const clone = forest.clone(schema, forest.anchors);
 			const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
 			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			clone.applyDelta(delta);
@@ -743,12 +748,14 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 
 			it("schema editing", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
+				const schema = new InMemoryStoredSchemaRepository(jsonSchema);
+				const forest = factory(schema);
 				const dependent = new MockDependent("dependent");
 				recordDependency(dependent, forest);
-				forest.schema.update(jsonSchema);
+				schema.update(jsonSchema);
 
-				assert.deepEqual(dependent.tokens.length, 1);
+				// Forest no longer observes schema and should not be invalidated by it changing.
+				assert.deepEqual(dependent.tokens, []);
 			});
 		});
 
