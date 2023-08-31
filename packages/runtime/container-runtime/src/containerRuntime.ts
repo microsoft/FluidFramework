@@ -3651,19 +3651,21 @@ export class ContainerRuntime
 	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
+		// proposalHandle is always passed from RunningSummarizer.
+		assert(proposalHandle !== undefined, "proposalHandle should be available");
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const result = await this.summarizerNode.refreshLatestSummary(
+		const isSummaryTracked = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
 		);
 
 		/**
-		 * When refreshing a summary ack, this check indicates a new ack of a summary that was newer than the
+		 * When refreshing a summary ack, this check indicates a new ack of a summary that is newer than the
 		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
 		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
-		if (result.latestSummaryUpdated && !result.wasSummaryTracked) {
+		if (!isSummaryTracked && summaryRefSeq > this.summarizerNode.referenceSequenceNumber) {
 			const fetchResult = await this.fetchSnapshotFromStorage(
 				summaryLogger,
 				{
@@ -3705,7 +3707,7 @@ export class ContainerRuntime
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(result);
+		await this.garbageCollector.refreshLatestSummary(isSummaryTracked);
 	}
 
 	/**

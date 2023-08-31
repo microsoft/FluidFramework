@@ -29,7 +29,6 @@ import {
 	RuntimeHeaders,
 } from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
-import { RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -846,8 +845,8 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
 	 * is downloaded and should be used to update the state.
 	 */
-	public async refreshLatestSummary(result: RefreshSummaryResult): Promise<void> {
-		return this.summaryStateTracker.refreshLatestSummary(result);
+	public async refreshLatestSummary(isSummaryTracked: boolean): Promise<void> {
+		return this.summaryStateTracker.refreshLatestSummary(isSummaryTracked);
 	}
 
 	/**

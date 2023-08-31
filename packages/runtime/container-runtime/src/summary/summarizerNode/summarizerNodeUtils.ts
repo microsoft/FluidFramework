@@ -8,30 +8,6 @@ import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/prot
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
- * Return type of refreshSummaryAck function. There can be three different scenarios based on the passed params:
- *
- * 1. The latest summary was not updated.
- *
- * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
- *
- * 3. The latest summary was updated but the summary corresponding to the params was not tracked. The client should
- * close
- */
-export type RefreshSummaryResult =
-	| {
-			latestSummaryUpdated: false;
-	  }
-	| {
-			latestSummaryUpdated: true;
-			wasSummaryTracked: true;
-			summaryRefSeq: number;
-	  }
-	| {
-			latestSummaryUpdated: true;
-			wasSummaryTracked: false;
-	  };
-
-/**
  * Result of snapshot fetch during refreshing latest summary state.
  */
 export interface IFetchSnapshotResult {
@@ -66,10 +42,7 @@ export interface ISummarizerNodeRootContract {
 	validateSummary(): ValidateSummaryResult;
 	completeSummary(proposalHandle: string, validate: boolean): void;
 	clearSummary(): void;
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		summaryRefSeq: number,
-	): Promise<RefreshSummaryResult>;
+	refreshLatestSummary(proposalHandle: string, summaryRefSeq: number): Promise<boolean>;
 }
 
 /** Path for nodes in a tree with escaped special characters */

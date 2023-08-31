@@ -31,7 +31,6 @@ export {
 	IFetchSnapshotResult,
 	IRootSummarizerNode,
 	IRootSummarizerNodeWithGC,
-	RefreshSummaryResult,
 } from "./summarizerNode";
 export {
 	IConnectableRuntime,

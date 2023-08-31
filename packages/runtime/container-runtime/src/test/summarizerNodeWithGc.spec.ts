@@ -414,9 +414,11 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await midNode?.summarize(false);
 			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
-			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			let isSummaryTracked = await rootNode.refreshLatestSummary(
+				"test-handle1",
+				summaryRefSeq,
+			);
+			assert(isSummaryTracked, "should be tracked");
 
 			rootNode.startSummary(summaryRefSeq++, logger);
 			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
@@ -429,9 +431,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			isSummaryTracked = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
+			assert(isSummaryTracked, "should be tracked");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
 			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
 			assert.strictEqual(
@@ -452,9 +453,11 @@ describe("SummarizerNodeWithGC Tests", () => {
 			await midNode?.summarize(false);
 			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
-			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			let isSummaryTracked = await rootNode.refreshLatestSummary(
+				"test-handle1",
+				summaryRefSeq,
+			);
+			assert(isSummaryTracked, "should be tracked");
 
 			rootNode.startSummary(summaryRefSeq++, logger);
 			rootNode.updateUsedRoutes([""]);
@@ -467,9 +470,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// Create a new child node for which we will need to create a pending summary for.
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
-			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			isSummaryTracked = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
+			assert(isSummaryTracked, "should be tracked");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
 			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
 			assert.strictEqual(

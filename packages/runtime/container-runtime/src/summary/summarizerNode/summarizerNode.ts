@@ -38,7 +38,6 @@ import {
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
 	parseSummaryTreeForSubtrees,
-	RefreshSummaryResult,
 	SummaryNode,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
@@ -365,27 +364,21 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	/**
 	 * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
-	 * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
-	 * we skip the update. If the current summary is behind, then we do not refresh.
+	 * it becomes the latest summary. If the current summary is already ahead, we skip the update.
+	 * If the current summary is behind, then we do not refresh.
 	 *
-	 * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
-	 *
-	 * 1. The latest summary was not updated.
-	 *
-	 * 2. The latest summary was updated and the summary corresponding to the params was being tracked.
-	 *
-	 * 3. The latest summary was updated but the summary corresponding to the params was not tracked.
+	 * @returns true if the summary is tracked by this node, false otherwise.
 	 */
 	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
+		proposalHandle: string,
 		summaryRefSeq: number,
-	): Promise<RefreshSummaryResult> {
+	): Promise<boolean> {
 		const eventProps: {
 			proposalHandle: string | undefined;
 			summaryRefSeq: number;
 			referenceSequenceNumber: number;
-			latestSummaryUpdated?: boolean;
-			wasSummaryTracked?: boolean;
+			isSummaryTracked?: boolean;
+			pendingSummaryFound?: boolean;
 		} = {
 			proposalHandle,
 			summaryRefSeq,
@@ -406,37 +399,22 @@ export class SummarizerNode implements IRootSummarizerNode {
 					});
 				}
 
-				if (proposalHandle !== undefined) {
-					const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
+				let isSummaryTracked = false;
+				let isSummaryNewer = false;
 
-					if (maybeSummaryNode !== undefined) {
-						this.refreshLatestSummaryFromPending(
-							proposalHandle,
-							maybeSummaryNode.referenceSequenceNumber,
-						);
-						eventProps.wasSummaryTracked = true;
-						eventProps.latestSummaryUpdated = true;
-						event.end(eventProps);
-						return {
-							latestSummaryUpdated: true,
-							wasSummaryTracked: true,
-							summaryRefSeq,
-						};
-					}
+				if (summaryRefSeq > this.referenceSequenceNumber) {
+					isSummaryNewer = true;
 				}
-
-				// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
-				if (this.referenceSequenceNumber >= summaryRefSeq) {
-					eventProps.latestSummaryUpdated = false;
-					event.end(eventProps);
-					return { latestSummaryUpdated: false };
+				const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
+				if (maybeSummaryNode !== undefined) {
+					this.refreshLatestSummaryFromPending(
+						proposalHandle,
+						maybeSummaryNode.referenceSequenceNumber,
+					);
+					isSummaryTracked = true;
 				}
-
-				// Note that we did not track this summary, but that the latest summary was updated.
-				eventProps.latestSummaryUpdated = true;
-				eventProps.wasSummaryTracked = false;
-				event.end(eventProps);
-				return { latestSummaryUpdated: true, wasSummaryTracked: false };
+				event.end({ ...eventProps, isSummaryNewer, pendingSummaryFound: isSummaryTracked });
+				return isSummaryTracked;
 			},
 			{ start: true, end: true, cancel: "error" },
 		);

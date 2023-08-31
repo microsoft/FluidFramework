@@ -6,7 +6,6 @@
 export {
 	IFetchSnapshotResult,
 	ISummarizerNodeRootContract,
-	RefreshSummaryResult,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
 export { IRootSummarizerNode, createRootSummarizerNode } from "./summarizerNode";

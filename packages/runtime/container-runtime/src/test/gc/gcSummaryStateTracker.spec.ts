@@ -14,7 +14,6 @@ import {
 	IGarbageCollectionState,
 	IGCStats,
 } from "../../gc";
-import { RefreshSummaryResult } from "../../summary";
 
 type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
 	latestSummaryGCVersion: GCVersion;
@@ -41,12 +40,7 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			const refreshSummaryResult: RefreshSummaryResult = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: true,
-				summaryRefSeq: 0,
-			};
-			await tracker.refreshLatestSummary(refreshSummaryResult);
+			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
 
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
@@ -94,12 +88,7 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			const refreshSummaryResult: RefreshSummaryResult = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: true,
-				summaryRefSeq: 0,
-			};
-			await tracker.refreshLatestSummary(refreshSummaryResult);
+			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
 				false,
@@ -135,12 +124,7 @@ describe("GCSummaryStateTracker tests", () => {
 			assert.equal(tracker.doesGCStateNeedReset, true, "Should need reset");
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			const refreshSummaryResult: RefreshSummaryResult = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: true,
-				summaryRefSeq: 0,
-			};
-			await tracker.refreshLatestSummary(refreshSummaryResult);
+			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
 			assert.equal(
 				tracker.doesGCStateNeedReset,
 				false,
@@ -161,12 +145,7 @@ describe("GCSummaryStateTracker tests", () => {
 			assert.equal(tracker.doesGCStateNeedReset, true, "Should need reset");
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			const refreshSummaryResult: RefreshSummaryResult = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: true,
-				summaryRefSeq: 0,
-			};
-			await tracker.refreshLatestSummary(refreshSummaryResult);
+			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
 
 			assert.equal(
 				tracker.doesGCStateNeedReset,
@@ -384,12 +363,8 @@ describe("GCSummaryStateTracker tests", () => {
 			new Set(),
 			[],
 		);
-		const refreshSummaryResult: RefreshSummaryResult = {
-			latestSummaryUpdated: true,
-			wasSummaryTracked: true,
-			summaryRefSeq: 0,
-		};
-		await summaryStateTracker.refreshLatestSummary(refreshSummaryResult);
+
+		await summaryStateTracker.refreshLatestSummary(true /* isSummaryTracked */);
 		assert.strictEqual(
 			summaryStateTracker.updatedDSCountSinceLastSummary,
 			0,
