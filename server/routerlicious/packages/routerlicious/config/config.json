@@ -118,6 +118,62 @@
 		},
 		"getDeltasRequestMaxOpsRange": 2000
 	},
+    "nexus": {
+		"kafkaClientId": "nexus",
+		"maxMessageSize": "16KB",
+		"verifyMaxMessageSize": false,
+		"maxNumberOfClientsPerDocument": 1000000,
+		"numberOfMessagesPerTrace": 100,
+		"sessionStickinessDurationMs": 3600000,
+		"enableConnectionCountLogging": false,
+		"throttling": {
+			"restCallsPerTenant": {
+				"generalRestCall": "disabled",
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled"
+			},
+			"restCallsPerCluster": {
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled"
+			},
+			"socketConnectionsPerTenant": "disabled",
+			"socketConnectionsPerCluster": "disabled",
+			"submitOps": "disabled",
+			"submitSignal": "disabled"
+		},
+		"topic": "rawdeltas",
+		"bucket": "snapshots",
+		"restJsonSize": "50mb",
+		"key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+		"tenants": [
+			{
+				"id": "fluid",
+				"key": "create-new-tenants-if-going-to-production"
+			},
+			{
+				"id": "github",
+				"key": "create-new-tenants-if-going-to-production"
+			},
+			{
+				"id": "local",
+				"key": "create-new-tenants-if-going-to-production"
+			}
+		],
+		"socketIoAdapter": {
+			"enableCustomSocketIoAdapter": true,
+			"shouldDisableDefaultNamespace": false
+		},
+		"enforceServerGeneratedDocumentId": false,
+		"socketIo": {
+			"perMessageDeflate": true
+		},
+		"jwtTokenCache": {
+			"enable": true
+		},
+		"getDeltasRequestMaxOpsRange": 2000
+	},
 	"client": {
 		"type": "browser",
 		"permission": []

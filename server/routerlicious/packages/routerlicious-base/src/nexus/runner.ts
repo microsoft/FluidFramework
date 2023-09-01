@@ -31,7 +31,7 @@ export class NexusRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
 	private stopped: boolean = false;
-	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.AlfredRunner);
+	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.NexusRunner);
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
@@ -58,18 +58,18 @@ export class NexusRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach alfred to it
-		const alfred = app.create(this.config);
-		alfred.set("port", this.port);
+		// Create the HTTP server and attach nexus to it
+		const nexus = app.create(this.config);
+		nexus.set("port", this.port);
 
-		this.server = this.serverFactory.create(alfred);
+		this.server = this.serverFactory.create(nexus);
 
 		const httpServer = this.server.httpServer;
 
 		const maxNumberOfClientsPerDocument = this.config.get(
-			"alfred:maxNumberOfClientsPerDocument",
+			"nexus:maxNumberOfClientsPerDocument",
 		);
-		const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
+		const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
 		const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
 		const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
 		const isClientConnectivityCountingEnabled = this.config.get(
@@ -106,8 +106,16 @@ export class NexusRunner implements IRunner {
 		// Listen on provided port, on all network interfaces.
 		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
-		httpServer.on("listening", () => this.onListening());
-
+	    httpServer.on("listening", () => this.onListening());
+	    httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
+		console.log("UPGRADE This is HTTPSERVER logger middleware");
+		console.log(socket.server._connections);
+		socket.on("error",(error) => {
+		    console.log("SOCKET ERROR SS");
+		    console.log(error);
+		})
+	    });
+	
 		// Start token manager
 		if (this.tokenRevocationManager) {
 			this.tokenRevocationManager.start().catch((error) => {
@@ -139,11 +147,11 @@ export class NexusRunner implements IRunner {
 			}
 			this.runningDeferred = undefined;
 			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.success("Alfred runner stopped");
+				this.runnerMetric.success("Nexus runner stopped");
 			}
 		} catch (error) {
 			if (!this.runnerMetric.isCompleted()) {
-				this.runnerMetric.error("Alfred runner encountered an error during stop", error);
+				this.runnerMetric.error("Nexus runner encountered an error during stop", error);
 			}
 			if (caller === "sigterm") {
 				this.runningDeferred?.resolve();
@@ -165,7 +173,7 @@ export class NexusRunner implements IRunner {
 	 */
 	private onError(error) {
 		if (!this.runnerMetric.isCompleted()) {
-			this.runnerMetric.error("Alfred runner encountered an error in http server", error);
+			this.runnerMetric.error("Nexus runner encountered an error in http server", error);
 		}
 		if (error.syscall !== "listen") {
 			throw error;
