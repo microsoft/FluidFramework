@@ -467,7 +467,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
 	public static async createChildInstance(
 		parentContext: IFluidDataStoreContext,
-	): Promise<AgentScheduler> {
+	): Promise<IAgentScheduler> {
 		const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
 		const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
 		const entryPoint: FluidObject<IAgentScheduler> | undefined =
@@ -482,7 +482,10 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 		return entryPoint as unknown as AgentScheduler;
 	}
 
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		const mapFactory = SharedMap.getFactory();
 		const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
 		const dataTypes = new Map<string, IChannelFactory>();
