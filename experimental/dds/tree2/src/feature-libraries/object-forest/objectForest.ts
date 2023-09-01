@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	recordDependency,
 	SimpleDependee,
 	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
@@ -62,13 +61,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 	private readonly events = createEmitter<ForestEvents>();
 
-	public constructor(
-		public readonly schema: StoredSchemaRepository,
-		public readonly anchors: AnchorSet = new AnchorSet(),
-	) {
+	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
 		super("object-forest.ObjectForest");
-		// Invalidate forest if schema change.
-		recordDependency(this.dependent, this.schema);
 	}
 
 	public get isEmpty(): boolean {
@@ -80,7 +74,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 	}
 
 	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
-		const forest = new ObjectForest(schema, anchors);
+		const forest = new ObjectForest(anchors);
 		// Deep copy the trees.
 		for (const [key, value] of this.roots.fields) {
 			// TODO: this references the existing TreeValues instead of copying them:
@@ -479,6 +473,6 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
-	return new ObjectForest(schema, anchors);
+export function buildForest(anchors?: AnchorSet): IEditableForest {
+	return new ObjectForest(anchors);
 }

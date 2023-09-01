@@ -114,10 +114,7 @@ describe("ChunkedForest", () => {
 
 			it("doesn't copy data when capturing and restoring repair data", () => {
 				const initialState: JsonableTree = { type: jsonObject.name };
-				const schema = new InMemoryStoredSchemaRepository(
-					defaultSchemaPolicy,
-					jsonSequenceRootSchema,
-				);
+				const schema = new InMemoryStoredSchemaRepository(jsonSequenceRootSchema);
 				const forest = buildChunkedForest(chunker(schema));
 				const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
 
