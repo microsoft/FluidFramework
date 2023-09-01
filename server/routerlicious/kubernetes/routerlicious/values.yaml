@@ -50,12 +50,12 @@ alfred:
   socketIo:
     perMessageDeflate: true
   getDeltasRequestMaxOpsRange: 2000
-  getDeltasEndingGapDisableFallback: false
+  getDeltasEndingGapDisableFallback:
+    enableTenants: []
   getDeltasDbRetryConfig:
-    enable: false
+    enableTenants: []
     retryCount: 3
     retryIntervalMs: 100
-  getDeltasOptimizationTenants: []
 
 storage:
   enableWholeSummaryUpload: false

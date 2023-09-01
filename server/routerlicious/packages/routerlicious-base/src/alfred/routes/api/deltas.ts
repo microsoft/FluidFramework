@@ -38,10 +38,10 @@ export function create(
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
 	const getDeltasRequestMaxOpsRange =
 		(config.get("alfred:getDeltasRequestMaxOpsRange") as number) ?? 2000;
-	const getDeltasEndingGapDisableFallback =
-		(config.get("alfred:getDeltasEndingGapDisableFallback") as boolean) ?? false;
+	const getDeltasEndingGapDisableFallback = config.get(
+		"alfred:getDeltasEndingGapDisableFallback",
+	);
 	const getDeltasDbRetryConfig = config.get("alfred:getDeltasDbRetryConfig");
-	const getDeltasOptimizationTenants = config.get("alfred:getDeltasOptimizationTenants") ?? [];
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -175,7 +175,6 @@ export function create(
 				{
 					getDeltasEndingGapDisableFallback,
 					getDeltasDbRetryConfig,
-					getDeltasOptimizationTenants,
 				},
 			);
 

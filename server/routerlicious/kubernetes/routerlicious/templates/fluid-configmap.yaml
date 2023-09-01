@@ -121,13 +121,14 @@ data:
                 "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
             },
             "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }},
-            "getDeltasEndingGapDisableFallback": {{ .Values.alfred.getDeltasEndingGapDisableFallback }},
-            "getDeltasDbRetryConfig": {
-                "enable": {{ Values.alfred.getDeltasDbRetryConfig.enable }},
-                "retryCount" : {{ Values.alfred.getDeltasDbRetryConfig.retryCount }}
-                "retryIntervalMs" : {{ Values.alfred.getDeltasDbRetryConfig.retryIntervalMs }}
+            "getDeltasEndingGapDisableFallback": {
+                "enableTenants": {{ toJson .Values.alfred.getDeltasEndingGapDisableFallback.enableTenants }}
             },
-            "getDeltasOptimizationTenants": {{ toJson .Values.alfred.getDeltasOptimizationTenants }}
+            "getDeltasDbRetryConfig": {
+                "enableTenants": {{ toJson .Values.alfred.getDeltasDbRetryConfig.enableTenants }},
+                "retryCount" : {{ .Values.alfred.getDeltasDbRetryConfig.retryCount }}
+                "retryIntervalMs" : {{ .Values.alfred.getDeltasDbRetryConfig.retryIntervalMs }}
+            }
         },
         "client": {
             "type": "browser",
