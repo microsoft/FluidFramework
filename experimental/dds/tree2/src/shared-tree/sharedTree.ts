@@ -16,7 +16,6 @@ import { ICodecOptions, noopValidator } from "../codec";
 import {
 	InMemoryStoredSchemaRepository,
 	Anchor,
-	AnchorSet,
 	AnchorNode,
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
@@ -89,11 +88,11 @@ export class SharedTree
 		telemetryContextPrefix: string,
 	) {
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const schema = new InMemoryStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
-				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), new AnchorSet())
-				: buildForest(schema, new AnchorSet());
+				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
+				: buildForest();
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
@@ -216,7 +215,7 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if (!this.schema.tryHandleOp(message)) {
+		if (!this.schema.tryHandleOp(message.contents)) {
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
@@ -227,6 +226,12 @@ export class SharedTree
 	): void {
 		if (!this.schema.tryResubmitOp(content)) {
 			super.reSubmitCore(content, localOpMetadata);
+		}
+	}
+
+	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		if (!this.schema.tryApplyStashedOp(content)) {
+			return super.applyStashedOp(content);
 		}
 	}
 

@@ -199,7 +199,7 @@ export function setUpTestSharedTree(
 	} else {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: componentRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(undefined),
 		};
 		tree.connect(services);
