@@ -220,11 +220,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				const datastores: IFluidRouter[] = [];
 				const createAliasedDataStore = async () => {
 					try {
-						const datastore = await getAliasedDataStoreEntryPoint(dataObject1, alias);
-						if (datastore === undefined) {
-							throw new Error("Aliased data store doesn't exist yet");
-						}
-						return datastore;
+						await getAliasedDataStoreEntryPoint(dataObject1, alias);
 					} catch (err) {
 						const newDataStore = await runtimeOf(dataObject1).createDataStore(
 							packageName,
