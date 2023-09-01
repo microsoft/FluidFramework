@@ -410,30 +410,6 @@ describe("EditManager", () => {
 			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
 		});
 
-		it("Rebases anchors over local changes", () => {
-			const { manager, anchors } = editManagerFactory({});
-			const change = TestChange.mint([], 1);
-			manager.localBranch.apply(change, mintRevisionTag());
-			assert.deepEqual(anchors.rebases, [change]);
-			assert.deepEqual(anchors.intentions, change.intentions);
-		});
-
-		it("Rebases anchors over sequenced changes", () => {
-			const { manager, anchors } = editManagerFactory({});
-			const change = TestChange.mint([], 1);
-			manager.addSequencedChange(
-				{
-					change,
-					revision: mintRevisionTag(),
-					sessionId: peer1,
-				},
-				brand(1),
-				brand(0),
-			);
-			assert.deepEqual(anchors.rebases, [change]);
-			assert.deepEqual(anchors.intentions, change.intentions);
-		});
-
 		it("Updates local branch when loading from summary", () => {
 			// This regression tests ensures that the local branch is rebased to the head of the trunk
 			// when the trunk is modified by a summary load
@@ -607,7 +583,6 @@ describe("EditManager", () => {
 						rebaser.composedCount,
 						trunkEditCount * (rebasedEditCount * 2 + 1),
 					);
-					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});
 			}
 		});
@@ -624,7 +599,6 @@ describe("EditManager", () => {
 
 					assert.equal(rebaser.invertedCount, rebasedEditCount - 1);
 					assert.equal(rebaser.composedCount, trunkEditCount + rebasedEditCount);
-					assert.equal(rebaser.rebaseAnchorCallsCount, trunkEditCount + rebasedEditCount);
 				});
 			}
 		});
@@ -735,7 +709,7 @@ function runUnitTestScenario(
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
 	const run = (advanceMinimumSequenceNumber: boolean) => {
-		const { manager, anchors } = editManagerFactory({ rebaser });
+		const { manager } = editManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
 		 * Used as a source of summary data to spin-up `joiners`.
@@ -939,8 +913,6 @@ function runUnitTestScenario(
 				default:
 					unreachableCase(type);
 			}
-			// Anchors should be kept up to date with the known intentions
-			assert.deepEqual(anchors.intentions, knownToLocal);
 			// The exposed trunk and local changes should reflect what is known to the local client
 			checkChangeList(
 				manager,

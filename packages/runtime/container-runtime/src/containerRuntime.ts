@@ -37,6 +37,7 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
@@ -125,7 +126,6 @@ import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	idCompressorBlobName,
-	IFetchSnapshotResult,
 	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
@@ -153,6 +153,7 @@ import {
 	ISummarizeResults,
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
+	ISummarizerEvents,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -553,7 +554,7 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-interface IPendingRuntimeState {
+export interface IPendingRuntimeState {
 	/**
 	 * Pending ops from PendingStateManager
 	 */
@@ -658,7 +659,7 @@ export const makeLegacySendBatchFn =
  * It will define the store level mappings.
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
@@ -718,16 +719,30 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		runtimeOptions?: IContainerRuntimeOptions;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		} & (
+			| {
+					requestHandler?: (
+						request: IRequest,
+						runtime: IContainerRuntime,
+					) => Promise<IResponse>;
+					initializeEntryPoint?: undefined;
+			  }
+			| {
+					requestHandler?: undefined;
+					initializeEntryPoint: (
+						containerRuntime: IContainerRuntime,
+					) => Promise<FluidObject>;
+			  }
+		),
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -736,14 +751,25 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
 		} = params;
+
+		const initializeEntryPoint =
+			params.initializeEntryPoint ??
+			(async (containerRuntime: IContainerRuntime) => ({
+				get IFluidRouter() {
+					return this;
+				},
+				async request(req) {
+					return containerRuntime.request(req);
+				},
+			}));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -1039,7 +1065,6 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
-	private readonly summaryStateUpdateMethod: string | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	/**
 	 * If true, summary generated is validate before uploading it to the server. With single commit summaries,
@@ -1049,7 +1074,7 @@ export class ContainerRuntime
 	private readonly validateSummaryBeforeUpload: boolean;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private _perfSignalData: IPerfSignalReport = {
+	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
@@ -1519,9 +1544,6 @@ export class ContainerRuntime
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._audience = audience!;
 
-		this.summaryStateUpdateMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
-		);
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
@@ -1618,6 +1640,9 @@ export class ContainerRuntime
 					},
 					this.heuristicsDisabled,
 				);
+				this.summaryManager.on("summarize", (eventProps) => {
+					this.emit("summarize", eventProps);
+				});
 				this.summaryManager.start();
 			}
 		}
@@ -1673,7 +1698,6 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				idCompressorEnabled: this.idCompressorEnabled,
-				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -1790,7 +1814,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.IFluidRouter.request(subRequest);
+				return dataStore.request(subRequest);
 			}
 
 			return create404Response(request);
@@ -3061,7 +3085,7 @@ export class ContainerRuntime
 							undefined,
 							{ pendingMessages: this.pendingMessagesCount },
 						);
-						summaryLogger.sendErrorEvent(
+						summaryNumberLogger.sendErrorEvent(
 							{
 								eventName: "SkipFailingIncorrectSummary",
 								referenceSequenceNumber: summaryRefSeqNum,
@@ -3070,9 +3094,14 @@ export class ContainerRuntime
 							error,
 						);
 					} else {
+						// Default retry delay is 1 second. This can be overridden via config so that we can adjust it
+						// based on telemetry while we decide on a stable number.
+						const retryDelayMs =
+							this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
+							1000;
 						const error = new RetriableSummaryError(
 							"PendingMessagesInSummary",
-							1 /* retryAfterSeconds */,
+							retryDelayMs / 1000,
 							{ count: this.pendingMessagesCount },
 						);
 						return {
@@ -3622,12 +3651,22 @@ export class ContainerRuntime
 	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
+		// proposalHandle is always passed from RunningSummarizer.
+		assert(proposalHandle !== undefined, "proposalHandle should be available");
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		// The call to fetch the snapshot is very expensive and not always needed.
-		// It should only be done by the summarizerNode, if required.
-		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
+		const result = await this.summarizerNode.refreshLatestSummary(
+			proposalHandle,
+			summaryRefSeq,
+		);
+
+		/**
+		 * When refreshing a summary ack, this check indicates a new ack of a summary that is newer than the
+		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
+		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
+		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
+		 */
+		if (!result.isSummaryTracked && result.isSummaryNewer) {
+			const fetchResult = await this.fetchSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3637,25 +3676,6 @@ export class ContainerRuntime
 				readAndParseBlob,
 				null,
 			);
-
-			/**
-			 * back-compat - Older loaders and drivers (pre 2.0.0-internal.1.4) don't have fetchSource as a param in the
-			 * getVersions API. So, they will not fetch the latest snapshot from network in the previous fetch call. For
-			 * these scenarios, fetch the snapshot corresponding to the ack handle to have the same behavior before the
-			 * change that started fetching latest snapshot always.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorageAndMaybeClose(
-					summaryLogger,
-					{
-						eventName: "RefreshLatestSummaryAckFetchBackCompat",
-						ackHandle,
-						targetSequenceNumber: summaryRefSeq,
-					},
-					readAndParseBlob,
-					ackHandle,
-				);
-			}
 
 			/**
 			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
@@ -3682,29 +3702,12 @@ export class ContainerRuntime
 				throw error;
 			}
 
-			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
-			// wait for the delta manager to catch up before refreshing the latest Summary.
-			await this.waitForDeltaManagerToCatchup(
-				fetchResult.latestSnapshotRefSeq,
-				summaryLogger,
-			);
-
-			return {
-				snapshotTree: fetchResult.snapshotTree,
-				snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-			};
-		};
-
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-			fetchLatestSnapshot,
-			readAndParseBlob,
-			summaryLogger,
-		);
+			await this.closeStaleSummarizer("RefreshLatestSummaryAckFetch");
+			return;
+		}
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
+		await this.garbageCollector.refreshLatestSummary(result);
 	}
 
 	/**
@@ -3717,35 +3720,35 @@ export class ContainerRuntime
 		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { snapshotTree, versionId, latestSnapshotRefSeq } =
-			await this.fetchSnapshotFromStorageAndMaybeClose(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryFromServerFetch",
-				},
-				readAndParseBlob,
-				null,
-			);
-		const fetchLatestSnapshot: IFetchSnapshotResult = {
-			snapshotTree,
-			snapshotRefSeq: latestSnapshotRefSeq,
-		};
-		const result = await this.summarizerNode.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			latestSnapshotRefSeq,
-			async () => fetchLatestSnapshot,
-			readAndParseBlob,
+		const { versionId, latestSnapshotRefSeq } = await this.fetchSnapshotFromStorage(
 			summaryLogger,
+			{
+				eventName: "RefreshLatestSummaryFromServerFetch",
+			},
+			readAndParseBlob,
+			null,
 		);
 
-		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			result,
-			readAndParseBlob,
-		);
+		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
 
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
+	}
+
+	private async closeStaleSummarizer(codePath: string): Promise<void> {
+		this.mc.logger.sendTelemetryEvent(
+			{
+				eventName: "ClosingSummarizerOnSummaryStale",
+				codePath,
+				message: "Stopping fetch from storage",
+				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
+			},
+			new GenericError("Restarting summarizer instead of refreshing"),
+		);
+
+		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.disposeFn();
 	}
 
 	/**
@@ -3753,13 +3756,13 @@ export class ContainerRuntime
 	 * By default, it also closes the container after downloading the snapshot. However, this may be
 	 * overridden via options.
 	 */
-	private async fetchSnapshotFromStorageAndMaybeClose(
+	private async fetchSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const snapshotResults = await PerformanceEvent.timedExecAsync(
+		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
 			async (perfEvent: {
@@ -3805,30 +3808,6 @@ export class ContainerRuntime
 				};
 			},
 		);
-
-		// We choose to close the summarizer after the snapshot cache is updated to avoid
-		// situations which the main client (which is likely to be re-elected as the leader again)
-		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod !== "refreshFromSnapshot") {
-			this.mc.logger.sendTelemetryEvent(
-				{
-					...event,
-					eventName: "ClosingSummarizerOnSummaryStale",
-					codePath: event.eventName,
-					message: "Stopping fetch from storage",
-					versionId: versionId != null ? versionId : undefined,
-					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-				},
-				new GenericError("Restarting summarizer instead of refreshing"),
-			);
-
-			// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(this.closeSummarizerDelayMs);
-			this._summarizer?.stop("latestSummaryStateStale");
-			this.disposeFn();
-		}
-
-		return snapshotResults;
 	}
 
 	public notifyAttaching() {} // do nothing (deprecated method)
@@ -3836,21 +3815,41 @@ export class ContainerRuntime
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;
 	}): Promise<unknown> {
-		this.verifyNotClosed();
-		const waitBlobsToAttach = props?.notifyImminentClosure;
-		if (this._orderSequentiallyCalls !== 0) {
-			throw new UsageError("can't get state during orderSequentially");
-		}
-		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
-		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-		// to close current batch.
-		this.flush();
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props?.notifyImminentClosure,
+			},
+			async (event) => {
+				this.verifyNotClosed();
+				const waitBlobsToAttach = props?.notifyImminentClosure;
+				if (this._orderSequentiallyCalls !== 0) {
+					throw new UsageError("can't get state during orderSequentially");
+				}
+				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
+					waitBlobsToAttach,
+				);
+				const pending = this.pendingStateManager.getLocalState();
+				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+					return; // no pending state to save
+				}
+				// Flush pending batch.
+				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+				// to close current batch.
+				this.flush();
 
-		return {
-			pending: this.pendingStateManager.getLocalState(),
-			pendingAttachmentBlobs,
-		};
+				const pendingState: IPendingRuntimeState = {
+					pending,
+					pendingAttachmentBlobs,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pending?.pendingStates.length,
+				});
+				return pendingState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

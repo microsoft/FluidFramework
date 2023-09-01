@@ -45,7 +45,6 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
 	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
@@ -91,6 +90,7 @@ import {
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
+	IEditableForest,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -369,9 +369,9 @@ export class TestTreeProviderLite {
 				id: "test",
 			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
-			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
 			t.push(tree);
@@ -458,7 +458,6 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				default:
 					unreachableCase(type);
 			}
-			return false;
 		}
 	}
 	return false;
@@ -582,14 +581,26 @@ export function viewWithContent(
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 	},
 ): ISharedTreeView {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, content.schema);
-	const forest = buildForest(schema);
+	const forest = forestWithContent(content);
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
+	return view;
+}
+
+export function forestWithContent(content: TreeContent): IEditableForest {
+	const forest = buildForest();
 	initializeForest(
 		forest,
-		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
+		normalizeNewFieldContent(
+			{ schema: content.schema },
+			content.schema.rootFieldSchema,
+			content.initialTree,
+		),
 	);
-	const view = createSharedTreeView({ ...args, forest, schema });
-	return view;
+	return forest;
 }
 
 const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);

@@ -65,6 +65,7 @@ export {
 	topDownPath,
 	compareFieldUpPaths,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
 	isSkipMark,
@@ -122,6 +123,7 @@ export {
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	cloneSchemaData,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";

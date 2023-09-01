@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -15,17 +14,27 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { FieldKinds, singleTextCursor } from "../../feature-libraries";
-import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
-import { brand } from "../../util";
-import { TestTreeProviderLite, namedTreeSchema } from "../utils";
-import { TreeValue, fieldSchema, SchemaData, UpPath, rootFieldKey } from "../../core";
+import { SharedTreeFactory, TreeContent } from "../../shared-tree";
+import { TestTreeProviderLite } from "../utils";
+import { AllowedUpdateType } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
+import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees";
 
-enum TreeShape {
-	Wide = "wide",
-	Deep = "deep",
-}
+// TODO: these tests currently only cover tree content.
+// It might make sense to extend them to cover complex collaboration windows.
+
+// number of nodes in test for wide trees
+const nodesCountWide: [numberOfNodes: number, minLength: number, maxLength: number][] = [
+	[1, 1000, 2000],
+	[10, 1000, 10000],
+	[100, 1000, 500000],
+];
+// number of nodes in test for deep trees
+const nodesCountDeep: [numberOfNodes: number, minLength: number, maxLength: number][] = [
+	[10, 1000, 25000],
+	[100, 1000, 1000000],
+	[200, 1000, 5000000],
+];
 
 describe("Summary benchmarks", () => {
 	// TODO: report these sizes as benchmark output which can be tracked over time.
@@ -38,67 +47,35 @@ describe("Summary benchmarks", () => {
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize < 500);
 		});
-		it("a tree with 1 node.", async () => {
-			const summaryTree = getInsertsSummaryTree(1, TreeShape.Wide);
-			const summaryString = JSON.stringify(summaryTree);
-			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize > 1000);
-			assert(summarySize < 2000);
-		});
-		it("a wide tree with 10 nodes", async () => {
-			const summaryTree = getInsertsSummaryTree(10, TreeShape.Wide);
-			const summaryString = JSON.stringify(summaryTree);
-			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize > 1000);
-			assert(summarySize < 10000);
-		});
-		it("a wide tree with 100 nodes", async () => {
-			const summaryTree = getInsertsSummaryTree(100, TreeShape.Wide);
-			const summaryString = JSON.stringify(summaryTree);
-			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize > 1000);
-			assert(summarySize < 500000);
-		});
-		it("a deep tree with 10 nodes", async () => {
-			const summaryTree = getInsertsSummaryTree(10, TreeShape.Deep);
-			const summaryString = JSON.stringify(summaryTree);
-			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize > 1000);
-			assert(summarySize < 25000);
-		});
-		it("a deep tree with 100 nodes.", async () => {
-			const summaryTree = getInsertsSummaryTree(100, TreeShape.Deep);
-			const summaryString = JSON.stringify(summaryTree);
-			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize > 1000);
-			assert(summarySize < 1000000);
-		});
-		it("a deep tree with 200 nodes.", async () => {
-			const summaryTree = getInsertsSummaryTree(200, TreeShape.Deep);
-			const summaryString = JSON.stringify(summaryTree);
-			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize > 1000);
-			assert(summarySize < 5000000);
-		});
+		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
+			it(`a wide tree with ${numberOfNodes} nodes.`, async () => {
+				const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
+				const summaryString = JSON.stringify(summaryTree);
+				const summarySize = IsoBuffer.from(summaryString).byteLength;
+				assert(summarySize > minLength);
+				assert(summarySize < maxLength);
+			});
+		}
+		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
+			it(`a deep tree with ${numberOfNodes} nodes.`, async () => {
+				const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
+				const summaryString = JSON.stringify(summaryTree);
+				const summarySize = IsoBuffer.from(summaryString).byteLength;
+				assert(summarySize > minLength);
+				assert(summarySize < maxLength);
+			});
+		}
 	});
 
 	describe("load speed of", () => {
-		function runSummaryBenchmark(
-			numberOfNodes: number,
-			shape: TreeShape,
-			benchmarkType: BenchmarkType = BenchmarkType.Perspective,
-		) {
+		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
 			let summaryTree: ITree;
 			const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 			benchmark({
-				title: `a ${shape} tree with ${numberOfNodes} node${
-					numberOfNodes !== 1 ? "s" : ""
-				}`,
-				type: benchmarkType,
+				title,
+				type,
 				before: async () => {
-					summaryTree = convertSummaryTreeToITree(
-						getInsertsSummaryTree(numberOfNodes, shape),
-					);
+					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
 				},
 				benchmarkFnAsync: async () => {
 					const services: IChannelServices = {
@@ -114,113 +91,40 @@ describe("Summary benchmarks", () => {
 			});
 		}
 
-		runSummaryBenchmark(1, TreeShape.Deep);
-		runSummaryBenchmark(10, TreeShape.Wide);
-		runSummaryBenchmark(10, TreeShape.Deep);
-		runSummaryBenchmark(100, TreeShape.Wide, BenchmarkType.Measurement);
-		runSummaryBenchmark(100, TreeShape.Deep, BenchmarkType.Measurement);
+		for (const [nodeCount, type] of [
+			[1, BenchmarkType.Perspective],
+			[10, BenchmarkType.Perspective],
+			[100, BenchmarkType.Measurement],
+		]) {
+			runSummaryBenchmark(
+				`a deep tree with ${nodeCount} nodes}`,
+				makeDeepContent(nodeCount),
+				type,
+			);
+		}
+
+		for (const [nodeCount, type] of [
+			[10, BenchmarkType.Perspective],
+			[100, BenchmarkType.Measurement],
+		]) {
+			runSummaryBenchmark(
+				`a wide tree with ${nodeCount} nodes}`,
+				makeWideContentWithEndValue(nodeCount, 1),
+				type,
+			);
+		}
 	});
 });
 
 /**
- * Inserts a single node under the root of the tree with the given value.
+ * @param content - content to full the tree with
+ * @returns the tree's summary
  */
-function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void {
-	// Apply an edit to the tree which inserts a node with a value
-	runSynchronous(tree, () => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-		field.insert(index, writeCursor);
-	});
-}
-
-function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: UpPath): void {
-	// Apply an edit to the tree which inserts a node with a value.
-	runSynchronous(tree, () => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField({ parent: path, field: rootFieldKey });
-		field.insert(0, writeCursor);
-	});
-}
-
-function setTestValuesWide(tree: ISharedTree, numberOfNodes: number): void {
-	const seed = 0;
-	const random = makeRandom(seed);
-	for (let j = 0; j < numberOfNodes; j++) {
-		setTestValue(tree, random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER), j);
-	}
-}
-
-/**
- *
- * @param numberOfNodes - number of nodes you would like to insert
- * @param shape - TreeShape enum to specify the shape of the tree
- * @returns the byte size of the tree's summary
- */
-export function getInsertsSummaryTree(numberOfNodes: number, shape: TreeShape): ISummaryTree {
+function getSummaryTree(content: TreeContent): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	initializeTestTreeWithValue(tree, 1);
-
-	switch (shape) {
-		case TreeShape.Deep:
-			setTestValuesNarrow(tree, numberOfNodes);
-			break;
-		case TreeShape.Wide:
-			setTestValuesWide(tree, numberOfNodes);
-			break;
-		default:
-			unreachableCase(shape);
-	}
-
+	tree.schematize({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;
-}
-
-function setTestValuesNarrow(tree: ISharedTree, numberOfNodes: number): void {
-	const seed = 0;
-	const random = makeRandom(seed);
-	let path: UpPath = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	// loop through and update path for the next insert.
-	for (let i = 0; i <= numberOfNodes; i++) {
-		setTestValueOnPath(
-			tree,
-			random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-			path,
-		);
-		path = {
-			parent: path,
-			parentField: rootFieldKey,
-			parentIndex: 0,
-		};
-	}
-}
-
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: "TestValue",
-	mapFields: fieldSchema(FieldKinds.sequence),
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	rootFieldSchema,
-};
-
-/**
- * Inserts a single node under the root of the tree with the given value.
- */
-function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-	tree.storedSchema.update(testSchema);
-
-	// Apply an edit to the tree which inserts a node with a value
-	runSynchronous(tree, () => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-		field.insert(0, writeCursor);
-	});
 }

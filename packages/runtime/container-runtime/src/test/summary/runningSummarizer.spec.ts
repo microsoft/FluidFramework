@@ -38,6 +38,8 @@ import {
 	SubmitSummaryResult,
 	RetriableSummaryError,
 	IGeneratedSummaryStats,
+	ISummarizeEventProps,
+	ISummaryCancellationToken,
 } from "../../summary";
 import {
 	defaultMaxAttempts,
@@ -274,6 +276,7 @@ describe("Runtime", () => {
 			const startRunningSummarizer = async (
 				disableHeuristics?: boolean,
 				submitSummaryCallback: () => Promise<SubmitSummaryResult> = successfulSubmitSummary,
+				cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 			): Promise<void> => {
 				heuristicData = new SummarizeHeuristicData(0, {
 					refSequenceNumber: 0,
@@ -299,7 +302,7 @@ describe("Runtime", () => {
 					async (options) => {},
 					heuristicData,
 					summaryCollection,
-					neverCancelledSummaryToken,
+					cancellationToken,
 					// stopSummarizerCallback
 					(reason) => {
 						stopCall++;
@@ -1838,6 +1841,174 @@ describe("Runtime", () => {
 
 					await emitNextOp(summaryConfig.maxOps + 1);
 					assertRunCounts(0, 0, 0, "Should not run summarizer");
+				});
+			});
+
+			describe("Summarize events", () => {
+				/**
+				 * Helper function that creates a promise that would resolve when "summarize" event is emitted.
+				 */
+				async function getSummarizeEventPromise() {
+					return new Promise<ISummarizeEventProps>((resolve) => {
+						const handler = (props: ISummarizeEventProps) => {
+							summarizer.off("summarize", handler);
+							resolve(props);
+						};
+						summarizer.on("summarize", handler);
+					});
+				}
+
+				beforeEach(async () => {
+					// Currently, summarize events are only logged with this feature.
+					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+				});
+
+				it("should emit summarize event with success result", async () => {
+					await startRunningSummarizer();
+					const summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+					await emitAck();
+
+					const eventProps = await summarizePromiseP;
+					const expectedEventProps: ISummarizeEventProps = {
+						result: "success",
+						currentAttempt: 1,
+						maxAttempts: defaultMaxAttempts,
+					};
+					assert.deepStrictEqual(
+						eventProps,
+						expectedEventProps,
+						"Summarize event not as expected",
+					);
+				});
+
+				it("should emit summarize event with failed result", async () => {
+					await startRunningSummarizer();
+					const summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+					await emitNack();
+
+					const { error, ...eventProps } = await summarizePromiseP;
+					const expectedEventProps: ISummarizeEventProps = {
+						result: "failure",
+						currentAttempt: 1,
+						maxAttempts: defaultMaxAttempts,
+					};
+					assert.deepStrictEqual(
+						eventProps,
+						expectedEventProps,
+						"Summarize event not as expected",
+					);
+				});
+
+				it("should emit summarize event with canceled result", async () => {
+					await startRunningSummarizer(
+						undefined /* disableHeuristics */,
+						undefined /* submitSummaryCallback */,
+						{
+							cancelled: true,
+							waitCancelled: new Promise(() => {}),
+						},
+					);
+					const summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+					await emitNack();
+
+					const eventProps = await summarizePromiseP;
+					const expectedEventProps: ISummarizeEventProps = {
+						result: "canceled",
+						currentAttempt: 1,
+						maxAttempts: defaultMaxAttempts,
+					};
+					assert.deepStrictEqual(
+						eventProps,
+						expectedEventProps,
+						"Summarize event not as expected",
+					);
+				});
+
+				it("should emit summarize event for every attempt with nack failure", async () => {
+					await startRunningSummarizer();
+					const retryAfterSeconds = 5;
+					let summarizePromiseP = getSummarizeEventPromise();
+
+					await emitNextOp(summaryConfig.maxOps + 1);
+
+					// Nack failures are attempted defaultMaxAttempts times. Each attempt should emit "summarize" event.
+					for (
+						let attemptNumber = 1;
+						attemptNumber <= defaultMaxAttempts;
+						attemptNumber++
+					) {
+						await emitNack(retryAfterSeconds);
+						const { error, ...eventProps } = await summarizePromiseP;
+						const expectedEventProps: ISummarizeEventProps = {
+							result: "failure",
+							currentAttempt: attemptNumber,
+							maxAttempts: defaultMaxAttempts,
+						};
+						assert.deepStrictEqual(
+							eventProps,
+							expectedEventProps,
+							`Summarize event for attempt ${attemptNumber} not as expected`,
+						);
+
+						summarizePromiseP = getSummarizeEventPromise();
+
+						// Wait for "retryAfterSeconds". The next attempt should start after this.
+						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+					}
+				});
+
+				it("should emit summarize event for every attempt with submit failure", async () => {
+					const retryAfterSeconds = 5;
+					// Callback that would result in summarization failed during submit.
+					const submitSummaryCallback = async (): Promise<SubmitSummaryResult> => {
+						const error = new RetriableSummaryError(
+							`Fail summarization at base stage`,
+							retryAfterSeconds,
+						);
+						const failedResult: Partial<SubmitSummaryResult> = {
+							stage: "base",
+							referenceSequenceNumber: lastRefSeq,
+							minimumSequenceNumber: 0,
+							error,
+						};
+						return failedResult as SubmitSummaryResult;
+					};
+
+					await startRunningSummarizer(
+						undefined /* disableHeuristics */,
+						submitSummaryCallback,
+					);
+					let summarizePromiseP = getSummarizeEventPromise();
+					await emitNextOp(summaryConfig.maxOps + 1);
+
+					// Submit failures are attempted defaultMaxAttemptsForSubmitFailures times.
+					// Each attempt should emit "summarize" event.
+					for (
+						let attemptNumber = 1;
+						attemptNumber <= defaultMaxAttemptsForSubmitFailures;
+						attemptNumber++
+					) {
+						const { error, ...eventProps } = await summarizePromiseP;
+						const expectedEventProps: ISummarizeEventProps = {
+							result: "failure",
+							currentAttempt: attemptNumber,
+							maxAttempts: defaultMaxAttemptsForSubmitFailures,
+						};
+						assert.deepStrictEqual(
+							eventProps,
+							expectedEventProps,
+							`Summarize event for attempt ${attemptNumber} not as expected`,
+						);
+						summarizePromiseP = getSummarizeEventPromise();
+						// Wait for "retryAfterSeconds". The next attempt should start after this.
+						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);
+					}
 				});
 			});
 		});

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.23.0",
+	"version": "0.24.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,8 +40,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "nyc npm run test:mocha:report",
 		"tsc": "tsc"
@@ -80,7 +79,7 @@
 	"devDependencies": {
 		"@fluid-internal/readme-command": "workspace:*",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.36.1",
 		"@oclif/test": "^2.3.27",
 		"@types/chai": "^4.3.5",

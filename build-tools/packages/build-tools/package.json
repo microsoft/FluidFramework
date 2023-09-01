@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.23.0",
+	"version": "0.24.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,7 +32,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
+		"test:mocha": "mocha --recursive dist/test --timeout 15000",
 		"tsc": "tsc"
 	},
 	"dependencies": {
@@ -71,7 +71,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/async": "^3.2.20",
 		"@types/fs-extra": "^8.1.2",
 		"@types/glob": "^7.2.0",

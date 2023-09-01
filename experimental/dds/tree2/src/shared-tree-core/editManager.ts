@@ -7,7 +7,6 @@ import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
-	AnchorSet,
 	assertIsRevisionTag,
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -139,14 +138,12 @@ export class EditManager<
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param repairDataStoreProvider - used for undoing/redoing the local branch
-	 * @param anchors - an optional set of anchors to be rebased by the local branch when it changes
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
-		anchors?: AnchorSet,
 	) {
 		super("EditManager");
 		this.trunkBase = {
@@ -167,7 +164,6 @@ export class EditManager<
 			changeFamily,
 			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
-			anchors,
 		);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
@@ -319,11 +315,11 @@ export class EditManager<
 			const trunkSize = getPathFromBase(this.trunk.getHead(), this.trunkBase).length;
 			assert(
 				this.sequenceMap.size === trunkSize + 1,
-				"The size of the sequenceMap must have one element more than the trunk",
+				0x744 /* The size of the sequenceMap must have one element more than the trunk */,
 			);
 			assert(
 				this.trunkMetadata.size === trunkSize,
-				"The size of the trunkMetadata must be the same as the trunk",
+				0x745 /* The size of the trunkMetadata must be the same as the trunk */,
 			);
 		}
 	}
@@ -610,7 +606,7 @@ export class EditManager<
 				: searchBy;
 
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceId);
-		assert(commit !== undefined, "sequence id has been evicted");
+		assert(commit !== undefined, 0x746 /* sequence id has been evicted */);
 		return commit;
 	}
 

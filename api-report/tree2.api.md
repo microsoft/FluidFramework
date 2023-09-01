@@ -755,6 +755,12 @@ export interface ForestEvents {
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @alpha
+export enum ForestType {
+    Optimized = 1,
+    Reference = 0
+}
+
+// @alpha
 export interface FullSchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
@@ -864,13 +870,12 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     readonly isEmpty: boolean;
-    readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
 
 // @alpha (undocumented)
-export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
     // (undocumented)
     encodedSchema?: TAnySchema;
 }
@@ -1757,6 +1762,7 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
+    forest?: ForestType;
 }
 
 // @alpha

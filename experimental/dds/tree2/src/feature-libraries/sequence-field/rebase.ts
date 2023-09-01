@@ -161,13 +161,13 @@ function rebaseMarkList<TNodeChange>(
 		if (markEmptiesCells(baseMark)) {
 			assert(isDetachMark(baseMark), 0x709 /* Only detach marks should empty cells */);
 			const detachId = getDetachCellId(baseMark, baseIntention);
-			assert(detachId.revision !== undefined, "Detach ID should have a revision");
+			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
 			addLineageToRecipients(lineageRecipients, detachId.revision, detachId.localId, length);
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
 			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), "Only detaches empty cells");
+				assert(isDetachMark(baseMark), 0x74b /* Only detaches empty cells */);
 				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
 					setMarkAdjacentCells(rebasedMark, detachBlock);
 				}
@@ -189,7 +189,7 @@ function rebaseMarkList<TNodeChange>(
 			if (detachId.revision === baseIntention) {
 				addIdRange(detachBlock, { id: baseMark.id, count: baseMark.count });
 			} else {
-				assert(detachId.revision !== undefined, "Detach ID should have revision");
+				assert(detachId.revision !== undefined, 0x74c /* Detach ID should have revision */);
 				lineageEntries.push({
 					revision: detachId.revision,
 					id: detachId.localId,
@@ -788,8 +788,11 @@ function getLineageHolder(mark: Mark<unknown>): HasLineage {
 }
 
 function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): void {
-	assert(mark.cellId !== undefined, "Can only set adjacent cells on a mark with cell ID");
-	assert(mark.cellId.adjacentCells === undefined, "Should not overwrite adjacentCells");
+	assert(
+		mark.cellId !== undefined,
+		0x74d /* Can only set adjacent cells on a mark with cell ID */,
+	);
+	assert(mark.cellId.adjacentCells === undefined, 0x74e /* Should not overwrite adjacentCells */);
 	mark.cellId.adjacentCells = adjacentCells;
 }
 

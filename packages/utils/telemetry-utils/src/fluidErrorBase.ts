@@ -67,35 +67,37 @@ export interface IFluidErrorBase extends Error {
 	addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
 
-const hasTelemetryPropFunctions = (x: any): boolean =>
-	typeof x?.getTelemetryProperties === "function" &&
-	typeof x?.addTelemetryProperties === "function";
+const hasTelemetryPropFunctions = (x: unknown): boolean =>
+	typeof (x as Partial<IFluidErrorBase>)?.getTelemetryProperties === "function" &&
+	typeof (x as Partial<IFluidErrorBase>)?.addTelemetryProperties === "function";
 
 /**
  * Type guard for error data containing the {@link IFluidErrorBase.errorInstanceId} property.
  */
-export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
-	typeof x?.errorInstanceId === "string";
+export const hasErrorInstanceId = (x: unknown): x is { errorInstanceId: string } =>
+	typeof (x as Partial<{ errorInstanceId: string }>)?.errorInstanceId === "string";
 
 /**
  * Type guard for {@link IFluidErrorBase}.
  */
-export function isFluidError(e: any): e is IFluidErrorBase {
+export function isFluidError(error: unknown): error is IFluidErrorBase {
 	return (
-		typeof e?.errorType === "string" &&
-		typeof e?.message === "string" &&
-		hasErrorInstanceId(e) &&
-		hasTelemetryPropFunctions(e)
+		typeof (error as Partial<IFluidErrorBase>)?.errorType === "string" &&
+		typeof (error as Partial<IFluidErrorBase>)?.message === "string" &&
+		hasErrorInstanceId(error) &&
+		hasTelemetryPropFunctions(error)
 	);
 }
 
 /**
  * Type guard for old standard of valid/known errors.
  */
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId"> {
+export function isValidLegacyError(
+	error: unknown,
+): error is Omit<IFluidErrorBase, "errorInstanceId"> {
 	return (
-		typeof e?.errorType === "string" &&
-		typeof e?.message === "string" &&
-		hasTelemetryPropFunctions(e)
+		typeof (error as Partial<IFluidErrorBase>)?.errorType === "string" &&
+		typeof (error as Partial<IFluidErrorBase>)?.message === "string" &&
+		hasTelemetryPropFunctions(error)
 	);
 }
