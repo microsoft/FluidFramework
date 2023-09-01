@@ -93,4 +93,31 @@ describe("MultiSinkLogger", () => {
 			"Min loglevel should be set correctly to default",
 		);
 	});
+
+	it("MultiSink logger set the logLevel correctly when no initial loggers are supplied", () => {
+		const multiSink = createMultiSinkLogger({
+			loggers: [],
+		});
+
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger());
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.default,
+			"Min loglevel should be set correctly to default",
+		);
+
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger(LogLevel.default));
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.default,
+			"Min loglevel should be set correctly to default",
+		);
+
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger(LogLevel.verbose));
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.verbose,
+			"Min loglevel should be set correctly to verbose",
+		);
+	});
 });

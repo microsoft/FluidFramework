@@ -472,6 +472,9 @@ export function createMultiSinkLogger(props: {
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[];
+	// This is minimum of minLlogLevel of all loggers.
+	private _minLogLevelOfAllLoggers: LogLevel | undefined;
+
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
@@ -503,19 +506,16 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
-	}
-
-	// This is minimum of minLlogLevel of all loggers.
-	private _minLogLevelOfAllLoggers: LogLevel | undefined;
-
-	public get minLogLevel(): LogLevel | undefined {
-		if (this._minLogLevelOfAllLoggers === undefined) {
+		if (this.loggers.length > 0) {
 			const logLevels: number[] = [];
 			for (const logger of this.loggers) {
 				logLevels.push(logger.minLogLevel ?? LogLevel.default);
 			}
 			this._minLogLevelOfAllLoggers = Math.min(...logLevels);
 		}
+	}
+
+	public get minLogLevel(): LogLevel | undefined {
 		// This will be eual to LogLevel.Default in case none of the loggers have the minLogLevel defined.
 		return this._minLogLevelOfAllLoggers;
 	}
@@ -528,9 +528,10 @@ export class MultiSinkLogger extends TelemetryLogger {
 		if (logger !== undefined && logger !== null) {
 			this.loggers.push(logger);
 			// Update in case the logLevel of added logger is less than the current.
-			if (
+			if (this._minLogLevelOfAllLoggers === undefined) {
+				this._minLogLevelOfAllLoggers = logger.minLogLevel ?? LogLevel.default;
+			} else if (
 				logger.minLogLevel !== undefined &&
-				this._minLogLevelOfAllLoggers !== undefined &&
 				logger.minLogLevel < this._minLogLevelOfAllLoggers
 			) {
 				this._minLogLevelOfAllLoggers = logger.minLogLevel;
