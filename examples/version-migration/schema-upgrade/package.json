@@ -76,7 +76,6 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
-		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
 		"eslint": "~8.6.0",

@@ -51,7 +51,6 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@types/node": "^16.18.38",
-		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",

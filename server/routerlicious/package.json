@@ -77,7 +77,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"lerna": "5.6.2",
 		"mocha": "^10.2.0",

@@ -73,7 +73,7 @@
 		"@types/assert": "^1.5.1",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",

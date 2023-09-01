@@ -54,7 +54,6 @@
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^16.18.38",
 		"assert": "^2.0.0",
-		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"mocha": "^10.2.0",

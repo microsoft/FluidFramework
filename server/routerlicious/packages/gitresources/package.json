@@ -33,7 +33,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/gitresources-previous": "npm:@fluidframework/gitresources@0.1040.1000",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",

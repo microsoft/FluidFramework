@@ -99,7 +99,6 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/valid-url": "^1.0.3",
 		"clean-webpack-plugin": "^4.0.0",
-		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"eslint-plugin-eslint-comments": "~3.2.0",

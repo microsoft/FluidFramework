@@ -89,7 +89,7 @@
 		"@types/rimraf": "^3.0.0",
 		"@types/split": "^0.3.28",
 		"@types/uuid": "^9.0.2",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
