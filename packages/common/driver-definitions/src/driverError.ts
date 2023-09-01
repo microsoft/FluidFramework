@@ -98,6 +98,11 @@ export const DriverErrorTypes = {
 	 * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
 	 */
 	fileIsLocked: "fileIsLocked",
+
+	/**
+	 * Storage is out of space
+	 */
+	outOfStorageError: "outOfStorageError",
 } as const;
 export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorTypes];
 
