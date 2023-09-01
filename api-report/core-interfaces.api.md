@@ -456,7 +456,7 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     duration?: number;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
@@ -490,11 +490,11 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 } : L;
 
 // @public
-export interface Tagged<T> {
+export interface Tagged<V, T extends string = string> {
     // (undocumented)
-    tag: string;
+    tag: T;
     // (undocumented)
-    value: T;
+    value: V;
 }
 
 // @public
@@ -503,7 +503,7 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 // @public @deprecated
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @public
