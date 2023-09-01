@@ -273,6 +273,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 
 // @public
 export class MockLogger implements ITelemetryBaseLogger {
+    constructor(minLogLevel?: LogLevel | undefined);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -284,6 +285,8 @@ export class MockLogger implements ITelemetryBaseLogger {
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
+    // (undocumented)
+    readonly minLogLevel?: LogLevel | undefined;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
     // (undocumented)
