@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import {
+	DriverError,
+	IDriverErrorBase,
+	DriverErrorTypes,
+} from "@fluidframework/driver-definitions";
 import {
 	NonRetryableError,
 	GenericNetworkError,
@@ -16,6 +20,24 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 /**
  * Routerlicious Error types
  * Different error types that may be thrown by the routerlicious driver
+ */
+export const RouterliciousErrorTypes = {
+	// Inherit base driver error types
+	...DriverErrorTypes,
+
+	/**
+	 * TODO
+	 */
+	sslCertError: "sslCertError",
+} as const;
+export type RouterliciousErrorTypes =
+	typeof RouterliciousErrorTypes[keyof typeof RouterliciousErrorTypes];
+
+/**
+ * Routerlicious Error types
+ * Different error types that may be thrown by the routerlicious driver
+ *
+ * @deprecated Use {@link RouterliciousErrorTypes} instead
  */
 export enum RouterliciousErrorType {
 	/**
@@ -77,7 +99,7 @@ export function createR11sNetworkError(
 			error = new AuthorizationError(errorMessage, undefined, undefined, props);
 			break;
 		case 404:
-			const errorType = RouterliciousErrorType.fileNotFoundOrAccessDeniedError;
+			const errorType = RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError;
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
 		case 429:
