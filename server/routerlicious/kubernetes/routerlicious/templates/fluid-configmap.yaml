@@ -126,7 +126,7 @@ data:
             },
             "getDeltasDbRetryConfig": {
                 "enableTenants": {{ toJson .Values.alfred.getDeltasDbRetryConfig.enableTenants }},
-                "retryCount" : {{ .Values.alfred.getDeltasDbRetryConfig.retryCount }}
+                "retryCount" : {{ .Values.alfred.getDeltasDbRetryConfig.retryCount }},
                 "retryIntervalMs" : {{ .Values.alfred.getDeltasDbRetryConfig.retryIntervalMs }}
             }
         },
