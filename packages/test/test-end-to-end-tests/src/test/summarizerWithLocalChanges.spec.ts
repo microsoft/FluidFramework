@@ -459,7 +459,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
-				settings["Fluid.Summarizer.TryDynamicRetries"] = tryDynamicRetry;
+				settings["Fluid.Summarizer.UseDynamicRetries"] = tryDynamicRetry;
 				const logger = new MockLogger();
 				const mainContainer = await createContainer(
 					provider,
@@ -571,7 +571,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
@@ -653,7 +653,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 			settings["Fluid.Summarizer.SkipFailingIncorrectSummary"] = true;
 			settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
 			const container = await createContainer(provider, false /* disableSummary */);

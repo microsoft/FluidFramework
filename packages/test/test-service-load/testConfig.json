@@ -28,7 +28,7 @@
 				"odsp": {
 					"configurations": {
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
-						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				},
@@ -36,14 +36,14 @@
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
-						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				},
 				"tinylicious": {
 					"configurations": {
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
-						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}
@@ -75,7 +75,7 @@
 				"routerlicious": {
 					"configurations": {
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
-						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}
@@ -106,7 +106,7 @@
 				"odsp": {
 					"configurations": {
 						"Fluid.Summarizer.ValidateSummaryBeforeUpload": [true, false],
-						"Fluid.Summarizer.TryDynamicRetries": [true, false],
+						"Fluid.Summarizer.UseDynamicRetries": [true, false],
 						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}
