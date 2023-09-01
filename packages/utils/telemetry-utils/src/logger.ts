@@ -6,13 +6,9 @@
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	// eslint-disable-next-line import/no-deprecated
 	ITelemetryErrorEvent,
-	// eslint-disable-next-line import/no-deprecated
 	ITelemetryGenericEvent,
-	// eslint-disable-next-line import/no-deprecated
 	ITelemetryPerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
 	ITelemetryProperties,
 	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
