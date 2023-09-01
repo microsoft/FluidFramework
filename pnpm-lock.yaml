@@ -7838,7 +7838,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -7866,7 +7865,6 @@ importers:
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
       copyfiles: 2.4.1
       eslint: 8.6.0
