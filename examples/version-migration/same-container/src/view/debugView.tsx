@@ -150,8 +150,8 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>
-				The demo in its current state disables summary heuristics, so it won't automatically
-				summarize. Use this button to force a summary immediately.
+				The demo in its current state disables summary heuristics, so it won&apos;t
+				automatically summarize. Use this button to force a summary immediately.
 				<br />
 				<button
 					onClick={() => {

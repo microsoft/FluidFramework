@@ -13,6 +13,7 @@ import {
 import {
 	Client,
 	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
@@ -369,6 +370,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this.client.createLocalReferencePosition(
 			segment,
@@ -376,6 +378,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			refType,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 	}
 
@@ -783,6 +786,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
+					// eslint-disable-next-line import/no-deprecated
 					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
 				};
 			}

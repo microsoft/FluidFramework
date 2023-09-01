@@ -10,6 +10,7 @@ import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definition
  */
 export enum OdspErrorType {
 	/**
+	 * @deprecated - This is deprecated in favour of DriverErrorType.outOfStorageError
 	 * Storage is out of space
 	 */
 	outOfStorageError = "outOfStorageError",

@@ -34,8 +34,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"start": "node server.js",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"nyc": {

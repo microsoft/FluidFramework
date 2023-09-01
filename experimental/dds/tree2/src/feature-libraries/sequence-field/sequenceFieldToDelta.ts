@@ -28,7 +28,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 		const changes = getEffectiveNodeChanges(mark);
 		const cellDeltas = cellDeltaFromMark(mark, revision, idAllocator, changes === undefined);
 		if (changes !== undefined) {
-			assert(cellDeltas.length === 1, "Invalid nested changes on non length-1 mark");
+			assert(
+				cellDeltas.length === 1,
+				0x74f /* Invalid nested changes on non length-1 mark */,
+			);
 			const fullDelta = withChildModifications(changes, cellDeltas[0], deltaFromChild);
 			out.push(fullDelta);
 		} else {

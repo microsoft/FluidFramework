@@ -33,8 +33,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha dist/**/test/**/*.test.js --unhandled-rejections=strict --reporter-option maxDiffSize=100000",
-		"test:mocha:multireport": "npm run test:mocha",
+		"test:mocha": "mocha dist/**/test/**/*.test.js --reporter-option maxDiffSize=100000",
 		"tsc": "tsc"
 	},
 	"nyc": {
@@ -66,7 +65,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluidframework/build-tools": "^0.23.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "^1.3.6",
 		"@fluidframework/test-utils": "^1.3.6",

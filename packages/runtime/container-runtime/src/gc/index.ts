@@ -38,7 +38,6 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	getGCDataFromSnapshot,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,

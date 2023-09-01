@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "assert";
 import {
 	JsonableTree,
 	fieldSchema,
@@ -9,6 +10,11 @@ import {
 	rootFieldKey,
 	moveToDetachedField,
 	Anchor,
+	UpPath,
+	Value,
+	clonePath,
+	compareUpPaths,
+	forEachNodeInSubtree,
 } from "../../../core";
 import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -48,16 +54,33 @@ export const onCreate = (tree: ISharedTree) => {
 	field.insert(0, singleTextCursor(initialTreeState));
 };
 
-export function getFirstAnchor(tree: ISharedTree): Anchor {
-	// building the anchor for anchor stability test
+export function validateAnchors(
+	tree: ISharedTree,
+	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
+	checkPaths: boolean,
+) {
+	for (const [anchor, [path, value]] of anchors) {
+		const cursor = tree.forest.allocateCursor();
+		tree.forest.tryMoveCursorToNode(anchor, cursor);
+		assert.equal(cursor.value, value);
+		if (checkPaths) {
+			const actualPath = tree.locate(anchor);
+			assert(compareUpPaths(actualPath, path));
+		}
+		cursor.free();
+	}
+}
+
+export function createAnchors(tree: ISharedTree): Map<Anchor, [UpPath, Value]> {
+	const anchors: Map<Anchor, [UpPath, Value]> = new Map();
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
-	cursor.enterNode(0);
-	cursor.getPath();
-	cursor.firstField();
-	cursor.getFieldKey();
-	cursor.enterNode(1);
-	const anchor = cursor.buildAnchor();
+	forEachNodeInSubtree(cursor, (c) => {
+		const anchor = c.buildAnchor();
+		const path = tree.locate(anchor);
+		assert(path !== undefined);
+		return anchors.set(anchor, [clonePath(path), c.value]);
+	});
 	cursor.free();
-	return anchor;
+	return anchors;
 }

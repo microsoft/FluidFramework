@@ -54,7 +54,10 @@ export class Sessions {
 			return existing;
 		}
 		const session = new Session(sessionId);
-		assert(this.uuidSpace.set(session.sessionUuid, session), "Duplicate session in map.");
+		assert(
+			this.uuidSpace.set(session.sessionUuid, session),
+			0x760 /* Duplicate session in map. */,
+		);
 		this.sessionCache.set(sessionId, session);
 		return session;
 	}
@@ -111,7 +114,7 @@ export class Sessions {
 		}
 
 		const [_, session] = closestMatch;
-		assert(session !== owningSession, "Failed to attempt to detect collisions.");
+		assert(session !== owningSession, 0x761 /* Failed to attempt to detect collisions. */);
 		const lastCluster = session.getLastCluster();
 		if (lastCluster === undefined) {
 			// If the closest session is empty (the local session), then it is guaranteed (probabilistically) that there are no
@@ -138,7 +141,7 @@ export class Sessions {
 					}
 					assert(
 						session === firstSessionThis,
-						"The only non-empty session must be the local session.",
+						0x762 /* The only non-empty session must be the local session. */,
 					);
 				} else if (!session.equals(otherSession)) {
 					return false;
@@ -367,7 +370,7 @@ export function getAlignedLocal(
 ): LocalCompressedId {
 	assert(
 		finalWithin >= cluster.baseFinalId && finalWithin <= lastAllocatedFinal(cluster),
-		"Supplied ID is not within the cluster.",
+		0x763 /* Supplied ID is not within the cluster. */,
 	);
 	const finalDelta = finalWithin - cluster.baseFinalId;
 	return (cluster.baseLocalId - finalDelta) as LocalCompressedId;

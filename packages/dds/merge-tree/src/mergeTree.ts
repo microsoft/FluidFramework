@@ -92,6 +92,7 @@ import {
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
 import { Client } from "./client";
+import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
 
 /**
  * someday we may split tree leaves from segments, but for now they are the same
@@ -452,6 +453,16 @@ export interface ClientSeq {
 
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
+	/**
+	 * Whether or not reference positions can slide to special endpoint segments
+	 * denoting the positions immediately before the start and immediately after
+	 * the end of the string.
+	 *
+	 * This is primarily useful in the case of interval stickiness.
+	 *
+	 * @alpha
+	 */
+	mergeTreeReferencesCanSlideToEndpoint?: boolean;
 	mergeTreeSnapshotChunkSize?: number;
 	/**
 	 * Whether to use the SnapshotV1 format over SnapshotLegacy.
@@ -585,14 +596,18 @@ function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	cache?: Map<ISegment, { seg?: ISegment }>,
-): ISegment | undefined {
-	if (!segment || !isRemovedAndAckedOrMovedAndAcked(segment)) {
-		return segment;
+): [ISegment | undefined, "start" | "end" | undefined] {
+	if (
+		!segment ||
+		!isRemovedAndAckedOrMovedAndAcked(segment) ||
+		segment.endpointType !== undefined
+	) {
+		return [segment, undefined];
 	}
 
 	const cachedSegment = cache?.get(segment);
 	if (cachedSegment !== undefined) {
-		return cachedSegment.seg;
+		return [cachedSegment.seg, undefined];
 	}
 	const result: { seg?: ISegment } = {};
 	cache?.set(segment, result);
@@ -613,7 +628,7 @@ function getSlideToSegment(
 		forwardExcursion(segment, goFurtherToFindSlideToSegment);
 	}
 	if (result.seg !== undefined) {
-		return result.seg;
+		return [result.seg, undefined];
 	}
 
 	if (slidingPreference === SlidingPreference.BACKWARD) {
@@ -622,7 +637,15 @@ function getSlideToSegment(
 		backwardExcursion(segment, goFurtherToFindSlideToSegment);
 	}
 
-	return result.seg;
+	let maybeEndpoint: "start" | "end" | undefined;
+
+	if (slidingPreference === SlidingPreference.BACKWARD) {
+		maybeEndpoint = "start";
+	} else if (slidingPreference === SlidingPreference.FORWARD) {
+		maybeEndpoint = "end";
+	}
+
+	return [result.seg, maybeEndpoint];
 }
 
 /**
@@ -638,7 +661,7 @@ export function getSlideToSegoff(
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
-	const segment = getSlideToSegment(segoff.segment, slidingPreference);
+	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
@@ -924,7 +947,16 @@ export class MergeTree {
 		return this.root.cachedLength;
 	}
 
-	public getPosition(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
+	public getPosition(
+		node: IMergeNode,
+		refSeq: number,
+		clientId: number,
+		localSeq?: number,
+	): number {
+		if (node.isLeaf() && node.endpointType === "start") {
+			return 0;
+		}
+
 		let totalOffset = 0;
 		let parent = node.parent;
 		let prevParent: IMergeBlock | undefined;
@@ -989,13 +1021,16 @@ export class MergeTree {
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
 		// References are slid in groups to preserve their order.
-		let currentSlideGroup: LocalReferenceCollection[] = [];
+		let currentForwardSlideGroup: LocalReferenceCollection[] = [];
+		let currentBackwardSlideGroup: LocalReferenceCollection[] = [];
 
+		let currentForwardMaybeEndpoint: "start" | "end" | undefined;
 		let currentForwardSlideDestination: ISegment | undefined;
 		let currentForwardSlideIsForward: boolean | undefined;
 		const forwardPred = (ref: LocalReferencePosition) =>
 			ref.slidingPreference !== SlidingPreference.BACKWARD;
 
+		let currentBackwardMaybeEndpoint: "start" | "end" | undefined;
 		let currentBackwardSlideDestination: ISegment | undefined;
 		let currentBackwardSlideIsForward: boolean | undefined;
 		const backwardPred = (ref: LocalReferencePosition) =>
@@ -1004,32 +1039,50 @@ export class MergeTree {
 		const slideGroup = (
 			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
+			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
+			maybeEndpoint: "start" | "end" | undefined,
 		) => {
 			if (currentSlideIsForward === undefined) {
 				return;
+			}
+
+			const nonEndpointRefsToAdd = currentSlideGroup.map((collection) =>
+				filterLocalReferencePositions(
+					collection,
+					(ref) => pred(ref) && (maybeEndpoint ? !ref.canSlideToEndpoint : true),
+				),
+			);
+
+			const endpointRefsToAdd = currentSlideGroup.map((collection) =>
+				filterLocalReferencePositions(
+					collection,
+					(ref) => pred(ref) && !!ref.canSlideToEndpoint,
+				),
+			);
+
+			if (maybeEndpoint) {
+				const endpoint = maybeEndpoint === "start" ? this.startOfTree : this.endOfTree;
+				const localRefs = (endpoint.localRefs ??= new LocalReferenceCollection(endpoint));
+				if (currentSlideIsForward) {
+					localRefs.addBeforeTombstones(...endpointRefsToAdd);
+				} else {
+					localRefs.addAfterTombstones(...endpointRefsToAdd);
+				}
 			}
 
 			if (currentSlideDestination !== undefined) {
 				const localRefs = (currentSlideDestination.localRefs ??=
 					new LocalReferenceCollection(currentSlideDestination));
 				if (currentSlideIsForward) {
-					localRefs.addBeforeTombstones(
-						...currentSlideGroup.map((collection) =>
-							filterLocalReferencePositions(collection, pred),
-						),
-					);
+					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
 				} else {
-					localRefs.addAfterTombstones(
-						...currentSlideGroup.map((collection) =>
-							filterLocalReferencePositions(collection, pred),
-						),
-					);
+					localRefs.addAfterTombstones(...nonEndpointRefsToAdd);
 				}
 			} else {
 				for (const collection of currentSlideGroup) {
 					for (const ref of collection) {
-						if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
+						if (pred(ref) && !refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
 							ref.callbacks?.beforeSlide?.(ref);
 							collection.removeLocalRef(ref);
 							ref.callbacks?.afterSlide?.(ref);
@@ -1053,12 +1106,15 @@ export class MergeTree {
 			segment: ISegment,
 			currentSlideDestination: ISegment | undefined,
 			currentSlideIsForward: boolean | undefined,
+			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			slidingPreference: SlidingPreference,
+			currentMaybeEndpoint: "start" | "end" | undefined,
 			reassign: (
 				localRefs: LocalReferenceCollection,
 				slideToSegment: ISegment | undefined,
 				slideIsForward: boolean,
+				maybeEndpoint: "start" | "end" | undefined,
 			) => void,
 		) => {
 			// avoid sliding logic if this segment doesn't have any references
@@ -1067,22 +1123,41 @@ export class MergeTree {
 				return;
 			}
 
-			const slideToSegment = getSlideToSegment(segment, slidingPreference, segmentCache);
+			const [slideToSegment, maybeEndpoint] = getSlideToSegment(
+				segment,
+				slidingPreference,
+				slidingPreference === SlidingPreference.FORWARD
+					? forwardSegmentCache
+					: backwardSegmentCache,
+			);
 			const slideIsForward =
 				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
 
 			if (
 				slideToSegment !== currentSlideDestination ||
-				slideIsForward !== currentSlideIsForward
+				slideIsForward !== currentSlideIsForward ||
+				maybeEndpoint !== currentMaybeEndpoint
 			) {
-				slideGroup(currentSlideDestination, currentSlideIsForward, pred);
-				reassign(segment.localRefs, slideToSegment, slideIsForward);
+				slideGroup(
+					currentSlideDestination,
+					currentSlideIsForward,
+					currentSlideGroup,
+					pred,
+					this.options?.mergeTreeReferencesCanSlideToEndpoint ? maybeEndpoint : undefined,
+				);
+				reassign(
+					segment.localRefs,
+					slideToSegment,
+					slideIsForward,
+					this.options?.mergeTreeReferencesCanSlideToEndpoint ? maybeEndpoint : undefined,
+				);
 			} else {
 				currentSlideGroup.push(segment.localRefs);
 			}
 		};
 
-		const segmentCache = new Map<ISegment, { seg?: ISegment }>();
+		const forwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
+		const backwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
 		for (const segment of segments) {
 			assert(
 				isRemovedAndAckedOrMovedAndAcked(segment),
@@ -1096,12 +1171,15 @@ export class MergeTree {
 				segment,
 				currentForwardSlideDestination,
 				currentForwardSlideIsForward,
+				currentForwardSlideGroup,
 				forwardPred,
 				SlidingPreference.FORWARD,
-				(localRefs, slideToSegment, slideIsForward) => {
-					currentSlideGroup = [localRefs];
+				currentForwardMaybeEndpoint,
+				(localRefs, slideToSegment, slideIsForward, maybeEndpoint) => {
+					currentForwardSlideGroup = [localRefs];
 					currentForwardSlideDestination = slideToSegment;
 					currentForwardSlideIsForward = slideIsForward;
+					currentForwardMaybeEndpoint = maybeEndpoint;
 				},
 			);
 
@@ -1109,18 +1187,33 @@ export class MergeTree {
 				segment,
 				currentBackwardSlideDestination,
 				currentBackwardSlideIsForward,
+				currentBackwardSlideGroup,
 				backwardPred,
 				SlidingPreference.BACKWARD,
-				(localRefs, slideToSegment, slideIsForward) => {
-					currentSlideGroup = [localRefs];
+				currentBackwardMaybeEndpoint,
+				(localRefs, slideToSegment, slideIsForward, maybeEndpoint) => {
+					currentBackwardSlideGroup = [localRefs];
 					currentBackwardSlideDestination = slideToSegment;
 					currentBackwardSlideIsForward = slideIsForward;
+					currentBackwardMaybeEndpoint = maybeEndpoint;
 				},
 			);
 		}
 
-		slideGroup(currentForwardSlideDestination, currentForwardSlideIsForward, forwardPred);
-		slideGroup(currentBackwardSlideDestination, currentBackwardSlideIsForward, backwardPred);
+		slideGroup(
+			currentForwardSlideDestination,
+			currentForwardSlideIsForward,
+			currentForwardSlideGroup,
+			forwardPred,
+			currentForwardMaybeEndpoint,
+		);
+		slideGroup(
+			currentBackwardSlideDestination,
+			currentBackwardSlideIsForward,
+			currentBackwardSlideGroup,
+			backwardPred,
+			currentBackwardMaybeEndpoint,
+		);
 	}
 
 	private blockLength(node: IMergeBlock, refSeq: number, clientId: number): number {
@@ -1402,7 +1495,7 @@ export class MergeTree {
 					if (marker !== undefined) {
 						assert(
 							marker.isLeaf() && Marker.is(marker),
-							"Object returned is not a valid marker",
+							0x751 /* Object returned is not a valid marker */,
 						);
 						foundMarker = marker;
 					}
@@ -2677,25 +2770,49 @@ export class MergeTree {
 		}
 	}
 
+	startOfTree = new StartOfTreeSegment(this);
+	endOfTree = new EndOfTreeSegment(this);
+
 	public createLocalReferencePosition(
-		segment: ISegmentLeaf,
+		_segment: ISegmentLeaf | "start" | "end",
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		if (
-			isRemovedAndAckedOrMovedAndAcked(segment) &&
-			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)
+			_segment !== "start" &&
+			_segment !== "end" &&
+			isRemovedAndAckedOrMovedAndAcked(_segment) &&
+			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient) &&
+			_segment.endpointType === undefined
 		) {
 			throw new UsageError(
 				"Can only create SlideOnRemove or Transient local reference position on a removed segment",
 			);
 		}
+
+		let segment: ISegmentLeaf;
+
+		if (_segment === "start") {
+			segment = this.startOfTree;
+		} else if (_segment === "end") {
+			segment = this.endOfTree;
+		} else {
+			segment = _segment;
+		}
+
 		const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
 		segment.localRefs = localRefs;
 
-		const segRef = localRefs.createLocalRef(offset, refType, properties, slidingPreference);
+		const segRef = localRefs.createLocalRef(
+			offset,
+			refType,
+			properties,
+			slidingPreference,
+			canSlideToEndpoint,
+		);
 
 		if (refTypeIncludesFlag(refType, hierRefTypes)) {
 			this.blockUpdatePathLengths(

@@ -42,7 +42,7 @@ import {
 	ContainerRuntimeMessage,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
+import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -598,8 +598,7 @@ describe("Runtime", () => {
 						pendingStates: [
 							{
 								type: "message",
-								messageType: ContainerMessageType.BlobAttach,
-								content: {},
+								content: `{"type": "${ContainerMessageType.BlobAttach}", "contents": {}}`,
 							},
 						],
 					},
@@ -1194,7 +1193,7 @@ describe("Runtime", () => {
 		describe("EntryPoint initialized correctly", () => {
 			it("when using old load method", async () => {
 				const myResponse: IResponse = {
-					mimeType: "myMimeType",
+					mimeType: "fluid/object",
 					value: "hello!",
 					status: 200,
 				};
@@ -1217,13 +1216,13 @@ describe("Runtime", () => {
 					"request method in runtime did not return the expected object",
 				);
 
-				// The entryPoint should be undefined because the deprecated load() method was used
-				assert(containerRuntime.getEntryPoint !== undefined); // The function should exist, though
+				// The entryPoint should use the request handler we passed in the runtime's constructor
+				assert(containerRuntime.getEntryPoint !== undefined);
 				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.strictEqual(
+				assert.notStrictEqual(
 					actualEntryPoint,
 					undefined,
-					"entryPoint was not undefined as expected",
+					"entryPoint was not the expected object",
 				);
 			});
 
@@ -1275,8 +1274,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					JSON.parse((state?.pendingStates[0] as IPendingMessageNew).content).contents
-						.contents,
+					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
 					{
 						prop1: 1,
 					},

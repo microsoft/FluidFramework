@@ -35,6 +35,9 @@ export {
 	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "./intervalCollection";
 export {
 	IntervalIndex,

@@ -48,17 +48,18 @@ import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
 class RevertibleFactory extends SharedStringFactory {
-	options = {};
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
 		return super.create(document, id);
 	}
 }

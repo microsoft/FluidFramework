@@ -28,6 +28,7 @@ import {
 	namedTreeSchema,
 } from "../utils";
 import {
+	ForestType,
 	ISharedTree,
 	ISharedTreeView,
 	SharedTreeFactory,
@@ -1917,6 +1918,40 @@ describe("SharedTree", () => {
 			readCursor.free();
 			anchorPath = tree.locate(firstAnchor);
 			assert(compareUpPaths(expectedPath, anchorPath));
+		});
+	});
+
+	describe("Creates a SharedTree using specific ForestType", () => {
+		it("unspecified ForestType uses ObjectForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+				}),
+			);
+			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
+		});
+
+		it("ForestType.Reference uses ObjectForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Reference,
+				}),
+			);
+			assert.equal(trees[0].forest.computationName, "object-forest.ObjectForest");
+		});
+
+		it("ForestType.Optimized uses ChunkedForest", () => {
+			const { trees } = new TestTreeProviderLite(
+				1,
+				new SharedTreeFactory({
+					jsonValidator: typeboxValidator,
+					forest: ForestType.Optimized,
+				}),
+			);
+			assert.equal(trees[0].forest.computationName, "object-forest.ChunkedForest");
 		});
 	});
 });
