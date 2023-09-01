@@ -19,7 +19,6 @@ import {
 	Delta,
 	UpPath,
 	Anchor,
-	visitDelta,
 	FieldAnchor,
 	ForestEvents,
 	ITreeSubscriptionCursorState,
@@ -49,6 +48,8 @@ interface StackNode {
  */
 class ChunkedForest extends SimpleDependee implements IEditableForest {
 	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
+
+	private activeVisitor?: DeltaVisitor;
 
 	private readonly events = createEmitter<ForestEvents>();
 
@@ -86,13 +87,22 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	public getVisitor(): DeltaVisitor {
+	public acquireVisitor(): DeltaVisitor {
+		assert(
+			this.activeVisitor === undefined,
+			"Must release existing visitor before acquiring another",
+		);
+		this.events.emit("beforeChange");
+		this.invalidateDependents();
+
 		const moves: Map<Delta.MoveId, DetachedField> = new Map();
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const thisForest = this;
+		if (this.roots.isShared()) {
+			this.roots = this.roots.clone();
+		}
 
 		const visitor = {
+			forest: this,
 			// Current location in the tree, as a non-shared BasicChunk (TODO: support in-place modification of other chunk formats when possible).
 			// Start above root detached sequences.
 			mutableChunkStack: [] as StackNode[],
@@ -106,8 +116,8 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			},
 			moveIn(index: number, toAttach: DetachedField): number {
 				const detachedKey = detachedFieldAsKey(toAttach);
-				const children = thisForest.roots.fields.get(detachedKey) ?? [];
-				thisForest.roots.fields.delete(detachedKey);
+				const children = this.forest.roots.fields.get(detachedKey) ?? [];
+				this.forest.roots.fields.delete(detachedKey);
 				if (children.length === 0) {
 					return 0; // Prevent creating 0 sized fields when inserting empty into empty.
 				}
@@ -119,31 +129,23 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 
 				return children.length;
 			},
-			beforeDelta(delta: Delta.Root): void {
-				thisForest.events.emit("beforeDelta", delta);
-				thisForest.invalidateDependents();
-
-				if (thisForest.roots.isShared()) {
-					thisForest.roots = thisForest.roots.clone();
-				}
-			},
-			afterDelta(delta: Delta.Root): void {
-				thisForest.events.emit("afterDelta", delta);
-			},
-			fork() {
-				return { ...this, mutableChunkStack: [...this.mutableChunkStack] };
-			},
 			free(): void {
 				this.mutableChunk = undefined;
 				this.mutableChunkStack.length = 0;
+				assert(
+					this.forest.activeVisitor !== undefined,
+					"Multiple free calls for same visitor",
+				);
+				this.forest.activeVisitor = undefined;
+				this.forest.events.emit("afterChange");
 			},
 			onDelete(index: number, count: number): void {
 				this.onMoveOut(index, count);
 			},
 			onInsert(index: number, content: Delta.ProtoNodes): void {
-				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, thisForest.chunker));
-				const field = thisForest.newDetachedField();
-				thisForest.roots.fields.set(detachedFieldAsKey(field), chunks);
+				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
+				const field = this.forest.newDetachedField();
+				this.forest.roots.fields.set(detachedFieldAsKey(field), chunks);
 				this.moveIn(index, field);
 			},
 			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
@@ -152,10 +154,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				const newField = sourceField.splice(index, count);
 
 				if (id !== undefined) {
-					const detached = thisForest.newDetachedField();
+					const detached = this.forest.newDetachedField();
 					const key = detachedFieldAsKey(detached);
 					if (newField.length > 0) {
-						thisForest.roots.fields.set(key, newField);
+						this.forest.roots.fields.set(key, newField);
 					}
 					moves.set(id, detached);
 				} else {
@@ -195,7 +197,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 					//
 					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
 					const newChunks = mapCursorField(found.cursor(), (cursor) =>
-						basicChunkTree(cursor, thisForest.chunker),
+						basicChunkTree(cursor, this.forest.chunker),
 					);
 					// TODO: this could fail for really long chunks being split (due to argument count limits).
 					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
@@ -227,6 +229,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.mutableChunk = top.mutableChunk;
 			},
 		};
+		this.activeVisitor = visitor;
 		return visitor;
 	}
 

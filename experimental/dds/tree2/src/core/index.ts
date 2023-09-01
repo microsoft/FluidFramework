@@ -55,6 +55,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	applyDelta,
 	setGenericTreeField,
 	DeltaVisitor,
 	PathVisitor,

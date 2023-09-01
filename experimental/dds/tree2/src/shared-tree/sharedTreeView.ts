@@ -17,7 +17,7 @@ import {
 	UndoRedoManager,
 	LocalCommitSource,
 	schemaDataIsEmpty,
-	visitDelta,
+	applyDelta,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -433,10 +433,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
-				const anchorVisitor = this.forest.anchors.getVisitor();
-				const visitor = this.forest.getVisitor();
-				visitDelta(delta, anchorVisitor);
-				visitDelta(delta, visitor);
+				applyDelta(delta, this.forest.anchors);
+				applyDelta(delta, this.forest);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
 			}

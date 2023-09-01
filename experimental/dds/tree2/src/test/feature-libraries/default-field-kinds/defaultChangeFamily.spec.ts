@@ -18,7 +18,7 @@ import {
 	rootFieldKey,
 	TaggedChange,
 	UpPath,
-	visitDelta,
+	applyDelta,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
@@ -122,7 +122,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		changes.push({ revision: currentRevision, change });
 		const delta = defaultChangeFamily.intoDelta(change);
 		deltas.push(delta);
-		visitDelta(delta, forest.getVisitor());
+		applyDelta(delta, forest);
 		currentRevision = mintRevisionTag();
 	});
 	return {

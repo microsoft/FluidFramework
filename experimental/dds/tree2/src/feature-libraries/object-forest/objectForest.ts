@@ -20,7 +20,6 @@ import {
 	Delta,
 	UpPath,
 	Anchor,
-	visitDelta,
 	ITreeCursor,
 	CursorLocationType,
 	TreeSchemaIdentifier,
@@ -53,6 +52,8 @@ function makeRoot(): MapTree {
  */
 class ObjectForest extends SimpleDependee implements IEditableForest {
 	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
+
+	private activeVisitor?: DeltaVisitor;
 
 	public readonly roots: MapTree = makeRoot();
 
@@ -96,7 +97,19 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	public getVisitor(): DeltaVisitor {
+	public acquireVisitor(): DeltaVisitor {
+		assert(
+			this.activeVisitor === undefined,
+			"Must release existing visitor before acquiring another",
+		);
+		this.events.emit("beforeChange");
+
+		this.invalidateDependents();
+		assert(
+			this.currentCursors.size === 0,
+			0x374 /* No cursors can be current when modifying forest */,
+		);
+
 		// Note: This code uses cursors, however it also modifies the tree.
 		// In general this is not safe, but this code happens to only modify the tree below the current cursor location,
 		// which happens to work.
@@ -122,35 +135,23 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 			return children.length;
 		};
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const thisForest = this;
-		const cursors: ITreeSubscriptionCursor[] = [cursor];
 		const visitor = {
+			forest: this,
 			cursor,
-			beforeDelta(delta: Delta.Root) {
-				thisForest.events.emit("beforeDelta", delta);
-				thisForest.invalidateDependents();
-				assert(
-					thisForest.currentCursors.size === 0,
-					0x374 /* No cursors can be current when modifying forest */,
-				);
-			},
-			afterDelta(delta: Delta.Root) {
-				thisForest.events.emit("afterDelta", delta);
-			},
-			fork() {
-				const newCursor = this.cursor.fork();
-				cursors.push(newCursor);
-				return { ...visitor, cursor: newCursor };
-			},
 			free() {
 				this.cursor.free();
+				assert(
+					this.forest.activeVisitor !== undefined,
+					"Multiple free calls for same visitor",
+				);
+				this.forest.activeVisitor = undefined;
+				this.forest.events.emit("afterChange");
 			},
 			onDelete(index: number, count: number): void {
 				this.onMoveOut(index, count);
 			},
 			onInsert(index: number, content: Delta.ProtoNode[]): void {
-				const range = thisForest.add(content);
+				const range = this.forest.add(content);
 				moveIn(index, range, this.cursor);
 			},
 			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
@@ -165,11 +166,11 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 					0x371 /* detached range's end must be after its start */,
 				);
 				const newField = sourceField.splice(startIndex, endIndex - startIndex);
-				const field = thisForest.addFieldAsDetached(newField);
+				const field = this.forest.addFieldAsDetached(newField);
 				if (id !== undefined) {
 					moves.set(id, field);
 				} else {
-					thisForest.delete(field);
+					this.forest.delete(field);
 				}
 				if (sourceField.length === 0) {
 					parent.fields.delete(key);
@@ -194,6 +195,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.cursor.exitField();
 			},
 		};
+		this.activeVisitor = visitor;
 		return visitor;
 	}
 

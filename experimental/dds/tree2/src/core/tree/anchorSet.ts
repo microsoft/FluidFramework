@@ -19,7 +19,7 @@ import { FieldKey } from "../schema-stored";
 import { UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
-import { DeltaVisitor, visitDelta } from "./visitDelta";
+import { DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";
 
 /**
@@ -213,6 +213,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	// TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
 	// For now use this more encapsulated approach with maps.
 	private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
+
+	private activeVisitor?: DeltaVisitor;
 
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
@@ -556,12 +558,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	/**
 	 * Updates the anchors according to the changes described in the given delta
 	 */
-	public getVisitor(): DeltaVisitor {
+	public acquireVisitor(): DeltaVisitor {
+		assert(
+			this.activeVisitor === undefined,
+			"Must release existing visitor before acquiring another",
+		);
 		const moveTable = new Map<Delta.MoveId, UpPath>();
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const thisAnchorSet = this;
 
 		const visitor = {
+			anchorSet: this,
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
 			// If at root, run `withRoot` instead.
 			maybeWithNode(withNode: (anchorNode: PathNode) => void, withRoot?: () => void) {
@@ -572,7 +577,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// TODO:Perf:
 					// When traversing to a depth D when there are not anchors in that subtree, this goes O(D^2).
 					// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
-					this.parent = thisAnchorSet.internalizePath(this.parent);
+					this.parent = this.anchorSet.internalizePath(this.parent);
 					if (this.parent instanceof PathNode) {
 						withNode(this.parent);
 					}
@@ -584,21 +589,20 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
-			beforeDelta(delta: Delta.Root): void {},
-			afterDelta(delta: Delta.Root): void {
-				thisAnchorSet.events.emit("treeChanging", thisAnchorSet);
+			free() {
+				assert(
+					this.anchorSet.activeVisitor !== undefined,
+					"Multiple free calls for same visitor",
+				);
+				this.anchorSet.activeVisitor = undefined;
 			},
-			fork() {
-				return { ...this };
-			},
-			free() {},
 			onDelete(start: number, count: number): void {
 				assert(this.parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
 				this.maybeWithNode(
 					(p) => {
 						p.events.emit("childrenChanging", p);
 					},
-					() => thisAnchorSet.events.emit("childrenChanging", thisAnchorSet),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 				const upPath: UpPath = {
 					parent: this.parent,
@@ -611,7 +615,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 
-				thisAnchorSet.removeChildren(
+				this.anchorSet.removeChildren(
 					{
 						parent: this.parent,
 						parentField: this.parentField,
@@ -624,7 +628,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				assert(this.parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => thisAnchorSet.events.emit("childrenChanging", thisAnchorSet),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 				const upPath: UpPath = {
 					parent: this.parent,
@@ -637,7 +641,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 
-				thisAnchorSet.offsetChildren(
+				this.anchorSet.offsetChildren(
 					{
 						parent: this.parent,
 						parentField: this.parentField,
@@ -650,33 +654,33 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				assert(this.parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => thisAnchorSet.events.emit("childrenChanging", thisAnchorSet),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 
-				const fieldKey = thisAnchorSet.createEmptyDetachedField();
+				const fieldKey = this.anchorSet.createEmptyDetachedField();
 				const source = {
 					parent: this.parent,
 					parentField: this.parentField,
 					parentIndex: start,
 				};
 				const destination = {
-					parent: thisAnchorSet.root,
+					parent: this.anchorSet.root,
 					parentField: fieldKey,
 					parentIndex: 0,
 				};
-				thisAnchorSet.moveChildren(source, destination, count);
+				this.anchorSet.moveChildren(source, destination, count);
 				moveTable.set(id, destination);
 			},
 			onMoveIn(start: number, count: number, id: Delta.MoveId): void {
 				assert(this.parentField !== undefined, 0x3aa /* Must be in a field to move in */);
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
-					() => thisAnchorSet.events.emit("childrenChanging", thisAnchorSet),
+					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
 				const sourcePath =
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				moveTable.delete(id);
-				thisAnchorSet.moveChildren(
+				this.anchorSet.moveChildren(
 					sourcePath,
 					{ parent: this.parent, parentField: this.parentField, parentIndex: start },
 					count,
@@ -727,6 +731,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.parentField = undefined;
 			},
 		};
+		this.events.emit("treeChanging", this);
+		this.activeVisitor = visitor;
 		return visitor;
 	}
 }

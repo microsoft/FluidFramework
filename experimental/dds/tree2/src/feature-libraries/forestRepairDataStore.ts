@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	AnchorSet,
+	applyDelta,
 	castCursorToSynchronous,
 	Delta,
 	EmptyKey,
@@ -22,7 +23,6 @@ import {
 	RevisionTag,
 	SparseNode,
 	UpPath,
-	visitDelta,
 } from "../core";
 import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
@@ -201,8 +201,7 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 
 	public applyChange(change: TChange): void {
 		if (this.frozenForest === undefined) {
-			const visitor = this.forest.getVisitor();
-			visitDelta(this.intoDelta(change), visitor);
+			applyDelta(this.intoDelta(change), this.forest);
 		}
 	}
 

@@ -10,7 +10,6 @@ import { StoredSchemaRepository, FieldKey } from "../schema-stored";
 import {
 	Anchor,
 	AnchorSet,
-	Delta,
 	DetachedField,
 	detachedFieldAsKey,
 	ITreeCursor,
@@ -35,14 +34,14 @@ import type { IEditableForest } from "./editableForest";
  */
 export interface ForestEvents {
 	/**
-	 * Delta is about to be applied to forest.
+	 * The forest is about to be changed.
 	 */
-	beforeDelta(delta: Delta.Root): void;
+	beforeChange(): void;
 
 	/**
-	 * Delta was just applied to forest.
+	 * The forest was just changed.
 	 */
-	afterDelta(delta: Delta.Root): void;
+	afterChange(): void;
 }
 
 /**
