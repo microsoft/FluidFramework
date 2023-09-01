@@ -31,6 +31,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
+		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:run": "mocha --recursive 'dist/test/**/*.spec.js' --exit",

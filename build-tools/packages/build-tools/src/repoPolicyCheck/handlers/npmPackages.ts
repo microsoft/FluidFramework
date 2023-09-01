@@ -790,6 +790,51 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		name: "npm-package-json-test-scripts-split",
+		match,
+		handler: (file, root) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const testScript = scripts["test"];
+
+			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
+
+			if (testScript === undefined) {
+				if (splitTestScriptNames.some((name) => scripts[name] !== undefined)) {
+					return "Missing 'test' scripts";
+				}
+				return undefined;
+			}
+
+			const actualSplitTestScriptNames = splitTestScriptNames.filter(
+				(name) => scripts[name] !== undefined,
+			);
+
+			if (actualSplitTestScriptNames.length === 0) {
+				if (!testScript.startsWith("echo ")) {
+					return "Missing split test scripts";
+				}
+				return undefined;
+			}
+			const expectedTestScript = actualSplitTestScriptNames
+				.map((name) => `npm run ${name}`)
+				.join(" && ");
+			if (testScript !== expectedTestScript) {
+				return `Unexpected test script:\n\tactual: ${testScript}\n\texpected: ${expectedTestScript}`;
+			}
+		},
+	},
+	{
 		name: "npm-package-json-script-mocha-config",
 		match,
 		handler: (file, root) => {
