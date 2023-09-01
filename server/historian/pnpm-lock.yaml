@@ -19,7 +19,6 @@ importers:
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
       '@types/lodash': ^4.14.119
-      '@types/mocha': ^10.0.0
       '@types/nconf': 0.0.37
       '@types/redis': ^2.8.10
       '@types/supertest': ^2.0.7
@@ -35,8 +34,6 @@ importers:
       eslint-plugin-unicorn: ~40.0.0
       eslint-plugin-unused-imports: ~2.0.0
       lerna: 5.6.2
-      mocha: ^10.1.0
-      nyc: ^15.1.0
       rimraf: ^3.0.2
       run-script-os: ^1.1.5
       supertest: ^3.3.0
@@ -52,7 +49,6 @@ importers:
       '@types/cors': 2.8.13
       '@types/debug': 4.1.7
       '@types/lodash': 4.14.194
-      '@types/mocha': 10.0.1
       '@types/nconf': 0.0.37
       '@types/redis': 2.8.32
       '@types/supertest': 2.0.12
@@ -68,8 +64,6 @@ importers:
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
       lerna: 5.6.2
-      mocha: 10.2.0
-      nyc: 15.1.0
       rimraf: 3.0.2
       run-script-os: 1.1.6
       supertest: 3.4.2
@@ -87,7 +81,6 @@ importers:
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
       '@types/lodash': ^4.14.119
-      '@types/mocha': ^10.0.0
       '@types/nconf': 0.0.37
       '@types/node': ^18.17.1
       '@types/supertest': ^2.0.7
@@ -109,9 +102,7 @@ importers:
       express: ^4.17.3
       ioredis: ^5.2.3
       lodash: ^4.17.19
-      mocha: ^10.1.0
       nconf: ^0.11.4
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^3.0.2
       supertest: ^3.3.0
@@ -140,7 +131,6 @@ importers:
       '@types/cors': 2.8.13
       '@types/debug': 4.1.7
       '@types/lodash': 4.14.194
-      '@types/mocha': 10.0.1
       '@types/nconf': 0.0.37
       '@types/node': 18.17.6
       '@types/supertest': 2.0.12
@@ -155,8 +145,6 @@ importers:
       eslint-plugin-react: 7.28.0_eslint@8.27.0
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 3.0.2
       supertest: 3.4.2
