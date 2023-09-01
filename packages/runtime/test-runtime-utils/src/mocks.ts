@@ -146,6 +146,9 @@ export class MockContainerRuntime {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
 	private readonly deltaManager: MockDeltaManager;
+	/**
+	 * @deprecated use the associated datastore to create the delta connection
+	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: IInternalMockRuntimeMessage[] = [];
@@ -181,6 +184,9 @@ export class MockContainerRuntime {
 		);
 	}
 
+	/**
+	 * @deprecated - use the associated datastore to create the delta connection
+	 */
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
 		this.deltaConnections.push(deltaConnection);
@@ -353,12 +359,26 @@ export class MockContainerRuntimeFactory {
 		return this.messages.length;
 	}
 
+	/**
+	 * @returns a minimum sequence number for all connected clients.
+	 */
 	public getMinSeq(): number {
-		let minSeq: number | undefined;
-		for (const [, clientSeq] of this.minSeq) {
-			minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
+		let minimumSequenceNumber: number | undefined;
+		for (const [client, clientSequenceNumber] of this.minSeq) {
+			// We have to make sure, a client is part of the quorum, when
+			// we compute the msn. We assume that the quorum accurately
+			// represents the currently connected clients. In some tests
+			// for reconnects, we will remove clients from the quorum
+			// to indicate they are currently not connected. In that case,
+			// they must no longer contribute to the msn computation.
+			if (this.quorum.getMember(client) !== undefined) {
+				minimumSequenceNumber =
+					minimumSequenceNumber === undefined
+						? clientSequenceNumber
+						: Math.min(minimumSequenceNumber, clientSequenceNumber);
+			}
 		}
-		return minSeq ?? 0;
+		return minimumSequenceNumber ?? 0;
 	}
 
 	public createContainerRuntime(
@@ -737,6 +757,10 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && clientId !== undefined) {
+			this.clientId = clientId;
+		}
+		this.deltaConnections.forEach((dc) => dc.setConnectionState(connected));
 		return;
 	}
 

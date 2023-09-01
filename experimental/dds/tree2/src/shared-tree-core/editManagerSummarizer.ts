@@ -4,7 +4,6 @@
  */
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IGarbageCollectionData,
@@ -18,11 +17,6 @@ import { JsonCompatibleReadOnly } from "../util";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
 import { EditManager, SummaryData } from "./editManager";
 import { makeEditManagerCodec } from "./editManagerCodecs";
-
-/**
- * The storage key for the blob in the summary containing EditManager data
- */
-const blobKey = "Blob";
 
 const stringKey = "String";
 
@@ -90,19 +84,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		let schemaBuffer: ArrayBufferLike;
-		if (await services.contains(blobKey)) {
-			const handleBuffer = await services.readBlob(blobKey);
-			const handleString = bufferToString(handleBuffer, "utf-8");
-			const handle = parse(handleString) as IFluidHandle<ArrayBufferLike>;
-			schemaBuffer = await handle.get();
-		} else {
-			assert(
-				await services.contains(stringKey),
-				0x42b /* EditManager data is required in summary */,
-			);
-			schemaBuffer = await services.readBlob(stringKey);
-		}
+		const schemaBuffer: ArrayBufferLike = await services.readBlob(stringKey);
 
 		// After the awaits, validate that the data is in a clean state.
 		// This detects any data that could have been accidentally added through

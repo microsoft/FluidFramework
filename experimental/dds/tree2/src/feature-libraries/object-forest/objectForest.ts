@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	recordDependency,
 	SimpleDependee,
 	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
@@ -60,13 +59,12 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 	private readonly events = createEmitter<ForestEvents>();
 
-	public constructor(
-		public readonly schema: StoredSchemaRepository,
-		public readonly anchors: AnchorSet = new AnchorSet(),
-	) {
+	public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
 		super("object-forest.ObjectForest");
-		// Invalidate forest if schema change.
-		recordDependency(this.dependent, this.schema);
+	}
+
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
@@ -74,7 +72,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 	}
 
 	public clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
-		const forest = new ObjectForest(schema, anchors);
+		const forest = new ObjectForest(anchors);
 		// Deep copy the trees.
 		for (const [key, value] of this.roots.fields) {
 			// TODO: this references the existing TreeValues instead of copying them:
@@ -445,13 +443,12 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 }
 
-// This function is the only package level export for objectForest, and hides all the implementation types.
+// This function is the folder level export for objectForest, and hides all the implementation types.
 // When other forest implementations are created (ex: optimized ones),
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
- * @alpha
  */
-export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
-	return new ObjectForest(schema, anchors);
+export function buildForest(anchors?: AnchorSet): IEditableForest {
+	return new ObjectForest(anchors);
 }

@@ -42,9 +42,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
 
-export function clone<T>(original: T): T {
-	return structuredClone(original);
-}
+export const clone = structuredClone;
 
 /**
  * @alpha
@@ -372,4 +370,13 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	for (const item of set) {
 		return item;
 	}
+}
+
+/**
+ * Type with a name describing what it is.
+ * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
+ * @alpha
+ */
+export interface Named<TName> {
+	readonly name: TName;
 }

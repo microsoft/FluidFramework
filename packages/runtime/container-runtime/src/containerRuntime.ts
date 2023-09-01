@@ -32,12 +32,17 @@ import { LazyPromise } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataCorruptionError,
+	DataProcessingError,
+	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
 	ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -46,12 +51,6 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	UsageError,
-} from "@fluidframework/container-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -127,7 +126,6 @@ import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	idCompressorBlobName,
-	IFetchSnapshotResult,
 	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
@@ -155,6 +153,8 @@ import {
 	ISummarizeResults,
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
+	ISummarizerEvents,
+	IBaseSummarizeResult,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -508,9 +508,13 @@ export enum RuntimeHeaders {
 
 /** True if a tombstoned object should be returned without erroring */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+/** [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned";
+/** Inactive error responses will have this header set to true */
+export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
@@ -551,7 +555,7 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-interface IPendingRuntimeState {
+export interface IPendingRuntimeState {
 	/**
 	 * Pending ops from PendingStateManager
 	 */
@@ -579,6 +583,11 @@ const defaultCompressionConfig = {
 };
 
 const defaultChunkSizeInBytes = 204800;
+
+/** The default time to wait for pending ops to be processed during summarization */
+export const defaultPendingOpsWaitTimeoutMs = 1000;
+/** The default time to delay a summarization retry attempt when there are pending ops */
+export const defaultPendingOpsRetryDelayMs = 1000;
 
 /**
  * Instead of refreshing from latest because we do not have 100% confidence in the state
@@ -656,7 +665,7 @@ export const makeLegacySendBatchFn =
  * It will define the store level mappings.
  */
 export class ContainerRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents>
+	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	/**
@@ -716,16 +725,30 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: {
-		context: IContainerContext;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		existing: boolean;
-		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-		runtimeOptions?: IContainerRuntimeOptions;
-		containerScope?: FluidObject;
-		containerRuntimeCtor?: typeof ContainerRuntime;
-		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-	}): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		} & (
+			| {
+					requestHandler?: (
+						request: IRequest,
+						runtime: IContainerRuntime,
+					) => Promise<IResponse>;
+					initializeEntryPoint?: undefined;
+			  }
+			| {
+					requestHandler?: undefined;
+					initializeEntryPoint: (
+						containerRuntime: IContainerRuntime,
+					) => Promise<FluidObject>;
+			  }
+		),
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -734,14 +757,25 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			initializeEntryPoint,
 		} = params;
+
+		const initializeEntryPoint =
+			params.initializeEntryPoint ??
+			(async (containerRuntime: IContainerRuntime) => ({
+				get IFluidRouter() {
+					return this;
+				},
+				async request(req) {
+					return containerRuntime.request(req);
+				},
+			}));
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -836,7 +870,7 @@ export class ContainerRuntime
 			idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), logger);
+					: IdCompressor.create(logger);
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -869,6 +903,7 @@ export class ContainerRuntime
 			initializeEntryPoint,
 		);
 
+		await runtime.blobManager.processStashedChanges();
 		// It's possible to have ops with a reference sequence number of 0. Op sequence numbers start
 		// at 1, so we won't see a replayed saved op with a sequence number of 0.
 		await runtime.pendingStateManager.applyStashedOpsAt(0);
@@ -1036,7 +1071,6 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
-	private readonly summaryStateUpdateMethod: string | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	/**
 	 * If true, summary generated is validate before uploading it to the server. With single commit summaries,
@@ -1046,7 +1080,7 @@ export class ContainerRuntime
 	private readonly validateSummaryBeforeUpload: boolean;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
-	private _perfSignalData: IPerfSignalReport = {
+	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
 		signalTimestamp: 0,
@@ -1516,9 +1550,6 @@ export class ContainerRuntime
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._audience = audience!;
 
-		this.summaryStateUpdateMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2",
-		);
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
@@ -1530,8 +1561,7 @@ export class ContainerRuntime
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
-			this.attachState !== AttachState.Attached ||
-			this.pendingStateManager.hasPendingMessages();
+			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
 		if (this.summariesDisabled) {
@@ -1616,6 +1646,9 @@ export class ContainerRuntime
 					},
 					this.heuristicsDisabled,
 				);
+				this.summaryManager.on("summarize", (eventProps) => {
+					this.emit("summarize", eventProps);
+				});
 				this.summaryManager.start();
 			}
 		}
@@ -1671,7 +1704,6 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				idCompressorEnabled: this.idCompressorEnabled,
-				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -1788,7 +1820,7 @@ export class ContainerRuntime
 					subRequest.url.startsWith("/"),
 					0x126 /* "Expected createSubRequest url to include a leading slash" */,
 				);
-				return dataStore.IFluidRouter.request(subRequest);
+				return dataStore.request(subRequest);
 			}
 
 			return create404Response(request);
@@ -1836,6 +1868,7 @@ export class ContainerRuntime
 			dataStoreContext.packagePath,
 			request?.headers,
 		);
+
 		return dataStoreChannel;
 	}
 
@@ -1930,7 +1963,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "ReconnectsWithNoProgress",
 				attempts: this.consecutiveReconnects,
-				pendingMessages: this.pendingStateManager.pendingMessagesCount,
+				pendingMessages: this.pendingMessagesCount,
 			});
 		}
 
@@ -2060,32 +2093,6 @@ export class ContainerRuntime
 			return;
 		}
 
-		// If attachment blobs were added while disconnected, we need to delay
-		// propagation of the "connected" event until we have uploaded them to
-		// ensure we don't submit ops referencing a blob that has not been uploaded
-		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
-		const connecting =
-			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
-		if (connecting && this.blobManager.hasPendingOfflineUploads) {
-			assert(
-				!this.delayConnectClientId,
-				0x392 /* Connect event delay must be canceled before subsequent connect event */,
-			);
-			assert(!!clientId, 0x393 /* Must have clientId when connecting */);
-			this.delayConnectClientId = clientId;
-			this.blobManager.onConnected().then(
-				() => {
-					// make sure we didn't reconnect before the promise resolved
-					if (this.delayConnectClientId === clientId && !this.disposed) {
-						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore(connected, clientId);
-					}
-				},
-				(error) => this.closeFn(error),
-			);
-			return;
-		}
-
 		this.setConnectionStateCore(connected, clientId);
 	}
 
@@ -2133,7 +2140,7 @@ export class ContainerRuntime
 						{
 							dataLoss: 1,
 							attempts: this.consecutiveReconnects,
-							pendingMessages: this.pendingStateManager.pendingMessagesCount,
+							pendingMessages: this.pendingMessagesCount,
 						},
 					),
 				);
@@ -2932,7 +2939,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, refreshLatestAck, summaryLogger } = options;
+		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2958,6 +2965,51 @@ export class ContainerRuntime
 
 			// We might need to catch up to the latest summary's reference sequence number before pausing.
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
+		}
+
+		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
+		// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
+		// within the timeout, check if it should be failed or can continue.
+		if (this.validateSummaryBeforeUpload && this.hasPendingMessages()) {
+			const countBefore = this.pendingMessagesCount;
+			// The timeout for waiting for pending ops can be overridden via configurations.
+			const pendingOpsTimeout =
+				this.mc.config.getNumber(
+					"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeoutMs",
+				) ?? defaultPendingOpsWaitTimeoutMs;
+			await new Promise<void>((resolve, reject) => {
+				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
+				this.once("saved", () => {
+					clearTimeout(timeoutId);
+					resolve();
+				});
+				this.once("dispose", () => {
+					clearTimeout(timeoutId);
+					reject(new Error("Runtime is disposed while summarizing"));
+				});
+			});
+
+			// Log that there are pending ops while summarizing. This will help us gather data on how often this
+			// happens, whether we attempted to wait for these ops to be acked and what was the result.
+			summaryNumberLogger.sendTelemetryEvent({
+				eventName: "PendingOpsWhileSummarizing",
+				saved: this.hasPendingMessages() ? false : true,
+				timeout: pendingOpsTimeout,
+				countBefore,
+				countAfter: this.pendingMessagesCount,
+			});
+
+			// There could still be pending ops. Check if summary should fail or continue.
+			const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
+				summaryNumberLogger,
+				this.deltaManager.lastSequenceNumber,
+				this.deltaManager.minimumSequenceNumber,
+				finalAttempt,
+				true /* beforeSummaryGeneration */,
+			);
+			if (pendingMessagesFailResult !== undefined) {
+				return pendingMessagesFailResult;
+			}
 		}
 
 		const shouldPauseInboundSignal =
@@ -3050,9 +3102,9 @@ export class ContainerRuntime
 				};
 			}
 
-			// If validateSummaryBeforeUpload is true, validate that the summary generated by the summarizer nodes is
-			// correct before this summary is uploaded.
+			// If validateSummaryBeforeUpload is true, validate that the summary generated is correct before uploading.
 			if (this.validateSummaryBeforeUpload) {
+				// Validate that the summaries generated by summarize nodes is correct.
 				const validateResult = this.summarizerNode.validateSummary();
 				if (!validateResult.success) {
 					const { success, ...loggingProps } = validateResult;
@@ -3067,6 +3119,17 @@ export class ContainerRuntime
 						minimumSequenceNumber,
 						error,
 					};
+				}
+
+				const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
+					summaryNumberLogger,
+					summaryRefSeqNum,
+					minimumSequenceNumber,
+					finalAttempt,
+					false /* beforeSummaryGeneration */,
+				);
+				if (pendingMessagesFailResult !== undefined) {
+					return pendingMessagesFailResult;
 				}
 			}
 
@@ -3208,8 +3271,78 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * This helper is called during summarization. If there are pending ops, it will return a failed summarize result
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * @param logger - The logger to be used for sending telemetry.
+	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
+	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
+	 * @param finalAttempt - Whether this is the final summary attempt.
+	 * @param beforeSummaryGeneration - Whether this is called before summary generation or after.
+	 * @returns failed summarize result (IBaseSummarizeResult) if summary should be failed, undefined otherwise.
+	 */
+	private async shouldFailSummaryOnPendingOps(
+		logger: ITelemetryLoggerExt,
+		referenceSequenceNumber: number,
+		minimumSequenceNumber: number,
+		finalAttempt: boolean,
+		beforeSummaryGeneration: boolean,
+	): Promise<IBaseSummarizeResult | undefined> {
+		if (!this.hasPendingMessages()) {
+			return;
+		}
+
+		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
+		// This is a fallback to make progress in documents where there are consistently pending ops in
+		// the summarizer.
+		if (
+			finalAttempt &&
+			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
+		) {
+			const error = DataProcessingError.create(
+				"Pending ops during summarization",
+				"submitSummary",
+				undefined,
+				{ pendingMessages: this.pendingMessagesCount },
+			);
+			logger.sendErrorEvent(
+				{
+					eventName: "SkipFailingIncorrectSummary",
+					referenceSequenceNumber,
+					minimumSequenceNumber,
+					beforeGenerate: beforeSummaryGeneration,
+				},
+				error,
+			);
+		} else {
+			// The retry delay when there are pending ops can be overridden via config so that we can adjust it
+			// based on telemetry while we decide on a stable number.
+			const retryDelayMs =
+				this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
+				defaultPendingOpsRetryDelayMs;
+			const error = new RetriableSummaryError(
+				"PendingOpsWhileSummarizing",
+				retryDelayMs / 1000,
+				{
+					count: this.pendingMessagesCount,
+					beforeGenerate: beforeSummaryGeneration,
+				},
+			);
+			return {
+				stage: "base",
+				referenceSequenceNumber,
+				minimumSequenceNumber,
+				error,
+			};
+		}
+	}
+
+	private get pendingMessagesCount(): number {
+		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
+	}
+
 	private hasPendingMessages() {
-		return this.pendingStateManager.hasPendingMessages() || !this.outbox.isEmpty;
+		return this.pendingMessagesCount !== 0;
 	}
 
 	private updateDocumentDirtyState(dirty: boolean) {
@@ -3276,7 +3409,7 @@ export class ContainerRuntime
 				);
 				idRange = this.idCompressor.takeNextCreationRange();
 				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+				idRange = idRange?.ids !== undefined ? idRange : undefined;
 			}
 
 			if (idRange !== undefined) {
@@ -3603,12 +3736,22 @@ export class ContainerRuntime
 	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
+		// proposalHandle is always passed from RunningSummarizer.
+		assert(proposalHandle !== undefined, "proposalHandle should be available");
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		// The call to fetch the snapshot is very expensive and not always needed.
-		// It should only be done by the summarizerNode, if required.
-		// When fetching from storage we will always get the latest version and do not use the ackHandle.
-		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.fetchLatestSnapshotFromStorage(
+		const result = await this.summarizerNode.refreshLatestSummary(
+			proposalHandle,
+			summaryRefSeq,
+		);
+
+		/**
+		 * When refreshing a summary ack, this check indicates a new ack of a summary that is newer than the
+		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
+		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
+		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
+		 */
+		if (!result.isSummaryTracked && result.isSummaryNewer) {
+			const fetchResult = await this.fetchSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3616,26 +3759,8 @@ export class ContainerRuntime
 					targetSequenceNumber: summaryRefSeq,
 				},
 				readAndParseBlob,
+				null,
 			);
-
-			/**
-			 * back-compat - Older loaders and drivers (pre 2.0.0-internal.1.4) don't have fetchSource as a param in the
-			 * getVersions API. So, they will not fetch the latest snapshot from network in the previous fetch call. For
-			 * these scenarios, fetch the snapshot corresponding to the ack handle to have the same behavior before the
-			 * change that started fetching latest snapshot always.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				fetchResult = await this.fetchSnapshotFromStorageAndClose(
-					summaryLogger,
-					{
-						eventName: "RefreshLatestSummaryAckFetchBackCompat",
-						ackHandle,
-						targetSequenceNumber: summaryRefSeq,
-					},
-					readAndParseBlob,
-					ackHandle,
-				);
-			}
 
 			/**
 			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
@@ -3662,29 +3787,12 @@ export class ContainerRuntime
 				throw error;
 			}
 
-			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
-			// wait for the delta manager to catch up before refreshing the latest Summary.
-			await this.waitForDeltaManagerToCatchup(
-				fetchResult.latestSnapshotRefSeq,
-				summaryLogger,
-			);
-
-			return {
-				snapshotTree: fetchResult.snapshotTree,
-				snapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-			};
-		};
-
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-			fetchLatestSnapshot,
-			readAndParseBlob,
-			summaryLogger,
-		);
+			await this.closeStaleSummarizer("RefreshLatestSummaryAckFetch");
+			return;
+		}
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(proposalHandle, result, readAndParseBlob);
+		await this.garbageCollector.refreshLatestSummary(result);
 	}
 
 	/**
@@ -3697,56 +3805,49 @@ export class ContainerRuntime
 		summaryLogger: ITelemetryLoggerExt,
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const { snapshotTree, versionId, latestSnapshotRefSeq } =
-			await this.fetchLatestSnapshotFromStorage(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryFromServerFetch",
-				},
-				readAndParseBlob,
-			);
-		const fetchLatestSnapshot: IFetchSnapshotResult = {
-			snapshotTree,
-			snapshotRefSeq: latestSnapshotRefSeq,
-		};
-		const result = await this.summarizerNode.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			latestSnapshotRefSeq,
-			async () => fetchLatestSnapshot,
-			readAndParseBlob,
+		const { versionId, latestSnapshotRefSeq } = await this.fetchSnapshotFromStorage(
 			summaryLogger,
+			{
+				eventName: "RefreshLatestSummaryFromServerFetch",
+			},
+			readAndParseBlob,
+			null,
 		);
 
-		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(
-			undefined /* proposalHandle */,
-			result,
-			readAndParseBlob,
-		);
+		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
 
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
 	}
 
-	private async fetchLatestSnapshotFromStorage(
-		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		return this.fetchSnapshotFromStorageAndClose(
-			logger,
-			event,
-			readAndParseBlob,
-			null /* latest */,
+	private async closeStaleSummarizer(codePath: string): Promise<void> {
+		this.mc.logger.sendTelemetryEvent(
+			{
+				eventName: "ClosingSummarizerOnSummaryStale",
+				codePath,
+				message: "Stopping fetch from storage",
+				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
+			},
+			new GenericError("Restarting summarizer instead of refreshing"),
 		);
+
+		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
+		await delay(this.closeSummarizerDelayMs);
+		this._summarizer?.stop("latestSummaryStateStale");
+		this.disposeFn();
 	}
 
-	private async fetchSnapshotFromStorageAndClose(
+	/**
+	 * Downloads snapshot from storage with the given versionId or latest if versionId is null.
+	 * By default, it also closes the container after downloading the snapshot. However, this may be
+	 * overridden via options.
+	 */
+	private async fetchSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const snapshotResults = await PerformanceEvent.timedExecAsync(
+		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
 			async (perfEvent: {
@@ -3792,30 +3893,6 @@ export class ContainerRuntime
 				};
 			},
 		);
-
-		// We choose to close the summarizer after the snapshot cache is updated to avoid
-		// situations which the main client (which is likely to be re-elected as the leader again)
-		// loads the summarizer from cache.
-		if (this.summaryStateUpdateMethod !== "refreshFromSnapshot") {
-			this.mc.logger.sendTelemetryEvent(
-				{
-					...event,
-					eventName: "ClosingSummarizerOnSummaryStale",
-					codePath: event.eventName,
-					message: "Stopping fetch from storage",
-					versionId: versionId != null ? versionId : undefined,
-					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-				},
-				new GenericError("Restarting summarizer instead of refreshing"),
-			);
-
-			// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(this.closeSummarizerDelayMs);
-			this._summarizer?.stop("latestSummaryStateStale");
-			this.disposeFn();
-		}
-
-		return snapshotResults;
 	}
 
 	public notifyAttaching() {} // do nothing (deprecated method)
@@ -3823,21 +3900,41 @@ export class ContainerRuntime
 	public async getPendingLocalState(props?: {
 		notifyImminentClosure: boolean;
 	}): Promise<unknown> {
-		this.verifyNotClosed();
-		const waitBlobsToAttach = props?.notifyImminentClosure;
-		if (this._orderSequentiallyCalls !== 0) {
-			throw new UsageError("can't get state during orderSequentially");
-		}
-		const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(waitBlobsToAttach);
-		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-		// to close current batch.
-		this.flush();
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props?.notifyImminentClosure,
+			},
+			async (event) => {
+				this.verifyNotClosed();
+				const waitBlobsToAttach = props?.notifyImminentClosure;
+				if (this._orderSequentiallyCalls !== 0) {
+					throw new UsageError("can't get state during orderSequentially");
+				}
+				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
+					waitBlobsToAttach,
+				);
+				const pending = this.pendingStateManager.getLocalState();
+				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
+					return; // no pending state to save
+				}
+				// Flush pending batch.
+				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+				// to close current batch.
+				this.flush();
 
-		return {
-			pending: this.pendingStateManager.getLocalState(),
-			pendingAttachmentBlobs,
-		};
+				const pendingState: IPendingRuntimeState = {
+					pending,
+					pendingAttachmentBlobs,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pending?.pendingStates.length,
+				});
+				return pendingState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

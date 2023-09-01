@@ -900,8 +900,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/5095
-	it.skip("handles stashed ops for local DDS", async function () {
+	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
@@ -945,7 +944,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 	});
 
-	it.skip("handles stashed ops created on top of sequenced local ops", async function () {
+	it("handles stashed ops created on top of sequenced local ops", async function () {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
@@ -974,7 +973,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 				// of how small this window is.
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
-					(container as any).processRemoteMessage = (message) => console.debug(message);
+					(container as any).processRemoteMessage = (message) => null;
 					const pendingStateP = container.closeAndGetPendingLocalState?.();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
@@ -1224,12 +1223,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		container.connect();
+		await waitForContainerConnection(container.container);
+
+		const handle = await handleP;
 		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 		map.set("blob handle", handle);
-
-		container.connect();
-
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
@@ -1244,8 +1244,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("close while uploading blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		// force write mode
-		dataStore.root.set("forceWrite", true);
 		await provider.ensureSynchronized();
 
 		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
@@ -1272,8 +1270,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	it("close while uploading multiple blob", async function () {
 		const dataStore = await requestFluidObject<ITestFluidObject>(container1, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		// force write mode
-		dataStore.root.set("forceWrite", true);
 		await provider.ensureSynchronized();
 
 		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
@@ -1302,11 +1298,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("load offline with blob redirect table", async function () {
-		if (provider.driver.type === "local") {
-			// TODO:AB#4746: Resolve flakiness of this test on localserver CI.
-			this.skip();
-		}
-
 		// upload blob offline so an entry is added to redirect table
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
@@ -1315,11 +1306,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
-		map.set("blob handle", handle);
-
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
+		const handle = await handleP;
+		map.set("blob handle", handle);
+		assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
 
 		// wait for summary with redirect table
 		await provider.ensureSynchronized();
@@ -1339,28 +1330,17 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handle = await dataStore.runtime.uploadBlob(
-			stringToBuffer("blob contents 1", "utf8"),
-		);
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+		const handle = await handleP;
 		map.set("blob handle 1", handle);
 
-		const stashedChanges = await container.container.closeAndGetPendingLocalState?.();
+		const stashedChanges = await stashedChangesP;
 
-		const container3 = await loadOffline(provider, { url }, stashedChanges);
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			container3.container,
-			"default",
-		);
+		const container3 = await loader.resolve({ url }, stashedChanges);
+		const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
 		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
-		// Blob is accessible locally while offline
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-
-		container3.connect();
-		await waitForContainerConnection(container3.container);
 		await provider.ensureSynchronized();
 
 		// Blob is uploaded and accessible by all clients
@@ -1386,15 +1366,15 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handle = await dataStore.runtime.uploadBlob(
-			stringToBuffer("blob contents 1", "utf8"),
-		);
-		map.set("blob handle 1", handle);
+		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 
 		container.connect();
 		await waitForDataStoreRuntimeConnection(dataStore.runtime);
 
-		const stashedChanges = await container.container.closeAndGetPendingLocalState?.();
+		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+		const handle = await handleP;
+		map.set("blob handle 1", handle);
+		const stashedChanges = await stashedChangesP;
 		assert.ok(stashedChanges);
 		const parsedChanges = JSON.parse(stashedChanges);
 		const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
@@ -1407,12 +1387,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			"default",
 		);
 		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
-		// Blob is accessible locally while offline
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-
 		container3.connect();
 		await waitForContainerConnection(container3.container, true);
 		await provider.ensureSynchronized();

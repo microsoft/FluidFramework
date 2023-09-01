@@ -7,7 +7,6 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	LoggingError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 
@@ -20,11 +19,10 @@ import {
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IAckSummaryResult,
 	INackSummaryResult,
-	ISummarizeOptions,
 	IBroadcastSummaryResult,
 	ISummarizeResults,
 	ISummarizeHeuristicData,
@@ -32,7 +30,6 @@ import {
 	SubmitSummaryResult,
 	SummarizeResultPart,
 	ISummaryCancellationToken,
-	ISummarizeTelemetryProperties,
 	SummaryGeneratorTelemetry,
 	SubmitSummaryFailureData,
 } from "./summarizerTypes";
@@ -223,32 +220,23 @@ export class SummaryGenerator {
 	 * fullTree to generate tree without any summary handles even if unchanged
 	 */
 	public summarize(
-		summarizeProps: ISummarizeTelemetryProperties,
-		options: ISummarizeOptions,
-		cancellationToken: ISummaryCancellationToken,
+		summaryOptions: ISubmitSummaryOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
-		this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken).catch(
-			(error) => {
-				const message = "UnexpectedSummarizeError";
-				this.logger.sendErrorEvent({ eventName: message, ...summarizeProps }, error);
-				resultsBuilder.fail(message, error);
-			},
-		);
+		this.summarizeCore(summaryOptions, resultsBuilder).catch((error) => {
+			const message = "UnexpectedSummarizeError";
+			summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
+			resultsBuilder.fail(message, error);
+		});
 
 		return resultsBuilder.build();
 	}
 
 	private async summarizeCore(
-		summarizeProps: ISummarizeTelemetryProperties,
-		summarizeOptions: ISummarizeOptions,
+		submitSummaryOptions: ISubmitSummaryOptions,
 		resultsBuilder: SummarizeResultBuilder,
-		cancellationToken: ISummaryCancellationToken,
 	): Promise<void> {
-		const logger = createChildLogger({
-			logger: this.logger,
-			properties: { all: summarizeProps },
-		});
+		const { summaryLogger, cancellationToken, ...summarizeOptions } = submitSummaryOptions;
 
 		// Note: timeSinceLastAttempt and timeSinceLastSummary for the
 		// first summary are basically the time since the summarizer was loaded.
@@ -263,7 +251,7 @@ export class SummaryGenerator {
 		};
 
 		const summarizeEvent = PerformanceEvent.start(
-			logger,
+			summaryLogger,
 			{
 				eventName: "Summarize",
 				...summarizeTelemetryProps,
@@ -289,7 +277,7 @@ export class SummaryGenerator {
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
 			const category =
-				cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError
+				cancellationToken.cancelled || error?.errorType === DriverErrorTypes.offlineError
 					? "generic"
 					: "error";
 
@@ -315,11 +303,7 @@ export class SummaryGenerator {
 			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
 
-			summaryData = await this.submitSummaryCallback({
-				...summarizeOptions,
-				summaryLogger: logger,
-				cancellationToken,
-			});
+			summaryData = await this.submitSummaryCallback(submitSummaryOptions);
 
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
@@ -355,14 +339,14 @@ export class SummaryGenerator {
 			 * state change of multiple data stores. So, the total number of data stores that are summarized should not
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
-			if (!summarizeOptions.fullTree && !summaryData.forcedFullTree) {
+			if (!submitSummaryOptions.fullTree && !summaryData.forcedFullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
 					summarizedDataStoreCount >
 					gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
 				) {
-					logger.sendErrorEvent({
+					summaryLogger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",
 						summarizedDataStoreCount,
 						gcStateUpdatedDataStoreCount,
@@ -411,7 +395,7 @@ export class SummaryGenerator {
 			});
 
 			this.heuristicData.lastAttempt.summarySequenceNumber = summarizeOp.sequenceNumber;
-			logger.sendTelemetryEvent({
+			summaryLogger.sendTelemetryEvent({
 				eventName: "Summarize_Op",
 				duration: broadcastDuration,
 				referenceSequenceNumber: summarizeOp.referenceSequenceNumber,

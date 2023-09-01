@@ -3,19 +3,23 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
-import { IErrorBase } from "@fluidframework/container-definitions";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
 	describeNoCompat,
@@ -25,6 +29,8 @@ import {
 } from "@fluid-internal/test-version-utils";
 import { v4 as uuid } from "uuid";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { IPendingRuntimeState, IPendingBlobs } from "@fluidframework/container-runtime/src/test";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -607,5 +613,56 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		]);
 		provider.opProcessingController.resumeProcessing();
 		await uploadP;
+	});
+
+	it("reconnection does not block ops when having pending blobs", async () => {
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
+		const runtimeStorage = (container1 as any).runtime.storage;
+
+		let resolveUploadBlob = () => {};
+		const uploadBlobPromise = new Promise<void>((resolve) => {
+			resolveUploadBlob = resolve;
+		});
+
+		const uploadBlobWithDelay = async (target, thisArg, args) => {
+			// Wait for the uploadBlobPromise to be resolved
+			await uploadBlobPromise;
+			const result = Reflect.apply(target, thisArg, args);
+			return result;
+		};
+
+		const delayedUploadBlob = new Proxy(runtimeStorage.createBlob.bind(runtimeStorage), {
+			async apply(target, thisArg, args) {
+				return uploadBlobWithDelay(target, thisArg, args);
+			},
+		});
+		runtimeStorage.createBlob = delayedUploadBlob;
+
+		const handleP = dataStore1._runtime.uploadBlob(stringToBuffer("test string", "utf8"));
+
+		container1.disconnect();
+		container1.connect();
+		await waitForContainerConnection(container1);
+
+		let pendingBlobs: IPendingBlobs = await (container1 as any).runtime
+			.getPendingLocalState()
+			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
+		assert.strictEqual(Object.values<any>(pendingBlobs).length, 1);
+		const acked = Object.values<any>(pendingBlobs)[0].acked;
+		assert.strictEqual(acked, false, "reconnection should not reupload pending blobs");
+		// sending some ops to confirm pending blob is not blocking other ops
+		dataStore1._root.set("key", "value");
+		dataStore1._root.set("another key", "another value");
+		await provider.ensureSynchronized();
+
+		resolveUploadBlob();
+
+		await assert.doesNotReject(handleP);
+		pendingBlobs = await (container1 as any).runtime
+			.getPendingLocalState()
+			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
+		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, true);
+		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });

@@ -21,6 +21,7 @@ import {
 	IResponse,
 	IFluidRouter,
 	FluidObject,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -43,7 +44,6 @@ import {
 	ReadOnlyInfo,
 	isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -92,6 +92,8 @@ import {
 	wrapError,
 	ITelemetryLoggerExt,
 	formatTick,
+	GenericError,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -217,6 +219,10 @@ export interface IContainerCreateProps {
 	 */
 	readonly detachedBlobStorage?: IDetachedBlobStorage;
 
+	/**
+	 * Optional property for allowing the container to use a custom
+	 * protocol implementation for handling the quorum and/or the audience.
+	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
@@ -424,7 +430,11 @@ export class Container
 								// Depending where error happens, we can be attempting to connect to web socket
 								// and continuously retrying (consider offline mode)
 								// Host has no container to close, so it's prudent to do it here
+								// Note: We could only dispose the container instead of just close but that would
+								// the telemetry where users sometimes search for ContainerClose event to look
+								// for load failures. So not removing this at this time.
 								container.close(err);
+								container.dispose(err);
 								onClosed(err);
 							},
 						);
@@ -747,6 +757,7 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
+		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -1094,38 +1105,50 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
-		if (!this.offlineLoadEnabled) {
-			throw new UsageError("Can't get pending local state unless offline load is enabled");
-		}
-		if (this.closed || this._disposed) {
-			throw new UsageError(
-				"Pending state cannot be retried if the container is closed or disposed",
-			);
-		}
-		assert(
-			this.attachState === AttachState.Attached,
-			0x0d1 /* "Container should be attached before close" */,
-		);
-		assert(
-			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			0x0d2 /* "resolved url should be valid Fluid url" */,
-		);
-		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
-		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
-		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-		const pendingState: IPendingContainerState = {
-			pendingRuntimeState,
-			baseSnapshot: this.baseSnapshot,
-			snapshotBlobs: this.baseSnapshotBlobs,
-			savedOps: this.savedOps,
-			url: this.resolvedUrl.url,
-			term: OnlyValidTermValue,
-			clientId: this.clientId,
-		};
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props.notifyImminentClosure,
+				savedOpsSize: this.savedOps.length,
+				clientId: this.clientId,
+			},
+			async () => {
+				if (!this.offlineLoadEnabled) {
+					throw new UsageError(
+						"Can't get pending local state unless offline load is enabled",
+					);
+				}
+				if (this.closed || this._disposed) {
+					throw new UsageError(
+						"Pending state cannot be retried if the container is closed or disposed",
+					);
+				}
+				assert(
+					this.attachState === AttachState.Attached,
+					0x0d1 /* "Container should be attached before close" */,
+				);
+				assert(
+					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+					0x0d2 /* "resolved url should be valid Fluid url" */,
+				);
+				assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+				assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+				const pendingState: IPendingContainerState = {
+					pendingRuntimeState,
+					baseSnapshot: this.baseSnapshot,
+					snapshotBlobs: this.baseSnapshotBlobs,
+					savedOps: this.savedOps,
+					url: this.resolvedUrl.url,
+					term: OnlyValidTermValue,
+					// no need to save this if there is no pending runtime state
+					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+				};
 
-		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
-
-		return JSON.stringify(pendingState);
+				return JSON.stringify(pendingState);
+			},
+		);
 	}
 
 	public get attachState(): AttachState {
@@ -1151,7 +1174,10 @@ export class Container
 		return JSON.stringify(combinedSummary);
 	}
 
-	public async attach(request: IRequest): Promise<void> {
+	public async attach(
+		request: IRequest,
+		attachProps?: { deltaConnection?: "none" | "delayed" },
+	): Promise<void> {
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "Attach" },
@@ -1277,10 +1303,13 @@ export class Container
 					this.emit("attached");
 
 					if (!this.closed) {
-						this.resumeInternal({
-							fetchOpsFromStorage: false,
-							reason: { text: "createDetached" },
-						});
+						this.handleDeltaConnectionArg(
+							{
+								fetchOpsFromStorage: false,
+								reason: { text: "createDetached" },
+							},
+							attachProps?.deltaConnection,
+						);
 					}
 				} catch (error) {
 					// add resolved URL on error object so that host has the ability to find this document and delete it
@@ -1505,6 +1534,7 @@ export class Container
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber: number | undefined,
 	) {
+		const timings: Record<string, number> = { phase1: performance.now() };
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
 			this.subLogger,
@@ -1543,6 +1573,7 @@ export class Container
 
 		this._attachState = AttachState.Attached;
 
+		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
@@ -1640,13 +1671,12 @@ export class Container
 				);
 				break;
 			case "sequenceNumber":
-				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "sequenceNumber");
-				break;
 			case "cached":
-				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "cached");
-				break;
 			case "all":
-				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "all");
+				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
+					dmAttributes,
+					loadMode.opsBeforeReturn,
+				);
 				break;
 			default:
 				unreachableCase(loadMode.opsBeforeReturn);
@@ -1656,11 +1686,13 @@ export class Container
 		// Initialize the protocol handler
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
+		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
 			snapshot,
-			pendingLocalState?.pendingRuntimeState,
+			// give runtime a dummy value so it knows we're loading from a stash blob
+			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 		);
 
 		// replay saved ops
@@ -1672,13 +1704,6 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
-
-			// now set clientId to stashed clientId so live ops are correctly processed as local
-			assert(
-				this.clientId === undefined,
-				0x5d6 /* Unexpected clientId when setting stashed clientId */,
-			);
-			this._clientId = pendingLocalState?.clientId;
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
@@ -1702,27 +1727,11 @@ export class Container
 				this._deltaManager.inbound.pause();
 			}
 
-			switch (loadMode.deltaConnection) {
-				case undefined:
-					if (pendingLocalState) {
-						// connect to delta stream now since we did not before
-						this.connectToDeltaStream(connectionArgs);
-					}
-				// intentional fallthrough
-				case "delayed":
-					assert(
-						this.inboundQueuePausedFromInit,
-						0x346 /* inboundQueuePausedFromInit should be true */,
-					);
-					this.inboundQueuePausedFromInit = false;
-					this._deltaManager.inbound.resume();
-					this._deltaManager.inboundSignal.resume();
-					break;
-				case "none":
-					break;
-				default:
-					unreachableCase(loadMode.deltaConnection);
-			}
+			this.handleDeltaConnectionArg(
+				connectionArgs,
+				loadMode.deltaConnection,
+				pendingLocalState !== undefined,
+			);
 		}
 
 		// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
@@ -1752,7 +1761,15 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
-
+		timings.end = performance.now();
+		this.subLogger.sendTelemetryEvent(
+			{
+				eventName: "LoadStagesTimings",
+				details: JSON.stringify(timings),
+			},
+			undefined,
+			LogLevel.verbose,
+		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,
 			version: versionId,
@@ -2452,6 +2469,34 @@ export class Container
 			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
 			 */
 			this.runtime.setConnectionState(state && !readonly, this.clientId);
+		}
+	}
+
+	private handleDeltaConnectionArg(
+		connectionArgs: IConnectionArgs,
+		deltaConnectionArg?: "none" | "delayed",
+		canConnect: boolean = true,
+	) {
+		switch (deltaConnectionArg) {
+			case undefined:
+				if (canConnect) {
+					// connect to delta stream now since we did not before
+					this.connectToDeltaStream(connectionArgs);
+				}
+			// intentional fallthrough
+			case "delayed":
+				assert(
+					this.inboundQueuePausedFromInit,
+					0x346 /* inboundQueuePausedFromInit should be true */,
+				);
+				this.inboundQueuePausedFromInit = false;
+				this._deltaManager.inbound.resume();
+				this._deltaManager.inboundSignal.resume();
+				break;
+			case "none":
+				break;
+			default:
+				unreachableCase(deltaConnectionArg);
 		}
 	}
 }

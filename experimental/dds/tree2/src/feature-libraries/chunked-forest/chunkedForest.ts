@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	recordDependency,
 	SimpleDependee,
 	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
@@ -64,8 +63,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {
 		super("object-forest.ChunkedForest");
-		// Invalidate forest if schema change.
-		recordDependency(this.dependent, this.schema);
+	}
+
+	public get isEmpty(): boolean {
+		return this.roots.fields.size === 0;
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {

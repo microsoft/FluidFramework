@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -26,8 +26,8 @@
 		"ci:build": "fluid-build --task ci:build",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
-		"ci:test:mocha": "npm run test:mocha:report",
-		"ci:test:mocha:coverage": "c8 --no-clean npm run test:mocha:report",
+		"ci:test:mocha": "npm run test:mocha",
+		"ci:test:mocha:coverage": "c8 --no-clean npm run test:mocha -- --timeout 4s",
 		"ci:test:realsvc:local": "pnpm run -r --no-sort --stream --no-bail test:realsvc:local:report",
 		"ci:test:realsvc:local:coverage": "c8 --no-clean pnpm recursive --no-sort --stream --no-bail run test:realsvc:local:report",
 		"ci:test:realsvc:local:full": "pnpm run -r --no-sort --stream --no-bail test:realsvc:local:report:full",
@@ -84,7 +84,6 @@
 		"test:memory-profiling:report": "pnpm run -r --no-sort --stream --no-bail test:memory-profiling:report -- --reporterOptions reportDir=./memoryProfilingOutput",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
-		"test:mocha:report": "pnpm run -r --no-sort --stream --no-bail test:mocha:multireport -- --timeout 4s",
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
 		"test:stress": "pnpm run -r --no-sort --stream --no-bail test:stress",
 		"tsc": "fluid-build --root . --task tsc",
@@ -136,7 +135,7 @@
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -167,7 +166,6 @@
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"npm-package-json-lint overrides is here because 6.4 updates type-fest such that it requires typescript 4.7",
-			"Fixing the react related type version here avoids a compile error in office-ui-fabric-react@7.199.6_@types+react-dom@17.0.18_@types+react@17.0.59_react-dom@17.0.2_react@17.0.2/node_modules/office-ui-fabric-react/lib/components/Tooltip/Tooltip.types.d.ts",
 			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node"
 		],
 		"overrides": {
@@ -178,10 +176,12 @@
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
 			"@fluidframework/build-tools>npm-package-json-lint@^6.0.0": "~6.3.0",
-			"@types/react": "17.0.52",
-			"@types/react-dom": "17.0.18",
 			"@oclif/core": "~2.4.0"
 		},
+		"peerDependencyComments": [
+			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
+			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency."
+		],
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"react": "17.0.2",
@@ -189,6 +189,7 @@
 				"webpack": "^5.82.0"
 			},
 			"ignoreMissing": [
+				"@types/node",
 				"fluid-framework"
 			]
 		}

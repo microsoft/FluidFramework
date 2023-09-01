@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/data-object-grid",
-	"version": "2.0.0-internal.6.2.0",
+	"version": "2.0.0-internal.6.3.0",
 	"private": true,
 	"description": "Data object grid creates child data objects from a registry and lays them out in a grid.",
 	"homepage": "https://fluidframework.com",
@@ -39,6 +39,8 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluentui/react-components": "~9.19.1",
+		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-example/clicker": "workspace:~",
 		"@fluid-example/codemirror": "workspace:~",
 		"@fluid-example/collaborative-textarea": "workspace:~",
@@ -54,19 +56,19 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
-		"office-ui-fabric-react": "7.199.6",
 		"prop-types": "^15.8.1",
 		"react": "^17.0.1",
 		"react-collapsible": "^2.7.0",
 		"react-dom": "^17.0.1",
 		"react-grid-layout": "^0.18.3",
+		"scheduler": "^0.20.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/jest": "29.5.3",

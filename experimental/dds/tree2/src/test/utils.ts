@@ -36,21 +36,28 @@ import {
 	ISharedTree,
 	ISharedTreeView,
 	SharedTreeFactory,
+	TreeContent,
+	ViewEvents,
 	createSharedTreeView,
 } from "../shared-tree";
 import {
+	buildForest,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
+	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
+	NodeKeyIndex,
+	NodeKeyManager,
 	NodeReviver,
+	normalizeNewFieldContent,
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
+	SchemaBuilder,
 	singleTextCursor,
 } from "../feature-libraries";
 import {
@@ -74,18 +81,22 @@ import {
 	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
-	InMemoryStoredSchemaRepository,
 	TaggedChange,
 	TreeSchemaBuilder,
-	Named,
-	NamedTreeSchema,
 	treeSchema,
 	FieldUpPath,
+	TreeSchemaIdentifier,
+	TreeStoredSchema,
+	IForestSubscription,
+	InMemoryStoredSchemaRepository,
+	initializeForest,
+	IEditableForest,
 } from "../core";
-import { JsonCompatible, brand, makeArray } from "../util";
+import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities
 
@@ -358,9 +369,9 @@ export class TestTreeProviderLite {
 				id: "test",
 			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
-			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
 			t.push(tree);
@@ -447,7 +458,6 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				default:
 					unreachableCase(type);
 			}
-			return false;
 		}
 	}
 	return false;
@@ -562,35 +572,65 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
 }
 
-export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
-	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-	return makeTreeFromCursor(cursors, jsonSchema);
+export function viewWithContent(
+	content: TreeContent,
+	args?: {
+		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyIndex?: NodeKeyIndex;
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	},
+): ISharedTreeView {
+	const forest = forestWithContent(content);
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
+	return view;
 }
 
+export function forestWithContent(content: TreeContent): IEditableForest {
+	const forest = buildForest();
+	initializeForest(
+		forest,
+		normalizeNewFieldContent(
+			{ schema: content.schema },
+			content.schema.rootFieldSchema,
+			content.initialTree,
+		),
+	);
+	return forest;
+}
+
+const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
+export const jsonSequenceRootSchema = new SchemaBuilder(
+	"JsonSequenceRoot",
+	{},
+	jsonSchema,
+).intoDocumentSchema(jsonSequenceRootField);
+
 /**
- * @remarks Remove this once schematize can do the work.
+ * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
+ *
+ * If the root is not an array, a single item root sequence is used.
  */
-export function makeTreeFromCursor(
-	cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
-	schemaData: SchemaData,
-): ISharedTreeView {
-	const schemaPolicy = defaultSchemaPolicy;
-	const tree: ISharedTreeView = createSharedTreeView();
-	// TODO: use ISharedTreeView.schematize once it supports cursors
-	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
-	const field = tree.editor.sequenceField({
-		parent: undefined,
-		field: rootFieldKey,
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
+	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
+	const tree = viewWithContent({
+		schema: jsonSequenceRootSchema,
+		initialTree: cursors,
 	});
-	if (!Array.isArray(cursor) || cursor.length > 0) {
-		field.insert(0, cursor);
-	}
 	return tree;
 }
 
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	return jsonableTreeFromForest(tree.forest);
+}
+
+export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
 	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
 	return jsonable;
@@ -608,7 +648,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 }
 
 /**
- * Helper function to insert node at a given index.
+ * Helper function to insert a jsonString at a given index of the documents root field.
  *
  * @param tree - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
@@ -846,9 +886,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link NamedTreeSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
  */
-export function namedTreeSchema(data: TreeSchemaBuilder & Named<string>): NamedTreeSchema {
+export function namedTreeSchema(
+	data: TreeSchemaBuilder & Named<string>,
+): Named<TreeSchemaIdentifier> & TreeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),

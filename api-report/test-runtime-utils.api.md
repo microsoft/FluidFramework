@@ -103,11 +103,11 @@ export class MockContainerRuntime {
     clientId: string;
     // (undocumented)
     protected clientSequenceNumber: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
-    // (undocumented)
+    // @deprecated (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
     // (undocumented)
     dirty(): void;

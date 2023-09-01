@@ -552,7 +552,7 @@
             "error"
         ],
         "import/no-deprecated": [
-            "off"
+            "error"
         ],
         "import/no-duplicates": [
             1
@@ -1389,7 +1389,10 @@
             "error"
         ],
         "unicorn/numeric-separators-style": [
-            "error"
+            "error",
+            {
+                "onlyIfContainsSeparator": true
+            }
         ],
         "unicorn/prefer-add-event-listener": [
             "error"

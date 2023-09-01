@@ -11,6 +11,7 @@ import {
 	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
+	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand } from "../../../util";
@@ -402,7 +403,11 @@ describe("Generic FieldKind", () => {
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
+		const actual = genericFieldKind.changeHandler.intoDelta(
+			makeAnonChange(input),
+			childToDelta,
+			MemoizedIdRangeAllocator.fromNextId(),
+		);
 		assert.deepEqual(actual, expected);
 	});
 

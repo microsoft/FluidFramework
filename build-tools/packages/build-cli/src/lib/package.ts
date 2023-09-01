@@ -749,9 +749,9 @@ export async function npmCheckUpdatesHomegrown(
 	updatedPackages: PackageWithKind[];
 	updatedDependencies: PackageVersionMap;
 }> {
-	if (releaseGroup === releaseGroupFilter) {
+	if (releaseGroupFilter !== undefined && releaseGroup === releaseGroupFilter) {
 		throw new Error(
-			`releaseGroup and releaseGroupFilter are the same. They must be different values.`,
+			`releaseGroup and releaseGroupFilter are the same (${releaseGroup}). They must be different values.`,
 		);
 	}
 	log?.info(`Calculating dependency updates...`);
@@ -777,10 +777,8 @@ export async function npmCheckUpdatesHomegrown(
 	if (releaseGroupFilter !== undefined) {
 		const indexOfFilteredGroup = selectionCriteria.releaseGroups.indexOf(releaseGroupFilter);
 		if (indexOfFilteredGroup !== -1) {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete selectionCriteria.releaseGroups[indexOfFilteredGroup];
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete selectionCriteria.releaseGroupRoots[indexOfFilteredGroup];
+			selectionCriteria.releaseGroups.splice(indexOfFilteredGroup, 1);
+			selectionCriteria.releaseGroupRoots.splice(indexOfFilteredGroup, 1);
 		}
 	}
 
