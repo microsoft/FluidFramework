@@ -5837,13 +5837,9 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-summary-block': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -5862,13 +5858,9 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -7241,13 +7233,10 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/replay-driver': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       jsonschema: ^1.2.6
-      mocha: ^10.2.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -7265,12 +7254,9 @@ importers:
       '@fluidframework/debugger-previous': /@fluidframework/debugger/2.0.0-internal.6.1.1
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      mocha: 10.2.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -7745,13 +7731,10 @@ importers:
       '@fluidframework/replay-driver-previous': npm:@fluidframework/replay-driver@2.0.0-internal.6.1.1
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      mocha: ^10.2.0
       nock: ^13.3.3
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -7770,13 +7753,10 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/replay-driver-previous': /@fluidframework/replay-driver/2.0.0-internal.6.1.1
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      mocha: 10.2.0
       nock: 13.3.3
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -8004,12 +7984,8 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       eslint: ~8.6.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -8032,12 +8008,8 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       eslint: 8.6.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -8265,13 +8237,9 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -8295,13 +8263,9 @@ importers:
       '@fluidframework/data-object-base-previous': /@fluidframework/data-object-base/2.0.0-internal.6.1.1
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -8324,7 +8288,6 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      '@types/random-js': ^1.0.31
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -8336,7 +8299,6 @@ importers:
       moment: ^2.21.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
@@ -8357,7 +8319,6 @@ importers:
       '@types/diff': 3.5.5
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      '@types/random-js': 1.0.31
       concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8369,7 +8330,6 @@ importers:
       moment: 2.29.4
       nyc: 15.1.0
       prettier: 2.6.2
-      random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -8386,11 +8346,8 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
-      cross-env: ^7.0.3
       eslint: ~8.6.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -8408,11 +8365,8 @@ importers:
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
-      cross-env: 7.0.3
       eslint: 8.6.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -8504,15 +8458,10 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
-      mocha: ^10.2.0
-      mocha-junit-reporter: ^1.18.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -8529,15 +8478,10 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.2.0
-      mocha-junit-reporter: 1.23.3_mocha@10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -8560,7 +8504,6 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      '@types/random-js': ^1.0.31
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -8572,7 +8515,6 @@ importers:
       moment: ^2.21.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
@@ -8593,7 +8535,6 @@ importers:
       '@types/diff': 3.5.5
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      '@types/random-js': 1.0.31
       concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8605,7 +8546,6 @@ importers:
       moment: 2.29.4
       nyc: 15.1.0
       prettier: 2.6.2
-      random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -8755,7 +8695,6 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      '@types/random-js': ^1.0.31
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -8768,7 +8707,6 @@ importers:
       moment: ^2.21.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
@@ -8790,7 +8728,6 @@ importers:
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      '@types/random-js': 1.0.31
       concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8802,7 +8739,6 @@ importers:
       moment: 2.29.4
       nyc: 15.1.0
       prettier: 2.6.2
-      random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 4.5.5
 
@@ -9815,11 +9751,9 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -9836,10 +9770,8 @@ importers:
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -9988,18 +9920,11 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.1.0
       '@fluidframework/test-driver-definitions': workspace:~
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      '@types/random-js': ^1.0.31
       applicationinsights: ^2.1.9
-      concurrently: ^7.6.0
-      cross-env: ^7.0.3
       eslint: ~8.6.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      start-server-and-test: ^1.11.7
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -10010,17 +9935,10 @@ importers:
       '@fluidframework/build-common': 2.0.0
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      '@types/random-js': 1.0.31
-      concurrently: 7.6.0
-      cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
-      start-server-and-test: 1.15.5
       typescript: 4.5.5
 
   packages/test/test-driver-definitions:
@@ -10034,12 +9952,8 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/test-driver-definitions-previous': npm:@fluidframework/test-driver-definitions@2.0.0-internal.6.1.1
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       typescript: ~4.5.5
@@ -10056,12 +9970,8 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.6.1.1
       '@microsoft/api-extractor': 7.34.9
-      '@types/mocha': 9.1.1
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       typescript: 4.5.5
@@ -10090,13 +10000,10 @@ importers:
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tool-utils': workspace:~
       '@microsoft/api-extractor': ^7.34.4
-      '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       axios: ^0.26.0
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
-      mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -10130,12 +10037,9 @@ importers:
       '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
-      '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
-      mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -10295,7 +10199,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/random-js': ^1.0.31
-      concurrently: ^7.6.0
+      cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
@@ -10315,7 +10219,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
       '@types/random-js': 1.0.31
-      concurrently: 7.6.0
+      cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -10446,7 +10350,6 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      '@types/random-js': ^1.0.31
       '@types/uuid': ^9.0.2
       best-random: ^1.0.0
       concurrently: ^7.6.0
@@ -10461,7 +10364,6 @@ importers:
       moment: ^2.21.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      random-js: ^1.0.8
       rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^9.0.0
@@ -10502,7 +10404,6 @@ importers:
       '@types/diff': 3.5.5
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      '@types/random-js': 1.0.31
       '@types/uuid': 9.0.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
@@ -10515,7 +10416,6 @@ importers:
       moment: 2.29.4
       nyc: 15.1.0
       prettier: 2.6.2
-      random-js: 1.0.8
       rimraf: 4.4.1
       typescript: 4.5.5
 
