@@ -6,21 +6,18 @@
 import { strict as assert } from "assert";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import {
-	describeFullCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
- * These tests retrieve a data store via handle.get() during their initialization. They validate that
- * retrieving a data store that was created locally works fine even if the outer data store has not
- * finished initializing.
+ * These tests retrieve a data store after its creation but at different stages of visibility.
+ * For example, a data store is retrieved via handle.get() during their initialization. It validates that
+ * retrieving a data store that was created locally works fine even if the outer data store has not finished
+ * initializing.
  */
 describeFullCompat(
-	"data store retrieval during initialization tests",
+	"data store retrieval during creation / initialization tests",
 	(getTestObjectProvider, apis) => {
 		const {
 			dataRuntime: { DataObject, DataObjectFactory },
@@ -67,7 +64,6 @@ describeFullCompat(
 				);
 				const innerDataObject = (await innerDataStore.entryPoint?.get()) as ITestDataObject;
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
-				await innerDataObject.handle.get();
 			}
 
 			protected async hasInitialized(): Promise<void> {
@@ -75,6 +71,8 @@ describeFullCompat(
 					this.innerDataStoreKey,
 				);
 				assert(innerDataStoreHandle !== undefined, "inner data store handle is missing");
+				// Here is where we retrieve the inner object during outer object's initialization
+				await innerDataStoreHandle.get();
 			}
 		}
 		const outerDataObjectFactory = new DataObjectFactory(
@@ -90,32 +88,6 @@ describeFullCompat(
 
 		beforeEach(() => {
 			provider = getTestObjectProvider();
-		});
-
-		it("Requesting not visible data stores in detached container", async () => {
-			const request = provider.driver.createCreateNewRequest(provider.documentId);
-			const loader = provider.makeTestLoader();
-			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			// Get the default (root) dataStore from the detached container.
-			const mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
-
-			// Create another data store and make it visible by adding its handle in the root data store's DDS.
-			const dataStore2 = await mainDataStore._context.containerRuntime.createDataStore(
-				TestDataObjectType,
-			);
-			const dataObject2 = (await dataStore2.entryPoint?.get()) as ITestDataObject;
-			assert(dataObject2 !== undefined, "could not create dataStore2");
-			mainDataStore._root.set("dataStore2", dataObject2.handle);
-
-			// Request the new data store via the request API on the container.
-			const dataStore2Response = await container.request({
-				url: dataObject2.handle.absolutePath,
-			});
-			assert(
-				dataStore2Response.mimeType === "fluid/object" && dataStore2Response.status === 200,
-				"Unable to load bound data store in detached container",
-			);
-			await container.attach(request);
 		});
 
 		it("Requesting data store before outer data store completes initialization", async () => {
@@ -134,11 +106,11 @@ describeFullCompat(
 			]);
 
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			// Get the outer dataStore from the detached container.
+			// Get the outer dataStore from the detached container. This will create and load the inner data store
+			// during initialization.
 			const outerDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 			assert(outerDataStore !== undefined, "Could not load outer data store");
-
-			await container.attach(request);
+			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
 		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
@@ -162,12 +134,16 @@ describeFullCompat(
 			const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 
 			// Create another data store and make it visible by adding its handle in the root data store's DDS.
+			// This will create and load the inner data store during initialization.
 			const dataStore2 = await outerDataObjectFactory.createInstance(
 				defaultDataStore._context.containerRuntime,
 			);
 			defaultDataStore._root.set("dataStore2", dataStore2.handle);
-
-			await container.attach(request);
+			await assert.doesNotReject(
+				dataStore2.handle.get(),
+				"Could not retrieve outer data store",
+			);
+			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 	},
 );
