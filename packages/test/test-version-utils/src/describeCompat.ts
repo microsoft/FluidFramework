@@ -10,7 +10,7 @@ import {
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { configList, mochaGlobalSetup, getMajorCompatConfig } from "./compatConfig.js";
+import { configList, mochaGlobalSetup, getCrossVersionCompatConfig } from "./compatConfig.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProvider,
@@ -112,7 +112,7 @@ function createCompatSuite(
 		}
 
 		if (enableVersionCompat) {
-			const versionConfigs = getMajorCompatConfig();
+			const versionConfigs = getCrossVersionCompatConfig();
 			for (const config of versionConfigs) {
 				describe(config.name, function () {
 					let provider: TestObjectProvider;

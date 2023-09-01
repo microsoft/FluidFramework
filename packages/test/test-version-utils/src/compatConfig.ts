@@ -17,6 +17,7 @@ import {
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
 import { baseVersion } from "./baseVersion.js";
+import { getRequestedRange } from "./versionUtils.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -59,7 +60,10 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	};
 
 	const compatVersionStr =
-		typeof compatVersion === "string" ? compatVersion : `N${compatVersion}`;
+		typeof compatVersion === "string" ? `${compatVersion} (N)` : `${getRequestedRange(
+      baseVersion,
+      compatVersion,
+    )} (N${compatVersion})`;
 	return [
 		{
 			name: `compat ${compatVersionStr} - old loader`,
@@ -135,15 +139,21 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 };
 
 const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+  const compatVersionStr =
+  typeof compatVersion === "string" ? `${compatVersion} (N)` : `${getRequestedRange(
+    baseVersion,
+    compatVersion,
+  )} (N${compatVersion})`;
+
 	return [
 		{
-			name: `compat back N${compatVersion} - older loader`,
+			name: `compat back ${compatVersionStr} - older loader`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat back N${compatVersion} - older loader + older driver`,
+			name: `compat back ${compatVersionStr} - older loader + older driver`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -190,22 +200,24 @@ export interface CompatVersionConfig {
 	loadWith: CompatVersion;
 }
 
-export const getMajorCompatConfig = (): CompatVersionConfig[] => {
+export const getCrossVersionCompatConfig = (): CompatVersionConfig[] => {
 	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
 		base: pkgVersion,
-		// temporary: using delta*10 to differentiate delta for major version instead of delta for internal version
+		// TODO: temporary: using delta*10 to differentiate delta for major version instead of delta for internal version
 		delta: delta * 10,
 	}));
 
 	return allDefaultDeltaVersions
 		.map((createVersion) =>
-			allDefaultDeltaVersions.map((loadVersion) => ({
-				name: `Major compat \
-create with [${createVersion.base} ${createVersion.delta === 0 ? "" : createVersion.delta}], \
-load with [${loadVersion.base} ${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
-				createWith: createVersion,
-				loadWith: loadVersion,
-			})),
+			allDefaultDeltaVersions.map((loadVersion) => {
+        const createRange = getRequestedRange(createVersion.base, createVersion.delta);
+        const loadRange = getRequestedRange(loadVersion.base, loadVersion.delta);
+				return {
+					name: `CROSS VERSION COMPAT create with [${createRange}], load with [${loadRange}]`,
+					createWith: createVersion,
+					loadWith: loadVersion,
+				};
+			}),
 		)
 		.reduce((a, b) => a.concat(b))
 		.filter((config) => config.createWith !== config.loadWith);
