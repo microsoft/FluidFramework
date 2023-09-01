@@ -3123,8 +3123,8 @@ export class ContainerRuntime
 
 				const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
 					summaryNumberLogger,
-					this.deltaManager.lastSequenceNumber,
-					this.deltaManager.minimumSequenceNumber,
+					summaryRefSeqNum,
+					minimumSequenceNumber,
 					finalAttempt,
 					false /* beforeSummaryGeneration */,
 				);
