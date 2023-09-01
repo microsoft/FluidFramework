@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { IIdCompressor, StableId } from "@fluidframework/runtime-definitions";
 import { Brand, brandedStringType, generateStableId } from "../../util";
 import { ReadonlyRepairDataStore } from "../repair";
 
@@ -22,7 +22,7 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = any;
-export const RevisionTagSchema = brandedStringType<StableId>();
+export const RevisionTagSchema = Type.Union([Type.String(), Type.Number()]);
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

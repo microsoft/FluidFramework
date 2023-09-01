@@ -131,7 +131,7 @@ describe("Node Key Index", () => {
 		);
 	});
 
-	it.only("can look up a node that was loaded from summary", async () => {
+	it("can look up a node that was loaded from summary", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [tree] = provider.trees;
 		const key = tree.nodeKey.generate();

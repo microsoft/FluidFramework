@@ -46,7 +46,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand, generateStableId } from "../util";
+import { JsonCompatibleReadOnly, brand } from "../util";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeBranchView,
