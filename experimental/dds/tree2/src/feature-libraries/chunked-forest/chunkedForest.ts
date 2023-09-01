@@ -25,6 +25,7 @@ import {
 	ITreeSubscriptionCursorState,
 	rootFieldKey,
 	mapCursorField,
+	DeltaVisitor,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -85,15 +86,8 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	public applyDelta(delta: Delta.Root): void {
-		this.events.emit("beforeDelta", delta);
-		this.invalidateDependents();
-
+	public getVisitor(): DeltaVisitor {
 		const moves: Map<Delta.MoveId, DetachedField> = new Map();
-
-		if (this.roots.isShared()) {
-			this.roots = this.roots.clone();
-		}
 
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const thisForest = this;
@@ -124,6 +118,17 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				destinationField.splice(index, 0, ...children);
 
 				return children.length;
+			},
+			beforeDelta(delta: Delta.Root): void {
+				thisForest.events.emit("beforeDelta", delta);
+				thisForest.invalidateDependents();
+
+				if (thisForest.roots.isShared()) {
+					thisForest.roots = thisForest.roots.clone();
+				}
+			},
+			afterDelta(delta: Delta.Root): void {
+				thisForest.events.emit("afterDelta", delta);
 			},
 			fork() {
 				return { ...this, mutableChunkStack: [...this.mutableChunkStack] };
@@ -222,9 +227,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.mutableChunk = top.mutableChunk;
 			},
 		};
-		visitDelta(delta, visitor);
-
-		this.events.emit("afterDelta", delta);
+		return visitor;
 	}
 
 	private nextDetachedFieldIdentifier = 0;

@@ -31,6 +31,7 @@ import {
 	FieldUpPath,
 	ForestEvents,
 	PathRootPrefix,
+	DeltaVisitor,
 } from "../../core";
 import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -95,14 +96,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	public applyDelta(delta: Delta.Root): void {
-		this.events.emit("beforeDelta", delta);
-		this.invalidateDependents();
-		assert(
-			this.currentCursors.size === 0,
-			0x374 /* No cursors can be current when modifying forest */,
-		);
-
+	public getVisitor(): DeltaVisitor {
 		// Note: This code uses cursors, however it also modifies the tree.
 		// In general this is not safe, but this code happens to only modify the tree below the current cursor location,
 		// which happens to work.
@@ -133,6 +127,17 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		const cursors: ITreeSubscriptionCursor[] = [cursor];
 		const visitor = {
 			cursor,
+			beforeDelta(delta: Delta.Root) {
+				thisForest.events.emit("beforeDelta", delta);
+				thisForest.invalidateDependents();
+				assert(
+					thisForest.currentCursors.size === 0,
+					0x374 /* No cursors can be current when modifying forest */,
+				);
+			},
+			afterDelta(delta: Delta.Root) {
+				thisForest.events.emit("afterDelta", delta);
+			},
 			fork() {
 				const newCursor = this.cursor.fork();
 				cursors.push(newCursor);
@@ -189,10 +194,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.cursor.exitField();
 			},
 		};
-		visitDelta(delta, visitor);
-		cursor.free();
-
-		this.events.emit("afterDelta", delta);
+		return visitor;
 	}
 
 	private nextRange = 0;

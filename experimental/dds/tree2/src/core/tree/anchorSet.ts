@@ -19,7 +19,7 @@ import { FieldKey } from "../schema-stored";
 import { UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
-import { visitDelta } from "./visitDelta";
+import { DeltaVisitor, visitDelta } from "./visitDelta";
 import * as Delta from "./delta";
 
 /**
@@ -556,7 +556,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	/**
 	 * Updates the anchors according to the changes described in the given delta
 	 */
-	public applyDelta(delta: Delta.Root): void {
+	public getVisitor(): DeltaVisitor {
 		const moveTable = new Map<Delta.MoveId, UpPath>();
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const thisAnchorSet = this;
@@ -584,6 +584,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
+			beforeDelta(delta: Delta.Root): void {},
+			afterDelta(delta: Delta.Root): void {
+				thisAnchorSet.events.emit("treeChanging", thisAnchorSet);
+			},
 			fork() {
 				return { ...this };
 			},
@@ -723,8 +727,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.parentField = undefined;
 			},
 		};
-		this.events.emit("treeChanging", this);
-		visitDelta(delta, visitor);
+		return visitor;
 	}
 }
 

@@ -34,6 +34,7 @@ import {
 	Delta,
 	IForestSubscription,
 	StoredSchemaRepository,
+	visitDelta,
 } from "../../../core";
 import { jsonObject } from "../../../domains";
 import {
@@ -143,7 +144,7 @@ describe("ChunkedForest", () => {
 				// Captured reference owns a ref count making it shared.
 				assert(chunk.isShared());
 				// Delete from forest, removing the forest's ref, making chunk not shared again.
-				forest.applyDelta(delta);
+				visitDelta(delta, forest.getVisitor());
 				assert(!chunk.isShared());
 				compareForest(forest, []);
 

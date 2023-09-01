@@ -79,6 +79,7 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
+	visitor.beforeDelta(delta);
 	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
 	const movedOutNodes: RangeMap<Delta.MoveId> = [];
 	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
@@ -95,9 +96,18 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 			movedOutRanges: movedOutNodes,
 		});
 	}
+	visitor.afterDelta(delta);
 }
 
 export interface DeltaVisitor {
+	/**
+	 * Called before the delta is visited.
+	 */
+	beforeDelta(delta: Delta.Root): void;
+	/**
+	 * Called after the delta is visited.
+	 */
+	afterDelta(delta: Delta.Root): void;
 	/**
 	 * Forks the current visitor.
 	 * Any fork produced this way is freed before the visit terminates.

@@ -12,6 +12,8 @@ import {
 	Anchor,
 	ITreeCursorSynchronous,
 	rootFieldKey,
+	DeltaVisitor,
+	visitDelta,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -34,7 +36,7 @@ export interface IEditableForest extends IForestSubscription {
 	 * Applies the supplied Delta to the forest.
 	 * Does NOT update anchors.
 	 */
-	applyDelta(delta: Delta.Root): void;
+	getVisitor(): DeltaVisitor;
 }
 
 /**
@@ -50,7 +52,8 @@ export function initializeForest(
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	forest.applyDelta(new Map([[rootFieldKey, [insert]]]));
+	const deltaVisitor = forest.getVisitor();
+	visitDelta(new Map([[rootFieldKey, [insert]]]), deltaVisitor);
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

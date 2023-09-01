@@ -71,9 +71,9 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
-    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
+    getVisitor(): DeltaVisitor;
     internalizePath(originalPath: UpPath): UpPath;
     isEmpty(): boolean;
     // (undocumented)
@@ -850,7 +850,7 @@ export interface IdRange {
 // @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
-    applyDelta(delta: Delta.Root): void;
+    getVisitor(): DeltaVisitor;
 }
 
 // @alpha
