@@ -81,17 +81,14 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		const augment = this.initializeEntryPoint
-			? { initializeEntryPoint: this.initializeEntryPoint }
-			: { requestHandler: buildRuntimeRequestHandler(...this.requestHandlers) };
-
 		return ContainerRuntime.loadRuntime({
 			context,
 			existing,
 			runtimeOptions: this.runtimeOptions,
 			registryEntries: this.registryEntries,
 			containerScope: scope,
-			...augment,
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
+			initializeEntryPoint: this.initializeEntryPoint,
 		});
 	}
 
