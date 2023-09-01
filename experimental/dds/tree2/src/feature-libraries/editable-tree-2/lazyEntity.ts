@@ -10,8 +10,44 @@ import {
 	ITreeSubscriptionCursorState,
 } from "../../core";
 import { TreeStatus } from "../editable-tree";
+import { fail } from "../../util";
 import { Context } from "./editableTreeContext";
 import { UntypedEntity } from "./editableTreeTypes";
+
+export function makePropertyEnumerableOwn<T extends object>(
+	target: T,
+	key: keyof T,
+	from: object,
+): void {
+	assert(Object.getOwnPropertyDescriptor(target, key) === undefined, "preexisting property");
+
+	const descriptor = Object.getOwnPropertyDescriptor(from, key) ?? fail("missing property");
+	Object.defineProperty(target, key, { ...descriptor, enumerable: true });
+}
+
+export function makePrivatePropertyEnumerableOwn<T extends object>(
+	target: T,
+	key: keyof T,
+	from: object,
+): void {
+	assert(Object.getOwnPropertyDescriptor(target, key) === undefined, "preexisting property");
+
+	const descriptor = Object.getOwnPropertyDescriptor(from, key) ?? fail("missing property");
+	Object.defineProperty(target, key, { ...descriptor, enumerable: true });
+}
+
+export function makePropertyNotEnumerable<T extends object>(target: T, key: keyof T): void {
+	assert(Object.getOwnPropertyDescriptor(target, key) !== undefined, "missing property");
+	Object.defineProperty(target, key, { enumerable: false });
+}
+
+/**
+ * Like makePropertyNotEnumerable, but less type safe so it works on private properties.
+ */
+export function makePrivatePropertyNotEnumerable(target: object, key: string | symbol): void {
+	assert(Object.getOwnPropertyDescriptor(target, key) !== undefined, "missing property");
+	Object.defineProperty(target, key, { enumerable: false });
+}
 
 /**
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
@@ -30,6 +66,12 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		this.lazyCursor = cursor.fork();
 		context.withCursors.add(this);
 		this.context.withAnchors.add(this);
+
+		// Setup JS Object API:
+		makePrivatePropertyNotEnumerable(this, "lazyCursor");
+		makePropertyNotEnumerable(this, "context");
+		makePropertyNotEnumerable(this, "schema");
+		makePropertyNotEnumerable(this, "anchor");
 	}
 
 	public abstract [Symbol.iterator](): Iterator<UntypedEntity>;

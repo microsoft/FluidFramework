@@ -51,7 +51,7 @@ import {
 	ValueField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
-import { LazyEntity } from "./lazyEntity";
+import { LazyEntity, makePropertyEnumerableOwn, makePropertyNotEnumerable } from "./lazyEntity";
 
 export function makeField(
 	context: Context,
@@ -99,6 +99,8 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		super(context, schema, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
+
+		makePropertyNotEnumerable(this, "key");
 	}
 
 	public is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema> {
@@ -241,6 +243,17 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements ValueField<TTypes>
 {
+	public constructor(
+		context: Context,
+		schema: FieldSchema<typeof FieldKinds.sequence, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+
+		makePropertyEnumerableOwn(this, "content", LazyValueField.prototype);
+	}
+
 	private valueFieldEditor(): ValueFieldEditBuilder {
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
@@ -262,6 +275,17 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements OptionalField<TTypes>
 {
+	public constructor(
+		context: Context,
+		schema: FieldSchema<typeof FieldKinds.sequence, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+
+		makePropertyEnumerableOwn(this, "content", LazyValueField.prototype);
+	}
+
 	private optionalEditor(): OptionalFieldEditBuilder {
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.optionalField(fieldPath);

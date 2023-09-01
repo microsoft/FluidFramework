@@ -11,7 +11,6 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	TreeSchemaIdentifier,
 	mapCursorFields,
 	CursorLocationType,
 	anchorSlot,
@@ -52,7 +51,12 @@ import {
 	UntypedTree,
 } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
-import { LazyEntity } from "./lazyEntity";
+import {
+	LazyEntity,
+	makePrivatePropertyNotEnumerable,
+	makePropertyEnumerableOwn,
+	makePropertyNotEnumerable,
+} from "./lazyEntity";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -109,6 +113,11 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	extends LazyEntity<TSchema, Anchor>
 	implements UntypedTree
 {
+	/**
+	 * Enumerable own property providing a more JS object friendly alternative to "schema".
+	 */
+	public readonly type: string;
+
 	private readonly removeDeleteCallback: () => void;
 	public constructor(
 		context: Context,
@@ -118,15 +127,20 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		anchor: Anchor,
 	) {
 		super(context, schema, cursor, anchor);
-		assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
+		assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
 
 		anchorNode.slots.set(lazyTreeSlot, this);
 		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
 
 		assert(
-			this.context.schema.treeSchema.get(this.typeName) !== undefined,
-			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
+			"There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData",
 		);
+
+		// Setup JS Object API:
+		makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
+		makePropertyNotEnumerable(this, "anchorNode");
+		this.type = schema.name;
 	}
 
 	public is<TSchemaInner extends TreeSchema>(
@@ -153,17 +167,6 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		this.anchorNode.slots.delete(lazyTreeSlot);
 		this.removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
-	}
-
-	public get typeName(): TreeSchemaIdentifier {
-		return this.cursor.type;
-	}
-
-	public get type(): TreeSchema {
-		return (
-			this.context.schema.treeSchema.get(this.typeName) ??
-			fail("requested type does not exist in schema")
-		);
 	}
 
 	public get value(): Value {
@@ -303,7 +306,10 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	}
 }
 
-class LazyMap<TSchema extends MapSchema> extends LazyTree<TSchema> implements MapNode<TSchema> {
+export class LazyMap<TSchema extends MapSchema>
+	extends LazyTree<TSchema>
+	implements MapNode<TSchema>
+{
 	public get(key: FieldKey): TypedField<TSchema["mapFields"]> {
 		return this.getField(key) as TypedField<TSchema["mapFields"]>;
 	}
@@ -326,13 +332,29 @@ class LazyMap<TSchema extends MapSchema> extends LazyTree<TSchema> implements Ma
 	}
 }
 
-class LazyLeaf<TSchema extends LeafSchema> extends LazyTree<TSchema> implements Leaf<TSchema> {
+export class LazyLeaf<TSchema extends LeafSchema>
+	extends LazyTree<TSchema>
+	implements Leaf<TSchema>
+{
+	public constructor(
+		context: Context,
+		schema: TSchema,
+		cursor: ITreeSubscriptionCursor,
+		anchorNode: AnchorNode,
+		anchor: Anchor,
+	) {
+		super(context, schema, cursor, anchorNode, anchor);
+
+		// Setup JS Object API:
+		makePropertyEnumerableOwn(this, "value", LazyTree.prototype);
+	}
+
 	public override get value(): SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> {
 		return super.value as SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
 	}
 }
 
-class LazyFieldNode<TSchema extends FieldNodeSchema>
+export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	extends LazyTree<TSchema>
 	implements FieldNode<TSchema>
 {

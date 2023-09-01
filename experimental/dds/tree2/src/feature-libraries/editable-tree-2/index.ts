@@ -3,4 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { UntypedField, UntypedTree } from "./editableTreeTypes";
+export { UntypedField, UntypedTree, UntypedEntity } from "./editableTreeTypes";
+
+export {
+	visitBipartiteIterableTree,
+	Skip,
+	visitBipartiteIterableTreeWithState,
+	visitIterableTree,
+	visitIterableTreeWithState,
+} from "./navigation";
