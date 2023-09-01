@@ -27,7 +27,7 @@ export class TreeIndex {
 
 	public constructor(
 		private readonly name: string,
-		private readonly rootIdAllocator: () => ForestRootId,
+		private readonly rootIdAllocator: (count: number) => ForestRootId,
 	) {}
 
 	/**
@@ -59,15 +59,15 @@ export class TreeIndex {
 	 * Retrieves the associated ForestRootId if any.
 	 * Otherwise, allocates a new one and associates it with the given DetachedNodeId.
 	 */
-	public getOrCreateEntry(nodeId: Delta.DetachedNodeId): Entry {
+	public getOrCreateEntry(nodeId: Delta.DetachedNodeId, count: number = 1): Entry {
 		return this.tryGetEntry(nodeId) ?? this.createEntry(nodeId);
 	}
 
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
-	public createEntry(nodeId?: Delta.DetachedNodeId): Entry {
-		const root = this.rootIdAllocator();
+	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): Entry {
+		const root = this.rootIdAllocator(count);
 		const field = this.toFieldKey(root);
 		const entry = { field, root };
 

@@ -130,7 +130,20 @@ import { ITreeCursorSynchronous } from "./cursor";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
+export interface Root<TTree = ProtoNode> extends FieldMarks<TTree> {
+	// readonly detached?: readonly DetachedMark<TTree>[];
+}
+
+// export type DetachedMark<TTree = ProtoNode> = Create<TTree> | DetachedModify<TTree> | Destroy;
+// export interface DetachedModify<TTree = ProtoNode> extends Modify<TTree>, IsDetachedMark {}
+// export interface DetachedMoveOut<TTree = ProtoNode> extends MoveOut<TTree>, IsDetachedMark {}
+
+export interface IsDetachedMark {
+	/**
+	 * When specified, indicates that the target node(s) are detached, and specifies the ID associated with the first node.
+	 */
+	readonly detachedNodeId: DetachedNodeId;
+}
 
 /**
  * The default representation for inserted content.
@@ -164,7 +177,8 @@ export type Mark<TTree = ProtoNode> =
 	| Modify<TTree>
 	| Remove<TTree>
 	| Restore<TTree>
-	| Destroy<TTree>
+	// | Create<TTree>
+	// | Destroy
 	| MoveOut<TTree>
 	| MoveIn
 	| Insert<TTree>;
@@ -196,12 +210,11 @@ export interface HasModifications<TTree = ProtoNode> {
  * Describes modifications made to an otherwise untouched subtree.
  * @alpha
  */
-export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
+export interface Modify<TTree = ProtoNode>
+	extends HasModifications<TTree>,
+		Partial<IsDetachedMark> {
 	readonly type: typeof MarkType.Modify;
-	/**
-	 * When specified, indicates that the modified node is a detached node with the given ID
-	 */
-	readonly id?: DetachedNodeId;
+	readonly count?: never;
 }
 
 /**
@@ -221,28 +234,25 @@ export interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly id: DetachedNodeId;
 }
 
-/**
- * Describes the destruction of a contiguous range of detached nodes.
- * @alpha
- */
-export interface Destroy<TTree = ProtoNode> extends HasModifications<TTree> {
-	readonly type: typeof MarkType.Remove;
-	/**
-	 * Must be 1 when `fields` is populated.
-	 */
-	readonly count: number;
-	/**
-	 * The ID of the first node being destroyed.
-	 * Subsequent nodes are assumed to have incrementing IDs.
-	 */
-	readonly id: DetachedNodeId;
-}
+// /**
+//  * Describes the destruction of a contiguous range of detached nodes.
+//  * @alpha
+//  */
+// export interface Destroy extends IsDetachedMark {
+// 	readonly type: typeof MarkType.Destroy;
+// 	/**
+// 	 * Must be 1 when `fields` is populated.
+// 	 */
+// 	readonly count: number;
+// }
 
 /**
  * Describes the moving out of a contiguous range of node.
  * @alpha
  */
-export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
+export interface MoveOut<TTree = ProtoNode>
+	extends HasModifications<TTree>,
+		Partial<IsDetachedMark> {
 	readonly type: typeof MarkType.MoveOut;
 	/**
 	 * Must be 1 when `fields` is populated.
@@ -252,12 +262,6 @@ export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
 	 */
 	readonly moveId: MoveId;
-	/**
-	 * The detached node ID associated with the first node being moved out.
-	 * Subsequent nodes are assumed to have incrementing IDs.
-	 * Specified iff when the nodes being moved out are in a detached state before the application of this delta.
-	 */
-	readonly restoreId?: DetachedNodeId;
 }
 
 /**
@@ -273,13 +277,35 @@ export interface MoveIn {
 	readonly moveId: MoveId;
 }
 
+// /**
+//  * Describes the creation of a contiguous range of node.
+//  * @alpha
+//  */
+// export interface Create<TTree = ProtoNode> {
+// 	readonly type: typeof MarkType.Create;
+// 	/**
+// 	 * Must be of length 1 when `fields` is populated.
+// 	 */
+// 	readonly data: readonly TTree[];
+
+// 	/**
+// 	 * Modifications to the new content.
+// 	 */
+// 	readonly fields?: FieldMarks<TTree>;
+// }
+
 /**
  * Describes the insertion of a contiguous range of node.
  * @alpha
  */
-export interface Insert<TTree = ProtoNode> {
+export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Insert;
+
 	// TODO: use a single cursor with multiple nodes instead of array of cursors.
+	/**
+	 * Must be of length 1 when `fields` is populated.
+	 */
+	readonly content: readonly TTree[];
 
 	/**
 	 * When set, indicates that the inserted content is replacing some existing content.
@@ -295,31 +321,13 @@ export interface Insert<TTree = ProtoNode> {
 		 */
 		readonly detachId: DetachedNodeId;
 	};
-
-	readonly newContent: {
-		/**
-		 * Must be of length 1 when `fields` is populated.
-		 */
-		readonly data: readonly TTree[];
-
-		/**
-		 * The ID assigned to the first node being removed.
-		 * Subsequent nodes should be assigned incrementing IDs.
-		 * Specified iff when the nodes being inserted are only transiently present.
-		 */
-		readonly detachId?: DetachedNodeId;
-		/**
-		 * Modifications to the new content.
-		 */
-		readonly fields?: FieldMarks<TTree>;
-	};
 }
 
 /**
  * Describes the restoration of a contiguous range of node.
  * @alpha
  */
-export interface Restore<TTree = ProtoNode> extends HasModifications<TTree> {
+export interface Restore<TTree = ProtoNode> {
 	readonly type: typeof MarkType.Restore;
 	/**
 	 * Must be 1 when `fields` is populated.
@@ -327,25 +335,33 @@ export interface Restore<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly count: number;
 
 	/**
-	 * The ID assigned to the first node being restored.
-	 * Subsequent nodes should be assigned incrementing IDs.
+	 * When set, indicates that the inserted content is replacing some existing content.
 	 */
-	readonly restoreId: DetachedNodeId;
+	readonly oldContent?: {
+		/**
+		 * Modifications to the old content.
+		 */
+		readonly fields?: FieldMarks<TTree>;
 
-	/**
-	 * The ID assigned to the first node being removed.
-	 * Subsequent nodes should be assigned incrementing IDs.
-	 * Specified iff when the nodes being restored are only transiently present.
-	 */
-	readonly removalId?: DetachedNodeId;
+		/**
+		 * The ID to assign the first node being replaced.
+		 * Subsequent replaced nodes should be assigned incrementing IDs.
+		 */
+		readonly detachId: DetachedNodeId;
+	};
 
-	/**
-	 * The ID assigned to the first node being replaced (if any).
-	 * Subsequent nodes should be assigned incrementing IDs.
-	 * Specified iff the existing nodes are being replaced by the restored nodes.
-	 */
+	readonly newContent: {
+		/**
+		 * The ID assigned to the first node being restored.
+		 * Subsequent nodes should be assigned incrementing IDs.
+		 */
+		readonly restoreId: DetachedNodeId;
 
-	readonly replaceeId?: DetachedNodeId;
+		/**
+		 * Modifications to the new content.
+		 */
+		readonly fields?: FieldMarks<TTree>;
+	};
 }
 
 /**
@@ -384,5 +400,6 @@ export const MarkType = {
 	Remove: 3,
 	MoveOut: 4,
 	Restore: 5,
-	Destroy: 5,
+	// Create: 6,
+	// Destroy: 7,
 } as const;

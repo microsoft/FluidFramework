@@ -11,6 +11,8 @@ import {
 	ITreeCursorSynchronous,
 	tagChange,
 	ChangesetLocalId,
+	JsonableTree,
+	ChangeAtomId,
 } from "../../core";
 import { fail, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -300,48 +302,10 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
-function deltaFromInsertAndChange(
-	insertedContent: ITreeCursorSynchronous | undefined,
-	nodeChange: NodeChangeset | undefined,
-	deltaFromNode: ToDelta,
+export function optionalFieldIntoDelta(
+	{ change, revision }: TaggedChange<OptionalChangeset>,
+	deltaFromChild: ToDelta,
 ): Delta.Mark[] {
-	if (insertedContent !== undefined) {
-		const insert: Mutable<Delta.Insert> = {
-			type: Delta.MarkType.Insert,
-			content: [insertedContent],
-		};
-		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange);
-			populateChildModifications(nodeDelta, insert);
-		}
-		return [insert];
-	}
-
-	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange)];
-	}
-
-	return [];
-}
-
-function deltaForDelete(
-	nodeExists: boolean,
-	nodeChange: NodeChangeset | undefined,
-	deltaFromNode: ToDelta,
-): Delta.Mark[] {
-	if (!nodeExists) {
-		return [];
-	}
-
-	const deleteDelta: Mutable<Delta.Remove> = { type: Delta.MarkType.Remove, count: 1 };
-	if (nodeChange !== undefined) {
-		const modify = deltaFromNode(nodeChange);
-		deleteDelta.fields = modify.fields;
-	}
-	return [deleteDelta];
-}
-
-export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
 	if (change.fieldChange === undefined) {
 		if (change.deletedBy === undefined && change.childChange !== undefined) {
 			return [deltaFromChild(change.childChange)];
@@ -349,25 +313,68 @@ export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild
 		return [];
 	}
 
-	const deleteDelta = deltaForDelete(
-		!change.fieldChange.wasEmpty,
-		change.deletedBy === undefined ? change.childChange : undefined,
-		deltaFromChild,
-	);
-
 	const update = change.fieldChange?.newContent;
-	let content: ITreeCursorSynchronous | undefined;
-	if (update === undefined) {
-		content = undefined;
-	} else if ("set" in update) {
-		content = singleTextCursor(update.set);
-	} else {
-		content = update.revert;
+	const id = {
+		major: change.fieldChange.revision ?? revision,
+		minor: change.fieldChange.id,
+	};
+	const hasOldFieldChanges: Mutable<Delta.HasModifications> = {};
+	if (change.childChange !== undefined) {
+		const fields = deltaFromChild(change.childChange).fields;
+		if (fields !== undefined) {
+			hasOldFieldChanges.fields = fields;
+		}
 	}
-
-	const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
-
-	return [...deleteDelta, ...insertDelta];
+	if (update === undefined) {
+		// The field is being cleared
+		if (!change.fieldChange.wasEmpty) {
+			return [{ type: Delta.MarkType.Remove, count: 1, id, ...hasOldFieldChanges }];
+		}
+		return [];
+	} else {
+		const hasNewFieldChanges: Mutable<Delta.HasModifications> = {};
+		if (update.changes !== undefined) {
+			const fields = deltaFromChild(update.changes).fields;
+			if (fields !== undefined) {
+				hasNewFieldChanges.fields = fields;
+			}
+		}
+		const hasOldContent: Mutable<Pick<Delta.Insert, "oldContent">> = {};
+		if (!change.fieldChange.wasEmpty) {
+			hasOldContent.oldContent = {
+				detachId: id,
+				...hasOldFieldChanges,
+			};
+		}
+		if (Object.prototype.hasOwnProperty.call(update, "set")) {
+			const content = [singleTextCursor((update as { set: JsonableTree }).set)];
+			return [
+				{
+					type: Delta.MarkType.Insert,
+					...hasNewFieldChanges,
+					...hasOldContent,
+					content,
+				},
+			];
+		} else {
+			const changeId = (update as { changeId: ChangeAtomId }).changeId;
+			const restoreId = {
+				major: changeId.revision,
+				minor: changeId.localId,
+			};
+			return [
+				{
+					type: Delta.MarkType.Restore,
+					count: 1,
+					newContent: {
+						...hasNewFieldChanges,
+						restoreId,
+					},
+					...hasOldContent,
+				},
+			];
+		}
+	}
 }
 
 export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
@@ -375,8 +382,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,
 
-	intoDelta: ({ change }: TaggedChange<OptionalChangeset>, deltaFromChild: ToDelta) =>
-		optionalFieldIntoDelta(change, deltaFromChild),
+	intoDelta: optionalFieldIntoDelta,
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChange === undefined && change.fieldChange === undefined,
 };
