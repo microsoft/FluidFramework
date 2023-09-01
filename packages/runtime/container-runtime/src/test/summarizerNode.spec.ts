@@ -416,17 +416,13 @@ describe("Runtime", () => {
 			});
 
 			describe("Refresh Latest Summary", () => {
-				it("Should refresh from tree when no proposal handle provided", async () => {
-					createRoot();
-					const result = await rootNode.refreshLatestSummary(undefined, summaryRefSeq);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-				});
-
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
-					const result = await rootNode.refreshLatestSummary(undefined, summaryRefSeq);
-					assert(result.latestSummaryUpdated === false, "we already got this summary");
+					const result = await rootNode.refreshLatestSummary(
+						"test-handle",
+						summaryRefSeq,
+					);
+					assert(!result.isSummaryTracked, "we already got this summary");
 				});
 
 				it("Should refresh from pending", async () => {
@@ -441,8 +437,8 @@ describe("Runtime", () => {
 						proposalHandle,
 						summaryRefSeq,
 					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === true, "should be tracked");
+					assert(result.isSummaryTracked, "should be tracked");
+					assert(result.isSummaryNewer === true, "should be newer");
 				});
 
 				it("should fail refresh when summary is in progress", async () => {

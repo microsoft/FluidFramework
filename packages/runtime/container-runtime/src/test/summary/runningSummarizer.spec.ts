@@ -769,7 +769,7 @@ describe("Runtime", () => {
 
 			describe("Summarization attempts with retry", () => {
 				beforeEach(async () => {
-					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+					settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 					shouldDeferGenerateSummary = false;
 					deferGenerateSummary = undefined;
 				});
@@ -1861,7 +1861,7 @@ describe("Runtime", () => {
 
 				beforeEach(async () => {
 					// Currently, summarize events are only logged with this feature.
-					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+					settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 				});
 
 				it("should emit summarize event with success result", async () => {

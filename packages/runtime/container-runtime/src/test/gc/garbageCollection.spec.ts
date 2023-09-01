@@ -53,7 +53,6 @@ import {
 	dataStoreAttributesBlobName,
 	IContainerRuntimeMetadata,
 	metadataBlobName,
-	RefreshSummaryResult,
 } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 import { configProvider } from "./gcUnitTestHelpers";
@@ -1098,12 +1097,10 @@ describe("Garbage Collection Tests", () => {
 				"Deleted nodes state should be a handle",
 			);
 
-			const refreshSummaryResult: RefreshSummaryResult = {
-				latestSummaryUpdated: true,
-				wasSummaryTracked: true,
-				summaryRefSeq: 0,
-			};
-			await garbageCollector.refreshLatestSummary(refreshSummaryResult);
+			await garbageCollector.refreshLatestSummary({
+				isSummaryTracked: true,
+				isSummaryNewer: true,
+			});
 
 			// Run GC and summarize again. The whole GC summary should now be a summary handle.
 			await garbageCollector.collectGarbage({});
@@ -1698,11 +1695,9 @@ describe("Garbage Collection Tests", () => {
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
 			await garbageCollector.refreshLatestSummary({
-				wasSummaryTracked: true,
-				latestSummaryUpdated: true,
-				summaryRefSeq: 0,
+				isSummaryTracked: true,
+				isSummaryNewer: true,
 			});
-
 			await garbageCollector.collectGarbage({});
 			const tree2 = garbageCollector.summarize(fullTree, trackState);
 
