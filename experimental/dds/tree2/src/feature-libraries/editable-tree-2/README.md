@@ -4,7 +4,7 @@ Editable Tree is a simple API for accessing a Forest's data.
 
 The entry point is `getEditableTree` which returns an `EditableTree` which allows reading and writing nodes of the Forest in a "JavaScript-object"-like manner.
 
-There are three main usage modes for this API:
+There are four main usage modes for this API:
 
 -   Generic tree readers: Code that can be applied to any tree, regardless of schema falls into this category.
 
@@ -23,6 +23,8 @@ There are three main usage modes for this API:
     Note that all of the untyped APIs are boxed since generic users may need to inspect the schema of these layers to interpret them.
     For schema aware code, usually the unboxed version provide everything thats needed when reading the tree, but passing data into another API, or doing editing, access to these intermediate layers, bia the `boxed` version can sometimes be necessary.
 
+    This could could be split up to separate reading and editing APIs.
+
 -   JavaScript object focused use.
     This includes use-cases like passing the tree to generic javascript object processing libraries like `JSON.stringify`, nodes's `assert.deepEqual`, some structural clone implementations, [JMESPath](https://jmespath.org/) and many others.
 
@@ -37,6 +39,18 @@ There are three main usage modes for this API:
     Also like the generic tree readers case, it provides an easy way for code which does understand the schema to get back to the Schema Aware API for editing if needed.
     (TODO: Add APIs for doing such casts safely.
     Possible way to do instance of checks or symbols to recover which objects are nodes and fields)
+
+-   Subscribing to changes.
+    This includes cases like updating the user interface to reflect changes
+
+    This could be considered part of either reading API, but is being addressed separately here.
+    APIs for receiving these changes take the form of registering callbacks for events.
+    These events can be triggered by anything that impacts the content of the tree including local edits, remote edits, merges, rebasing local edits, transaction rollback, undo etc.
+    These can also be batching together, possibly eliminating intermediate states and reordering operations that don't impact each-other (like edits to different parts of the tree).
+    This means these event subscriptions should only be treated as changes to the content, and users of them should not attempt to ascribe meaning or providence to any particular event.
+
+    Some control over these events is available via branching which provides snapshot isolation (among other things):
+    this is done at a higher level than the tree API covered here but can be accessed via each tree entities context property. (TODO: provide this access).
 
 ## Status
 
