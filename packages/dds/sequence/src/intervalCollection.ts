@@ -647,7 +647,14 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 		stickiness?: IntervalStickiness,
 	): TInterval;
 	/**
-	 * overload of add
+	 * Creates a new interval and add it to the collection.
+	 * @param start - interval start position (inclusive)
+	 * @param end - interval end position (exclusive)
+	 * @param props - properties of the interval
+	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
+	 * @returns - the created interval
+	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
+	 * with how the current half-open behavior is represented.
 	 */
 	add(
 		start: number,
@@ -1001,14 +1008,18 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	) {
 		let type: IntervalType;
 		let properties: PropertySet | undefined;
+		let sticky = stickiness;
 		if (intervalType !== undefined && typeof intervalType === "number") {
 			type = intervalType;
-			if (props === undefined || typeof props !== "number") {
+			if (props === undefined || typeof props === "object") {
 				properties = props;
 			}
 		} else {
 			type = IntervalType.SlideOnRemove;
 			properties = intervalType;
+			if (typeof props === "number") {
+				sticky = props;
+			}
 		}
 
 		if (!this.localCollection) {
@@ -1027,7 +1038,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			type,
 			properties,
 			undefined,
-			stickiness,
+			sticky,
 		);
 
 		if (interval) {

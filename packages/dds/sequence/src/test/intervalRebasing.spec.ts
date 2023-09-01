@@ -9,7 +9,6 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalType } from "../intervals";
 import { SharedStringFactory } from "../sequenceFactory";
 import { SharedString } from "../sharedString";
 import { assertConsistent, Client } from "./intervalUtils";
@@ -58,7 +57,7 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(12, 15, IntervalType.SlideOnRemove, { intervalId: "id" });
+		collection_0.add(12, 15, { intervalId: "id" });
 		clients[2].sharedString.removeRange(5, 7);
 		clients[0].sharedString.removeRange(3, 5);
 		containerRuntimeFactory.processAllMessages();
@@ -77,7 +76,7 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = false;
 		clients[1].sharedString.removeRange(0, 2);
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(0, 1, IntervalType.SlideOnRemove, { intervalId: "id" });
+		collection_0.add(0, 1, { intervalId: "id" });
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[0].containerRuntime.connected = true;
@@ -91,7 +90,7 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = false;
 		clients[1].sharedString.removeRange(0, 2);
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(0, 1, IntervalType.SlideOnRemove, { intervalId: "id" });
+		collection_0.add(0, 1, { intervalId: "id" });
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		collection_0.removeIntervalById("id");
@@ -109,7 +108,7 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 		clients[0].sharedString.insertText(0, "ABCDEFGHIJKLMN");
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(20, 20, IntervalType.SlideOnRemove, {
+		collection_0.add(20, 20, {
 			intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
 		});
 		clients[2].sharedString.removeRange(13, 15);
@@ -129,7 +128,7 @@ describe("interval rebasing", () => {
 		clients[0].sharedString.insertText(0, "C");
 
 		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-		collection_0.add(0, 1, IntervalType.SlideOnRemove, {
+		collection_0.add(0, 1, {
 			intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
 		});
 
@@ -143,7 +142,7 @@ describe("interval rebasing", () => {
 		// A 0-length interval is required here to reproduce this error. If in
 		// the future we wish to stop supporting 0-length intervals, this test
 		// can be removed
-		collection_0.add(0, 0, IntervalType.SlideOnRemove, {
+		collection_0.add(0, 0, {
 			intervalId: "1",
 		});
 		clients[1].sharedString.insertText(0, "BCD");
@@ -153,7 +152,7 @@ describe("interval rebasing", () => {
 		clients[2].sharedString.removeRange(1, 3);
 		clients[1].sharedString.insertText(1, "E");
 		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
-		collection_1.add(0, 2, IntervalType.SlideOnRemove, {
+		collection_1.add(0, 2, {
 			intervalId: "2",
 		});
 

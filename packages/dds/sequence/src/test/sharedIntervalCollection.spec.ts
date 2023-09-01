@@ -16,7 +16,7 @@ import {
 	SharedIntervalCollectionFactory,
 } from "../sharedIntervalCollection";
 import { IIntervalCollection } from "../intervalCollection";
-import { Interval, IntervalType } from "../intervals";
+import { Interval } from "../intervals";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,
@@ -101,8 +101,8 @@ describe("SharedIntervalCollection", () => {
 		});
 
 		it("Can add intervals from multiple clients", () => {
-			collection1.add(0, 20, IntervalType.Simple);
-			collection2.add(10, 30, IntervalType.Simple);
+			collection1.add(0, 20);
+			collection2.add(10, 30);
 			assertIntervals(collection1, [{ start: 0, end: 20 }]);
 			assertIntervals(collection2, [{ start: 10, end: 30 }]);
 			assert.equal(Array.from(collection1.findOverlappingIntervals(1, 3)).length, 1);
@@ -124,8 +124,8 @@ describe("SharedIntervalCollection", () => {
 		});
 
 		it("Can remove intervals that were added", () => {
-			const interval = collection1.add(0, 20, IntervalType.Simple);
-			collection2.add(10, 30, IntervalType.Simple);
+			const interval = collection1.add(0, 20);
+			collection2.add(10, 30);
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
@@ -142,8 +142,8 @@ describe("SharedIntervalCollection", () => {
 		});
 
 		it("Can change intervals", () => {
-			const interval = collection1.add(0, 20, IntervalType.Simple);
-			collection2.add(10, 30, IntervalType.Simple);
+			const interval = collection1.add(0, 20);
+			collection2.add(10, 30);
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
@@ -192,7 +192,7 @@ describe("SharedIntervalCollection", () => {
 
 		it("can rebase add ops", () => {
 			runtime1.connected = false;
-			collection1.add(15, 17, IntervalType.Simple);
+			collection1.add(15, 17);
 			runtimeFactory.processAllMessages();
 
 			assertIntervals(collection1, [{ start: 15, end: 17 }]);
