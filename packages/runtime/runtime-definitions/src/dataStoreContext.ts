@@ -474,12 +474,6 @@ export interface IFluidDataStoreContext
 	submitSignal(type: string, content: any): void;
 
 	/**
-	 * @deprecated To be removed in favor of makeVisible.
-	 * Register the runtime to the container
-	 */
-	bindToContext(): void;
-
-	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
 	 * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
 	 */
