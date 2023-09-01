@@ -22,7 +22,7 @@ import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
-import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
+import { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -187,7 +187,7 @@ export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeEx
 // @public
 export function isValidLegacyError(error: unknown): error is Omit<IFluidErrorBase, "errorInstanceId">;
 
-// @public
+// @public @deprecated
 export interface ITaggedTelemetryPropertyTypeExt {
     // (undocumented)
     tag: string;
@@ -211,6 +211,8 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 
 // @public
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
+    // Warning: (ae-forgotten-export) The symbol "TelemetryEventCategory" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
     category?: TelemetryEventCategory;
     // (undocumented)
@@ -247,7 +249,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @public
 export interface ITelemetryPropertiesExt {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
+    [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
 // @public (undocumented)

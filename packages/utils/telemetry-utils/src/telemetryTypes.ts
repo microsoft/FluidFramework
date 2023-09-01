@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, LogLevel } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
 
 /**
  * Examples of known categories, however category can be any string for extensibility.
@@ -29,6 +29,8 @@ export type TelemetryEventPropertyTypeExt =
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
+ *
+ * @deprecated Use Tagged<TelemetryEventPropertyTypeExt>
  */
 export interface ITaggedTelemetryPropertyTypeExt {
 	value: TelemetryEventPropertyTypeExt;
@@ -39,7 +41,7 @@ export interface ITaggedTelemetryPropertyTypeExt {
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryPropertiesExt {
-	[index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
+	[index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
 /**

@@ -27,19 +27,24 @@ export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 /**
- * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
- * to mark pieces of information that should be organized or handled differently by loggers in various first or third
+ * A property to be logged to telemetry may require a tag indicating the value may contain sensitive data.
+ * This type wraps a value of the given type T in an object along with a string tag.
+ *
+ * This indicates that the value should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
  */
-export type ITaggedTelemetryBasePropertyType = ITaggedTelemetryPropertyType;
+export interface Tagged<T> {
+	value: T;
+	tag: string;
+}
 
 /**
- * @see {@link ITaggedTelemetryBasePropertyType}
+ * @see {@link Tagged} for info on tagging
  *
- * @deprecated Renamed to ITaggedTelemetryBasePropertyType
+ * @deprecated Use Tagged\<TelemetryBaseEventPropertyType\>
  */
 export interface ITaggedTelemetryPropertyType {
-	value: TelemetryBaseEventPropertyType;
+	value: TelemetryEventPropertyType;
 	tag: string;
 }
 
@@ -54,7 +59,7 @@ export type ITelemetryBaseProperties = ITelemetryProperties;
  * @deprecated Renamed to ITelemetryBaseProperties
  */
 export interface ITelemetryProperties {
-	[index: string]: TelemetryBaseEventPropertyType | ITaggedTelemetryBasePropertyType;
+	[index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
 }
 
 /**
@@ -93,7 +98,7 @@ export interface ITelemetryBaseLogger {
  *
  * @deprecated Use ITelemetryGenericEventExt
  */
-export interface ITelemetryGenericEvent extends ITelemetryBaseProperties {
+export interface ITelemetryGenericEvent extends ITelemetryProperties {
 	eventName: string;
 	category?: TelemetryEventCategory;
 }
@@ -104,7 +109,7 @@ export interface ITelemetryGenericEvent extends ITelemetryBaseProperties {
  *
  * @deprecated Use ITelemetryErrorEventExt
  */
-export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
 	eventName: string;
 }
 
