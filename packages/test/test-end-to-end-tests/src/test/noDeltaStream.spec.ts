@@ -156,6 +156,13 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					url: containerUrl,
 				});
 
+				// Force the container into write mode to ensure a summary will be created
+				const dataObject = await requestFluidObject<ITestFluidObject>(
+					summaryContainer,
+					"default",
+				);
+				dataObject.root.set("Force write", 0);
+
 				const summaryCollection = new SummaryCollection(
 					summaryContainer.deltaManager,
 					createChildLogger(),

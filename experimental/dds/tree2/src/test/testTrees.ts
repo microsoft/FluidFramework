@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, ValueSchema } from "../../../../core";
+import { JsonableTree, ValueSchema } from "../core";
 import {
 	Any,
 	FieldKinds,
@@ -11,48 +11,61 @@ import {
 	FullSchemaPolicy,
 	SchemaAware,
 	SchemaBuilder,
+	SchemaLibrary,
 	TreeSchema,
 	TypedSchemaCollection,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
+	singleTextCursor,
 	typeNameSymbol,
 	valueSymbol,
-} from "../../../../feature-libraries";
+} from "../feature-libraries";
+import { TreeContent } from "../shared-tree";
 
 interface TestTree {
 	readonly name: string;
 	readonly schemaData: TypedSchemaCollection;
 	readonly policy: FullSchemaPolicy;
-	readonly schema: FieldSchema;
 	readonly treeFactory: () => JsonableTree[];
 }
 
 function testTree<T extends TreeSchema>(
 	name: string,
-	schemaData: TypedSchemaCollection,
-	schema: T,
+	schemaData: SchemaLibrary,
+	rootNode: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
-	const fieldSchema = SchemaBuilder.fieldValue(schema);
+	const fieldSchema = SchemaBuilder.fieldValue(rootNode);
 	return testField(name, schemaData, fieldSchema, data);
 }
 
 function testField<T extends FieldSchema>(
 	name: string,
-	schemaData: TypedSchemaCollection,
-	schema: T,
+	schemaLibrary: SchemaLibrary,
+	rootField: T,
 	data: SchemaAware.TypedField<T, SchemaAware.ApiMode.Flexible>,
 ): TestTree {
+	const schema = new SchemaBuilder(
+		name,
+		{ rejectForbidden: false, rejectEmpty: false },
+		schemaLibrary,
+	).intoDocumentSchema(rootField);
 	return {
 		name,
-		schema,
+		schemaData: schema,
 		treeFactory: () => {
-			const cursors = cursorsForTypedFieldData({ schema: schemaData }, schema, data);
+			const cursors = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
 			return cursors.map(jsonableTreeFromCursor);
 		},
-		schemaData,
 		policy: defaultSchemaPolicy,
+	};
+}
+
+export function treeContentFromTestTree(test: TestTree): TreeContent {
+	return {
+		schema: test.schemaData,
+		initialTree: test.treeFactory().map(singleTextCursor),
 	};
 }
 
