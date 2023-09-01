@@ -263,18 +263,19 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
 	public async refreshLatestSummary(isSummaryTracked: boolean): Promise<void> {
-		// If the summary is tracked, this client is the one that generated it. So, update wasGCRunInLatestSummary.
-		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
-		// true in scenarios where GC is disabled but enabled in the snapshot we loaded from.
-		if (isSummaryTracked) {
-			this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
+		if (!isSummaryTracked) {
+			return;
 		}
 
-		if (!isSummaryTracked || !this.configs.shouldRunGC) {
+		// If the summary is tracked, this client is the one that generated it. So, update wasGCRunInLatestSummary.
+		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
+		// true in scenarios where GC is currently disabled but enabled in the snapshot we loaded from.
+		this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
+
+		if (!this.configs.shouldRunGC) {
 			return;
 		}
 

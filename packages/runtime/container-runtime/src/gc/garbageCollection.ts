@@ -842,8 +842,7 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
 	public async refreshLatestSummary(isSummaryTracked: boolean): Promise<void> {
 		return this.summaryStateTracker.refreshLatestSummary(isSummaryTracked);
