@@ -17,7 +17,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullVersionCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
 const mapId = "mapKey";
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullVersionCompat("SharedMap", (getTestObjectProvider) => {
+describeFullCompat("SharedMap", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

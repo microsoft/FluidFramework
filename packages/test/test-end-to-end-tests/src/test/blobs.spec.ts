@@ -21,7 +21,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeFullVersionCompat,
+	describeFullCompat,
 	describeNoCompat,
 	ExpectedEvents,
 	ITestDataObject,
@@ -70,7 +70,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeFullVersionCompat("blobs", (getTestObjectProvider) => {
+describeFullCompat("blobs", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(async function () {
 		provider = getTestObjectProvider();

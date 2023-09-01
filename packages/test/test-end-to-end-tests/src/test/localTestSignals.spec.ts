@@ -13,7 +13,7 @@ import {
 	ITestFluidObject,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullVersionCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -30,7 +30,7 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 		),
 	);
 
-describeFullVersionCompat("TestSignals", (getTestObjectProvider) => {
+describeFullCompat("TestSignals", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;

@@ -14,7 +14,7 @@ import {
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-	describeFullVersionCompat,
+	describeFullCompat,
 	describeNoCompat,
 	itExpects,
 } from "@fluid-internal/test-version-utils";
@@ -30,7 +30,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeFullVersionCompat("SharedCounter", (getTestObjectProvider) => {
+describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

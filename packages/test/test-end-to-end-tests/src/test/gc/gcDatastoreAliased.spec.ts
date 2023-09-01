@@ -18,7 +18,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeFullVersionCompat,
+	describeFullCompat,
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
@@ -29,7 +29,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
  */
-describeFullVersionCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) => {
+describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach(async () => {

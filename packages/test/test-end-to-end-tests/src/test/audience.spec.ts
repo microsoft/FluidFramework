@@ -10,12 +10,12 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullVersionCompat } from "@fluid-internal/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 
-describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
+describeFullVersionCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
 		public get _root() {
 			return this.root;

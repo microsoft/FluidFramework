@@ -15,7 +15,7 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import {
-	describeFullVersionCompat,
+	describeFullCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
 } from "@fluid-internal/test-version-utils";
@@ -89,7 +89,7 @@ const compressionSuite = (getProvider) => {
 	});
 };
 
-describeFullVersionCompat("Op Compression", (getTestObjectProvider) =>
+describeFullCompat("Op Compression", (getTestObjectProvider) =>
 	compressionSuite(async () => getTestObjectProvider()),
 );
 
