@@ -67,7 +67,7 @@ export interface IContainerRuntime
 	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
 	 * data store has been assigned the given alias.
 	 */
-	getAliasedDataStoreEntryPoint?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete
