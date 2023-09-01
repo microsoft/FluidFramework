@@ -210,8 +210,6 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 
 // @public
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    // Warning: (ae-forgotten-export) The symbol "TelemetryEventCategory" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     category?: TelemetryEventCategory;
     // (undocumented)
@@ -371,6 +369,9 @@ export enum TelemetryDataTag {
     CodeArtifact = "CodeArtifact",
     UserData = "UserData"
 }
+
+// @public
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {

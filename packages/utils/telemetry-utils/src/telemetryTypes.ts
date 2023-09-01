@@ -6,7 +6,11 @@
 import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
 
 /**
- * Examples of known categories, however category can be any string for extensibility.
+ * The categories FF uses when instrumenting the code.
+ *
+ * generic - Informational log event
+ * error - Error log event, ideally 0 of these are logged during a session
+ * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 

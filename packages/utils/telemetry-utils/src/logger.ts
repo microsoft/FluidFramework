@@ -15,7 +15,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ITelemetryProperties,
 	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
-	TelemetryEventCategory,
 	LogLevel,
 	Tagged,
 	ITelemetryBaseProperties,
@@ -35,6 +34,7 @@ import {
 	ITelemetryPerformanceEventExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";
 
 export interface Memory {
