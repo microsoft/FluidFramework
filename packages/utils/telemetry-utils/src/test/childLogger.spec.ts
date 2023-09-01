@@ -246,7 +246,7 @@ describe("ChildLogger", () => {
 		assert(!sent, "event should not be sent");
 	});
 
-	it("MultiSink logger set the logLevel to default if not supplied with a log level", () => {
+	it("should be able to send events correctly according to loglevel if multisink logger is used inside childlogger", () => {
 		let sent = false;
 		const logger1: ITelemetryBaseLogger = {
 			send(event: ITelemetryBaseEvent): void {

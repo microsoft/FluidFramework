@@ -62,13 +62,13 @@ describe("MultiSinkLogger", () => {
 
 	it("MultiSink logger set the logLevel to min logLevel of all loggers", () => {
 		const logger1 = new MockLogger(LogLevel.error);
-		const logger2 = new MockLogger(LogLevel.error);
+		const logger2 = new MockLogger(LogLevel.default);
 		const multiSink = createMultiSinkLogger({
 			loggers: [createChildLogger({ logger: logger1 }), logger2],
 		});
 		assert.strictEqual(
 			multiSink.minLogLevel,
-			LogLevel.error,
+			LogLevel.default,
 			"Min loglevel should be set correctly",
 		);
 
