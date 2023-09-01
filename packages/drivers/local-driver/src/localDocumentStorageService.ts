@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,

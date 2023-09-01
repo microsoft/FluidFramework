@@ -11,7 +11,7 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {

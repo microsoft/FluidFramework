@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	ISummaryContext,

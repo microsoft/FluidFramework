@@ -29,7 +29,8 @@ import {
 	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
-import { TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;

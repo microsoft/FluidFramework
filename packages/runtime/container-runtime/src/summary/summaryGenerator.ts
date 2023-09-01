@@ -16,7 +16,7 @@ import {
 	IPromiseTimer,
 	IPromiseTimerResult,
 	Timer,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/core-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
