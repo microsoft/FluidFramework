@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentManager } from "@fluidframework/server-services-core";
+import { IDocumentManager, IDocumentKeyRetriever } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
-export class DocumentKeyRetriever {
+export class DocumentKeyRetriever implements IDocumentKeyRetriever {
 	public constructor(
 		// TODO: Consolidate implementations of RedisCache class across all services, then change "any" type to Redis cache
 		private readonly redis: any,
@@ -21,12 +21,12 @@ export class DocumentKeyRetriever {
 		}
 	}
 
-	public async getKeyCosmos<ValType>(
+	public async getKeyCosmos<T>(
 		keyName: string,
 		tenantId: string,
 		documentId: string,
 		useCachedDocument: boolean = true,
-	): Promise<ValType> {
+	): Promise<T> {
 		this.infoLog(`Retrieving value of ${keyName} from cosmosDB.`, documentId, tenantId);
 
 		// Retrieve the cached document details, if it exists for this document
@@ -34,7 +34,7 @@ export class DocumentKeyRetriever {
 			? await this.getCachedDocumentDetails(documentId)
 			: undefined;
 
-		let val: ValType = cachedDetails?.[keyName];
+		let val: T = cachedDetails?.[keyName];
 		if (val) {
 			// If the cached document details contain the key and useCachedDocument is true, use the cached value
 			this.infoLog("Using cached cosmosDB document details.", documentId, tenantId);
@@ -52,22 +52,22 @@ export class DocumentKeyRetriever {
 		return val;
 	}
 
-	public async getKeyRedis<ValType>(keyName: string): Promise<ValType> {
+	public async getKeyRedis<T>(keyName: string): Promise<T> {
 		this.infoLog(`Retrieving value of ${keyName} from redis`);
-		const val: ValType = await this.redis.get(keyName);
+		const val: T = await this.redis.get(keyName);
 		return val;
 	}
 
-	public async getKeyRedisFallback<ValType>(
+	public async getKeyRedisFallback<T>(
 		keyNameBase: string,
 		tenantId: string,
 		documentId: string,
 		useCachedDocument: boolean = true,
-	): Promise<ValType> {
+	): Promise<T> {
 		const redisKeyName: string = `${keyNameBase}:${documentId}}`;
 		const cosmosKeyName: string = keyNameBase;
 
-		let val: ValType = await this.getKeyRedis<ValType>(redisKeyName);
+		let val: T = await this.getKeyRedis<T>(redisKeyName);
 		if (val !== undefined && val !== null) {
 			// Return the value if redis has it
 			this.infoLog(`Found value for ${redisKeyName} in redis.`, documentId, tenantId);
@@ -80,7 +80,7 @@ export class DocumentKeyRetriever {
 				tenantId,
 			);
 
-			val = await this.getKeyCosmos<ValType>(
+			val = await this.getKeyCosmos<T>(
 				cosmosKeyName,
 				tenantId,
 				documentId,
