@@ -4,19 +4,19 @@
  */
 
 export interface IDocumentKeyRetriever {
-  getKeyCosmos<T>(
-    keyName: string,
-    tenantId: string,
-    documentId: string,
-    useCachedDocument?: boolean
-  ): Promise<T>;
+	getKeyCosmos<T>(
+		keyName: string,
+		tenantId: string,
+		documentId: string,
+		useCachedDocument?: boolean,
+	): Promise<T>;
 
-  getKeyRedis<T>(keyName: string): Promise<T>;
+	getKeyRedis<T>(keyName: string): Promise<T>;
 
-  getKeyRedisFallback<T>(
-    keyNameBase: string,
-    tenantId: string,
-    documentId: string,
-    useCachedDocument?: boolean
-  ): Promise<T>;
+	getKeyRedisFallback<T>(
+		keyNameBase: string,
+		tenantId: string,
+		documentId: string,
+		useCachedDocument?: boolean,
+	): Promise<T>;
 }

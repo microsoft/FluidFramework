@@ -162,4 +162,4 @@ export {
 	TokenRevokedError,
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
-export { IDocumentKeyRetriever } from "./documentKeyRetriever"
+export { IDocumentKeyRetriever } from "./documentKeyRetriever";

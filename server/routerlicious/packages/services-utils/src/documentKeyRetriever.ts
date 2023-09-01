@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentManager, IDocumentKeyRetriever } from "@fluidframework/server-services-core";
+import {
+	IDocumentManager,
+	IDocumentKeyRetriever,
+	IDocument,
+} from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
 export class DocumentKeyRetriever implements IDocumentKeyRetriever {
@@ -30,7 +34,7 @@ export class DocumentKeyRetriever implements IDocumentKeyRetriever {
 		this.infoLog(`Retrieving value of ${keyName} from cosmosDB.`, documentId, tenantId);
 
 		// Retrieve the cached document details, if it exists for this document
-		const cachedDetails: Record<string, any> | undefined = useCachedDocument
+		const cachedDetails: IDocument | undefined = useCachedDocument
 			? await this.getCachedDocumentDetails(documentId)
 			: undefined;
 
@@ -41,7 +45,7 @@ export class DocumentKeyRetriever implements IDocumentKeyRetriever {
 		} else {
 			// Otherwise, call cosmosDB, and cache the result
 			this.infoLog("Querying cosmosDB and caching the results.", documentId, tenantId);
-			const documentDetails: Record<string, any> = await this.documentManager.readDocument(
+			const documentDetails: IDocument = await this.documentManager.readDocument(
 				tenantId,
 				documentId,
 			);
@@ -91,21 +95,19 @@ export class DocumentKeyRetriever implements IDocumentKeyRetriever {
 		}
 	}
 
-	public async getCachedDocumentDetails(
-		documentId: string,
-	): Promise<Record<string, any> | undefined> {
+	public async getCachedDocumentDetails(documentId: string): Promise<IDocument | undefined> {
 		// Check if redis has a cache of cosmosDB document details
 		const documentDetailsKey: string = DocumentKeyRetriever.getDocumentDetailsKey(documentId);
-		const documentDetails: any = await this.redis.get(documentDetailsKey);
+		const documentDetails: IDocument = await this.redis.get(documentDetailsKey);
 		if (documentDetails) {
-			return documentDetails as Record<string, any> | undefined;
+			return documentDetails as IDocument | undefined;
 		}
 		return undefined;
 	}
 
 	public async setCachedDocumentDetails(
 		documentId: string,
-		documentDetails: Record<string, any>,
+		documentDetails: IDocument,
 	): Promise<void> {
 		// Set the redis cache for cosmosDB document details
 		await this.redis.set(
