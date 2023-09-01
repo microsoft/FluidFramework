@@ -5,6 +5,8 @@
 
 /**
  * Examples of known categories, however category can be any string for extensibility.
+ *
+ * @deprecated Moved to \@fluidframework/telemetry-utils package
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -15,6 +17,13 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
  */
+export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
+
+/**
+ * @see {@link TelemetryBaseEventPropertyType}
+ *
+ * @deprecated Renamed to TelemetryBaseEventPropertyType
+ */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 /**
@@ -22,16 +31,30 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
  */
+export type ITaggedTelemetryBasePropertyType = ITaggedTelemetryPropertyType;
+
+/**
+ * @see {@link ITaggedTelemetryBasePropertyType}
+ *
+ * @deprecated Renamed to ITaggedTelemetryBasePropertyType
+ */
 export interface ITaggedTelemetryPropertyType {
-	value: TelemetryEventPropertyType;
+	value: TelemetryBaseEventPropertyType;
 	tag: string;
 }
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */
+export type ITelemetryBaseProperties = ITelemetryProperties;
+
+/**
+ * @see {@link ITelemetryBaseProperties}
+ *
+ * @deprecated Renamed to ITelemetryBaseProperties
+ */
 export interface ITelemetryProperties {
-	[index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+	[index: string]: TelemetryBaseEventPropertyType | ITaggedTelemetryBasePropertyType;
 }
 
 /**
@@ -40,7 +63,7 @@ export interface ITelemetryProperties {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 	category: string;
 	eventName: string;
 }
@@ -67,8 +90,10 @@ export interface ITelemetryBaseLogger {
 /**
  * Informational (non-error) telemetry event
  * Maps to category = "generic"
+ *
+ * @deprecated Use ITelemetryGenericEventExt
  */
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
+export interface ITelemetryGenericEvent extends ITelemetryBaseProperties {
 	eventName: string;
 	category?: TelemetryEventCategory;
 }
@@ -76,14 +101,18 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 /**
  * Error telemetry event.
  * Maps to category = "error"
+ *
+ * @deprecated Use ITelemetryErrorEventExt
  */
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
+export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 	eventName: string;
 }
 
 /**
  * Performance telemetry event.
  * Maps to category = "performance"
+ *
+ * @deprecated Use ITelemetryPerformanceEventExt
  */
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 	duration?: number; // Duration of event (optional)
@@ -96,13 +125,15 @@ export interface ILoggingError extends Error {
 	/**
 	 * Return all properties from this object that should be logged to telemetry
 	 */
-	getTelemetryProperties(): ITelemetryProperties;
+	getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
 /**
  * ITelemetryLogger interface contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
+ *
+ * @deprecated Use ITelemetryLoggerExt
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**

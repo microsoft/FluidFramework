@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseLogger,
-	LogLevel,
-	TelemetryEventCategory,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, LogLevel } from "@fluidframework/core-interfaces";
+
+/**
+ * Examples of known categories, however category can be any string for extensibility.
+ */
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
  * Property types that can be logged.
