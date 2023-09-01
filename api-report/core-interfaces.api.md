@@ -39,7 +39,7 @@ export interface IDisposable {
 // @public
 export interface IErrorBase extends Partial<Error> {
     readonly errorType: string;
-    getTelemetryProperties?(): ITelemetryProperties;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
     readonly message: string;
     readonly name?: string;
     readonly stack?: string;
