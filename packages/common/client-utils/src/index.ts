@@ -11,7 +11,7 @@ export { EventForwarder } from "./eventForwarder";
  * Because the two files don't have fully isomorphic exports, using named exports for the full API surface
  * is problematic if that named export includes values not in their intersection.
  *
- * In a future breaking change of common-utils, we could use a named export for their intersection if we
+ * In a future breaking change of client-utils, we could use a named export for their intersection if we
  * desired.
  */
 // eslint-disable-next-line no-restricted-syntax
