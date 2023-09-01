@@ -31,7 +31,7 @@ import {
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorType,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -942,7 +942,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							// pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
 							"Found two messages with the same sequenceNumber but different payloads. Likely to be a " +
 								"service issue",
-							DriverErrorType.fileOverwrittenInStorage,
+							DriverErrorTypes.fileOverwrittenInStorage,
 							{
 								clientId: this.connectionManager.clientId,
 								sequenceNumber: message.sequenceNumber,
