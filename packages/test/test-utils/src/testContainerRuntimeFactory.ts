@@ -61,22 +61,25 @@ export const createTestContainerRuntimeFactory = (
 			context: IContainerContext,
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
-			const runtime: ContainerRuntime = await containerRuntimeCtor.load(
+			const runtime: ContainerRuntime = await containerRuntimeCtor.loadRuntime({
 				context,
-				[
+				registryEntries: [
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
 				// eslint-disable-next-line import/no-deprecated
-				buildRuntimeRequestHandler(
+				requestHandler: buildRuntimeRequestHandler(
 					// eslint-disable-next-line import/no-deprecated
 					defaultRouteRequestHandler("default"),
 					...this.requestHandlers,
 				),
-				this.runtimeOptions,
-				context.scope,
+				runtimeOptions: this.runtimeOptions,
+				containerScope: context.scope,
 				existing,
-			);
+				provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+					throw new Error("TODO: what's the correct thing to return?");
+				},
+			});
 
 			return runtime;
 		}
