@@ -29,7 +29,6 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -424,7 +423,11 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
-	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
+	public get minLogLevel(): LogLevel | undefined {
+		return this.baseLogger.minLogLevel;
+	}
+
+	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
 		const eventLogLevel = logLevel ?? LogLevel.default;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
 		// Filter out in case event log level is below what is wanted in config.
@@ -502,6 +505,21 @@ export class MultiSinkLogger extends TelemetryLogger {
 		this.loggers = loggers;
 	}
 
+	// This is minimum of minLlogLevel of all loggers.
+	private _minLogLevelOfAllLoggers: LogLevel | undefined;
+
+	public get minLogLevel(): LogLevel | undefined {
+		if (this._minLogLevelOfAllLoggers === undefined) {
+			const logLevels: number[] = [];
+			for (const logger of this.loggers) {
+				logLevels.push(logger.minLogLevel ?? LogLevel.default);
+			}
+			this._minLogLevelOfAllLoggers = Math.min(...logLevels);
+		}
+		// This will be eual to LogLevel.Default in case none of the loggers have the minLogLevel defined.
+		return this._minLogLevelOfAllLoggers;
+	}
+
 	/**
 	 * Add logger to send all events to
 	 * @param logger - Logger to add
@@ -509,6 +527,14 @@ export class MultiSinkLogger extends TelemetryLogger {
 	public addLogger(logger?: ITelemetryBaseLogger): void {
 		if (logger !== undefined && logger !== null) {
 			this.loggers.push(logger);
+			// Update in case the logLevel of added logger is less than the current.
+			if (
+				logger.minLogLevel !== undefined &&
+				this._minLogLevelOfAllLoggers !== undefined &&
+				logger.minLogLevel < this._minLogLevelOfAllLoggers
+			) {
+				this._minLogLevelOfAllLoggers = logger.minLogLevel;
+			}
 		}
 	}
 
