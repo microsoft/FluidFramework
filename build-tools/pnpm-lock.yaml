@@ -381,7 +381,6 @@ importers:
       eslint-config-oclif: ^4.0.0
       eslint-config-oclif-typescript: ^1.0.3
       eslint-config-prettier: ~8.5.0
-      moment: ^2.29.4
       oclif: ^3.9.1
       prettier: ~2.6.2
       rimraf: ^4.4.1
@@ -412,7 +411,6 @@ importers:
       eslint-config-oclif: 4.0.0_eslint@8.6.0
       eslint-config-oclif-typescript: 1.0.3_qvtltsyn3reahc7lgycismcfiq
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      moment: 2.29.4
       prettier: 2.6.2
       rimraf: 4.4.1
       ts-node: 10.9.1_vliugzio5c6rxk3co27b7rq74a
