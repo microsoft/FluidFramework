@@ -132,6 +132,17 @@ module.exports = {
 				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
 				"tools/markdown-magic/package.json",
 			],
+			"npm-package-json-script-mocha-config": [
+				// these doesn't use mocha config for reporters yet.
+				"server/",
+				"build-tools/",
+				"common/lib/common-utils/package.json",
+			],
+			"npm-package-json-test-scripts": [
+				"common/build/eslint-config-fluid/package.json",
+				"packages/test/mocha-test-setup/package.json",
+				"examples/apps/attributable-map/package.json",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
