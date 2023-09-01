@@ -173,13 +173,13 @@ const createContainer = async (
 	if (disableSummary) {
 		summaryConfigOverrides = { state: "disabled" };
 	} else {
-		const IdleDetectionTime = 20;
+		const IdleDetectionTimeMs = 20;
 		summaryConfigOverrides = {
 			...DefaultSummaryConfiguration,
 			...{
-				minIdleTime: IdleDetectionTime,
-				maxIdleTime: IdleDetectionTime * 2,
-				maxTime: IdleDetectionTime * 12,
+				minIdleTime: IdleDetectionTimeMs,
+				maxIdleTime: IdleDetectionTimeMs * 2,
+				maxTime: IdleDetectionTimeMs * 12,
 				initialSummarizerDelayMs: 0,
 			},
 		};
@@ -222,7 +222,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings = [];
+		settings = {};
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
 		settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = true;
 		settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
@@ -332,9 +332,9 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		],
 		async () => {
 			// Wait for 100 ms for pending ops to be saved.
-			const pendingOpsTimeout = 100;
-			settings["Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout"] =
-				pendingOpsTimeout;
+			const pendingOpsTimeoutMs = 100;
+			settings["Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeoutMs"] =
+				pendingOpsTimeoutMs;
 			const mockLogger = new MockLogger();
 			const container1 = await provider.makeTestContainer();
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
@@ -378,7 +378,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 					saved: false,
 					countBefore: pendingOpCount,
 					countAfter: pendingOpCount,
-					timeout: pendingOpsTimeout,
+					timeout: pendingOpsTimeoutMs,
 				},
 			]);
 		},
@@ -400,6 +400,9 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			await waitForContainerConnection(container);
 
 			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+
+			// This data object will send ops during summarization because the factory uses mixinSummaryHandler
+			// to do so on every summarize.
 			const dataObject2 = await dataStoreFactory2.createInstance(
 				rootDataObject.containerRuntime,
 			);

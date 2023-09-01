@@ -2975,7 +2975,7 @@ export class ContainerRuntime
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
 				this.mc.config.getNumber(
-					"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeout",
+					"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeoutMs",
 				) ?? defaultPendingOpsWaitTimeoutMs;
 			await new Promise<void>((resolve, reject) => {
 				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
