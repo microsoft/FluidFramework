@@ -34,6 +34,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
+	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntime: MockContainerRuntimeForReconnection;
 }
 
@@ -533,7 +534,7 @@ export function mixinAttach<
 			assert.equal(state.clients.length, 1);
 			const clientA = state.clients[0];
 			const services: IChannelServices = {
-				deltaConnection: clientA.containerRuntime.createDeltaConnection(),
+				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			clientA.channel.connect(services);
@@ -770,7 +771,7 @@ export function mixinClientSelection<
 	};
 }
 
-function makeUnreachableCodepathProxy<T extends object>(name: string): T {
+function makeUnreachableCodePathProxy<T extends object>(name: string): T {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return new Proxy({} as T, {
 		get: (): never => {
@@ -799,6 +800,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	// than IChannel here.
 	const newClient: Client<TChannelFactory> = {
 		containerRuntime,
+		dataStoreRuntime,
 		channel: channel as ReturnType<TChannelFactory["create"]>,
 	};
 	options.emitter.emit("clientCreate", newClient);
@@ -818,7 +820,7 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
 	});
 	const services: IChannelServices = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: MockStorage.createFromSummary(summary),
 	};
 
@@ -832,6 +834,7 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	const newClient: Client<TChannelFactory> = {
 		channel,
 		containerRuntime,
+		dataStoreRuntime,
 	};
 	options.emitter.emit("clientCreate", newClient);
 	return newClient;
@@ -874,7 +877,7 @@ export async function runTestForSeed<
 	);
 	if (!startDetached) {
 		const services: IChannelServices = {
-			deltaConnection: initialClient.containerRuntime.createDeltaConnection(),
+			deltaConnection: initialClient.dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		initialClient.channel.connect(services);
@@ -902,8 +905,8 @@ export async function runTestForSeed<
 		// These properties should always be injected into the state by the mixed in reducer/generator
 		// for any user code. We initialize them to proxies which throw errors on any property access
 		// to catch bugs in that setup.
-		channel: makeUnreachableCodepathProxy("channel"),
-		client: makeUnreachableCodepathProxy("client"),
+		channel: makeUnreachableCodePathProxy("channel"),
+		client: makeUnreachableCodePathProxy("client"),
 		isDetached: startDetached,
 	};
 
@@ -963,7 +966,7 @@ export async function replayTest<
 
 	const model = {
 		..._model,
-		// We lose some typesafety here because the options interface isn't generic
+		// We lose some type safety here because the options interface isn't generic
 		generatorFactory: (): Generator<TOperation, unknown> => generatorFromArray(operations),
 	};
 
@@ -1019,11 +1022,10 @@ export function createDDSFuzzSuite<
 
 				const replayModel = {
 					...model,
-					// We lose some typesafety here because the options interface isn't generic
+					// We lose some type safety here because the options interface isn't generic
 					generatorFactory: (): Generator<TOperation, unknown> =>
 						generatorFromArray(operations as TOperation[]),
 				};
-				// eslint-disable-next-line unicorn/no-useless-undefined
 				runTest(replayModel, options, seed, undefined);
 			});
 		}

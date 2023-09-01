@@ -55,9 +55,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 
 		// Let the DDSes know that the connection state changed.
-		this.deltaConnections.forEach((dc) => {
-			dc.setConnectionState(this.connected);
-		});
+		this.dataStoreRuntime.setConnectionState(this.connected, this.clientId);
 	}
 
 	private _connected = true;

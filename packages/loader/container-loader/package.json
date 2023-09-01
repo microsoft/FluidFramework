@@ -68,7 +68,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^1.0.0",
+		"@fluidframework/protocol-base": "^1.0.1",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"debug": "^4.1.1",
