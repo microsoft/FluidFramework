@@ -118,7 +118,7 @@
 		},
 		"getDeltasRequestMaxOpsRange": 2000
 	},
-    "nexus": {
+	"nexus": {
 		"kafkaClientId": "nexus",
 		"maxMessageSize": "16KB",
 		"verifyMaxMessageSize": false,

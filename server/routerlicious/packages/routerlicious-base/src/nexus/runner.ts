@@ -106,16 +106,16 @@ export class NexusRunner implements IRunner {
 		// Listen on provided port, on all network interfaces.
 		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
-	    httpServer.on("listening", () => this.onListening());
-	    httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-		console.log("UPGRADE This is HTTPSERVER logger middleware");
-		console.log(socket.server._connections);
-		socket.on("error",(error) => {
-		    console.log("SOCKET ERROR SS");
-		    console.log(error);
-		})
-	    });
-	
+		httpServer.on("listening", () => this.onListening());
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
+			console.log("UPGRADE This is HTTPSERVER logger middleware");
+			console.log(socket.server._connections);
+			socket.on("error", (error) => {
+				console.log("SOCKET ERROR SS");
+				console.log(error);
+			});
+		});
+
 		// Start token manager
 		if (this.tokenRevocationManager) {
 			this.tokenRevocationManager.start().catch((error) => {
