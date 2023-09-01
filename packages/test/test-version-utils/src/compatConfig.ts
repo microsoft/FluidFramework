@@ -191,15 +191,22 @@ export interface CompatVersionConfig {
 export const getCrossVersionCompatConfig = (): CompatVersionConfig[] => {
 	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
 		base: pkgVersion,
-		// TODO: temporary: using delta*10 to differentiate delta for major version instead of delta for internal version
-		delta: delta * 10,
+		delta,
 	}));
 
 	return allDefaultDeltaVersions
 		.map((createVersion) =>
 			allDefaultDeltaVersions.map((loadVersion) => {
-				const createRange = getRequestedRange(createVersion.base, createVersion.delta);
-				const loadRange = getRequestedRange(loadVersion.base, loadVersion.delta);
+				const createRange = getRequestedRange(
+					createVersion.base,
+					createVersion.delta,
+					/* adjustPublicMajor */ true,
+				);
+				const loadRange = getRequestedRange(
+					loadVersion.base,
+					loadVersion.delta,
+					/* adjustPublicMajor */ true,
+				);
 				return {
 					name: `CROSS VERSION COMPAT create with [${createRange}], load with [${loadRange}]`,
 					createWith: createVersion,
