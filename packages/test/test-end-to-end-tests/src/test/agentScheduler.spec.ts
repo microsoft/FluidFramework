@@ -53,62 +53,62 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 	});
 
-	// describe("Single client", () => {
-	// 	let scheduler: IAgentScheduler;
+	describe("Single client", () => {
+		let scheduler: IAgentScheduler;
 
-	// 	beforeEach(async () => {
-	// 		const container = await createContainer();
-	// 		scheduler = await getAgentScheduler(container);
-	// 	});
+		beforeEach(async () => {
+			const container = await createContainer();
+			scheduler = await getAgentScheduler(container);
+		});
 
-	// 	it("No tasks initially", async () => {
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), []);
-	// 	});
+		it("No tasks initially", async () => {
+			assert.deepStrictEqual(scheduler.pickedTasks(), []);
+		});
 
-	// 	it("Can pick tasks", async () => {
-	// 		await scheduler.pick("task1", async () => {});
-	// 		await provider.ensureSynchronized();
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
-	// 	});
+		it("Can pick tasks", async () => {
+			await scheduler.pick("task1", async () => {});
+			await provider.ensureSynchronized();
+			assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
+		});
 
-	// 	it("Can pick and release tasks", async () => {
-	// 		await scheduler.pick("task1", async () => {});
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
-	// 		await scheduler.release("task1");
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), []);
-	// 	});
+		it("Can pick and release tasks", async () => {
+			await scheduler.pick("task1", async () => {});
+			assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
+			await scheduler.release("task1");
+			assert.deepStrictEqual(scheduler.pickedTasks(), []);
+		});
 
-	// 	it("Can register task without picking up", async () => {
-	// 		await scheduler.register("task1");
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), []);
-	// 	});
+		it("Can register task without picking up", async () => {
+			await scheduler.register("task1");
+			assert.deepStrictEqual(scheduler.pickedTasks(), []);
+		});
 
-	// 	it("Duplicate picking fails", async () => {
-	// 		await scheduler.pick("task1", async () => {});
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
-	// 		await scheduler
-	// 			.pick("task1", async () => {})
-	// 			.catch((err) => {
-	// 				assert.deepStrictEqual(err.message, "Task is already attempted");
-	// 			});
-	// 	});
+		it("Duplicate picking fails", async () => {
+			await scheduler.pick("task1", async () => {});
+			assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
+			await scheduler
+				.pick("task1", async () => {})
+				.catch((err) => {
+					assert.deepStrictEqual(err.message, "Task is already attempted");
+				});
+		});
 
-	// 	it("Unpicked task release should fail", async () => {
-	// 		await scheduler.pick("task1", async () => {});
-	// 		await scheduler.release("task2").catch((err) => {
-	// 			assert.deepStrictEqual(err.message, "Task was never registered");
-	// 		});
-	// 	});
+		it("Unpicked task release should fail", async () => {
+			await scheduler.pick("task1", async () => {});
+			await scheduler.release("task2").catch((err) => {
+				assert.deepStrictEqual(err.message, "Task was never registered");
+			});
+		});
 
-	// 	it("Should pick previously released task", async () => {
-	// 		await scheduler.pick("task1", async () => {});
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
-	// 		await scheduler.release("task1");
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), []);
-	// 		await scheduler.pick("task1", async () => {});
-	// 		assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
-	// 	});
-	// });
+		it("Should pick previously released task", async () => {
+			await scheduler.pick("task1", async () => {});
+			assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
+			await scheduler.release("task1");
+			assert.deepStrictEqual(scheduler.pickedTasks(), []);
+			await scheduler.pick("task1", async () => {});
+			assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
+		});
+	});
 
 	describe("Multiple clients", () => {
 		let container1: IContainer;
