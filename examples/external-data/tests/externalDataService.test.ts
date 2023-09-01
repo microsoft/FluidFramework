@@ -94,7 +94,7 @@ describe("mock-external-data-service", () => {
 			.expect(200, { taskList: expectedData });
 	});
 
-	// // TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
+	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
@@ -200,18 +200,18 @@ describe("mock-external-data-service", () => {
 		// invalid url
 		await request(externalDataService!)
 			.post(`/unregister-webhook`)
-			.send({ url: "not a url" })
+			.send({ url: "not a url", externalTaskListId })
 			.expect(400);
 		// missing url
 		await request(externalDataService!).post(`/unregister-webhook`).send({}).expect(400);
 		// invalid data type
 		await request(externalDataService!)
 			.post(`/unregister-webhook`)
-			.send({ url: 123 })
+			.send({ url: 123, externalTaskListId })
 			.expect(400);
 	});
 
-	it("unregister-webhook: Invalid request with missing/invalid url externalTaskListId fails", async () => {
+	it("unregister-webhook: Invalid request with missing/invalid externalTaskListId fails", async () => {
 		// missing externalTaskListId
 		await request(externalDataService!)
 			.post(`/unregister-webhook`)

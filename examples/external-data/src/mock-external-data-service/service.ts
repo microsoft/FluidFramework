@@ -47,7 +47,7 @@ class InvalidRequestError extends ApiError {
 export interface RegisterWebhookRequest extends express.Request {
 	body: {
 		/**
-		 * The target URL to unsubscribe from change notifications
+		 * The target URL to subscribe to change notifications for
 		 */
 		url: string;
 		/**
@@ -161,7 +161,6 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 */
 	expressApp.post("/register-for-webhook", (request: RegisterWebhookRequest, result) => {
 		try {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const subscriberUrl = request.body.url;
 			if (subscriberUrl === undefined || typeof subscriberUrl !== "string") {
 				throw new InvalidRequestError(
@@ -205,7 +204,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	});
 
 	/**
-	 * Unregisters the senders URL from receiving notifications when this endpoint is called at the end of a collaboration session
+	 * Unregisters the specified URL from receiving notifications for the specified external task list id.
 	 *
 	 * Expected request body format: {@link UnregisterWebhookRequest}
 	 */
