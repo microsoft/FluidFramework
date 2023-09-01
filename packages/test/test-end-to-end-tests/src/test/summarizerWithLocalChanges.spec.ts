@@ -224,7 +224,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		}
 		settings = {};
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
-		settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = true;
+		settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
 		settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
 	});
 
@@ -285,7 +285,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = false;
+			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = false;
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
 			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
@@ -333,8 +333,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		async () => {
 			// Wait for 100 ms for pending ops to be saved.
 			const pendingOpsTimeoutMs = 100;
-			settings["Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeoutMs"] =
-				pendingOpsTimeoutMs;
+			settings["Fluid.Summarizer.waitForPendingOpsTimeoutMs"] = pendingOpsTimeoutMs;
 			const mockLogger = new MockLogger();
 			const container1 = await provider.makeTestContainer();
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
@@ -460,7 +459,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
-				settings["Fluid.Summarizer.TryDynamicRetries"] = tryDynamicRetry;
+				settings["Fluid.Summarizer.UseDynamicRetries"] = tryDynamicRetry;
 				const logger = new MockLogger();
 				const mainContainer = await createContainer(
 					provider,
@@ -572,7 +571,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
@@ -654,7 +653,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 			settings["Fluid.Summarizer.SkipFailingIncorrectSummary"] = true;
 			settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
 			const container = await createContainer(provider, false /* disableSummary */);
