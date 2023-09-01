@@ -606,7 +606,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				this.beforeSummaryAction();
 			},
 			async () => {
-				return this.mc.config.getBoolean("Fluid.Summarizer.TryDynamicRetries")
+				return this.mc.config.getBoolean("Fluid.Summarizer.UseDynamicRetries")
 					? this.trySummarizeWithRetries(reason)
 					: this.trySummarizeWithStaticAttempts(reason);
 			},
