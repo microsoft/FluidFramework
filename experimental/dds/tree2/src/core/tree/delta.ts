@@ -275,6 +275,13 @@ export interface MoveIn {
 	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
 	 */
 	readonly moveId: MoveId;
+
+	/**
+	 * The ID to assign the first node being replaced.
+	 * Subsequent replaced nodes should be assigned incrementing IDs.
+	 * Populated iff the insertion is transient.
+	 */
+	readonly detachId?: DetachedNodeId;
 }
 
 // /**
@@ -306,6 +313,13 @@ export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	 * Must be of length 1 when `fields` is populated.
 	 */
 	readonly content: readonly TTree[];
+
+	/**
+	 * The ID to assign the first node being replaced.
+	 * Subsequent replaced nodes should be assigned incrementing IDs.
+	 * Populated iff the insertion is transient.
+	 */
+	readonly detachId?: DetachedNodeId;
 
 	/**
 	 * When set, indicates that the inserted content is replacing some existing content.
@@ -358,10 +372,17 @@ export interface Restore<TTree = ProtoNode> {
 		readonly restoreId: DetachedNodeId;
 
 		/**
-		 * Modifications to the new content.
+		 * The ID to assign the first node being replaced.
+		 * Subsequent replaced nodes should be assigned incrementing IDs.
+		 * Populated iff the restoration is transient.
 		 */
-		readonly fields?: FieldMarks<TTree>;
+		readonly detachId?: DetachedNodeId;
 	};
+
+	/**
+	 * Modifications to the new content.
+	 */
+	readonly fields?: FieldMarks<TTree>;
 }
 
 /**

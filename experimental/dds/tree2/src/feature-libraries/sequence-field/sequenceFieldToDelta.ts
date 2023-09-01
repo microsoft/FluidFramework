@@ -70,7 +70,10 @@ function cellDeltaFromMark<TNodeChange>(
 					content: cursors,
 				};
 				if (mark.transientDetach !== undefined) {
-					insertMark.isTransient = true;
+					insertMark.detachId = {
+						major: mark.transientDetach.revision ?? revision,
+						minor: mark.transientDetach.localId,
+					};
 				}
 				return [insertMark];
 			}
@@ -91,6 +94,10 @@ function cellDeltaFromMark<TNodeChange>(
 					{
 						type: Delta.MarkType.Remove,
 						count: mark.count,
+						id: {
+							major: mark.revision ?? revision,
+							minor: mark.id,
+						},
 					},
 				];
 			}
@@ -104,14 +111,27 @@ function cellDeltaFromMark<TNodeChange>(
 				}));
 			}
 			case "Revive": {
-				const insertMark: Mutable<Delta.Insert> = {
-					type: Delta.MarkType.Insert,
-					content: mark.content,
-				};
+				const cellId = mark.cellId;
+				assert(cellId !== undefined, "Effective revive must target an empty cell");
+				const hasTransience: { detachId?: Delta.DetachedNodeId } = {};
 				if (mark.transientDetach !== undefined) {
-					insertMark.isTransient = true;
+					hasTransience.detachId = {
+						major: mark.transientDetach.revision ?? revision,
+						minor: mark.transientDetach.localId,
+					};
 				}
-				return [insertMark];
+				const restoreMark: Mutable<Delta.Restore> = {
+					type: Delta.MarkType.Restore,
+					count: mark.count,
+					newContent: {
+						restoreId: {
+							major: cellId.revision ?? revision,
+							minor: cellId.localId,
+						},
+						...hasTransience,
+					},
+				};
+				return [restoreMark];
 			}
 			case "Placeholder":
 				fail("Should not have placeholders in a changeset being converted to delta");
