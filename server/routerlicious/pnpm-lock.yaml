@@ -881,16 +881,13 @@ importers:
       '@fluidframework/server-test-utils': workspace:~
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
-      '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
       concurrently: ^7.6.0
       eslint: ~8.27.0
       events: ^3.1.0
       kafka-node: ^5.0.0
-      mocha: ^10.2.0
       nconf: ^0.12.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
@@ -914,13 +911,10 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       '@types/debug': 4.1.8
       '@types/lru-cache': 5.1.1
-      '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       concurrently: 7.6.0
       eslint: 8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -941,16 +935,13 @@ importers:
       '@types/amqplib': ^0.5.17
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
-      '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
       concurrently: ^7.6.0
       eslint: ~8.27.0
       events: ^3.1.0
-      mocha: ^10.2.0
       nconf: ^0.12.0
       node-rdkafka: ^2.16.1
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
@@ -975,13 +966,10 @@ importers:
       '@types/amqplib': 0.5.17
       '@types/debug': 4.1.8
       '@types/lru-cache': 5.1.1
-      '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       concurrently: 7.6.0
       eslint: 8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -998,13 +986,10 @@ importers:
       '@fluidframework/server-test-utils': workspace:~
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
-      '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
       concurrently: ^7.6.0
       eslint: ~8.27.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sinon: ^9.2.3
@@ -1022,13 +1007,10 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       '@types/debug': 4.1.8
       '@types/lru-cache': 5.1.1
-      '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       concurrently: 7.6.0
       eslint: 8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 9.2.4

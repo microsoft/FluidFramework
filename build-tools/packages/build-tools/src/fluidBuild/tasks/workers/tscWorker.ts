@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import type * as tsTypes from "typescript";
-
+import path from "path";
 import { getTscUtils } from "../../../common/tscUtils";
 import type { WorkerExecResult, WorkerMessage } from "./worker";
 
@@ -35,7 +35,7 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
 		const incremental = !!(commandLine.options.incremental || commandLine.options.composite);
 		const param = {
 			rootNames: commandLine.fileNames,
-			options: tscUtils.convertToOptionsWithAbsolutePath(commandLine.options, cwd),
+			options: tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
 			projectReferences: commandLine.projectReferences,
 		};
 		const program = incremental ? ts.createIncrementalProgram(param) : ts.createProgram(param);

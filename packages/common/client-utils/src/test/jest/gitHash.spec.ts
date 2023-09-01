@@ -89,7 +89,7 @@ async function evaluateBrowserGitHash(page, file: Buffer): Promise<string> {
 	return evaluateBrowserHash(page, hashBuffer);
 }
 
-describe("Common-Utils", () => {
+describe("Client-Utils", () => {
 	let xmlFile: Buffer;
 	let svgFile: Buffer;
 	let pdfFile: Buffer;
