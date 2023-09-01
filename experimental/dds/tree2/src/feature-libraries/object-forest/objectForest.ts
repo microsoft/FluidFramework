@@ -98,7 +98,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		);
 		this.events.emit("beforeChange");
 
-		this.invalidateDependents();
 		assert(
 			this.currentCursors.size === 0,
 			0x374 /* No cursors can be current when modifying forest */,
@@ -114,6 +113,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		const cursor: Cursor = this.allocateCursor();
 		cursor.setToAboveDetachedSequences();
 		const moveIn = (index: number, toAttach: DetachedField, moveInCursor: Cursor): number => {
+			this.invalidateDependents();
 			const detachedKey = detachedFieldAsKey(toAttach);
 			const children = getMapTreeField(this.roots, detachedKey, false);
 			this.roots.fields.delete(detachedKey);
@@ -149,6 +149,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				moveIn(index, range, this.cursor);
 			},
 			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
+				this.forest.invalidateDependents();
 				const [parent, key] = cursor.getParent();
 				const sourceField = getMapTreeField(parent, key, false);
 				const startIndex = index;

@@ -35,11 +35,13 @@ import type { IEditableForest } from "./editableForest";
 export interface ForestEvents {
 	/**
 	 * The forest is about to be changed.
+	 * Emitted before the first change in a batch of changes.
 	 */
 	beforeChange(): void;
 
 	/**
 	 * The forest was just changed.
+	 * Emitted after the last change in a batch of changes.
 	 */
 	afterChange(): void;
 }
