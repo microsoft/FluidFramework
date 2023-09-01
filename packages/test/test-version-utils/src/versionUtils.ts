@@ -5,12 +5,12 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
+import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { ExecOptions, exec, execSync } from "child_process";
 import * as path from "path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
+import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion.js";
@@ -313,7 +313,7 @@ export function getRequestedRange(
 			true,
 		);
 
-		if(adjustPublicMajor === false) {
+		if (adjustPublicMajor === false) {
 			return internalSchema(publicVersion.version, internalVersion.version, requested);
 		}
 	}

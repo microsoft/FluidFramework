@@ -354,7 +354,7 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
     readonly versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
 }
 
-// @public (undocumented)
+// @public
 export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
 // @public

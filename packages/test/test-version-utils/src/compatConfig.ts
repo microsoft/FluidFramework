@@ -60,10 +60,9 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	};
 
 	const compatVersionStr =
-		typeof compatVersion === "string" ? `${compatVersion} (N)` : `${getRequestedRange(
-      baseVersion,
-      compatVersion,
-    )} (N${compatVersion})`;
+		typeof compatVersion === "string"
+			? `${compatVersion} (N)`
+			: `${getRequestedRange(baseVersion, compatVersion)} (N${compatVersion})`;
 	return [
 		{
 			name: `compat ${compatVersionStr} - old loader`,
@@ -139,11 +138,10 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 };
 
 const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
-  const compatVersionStr =
-  typeof compatVersion === "string" ? `${compatVersion} (N)` : `${getRequestedRange(
-    baseVersion,
-    compatVersion,
-  )} (N${compatVersion})`;
+	const compatVersionStr =
+		typeof compatVersion === "string"
+			? `${compatVersion} (N)`
+			: `${getRequestedRange(baseVersion, compatVersion)} (N${compatVersion})`;
 
 	return [
 		{
@@ -200,8 +198,8 @@ export const getCrossVersionCompatConfig = (): CompatVersionConfig[] => {
 	return allDefaultDeltaVersions
 		.map((createVersion) =>
 			allDefaultDeltaVersions.map((loadVersion) => {
-        const createRange = getRequestedRange(createVersion.base, createVersion.delta);
-        const loadRange = getRequestedRange(loadVersion.base, loadVersion.delta);
+				const createRange = getRequestedRange(createVersion.base, createVersion.delta);
+				const loadRange = getRequestedRange(loadVersion.base, loadVersion.delta);
 				return {
 					name: `CROSS VERSION COMPAT create with [${createRange}], load with [${loadRange}]`,
 					createWith: createVersion,
