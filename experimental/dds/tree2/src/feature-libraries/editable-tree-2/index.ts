@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-// TODO
+export { UntypedField, UntypedTree } from "./editableTreeTypes";
