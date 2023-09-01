@@ -13,10 +13,10 @@ import {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { GCVersion, IGCStats } from "./gcDefinitions";
+import { IRefreshSummaryResult } from "../summary";
+import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions";
 import { generateSortedGCState } from "./gcHelpers";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
-import { IGarbageCollectorConfigs } from ".";
 
 export const gcStateBlobKey = `${gcBlobPrefix}_root`;
 
@@ -265,8 +265,8 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(isSummaryTracked: boolean): Promise<void> {
-		if (!isSummaryTracked) {
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		if (!result.isSummaryTracked) {
 			return;
 		}
 

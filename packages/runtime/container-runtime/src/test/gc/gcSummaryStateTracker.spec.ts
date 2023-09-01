@@ -40,7 +40,7 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
+			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
 
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
@@ -88,7 +88,7 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
+			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
 				false,
@@ -124,7 +124,7 @@ describe("GCSummaryStateTracker tests", () => {
 			assert.equal(tracker.doesGCStateNeedReset, true, "Should need reset");
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
+			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
 			assert.equal(
 				tracker.doesGCStateNeedReset,
 				false,
@@ -145,7 +145,7 @@ describe("GCSummaryStateTracker tests", () => {
 			assert.equal(tracker.doesGCStateNeedReset, true, "Should need reset");
 
 			// After the first summary succeeds (refreshLatestSummary called), the state should not need reset.
-			await tracker.refreshLatestSummary(true /* isSummaryTracked */);
+			await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
 
 			assert.equal(
 				tracker.doesGCStateNeedReset,
@@ -364,7 +364,10 @@ describe("GCSummaryStateTracker tests", () => {
 			[],
 		);
 
-		await summaryStateTracker.refreshLatestSummary(true /* isSummaryTracked */);
+		await summaryStateTracker.refreshLatestSummary({
+			isSummaryTracked: true,
+			isSummaryNewer: true,
+		});
 		assert.strictEqual(
 			summaryStateTracker.updatedDSCountSinceLastSummary,
 			0,

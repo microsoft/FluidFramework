@@ -7,12 +7,11 @@ import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
-/**
- * Result of snapshot fetch during refreshing latest summary state.
- */
-export interface IFetchSnapshotResult {
-	snapshotTree: ISnapshotTree;
-	snapshotRefSeq: number;
+export interface IRefreshSummaryResult {
+	/** Tells whether this summary is tracked by this client. */
+	isSummaryTracked: boolean;
+	/** Tells whether this summary is newer than the latest one tracked by this client. */
+	isSummaryNewer: boolean;
 }
 
 /**
@@ -42,7 +41,10 @@ export interface ISummarizerNodeRootContract {
 	validateSummary(): ValidateSummaryResult;
 	completeSummary(proposalHandle: string, validate: boolean): void;
 	clearSummary(): void;
-	refreshLatestSummary(proposalHandle: string, summaryRefSeq: number): Promise<boolean>;
+	refreshLatestSummary(
+		proposalHandle: string,
+		summaryRefSeq: number,
+	): Promise<IRefreshSummaryResult>;
 }
 
 /** Path for nodes in a tree with escaped special characters */

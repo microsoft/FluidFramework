@@ -35,6 +35,7 @@ import {
 	EscapedPath,
 	ICreateChildDetails,
 	IInitialSummary,
+	IRefreshSummaryResult,
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
 	parseSummaryTreeForSubtrees,
@@ -372,7 +373,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	public async refreshLatestSummary(
 		proposalHandle: string,
 		summaryRefSeq: number,
-	): Promise<boolean> {
+	): Promise<IRefreshSummaryResult> {
 		const eventProps: {
 			proposalHandle: string | undefined;
 			summaryRefSeq: number;
@@ -414,7 +415,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 					isSummaryTracked = true;
 				}
 				event.end({ ...eventProps, isSummaryNewer, pendingSummaryFound: isSummaryTracked });
-				return isSummaryTracked;
+				return { isSummaryTracked, isSummaryNewer };
 			},
 			{ start: true, end: true, cancel: "error" },
 		);

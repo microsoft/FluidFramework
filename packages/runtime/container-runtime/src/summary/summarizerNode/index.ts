@@ -4,7 +4,7 @@
  */
 
 export {
-	IFetchSnapshotResult,
+	IRefreshSummaryResult,
 	ISummarizerNodeRootContract,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils";

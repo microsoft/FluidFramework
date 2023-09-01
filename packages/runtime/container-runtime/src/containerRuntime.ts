@@ -3654,7 +3654,7 @@ export class ContainerRuntime
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, "proposalHandle should be available");
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-		const isSummaryTracked = await this.summarizerNode.refreshLatestSummary(
+		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
 		);
@@ -3665,7 +3665,7 @@ export class ContainerRuntime
 		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
-		if (!isSummaryTracked && summaryRefSeq > this.summarizerNode.referenceSequenceNumber) {
+		if (!result.isSummaryTracked && result.isSummaryNewer) {
 			const fetchResult = await this.fetchSnapshotFromStorage(
 				summaryLogger,
 				{
@@ -3707,7 +3707,7 @@ export class ContainerRuntime
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(isSummaryTracked);
+		await this.garbageCollector.refreshLatestSummary(result);
 	}
 
 	/**
