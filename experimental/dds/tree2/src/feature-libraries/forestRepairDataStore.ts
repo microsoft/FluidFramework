@@ -21,6 +21,7 @@ import {
 	RepairDataStore,
 	RevisionTag,
 	SparseNode,
+	StoredSchemaRepository,
 	UpPath,
 } from "../core";
 import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
@@ -190,12 +191,17 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly storedSchema: InMemoryStoredSchemaRepository,
+		// TODO: Its unclear what it means if this schema is modified, and why its separate from the one in the forest. Maybe this should be removed or replaced with SchemaData?
+		private readonly storedSchema: StoredSchemaRepository,
 		private readonly intoDelta: (change: TChange) => Delta.Root,
 	) {}
 
 	public freeze(): void {
-		this.frozenForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
+		// TODO: ensure editing this clone of the schema does the right thing (probably error?).
+		this.frozenForest = this.forest.clone(
+			new InMemoryStoredSchemaRepository(this.storedSchema),
+			new AnchorSet(),
+		);
 	}
 
 	public applyChange(change: TChange): void {
@@ -214,7 +220,8 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 	}
 
 	public clone(forest?: IEditableForest): ForestRepairDataStoreProvider<TChange> {
-		const storedSchema = this.storedSchema.clone();
+		// TODO: ensure editing this clone of the schema does the right thing (probably error?).
+		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		return new ForestRepairDataStoreProvider(
 			forest ?? this.forest.clone(storedSchema, new AnchorSet()),
 			storedSchema,
