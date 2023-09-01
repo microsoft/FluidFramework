@@ -251,6 +251,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			success: true;
 			data: TSuccess;
+			error?: undefined;
 	  }
 	| {
 			success: false;

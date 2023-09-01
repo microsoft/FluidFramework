@@ -3083,7 +3083,7 @@ export class ContainerRuntime
 							"Pending ops during summarization",
 							"submitSummary",
 							undefined,
-							{ pendingMessages: this.pendingMessagesCount },
+							{ count: this.pendingMessagesCount },
 						);
 						summaryNumberLogger.sendErrorEvent(
 							{

@@ -734,13 +734,11 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let maxAttempts = defaultMaxAttempts;
 		let currentAttempt = 0;
 		let retryAfterSeconds: number | undefined;
-		let done = false;
 		let result: "success" | "failure" | "canceled" = "success";
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
 				result = "canceled";
-				done = true;
 				break;
 			}
 
@@ -753,7 +751,6 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			if (ackNackResult.success) {
 				result = "success";
-				done = true;
 				break;
 			}
 
@@ -780,25 +777,24 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			};
 			this.emit("summarize", eventProps);
 
-			// If the failure doesn't have "retryAfterSeconds" or the max number of attempts have been done, we're done.
-			if (retryAfterSeconds === undefined || currentAttempt >= maxAttempts - 1) {
-				done = true;
+			// If the failure doesn't have "retryAfterSeconds", we're done.
+			if (retryAfterSeconds === undefined) {
+				break;
 			}
 
 			// If the failure has "retryAfterSeconds", add a delay of that time. In this case, a final attempt will
 			// take place and we need to wait for "retryAfterSeconds" before that.
-			if (retryAfterSeconds !== undefined) {
-				this.mc.logger.sendPerformanceEvent({
-					eventName: "SummarizeAttemptDelay",
-					duration: retryAfterSeconds,
-					summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
-					stage: submitSummaryResult.data?.stage,
-					dynamicRetries: true, // To differentiate this telemetry from regular retry logic
-					...summarizeProps,
-				});
-				await delay(retryAfterSeconds * 1000);
-			}
-		} while (!done);
+			this.mc.logger.sendPerformanceEvent({
+				eventName: "SummarizeAttemptDelay",
+				duration: retryAfterSeconds,
+				summaryNackDelay: ackNackResult.data?.retryAfterSeconds !== undefined,
+				stage: submitSummaryResult.data?.stage,
+				dynamicRetries: true, // To differentiate this telemetry from regular retry logic
+				...summarizeProps,
+			});
+
+			await delay(retryAfterSeconds * 1000);
+		} while (currentAttempt < maxAttempts - 1); // We stop when we've got one last attempt to try
 
 		// If summarize attempt did not fail, emit "summarize" event and return. A failed attempt may be retried below.
 		if (result !== "failure") {
@@ -810,14 +806,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		// attempt. This gives a chance to the runtime to perform additional steps in the last attempt.
 		if (retryAfterSeconds !== undefined) {
 			const { summarizeResult } = attemptSummarize(++currentAttempt, true /* finalAttempt */);
-			// Ack / nack is the final step, so if it succeeds we're done.
+			// Ack / nack is the final step, so it measures overall success in this final attempt.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			result = ackNackResult.success ? "success" : "failure";
 			const eventProps: ISummarizeEventProps = {
 				result,
 				currentAttempt,
 				maxAttempts,
-				error: ackNackResult.success ? undefined : ackNackResult.error,
+				error: ackNackResult.error,
 			};
 			this.emit("summarize", eventProps);
 		}
