@@ -38,7 +38,6 @@
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-experimental/tree2": "workspace:~",
-		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~"
 	},
 	"devDependencies": {

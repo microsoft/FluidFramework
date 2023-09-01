@@ -56,7 +56,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"best-random": "^1.0.0"
 	},

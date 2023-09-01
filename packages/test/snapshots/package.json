@@ -57,7 +57,6 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
-		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/replay-tool": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
