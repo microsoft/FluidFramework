@@ -7,7 +7,7 @@ import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/core-interfac
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import {
-	DriverErrorType,
+	DriverErrorTypes,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -365,7 +365,7 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 }
 
 function throwOfflineError(): never {
-	throw new FaultInjectionError("simulated offline error", false, DriverErrorType.offlineError);
+	throw new FaultInjectionError("simulated offline error", false, DriverErrorTypes.offlineError);
 }
 
 export class FaultInjectionError extends LoggingError {

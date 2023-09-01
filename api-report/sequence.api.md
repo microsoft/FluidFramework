@@ -175,9 +175,9 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 // @public @sealed (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-    // (undocumented)
+    // @deprecated (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
     create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;

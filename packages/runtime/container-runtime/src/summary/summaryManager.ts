@@ -16,7 +16,7 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IThrottler } from "../throttler";
 import { ISummarizerClientElection } from "./summarizerClientElection";
 import {
@@ -329,7 +329,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.
 					const category =
-						error?.errorType === DriverErrorType.offlineError ? "generic" : "error";
+						error?.errorType === DriverErrorTypes.offlineError ? "generic" : "error";
 					this.logger.sendTelemetryEvent(
 						{
 							eventName: "SummarizerException",

@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
@@ -311,7 +311,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 						// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
 						const isIgnoredError =
 							isFluidError(error) &&
-							error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError;
+							error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 
 						summaryLogger.sendTelemetryEvent(
 							{
