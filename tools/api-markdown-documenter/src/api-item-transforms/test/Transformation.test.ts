@@ -364,6 +364,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
 		const expectedPackageDoc = new DocumentNode({
+			apiItemName: "test-package",
 			filePath: "test-package.md",
 			children: [
 				new SectionNode(
@@ -401,6 +402,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[1]).to.deep.equal(expectedPackageDoc);
 
 		const expectedEntryPointADoc = new DocumentNode({
+			apiItemName: "entry-point-a",
 			filePath: "test-package/entry-point-a-entrypoint.md",
 			children: [
 				new SectionNode(
@@ -484,6 +486,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(documents[2]).to.deep.equal(expectedEntryPointADoc);
 
 		const expectedEntryPointBDoc = new DocumentNode({
+			apiItemName: "entry-point-b",
 			filePath: "test-package/entry-point-b-entrypoint.md",
 			children: [
 				new SectionNode(
