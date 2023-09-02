@@ -26,7 +26,6 @@ importers:
       '@types/uuid': ^3.4.4
       '@types/winston': ^2.4.4
       async: ^3.2.2
-      concurrently: ^7.5.0
       eslint: ~8.27.0
       lerna: 5.6.2
       lorem-ipsum: ^1.0.6
@@ -55,7 +54,6 @@ importers:
       '@types/uuid': 3.4.10
       '@types/winston': 2.4.4
       async: 3.2.4
-      concurrently: 7.6.0
       eslint: 8.27.0
       lerna: 5.6.2
       lorem-ipsum: 1.0.6
