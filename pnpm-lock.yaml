@@ -7801,7 +7801,6 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
@@ -7829,7 +7828,6 @@ importers:
       '@microsoft/api-extractor': 7.34.9_@types+node@16.18.38
       '@types/mocha': 9.1.1
       '@types/node': 16.18.38
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
