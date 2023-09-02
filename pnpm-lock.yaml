@@ -5024,8 +5024,8 @@ importers:
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluid-experimental/tree2': workspace:~
-      '@fluid-tools/build-cli': ^0.22.0
       '@fluidframework/build-common': ^2.0.0
+      '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/test-runtime-utils': workspace:~
       '@types/jest': 29.5.3
@@ -5044,8 +5044,8 @@ importers:
       '@fluid-experimental/tree2': link:../../../dds/tree2
       '@fluidframework/common-utils': 1.1.1
     devDependencies:
-      '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
+      '@fluidframework/build-tools': 0.22.0_@types+node@16.18.38
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@types/jest': 29.5.3
       '@types/node': 16.18.38
