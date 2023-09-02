@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils-previous";
 import {
 	CachedConfigProvider,
 	ConfigTypes,
@@ -12,6 +11,7 @@ import {
 	inMemoryConfigProvider,
 } from "../config";
 import { TelemetryDataTag } from "../logger";
+import { MockLogger } from "../mockLogger";
 
 const getMockStore = (settings: Record<string, string>): Storage => {
 	const ops: string[] = [];

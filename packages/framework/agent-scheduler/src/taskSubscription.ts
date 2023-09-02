@@ -4,7 +4,7 @@
  */
 
 import { IEvent } from "@fluidframework/core-interfaces";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IAgentScheduler } from "./agent";
 
 export interface ITaskSubscriptionEvents extends IEvent {

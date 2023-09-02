@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { validateMessages } from "@fluidframework/driver-base";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import {

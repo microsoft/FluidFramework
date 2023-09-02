@@ -4,7 +4,7 @@
  */
 
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 

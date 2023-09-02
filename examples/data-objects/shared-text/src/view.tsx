@@ -4,7 +4,7 @@
  */
 
 import registerDebug from "debug";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 
 import React, { useEffect, useRef } from "react";
 

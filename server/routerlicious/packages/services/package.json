@@ -89,7 +89,7 @@
 		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
 		"@types/uuid": "^9.0.2",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"ioredis-mock": "^8.2.3",
 		"mocha": "^10.2.0",

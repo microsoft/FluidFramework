@@ -75,8 +75,8 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/data-object-base": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
@@ -103,7 +103,6 @@
 		"@types/node": "^16.18.38",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
