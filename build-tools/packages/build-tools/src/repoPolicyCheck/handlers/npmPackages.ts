@@ -822,7 +822,7 @@ export const handlers: Handler[] = [
 
 			if (actualSplitTestScriptNames.length === 0) {
 				if (!testScript.startsWith("echo ")) {
-					return "Missing split test scripts";
+					return "Missing split test scripts. The 'test' script must call one or more \"split\" scripts like 'test:mocha', 'test:jest', or 'test:realsvc'.";
 				}
 				return undefined;
 			}
