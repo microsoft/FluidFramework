@@ -53,8 +53,8 @@
 	"dependencies": {
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",

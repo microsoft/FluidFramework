@@ -15,7 +15,7 @@ import {
 	TelemetryEventCategory,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
+import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
 	isILoggingError,
@@ -29,7 +29,6 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
@@ -424,7 +423,11 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
-	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
+	public get minLogLevel(): LogLevel | undefined {
+		return this.baseLogger.minLogLevel;
+	}
+
+	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
 		const eventLogLevel = logLevel ?? LogLevel.default;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
 		// Filter out in case event log level is below what is wanted in config.
@@ -469,6 +472,9 @@ export function createMultiSinkLogger(props: {
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[];
+	// This is minimum of minLlogLevel of all loggers.
+	private _minLogLevelOfAllLoggers: LogLevel;
+
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
@@ -500,6 +506,22 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
+		this._minLogLevelOfAllLoggers = LogLevel.default;
+		this.calculateMinLogLevel();
+	}
+
+	public get minLogLevel(): LogLevel {
+		return this._minLogLevelOfAllLoggers;
+	}
+
+	private calculateMinLogLevel(): void {
+		if (this.loggers.length > 0) {
+			const logLevels: number[] = [];
+			for (const logger of this.loggers) {
+				logLevels.push(logger.minLogLevel ?? LogLevel.default);
+			}
+			this._minLogLevelOfAllLoggers = Math.min(...logLevels);
+		}
 	}
 
 	/**
@@ -509,6 +531,8 @@ export class MultiSinkLogger extends TelemetryLogger {
 	public addLogger(logger?: ITelemetryBaseLogger): void {
 		if (logger !== undefined && logger !== null) {
 			this.loggers.push(logger);
+			// Update in case the logLevel of added logger is less than the current.
+			this.calculateMinLogLevel();
 		}
 	}
 

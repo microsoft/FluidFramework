@@ -27,8 +27,8 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, delay, Trace, TypedEventEmitter } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, delay, LazyPromise } from "@fluidframework/core-utils";
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -1555,8 +1555,7 @@ export class ContainerRuntime
 		);
 		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 		this.validateSummaryBeforeUpload =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload") ??
-			false;
+			this.mc.config.getBoolean("Fluid.Summarizer.ValidateSummaryBeforeUpload") ?? false;
 
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
@@ -2974,9 +2973,8 @@ export class ContainerRuntime
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
-				this.mc.config.getNumber(
-					"Fluid.ContainerRuntime.SubmitSummary.waitForPendingOpsTimeoutMs",
-				) ?? defaultPendingOpsWaitTimeoutMs;
+				this.mc.config.getNumber("Fluid.Summarizer.waitForPendingOpsTimeoutMs") ??
+				defaultPendingOpsWaitTimeoutMs;
 			await new Promise<void>((resolve, reject) => {
 				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
 				this.once("saved", () => {

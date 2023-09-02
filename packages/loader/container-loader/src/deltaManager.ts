@@ -16,7 +16,8 @@ import {
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,

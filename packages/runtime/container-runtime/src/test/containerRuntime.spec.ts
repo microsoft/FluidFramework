@@ -1527,7 +1527,7 @@ describe("Runtime", () => {
 
 			beforeEach(async () => {
 				const settings = {};
-				settings["Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload"] = true;
+				settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext(settings) as IContainerContext,
 					registryEntries: [],

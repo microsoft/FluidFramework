@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
 import { AttachState, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";

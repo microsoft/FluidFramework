@@ -4,10 +4,10 @@
  */
 
 import BTree from 'sorted-btree';
-import { TypedEventEmitter, assert } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
+import { assert, compareArrays } from '@fluidframework/core-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { compareArrays } from '@fluidframework/core-utils';
 import { fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';

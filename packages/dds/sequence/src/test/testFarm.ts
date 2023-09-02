@@ -11,7 +11,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import path from "path";
-import { assert, Trace } from "@fluidframework/common-utils";
+import { Trace } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as MergeTree from "@fluidframework/merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

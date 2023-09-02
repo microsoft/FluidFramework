@@ -63,8 +63,8 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/tree2": "workspace:~",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
