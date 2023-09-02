@@ -105,6 +105,21 @@ export function applyDelta(
 	visitDelta(delta, visitor);
 	visitor.free();
 }
+
+export function combineVisitors(visitors: readonly DeltaVisitor[]): DeltaVisitor {
+	return {
+		free: () => visitors.forEach((v) => v.free()),
+		onDelete: (...args) => visitors.forEach((v) => v.onDelete(...args)),
+		onInsert: (...args) => visitors.forEach((v) => v.onInsert(...args)),
+		onMoveOut: (...args) => visitors.forEach((v) => v.onMoveOut(...args)),
+		onMoveIn: (...args) => visitors.forEach((v) => v.onMoveIn(...args)),
+		enterNode: (...args) => visitors.forEach((v) => v.enterNode(...args)),
+		exitNode: (...args) => visitors.forEach((v) => v.exitNode(...args)),
+		enterField: (...args) => visitors.forEach((v) => v.enterField(...args)),
+		exitField: (...args) => visitors.forEach((v) => v.exitField(...args)),
+	};
+}
+
 /**
  * Visitor for changes in a delta.
  * Must be freed after use.
