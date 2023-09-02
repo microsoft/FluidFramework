@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AnchorSet,
+	applyDelta,
 	castCursorToSynchronous,
 	Delta,
 	EmptyKey,
@@ -207,7 +208,7 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 
 	public applyChange(change: TChange): void {
 		if (this.frozenForest === undefined) {
-			this.forest.applyDelta(this.intoDelta(change));
+			applyDelta(this.intoDelta(change), this.forest);
 		}
 	}
 

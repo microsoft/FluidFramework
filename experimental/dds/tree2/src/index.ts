@@ -27,6 +27,7 @@ export {
 	RootField,
 	ChildCollection,
 	ChildLocation,
+	DeltaVisitor,
 	FieldMapObject,
 	NodeData,
 	GenericTreeNode,

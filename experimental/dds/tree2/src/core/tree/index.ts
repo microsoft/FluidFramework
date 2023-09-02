@@ -70,7 +70,7 @@ export {
 	NodeData,
 	rootField,
 } from "./types";
-export { DeltaVisitor, visitDelta } from "./visitDelta";
+export { DeltaVisitor, visitDelta, applyDelta, combineVisitors } from "./visitDelta";
 export { PathVisitor, ReplaceKind } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
