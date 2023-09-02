@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {

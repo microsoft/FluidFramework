@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 
 import { jsonObject, jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath, moveToDetachedField, FieldUpPath } from "../../core";

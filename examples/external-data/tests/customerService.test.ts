@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 
 import { initializeCustomerService } from "../src/mock-customer-service";
 import { customerServicePort } from "../src/mock-customer-service-interface";

@@ -9,7 +9,8 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UpPath, Anchor, Value } from "../../../core";
 import { SharedTreeTestFactory, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";

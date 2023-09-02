@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
 import { Delta, RevisionTag, TaggedChange } from "../../core";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
