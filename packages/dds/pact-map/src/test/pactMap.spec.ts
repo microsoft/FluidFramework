@@ -18,9 +18,9 @@ import { IPactMap } from "../interfaces";
 function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntimeFactory): PactMap {
 	// Create and connect a PactMap.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -248,8 +248,7 @@ describe("PactMap", () => {
 		it("Can set and delete values before attaching and functions normally after attaching", async () => {
 			// Create a detached PactMap.
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			const containerRuntime =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
 			const pactMap = new PactMap("pactMap", dataStoreRuntime, PactMapFactory.Attributes);
 			assert.strict(!pactMap.isAttached(), "PactMap is attached earlier than expected");
@@ -283,7 +282,7 @@ describe("PactMap", () => {
 
 			// Attach the PactMap
 			const services = {
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			pactMap.connect(services);
@@ -324,7 +323,7 @@ describe("PactMap", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			pactMap1 = new PactMap("pact-map-1", dataStoreRuntime1, PactMapFactory.Attributes);
@@ -334,7 +333,7 @@ describe("PactMap", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			pactMap2 = new PactMap("pact-map-2", dataStoreRuntime2, PactMapFactory.Attributes);

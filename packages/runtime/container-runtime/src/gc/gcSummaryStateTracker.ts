@@ -13,11 +13,10 @@ import {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { RefreshSummaryResult } from "../summary";
-import { GCVersion, IGCStats } from "./gcDefinitions";
+import { IRefreshSummaryResult } from "../summary";
+import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions";
 import { generateSortedGCState } from "./gcHelpers";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
-import { IGarbageCollectorConfigs } from ".";
 
 export const gcStateBlobKey = `${gcBlobPrefix}_root`;
 
@@ -264,31 +263,27 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: RefreshSummaryResult): Promise<void> {
-		// If the latest summary was updated and the summary was tracked, this client is the one that generated this
-		// summary. So, update wasGCRunInLatestSummary.
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		if (!result.isSummaryTracked) {
+			return;
+		}
+
+		// If the summary is tracked, this client is the one that generated it. So, update wasGCRunInLatestSummary.
 		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
-		// true in scenarios where GC is disabled but enabled in the snapshot we loaded from.
-		if (result.latestSummaryUpdated && result.wasSummaryTracked) {
-			this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
-		}
+		// true in scenarios where GC is currently disabled but enabled in the snapshot we loaded from.
+		this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
 
-		if (!result.latestSummaryUpdated || !this.configs.shouldRunGC) {
+		if (!this.configs.shouldRunGC) {
 			return;
 		}
 
-		// If the summary was tracked by this client, it was the one that generated the summary in the first place.
-		// Update latest state from pending.
-		if (result.wasSummaryTracked) {
-			this.latestSummaryGCVersion = this.configs.gcVersionInEffect;
-			this.latestSummaryData = this.pendingSummaryData;
-			this.pendingSummaryData = undefined;
-			this.updatedDSCountSinceLastSummary = 0;
-			return;
-		}
+		this.latestSummaryGCVersion = this.configs.gcVersionInEffect;
+		this.latestSummaryData = this.pendingSummaryData;
+		this.pendingSummaryData = undefined;
+		this.updatedDSCountSinceLastSummary = 0;
+		return;
 	}
 
 	/**

@@ -6,9 +6,8 @@
 import Deque from "double-ended-queue";
 
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 

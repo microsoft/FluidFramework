@@ -7,9 +7,11 @@ import {
 	IThrottlingWarning,
 	IDriverErrorBase,
 	IAuthorizationError,
+	// eslint-disable-next-line import/no-deprecated
 	DriverErrorType,
 	ILocationRedirectionError,
 	IResolvedUrl,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
@@ -43,6 +45,7 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
  * Generic network error class.
  */
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.genericNetworkError;
 
 	constructor(message: string, readonly canRetry: boolean, props: DriverErrorTelemetryProps) {
@@ -57,6 +60,7 @@ export class FluidInvalidSchemaError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.fluidInvalidSchema;
 	readonly canRetry = false;
 
@@ -69,6 +73,7 @@ export class DeltaStreamConnectionForbiddenError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
+	// eslint-disable-next-line import/no-deprecated
 	static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
 	readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
 	readonly canRetry = false;
@@ -84,6 +89,7 @@ export class AuthorizationError
 	extends LoggingError
 	implements IAuthorizationError, IFluidErrorBase
 {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.authorizationError;
 	readonly canRetry = false;
 
@@ -102,6 +108,7 @@ export class LocationRedirectionError
 	extends LoggingError
 	implements ILocationRedirectionError, IFluidErrorBase
 {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.locationRedirection;
 	readonly canRetry = false;
 
@@ -142,6 +149,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
  * Throttling error class - used to communicate all throttling errors
  */
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.throttlingError;
 	readonly canRetry = true;
 
@@ -155,7 +163,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 }
 
 export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
-	new NonRetryableError(message, DriverErrorType.writeError, props);
+	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 export function createGenericNetworkError(
 	message: string,

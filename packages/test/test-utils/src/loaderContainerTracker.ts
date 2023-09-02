@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
@@ -76,30 +76,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * @param container - container to add
 	 */
 	private addContainer(container: IContainer) {
-		// ignore summarizer
-		if (
-			!container.deltaManager.clientDetails.capabilities.interactive &&
-			!this.syncSummarizerClients
-		) {
-			return;
-		}
-
 		// don't add container that is already tracked
 		if (this.containers.has(container)) {
 			return;
 		}
-
-		const record = {
-			index: this.containers.size,
-			paused: false,
-			startTrailingNoOps: 0,
-			trailingNoOps: 0,
-			lastProposal: 0,
-		};
-		this.containers.set(container, record);
-		this.trackTrailingNoOps(container, record);
-		this.trackLastProposal(container);
-		this.setupTrace(container, record.index);
 
 		// Container has a `clone` method that can be used to create another container without going through
 		// the Loader. Such containers won't be added by the `add` method so do it here. For example, summarizer
@@ -125,6 +105,26 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			};
 			containerWithClone.clone = patch(containerWithClone.clone);
 		}
+
+		// ignore summarizer
+		if (
+			!container.deltaManager.clientDetails.capabilities.interactive &&
+			!this.syncSummarizerClients
+		) {
+			return;
+		}
+
+		const record = {
+			index: this.containers.size,
+			paused: false,
+			startTrailingNoOps: 0,
+			trailingNoOps: 0,
+			lastProposal: 0,
+		};
+		this.containers.set(container, record);
+		this.trackTrailingNoOps(container, record);
+		this.trackLastProposal(container);
+		this.setupTrace(container, record.index);
 	}
 
 	/**

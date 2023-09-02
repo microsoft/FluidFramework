@@ -4,7 +4,7 @@
  */
 /* eslint-disable no-bitwise */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
@@ -528,27 +528,14 @@ function revertLocalSequenceRemove(
 		const intervalId = getUpdatedId(intervalInfo.intervalId);
 		const interval = intervalCollection.getIntervalById(intervalId);
 		if (interval !== undefined) {
-			const newStart = newEndpointPosition(
-				intervalInfo.startOffset,
-				restoredRanges,
-				sharedString,
-			);
-			const newEnd = newEndpointPosition(
-				intervalInfo.endOffset,
-				restoredRanges,
-				sharedString,
-			);
-			// only move interval if start <= end
-			if (
-				(newStart === undefined &&
-					newEnd !== undefined &&
-					sharedString.localReferencePositionToPosition(interval.start) <= newEnd) ||
-				(newEnd === undefined &&
-					newStart !== undefined &&
-					sharedString.localReferencePositionToPosition(interval.end) >= newStart) ||
-				(newStart !== undefined && newEnd !== undefined && newStart <= newEnd)
-			) {
-				intervalCollection.change(intervalId, newStart, newEnd);
+			const start =
+				newEndpointPosition(intervalInfo.startOffset, restoredRanges, sharedString) ??
+				sharedString.localReferencePositionToPosition(interval.start);
+			const end =
+				newEndpointPosition(intervalInfo.endOffset, restoredRanges, sharedString) ??
+				sharedString.localReferencePositionToPosition(interval.end);
+			if (start <= end) {
+				intervalCollection.change(intervalId, start, end);
 			}
 		}
 	});

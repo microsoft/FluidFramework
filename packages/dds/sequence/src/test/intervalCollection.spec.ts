@@ -133,7 +133,7 @@ describe("SharedString interval collections", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -145,7 +145,7 @@ describe("SharedString interval collections", () => {
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			dataStoreRuntime2.options = { intervalStickinessEnabled: true };
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -436,29 +436,6 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString, collection1, [{ start: -1, end: -1 }], false);
 			assertIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
-		});
-
-		it("remains consistent after changing only one end of a detached interval", () => {
-			const collection1 = sharedString.getIntervalCollection("test");
-			const collection2 = sharedString2.getIntervalCollection("test");
-			const assertAllIntervals = (expected: readonly { start: number; end: number }[]) => {
-				assertIntervals(sharedString, collection1, expected, false);
-				assertIntervals(sharedString2, collection2, expected, false);
-			};
-
-			sharedString.insertText(0, "ABCD");
-			const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
-			sharedString.removeRange(0, 4);
-			sharedString.insertText(0, "012");
-			containerRuntimeFactory.processAllMessages();
-
-			assertAllIntervals([{ start: -1, end: -1 }]);
-
-			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection2.change(id, undefined, 2);
-			containerRuntimeFactory.processAllMessages();
-
-			assertAllIntervals([{ start: -1, end: 2 }]);
 		});
 
 		it("can slide intervals on remove ack", () => {
@@ -815,7 +792,7 @@ describe("SharedString interval collections", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -830,7 +807,7 @@ describe("SharedString interval collections", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();
@@ -1138,23 +1115,6 @@ describe("SharedString interval collections", () => {
 			assert.equal(Array.from(collection2).length, 0);
 		});
 
-		it("Can correctly interpret ack of single-endpoint changes", () => {
-			sharedString.insertText(0, "ABCDEF");
-			const collection1 = sharedString.getIntervalCollection("test");
-			const collection2 = sharedString2.getIntervalCollection("test");
-			containerRuntimeFactory.processAllMessages();
-			const interval = collection1.add(2, 5, IntervalType.SlideOnRemove);
-			sharedString2.removeRange(4, 6);
-			const intervalId = interval.getIntervalId();
-			assert(intervalId);
-			collection1.change(intervalId, 1 /* only change start */);
-			sharedString2.insertText(2, "123");
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(sharedString.getText(), "AB123CD");
-			assertIntervals(sharedString, collection1, [{ start: 1, end: 6 }]);
-			assertIntervals(sharedString2, collection2, [{ start: 1, end: 6 }]);
-		});
-
 		it("doesn't slide references on ack if there are pending remote changes", () => {
 			sharedString.insertText(0, "ABCDEF");
 			const collection1 = sharedString.getIntervalCollection("test");
@@ -1221,7 +1181,7 @@ describe("SharedString interval collections", () => {
 			// Connect the first SharedString.
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -1236,7 +1196,7 @@ describe("SharedString interval collections", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();
@@ -1290,75 +1250,52 @@ describe("SharedString interval collections", () => {
 			// when both an add and a change op are rebased. Pending change tracking should only apply
 			// to "change" ops, but was also erroneously updated for "add" ops. Change tracking should also
 			// properly handle rebasing ops that only affect one endpoint.
-			const testCases = [
-				{
-					name: "that changes both endpoints",
-					start: 6,
-					end: 7,
-				},
-				{
-					name: "that changes only the start",
-					start: 6,
-					end: undefined,
-				},
-				{
-					name: "that changes only the end",
-					start: undefined,
-					end: 7,
-				},
-			];
 
-			describe("an add followed by a change", () => {
-				for (const { name, start, end } of testCases) {
-					it(name, () => {
-						const intervalId = interval.getIntervalId();
-						assert(intervalId);
-						collection1.removeIntervalById(intervalId);
-						containerRuntimeFactory.processAllMessages();
-						containerRuntime1.connected = false;
-						const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
-						sharedString.insertText(2, "llo he");
-						const newIntervalId = newInterval.getIntervalId();
-						assert(newIntervalId);
-						collection1.change(newIntervalId, start, end);
-						// Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
-						// assert to fire (since the pending change wasn't actually the addition of the interval;
-						// it was the change)
-						containerRuntime1.connected = true;
-						containerRuntimeFactory.processAllMessages();
-						const expectedIntervals = [{ start: start ?? 0, end: end ?? 1 }];
-						assertIntervals(sharedString, collection1, expectedIntervals);
-						assertIntervals(sharedString2, collection2, expectedIntervals);
-					});
-				}
+			it("an add followed by a change", () => {
+				const intervalId = interval.getIntervalId();
+				assert(intervalId);
+				collection1.removeIntervalById(intervalId);
+				containerRuntimeFactory.processAllMessages();
+				containerRuntime1.connected = false;
+				const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+				sharedString.insertText(2, "llo he");
+				const newIntervalId = newInterval.getIntervalId();
+				assert(newIntervalId);
+				collection1.change(newIntervalId, 6, 7);
+				// Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
+				// assert to fire (since the pending change wasn't actually the addition of the interval;
+				// it was the change)
+				containerRuntime1.connected = true;
+				containerRuntimeFactory.processAllMessages();
+				const expectedIntervals = [{ start: 6, end: 7 }];
+				assertIntervals(sharedString, collection1, expectedIntervals);
+				assertIntervals(sharedString2, collection2, expectedIntervals);
 			});
 
-			describe("a change", () => {
+			it("a change", () => {
 				// Like above, but the string-modifying operation is performed remotely. This means the pendingChange
 				// recorded prior to rebasing will have a different index from the pendingChange that would be generated
 				// upon rebasing (so failing to update would cause mismatch)
-				for (const { name, start, end } of testCases) {
-					it(name, () => {
-						const intervalId = interval.getIntervalId();
-						assert(intervalId);
-						collection1.removeIntervalById(intervalId);
-						containerRuntimeFactory.processAllMessages();
-						containerRuntime1.connected = false;
-						const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
-						sharedString2.insertText(2, "llo he");
-						const newIntervalId = newInterval.getIntervalId();
-						assert(newIntervalId);
-						collection1.change(newIntervalId, start, end);
-						containerRuntimeFactory.processAllMessages();
-						containerRuntime1.connected = true;
-						containerRuntimeFactory.processAllMessages();
-						const expectedStart = start === undefined ? 0 : start + "llo he".length;
-						const expectedEnd = end === undefined ? 1 : end + "llo he".length;
-						const expectedIntervals = [{ start: expectedStart ?? 0, end: expectedEnd }];
-						assertIntervals(sharedString, collection1, expectedIntervals);
-						assertIntervals(sharedString2, collection2, expectedIntervals);
-					});
-				}
+				const intervalId = interval.getIntervalId();
+				const start = 6;
+				const end = 7;
+				assert(intervalId);
+				collection1.removeIntervalById(intervalId);
+				containerRuntimeFactory.processAllMessages();
+				containerRuntime1.connected = false;
+				const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
+				sharedString2.insertText(2, "llo he");
+				const newIntervalId = newInterval.getIntervalId();
+				assert(newIntervalId);
+				collection1.change(newIntervalId, start, end);
+				containerRuntimeFactory.processAllMessages();
+				containerRuntime1.connected = true;
+				containerRuntimeFactory.processAllMessages();
+				const expectedStart = start + "llo he".length;
+				const expectedEnd = end + "llo he".length;
+				const expectedIntervals = [{ start: expectedStart ?? 0, end: expectedEnd }];
+				assertIntervals(sharedString, collection1, expectedIntervals);
+				assertIntervals(sharedString2, collection2, expectedIntervals);
 			});
 		});
 

@@ -57,7 +57,7 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	endSide: Side;
 }
 
-export interface ChangeInterval extends IntervalCollectionSpec, Partial<RangeSpec> {
+export interface ChangeInterval extends IntervalCollectionSpec, RangeSpec {
 	type: "changeInterval";
 	id: string;
 	startSide: Side;
@@ -229,11 +229,7 @@ export function makeReducer(
 			{ id, start, end, collectionName, startSide, endSide },
 		) => {
 			const collection = channel.getIntervalCollection(collectionName);
-			collection.change(
-				id,
-				start === undefined ? undefined : { pos: start, side: startSide },
-				end === undefined ? undefined : { pos: end, side: endSide },
-			);
+			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
 		},
 		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);

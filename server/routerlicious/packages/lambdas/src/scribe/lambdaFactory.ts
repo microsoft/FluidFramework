@@ -212,7 +212,16 @@ export class ScribeLambdaFactory
 				"scribe",
 				document,
 			)) as IScribe;
-			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+
+			try {
+				opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+			} catch (error) {
+				Lumberjack.error(
+					`Error getting pending messages after last checkpoint.`,
+					lumberProperties,
+					error,
+				);
+			}
 		}
 
 		if (lastCheckpoint.isCorrupt) {

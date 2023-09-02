@@ -9,8 +9,7 @@ import {
 	TelemetryDataTag,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionData,
