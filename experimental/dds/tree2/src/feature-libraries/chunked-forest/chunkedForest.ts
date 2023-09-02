@@ -24,6 +24,10 @@ import {
 	rootFieldKey,
 	mapCursorField,
 	DeltaVisitor,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
+	PlaceIndex,
+	ReplaceKind,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -136,6 +140,15 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
+			create(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void {},
+			destroy(index: DetachedRangeUpPath): void {},
+			replace(
+				newContentSource: DetachedRangeUpPath | undefined,
+				oldContentIndex: PlaceIndex,
+				oldContentCount: number,
+				oldContentDestination: DetachedPlaceUpPath | undefined,
+				kind: ReplaceKind,
+			): void {},
 			onDelete(index: number, count: number): void {
 				this.onMoveOut(index, count);
 			},

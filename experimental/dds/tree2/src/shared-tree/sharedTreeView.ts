@@ -19,6 +19,8 @@ import {
 	schemaDataIsEmpty,
 	combineVisitors,
 	visitDelta,
+	TreeIndex,
+	ForestRootId,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -42,6 +44,8 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	idAllocatorFromMaxId,
+	IdAllocator,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -438,7 +442,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 					this.forest.acquireVisitor(),
 					this.forest.anchors.acquireVisitor(),
 				]);
-				visitDelta(delta, combinedVisitor);
+				visitDelta(delta, combinedVisitor, this.removedTrees);
 				combinedVisitor.free();
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
@@ -448,6 +452,11 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			this.events.emit("revertible", type);
 		});
 	}
+
+	private readonly removedTrees = new TreeIndex(
+		"removed",
+		idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>,
+	);
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
 		return this.forest.anchors;

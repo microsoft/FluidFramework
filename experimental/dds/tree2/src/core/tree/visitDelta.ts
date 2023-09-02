@@ -16,6 +16,8 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { DetachedPlaceUpPath, DetachedRangeUpPath, NodeIndex, PlaceIndex } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
+import { ReplaceKind } from "./visitPath";
+import { IdAllocator, idAllocatorFromMaxId } from "../../feature-libraries";
 
 /**
  * Implementation notes:
@@ -131,7 +133,13 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 			const field = treeIndex.toFieldKey(destination);
 			visitor.enterField(field);
 			const newContentField = treeIndex.toFieldKey(brand(source));
-			visitor.replace(brand({ field: newContentField, start: 0, end: 1 }), 0, 0, undefined);
+			visitor.replace(
+				brand({ field: newContentField, start: 0, end: 1 }),
+				0,
+				0,
+				undefined,
+				ReplaceKind.CellPerfect,
+			);
 			visitor.exitField(field);
 		}
 		for (const [root, modifications] of rootTreesAttachPass) {
@@ -142,29 +150,6 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 			visitor.exitField(field);
 		}
 	}
-}
-
-export function applyDelta(
-	delta: Delta.Root,
-	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-): void {
-	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, visitor);
-	visitor.free();
-}
-
-export function combineVisitors(visitors: readonly DeltaVisitor[]): DeltaVisitor {
-	return {
-		free: () => visitors.forEach((v) => v.free()),
-		onDelete: (...args) => visitors.forEach((v) => v.onDelete(...args)),
-		onInsert: (...args) => visitors.forEach((v) => v.onInsert(...args)),
-		onMoveOut: (...args) => visitors.forEach((v) => v.onMoveOut(...args)),
-		onMoveIn: (...args) => visitors.forEach((v) => v.onMoveIn(...args)),
-		enterNode: (...args) => visitors.forEach((v) => v.enterNode(...args)),
-		exitNode: (...args) => visitors.forEach((v) => v.exitNode(...args)),
-		enterField: (...args) => visitors.forEach((v) => v.enterField(...args)),
-		exitField: (...args) => visitors.forEach((v) => v.exitField(...args)),
-	};
 }
 
 /**
@@ -189,6 +174,7 @@ export interface DeltaVisitor {
 		oldContentIndex: PlaceIndex,
 		oldContentCount: number,
 		oldContentDestination: DetachedPlaceUpPath | undefined,
+		kind: ReplaceKind,
 	): void;
 
 	enterNode(index: NodeIndex): void;
@@ -480,7 +466,13 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 						const oldRoot = oldContent.destination;
 						for (let i = 0; i < count; i += 1) {
 							const field = config.treeIndex.toFieldKey(brand(oldRoot + i));
-							visitor.replace(undefined, index, 1, brand({ field, index: 0 }));
+							visitor.replace(
+								undefined,
+								index,
+								1,
+								brand({ field, index: 0 }),
+								ReplaceKind.CellPerfect,
+							);
 						}
 					} else {
 						// Don't detach if this really is a replace so we can do it in one operation during the attach pass
@@ -520,6 +512,7 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 								index + i,
 								1,
 								brand({ field: oldContentField, index: 0 }),
+								ReplaceKind.CellPerfect,
 							);
 						}
 					} else {
@@ -532,6 +525,7 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 								index + i,
 								1,
 								undefined,
+								ReplaceKind.CellPerfect,
 							);
 						}
 					}

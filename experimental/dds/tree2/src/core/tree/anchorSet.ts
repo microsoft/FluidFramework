@@ -16,9 +16,9 @@ import {
 	brandedSlot,
 } from "../../util";
 import { FieldKey } from "../schema-stored";
-import { UpPath } from "./pathTree";
+import { DetachedPlaceUpPath, DetachedRangeUpPath, PlaceIndex, UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
-import { PathVisitor } from "./visitPath";
+import { PathVisitor, ReplaceKind } from "./visitPath";
 import { DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";
 
@@ -596,6 +596,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				);
 				this.anchorSet.activeVisitor = undefined;
 			},
+			create(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void {},
+			destroy(index: DetachedRangeUpPath): void {},
+			replace(
+				newContentSource: DetachedRangeUpPath | undefined,
+				oldContentIndex: PlaceIndex,
+				oldContentCount: number,
+				oldContentDestination: DetachedPlaceUpPath | undefined,
+				kind: ReplaceKind,
+			): void {},
 			onDelete(start: number, count: number): void {
 				assert(this.parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
 				this.maybeWithNode(
@@ -611,7 +620,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						pathVisitor.onDelete(upPath, count);
+						// pathVisitor.onDelete(upPath, count);
 					}
 				}
 
@@ -637,7 +646,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				};
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						pathVisitor.onInsert(upPath, content);
+						// pathVisitor.onInsert(upPath, content);
 					}
 				}
 

@@ -26,6 +26,9 @@ export {
 	DetachedField,
 	UpPath,
 	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	DetachedPlaceUpPath,
 	AttachedRangeUpPath,
 	DetachedRangeUpPath,
 	FieldUpPath,
@@ -87,6 +90,8 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	TreeIndex,
+	ForestRootId,
 } from "./tree";
 
 export {

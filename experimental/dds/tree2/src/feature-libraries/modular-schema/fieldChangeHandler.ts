@@ -4,7 +4,7 @@
  */
 
 import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
-import { fail, Invariant } from "../../util";
+import { Brand, fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -211,7 +211,9 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
  * For convenience can be called with no parameters to allocate a single ID.
  * @alpha
  */
-export type IdAllocator = (count?: number) => ChangesetLocalId;
+export type IdAllocator<TId extends Brand<number, string> = ChangesetLocalId> = (
+	count?: number,
+) => TId;
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being

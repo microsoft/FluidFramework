@@ -38,6 +38,9 @@ export {
 	UpPath,
 	FieldUpPath,
 	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	DetachedPlaceUpPath,
 	AttachedRangeUpPath,
 	DetachedRangeUpPath,
 	compareUpPaths,
@@ -70,7 +73,8 @@ export {
 	NodeData,
 	rootField,
 } from "./types";
-export { DeltaVisitor, visitDelta, applyDelta, combineVisitors } from "./visitDelta";
+export { DeltaVisitor, visitDelta } from "./visitDelta";
+export { applyDelta, combineVisitors, announceVisitor } from "./visitorUtils";
 export { PathVisitor, ReplaceKind } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -80,3 +84,5 @@ export { Delta };
 export { SparseNode, getDescendant } from "./sparseTree";
 
 export { isSkipMark, emptyDelta } from "./deltaUtil";
+
+export { TreeIndex, ForestRootId } from "./treeIndex";
