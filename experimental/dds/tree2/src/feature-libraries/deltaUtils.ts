@@ -64,39 +64,50 @@ export function mapMark<TIn, TOut>(
 	}
 	const type = mark.type;
 	switch (type) {
-		case Delta.MarkType.Insert: {
+		case Delta.MarkType.Insert:
 			return {
-				type: Delta.MarkType.Insert,
+				...(mark as unknown as Delta.Insert<TOut>),
 				...mapModifications(mark, func),
+				...mapOldContent(mark, func),
 				content: mark.content.map(func),
 			};
-		}
-		case Delta.MarkType.Modify: {
+		case Delta.MarkType.Restore: {
 			return {
-				type: Delta.MarkType.Modify,
+				...(mark as unknown as Delta.Restore<TOut>),
 				...mapModifications(mark, func),
+				...mapOldContent(mark, func),
 			};
 		}
-		case Delta.MarkType.MoveOut: {
+		case Delta.MarkType.Modify:
+		case Delta.MarkType.Remove:
+		case Delta.MarkType.MoveOut:
 			return {
-				type: Delta.MarkType.MoveOut,
-				count: mark.count,
-				moveId: mark.moveId,
+				...(mark as unknown as Delta.Modify<TOut>),
 				...mapModifications(mark, func),
 			};
+		case Delta.MarkType.MoveIn: {
+			return { ...mark };
 		}
-		case Delta.MarkType.Remove: {
-			return {
-				type: Delta.MarkType.Remove,
-				count: mark.count,
-				...mapModifications(mark, func),
-			};
-		}
-		case Delta.MarkType.MoveIn:
-			return mark;
 		default:
 			unreachableCase(type);
 	}
+}
+
+type OldContent<T> = Mutable<(Delta.Insert<T> | Delta.Restore<T>)["oldContent"]>;
+type HasOldContent<T> = { oldContent?: OldContent<T> };
+
+function mapOldContent<TIn, TOut>(
+	input: HasOldContent<TIn>,
+	func: (tree: TIn) => TOut,
+): HasOldContent<TOut> {
+	const hasOldContent: { oldContent?: OldContent<TOut> } = {};
+	if (input.oldContent !== undefined) {
+		hasOldContent.oldContent = { detachId: input.oldContent.detachId };
+		if (input.oldContent.fields !== undefined) {
+			hasOldContent.oldContent.fields = mapFieldMarks(input.oldContent.fields, func);
+		}
+	}
+	return hasOldContent;
 }
 
 function mapModifications<TIn, TOut>(
