@@ -492,6 +492,27 @@ class DirectPathVisitor extends AbstractPathVisitor {
 			type: BindingType.Insert,
 		});
 	}
+
+	public override afterCreate(content: DetachedRangeUpPath): void {
+		throw new Error("Method not implemented.");
+	}
+	public override beforeReplace(
+		oldContent: AttachedRangeUpPath,
+		newContent: DetachedRangeUpPath,
+		kind: ReplaceKind,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public override afterReplace(
+		oldContent: DetachedRangeUpPath,
+		newContent: AttachedRangeUpPath,
+		kind: ReplaceKind,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public override beforeDestroy(content: DetachedRangeUpPath): void {
+		throw new Error("Method not implemented.");
+	}
 }
 
 /**
@@ -501,8 +522,6 @@ class InvalidatingPathVisitor
 	extends AbstractPathVisitor
 	implements Flushable<InvalidatingPathVisitor>
 {
-	private readonly listeners: Set<Listener> = new Set();
-
 	private processRegisteredPaths(path: UpPath): void {
 		const current = toDownPath(path);
 		const listeners = this.getListeners(BindingType.Invalidation, current);
@@ -520,6 +539,29 @@ class InvalidatingPathVisitor
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		this.processRegisteredPaths(path);
 	}
+
+	public override afterCreate(content: DetachedRangeUpPath): void {
+		throw new Error("Method not implemented.");
+	}
+	public override beforeReplace(
+		oldContent: AttachedRangeUpPath,
+		newContent: DetachedRangeUpPath,
+		kind: ReplaceKind,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public override afterReplace(
+		oldContent: DetachedRangeUpPath,
+		newContent: AttachedRangeUpPath,
+		kind: ReplaceKind,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public override beforeDestroy(content: DetachedRangeUpPath): void {
+		throw new Error("Method not implemented.");
+	}
+
+	private readonly listeners: Set<Listener> = new Set();
 
 	public flush(): InvalidatingPathVisitor {
 		for (const listener of this.listeners) {
@@ -572,6 +614,27 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 				listeners,
 			});
 		}
+	}
+
+	public override afterCreate(content: DetachedRangeUpPath): void {
+		throw new Error("Method not implemented.");
+	}
+	public override beforeReplace(
+		oldContent: AttachedRangeUpPath,
+		newContent: DetachedRangeUpPath,
+		kind: ReplaceKind,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public override afterReplace(
+		oldContent: DetachedRangeUpPath,
+		newContent: AttachedRangeUpPath,
+		kind: ReplaceKind,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+	public override beforeDestroy(content: DetachedRangeUpPath): void {
+		throw new Error("Method not implemented.");
 	}
 
 	public flush(): BufferingPathVisitor {
