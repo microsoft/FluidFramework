@@ -36,7 +36,7 @@ import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-defini
 import { RequestParser } from '@fluidframework/runtime-utils';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {

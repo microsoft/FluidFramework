@@ -9,7 +9,7 @@ import {
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { MockRuntime, validateSummary } from "./blobManager.spec";
 
 describe("getPendingLocalState", () => {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { OdspFluidDataStoreLocator } from "./contractsPublic";
 import { OdcFileSiteOrigin, OdcApiSiteOrigin } from "./constants";
 

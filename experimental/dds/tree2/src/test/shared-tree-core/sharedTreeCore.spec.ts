@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {

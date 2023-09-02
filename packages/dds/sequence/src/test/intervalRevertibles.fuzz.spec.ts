@@ -17,7 +17,7 @@ import {
 	DDSFuzzHarnessEvents,
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IFluidDataStoreRuntime,
 	IChannelServices,

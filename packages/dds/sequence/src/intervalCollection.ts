@@ -5,7 +5,8 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,

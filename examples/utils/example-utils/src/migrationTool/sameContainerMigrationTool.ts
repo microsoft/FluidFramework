@@ -10,7 +10,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
 const pactMapKey = "pact-map";

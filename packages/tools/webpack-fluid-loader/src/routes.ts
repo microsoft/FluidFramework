@@ -8,7 +8,7 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidPackage } from "@fluidframework/container-definitions";
 import {
 	getMicrosoftConfiguration,
