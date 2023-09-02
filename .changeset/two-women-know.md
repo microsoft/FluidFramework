@@ -2,6 +2,6 @@
 "@fluidframework/sequence": major
 ---
 
-remove compareStarts and compareEnds from IIntervalHelpers
+remove `compareStarts` and `compareEnds` from `IIntervalHelpers`
 
-these methods are redudant with the equivalent functions on IInterval
+these methods are redudant with the functions `IInterval.compareStart` and `IInterval.compareEnd` respectively
