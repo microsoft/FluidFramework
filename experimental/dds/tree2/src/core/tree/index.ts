@@ -37,6 +37,9 @@ export {
 	getDepth,
 	UpPath,
 	FieldUpPath,
+	RangeUpPath,
+	AttachedRangeUpPath,
+	DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
 	UpPathDefault,
@@ -68,7 +71,7 @@ export {
 	rootField,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
-export { PathVisitor } from "./visitPath";
+export { PathVisitor, ReplaceKind } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";

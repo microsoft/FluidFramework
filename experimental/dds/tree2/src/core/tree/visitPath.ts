@@ -54,7 +54,7 @@ export interface PathVisitor {
  * Describes the specific nature of a replacement.
  * @alpha
  */
-enum ReplaceKind {
+export enum ReplaceKind {
 	/**
 	 * The new content will truly be at the same location as the old content.
 	 * When that's the case, if user 1 replaces nodes ABC with nodes DEF,

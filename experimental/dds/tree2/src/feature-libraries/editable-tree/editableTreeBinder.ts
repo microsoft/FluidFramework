@@ -4,7 +4,16 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, PathVisitor, ProtoNodes, UpPath, topDownPath } from "../../core";
+import {
+	AttachedRangeUpPath,
+	DetachedRangeUpPath,
+	FieldKey,
+	PathVisitor,
+	ProtoNodes,
+	ReplaceKind,
+	UpPath,
+	topDownPath,
+} from "../../core";
 import { Events, ISubscribable } from "../../events";
 import { brand, getOrCreate } from "../../util";
 import { on } from "../untypedTree";
@@ -301,8 +310,19 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
 		new Map();
 	public constructor(protected readonly options: BinderOptions) {}
-	public abstract onDelete(path: UpPath, count: number): void;
-	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
+	public abstract afterCreate(content: DetachedRangeUpPath): void;
+	public abstract beforeReplace(
+		oldContent: AttachedRangeUpPath,
+		newContent: DetachedRangeUpPath,
+		kind: ReplaceKind,
+	): void;
+
+	public abstract afterReplace(
+		oldContent: DetachedRangeUpPath,
+		newContent: AttachedRangeUpPath,
+		kind: ReplaceKind,
+	): void;
+	public abstract beforeDestroy(content: DetachedRangeUpPath): void;
 	public registerListener(
 		contextType: BindingContextType,
 		trees: BindTree[],
