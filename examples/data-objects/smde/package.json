@@ -65,7 +65,6 @@
 		"@types/events": "^3.0.0",
 		"@types/react": "^17.0.44",
 		"@types/simplemde": "^1.11.7",
-		"concurrently": "^7.6.0",
 		"css-loader": "^1.0.0",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",

@@ -23,7 +23,6 @@ importers:
       '@types/redis': ^2.8.10
       '@types/supertest': ^2.0.7
       async: ^3.2.2
-      concurrently: ^7.5.0
       copyfiles: ^2.4.1
       eslint: ~8.27.0
       eslint-plugin-eslint-comments: ~3.1.2
@@ -53,7 +52,6 @@ importers:
       '@types/redis': 2.8.32
       '@types/supertest': 2.0.12
       async: 3.2.4
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.27.0
       eslint-plugin-eslint-comments: 3.1.2_eslint@8.27.0
@@ -88,7 +86,7 @@ importers:
       async: ^3.2.2
       body-parser: ^1.17.2
       compression: ^1.7.3
-      concurrently: ^7.5.0
+      concurrently: ^8.2.1
       cors: ^2.8.5
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -136,7 +134,7 @@ importers:
       '@types/supertest': 2.0.12
       '@types/uuid': 3.4.10
       async: 3.2.4
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       eslint-plugin-eslint-comments: 3.1.2_eslint@8.27.0
       eslint-plugin-import: 2.25.4_eslint@8.27.0
@@ -181,7 +179,7 @@ importers:
       axios-mock-adapter: ^1.19.0
       body-parser: ^1.17.2
       compression: ^1.7.3
-      concurrently: ^7.5.0
+      concurrently: ^8.2.1
       cors: ^2.8.5
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -247,7 +245,7 @@ importers:
       '@types/uuid': 3.4.10
       async: 3.2.4
       axios-mock-adapter: 1.21.4_axios@0.26.1
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       eslint-plugin-eslint-comments: 3.1.2_eslint@8.27.0
       eslint-plugin-import: 2.25.4_eslint@8.27.0
@@ -6077,6 +6075,22 @@ packages:
       rxjs: 7.8.1
       shell-quote: 1.8.1
       spawn-command: 0.0.2-1
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
+    dev: true
+
+  /concurrently/8.2.1:
+    resolution: {integrity: sha512-nVraf3aXOpIcNud5pB9M82p1tynmZkrSGQ1p6X/VY8cJ+2LMVqAgXsJxYYefACSHbTYlm92O1xuhdGTjwoEvbQ==}
+    engines: {node: ^14.13.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      date-fns: 2.30.0
+      lodash: 4.17.21
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
+      spawn-command: 0.0.2
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -13136,6 +13150,10 @@ packages:
       memory-pager: 1.5.0
     dev: false
     optional: true
+
+  /spawn-command/0.0.2:
+    resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
+    dev: true
 
   /spawn-command/0.0.2-1:
     resolution: {integrity: sha512-n98l9E2RMSJ9ON1AKisHzz7V42VDiBQGY6PB1BwRglz99wpVsSuGzQ+jOi6lFXBGVTCrRpltvjm+/XA+tpeJrg==}

@@ -84,7 +84,6 @@
 		"async": "^3.2.2",
 		"body-parser": "^1.18.3",
 		"clean-webpack-plugin": "^4.0.0",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"enzyme": "^3.10.0",
 		"eslint": "~8.6.0",

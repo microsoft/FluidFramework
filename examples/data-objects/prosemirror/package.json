@@ -79,7 +79,6 @@
 		"@types/prosemirror-schema-list": "^1.2.0",
 		"@types/prosemirror-state": "^1.4.0",
 		"@types/react": "^17.0.44",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"css-loader": "^1.0.0",
 		"eslint": "~8.6.0",

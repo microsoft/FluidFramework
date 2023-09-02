@@ -44,9 +44,8 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.0",
-		"concurrently": "^6.2.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.6.0",
-		"node-jq": "^2.3.3",
 		"prettier": "~2.6.2",
 		"sort-json": "^2.0.1",
 		"typescript": "~4.5.5"
