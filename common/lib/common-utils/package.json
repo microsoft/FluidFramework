@@ -45,7 +45,7 @@
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "npm run test:report",
 		"test:jest": "jest",
-		"test:jest:report": "npm run test:jest -- --ci --coverage --reporters=default --reporters=jest-junit",
+		"test:jest:report": "npm run test:jest -- --ci --coverage",
 		"test:mocha": "mocha --unhandled-rejections=strict  --recursive dist/test/mocha/**/*.spec.js --exit --project test/tsconfig.json",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
@@ -145,10 +145,6 @@
 				"tsc"
 			]
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"broken": {}

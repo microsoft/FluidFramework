@@ -853,7 +853,7 @@ export const handlers: Handler[] = [
 			const mochaScriptName = scripts["test:mocha"] !== undefined ? "test:mocha" : "test";
 			const mochaScript = scripts[mochaScriptName];
 
-			if (!mochaScript || !mochaScript.startsWith("mocha")) {
+			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
 				// skip irregular test script for now
 				return undefined;
 			}
@@ -868,6 +868,65 @@ export const handlers: Handler[] = [
 				if (!mochaScript.includes(" --config ")) {
 					return "Missing config arguments";
 				}
+			}
+		},
+	},
+
+	{
+		name: "npm-package-json-script-jest-config",
+		match,
+		handler: (file, root) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const jestScriptName = scripts["test:jest"] !== undefined ? "test:jest" : "test";
+			const jestScript = scripts[jestScriptName];
+
+			if (jestScript === undefined || !jestScript.startsWith("jest")) {
+				// skip irregular test script for now
+				return undefined;
+			}
+
+			const packageDir = path.dirname(file);
+			const jestFileName = ["jest.config.js", "jest.config.cjs"].find((name) =>
+				fs.existsSync(path.join(packageDir, name)),
+			);
+			if (jestFileName === undefined) {
+				return `Missing jest config file.`;
+			}
+
+			const jestConfigFile = path.join(packageDir, jestFileName);
+			const config = require(path.resolve(jestConfigFile));
+			if (config.reporters === undefined) {
+				return `Missing reporters in '${jestConfigFile}'`;
+			}
+
+			const expectedReporter = [
+				"default",
+				[
+					"jest-junit",
+					{
+						outputDirectory: "nyc",
+						outputName: "jest-junit-report.xml",
+					},
+				],
+			];
+
+			if (JSON.stringify(config.reporters) !== JSON.stringify(expectedReporter)) {
+				return `Unexpected reporters in '${jestConfigFile}'`;
+			}
+
+			if (json["jest-junit"] !== undefined) {
+				return `Extraneous jest-unit config in ${file}`;
 			}
 		},
 	},

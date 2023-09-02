@@ -33,7 +33,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
-		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
 		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
@@ -98,10 +98,6 @@
 				"library": "main"
 			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,
