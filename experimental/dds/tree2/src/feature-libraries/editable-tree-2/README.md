@@ -29,11 +29,11 @@ There are four main usage modes for this API:
     This includes use-cases like passing the tree to generic javascript object processing libraries like `JSON.stringify`, nodes's `assert.deepEqual`, some structural clone implementations, [JMESPath](https://jmespath.org/) and many others.
 
     Since this is an open ended set of preexisting third party libraries, compatibility is on a best effort basis.
-    However, a few things are taken into account: (TODO: actually implement this):
+    However, a few things are taken into account:
 
     -   The content visited by recursively walking over all the enumerable own properties should fully and unique describe the tree assuming the view schema is available (see "Javascript Object API: `enumerable` and `own` properties' below for details).
         This requires some extra properties to prevent MapNodes and sequences from blocking the traversal, and provides guidance for which properties should be enumerable own properties.
-    -   Adapters can be provided to (lazily) view any subtree in a more JavaScript object like form, with different options to pick different trad-offs like boxed vs. unboxed and including getters (as non-enumerable properties) back to the editable view.
+    -   Adapters can be provided to (lazily) view any subtree in a more JavaScript object like form, with different options to pick different trad-offs like boxed vs. unboxed and including getters (as non-enumerable properties) back to the editable view. (TODO: actually implement this):
 
     Like with the generic tree readers above, this case intentionally does not provide editing.
     Also like the generic tree readers case, it provides an easy way for code which does understand the schema to get back to the Schema Aware API for editing if needed.
@@ -78,11 +78,6 @@ This library guarantees then when traversing from a root `UntypedEntity` via `en
 -   No symbols will be encountered as keys. This ensures that the traversal can use the APIs which only support strings (like `Object.entries`) and get the same result as if using APIs which also support symbols (like `object spread).
 
 Note that if using `for...in`, be sure to filter out `inherited` properties.
-
-TODO:
-The test suite for this library should include a function that checks these invariants explicitly, and many test cases should be checked for them.
-TODO:
-Make these properties actually hold.
 
 ## Status
 

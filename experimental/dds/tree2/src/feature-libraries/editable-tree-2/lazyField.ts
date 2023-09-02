@@ -178,18 +178,28 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		) as TypedNodeUnion<TTypes>;
 	}
 
-	/**
-	 * Gets array of unwrapped nodes.
-	 */
-	private asBoxedArray(): TypedNodeUnion<TTypes>[] {
-		return mapCursorField(
-			this.cursor,
-			(cursor) => makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
+	public map<U>(
+		callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U,
+	): U[] {
+		return mapCursorField(this.cursor, (cursor) =>
+			callbackfn(unboxedUnion(this.context, this.schema, cursor), cursor.fieldIndex, this),
+		);
+	}
+
+	public mapBoxed<U>(
+		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U,
+	): U[] {
+		return mapCursorField(this.cursor, (cursor) =>
+			callbackfn(
+				makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
+				cursor.fieldIndex,
+				this,
+			),
 		);
 	}
 
 	public [Symbol.iterator](): IterableIterator<TypedNodeUnion<TTypes>> {
-		return this.asBoxedArray()[Symbol.iterator]();
+		return this.mapBoxed((x) => x)[Symbol.iterator]();
 	}
 
 	public treeStatus(): TreeStatus {
@@ -220,6 +230,17 @@ export class LazySequence<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements Sequence<TTypes>
 {
+	public constructor(
+		context: Context,
+		schema: FieldSchema<typeof FieldKinds.sequence, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+
+		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
+	}
+
 	private sequenceEditor(): SequenceFieldEditBuilder {
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
@@ -236,6 +257,10 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 		fieldEditor.delete(index, count);
 		fieldEditor.insert(index, content);
+	}
+
+	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
+		return this.map((x) => x);
 	}
 }
 

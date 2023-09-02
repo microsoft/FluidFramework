@@ -18,6 +18,7 @@ import {
 	inCursorField,
 	rootFieldKey,
 	EmptyKey,
+	TreeSchemaIdentifier,
 } from "../../core";
 import { fail, getOrCreate } from "../../util";
 import { FieldKind } from "../modular-schema";
@@ -47,6 +48,7 @@ import {
 	StructTyped,
 	TypedField,
 	TypedNode,
+	UnboxField,
 	UntypedField,
 	UntypedTree,
 } from "./editableTreeTypes";
@@ -116,7 +118,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	/**
 	 * Enumerable own property providing a more JS object friendly alternative to "schema".
 	 */
-	public readonly type: string;
+	public readonly type: TreeSchemaIdentifier;
 
 	private readonly removeDeleteCallback: () => void;
 	public constructor(
@@ -310,6 +312,19 @@ export class LazyMap<TSchema extends MapSchema>
 	extends LazyTree<TSchema>
 	implements MapNode<TSchema>
 {
+	public constructor(
+		context: Context,
+		schema: TSchema,
+		cursor: ITreeSubscriptionCursor,
+		anchorNode: AnchorNode,
+		anchor: Anchor,
+	) {
+		super(context, schema, cursor, anchorNode, anchor);
+
+		// Setup JS Object API:
+		makePropertyEnumerableOwn(this, "asObject", LazyMap.prototype);
+	}
+
 	public get(key: FieldKey): TypedField<TSchema["mapFields"]> {
 		return this.getField(key) as TypedField<TSchema["mapFields"]>;
 	}
@@ -329,6 +344,21 @@ export class LazyMap<TSchema extends MapSchema>
 
 	public [Symbol.iterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
 		return super[Symbol.iterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	}
+
+	public get asObject(): {
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+	} {
+		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> = {};
+		for (const field of this) {
+			Object.defineProperty(record, field.key, {
+				// TODO: this needs to be unboxed!
+				value: field,
+				configurable: true,
+				enumerable: true,
+			});
+		}
+		return record;
 	}
 }
 

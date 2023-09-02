@@ -4,7 +4,7 @@
  */
 
 import * as SchemaAware from "../schema-aware";
-import { FieldKey, TreeValue } from "../../core";
+import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey } from "../node-key";
 import {
@@ -97,6 +97,14 @@ export interface UntypedTree extends UntypedEntity<TreeSchema> {
 	 */
 	is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
 
+	/**
+	 * Same as `this.schema.name`.
+	 * This is provided as a enumerable own property to aid with JavaScript object traversals of this data-structure.
+	 * See [readme](./README.md) for details.
+	 */
+	// TODO: do we want to leave this and other similar properties in the TypeScript API?
+	readonly type: TreeSchemaIdentifier;
+
 	[Symbol.iterator](): Iterator<UntypedField>;
 }
 
@@ -139,6 +147,12 @@ export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
 	set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
+
+	// TODO: JS object traversal docs
+	// Inclines only non-empty fields, like iteration.
+	readonly asObject: {
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+	};
 }
 
 /**
@@ -243,6 +257,18 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 	 */
 	boxedAt(index: number): TypedNodeUnion<TTypes>;
 
+	/**
+	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
+	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 */
+	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U): U[];
+
+	/**
+	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
+	 * @param callbackfn - A function that accepts the child, its index, and this field.
+	 */
+	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U): U[];
+
 	readonly length: number;
 
 	replaceRange(
@@ -252,6 +278,9 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 	): void;
 
 	[Symbol.iterator](): Iterator<TypedNodeUnion<TTypes>>;
+
+	// TODO: JS object traversal docs
+	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
 }
 
 export interface ValueField<TTypes extends AllowedTypes> extends UntypedField {
