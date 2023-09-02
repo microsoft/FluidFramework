@@ -283,6 +283,7 @@ export {
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
+	ForestType,
 } from "./shared-tree";
 
 export type {

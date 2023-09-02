@@ -12,8 +12,7 @@ import {
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -40,25 +39,30 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger implements ITelemetryBufferedLogger {
-	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
-		if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-			await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-			const logger = getTestLogger?.();
-			assert(logger !== undefined, "Expected getTestLogger to return something");
-			return new FileLogger(logger);
-		} else {
-			return new FileLogger();
-		}
-	});
+	private static readonly loggerP = (minLogLevel?: LogLevel) =>
+		new LazyPromise<FileLogger>(async () => {
+			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
+				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+				const logger = getTestLogger?.();
+				assert(logger !== undefined, "Expected getTestLogger to return something");
+				return new FileLogger(logger, minLogLevel);
+			} else {
+				return new FileLogger(undefined, minLogLevel);
+			}
+		});
 
-	public static async createLogger(dimensions: {
-		driverType: string;
-		driverEndpointName: string | undefined;
-		profile: string;
-		runId: number | undefined;
-	}) {
+	public static async createLogger(
+		dimensions: {
+			driverType: string;
+			driverEndpointName: string | undefined;
+			profile: string;
+			runId: number | undefined;
+		},
+		minLogLevel: LogLevel = LogLevel.default,
+	) {
+		const logger = await this.loggerP(minLogLevel);
 		return createChildLogger({
-			logger: await this.loggerP,
+			logger,
 			properties: {
 				all: dimensions,
 			},
@@ -66,14 +70,17 @@ class FileLogger implements ITelemetryBufferedLogger {
 	}
 
 	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
-		await (await this.loggerP).flush(runInfo);
+		await (await this.loggerP()).flush(runInfo);
 	}
 
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {}
+	private constructor(
+		private readonly baseLogger?: ITelemetryBufferedLogger,
+		public readonly minLogLevel?: LogLevel,
+	) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
@@ -174,13 +181,16 @@ export async function initialize(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
-	const logger = await createLogger({
-		driverType: testDriver.type,
-		driverEndpointName: testDriver.endpointName,
-		profile: profileName,
-		runId: undefined,
-	});
-	logger.minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
+	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
+	const logger = await createLogger(
+		{
+			driverType: testDriver.type,
+			driverEndpointName: testDriver.endpointName,
+			profile: profileName,
+			runId: undefined,
+		},
+		minLogLevel,
+	);
 
 	logger.sendTelemetryEvent({
 		eventName: "RunConfigOptions",
@@ -188,7 +198,7 @@ export async function initialize(
 			loaderOptions,
 			containerOptions,
 			configurations,
-			logLevel: logger.minLogLevel,
+			logLevel: minLogLevel,
 		}),
 	});
 

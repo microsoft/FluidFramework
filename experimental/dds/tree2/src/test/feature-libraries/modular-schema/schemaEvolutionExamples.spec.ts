@@ -23,17 +23,15 @@ import {
 	Adapters,
 	Compatibility,
 	storedEmptyFieldSchema,
+	SchemaData,
 } from "../../../core";
 import { brand } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
 
-class TestSchemaRepository extends InMemoryStoredSchemaRepository<FullSchemaPolicy> {
-	public clone(): TestSchemaRepository {
-		return new TestSchemaRepository(this.policy, {
-			treeSchema: new Map(this.data.treeSchema),
-			rootFieldSchema: this.data.rootFieldSchema,
-		});
+class TestSchemaRepository extends InMemoryStoredSchemaRepository {
+	public constructor(public readonly policy: FullSchemaPolicy, data?: SchemaData) {
+		super(data);
 	}
 
 	/**

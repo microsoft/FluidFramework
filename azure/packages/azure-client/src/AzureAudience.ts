@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
 

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
-	recordDependency,
 	SimpleDependee,
 	SimpleObservingDependent,
 	ITreeSubscriptionCursor,
@@ -64,8 +63,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		public readonly anchors: AnchorSet = new AnchorSet(),
 	) {
 		super("object-forest.ChunkedForest");
-		// Invalidate forest if schema change.
-		recordDependency(this.dependent, this.schema);
 	}
 
 	public get isEmpty(): boolean {

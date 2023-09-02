@@ -9,7 +9,6 @@ import {
 	FieldKey,
 	mintRevisionTag,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	RevisionTag,
 	rootFieldKey,
 	UpPath,
@@ -17,7 +16,6 @@ import {
 import { jsonNumber, jsonObject } from "../../domains";
 import {
 	buildForest,
-	defaultSchemaPolicy,
 	ForestRepairDataStore,
 	jsonableTreeFromCursor,
 	singleTextCursor,
@@ -37,8 +35,7 @@ const root: UpPath = {
 
 describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema);
+		const forest = buildForest();
 		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const capture1 = [
 			{ type: jsonNumber.name, value: 1 },

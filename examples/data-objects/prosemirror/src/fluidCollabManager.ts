@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ILoader } from "@fluidframework/container-definitions";
 import {
 	// eslint-disable-next-line import/no-deprecated

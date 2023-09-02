@@ -9,7 +9,7 @@ import {
 	MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";

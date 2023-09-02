@@ -5,12 +5,8 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import {
-	assert,
-	stringToBuffer,
-	Uint8ArrayToArrayBuffer,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
@@ -18,7 +14,7 @@ import {
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -185,6 +181,6 @@ export function isDeltaStreamConnectionForbiddenError(
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		error?.errorType === DriverErrorType.deltaStreamConnectionForbidden
+		error?.errorType === DriverErrorTypes.deltaStreamConnectionForbidden
 	);
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedTree, SharedTreeFactory, SharedTreeOptions } from "./sharedTree";
+export { ISharedTree, SharedTreeFactory, SharedTreeOptions, ForestType } from "./sharedTree";
 
 export {
 	createSharedTreeView,
