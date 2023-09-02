@@ -91,9 +91,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
 	 */
 	async function getAliasedDataStoreEntryPoint(dataObject: ITestFluidObject, id: string) {
-		// back-compat: Older container runtime did not have getAliasedDataStoreEntryPoint.
-		const dataStore = await (runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
-			runtimeOf(dataObject).getRootDataStore(id, false /* wait */));
+		const dataStore = await runtimeOf(dataObject).getAliasedDataStoreEntryPoint(id);
 		if (dataStore === undefined) {
 			throw new Error("Could not get aliased data store");
 		}
@@ -222,11 +220,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 				const datastores: IFluidRouter[] = [];
 				const createAliasedDataStore = async () => {
 					try {
-						const datastore = await getAliasedDataStoreEntryPoint(dataObject1, alias);
-						if (datastore === undefined) {
-							throw new Error("Aliased data store doesn't exist yet");
-						}
-						return datastore;
+						await getAliasedDataStoreEntryPoint(dataObject1, alias);
 					} catch (err) {
 						const newDataStore = await runtimeOf(dataObject1).createDataStore(
 							packageName,
