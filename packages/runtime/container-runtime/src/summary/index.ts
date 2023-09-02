@@ -28,10 +28,9 @@ export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHe
 export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
+	IRefreshSummaryResult,
 	IRootSummarizerNode,
 	IRootSummarizerNodeWithGC,
-	RefreshSummaryResult,
 } from "./summarizerNode";
 export {
 	IConnectableRuntime,

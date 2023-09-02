@@ -26,7 +26,6 @@ importers:
       '@types/uuid': ^3.4.4
       '@types/winston': ^2.4.4
       async: ^3.2.2
-      concurrently: ^7.5.0
       eslint: ~8.27.0
       lerna: 5.6.2
       lorem-ipsum: ^1.0.6
@@ -55,7 +54,6 @@ importers:
       '@types/uuid': 3.4.10
       '@types/winston': 2.4.4
       async: 3.2.4
-      concurrently: 7.6.0
       eslint: 8.27.0
       lerna: 5.6.2
       lorem-ipsum: 1.0.6
@@ -78,8 +76,6 @@ importers:
       '@types/async': ^3.2.9
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
-      '@types/lorem-ipsum': ^1.0.2
-      '@types/mocha': ^10.0.0
       '@types/nconf': ^0.10.0
       '@types/node': ^18.17.1
       '@types/rimraf': ^3.0.2
@@ -90,17 +86,14 @@ importers:
       axios: ^0.26.0
       body-parser: ^1.17.2
       compression: ^1.7.3
-      concurrently: ^7.5.0
+      concurrently: ^8.2.1
       cors: ^2.8.5
       debug: ^4.1.1
       eslint: ~8.27.0
       express: ^4.17.3
       isomorphic-git: ^1.14.0
       json-stringify-safe: ^5.0.1
-      lorem-ipsum: ^1.0.6
-      mocha: ^10.1.0
       nconf: ^0.11.4
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^3.0.2
       sillyname: ^0.1.0
@@ -130,8 +123,6 @@ importers:
       '@types/async': 3.2.16
       '@types/cors': 2.8.13
       '@types/debug': 4.1.7
-      '@types/lorem-ipsum': 1.0.2
-      '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
       '@types/node': 18.17.7
       '@types/rimraf': 3.0.2
@@ -139,11 +130,8 @@ importers:
       '@types/uuid': 3.4.10
       '@types/winston': 2.4.4
       async: 3.2.4
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
-      lorem-ipsum: 1.0.6
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 3.0.2
       sillyname: 0.1.0
@@ -182,7 +170,7 @@ importers:
       axios: ^0.26.0
       body-parser: ^1.17.2
       compression: ^1.7.3
-      concurrently: ^7.5.0
+      concurrently: ^8.2.1
       cors: ^2.8.5
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -249,7 +237,7 @@ importers:
       '@types/uuid': 3.4.10
       '@types/winston': 2.4.4
       async: 3.2.4
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       lorem-ipsum: 1.0.6
       mocha: 10.2.0
@@ -4944,6 +4932,22 @@ packages:
       yargs: 17.6.2
     dev: true
 
+  /concurrently/8.2.1:
+    resolution: {integrity: sha512-nVraf3aXOpIcNud5pB9M82p1tynmZkrSGQ1p6X/VY8cJ+2LMVqAgXsJxYYefACSHbTYlm92O1xuhdGTjwoEvbQ==}
+    engines: {node: ^14.13.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      date-fns: 2.30.0
+      lodash: 4.17.21
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
+      spawn-command: 0.0.2
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
+    dev: true
+
   /config-chain/1.1.13:
     resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
     dependencies:
@@ -7463,7 +7467,7 @@ packages:
       mute-stream: 0.0.8
       ora: 5.4.1
       run-async: 2.4.1
-      rxjs: 7.8.0
+      rxjs: 7.8.1
       string-width: 4.2.3
       strip-ansi: 6.0.1
       through: 2.3.8
@@ -9767,7 +9771,7 @@ packages:
       tsconfig-paths: 4.2.0
       tslib: 2.6.0
       v8-compile-cache: 2.3.0
-      yargs: 17.6.2
+      yargs: 17.7.2
       yargs-parser: 21.1.1
     optionalDependencies:
       '@nrwl/nx-darwin-arm64': 15.9.4
@@ -10998,7 +11002,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       glob: 7.2.3
-      yargs: 17.6.2
+      yargs: 17.7.2
     dev: true
 
   /require-directory/2.1.1:
@@ -11130,6 +11134,12 @@ packages:
 
   /rxjs/7.8.0:
     resolution: {integrity: sha512-F2+gxDshqmIub1KdvZkaEfGDwLNpPvk9Fs6LD/MyQxNgMds/WH9OdDDXOmxUZpME+iSK3rQCctkL0DYyytUqMg==}
+    dependencies:
+      tslib: 2.6.0
+    dev: true
+
+  /rxjs/7.8.1:
+    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
     dependencies:
       tslib: 2.6.0
     dev: true
@@ -11360,6 +11370,10 @@ packages:
     resolution: {integrity: sha512-8o/QEhSSRb1a5i7TFR0iM4G16Z0vYB2OQVs4G3aAFXjn3T6yEx8AZxy1PgDF7I00LZHYA3WxaSYIf5e5sAX8Rw==}
     dev: true
 
+  /shell-quote/1.8.1:
+    resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
+    dev: true
+
   /shelljs/0.8.5:
     resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
     engines: {node: '>=4'}
@@ -11572,6 +11586,10 @@ packages:
   /source-map/0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /spawn-command/0.0.2:
+    resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
     dev: true
 
   /spawn-command/0.0.2-1:
@@ -12147,6 +12165,7 @@ packages:
 
   /tree-kill/1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
+    hasBin: true
     dev: true
 
   /treeverse/1.0.4:
@@ -13073,6 +13092,19 @@ packages:
 
   /yargs/17.6.2:
     resolution: {integrity: sha512-1/9UrdHjDZc0eOU0HxOHoS78C69UD3JRMvzlJ7S79S2nTaWRA/whGCTV8o9e/N/1Va9YIV7Q4sOxD8VV4pCWOw==}
+    engines: {node: '>=12'}
+    dependencies:
+      cliui: 8.0.1
+      escalade: 3.1.1
+      get-caller-file: 2.0.5
+      require-directory: 2.1.1
+      string-width: 4.2.3
+      y18n: 5.0.8
+      yargs-parser: 21.1.1
+    dev: true
+
+  /yargs/17.7.2:
+    resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
     dependencies:
       cliui: 8.0.1

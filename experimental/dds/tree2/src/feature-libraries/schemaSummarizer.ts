@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreRuntime,
@@ -14,7 +15,6 @@ import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
 import {
@@ -161,16 +161,18 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
 	 * See TODO on `SharedTree.processCore`.
 	 */
-	public tryHandleOp(message: ISequencedDocumentMessage): boolean {
-		const op = message.contents as JsonCompatibleReadOnly;
-		if (isJsonObject(op) && op.type === "SchemaOp") {
-			assert(typeof op.data === "string", 0x6ca /* SchemaOps should have string data */);
-			const data = this.codec.decode(op.data);
+	public tryHandleOp(encodedOp: JsonCompatibleReadOnly): boolean {
+		const op = this.tryDecodeOp(encodedOp);
+		if (op !== undefined) {
 			// TODO: This does not correctly handle concurrency of schema edits.
-			this.inner.update(data);
+			this.inner.update(op);
 			return true;
 		}
 		return false;
+	}
+
+	public tryApplyStashedOp(encodedOp: JsonCompatibleReadOnly): boolean {
+		return this.tryHandleOp(encodedOp);
 	}
 
 	/**
@@ -224,5 +226,17 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 
 	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
 		return this.inner.treeSchema;
+	}
+
+	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
+		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
+			assert(
+				typeof encodedOp.data === "string",
+				0x6ca /* SchemaOps should have string data */,
+			);
+			return this.codec.decode(encodedOp.data);
+		}
+
+		return undefined;
 	}
 }

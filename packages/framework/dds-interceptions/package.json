@@ -60,7 +60,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -78,8 +78,6 @@
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"@types/random-js": "^1.0.31",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
@@ -90,7 +88,6 @@
 		"moment": "^2.21.0",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
-		"random-js": "^1.0.8",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
 	},

@@ -19,12 +19,10 @@ importers:
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
       '@types/lodash': ^4.14.119
-      '@types/mocha': ^10.0.0
       '@types/nconf': 0.0.37
       '@types/redis': ^2.8.10
       '@types/supertest': ^2.0.7
       async: ^3.2.2
-      concurrently: ^7.5.0
       copyfiles: ^2.4.1
       eslint: ~8.27.0
       eslint-plugin-eslint-comments: ~3.1.2
@@ -35,8 +33,6 @@ importers:
       eslint-plugin-unicorn: ~40.0.0
       eslint-plugin-unused-imports: ~2.0.0
       lerna: 5.6.2
-      mocha: ^10.1.0
-      nyc: ^15.1.0
       rimraf: ^3.0.2
       run-script-os: ^1.1.5
       supertest: ^3.3.0
@@ -52,12 +48,10 @@ importers:
       '@types/cors': 2.8.13
       '@types/debug': 4.1.7
       '@types/lodash': 4.14.194
-      '@types/mocha': 10.0.1
       '@types/nconf': 0.0.37
       '@types/redis': 2.8.32
       '@types/supertest': 2.0.12
       async: 3.2.4
-      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.27.0
       eslint-plugin-eslint-comments: 3.1.2_eslint@8.27.0
@@ -68,8 +62,6 @@ importers:
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
       lerna: 5.6.2
-      mocha: 10.2.0
-      nyc: 15.1.0
       rimraf: 3.0.2
       run-script-os: 1.1.6
       supertest: 3.4.2
@@ -87,7 +79,6 @@ importers:
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
       '@types/lodash': ^4.14.119
-      '@types/mocha': ^10.0.0
       '@types/nconf': 0.0.37
       '@types/node': ^18.17.1
       '@types/supertest': ^2.0.7
@@ -95,7 +86,7 @@ importers:
       async: ^3.2.2
       body-parser: ^1.17.2
       compression: ^1.7.3
-      concurrently: ^7.5.0
+      concurrently: ^8.2.1
       cors: ^2.8.5
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -109,9 +100,7 @@ importers:
       express: ^4.17.3
       ioredis: ^5.2.3
       lodash: ^4.17.19
-      mocha: ^10.1.0
       nconf: ^0.11.4
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^3.0.2
       supertest: ^3.3.0
@@ -140,13 +129,12 @@ importers:
       '@types/cors': 2.8.13
       '@types/debug': 4.1.7
       '@types/lodash': 4.14.194
-      '@types/mocha': 10.0.1
       '@types/nconf': 0.0.37
       '@types/node': 18.17.6
       '@types/supertest': 2.0.12
       '@types/uuid': 3.4.10
       async: 3.2.4
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       eslint-plugin-eslint-comments: 3.1.2_eslint@8.27.0
       eslint-plugin-import: 2.25.4_eslint@8.27.0
@@ -155,8 +143,6 @@ importers:
       eslint-plugin-react: 7.28.0_eslint@8.27.0
       eslint-plugin-unicorn: 40.0.0_eslint@8.27.0
       eslint-plugin-unused-imports: 2.0.0_eslint@8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 3.0.2
       supertest: 3.4.2
@@ -193,7 +179,7 @@ importers:
       axios-mock-adapter: ^1.19.0
       body-parser: ^1.17.2
       compression: ^1.7.3
-      concurrently: ^7.5.0
+      concurrently: ^8.2.1
       cors: ^2.8.5
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -259,7 +245,7 @@ importers:
       '@types/uuid': 3.4.10
       async: 3.2.4
       axios-mock-adapter: 1.21.4_axios@0.26.1
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       eslint-plugin-eslint-comments: 3.1.2_eslint@8.27.0
       eslint-plugin-import: 2.25.4_eslint@8.27.0
@@ -6089,6 +6075,22 @@ packages:
       rxjs: 7.8.1
       shell-quote: 1.8.1
       spawn-command: 0.0.2-1
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
+    dev: true
+
+  /concurrently/8.2.1:
+    resolution: {integrity: sha512-nVraf3aXOpIcNud5pB9M82p1tynmZkrSGQ1p6X/VY8cJ+2LMVqAgXsJxYYefACSHbTYlm92O1xuhdGTjwoEvbQ==}
+    engines: {node: ^14.13.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      date-fns: 2.30.0
+      lodash: 4.17.21
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
+      spawn-command: 0.0.2
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -13148,6 +13150,10 @@ packages:
       memory-pager: 1.5.0
     dev: false
     optional: true
+
+  /spawn-command/0.0.2:
+    resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
+    dev: true
 
   /spawn-command/0.0.2-1:
     resolution: {integrity: sha512-n98l9E2RMSJ9ON1AKisHzz7V42VDiBQGY6PB1BwRglz99wpVsSuGzQ+jOi6lFXBGVTCrRpltvjm+/XA+tpeJrg==}

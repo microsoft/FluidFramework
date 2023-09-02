@@ -477,11 +477,11 @@ export interface IUsageError extends IErrorBase {
 // @public
 export const enum LogLevel {
     // (undocumented)
-    default = 10,
+    default = 20,
     // (undocumented)
-    error = 20,
+    error = 30,
     // (undocumented)
-    verbose = 0
+    verbose = 10
 }
 
 // @public

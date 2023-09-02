@@ -15,7 +15,7 @@ importers:
       '@fluidframework/build-tools': ^0.22.0
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       lerna: 5.6.2
       mocha: ^10.2.0
@@ -30,7 +30,7 @@ importers:
       '@fluidframework/build-tools': 0.22.0_typescript@4.5.5
       '@microsoft/api-documenter': 7.22.21
       '@microsoft/api-extractor': 7.36.0
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       lerna: 5.6.2
       mocha: 10.2.0
@@ -47,7 +47,7 @@ importers:
       '@fluidframework/build-tools': ^0.22.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources-previous': npm:@fluidframework/gitresources@0.1040.1000
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -58,7 +58,7 @@ importers:
       '@fluidframework/build-tools': 0.22.0_typescript@4.5.5
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/gitresources-previous': /@fluidframework/gitresources/0.1040.1000
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -74,7 +74,7 @@ importers:
       '@fluidframework/server-kafka-orderer-previous': npm:@fluidframework/server-kafka-orderer@0.1040.1000
       '@fluidframework/server-services-core': workspace:~
       '@types/node': ^18.17.1
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
@@ -89,7 +89,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-kafka-orderer-previous': /@fluidframework/server-kafka-orderer/0.1040.1000
       '@types/node': 18.17.6
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -124,7 +124,7 @@ importers:
       async: ^3.2.2
       axios: ^0.26.0
       buffer: ^6.0.3
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       double-ended-queue: ^2.1.0-0
       eslint: ~8.27.0
       events: ^3.1.0
@@ -180,7 +180,7 @@ importers:
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       '@types/uuid': 9.0.2
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -210,7 +210,7 @@ importers:
       '@types/node': ^18.17.1
       assert: ^2.0.0
       async: ^3.2.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       events: ^3.1.0
       lodash: ^4.17.21
@@ -243,7 +243,7 @@ importers:
       '@types/lodash': 4.14.195
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -271,7 +271,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -312,7 +312,7 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.27.0
       mocha: 10.2.0
@@ -348,7 +348,7 @@ importers:
       '@types/uuid': ^9.0.2
       '@types/ws': ^6.0.1
       assert: ^2.0.0
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       debug: ^4.1.1
       double-ended-queue: ^2.1.0-0
       eslint: ~8.27.0
@@ -392,7 +392,7 @@ importers:
       '@fluidframework/server-memory-orderer-previous': /@fluidframework/server-memory-orderer/0.1040.1000
       '@types/mocha': 10.0.1
       '@types/uuid': 9.0.2
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -415,7 +415,7 @@ importers:
       '@types/assert': ^1.5.1
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       eslint: ~8.27.0
       events: ^3.1.0
@@ -439,7 +439,7 @@ importers:
       '@types/assert': 1.5.6
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.27.0
       mocha: 10.2.0
@@ -474,7 +474,7 @@ importers:
       '@types/nconf': ^0.10.2
       '@types/node': ^18.17.1
       commander: ^2.17.1
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       express: ^4.17.3
       ioredis: ^5.2.3
@@ -513,7 +513,7 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       '@types/nconf': 0.10.3
       '@types/node': 18.17.6
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -564,7 +564,7 @@ importers:
       body-parser: ^1.17.1
       bytes: ^3.0.0
       compression: ^1.7.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       cookie-parser: ^1.4.3
       cors: ^2.8.4
       eslint: ~8.27.0
@@ -644,7 +644,7 @@ importers:
       '@types/supertest': 2.0.12
       '@types/uuid': 9.0.2
       '@types/ws': 6.0.4
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -682,7 +682,7 @@ importers:
       '@types/uuid': ^9.0.2
       amqplib: ^0.10.2
       axios: ^0.26.0
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       debug: ^4.1.1
       eslint: ~8.27.0
       events: ^3.1.0
@@ -740,7 +740,7 @@ importers:
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       '@types/uuid': 9.0.2
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       ioredis-mock: 8.7.0_nevjj6jngqp4qe6g7n3cd7su4y
       mocha: 10.2.0
@@ -770,7 +770,7 @@ importers:
       '@types/node': ^18.17.1
       axios: ^0.26.0
       axios-mock-adapter: ^1.19.0
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       crc-32: 1.2.0
       debug: ^4.1.1
@@ -813,7 +813,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       axios-mock-adapter: 1.21.5_axios@0.26.1
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.27.0
       mocha: 10.2.0
@@ -836,7 +836,7 @@ importers:
       '@fluidframework/server-services-telemetry': workspace:~
       '@types/nconf': ^0.10.2
       '@types/node': ^18.17.1
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       debug: ^4.1.1
       eslint: ~8.27.0
       events: ^3.1.0
@@ -861,7 +861,7 @@ importers:
       '@fluidframework/build-tools': 0.22.0_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-core-previous': /@fluidframework/server-services-core/0.1040.1000
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       prettier: 2.6.2
       rimraf: 4.4.1
@@ -881,16 +881,13 @@ importers:
       '@fluidframework/server-test-utils': workspace:~
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
-      '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       events: ^3.1.0
       kafka-node: ^5.0.0
-      mocha: ^10.2.0
       nconf: ^0.12.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
@@ -914,13 +911,10 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       '@types/debug': 4.1.8
       '@types/lru-cache': 5.1.1
-      '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -941,16 +935,13 @@ importers:
       '@types/amqplib': ^0.5.17
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
-      '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       events: ^3.1.0
-      mocha: ^10.2.0
       nconf: ^0.12.0
       node-rdkafka: ^2.16.1
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
@@ -975,13 +966,10 @@ importers:
       '@types/amqplib': 0.5.17
       '@types/debug': 4.1.8
       '@types/lru-cache': 5.1.1
-      '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -998,13 +986,10 @@ importers:
       '@fluidframework/server-test-utils': workspace:~
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
-      '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
-      mocha: ^10.2.0
-      nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sinon: ^9.2.3
@@ -1022,13 +1007,10 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       '@types/debug': 4.1.8
       '@types/lru-cache': 5.1.1
-      '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
-      mocha: 10.2.0
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 9.2.4
@@ -1058,7 +1040,7 @@ importers:
       '@types/supertest': ^2.0.5
       axios: ^0.26.0
       body-parser: ^1.17.1
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       debug: ^4.1.1
       eslint: ~8.27.0
       events: ^3.1.0
@@ -1117,7 +1099,7 @@ importers:
       '@types/node': 18.17.6
       '@types/supertest': 2.0.12
       axios: 0.26.1_debug@4.3.4
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       express: 4.18.2
       mocha: 10.2.0
@@ -1139,7 +1121,7 @@ importers:
       '@types/node': ^18.17.1
       '@types/supertest': ^2.0.5
       '@types/uuid': ^9.0.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
       mocha: ^10.2.0
@@ -1167,7 +1149,7 @@ importers:
       '@types/node': 18.17.6
       '@types/supertest': 2.0.12
       '@types/uuid': 9.0.2
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -1199,7 +1181,7 @@ importers:
       '@types/node': ^18.17.1
       '@types/supertest': ^2.0.5
       '@types/uuid': ^9.0.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       debug: ^4.1.1
       eslint: ~8.27.0
       express: ^4.17.3
@@ -1256,7 +1238,7 @@ importers:
       '@types/node': 18.17.6
       '@types/supertest': 2.0.12
       '@types/uuid': 9.0.2
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -1285,7 +1267,7 @@ importers:
       '@types/sinon': ^9.0.9
       '@types/string-hash': ^1.1.1
       assert: ^2.0.0
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       debug: ^4.1.1
       eslint: ~8.27.0
       events: ^3.1.0
@@ -1323,7 +1305,7 @@ importers:
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       '@types/string-hash': 1.1.1
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.27.0
       mocha: 10.2.0
       nyc: 15.1.0
@@ -7703,6 +7685,22 @@ packages:
       rxjs: 7.8.1
       shell-quote: 1.8.1
       spawn-command: 0.0.2-1
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
+    dev: true
+
+  /concurrently/8.2.1:
+    resolution: {integrity: sha512-nVraf3aXOpIcNud5pB9M82p1tynmZkrSGQ1p6X/VY8cJ+2LMVqAgXsJxYYefACSHbTYlm92O1xuhdGTjwoEvbQ==}
+    engines: {node: ^14.13.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      date-fns: 2.30.0
+      lodash: 4.17.21
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
+      spawn-command: 0.0.2
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -14863,6 +14861,10 @@ packages:
     dependencies:
       memory-pager: 1.5.0
     optional: true
+
+  /spawn-command/0.0.2:
+    resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
+    dev: true
 
   /spawn-command/0.0.2-1:
     resolution: {integrity: sha512-n98l9E2RMSJ9ON1AKisHzz7V42VDiBQGY6PB1BwRglz99wpVsSuGzQ+jOi6lFXBGVTCrRpltvjm+/XA+tpeJrg==}

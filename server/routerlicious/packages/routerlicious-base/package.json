@@ -108,7 +108,7 @@
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
 		"@types/ws": "^6.0.1",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",
 		"nyc": "^15.1.0",

@@ -39,7 +39,7 @@
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-properties": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -75,7 +75,6 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"chai": "^4.2.0",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"easy-table": "^1.1.1",

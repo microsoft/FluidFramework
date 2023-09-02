@@ -17,7 +17,6 @@ import {
 	ContextuallyTypedNodeData,
 	buildForest,
 	cursorsFromContextualData,
-	defaultSchemaPolicy,
 	getEditableTreeContext,
 	FieldSchema,
 	SchemaBuilder,
@@ -244,18 +243,21 @@ export function buildTestSchema<T extends FieldSchema>(rootField: T) {
 	);
 }
 
-export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+export function getReadonlyEditableTreeContext(
+	forest: IEditableForest,
+	schema: SchemaData,
+): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, dummyEditor, createMockNodeKeyManager());
+	return getEditableTreeContext(forest, schema, dummyEditor, createMockNodeKeyManager());
 }
 
 export function setupForest<T extends FieldSchema>(
 	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
-	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
-	const forest = buildForest(schemaRepo);
+	const schemaRepo = new InMemoryStoredSchemaRepository(schema);
+	const forest = buildForest();
 	const root = cursorsFromContextualData(
 		{
 			schema: schemaRepo,
@@ -273,7 +275,7 @@ export function buildTestTree(
 ): EditableTreeContext {
 	const schema = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);
-	const context = getReadonlyEditableTreeContext(forest);
+	const context = getReadonlyEditableTreeContext(forest, schema);
 	return context;
 }
 

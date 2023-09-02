@@ -38,9 +38,9 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -76,7 +76,6 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
-		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
 		"eslint": "~8.6.0",
@@ -113,10 +112,6 @@
 				"library": "main"
 			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

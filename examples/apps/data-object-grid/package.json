@@ -79,7 +79,6 @@
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
@@ -135,10 +134,6 @@
 				"@fluid-example/prosemirror#build:esnext"
 			]
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

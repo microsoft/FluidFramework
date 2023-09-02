@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import * as git from "@fluidframework/gitresources";
 import {
 	IWholeSummaryPayload,

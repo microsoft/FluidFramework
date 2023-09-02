@@ -5,7 +5,7 @@
 ```ts
 
 import { EventEmitter } from 'events';
-import { EventEmitterEventType } from '@fluidframework/common-utils';
+import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -23,7 +23,9 @@ import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -272,6 +274,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 
 // @public
 export class MockLogger implements ITelemetryBaseLogger {
+    constructor(minLogLevel?: LogLevel | undefined);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -283,6 +286,8 @@ export class MockLogger implements ITelemetryBaseLogger {
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
+    // (undocumented)
+    readonly minLogLevel?: LogLevel | undefined;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
     // (undocumented)

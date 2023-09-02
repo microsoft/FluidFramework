@@ -20,6 +20,7 @@ import {
 	SimpleObservingDependent,
 	InMemoryStoredSchemaRepository,
 	SchemaData,
+	cloneSchemaData,
 } from "../../core";
 import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -57,7 +58,7 @@ describe("schematizeTree", () => {
 		): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
-					const storedSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+					const storedSchema = new InMemoryStoredSchemaRepository();
 					let count = 0;
 					initializeContent(storedSchema, content.schema, () => {
 						count++;
@@ -71,8 +72,8 @@ describe("schematizeTree", () => {
 					// Currently we do not have a function which tests that data is compatible with a given schema. When such a function is available
 					// this test should be updated to use it to greatly increase its validation.
 
-					const storedSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-					let previousSchema: SchemaData = storedSchema.clone();
+					const storedSchema = new InMemoryStoredSchemaRepository();
+					let previousSchema: SchemaData = cloneSchemaData(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
 					let currentData: NewFieldContent;
@@ -84,7 +85,7 @@ describe("schematizeTree", () => {
 							// TODO: check currentData compatible with previousSchema.
 							// TODO: check currentData compatible with storedSchema.
 
-							previousSchema = storedSchema.clone();
+							previousSchema = cloneSchemaData(storedSchema);
 						}),
 					);
 
@@ -100,7 +101,7 @@ describe("schematizeTree", () => {
 				});
 
 				it("has expected steps", () => {
-					const storedSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+					const storedSchema = new InMemoryStoredSchemaRepository();
 					const log: string[] = [];
 
 					storedSchema.registerDependent(
@@ -136,10 +137,7 @@ describe("schematizeTree", () => {
 			for (const [name, data] of testCases) {
 				it(name, () => {
 					const events = createEmitter<ViewEvents>();
-					const storedSchema = new InMemoryStoredSchemaRepository(
-						defaultSchemaPolicy,
-						data,
-					);
+					const storedSchema = new InMemoryStoredSchemaRepository(data);
 
 					// Error if modified
 					storedSchema.registerDependent(new SimpleObservingDependent(() => fail()));
@@ -155,7 +153,7 @@ describe("schematizeTree", () => {
 
 		it("upgrade works", () => {
 			const events = createEmitter<ViewEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
+			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 
 			schematize(events, storedSchema, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
@@ -166,7 +164,7 @@ describe("schematizeTree", () => {
 
 		it("upgrade schema errors when in AllowedUpdateType.None", () => {
 			const events = createEmitter<ViewEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
+			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 			assert.throws(() => {
 				schematize(events, storedSchema, {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -177,10 +175,7 @@ describe("schematizeTree", () => {
 
 		it("incompatible upgrade errors and does not modify schema", () => {
 			const events = createEmitter<ViewEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(
-				defaultSchemaPolicy,
-				schemaGeneralized,
-			);
+			const storedSchema = new InMemoryStoredSchemaRepository(schemaGeneralized);
 
 			let modified = false;
 			storedSchema.registerDependent(
@@ -203,7 +198,7 @@ describe("schematizeTree", () => {
 
 		it("errors at correct time when schema changes to not be compatible with view schema", () => {
 			const events = createEmitter<ViewEvents>();
-			const storedSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
+			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 
 			schematize(events, storedSchema, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,

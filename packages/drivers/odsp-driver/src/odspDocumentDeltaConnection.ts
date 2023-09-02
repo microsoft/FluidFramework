@@ -9,7 +9,8 @@ import {
 	IFluidErrorBase,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
