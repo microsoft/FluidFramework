@@ -16,7 +16,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
  * Property types that can be logged.
- * Includes extra types beyond TelemetryEventPropertyType (which will be deprecated in favor of this one)
+ * Includes extra types beyond TelemetryBaseEventPropertyType, which must be converted before sending to a base logger
  */
 export type TelemetryEventPropertyTypeExt =
 	| string
