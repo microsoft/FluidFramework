@@ -23,8 +23,6 @@ import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
-import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
