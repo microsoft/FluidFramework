@@ -107,13 +107,11 @@ export class NexusRunner implements IRunner {
 		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
-		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-			console.log("UPGRADE This is HTTPSERVER logger middleware");
-			console.log(socket.server._connections);
-			socket.on("error", (error) => {
-				console.log("SOCKET ERROR SS");
-				console.log(error);
-			});
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {    
+		    Lumberjack.info(`WS: Upgraded http request connections: ${socket.server._connections}`);
+		    socket.on("error", (error) => {
+			Lumberjack.error("WS: error", { bytesRead: socket.bytesRead, bytesWritten: socket.bytesWritten, error: error.toString() }, error);
+		    });
 		});
 
 		// Start token manager
