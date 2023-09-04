@@ -89,6 +89,31 @@ export interface IMapKeyAddLocalOpMetadata {
 }
 
 /**
+ * Metadata for an local 'delete' operation.
+ */
+export interface IMapKeyDeleteLocalOpMetadata {
+	/**
+	 * String identifier of the operation type.
+	 */
+	type: "delete";
+
+	/**
+	 * Unique identifier for the local operation.
+	 */
+	pendingMessageId: number;
+
+	/**
+	 * Local value prior to the edit.
+	 */
+	previousValue: ILocalValue;
+
+	/**
+	 * All associated pending message id's, or its position at `ackedInsertedKeys`
+	 */
+	previousPos: number | number[];
+}
+
+/**
  * Metadata for an local `clear` operation.
  */
 export interface IMapClearLocalOpMetadata {

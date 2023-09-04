@@ -72,6 +72,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/merge-tree": "workspace:~",
 		"path-browserify": "^1.0.1"
 	},
 	"devDependencies": {

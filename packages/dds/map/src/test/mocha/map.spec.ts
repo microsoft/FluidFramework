@@ -858,6 +858,109 @@ describe("Map", () => {
 				});
 			});
 		});
+
+		describe("Iteration Order", () => {
+			it("Iteration test 1", () => {
+				map1.set("1", 1);
+				map2.set("2", 1);
+				map1.set("2", 2);
+				map1.set("3", 1);
+
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
+			});
+
+			it("Iteration test 2", () => {
+				map1.set("1", 1);
+				map2.set("2", 1);
+				map1.set("2", 2);
+				map1.set("3", 1);
+				map1.delete("2");
+
+				assert.deepEqual(Array.from(map1.keys()), ["1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2"]);
+
+				containerRuntimeFactory.processAllMessages();
+				assert.deepEqual(Array.from(map1.keys()), ["1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "3"]);
+			});
+
+			it("Iteration Test 3", () => {
+				map1.set("1", 1);
+				map2.set("1", 2);
+				map2.set("2", 3);
+				map2.delete("1");
+				map2.set("1", 4);
+				map2.set("3", 5);
+
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
+				assert.deepEqual(Array.from(map2.keys()), ["1", "2", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+			});
+
+			it("Iteration Test 4", () => {
+				map2.set("1", 2);
+				map2.set("2", 3);
+				map2.delete("1");
+				map2.set("1", 4);
+				map2.set("3", 5);
+				map1.set("1", 1);
+
+				assert.deepEqual(Array.from(map1.keys()), ["1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(2);
+				assert.deepEqual(Array.from(map1.keys()), ["1", "2"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+
+				containerRuntimeFactory.processSomeMessages(1);
+				assert.deepEqual(Array.from(map1.keys()), ["2", "1", "3"]);
+				assert.deepEqual(Array.from(map2.keys()), ["2", "1", "3"]);
+			});
+		});
 	});
 
 	describe("Garbage Collection", () => {
