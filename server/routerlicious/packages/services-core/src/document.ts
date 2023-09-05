@@ -18,6 +18,15 @@ export interface IDocumentDetails {
 	value: IDocument;
 }
 
+export interface IDocumentStaticProperties {
+	// Schema version
+	version: string;
+	createTime: number;
+	documentId: string;
+	tenantId: string;
+	isEphemeralContainer?: boolean;
+}
+
 export interface IDocumentStorage {
 	getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
