@@ -738,11 +738,6 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
-	public bindToContext() {
-		this.makeLocallyVisibleFn();
-	}
-
 	protected bindRuntime(channel: IFluidDataStoreChannel) {
 		if (this.channel) {
 			throw new Error("Runtime already bound");

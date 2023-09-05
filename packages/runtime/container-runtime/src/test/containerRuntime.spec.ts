@@ -50,7 +50,7 @@ import {
 	defaultPendingOpsWaitTimeoutMs,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
+import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";
 
@@ -646,8 +646,7 @@ describe("Runtime", () => {
 						pendingStates: [
 							{
 								type: "message",
-								messageType: ContainerMessageType.BlobAttach,
-								content: {},
+								content: `{"type": "${ContainerMessageType.BlobAttach}", "contents": {}}`,
 							},
 						],
 					},
@@ -1323,8 +1322,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					JSON.parse((state?.pendingStates[0] as IPendingMessageNew).content).contents
-						.contents,
+					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
 					{
 						prop1: 1,
 					},

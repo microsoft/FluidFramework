@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime-definitions",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.7.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,6 +52,14 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
