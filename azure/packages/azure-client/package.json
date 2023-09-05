@@ -32,6 +32,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
+		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:local:run": "mocha --recursive 'dist/test/**/*.spec.js' --exit --timeout 10000",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:local:run",
@@ -40,10 +41,10 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
@@ -70,7 +71,6 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/uuid": "^9.0.2",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",

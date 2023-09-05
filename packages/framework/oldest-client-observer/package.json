@@ -33,7 +33,7 @@
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -54,9 +54,10 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0"
 	},
 	"devDependencies": {

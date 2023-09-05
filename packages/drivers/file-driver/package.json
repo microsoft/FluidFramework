@@ -12,7 +12,6 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -32,8 +31,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^1.1.0",
@@ -47,7 +47,6 @@
 		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.0.0-internal.6.1.1",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/node": "^16.18.38",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",

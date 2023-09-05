@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { MockLogger } from "@fluidframework/telemetry-utils-previous";
-import { createChildLogger, createMultiSinkLogger } from "../logger";
+import { strict as assert } from "assert";
+import { LogLevel } from "@fluidframework/core-interfaces";
+import { MultiSinkLogger, createChildLogger, createMultiSinkLogger } from "../logger";
+import { MockLogger } from "../mockLogger";
 
 describe("MultiSinkLogger", () => {
 	it("Pushes logs to all sinks", () => {
@@ -56,5 +58,66 @@ describe("MultiSinkLogger", () => {
 
 		logger1.assertMatch([{ category: "generic", eventName: "test", test: true }]);
 		logger2.assertMatch([{ category: "generic", eventName: "test" }]);
+	});
+
+	it("MultiSink logger set the logLevel to min logLevel of all loggers", () => {
+		const logger1 = new MockLogger(LogLevel.error);
+		const logger2 = new MockLogger(LogLevel.default);
+		const multiSink = createMultiSinkLogger({
+			loggers: [createChildLogger({ logger: logger1 }), logger2],
+		});
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.default,
+			"Min loglevel should be set correctly",
+		);
+
+		// Add logger with a log level as verbose
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger(LogLevel.verbose));
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.verbose,
+			"Min loglevel should be set correctly to verbose",
+		);
+	});
+
+	it("MultiSink logger set the logLevel to default if not supplied with a log level", () => {
+		const logger1 = new MockLogger();
+		const logger2 = new MockLogger();
+		const multiSink = createMultiSinkLogger({
+			loggers: [createChildLogger({ logger: logger1 }), logger2],
+		});
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.default,
+			"Min loglevel should be set correctly to default",
+		);
+	});
+
+	it("MultiSink logger set the logLevel correctly when no initial loggers are supplied", () => {
+		const multiSink = createMultiSinkLogger({
+			loggers: [],
+		});
+
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger());
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.default,
+			"Min loglevel should be set correctly to default",
+		);
+
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger(LogLevel.default));
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.default,
+			"Min loglevel should be set correctly to default",
+		);
+
+		(multiSink as MultiSinkLogger).addLogger(new MockLogger(LogLevel.verbose));
+		assert.strictEqual(
+			multiSink.minLogLevel,
+			LogLevel.verbose,
+			"Min loglevel should be set correctly to verbose",
+		);
 	});
 });

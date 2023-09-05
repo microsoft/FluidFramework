@@ -35,7 +35,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -56,7 +56,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
 		"random-js": "^1.0.8"
 	},
 	"devDependencies": {
@@ -68,10 +67,10 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/random-js": "^1.0.31",
+		"c8": "^7.7.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
