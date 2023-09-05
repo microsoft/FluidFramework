@@ -624,8 +624,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	 */
 	private async trySummarizeWithStaticAttempts(reason: SummarizeReason) {
 		const attemptOptions: ISummarizeOptions[] = [
-			{ refreshLatestAck: false, fullTree: false },
-			{ refreshLatestAck: true, fullTree: false },
+			{ downloadLatestStateAndClose: false, fullTree: false },
+			{ downloadLatestStateAndClose: true, fullTree: false },
 		];
 		let summaryAttempts = 0;
 		let summaryAttemptsPerPhase = 0;

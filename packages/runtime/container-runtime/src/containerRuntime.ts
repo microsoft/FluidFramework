@@ -2934,7 +2934,12 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
+		const {
+			fullTree = false,
+			finalAttempt = false,
+			downloadLatestStateAndClose,
+			summaryLogger,
+		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2948,7 +2953,7 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
 		let latestSnapshotVersionId: string | undefined;
-		if (refreshLatestAck) {
+		if (downloadLatestStateAndClose === true) {
 			return this.closeSummarizerOnSummaryStateStale(
 				createChildLogger({
 					logger: summaryNumberLogger,
