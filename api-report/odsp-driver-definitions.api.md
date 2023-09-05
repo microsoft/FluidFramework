@@ -203,7 +203,7 @@ export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) =>
 // @public (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @public
+// @public @deprecated
 export enum OdspErrorType {
     cannotCatchUp = "cannotCatchUp",
     fetchTimeout = "fetchTimeout",
