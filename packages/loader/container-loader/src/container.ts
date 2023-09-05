@@ -17,7 +17,7 @@ import {
 	IResponse,
 	IFluidRouter,
 	FluidObject,
-	LogLevels,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -1764,7 +1764,7 @@ export class Container
 				details: JSON.stringify(timings),
 			},
 			undefined,
-			LogLevels.verbose,
+			LogLevel.verbose,
 		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,

@@ -21,8 +21,7 @@ import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
-import { LogLevels } from '@fluidframework/core-interfaces';
-import { LogLevelType } from '@fluidframework/core-interfaces';
+import { LogLevel } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -221,8 +220,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 // @public
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevels.verbose | typeof LogLevels.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevels.verbose | typeof LogLevels.default): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
 // @public (undocumented)
@@ -274,7 +273,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 
 // @public
 export class MockLogger implements ITelemetryBaseLogger {
-    constructor(minLogLevel?: LogLevelType | undefined);
+    constructor(minLogLevel?: LogLevel | undefined);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -287,7 +286,7 @@ export class MockLogger implements ITelemetryBaseLogger {
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     // (undocumented)
-    readonly minLogLevel?: LogLevelType | undefined;
+    readonly minLogLevel?: LogLevel | undefined;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
     // (undocumented)

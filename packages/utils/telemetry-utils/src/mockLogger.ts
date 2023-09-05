@@ -6,7 +6,7 @@
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	LogLevelType,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes";
@@ -19,7 +19,7 @@ import { createChildLogger } from "./logger";
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
 
-	constructor(public readonly minLogLevel?: LogLevelType) {}
+	constructor(public readonly minLogLevel?: LogLevel) {}
 
 	clear(): void {
 		this.events = [];

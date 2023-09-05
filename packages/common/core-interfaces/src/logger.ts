@@ -48,7 +48,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 /**
  * Specify levels of the logs.
  */
-export const LogLevels = {
+export const LogLevel = {
 	verbose: 10, // To log any verbose event for example when you are debugging something.
 	default: 20, // Default log level
 	error: 30, // To log errors.
@@ -57,16 +57,16 @@ export const LogLevels = {
 /**
  * Specify a level to the log to filter out logs based on the level.
  */
-export type LogLevelType = typeof LogLevels[keyof typeof LogLevels];
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
-	minLogLevel?: LogLevelType;
+	minLogLevel?: LogLevel;
 }
 
 /**
@@ -116,7 +116,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * @param event - Telemetry event to send over
 	 * @param logLevel - optional level of the log.
 	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send information telemetry event
@@ -128,7 +128,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	sendTelemetryEvent(
 		event: ITelemetryGenericEvent,
 		error?: any,
-		logLevel?: typeof LogLevels.verbose | typeof LogLevels.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 
 	/**
@@ -149,6 +149,6 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEvent,
 		error?: any,
-		logLevel?: typeof LogLevels.verbose | typeof LogLevels.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 }

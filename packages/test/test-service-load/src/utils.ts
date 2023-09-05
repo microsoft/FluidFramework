@@ -11,7 +11,7 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent, LogLevelType, LogLevels } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
@@ -39,7 +39,7 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger implements ITelemetryBufferedLogger {
-	private static readonly loggerP = (minLogLevel?: LogLevelType) =>
+	private static readonly loggerP = (minLogLevel?: LogLevel) =>
 		new LazyPromise<FileLogger>(async () => {
 			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
 				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
@@ -58,7 +58,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 			profile: string;
 			runId: number | undefined;
 		},
-		minLogLevel: LogLevelType = LogLevels.default,
+		minLogLevel: LogLevel = LogLevel.default,
 	) {
 		const logger = await this.loggerP(minLogLevel);
 		return createChildLogger({
@@ -79,7 +79,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 
 	private constructor(
 		private readonly baseLogger?: ITelemetryBufferedLogger,
-		public readonly minLogLevel?: LogLevelType,
+		public readonly minLogLevel?: LogLevel,
 	) {}
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
@@ -181,7 +181,7 @@ export async function initialize(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
-	const minLogLevel = random.pick([LogLevels.verbose, LogLevels.default]);
+	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
 	const logger = await createLogger(
 		{
 			driverType: testDriver.type,

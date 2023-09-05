@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader, LogLevels } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
@@ -99,7 +99,7 @@ async function main() {
 			driverEndpointName: endpoint,
 			profile: profileName,
 		},
-		random.pick([LogLevels.verbose, LogLevels.default]),
+		random.pick([LogLevel.verbose, LogLevel.default]),
 	);
 
 	// this will enabling capturing the full stack for errors

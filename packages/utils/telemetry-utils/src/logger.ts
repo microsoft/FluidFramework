@@ -13,8 +13,7 @@ import {
 	TelemetryEventPropertyType,
 	ITaggedTelemetryPropertyType,
 	TelemetryEventCategory,
-	LogLevelType,
-	LogLevels,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
@@ -147,7 +146,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
+	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send a telemetry event with the logger
@@ -160,12 +159,12 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevels.verbose | typeof LogLevels.default = LogLevels.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
 			error,
-			event.category === "error" ? LogLevels.error : logLevel,
+			event.category === "error" ? LogLevel.error : logLevel,
 		);
 	}
 
@@ -179,7 +178,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	protected sendTelemetryEventCore(
 		event: ITelemetryGenericEventExt & { category: TelemetryEventCategory },
 		error?: unknown,
-		logLevel?: LogLevelType,
+		logLevel?: LogLevel,
 	): void {
 		const newEvent = convertToBaseEvent(event);
 		if (error !== undefined) {
@@ -210,7 +209,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				category: "error",
 			},
 			error,
-			LogLevels.error,
+			LogLevel.error,
 		);
 	}
 
@@ -225,7 +224,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevels.verbose | typeof LogLevels.default = LogLevels.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		const perfEvent = {
 			...event,
@@ -235,7 +234,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		this.sendTelemetryEventCore(
 			perfEvent,
 			error,
-			perfEvent.category === "error" ? LogLevels.error : logLevel,
+			perfEvent.category === "error" ? LogLevel.error : logLevel,
 		);
 	}
 
@@ -424,13 +423,13 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
-	public get minLogLevel(): LogLevelType | undefined {
+	public get minLogLevel(): LogLevel | undefined {
 		return this.baseLogger.minLogLevel;
 	}
 
-	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevelType): boolean {
-		const eventLogLevel = logLevel ?? LogLevels.default;
-		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevels.default;
+	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
+		const eventLogLevel = logLevel ?? LogLevel.default;
+		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
 		// Filter out in case event log level is below what is wanted in config.
 		return eventLogLevel < configLogLevel;
 	}
@@ -440,7 +439,7 @@ export class ChildLogger extends TelemetryLogger {
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (this.shouldFilterOutEvent(event, logLevel)) {
 			return;
 		}
@@ -474,7 +473,7 @@ export function createMultiSinkLogger(props: {
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[];
 	// This is minimum of minLlogLevel of all loggers.
-	private _minLogLevelOfAllLoggers: LogLevelType;
+	private _minLogLevelOfAllLoggers: LogLevel;
 
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
@@ -507,21 +506,21 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
-		this._minLogLevelOfAllLoggers = LogLevels.default;
+		this._minLogLevelOfAllLoggers = LogLevel.default;
 		this.calculateMinLogLevel();
 	}
 
-	public get minLogLevel(): LogLevelType {
+	public get minLogLevel(): LogLevel {
 		return this._minLogLevelOfAllLoggers;
 	}
 
 	private calculateMinLogLevel(): void {
 		if (this.loggers.length > 0) {
-			const logLevels: LogLevelType[] = [];
+			const logLevels: LogLevel[] = [];
 			for (const logger of this.loggers) {
-				logLevels.push(logger.minLogLevel ?? LogLevels.default);
+				logLevels.push(logger.minLogLevel ?? LogLevel.default);
 			}
-			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevelType;
+			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
 		}
 	}
 

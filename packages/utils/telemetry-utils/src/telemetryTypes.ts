@@ -5,7 +5,7 @@
 
 import {
 	ITelemetryBaseLogger,
-	LogLevels,
+	LogLevel,
 	TelemetryEventCategory,
 } from "@fluidframework/core-interfaces";
 
@@ -92,7 +92,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevels.verbose | typeof LogLevels.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 
 	/**
@@ -111,6 +111,6 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevels.verbose | typeof LogLevels.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 }
