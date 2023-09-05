@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,

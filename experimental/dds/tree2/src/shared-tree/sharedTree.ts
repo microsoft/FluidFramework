@@ -16,7 +16,6 @@ import { ICodecOptions, noopValidator } from "../codec";
 import {
 	InMemoryStoredSchemaRepository,
 	Anchor,
-	AnchorSet,
 	AnchorNode,
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
@@ -41,6 +40,8 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	buildChunkedForest,
+	makeTreeChunker,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -86,9 +87,12 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		const options = { jsonValidator: noopValidator, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema, new AnchorSet());
+		const options = { ...defaultSharedTreeOptions, ...optionsParam };
+		const schema = new InMemoryStoredSchemaRepository();
+		const forest =
+			options.forest === ForestType.Optimized
+				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
+				: buildForest();
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
@@ -211,7 +215,7 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if (!this.schema.tryHandleOp(message)) {
+		if (!this.schema.tryHandleOp(message.contents)) {
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
@@ -222,6 +226,12 @@ export class SharedTree
 	): void {
 		if (!this.schema.tryResubmitOp(content)) {
 			super.reSubmitCore(content, localOpMetadata);
+		}
+	}
+
+	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		if (!this.schema.tryApplyStashedOp(content)) {
+			return super.applyStashedOp(content);
 		}
 	}
 
@@ -237,7 +247,32 @@ export class SharedTree
 /**
  * @alpha
  */
-export interface SharedTreeOptions extends Partial<ICodecOptions> {}
+export interface SharedTreeOptions extends Partial<ICodecOptions> {
+	/**
+	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 */
+	forest?: ForestType;
+}
+
+/**
+ * Used to distinguish between different forest types.
+ * @alpha
+ */
+export enum ForestType {
+	/**
+	 * The "ObjectForest" forest type.
+	 */
+	Reference = 0,
+	/**
+	 * The "ChunkedForest" forest type.
+	 */
+	Optimized = 1,
+}
+
+export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
+	jsonValidator: noopValidator,
+	forest: ForestType.Reference,
+};
 
 /**
  * A channel factory that creates {@link ISharedTree}s.

@@ -21,9 +21,9 @@ import { IConsensusRegisterCollection } from "../interfaces";
 
 function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -45,7 +45,7 @@ function createCollectionForReconnection(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -240,7 +240,7 @@ describe("ConsensusRegisterCollection", () => {
 			beforeEach(() => {
 				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 				const response1 = createCollectionForReconnection(
-					"colllection1",
+					"collection1",
 					containerRuntimeFactory,
 				);
 				testCollection1 = response1.collection;
@@ -310,7 +310,7 @@ describe("ConsensusRegisterCollection", () => {
 				const winner = await writeP;
 				assert.equal(winner, true, "Write was not successful");
 
-				// Verify that the remote register collection recieved the write.
+				// Verify that the remote register collection received the write.
 				assert.equal(receivedKey, testKey, "The remote client did not receive the key");
 				assert.equal(
 					receivedValue,
@@ -333,7 +333,7 @@ describe("ConsensusRegisterCollection", () => {
 	});
 
 	describe("Garbage Collection", () => {
-		class GCRegistedCollectionProvider implements IGCTestProvider {
+		class GCRegisteredCollectionProvider implements IGCTestProvider {
 			private subCollectionCount = 0;
 			private _expectedRoutes: string[] = [];
 			private readonly collection1: IConsensusRegisterCollection;
@@ -406,6 +406,6 @@ describe("ConsensusRegisterCollection", () => {
 			}
 		}
 
-		runGCTests(GCRegistedCollectionProvider);
+		runGCTests(GCRegisteredCollectionProvider);
 	});
 });

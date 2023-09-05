@@ -168,7 +168,14 @@ export type CompressedSerializedInterval =
  * @sealed
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
+	/**
+	 * @deprecated Use the method `IInterval.compareEnd` instead
+	 */
 	compareEnds(a: TInterval, b: TInterval): number;
+
+	/**
+	 * @deprecated Use the method `IInterval.compareStart` instead
+	 */
 	compareStarts?(a: TInterval, b: TInterval): number;
 	/**
 	 *
