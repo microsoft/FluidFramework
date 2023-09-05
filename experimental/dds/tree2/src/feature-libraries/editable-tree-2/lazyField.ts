@@ -265,12 +265,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 }
 
 export class LazyValueField<TTypes extends AllowedTypes>
-	extends LazyField<typeof FieldKinds.sequence, TTypes>
+	extends LazyField<typeof FieldKinds.value, TTypes>
 	implements ValueField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.sequence, TTypes>,
+		schema: FieldSchema<typeof FieldKinds.value, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -297,18 +297,18 @@ export class LazyValueField<TTypes extends AllowedTypes>
 }
 
 export class LazyOptionalField<TTypes extends AllowedTypes>
-	extends LazyField<typeof FieldKinds.sequence, TTypes>
+	extends LazyField<typeof FieldKinds.optional, TTypes>
 	implements OptionalField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.sequence, TTypes>,
+		schema: FieldSchema<typeof FieldKinds.optional, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
 
-		makePropertyEnumerableOwn(this, "content", LazyValueField.prototype);
+		makePropertyEnumerableOwn(this, "content", LazyOptionalField.prototype);
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
@@ -343,7 +343,7 @@ type Builder = new <TTypes extends AllowedTypes>(
 
 const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
-	[FieldKinds.nodeKey, LazyOptionalField],
+	[FieldKinds.nodeKey, LazyOptionalField], // TODO
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.value, LazyValueField],

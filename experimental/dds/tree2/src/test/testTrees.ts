@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, ValueSchema } from "../core";
+import { strict as assert } from "assert";
+
+import { ITreeCursorSynchronous, JsonableTree, ValueSchema } from "../core";
 import {
 	Any,
 	FieldKinds,
 	FieldSchema,
 	FullSchemaPolicy,
+	Multiplicity,
 	SchemaAware,
 	SchemaBuilder,
 	SchemaLibrary,
@@ -62,10 +65,27 @@ function testField<T extends FieldSchema>(
 	};
 }
 
+function cursorsToFieldContent(
+	cursors: readonly ITreeCursorSynchronous[],
+	schema: FieldSchema,
+): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
+	if (schema.kind.multiplicity === Multiplicity.Sequence) {
+		return cursors;
+	}
+	if (cursors.length === 1) {
+		return cursors[0];
+	}
+	assert(cursors.length === 0);
+	return undefined;
+}
+
 export function treeContentFromTestTree(test: TestTree): TreeContent {
 	return {
 		schema: test.schemaData,
-		initialTree: test.treeFactory().map(singleTextCursor),
+		initialTree: cursorsToFieldContent(
+			test.treeFactory().map(singleTextCursor),
+			test.schemaData.rootFieldSchema,
+		),
 	};
 }
 

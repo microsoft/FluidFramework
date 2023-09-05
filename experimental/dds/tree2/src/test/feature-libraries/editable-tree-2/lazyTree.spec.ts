@@ -17,12 +17,22 @@ import {
 	DefaultEditBuilder,
 	PrimitiveValue,
 	SchemaBuilder,
+	TypedSchemaCollection,
 	createMockNodeKeyManager,
 	isPrimitiveValue,
+	jsonableTreeFromCursor,
+	singleMapTreeCursor,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/editableTreeContext";
-import { IEditableForest, TreeNavigationResult, rootFieldKey } from "../../../core";
+import {
+	FieldKey,
+	IEditableForest,
+	MapTree,
+	TreeNavigationResult,
+	TreeValue,
+	rootFieldKey,
+} from "../../../core";
 import { forestWithContent } from "../../utils";
 import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
@@ -32,14 +42,22 @@ import {
 	LazyValueField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-// eslint-disable-next-line import/no-internal-modules
-import { visitIterableTree, UntypedEntity } from "../../../feature-libraries/editable-tree-2";
+
+import {
+	visitIterableTree,
+	UntypedEntity,
+	UntypedField,
+	UntypedTree,
+	Skip,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/editable-tree-2";
+import { testTrees, treeContentFromTestTree } from "../../testTrees";
 
 const builder = new SchemaBuilder("lazyTree");
 const emptyStruct = builder.struct("empty", {});
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
+const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
 
-function getReadonlyContext(forest: IEditableForest): Context {
+function getReadonlyContext(forest: IEditableForest, schema: TypedSchemaCollection): Context {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
 	return new Context(schema, forest, dummyEditor, createMockNodeKeyManager());
@@ -47,7 +65,7 @@ function getReadonlyContext(forest: IEditableForest): Context {
 
 function contextWithContentReadonly(content: TreeContent): Context {
 	const forest = forestWithContent(content);
-	return getReadonlyContext(forest);
+	return getReadonlyContext(forest, content.schema);
 }
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -62,8 +80,8 @@ function collectPropertyNames(obj: object): Set<string> {
 
 describe("lazyTree", () => {
 	it("property names", () => {
-		const forest = forestWithContent({ schema, initialTree: {} });
-		const context = getReadonlyContext(forest);
+		const forest = forestWithContent({ schema: testSchema, initialTree: {} });
+		const context = getReadonlyContext(forest, testSchema);
 		const cursor = context.forest.allocateCursor();
 		assert.equal(
 			forest.tryMoveCursorToField({ fieldKey: rootFieldKey, parent: undefined }, cursor),
@@ -142,16 +160,74 @@ describe("lazyTree", () => {
 
 	describe("enumerable own properties", () => {
 		it("provide access to full tree data", () => {
-			const context = contextWithContentReadonly({ schema, initialTree: {} });
+			const context = contextWithContentReadonly({ schema: testSchema, initialTree: {} });
 
-			// assert.deepEqual(viaJson, {type:})
 			checkPropertyInvariants(context.root);
 			const viaJson = JSON.parse(JSON.stringify(context.root));
+			// assert.deepEqual(viaJson, {type:})
+		});
+
+		describe("test trees", () => {
+			for (const testTree of testTrees) {
+				describe(testTree.name, () => {
+					it("iterable traversal", () => {
+						const context = contextWithContentReadonly(
+							treeContentFromTestTree(testTree),
+						);
+
+						const mapTree = fieldToMapTree(context.root);
+						const jsonable = mapTree
+							.map(singleMapTreeCursor)
+							.map(jsonableTreeFromCursor);
+
+						const expected = testTree.treeFactory();
+						assert.deepEqual(jsonable, expected);
+					});
+					it("object traversal", () => {
+						const context = contextWithContentReadonly(
+							treeContentFromTestTree(testTree),
+						);
+
+						const viaJson = JSON.parse(JSON.stringify(context.root));
+						checkPropertyInvariants(context.root);
+						// assert.deepEqual(viaJson, {type:})
+					});
+				});
+			}
 		});
 	});
 });
 
+function fieldToMapTree(field: UntypedField): MapTree[] {
+	const results: MapTree[] = [];
+	for (const child of field) {
+		results.push(nodeToMapTree(child));
+	}
+	return results;
+}
+
+function nodeToMapTree(node: UntypedTree): MapTree {
+	const fields: Map<FieldKey, MapTree[]> = new Map();
+	for (const field of node) {
+		fields.set(field.key, fieldToMapTree(field));
+	}
+
+	return { fields, type: node.type, value: node.value };
+}
+
 function checkPropertyInvariants(root: UntypedEntity): void {
+	const treeValues = new Map<TreeValue, number>();
+	// Assert all nodes and fields traversed, and all values found.
+	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
+	visitIterableTree(root, (item) => {
+		if (item instanceof LazyLeaf) {
+			const value = item.value;
+			treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
+		}
+		return undefined;
+	});
+
+	// TODO: generic typed traverse first, collect leaves use in asserts.
 	// TODO: add extra items needed to traverse map nodes and in leaves.
 	const allowedPrototypes = new Set([
 		LazyMap.prototype,
@@ -160,17 +236,23 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 		LazySequence.prototype,
 		LazyValueField.prototype,
 		LazyOptionalField.prototype,
+		null,
+		Array.prototype,
 	]);
 
 	const visited: Set<unknown> = new Set([root]);
-	const primitives = new Map<PrimitiveValue, number>();
+	const primitivesAndValues = new Map<PrimitiveValue | TreeValue, number>();
 	// TODO: add cycle handler to not error on fluid handles.
-	visitOwnPropertiesRecursive(root, (parent, key, child) => {
+	visitOwnPropertiesRecursive(root, (parent, key, child): typeof Skip | undefined => {
 		assert(typeof child !== "function");
 		assert(typeof key !== "symbol");
 
 		if (typeof child === "object") {
-			// TODO: add exception to allow shared leaf values.
+			if (treeValues.has(child)) {
+				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
+				return Skip;
+			}
+
 			assert(!visited.has(child));
 			visited.add(child);
 
@@ -185,39 +267,33 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 				assert(typeof child === "string");
 				assert(root.context.schema.treeSchema.has(brand(child)));
 			} else {
-				primitives.set(child, (primitives.get(child) ?? 0) + 1);
+				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 			}
 		}
 	});
 
 	const unboxable = new Set([
+		LazyLeaf.prototype,
 		LazyFieldNode.prototype,
 		LazyValueField.prototype,
 		LazyOptionalField.prototype,
 	]);
 
-	const primitives2 = new Map<PrimitiveValue, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
-		if (item instanceof LazyLeaf) {
-			const value = item.value;
-			primitives2.set(value, (primitives2.get(value) ?? 0) + 1);
-		} else {
-			if (unboxable.has(Object.getPrototypeOf(item))) {
-				assert(visited.has(item));
-			}
+		if (!unboxable.has(Object.getPrototypeOf(item))) {
+			assert(primitivesAndValues.has(item) || visited.has(item));
 		}
-
 		return undefined;
 	});
 
-	assert.deepEqual(primitives, primitives2);
+	assert.deepEqual(primitivesAndValues, treeValues);
 }
 
 function visitOwnPropertiesRecursive(
 	root: unknown,
-	visitor: (parent: object, key: string | symbol, data: unknown) => void,
+	visitor: (parent: object, key: string | symbol, data: unknown) => undefined | typeof Skip,
 	cycleHandler: (item: object) => void = () => fail("cycle"),
 	stack: Set<unknown> = new Set(),
 ): void {
@@ -243,8 +319,9 @@ function visitOwnPropertiesRecursive(
 		const descriptor = descriptors[key];
 		if (descriptor.enumerable === true) {
 			const value = Reflect.get(root, key);
-			visitor(root, key, value);
-			visitOwnPropertiesRecursive(value, visitor, cycleHandler, stack);
+			if (visitor(root, key, value) !== Skip) {
+				visitOwnPropertiesRecursive(value, visitor, cycleHandler, stack);
+			}
 		}
 	}
 

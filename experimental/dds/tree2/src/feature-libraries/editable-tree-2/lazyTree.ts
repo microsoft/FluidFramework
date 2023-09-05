@@ -349,7 +349,8 @@ export class LazyMap<TSchema extends MapSchema>
 	public get asObject(): {
 		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
 	} {
-		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> = {};
+		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> =
+			Object.create(null);
 		for (const field of this) {
 			Object.defineProperty(record, field.key, {
 				// TODO: this needs to be unboxed!
@@ -435,23 +436,12 @@ function buildStructClass<TSchema extends StructSchema>(
 	anchorNode: AnchorNode,
 	anchor: Anchor,
 ) => LazyStruct<TSchema> {
-	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
-	class CustomStruct extends LazyStruct<TSchema> {
-		public constructor(
-			context: Context,
-			cursor: ITreeSubscriptionCursor,
-			anchorNode: AnchorNode,
-			anchor: Anchor,
-		) {
-			super(context, schema, cursor, anchorNode, anchor);
-		}
-	}
-
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
+	const ownPropertyMap: PropertyDescriptorMap = {};
 
 	for (const [key, _field] of schema.structFields) {
 		// TODO: custom field identifiers
-		propertyDescriptorMap[key] = {
+		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct) {
 				return this.getField(key);
@@ -471,6 +461,19 @@ function buildStructClass<TSchema extends StructSchema>(
 				fail("TODO: implement or remove this API");
 			},
 		};
+	}
+
+	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
+	class CustomStruct extends LazyStruct<TSchema> {
+		public constructor(
+			context: Context,
+			cursor: ITreeSubscriptionCursor,
+			anchorNode: AnchorNode,
+			anchor: Anchor,
+		) {
+			super(context, schema, cursor, anchorNode, anchor);
+			Object.defineProperties(this, ownPropertyMap);
+		}
 	}
 
 	Object.defineProperties(CustomStruct.prototype, propertyDescriptorMap);
