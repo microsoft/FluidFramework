@@ -420,9 +420,9 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 // @public
 export interface ITelemetryBaseLogger {
     // (undocumented)
-    minLogLevel?: LogLevel;
+    minLogLevel?: LogLevelType;
     // (undocumented)
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
 }
 
 // @public
@@ -441,7 +441,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 
 // @public
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevels.verbose | typeof LogLevels.default): void;
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevels.verbose | typeof LogLevels.default): void;
@@ -472,14 +472,14 @@ export interface IUsageError extends IErrorBase {
 }
 
 // @public
-export type LogLevel = typeof LogLevels[keyof typeof LogLevels];
-
-// @public
 export const LogLevels: {
     readonly verbose: 10;
     readonly default: 20;
     readonly error: 30;
 };
+
+// @public
+export type LogLevelType = typeof LogLevels[keyof typeof LogLevels];
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

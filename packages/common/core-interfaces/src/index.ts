@@ -73,5 +73,5 @@ export type {
 	TelemetryEventCategory,
 	TelemetryEventPropertyType,
 } from "./logger";
-export { LogLevel, LogLevels } from "./logger";
+export { LogLevelType, LogLevels } from "./logger";
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";

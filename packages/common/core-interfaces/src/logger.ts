@@ -57,16 +57,16 @@ export const LogLevels = {
 /**
  * Specify a level to the log to filter out logs based on the level.
  */
-export type LogLevel = typeof LogLevels[keyof typeof LogLevels];
+export type LogLevelType = typeof LogLevels[keyof typeof LogLevels];
 
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
  */
 export interface ITelemetryBaseLogger {
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
 
-	minLogLevel?: LogLevel;
+	minLogLevel?: LogLevelType;
 }
 
 /**
@@ -116,7 +116,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * @param event - Telemetry event to send over
 	 * @param logLevel - optional level of the log.
 	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevelType): void;
 
 	/**
 	 * Send information telemetry event
