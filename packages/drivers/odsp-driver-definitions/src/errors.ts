@@ -66,7 +66,7 @@ export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
  *
- * @deprecated Use {@link OdspErrorTypes} instead.
+ * @deprecated Use {@link (OdspErrorTypes:variable)} instead.
  */
 export enum OdspErrorType {
 	/**

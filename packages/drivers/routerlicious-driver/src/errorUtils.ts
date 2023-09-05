@@ -37,7 +37,7 @@ export type RouterliciousErrorTypes =
  * Routerlicious Error types
  * Different error types that may be thrown by the routerlicious driver
  *
- * @deprecated Use {@link RouterliciousErrorTypes} instead
+ * @deprecated Use {@link (RouterliciousErrorTypes:variable)} instead.
  */
 export enum RouterliciousErrorType {
 	/**
