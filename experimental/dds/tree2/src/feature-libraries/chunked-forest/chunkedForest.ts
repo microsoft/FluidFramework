@@ -110,8 +110,14 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
-			moveIn(index: number, toAttach: DetachedField): number {
-				this.forest.invalidateDependents();
+			moveIn(
+				index: number,
+				toAttach: DetachedField,
+				invalidateDependents: boolean = true,
+			): number {
+				if (invalidateDependents) {
+					this.forest.invalidateDependents();
+				}
 				const detachedKey = detachedFieldAsKey(toAttach);
 				const children = this.forest.roots.fields.get(detachedKey) ?? [];
 				this.forest.roots.fields.delete(detachedKey);
@@ -144,7 +150,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				const field = this.forest.newDetachedField();
 				this.forest.roots.fields.set(detachedFieldAsKey(field), chunks);
-				this.moveIn(index, field);
+				this.moveIn(index, field, false);
 			},
 			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
 				this.forest.invalidateDependents();
