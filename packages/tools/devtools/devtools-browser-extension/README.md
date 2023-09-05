@@ -111,6 +111,11 @@ To use a local build of this extension in your browser:
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
+## Inject telemetry key
+If you're manually releasing or testing the Devtools browser extension using a local build, set up your .env file based on a local template (e.g., dev-example.env). In automated pipeline builds, the telemetry key will be fetched from the "prague-key-vault" group in Azure Ops.
+
+For local tests, execute the command npm run `start:client:test`. This ensures the telemetry token is correctly integrated.
+
 ## Contribution Guidelines
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.

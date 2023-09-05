@@ -113,6 +113,7 @@
 		"copy-webpack-plugin": "^11.0.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
+		"dotenv-webpack": "^7.0.3",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~8.5.0",
 		"eslint-plugin-chai-expect": "~3.0.0",

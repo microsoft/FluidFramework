@@ -470,7 +470,7 @@ stages:
             # Auth to internal feed
             - task: Bash@3
               name: Initialize
-              displayName: Initialize .npmrc for telemetry logger
+              displayName: Initialize .npmrc and .env for telemetry logger
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}
@@ -490,6 +490,10 @@ stages:
                   echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
+
+                  echo Generating .env
+                  echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+                  cat ./packages/tools/devtools/devtools-browser-extension/.env
 
             - task: npmAuthenticate@0
               displayName: 'npm authenticate (internal feed)'

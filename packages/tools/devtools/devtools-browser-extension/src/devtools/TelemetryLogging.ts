@@ -10,6 +10,11 @@ import {
 	type ITelemetryBaseEvent,
 } from "@fluid-experimental/devtools-view";
 import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { AppInsightsCore, IExtendedConfiguration } from "@microsoft/1ds-core-js";
+import { PostChannel, IChannelConfiguration, IXHROverride } from "@microsoft/1ds-post-js";
+import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluid-experimental/devtools-view";
+import { ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 
@@ -78,11 +83,15 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			httpXHROverride: fetchHttpXHROverride,
 		};
 
+		// The instrumentation key is passed in via the webpack config, which is set up to inject it into the
+		// environment variable DEVTOOL_TELEMETRY_TOKEN. If it's not present, we'll just use an empty string.
+		const instrumentationKey = process.env.DEVTOOLS_TELEMETRY_TOKEN ?? "";
+
 		// Configure App insights core to send to collector
 		const coreConfig: IExtendedConfiguration = {
 			// A non-empty instrumentation key needs to provided for the logger to do anything.
 			// AB#5167 tracks how to inject one at build time to keep it out of source control.
-			instrumentationKey: "",
+			instrumentationKey,
 			loggingLevelConsole: 0, // Do not log to console
 			disableDbgExt: true, // Small perf optimization
 			extensions: [
@@ -98,6 +107,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		if ((coreConfig.instrumentationKey ?? "") !== "") {
 			this.enabled = true;
 			this.appInsightsCore.initialize(coreConfig, []);
+			console.log(formatDevtoolsScriptMessageForLogging(`Injected telemetry token.`));
 		}
 	}
 

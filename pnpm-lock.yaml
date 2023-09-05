@@ -10432,6 +10432,7 @@ importers:
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
+      dotenv-webpack: ^7.0.3
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-chai-expect: ~3.0.0
@@ -10508,6 +10509,7 @@ importers:
       copy-webpack-plugin: 11.0.0_webpack@5.83.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
+      dotenv-webpack: 7.1.1_webpack@5.83.0
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
@@ -28689,8 +28691,24 @@ packages:
       is-obj: 2.0.0
     dev: true
 
+  /dotenv-defaults/2.0.2:
+    resolution: {integrity: sha512-iOIzovWfsUHU91L5i8bJce3NYK5JXeAwH50Jh6+ARUdLiiGlYWfGw6UkzsYqaXZH/hjE/eCd/PlfM/qqyK0AMg==}
+    dependencies:
+      dotenv: 8.6.0
+    dev: true
+
   /dotenv-expand/5.1.0:
     resolution: {integrity: sha512-YXQl1DSa4/PQyRfgrv6aoNjhasp/p4qs9FjJ4q4cQk+8m4r6k4ZSiEyytKG8f8W9gi8WsQtIObNmKd+tMzNTmA==}
+    dev: true
+
+  /dotenv-webpack/7.1.1_webpack@5.83.0:
+    resolution: {integrity: sha512-xw/19VqHDkXALtBOJAnnrSU/AZDIQRXczAmJyp0lZv6SH2aBLzUTl96W1MVryJZ7okZ+djZS4Gj4KlZ0xP7deA==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      webpack: ^4 || ^5 || ^5.82.0
+    dependencies:
+      dotenv-defaults: 2.0.2
+      webpack: 5.83.0_webpack-cli@4.10.0
     dev: true
 
   /dotenv/8.6.0:
