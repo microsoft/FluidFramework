@@ -46,13 +46,18 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 }
 
 /**
- * Enum to specify a level to the log to filter out logs based on the level.
+ * Specify levels of the logs.
  */
-export const enum LogLevel {
-	verbose = 10, // To log any verbose event for example when you are debugging something.
-	default = 20, // Default log level
-	error = 30, // To log errors.
-}
+export const LogLevel = {
+	verbose: 10, // To log any verbose event for example when you are debugging something.
+	default: 20, // Default log level
+	error: 30, // To log errors.
+} as const;
+
+/**
+ * Specify a level to the log to filter out logs based on the level.
+ */
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.
@@ -123,7 +128,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	sendTelemetryEvent(
 		event: ITelemetryGenericEvent,
 		error?: any,
-		logLevel?: LogLevel.verbose | LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 
 	/**
@@ -144,6 +149,6 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEvent,
 		error?: any,
-		logLevel?: LogLevel.verbose | LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 }

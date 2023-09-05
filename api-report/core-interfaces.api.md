@@ -443,8 +443,8 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
 // @public
@@ -472,14 +472,14 @@ export interface IUsageError extends IErrorBase {
 }
 
 // @public
-export const enum LogLevel {
-    // (undocumented)
-    default = 20,
-    // (undocumented)
-    error = 30,
-    // (undocumented)
-    verbose = 10
-}
+export const LogLevel: {
+    readonly verbose: 10;
+    readonly default: 20;
+    readonly error: 30;
+};
+
+// @public
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

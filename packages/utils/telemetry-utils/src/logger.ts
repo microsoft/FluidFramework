@@ -159,7 +159,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
@@ -224,7 +224,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		const perfEvent = {
 			...event,
@@ -516,11 +516,11 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 	private calculateMinLogLevel(): void {
 		if (this.loggers.length > 0) {
-			const logLevels: number[] = [];
+			const logLevels: LogLevel[] = [];
 			for (const logger of this.loggers) {
 				logLevels.push(logger.minLogLevel ?? LogLevel.default);
 			}
-			this._minLogLevelOfAllLoggers = Math.min(...logLevels);
+			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
 		}
 	}
 
