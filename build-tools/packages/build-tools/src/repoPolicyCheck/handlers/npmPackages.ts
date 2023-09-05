@@ -742,4 +742,192 @@ export const handlers: Handler[] = [
 				: undefined;
 		},
 	},
+	{
+		name: "npm-package-json-test-scripts",
+		match,
+		handler: (file, root) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const packageDir = path.dirname(file);
+			const scripts = json.scripts;
+			if (
+				scripts !== undefined &&
+				Object.keys(scripts).some((name) => name.startsWith("test"))
+			) {
+				// Found test script
+				return undefined;
+			}
+
+			const testDir = path.join(packageDir, "src", "test");
+			if (fs.existsSync(testDir)) {
+				const info = fs.readdirSync(testDir, { withFileTypes: true });
+				if (
+					info.some(
+						(e) =>
+							path.extname(e.name) === ".ts" ||
+							(e.isDirectory() && e.name !== "types"),
+					)
+				) {
+					return "Test files exists but no test scripts";
+				}
+			}
+
+			const dep = ["mocha", "@types/mocha", "jest", "@types/jest"];
+			if (
+				(json.dependencies &&
+					Object.keys(json.dependencies).some((name) => dep.includes(name))) ||
+				(json.devDependencies &&
+					Object.keys(json.devDependencies).some((name) => dep.includes(name)))
+			) {
+				return `Package has one of "${dep.join()}" dependency but no test scripts`;
+			}
+		},
+	},
+	{
+		name: "npm-package-json-test-scripts-split",
+		match,
+		handler: (file, root) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const testScript = scripts["test"];
+
+			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
+
+			if (testScript === undefined) {
+				if (splitTestScriptNames.some((name) => scripts[name] !== undefined)) {
+					return "Missing 'test' scripts";
+				}
+				return undefined;
+			}
+
+			const actualSplitTestScriptNames = splitTestScriptNames.filter(
+				(name) => scripts[name] !== undefined,
+			);
+
+			if (actualSplitTestScriptNames.length === 0) {
+				if (!testScript.startsWith("echo ")) {
+					return "Missing split test scripts. The 'test' script must call one or more \"split\" scripts like 'test:mocha', 'test:jest', or 'test:realsvc'.";
+				}
+				return undefined;
+			}
+			const expectedTestScript = actualSplitTestScriptNames
+				.map((name) => `npm run ${name}`)
+				.join(" && ");
+			if (testScript !== expectedTestScript) {
+				return `Unexpected test script:\n\tactual: ${testScript}\n\texpected: ${expectedTestScript}`;
+			}
+		},
+	},
+	{
+		name: "npm-package-json-script-mocha-config",
+		match,
+		handler: (file, root) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const mochaScriptName = scripts["test:mocha"] !== undefined ? "test:mocha" : "test";
+			const mochaScript = scripts[mochaScriptName];
+
+			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
+				// skip irregular test script for now
+				return undefined;
+			}
+
+			const packageDir = path.dirname(file);
+			const mochaRcNames = [".mocharc", ".mocharc.js", ".mocharc.json", ".mocharc.cjs"];
+			const mochaRcName = mochaRcNames.find((name) =>
+				fs.existsSync(path.join(packageDir, name)),
+			);
+
+			if (mochaRcName === undefined) {
+				if (!mochaScript.includes(" --config ")) {
+					return "Missing config arguments";
+				}
+			}
+		},
+	},
+
+	{
+		name: "npm-package-json-script-jest-config",
+		match,
+		handler: (file, root) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			const jestScriptName = scripts["test:jest"] !== undefined ? "test:jest" : "test";
+			const jestScript = scripts[jestScriptName];
+
+			if (jestScript === undefined || !jestScript.startsWith("jest")) {
+				// skip irregular test script for now
+				return undefined;
+			}
+
+			const packageDir = path.dirname(file);
+			const jestFileName = ["jest.config.js", "jest.config.cjs"].find((name) =>
+				fs.existsSync(path.join(packageDir, name)),
+			);
+			if (jestFileName === undefined) {
+				return `Missing jest config file.`;
+			}
+
+			const jestConfigFile = path.join(packageDir, jestFileName);
+			const config = require(path.resolve(jestConfigFile));
+			if (config.reporters === undefined) {
+				return `Missing reporters in '${jestConfigFile}'`;
+			}
+
+			const expectedReporter = [
+				"default",
+				[
+					"jest-junit",
+					{
+						outputDirectory: "nyc",
+						outputName: "jest-junit-report.xml",
+					},
+				],
+			];
+
+			if (JSON.stringify(config.reporters) !== JSON.stringify(expectedReporter)) {
+				return `Unexpected reporters in '${jestConfigFile}'`;
+			}
+
+			if (json["jest-junit"] !== undefined) {
+				return `Extraneous jest-unit config in ${file}`;
+			}
+		},
+	},
 ];

@@ -7,12 +7,8 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	TypedEventEmitter,
-	assert,
-	performance,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryProperties,
@@ -2327,19 +2323,6 @@ export class Container
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
-			if (
-				typeof message.clientId === "string" &&
-				this.audience.getMember(message.clientId) === undefined
-			) {
-				// Right now this will just tell us if a signal comes form a client
-				// this client doesn't recognize. In the future we may decided to do something
-				// like disconnect and reconnect to refresh the audience, but we should see
-				// how often it hits before we decided to add that kind of recovery.
-				this.mc.logger.sendErrorEvent({
-					eventName: "SignalFromUnknownClient",
-					messageClientId: message.clientId,
-				});
-			}
 			this.runtime.processSignal(message, local);
 		}
 	}

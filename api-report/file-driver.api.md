@@ -28,7 +28,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {

@@ -49,9 +49,9 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  * Enum to specify a level to the log to filter out logs based on the level.
  */
 export const enum LogLevel {
-	verbose = 0, // To log any verbose event for example when you are debugging something.
-	default = 10, // Default log level
-	error = 20, // To log errors.
+	verbose = 10, // To log any verbose event for example when you are debugging something.
+	default = 20, // Default log level
+	error = 30, // To log errors.
 }
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 
 /**
  * Checks if response headers contains `www-authenticate` header and extracts claims that should be
