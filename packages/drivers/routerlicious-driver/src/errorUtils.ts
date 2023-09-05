@@ -99,7 +99,7 @@ export function createR11sNetworkError(
 			error = new AuthorizationError(errorMessage, undefined, undefined, props);
 			break;
 		case 404:
-			const errorType = RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError;
+			const errorType = RouterliciousErrorType.fileNotFoundOrAccessDeniedError;
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
 		case 429:
