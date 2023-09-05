@@ -21,8 +21,8 @@ import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
-import { LogLevel } from '@fluidframework/core-interfaces';
 import { LogLevels } from '@fluidframework/core-interfaces';
+import { LogLevelType } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -274,7 +274,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 
 // @public
 export class MockLogger implements ITelemetryBaseLogger {
-    constructor(minLogLevel?: LogLevel | undefined);
+    constructor(minLogLevel?: LogLevelType | undefined);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -287,7 +287,7 @@ export class MockLogger implements ITelemetryBaseLogger {
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     // (undocumented)
-    readonly minLogLevel?: LogLevel | undefined;
+    readonly minLogLevel?: LogLevelType | undefined;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
     // (undocumented)
