@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, RevisionTag, findCommonAncestor, tagChange } from "../rebase";
 
@@ -205,23 +205,33 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		// Rebuild the reversible commit trees off of the undo redo manager of the branch
 		// that was rebased onto.
-		let newHeadUndoable = baseUndoRedoManager.headUndoable;
-		let newHeadRedoable = baseUndoRedoManager.headRedoable;
+		let newHeadUndoable: ReversibleCommit<TChange> | undefined =
+			baseUndoRedoManager.headUndoable;
+		let newHeadRedoable: ReversibleCommit<TChange> | undefined =
+			baseUndoRedoManager.headRedoable;
 
 		// Distinguish which reversible stack each commit is in and add it to the stack.
 		for (const commit of newCommits) {
 			const type = originalUndoRedoManager.commitTypes.get(commit.revision);
 			if (type !== undefined) {
-				if (type === LocalCommitSource.Undo) {
-					newHeadRedoable = {
-						commit,
-						parent: newHeadRedoable,
-					};
-				} else {
-					newHeadUndoable = {
-						commit,
-						parent: newHeadUndoable,
-					};
+				switch (type) {
+					// Undo commits push a new head redoable commit to the redoable commit stack and pop from the
+					// undoable commit stack.
+					case LocalCommitSource.Undo:
+						newHeadUndoable = newHeadUndoable?.parent;
+						newHeadRedoable = {
+							commit,
+							parent: newHeadRedoable,
+						};
+						break;
+					// Redo commits pop from the redoable commit stack and all other commits push to the undoable commit stack.
+					case LocalCommitSource.Redo:
+						newHeadRedoable = newHeadRedoable?.parent;
+					default:
+						newHeadUndoable = {
+							commit,
+							parent: newHeadUndoable,
+						};
 				}
 			}
 		}

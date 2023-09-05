@@ -36,7 +36,7 @@
 		"test": "concurrently npm:test:jest npm:test:mocha",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest",
-		"test:jest:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:jest:coverage": "jest --coverage --ci",
 		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
@@ -49,7 +49,7 @@
 		"@fluentui/react-hooks": "^8.6.24",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools-core": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -91,7 +91,7 @@
 		"@types/testing-library__jest-dom": "^5.14.5",
 		"chai": "^4.2.0",
 		"chalk": "^2.4.2",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
@@ -124,10 +124,6 @@
 				"library": "main"
 			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

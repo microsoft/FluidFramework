@@ -32,6 +32,13 @@ parameters:
   default:
   - ci:test
 
+# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
+# Used to avoid the force merge limit of 100 result files.
+- name: testResultDirs
+  type: object
+  default:
+  - nyc
+
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -181,6 +188,7 @@ stages:
                 Lint=${{ parameters.taskLint }}
                 LintName: ${{ parameters.taskLintName }}
                 Test=${{ convertToJson(parameters.taskTest) }}
+                TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 PublishDocs=${{ parameters.publishDocs }}
                 TestCoverage=$(testCoverage)
@@ -356,14 +364,15 @@ stages:
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Test - Upload results
-          - task: PublishTestResults@2
-            displayName: Publish Test Results
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/*junit-report.xml'
-              searchFolder: ${{ parameters.buildDirectory }}/nyc
-              mergeTestResults: false
-            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+          - ${{ each testResultDir in parameters.testResultDirs }}:
+            - task: PublishTestResults@2
+              displayName: Publish Test Results in ${{ testResultDir }}
+              inputs:
+                testResultsFormat: 'JUnit'
+                testResultsFiles: '**/*junit-report.xml'
+                searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
+                mergeTestResults: false
+              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
           # Publish tinylicious log for troubleshooting
           - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
