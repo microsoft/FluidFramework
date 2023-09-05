@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -29,7 +29,6 @@ import {
 	NodeKeyIndex,
 	buildForest,
 	DefaultChangeFamily,
-	defaultSchemaPolicy,
 	getEditableTreeContext,
 	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
@@ -284,15 +283,15 @@ export interface ISharedTreeView extends AnchorLocator {
 export function createSharedTreeView(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 	changeFamily?: DefaultChangeFamily;
-	schema?: InMemoryStoredSchemaRepository;
+	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	nodeKeyManager?: NodeKeyManager;
 	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
-	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
+	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
+	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
 	const repairDataStoreProvider =
@@ -315,6 +314,7 @@ export function createSharedTreeView(args?: {
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
 		forest,
+		schema,
 		branch.editor,
 		nodeKeyManager,
 		brand(nodeKeyFieldKey),
@@ -420,7 +420,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		private readonly changeFamily: DefaultChangeFamily,
-		public readonly storedSchema: InMemoryStoredSchemaRepository,
+		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly context: EditableTreeContext,
 		private readonly nodeKeyManager: NodeKeyManager,
@@ -478,7 +478,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 
 	public fork(): SharedTreeView {
 		const anchors = new AnchorSet();
-		const storedSchema = this.storedSchema.clone();
+		// TODO: ensure editing this clone of the schema does the right thing.
+		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
 		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
 			forest,
@@ -488,6 +489,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
+			storedSchema,
 			branch.editor,
 			this.nodeKeyManager,
 			this.nodeKeyIndex.fieldKey,

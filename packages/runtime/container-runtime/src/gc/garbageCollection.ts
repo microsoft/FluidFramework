@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise, Timer } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -29,7 +28,7 @@ import {
 	RuntimeHeaders,
 } from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
-import { RefreshSummaryResult } from "../summary";
+import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -843,10 +842,9 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: RefreshSummaryResult): Promise<void> {
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
 		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 

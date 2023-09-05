@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";

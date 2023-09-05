@@ -5,7 +5,7 @@
 
 import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
