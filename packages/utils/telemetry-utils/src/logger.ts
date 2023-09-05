@@ -10,10 +10,10 @@ import {
 	ITelemetryGenericEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
-	TelemetryEventPropertyType,
-	ITaggedTelemetryPropertyType,
-	TelemetryEventCategory,
+	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
+	Tagged,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
@@ -24,12 +24,12 @@ import {
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging";
 import {
-	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
 	TelemetryEventPropertyTypeExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";
 
 export interface Memory {
@@ -54,7 +54,7 @@ export enum TelemetryDataTag {
 	UserData = "UserData",
 }
 
-export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
@@ -744,15 +744,15 @@ function convertToBaseEvent({
 /**
  * Takes in value, and does one of 4 things.
  * if value is of primitive type - returns the original value.
- * If the value is an array of primitives - returns a stringified version of the array.
- * If the value is an object of type ITaggedTelemetryPropertyType - returns the object
+ * If the value is a flat array or object - returns a stringified version of the array/object.
+ * If the value is an object of type Tagged<TelemetryEventPropertyType> - returns the object
  * with its values recursively converted to base property Type.
  * If none of these cases are reached - returns an error string
  * @param x - value passed in to convert to a base property type
  */
 export function convertToBasePropertyType(
-	x: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt,
-): TelemetryEventPropertyType | ITaggedTelemetryPropertyType {
+	x: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>,
+): TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType> {
 	return isTaggedTelemetryPropertyValue(x)
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),

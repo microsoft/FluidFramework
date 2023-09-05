@@ -12,9 +12,9 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
 import { ILoggingError } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ITaggedTelemetryPropertyType } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
@@ -22,8 +22,7 @@ import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
-import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { Tagged } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
@@ -148,7 +147,7 @@ export interface IConfigProviderBase {
 
 // @public
 export interface IFluidErrorAnnotations {
-    props?: ITelemetryProperties;
+    props?: ITelemetryBaseProperties;
 }
 
 // @public
@@ -182,12 +181,12 @@ export function isFluidError(error: unknown): error is IFluidErrorBase;
 export const isILoggingError: (x: unknown) => x is ILoggingError;
 
 // @public
-export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt;
+export function isTaggedTelemetryPropertyValue(x: Tagged<TelemetryEventPropertyTypeExt> | TelemetryEventPropertyTypeExt): x is Tagged<TelemetryEventPropertyTypeExt>;
 
 // @public
 export function isValidLegacyError(error: unknown): error is Omit<IFluidErrorBase, "errorInstanceId">;
 
-// @public
+// @public @deprecated
 export interface ITaggedTelemetryPropertyTypeExt {
     // (undocumented)
     tag: string;
@@ -247,7 +246,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @public
 export interface ITelemetryPropertiesExt {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
+    [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
 // @public (undocumented)
@@ -255,11 +254,11 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 
 // @public
 export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
-    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryProperties): void;
+    constructor(message: string, props?: ITelemetryBaseProperties, omitPropsFromLogging?: Set<string>);
+    addTelemetryProperties(props: ITelemetryBaseProperties): void;
     // (undocumented)
     get errorInstanceId(): string;
-    getTelemetryProperties(): ITelemetryProperties;
+    getTelemetryProperties(): ITelemetryBaseProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
     static typeCheck(object: unknown): object is LoggingError;
@@ -375,13 +374,16 @@ export enum TelemetryDataTag {
 }
 
 // @public
+export type TelemetryEventCategory = "generic" | "error" | "performance";
+
+// @public
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
     [key: string]: // Flat objects can have the same properties as the event itself
     string | number | boolean | undefined | (string | number | boolean)[];
 };
 
 // @public (undocumented)
-export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 // @public @deprecated
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
