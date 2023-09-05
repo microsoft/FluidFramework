@@ -21,7 +21,7 @@ import {
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { RouterliciousErrorType, throwR11sNetworkError } from "./errorUtils";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
@@ -147,7 +147,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 				// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 				// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
 				const err = errorMessage.includes("failed, reason: self signed certificate")
-					? new NonRetryableError(errorMessage, RouterliciousErrorType.sslCertError, {
+					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
 							driverVersion,
 					  })
 					: new GenericNetworkError(
