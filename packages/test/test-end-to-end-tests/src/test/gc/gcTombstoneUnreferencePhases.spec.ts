@@ -19,7 +19,8 @@ import {
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";

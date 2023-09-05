@@ -53,8 +53,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -69,7 +70,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"execa": "^5.1.1",

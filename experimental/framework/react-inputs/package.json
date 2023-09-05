@@ -31,8 +31,8 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -46,7 +46,6 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/node": "^16.18.38",
 		"@types/react": "^17.0.44",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",

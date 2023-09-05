@@ -74,7 +74,7 @@
 		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.1.0",

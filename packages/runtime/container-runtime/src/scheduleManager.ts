@@ -12,7 +12,8 @@ import {
 	extractSafePropertiesFromMessage,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";

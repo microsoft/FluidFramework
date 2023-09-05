@@ -35,7 +35,7 @@
 	},
 	"dependencies": {
 		"@fluid-tools/fluidapp-odsp-urlresolver": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
@@ -54,7 +54,6 @@
 		"@types/fs-extra": "^9.0.11",
 		"@types/node": "^16.18.38",
 		"buffer": "^6.0.3",
-		"concurrently": "^7.6.0",
 		"css-loader": "^1.0.0",
 		"eslint": "~8.6.0",
 		"fs-extra": "^9.1.0",
