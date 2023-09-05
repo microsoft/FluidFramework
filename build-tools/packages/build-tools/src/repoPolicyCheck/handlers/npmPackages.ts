@@ -797,7 +797,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file, root) => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
-			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that doesn't
+			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
 			let json;
 
