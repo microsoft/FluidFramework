@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	jsonArray,
 	jsonBoolean,
