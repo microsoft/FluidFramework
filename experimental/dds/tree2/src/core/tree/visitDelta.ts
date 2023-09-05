@@ -3,21 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import {
-	Mutable,
-	RangeMap,
-	brand,
-	extractFromOpaque,
-	getFirstFromRangeMap,
-	setInRangeMap,
-} from "../../util";
+import { unreachableCase } from "@fluidframework/core-utils";
+import { Mutable, brand, extractFromOpaque, makeArray } from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
-import { DetachedPlaceUpPath, DetachedRangeUpPath, NodeIndex, PlaceIndex } from "./pathTree";
+import { DetachedPlaceUpPath, DetachedRangeUpPath, NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
-import { IdAllocator, idAllocatorFromMaxId } from "../../feature-libraries";
 
 /**
  * Implementation notes:
@@ -88,7 +80,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 	const insertToRootId: Map<Delta.Insert, ForestRootId> = new Map();
 	const creations: Map<Delta.Insert, ForestRootId> = new Map();
 	const rootTreesDetachPass: Map<ForestRootId, Delta.FieldMarks> = new Map();
-	const rootTransfers: Map<ForestRootId, ForestRootId> = new Map();
+	const rootTransfersDetachPass: Map<ForestRootId, ForestRootId> = new Map();
 	const detachConfig: PassConfig = {
 		func: detachPass,
 		modsToMovedTrees,
@@ -96,7 +88,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 		insertToRootId,
 		creations,
 		rootTrees: rootTreesDetachPass,
-		rootTransfers,
+		rootTransfers: rootTransfersDetachPass,
 	};
 	visitFieldMarks(delta, visitor, detachConfig);
 	// Fixed point iteration until we have no more detached roots to execute the detach pass on.
@@ -106,7 +98,9 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 			for (let i = 0; i < insert.content.length; i += 1) {
 				const root: ForestRootId = brand(firstRoot + i);
 				const field = treeIndex.toFieldKey(root);
-				visitor.create(brand({ field, index: 0 }), insert.content.slice(i, i + 1));
+				visitor.enterField(field);
+				visitor.create(0, insert.content.slice(i, i + 1));
+				visitor.exitField(field);
 			}
 		}
 		for (const [root, modifications] of rootTreesDetachPass) {
@@ -118,6 +112,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 		}
 	}
 	const rootTreesAttachPass: Map<ForestRootId, Delta.FieldMarks> = new Map();
+	const rootTransfersAttachPass: Map<ForestRootId, ForestRootId> = new Map();
 	const attachConfig: PassConfig = {
 		func: attachPass,
 		modsToMovedTrees,
@@ -125,22 +120,22 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 		insertToRootId,
 		creations,
 		rootTrees: rootTreesAttachPass,
-		rootTransfers,
+		rootTransfers: rootTransfersAttachPass,
 	};
 	visitFieldMarks(delta, visitor, attachConfig);
-	while (rootTransfers.size > 0 || rootTreesAttachPass.size > 0) {
-		for (const [source, destination] of rootTransfers) {
-			const field = treeIndex.toFieldKey(destination);
-			visitor.enterField(field);
-			const newContentField = treeIndex.toFieldKey(brand(source));
+	while (rootTransfersAttachPass.size > 0 || rootTreesAttachPass.size > 0) {
+		for (const [source, destination] of rootTransfersAttachPass) {
+			rootTransfersAttachPass.delete(source);
+			const sourceField = treeIndex.toFieldKey(source);
+			const destinationField = treeIndex.toFieldKey(destination);
+			visitor.enterField(sourceField);
 			visitor.replace(
-				brand({ field: newContentField, start: 0, end: 1 }),
-				0,
-				0,
 				undefined,
+				{ start: 0, end: 1 },
+				brand({ field: destinationField, index: 0 }),
 				ReplaceKind.CellPerfect,
 			);
-			visitor.exitField(field);
+			visitor.exitField(sourceField);
 		}
 		for (const [root, modifications] of rootTreesAttachPass) {
 			rootTreesAttachPass.delete(root);
@@ -159,8 +154,8 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
  */
 export interface DeltaVisitor {
 	free(): void;
-	create(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void;
-	destroy(index: DetachedRangeUpPath): void;
+	create(index: PlaceIndex, content: Delta.ProtoNodes): void;
+	destroy(range: Range): void;
 
 	/**
 	 *
@@ -171,8 +166,7 @@ export interface DeltaVisitor {
 	 */
 	replace(
 		newContentSource: DetachedRangeUpPath | undefined,
-		oldContentIndex: PlaceIndex,
-		oldContentCount: number,
+		oldContent: Range,
 		oldContentDestination: DetachedPlaceUpPath | undefined,
 		kind: ReplaceKind,
 	): void;
@@ -238,7 +232,6 @@ function visitModify(
 }
 
 interface Replace {
-	readonly count: number;
 	/**
 	 * When set, indicates that some pre-existing content is being detached.
 	 */
@@ -266,70 +259,104 @@ interface Replace {
 	};
 }
 
-function asReplace(
+function offsetDetachId(detachId: Delta.DetachedNodeId, offset: number): Delta.DetachedNodeId {
+	return {
+		...detachId,
+		minor: detachId.minor + offset,
+	};
+}
+
+function asReplaces(
 	mark: Exclude<Delta.Mark, number | Delta.Modify<any>>,
 	config: PassConfig,
-): Replace {
+): Replace[] {
 	// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 	const type = mark.type;
 	switch (type) {
 		case Delta.MarkType.Remove: {
-			const { root } = config.treeIndex.getOrCreateEntry(mark.detachId);
-			return {
-				count: mark.count,
-				oldContent: { fields: mark.fields, destination: root },
-			};
+			return makeArray(mark.count, (i) => {
+				const { root } = config.treeIndex.getOrCreateEntry(
+					offsetDetachId(mark.detachId, i),
+				);
+				return {
+					oldContent: { fields: mark.fields, destination: root },
+				};
+			});
 		}
 		case Delta.MarkType.MoveOut: {
-			const replace: Mutable<Replace> = { count: mark.count };
 			if (mark.detachedNodeId === undefined) {
 				const minor = extractFromOpaque(mark.moveId);
-				const { root } = config.treeIndex.getOrCreateEntry({ minor });
-				// TODO: avoid atomizing moves
-				for (let i = 1; i < mark.count; i += 1) {
-					config.treeIndex.getOrCreateEntry({ major: "move", minor: minor + 1 });
-				}
-				replace.oldContent = { fields: mark.fields, destination: root };
+				return makeArray(mark.count, (i) => {
+					const detachId = {
+						major: "move",
+						minor: minor + i,
+					};
+					const { root } = config.treeIndex.getOrCreateEntry(detachId);
+					return {
+						oldContent: { fields: mark.fields, destination: root },
+					};
+				});
 			}
-			return replace;
-		}
-		case Delta.MarkType.Insert: {
-			const replace: Mutable<Replace> = { count: mark.content.length };
-			if (mark.detachId === undefined) {
-				const newContentSource = ensureCreation(mark, config);
-				replace.newContent = { fields: mark.fields, source: newContentSource };
-			}
-			if (mark.oldContent !== undefined) {
-				// Content is being replaced
-				const { root: oldContentDestination } = config.treeIndex.getOrCreateEntry(
-					mark.oldContent.detachId,
-				);
-				replace.oldContent = {
-					fields: mark.oldContent.fields,
-					destination: oldContentDestination,
-				};
-			}
-			return replace;
+			return [];
 		}
 		case Delta.MarkType.MoveIn: {
 			const minor = extractFromOpaque(mark.moveId);
-			const { root } = config.treeIndex.getOrCreateEntry({ major: "move", minor });
-			return { count: mark.count, newContent: { source: root } };
+			return makeArray(mark.count, (i) => {
+				const detachId = {
+					major: "move",
+					minor: minor + i,
+				};
+				const { root } = config.treeIndex.getOrCreateEntry(detachId);
+				return { newContent: { source: root } };
+			});
+		}
+		case Delta.MarkType.Insert: {
+			if (mark.detachId === undefined || mark.oldContent !== undefined) {
+				const newContentSource = ensureCreation(mark, config);
+				return makeArray(mark.content.length, (i) => {
+					const replace: Mutable<Replace> = {};
+					if (mark.detachId === undefined) {
+						replace.newContent = {
+							fields: mark.fields,
+							source: brand(newContentSource + i),
+						};
+					}
+					if (mark.oldContent !== undefined) {
+						// Content is being replaced
+						const { root: oldContentDestination } = config.treeIndex.getOrCreateEntry(
+							offsetDetachId(mark.oldContent.detachId, i),
+						);
+						replace.oldContent = {
+							fields: mark.oldContent.fields,
+							destination: oldContentDestination,
+						};
+					}
+					return replace;
+				});
+			}
+			return [];
 		}
 		case Delta.MarkType.Restore: {
-			const replace: Mutable<Replace> = { count: mark.count };
-			if (mark.newContent.detachId === undefined) {
-				const { root: restoredRoot } = config.treeIndex.getOrCreateEntry(
-					mark.newContent.restoreId,
-				);
-				const newContent = { source: restoredRoot, fields: mark.fields };
-				replace.newContent = newContent;
+			if (mark.newContent.detachId === undefined || mark.oldContent !== undefined) {
+				return makeArray(mark.count, (i) => {
+					const replace: Mutable<Replace> = {};
+					if (mark.newContent.detachId === undefined) {
+						const { root: restoredRoot } = config.treeIndex.getOrCreateEntry(
+							offsetDetachId(mark.newContent.restoreId, i),
+						);
+						const newContent = { source: restoredRoot, fields: mark.fields };
+						replace.newContent = newContent;
+					}
+					if (mark.oldContent !== undefined) {
+						const { root } = config.treeIndex.getOrCreateEntry(
+							offsetDetachId(mark.oldContent.detachId, i),
+						);
+						replace.oldContent = { destination: root, fields: mark.oldContent.fields };
+					}
+					return replace;
+				});
 			}
-			if (mark.oldContent !== undefined) {
-				const { root } = config.treeIndex.getOrCreateEntry(mark.oldContent.detachId);
-				replace.oldContent = { destination: root, fields: mark.oldContent.fields };
-			}
-			return replace;
+			return [];
 		}
 		default:
 			unreachableCase(type);
@@ -391,6 +418,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 		case Delta.MarkType.MoveIn: {
 			nodeId = mark.detachId;
 			fields = config.modsToMovedTrees.get(mark.moveId);
+			// Handles moves whose content is being removed after the move
 			if (mark.detachId !== undefined) {
 				const minor = extractFromOpaque(mark.moveId);
 				const sourceNodeId = { major: "move", minor };
@@ -458,25 +486,25 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 				if (mark.type === Delta.MarkType.MoveOut && mark.fields !== undefined) {
 					config.modsToMovedTrees.set(mark.moveId, mark.fields);
 				}
-				const { oldContent, newContent, count } = asReplace(mark, config);
-				if (oldContent !== undefined) {
-					visitModify(index, oldContent.fields, visitor, config);
-					if (newContent !== undefined) {
-						// This a simple detach
-						const oldRoot = oldContent.destination;
-						for (let i = 0; i < count; i += 1) {
-							const field = config.treeIndex.toFieldKey(brand(oldRoot + i));
+				const replaces = asReplaces(mark, config);
+				for (const { oldContent, newContent } of replaces) {
+					if (oldContent !== undefined) {
+						visitModify(index, oldContent.fields, visitor, config);
+						if (newContent === undefined) {
+							// This a simple detach
+							const oldRoot = oldContent.destination;
+							const field = config.treeIndex.toFieldKey(brand(oldRoot));
 							visitor.replace(
 								undefined,
-								index,
-								1,
+								{ start: index, end: index + 1 },
 								brand({ field, index: 0 }),
 								ReplaceKind.CellPerfect,
 							);
+						} else {
+							// This really is a replace.
+							// Delay the detach until we can do it during the attach pass.
+							index += 1;
 						}
-					} else {
-						// Don't detach if this really is a replace so we can do it in one operation during the attach pass
-						index += count;
 					}
 				}
 			}
@@ -498,39 +526,33 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					index += 1;
 				}
 			} else {
-				const { oldContent, newContent, count } = asReplace(mark, config);
-				if (newContent !== undefined) {
-					if (oldContent !== undefined) {
-						// This is a true replace.
+				const replaces = asReplaces(mark, config);
+				for (const { oldContent, newContent } of replaces) {
+					if (newContent !== undefined) {
 						const newRoot = newContent.source;
-						const oldRoot = oldContent.destination;
-						for (let i = 0; i < count; i += 1) {
-							const newContentField = config.treeIndex.toFieldKey(brand(newRoot + i));
-							const oldContentField = config.treeIndex.toFieldKey(brand(oldRoot + i));
+						const newContentField = config.treeIndex.toFieldKey(newRoot);
+						if (oldContent !== undefined) {
+							// This is a true replace.
+							const oldRoot = oldContent.destination;
+							const oldContentField = config.treeIndex.toFieldKey(oldRoot);
 							visitor.replace(
 								brand({ field: newContentField, start: 0, end: 1 }),
-								index + i,
-								1,
+								{ start: index, end: index + 1 },
 								brand({ field: oldContentField, index: 0 }),
 								ReplaceKind.CellPerfect,
 							);
-						}
-					} else {
-						// This a simple attach
-						const newRoot = newContent.source;
-						for (let i = 0; i < count; i += 1) {
-							const newContentField = config.treeIndex.toFieldKey(brand(newRoot + i));
+						} else {
+							// This a simple attach
 							visitor.replace(
 								brand({ field: newContentField, start: 0, end: 1 }),
-								index + i,
-								1,
+								{ start: index, end: index },
 								undefined,
 								ReplaceKind.CellPerfect,
 							);
 						}
+						visitModify(index, newContent.fields, visitor, config);
+						index += 1;
 					}
-					visitModify(index, newContent.fields, visitor, config);
-					index += count;
 				}
 			}
 		}

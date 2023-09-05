@@ -73,22 +73,24 @@ export type AttachedRangeUpPath = Brand<RangeUpPath, "AttachedRangeUpPath">;
  */
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
-/**
- * A possibly empty range of nodes in a field.
- * This object only characterizes the location of the range, it does not own/contain the nodes in the range.
- */
-export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath> {
+export interface Range {
 	/**
-	 * The location before the first node in the path.
+	 * The location before the first node.
 	 * Must be less than or equal to `end`.
 	 */
 	readonly start: PlaceIndex;
 	/**
-	 * The location after the last node in the path.
+	 * The location after the last node.
 	 * Must be greater than or equal to `start`.
 	 */
 	readonly end: PlaceIndex;
 }
+
+/**
+ * A possibly empty range of nodes in a field.
+ * This object only characterizes the location of the range, it does not own/contain the nodes in the range.
+ */
+export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath>, Range {}
 
 /**
  * A place in a field.

@@ -16,7 +16,14 @@ import {
 	brandedSlot,
 } from "../../util";
 import { FieldKey } from "../schema-stored";
-import { DetachedPlaceUpPath, DetachedRangeUpPath, PlaceIndex, UpPath } from "./pathTree";
+import {
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
+	NodeIndex,
+	PlaceIndex,
+	UpPath,
+	Range,
+} from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor, ReplaceKind } from "./visitPath";
 import { DeltaVisitor } from "./visitDelta";
@@ -596,12 +603,11 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				);
 				this.anchorSet.activeVisitor = undefined;
 			},
-			create(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void {},
-			destroy(index: DetachedRangeUpPath): void {},
+			create(index: PlaceIndex, content: Delta.ProtoNodes): void {},
+			destroy(range: Range): void {},
 			replace(
 				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentIndex: PlaceIndex,
-				oldContentCount: number,
+				oldContentRange: Range,
 				oldContentDestination: DetachedPlaceUpPath | undefined,
 				kind: ReplaceKind,
 			): void {},

@@ -5,7 +5,7 @@
 
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
-import { DetachedPlaceUpPath, DetachedRangeUpPath, NodeIndex, PlaceIndex } from "./pathTree";
+import { DetachedPlaceUpPath, DetachedRangeUpPath, NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
 import { IdAllocator, idAllocatorFromMaxId } from "../../feature-libraries";
@@ -69,19 +69,17 @@ export function announceVisitor(visitor: AnnouncedVisitor): DeltaVisitor {
  */
 export interface AnnouncedVisitor extends DeltaVisitor {
 	free(): void;
-	afterCreate(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void;
-	beforeDestroy(index: DetachedRangeUpPath): void;
+	afterCreate(index: PlaceIndex, content: Delta.ProtoNodes): void;
+	beforeDestroy(range: Range): void;
 	beforeReplace(
 		newContentSource: DetachedRangeUpPath | undefined,
-		oldContentIndex: PlaceIndex,
-		oldContentCount: number,
+		oldContent: Range,
 		oldContentDestination: DetachedPlaceUpPath | undefined,
 		kind: ReplaceKind,
 	): void;
 	afterReplace(
 		newContentSource: DetachedRangeUpPath | undefined,
-		oldContentIndex: PlaceIndex,
-		oldContentCount: number,
+		oldContent: Range,
 		oldContentDestination: DetachedPlaceUpPath | undefined,
 		kind: ReplaceKind,
 	): void;

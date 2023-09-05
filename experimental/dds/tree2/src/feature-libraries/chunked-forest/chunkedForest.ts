@@ -28,6 +28,7 @@ import {
 	DetachedRangeUpPath,
 	PlaceIndex,
 	ReplaceKind,
+	Range,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -140,12 +141,11 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
-			create(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void {},
-			destroy(index: DetachedRangeUpPath): void {},
+			create(index: PlaceIndex, content: Delta.ProtoNodes): void {},
+			destroy(range: Range): void {},
 			replace(
 				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentIndex: PlaceIndex,
-				oldContentCount: number,
+				oldContent: Range,
 				oldContentDestination: DetachedPlaceUpPath | undefined,
 				kind: ReplaceKind,
 			): void {},

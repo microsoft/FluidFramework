@@ -32,8 +32,9 @@ import {
 	DeltaVisitor,
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
+	Range,
 	PlaceIndex,
-	ReplaceKind,
+	NodeIndex,
 } from "../../core";
 import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
@@ -114,25 +115,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		// This pattern could be generalized/formalized with a concept of an exclusive cursor,
 		// which can edit, but is the only cursor allowed at the time.
 
-		const moves: Map<Delta.MoveId, DetachedField> = new Map();
 		const cursor: Cursor = this.allocateCursor();
 		cursor.setToAboveDetachedSequences();
-		const moveIn = (index: number, toAttach: DetachedField, moveInCursor: Cursor): number => {
-			const detachedKey = detachedFieldAsKey(toAttach);
-			const children = getMapTreeField(this.roots, detachedKey, false);
-			this.roots.fields.delete(detachedKey);
-			if (children.length === 0) {
-				return 0; // Prevent creating 0 sized fields when inserting empty into empty.
-			}
-
-			const [parent, key] = moveInCursor.getParent();
-			const destinationField = getMapTreeField(parent, key, true);
-			assertValidIndex(index, destinationField, true);
-			// TODO: this will fail for very large moves due to argument limits.
-			destinationField.splice(index, 0, ...children);
-
-			return children.length;
-		};
 		const visitor = {
 			forest: this,
 			cursor,
@@ -145,49 +129,66 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
 			},
-			create(index: DetachedPlaceUpPath, content: Delta.ProtoNodes): void {},
-			destroy(index: DetachedRangeUpPath): void {},
+			destroy(range: Range): void {
+				this.replace(undefined, range, undefined);
+			},
+			create(index: PlaceIndex, content: Delta.ProtoNodes): void {
+				const nodes = Array.from(content, mapTreeFromCursor);
+				const [parent, key] = this.cursor.getParent();
+				const destinationField = getMapTreeField(parent, key, true);
+				assertValidIndex(index, destinationField, true);
+				// TODO: this will fail for very large insertions due to argument limits.
+				destinationField.splice(index, 0, ...nodes);
+			},
 			replace(
 				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentIndex: PlaceIndex,
-				oldContentCount: number,
+				oldContentRange: Range,
 				oldContentDestination: DetachedPlaceUpPath | undefined,
-				kind: ReplaceKind,
-			): void {},
-			onDelete(index: number, count: number): void {
-				this.onMoveOut(index, count);
-			},
-			onInsert(index: number, content: Delta.ProtoNode[]): void {
-				const range = this.forest.add(content);
-				moveIn(index, range, this.cursor);
-			},
-			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
+			): void {
 				const [parent, key] = cursor.getParent();
-				const sourceField = getMapTreeField(parent, key, false);
-				const startIndex = index;
-				const endIndex = index + count;
-				assertValidIndex(startIndex, sourceField, true);
-				assertValidIndex(endIndex, sourceField, true);
+				const currentField = getMapTreeField(parent, key, true);
+				assertValidIndex(oldContentRange.start, currentField, true);
+				assertValidIndex(oldContentRange.end, currentField, true);
 				assert(
-					startIndex <= endIndex,
-					0x371 /* detached range's end must be after its start */,
+					oldContentRange.end >= oldContentRange.end,
+					"Range end must be >= its start",
 				);
-				const newField = sourceField.splice(startIndex, endIndex - startIndex);
-				const field = this.forest.addFieldAsDetached(newField);
-				if (id !== undefined) {
-					moves.set(id, field);
-				} else {
-					this.forest.delete(field);
+				let newContent: MapTree[] = [];
+				if (newContentSource !== undefined) {
+					const sourceField = getMapTreeField(
+						this.forest.roots,
+						newContentSource.field,
+						false,
+					);
+					assertValidIndex(newContentSource.start, sourceField, true);
+					assertValidIndex(newContentSource.end, sourceField, true);
+					assert(
+						newContentSource.start <= newContentSource.end,
+						0x371 /* detached range's end must be after its start */,
+					);
+					newContent = sourceField.splice(newContentSource.start, newContentSource.end);
+					if (sourceField.length === 0) {
+						this.forest.roots.fields.delete(newContentSource.field);
+					}
 				}
-				if (sourceField.length === 0) {
+				const oldContent = currentField.splice(
+					oldContentRange.start,
+					oldContentRange.end - oldContentRange.start,
+					// TODO: this will fail for very large insertions due to argument limits.
+					...newContent,
+				);
+				if (currentField.length === 0) {
 					parent.fields.delete(key);
 				}
-			},
-			onMoveIn(index: number, count: number, id: Delta.MoveId): void {
-				const toAttach = moves.get(id) ?? fail("move in without move out");
-				moves.delete(id);
-				const countMoved = moveIn(index, toAttach, this.cursor);
-				assert(countMoved === count, 0x369 /* counts must match */);
+				if (oldContent.length > 0 && oldContentDestination !== undefined) {
+					const destinationField = getMapTreeField(
+						this.forest.roots,
+						oldContentDestination.field,
+						true,
+					);
+					assertValidIndex(oldContentDestination.index, destinationField, true);
+					destinationField.splice(oldContentDestination.index, 0, ...oldContent);
+				}
 			},
 			enterNode(index: number): void {
 				this.cursor.enterNode(index);

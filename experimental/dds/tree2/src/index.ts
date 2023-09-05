@@ -19,6 +19,7 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
 	RangeUpPath,
 	AttachedRangeUpPath,
 	DetachedRangeUpPath,
