@@ -98,6 +98,9 @@ export enum OdspErrorType {
 	 */
 	fluidNotEnabled = "fluidNotEnabled",
 
+	/**
+	 * {@inheritDoc @fluidframework/driver-definitions#FluidErrorType.fetchTokenError}
+	 */
 	fetchTokenError = "fetchTokenError",
 
 	/**
