@@ -16,7 +16,7 @@ import { IRequestHeader, ITelemetryBaseEvent, LogLevel } from "@fluidframework/c
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
@@ -100,12 +100,15 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
-		runId,
-		driverType: driver,
-		driverEndpointName: endpoint,
-		profile: profileName,
-	});
+	const logger = await createLogger(
+		{
+			runId,
+			driverType: driver,
+			driverEndpointName: endpoint,
+			profile: profileName,
+		},
+		random.pick([LogLevel.verbose, LogLevel.default]),
+	);
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it
@@ -124,7 +127,7 @@ async function main() {
 	});
 
 	let testFailed: boolean = false;
-	const fileLogger = await FileLogger.loggerP;
+	const fileLogger = await FileLogger.loggerP();
 	// Check for InactiveObject or SweepReadyObject logs
 	fileLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
 		if (
@@ -227,7 +230,6 @@ async function runnerProcess(
 		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
 	);
 
-	const loggerLogLevelOptions = [LogLevel.verbose, LogLevel.default];
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
@@ -242,8 +244,6 @@ async function runnerProcess(
 			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
 			// Construct the loader
-			runConfig.logger.minLogLevel =
-				loggerLogLevelOptions[runConfig.runId % loggerLogLevelOptions.length];
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",

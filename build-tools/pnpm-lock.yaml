@@ -19,7 +19,6 @@ importers:
       '@microsoft/api-extractor': ^7.36.1
       c8: ^7.14.0
       commitizen: ^4.3.0
-      concurrently: ^7.6.0
       conventional-changelog-cli: ^2.2.2
       conventional-changelog-conventionalcommits: ^5.0.0
       copyfiles: ^2.4.1
@@ -42,7 +41,6 @@ importers:
       '@microsoft/api-extractor': 7.36.1
       c8: 7.14.0
       commitizen: 4.3.0
-      concurrently: 7.6.0
       conventional-changelog-cli: 2.2.2
       conventional-changelog-conventionalcommits: 5.0.0
       copyfiles: 2.4.1
@@ -90,7 +88,7 @@ importers:
       chai: ^4.3.7
       chai-arrays: ^2.2.0
       chalk: ^2.4.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       danger: ^10.9.0
@@ -193,7 +191,7 @@ importers:
       '@types/sort-json': 2.0.1
       chai: 4.3.7
       chai-arrays: 2.2.0
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -234,7 +232,7 @@ importers:
       async: ^3.2.4
       chalk: ^2.4.2
       commander: ^6.2.1
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       cosmiconfig: ^8.2.0
       danger: ^10.9.0
       date-fns: ^2.30.0
@@ -310,7 +308,7 @@ importers:
       '@types/rimraf': 2.0.5
       '@types/semver': 7.5.0
       '@types/shelljs': 0.8.12
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
@@ -324,6 +322,7 @@ importers:
       '@types/node': ^14.18.53
       '@types/pako': ^2.0.0
       azure-devops-node-api: ^11.2.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-plugin-eslint-comments: ~3.2.0
@@ -351,6 +350,7 @@ importers:
       '@types/msgpack-lite': 0.1.8
       '@types/node': 14.18.53
       '@types/pako': 2.0.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
@@ -370,23 +370,17 @@ importers:
       '@oclif/test': ^2.3.27
       '@types/chai': ^4.3.5
       '@types/chai-arrays': ^2.0.0
-      '@types/mocha': ^9.1.1
       '@types/node': ^14.18.53
       '@types/semver': ^7.5.0
       chai: ^4.3.7
       chai-arrays: ^2.2.0
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       eslint-config-oclif: ^4.0.0
       eslint-config-oclif-typescript: ^1.0.3
       eslint-config-prettier: ~8.5.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.1.0
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.29.4
-      nyc: ^15.1.0
       oclif: ^3.9.1
       prettier: ~2.6.2
       rimraf: ^4.4.1
@@ -406,23 +400,17 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.1.0_qvtltsyn3reahc7lgycismcfiq
       '@types/chai': 4.3.5
       '@types/chai-arrays': 2.0.0
-      '@types/mocha': 9.1.1
       '@types/node': 14.18.53
       '@types/semver': 7.5.0
       chai: 4.3.7
       chai-arrays: 2.2.0
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-oclif: 4.0.0_eslint@8.6.0
       eslint-config-oclif-typescript: 1.0.3_qvtltsyn3reahc7lgycismcfiq
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.1
       ts-node: 10.9.1_vliugzio5c6rxk3co27b7rq74a
@@ -448,7 +436,7 @@ importers:
       '@types/semver': ^7.5.0
       chai: ^4.3.7
       chalk: ^2.4.2
-      concurrently: ^7.6.0
+      concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -489,7 +477,7 @@ importers:
       '@types/node': 14.18.53
       '@types/semver': 7.5.0
       chai: 4.3.7
-      concurrently: 7.6.0
+      concurrently: 8.2.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -4021,12 +4009,28 @@ packages:
       chalk: 4.1.2
       date-fns: 2.30.0
       lodash: 4.17.21
-      rxjs: 7.8.0
-      shell-quote: 1.8.0
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
       spawn-command: 0.0.2-1
       supports-color: 8.1.1
       tree-kill: 1.2.2
-      yargs: 17.7.1
+      yargs: 17.7.2
+
+  /concurrently/8.2.1:
+    resolution: {integrity: sha512-nVraf3aXOpIcNud5pB9M82p1tynmZkrSGQ1p6X/VY8cJ+2LMVqAgXsJxYYefACSHbTYlm92O1xuhdGTjwoEvbQ==}
+    engines: {node: ^14.13.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      date-fns: 2.30.0
+      lodash: 4.17.21
+      rxjs: 7.8.1
+      shell-quote: 1.8.1
+      spawn-command: 0.0.2
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
+    dev: true
 
   /config-chain/1.1.13:
     resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
@@ -9519,6 +9523,11 @@ packages:
     dependencies:
       tslib: 2.6.0
 
+  /rxjs/7.8.1:
+    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
+    dependencies:
+      tslib: 2.6.0
+
   /safe-buffer/5.1.2:
     resolution: {integrity: sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==}
 
@@ -9654,8 +9663,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  /shell-quote/1.8.0:
-    resolution: {integrity: sha512-QHsz8GgQIGKlRi24yFc6a6lN69Idnx634w49ay6+jA5yFh7a1UY+4Rp6HPx/L/1zcEDPEij8cIsiqR6bQsE5VQ==}
+  /shell-quote/1.8.1:
+    resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
 
   /shelljs/0.8.5:
     resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
@@ -9799,6 +9808,10 @@ packages:
   /source-map/0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
+
+  /spawn-command/0.0.2:
+    resolution: {integrity: sha512-zC8zGoGkmc8J9ndvml8Xksr1Amk9qBujgbF0JAIWO7kXr43w0h/0GJNM/Vustixu+YE8N/MTrQ7N31FvHUACxQ==}
+    dev: true
 
   /spawn-command/0.0.2-1:
     resolution: {integrity: sha512-n98l9E2RMSJ9ON1AKisHzz7V42VDiBQGY6PB1BwRglz99wpVsSuGzQ+jOi6lFXBGVTCrRpltvjm+/XA+tpeJrg==}
@@ -11094,6 +11107,18 @@ packages:
 
   /yargs/17.7.1:
     resolution: {integrity: sha512-cwiTb08Xuv5fqF4AovYacTFNxk62th7LKJ6BL9IGUpTJrWoU7/7WdQGTP2SjKf1dUNBGzDd28p/Yfs/GI6JrLw==}
+    engines: {node: '>=12'}
+    dependencies:
+      cliui: 8.0.1
+      escalade: 3.1.1
+      get-caller-file: 2.0.5
+      require-directory: 2.1.1
+      string-width: 4.2.3
+      y18n: 5.0.8
+      yargs-parser: 21.1.1
+
+  /yargs/17.7.2:
+    resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
     dependencies:
       cliui: 8.0.1

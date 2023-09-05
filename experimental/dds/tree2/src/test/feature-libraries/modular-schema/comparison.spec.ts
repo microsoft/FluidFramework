@@ -111,7 +111,7 @@ describe("Schema Comparison", () => {
 	}
 
 	it("isNeverField", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
 		updateTreeSchema(repo, brand("never"), neverTree);
 		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
@@ -135,7 +135,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("isNeverTree", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
 		assert(
 			isNeverTree(defaultSchemaPolicy, repo, {
@@ -170,7 +170,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("isNeverTreeRecursive", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive")]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
@@ -180,7 +180,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("isNeverTreeRecursive non-never", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive"), emptyTree.name]);
 		const recursiveType = treeSchema({
 			mapFields: recursiveField,
@@ -242,7 +242,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsFieldSuperset", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.value, [brand("never")]);
@@ -277,7 +277,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsTreeSuperset-no leaf values", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
 			a: TreeStoredSchema | undefined,
@@ -304,7 +304,7 @@ describe("Schema Comparison", () => {
 	});
 
 	it("allowsTreeSuperset-leaf values", () => {
-		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
 			a: TreeStoredSchema | undefined,

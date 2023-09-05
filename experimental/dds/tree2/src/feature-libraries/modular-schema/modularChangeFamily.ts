@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, ICodecOptions } from "../../codec";
 import {
 	ChangeFamily,
 	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
-	AnchorSet,
 	Delta,
 	FieldKey,
 	UpPath,
@@ -712,10 +711,6 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
-		anchors.applyDelta(this.intoDelta(over));
-	}
-
 	public intoDelta(change: ModularChangeset): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
@@ -766,11 +761,8 @@ export class ModularChangeFamily
 		return modify;
 	}
 
-	public buildEditor(
-		changeReceiver: (change: ModularChangeset) => void,
-		anchors: AnchorSet,
-	): ModularEditBuilder {
-		return new ModularEditBuilder(this, changeReceiver, anchors);
+	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
+		return new ModularEditBuilder(this, changeReceiver);
 	}
 }
 
@@ -1007,9 +999,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
-		anchors: AnchorSet,
 	) {
-		super(family, changeReceiver, anchors);
+		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
 	}
 

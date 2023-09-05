@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Timer, assert } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise, Timer } from "@fluidframework/core-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -13,11 +12,7 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	ReadAndParseBlob,
-	createResponseError,
-	responseToException,
-} from "@fluidframework/runtime-utils";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -33,7 +28,7 @@ import {
 	RuntimeHeaders,
 } from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
-import { RefreshSummaryResult } from "../summary";
+import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -163,10 +158,6 @@ export class GarbageCollector implements IGarbageCollector {
 				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
 			);
 			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
-			assert(
-				timeoutMs <= this.configs.sessionExpiryTimeoutMs,
-				"Cannot extend sessionExpiry via TestOverride setting",
-			);
 
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(
@@ -851,40 +842,10 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
-		const latestSnapshotData = await this.summaryStateTracker.refreshLatestSummary(
-			proposalHandle,
-			result,
-			readAndParseBlob,
-		);
-
-		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
-		// this snapshot data.
-		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
-			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
-			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-			if (currentReferenceTimestampMs === undefined) {
-				throw DataProcessingError.create(
-					"No reference timestamp when updating GC state from snapshot",
-					"refreshLatestSummary",
-					undefined,
-					{
-						proposalHandle,
-						summaryRefSeq: result.summaryRefSeq,
-						gcConfigs: JSON.stringify(this.configs),
-					},
-				);
-			}
-			this.updateStateFromSnapshotData(latestSnapshotData, currentReferenceTimestampMs);
-		}
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
 	/**

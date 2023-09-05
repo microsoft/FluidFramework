@@ -156,7 +156,13 @@ export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from 
 export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
-export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
+export {
+	TreeChunk,
+	chunkTree,
+	buildChunkedForest,
+	defaultChunkPolicy,
+	makeTreeChunker,
+} from "./chunked-forest";
 
 export {
 	compareLocalNodeKeys,

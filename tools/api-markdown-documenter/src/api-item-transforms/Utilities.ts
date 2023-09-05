@@ -44,6 +44,7 @@ export function createDocument(
 	}
 
 	return new DocumentNode({
+		apiItemName: documentItem.displayName,
 		children: contents,
 		filePath: getFilePathForApiItem(documentItem, config),
 		frontMatter,
