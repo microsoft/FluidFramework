@@ -746,6 +746,9 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-test-scripts",
 		match,
 		handler: (file, root) => {
+			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
+			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
+
 			let json;
 
 			try {
@@ -793,6 +796,9 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-test-scripts-split",
 		match,
 		handler: (file, root) => {
+			// This rule enforces that because the pipeline split running these test in different steps, each project
+			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
+			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
 			let json;
 
 			try {
@@ -838,8 +844,8 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-mocha-config",
 		match,
 		handler: (file, root) => {
+			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			let json;
-
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -876,6 +882,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-jest-config",
 		match,
 		handler: (file, root) => {
+			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			let json;
 
 			try {
@@ -927,6 +934,43 @@ export const handlers: Handler[] = [
 
 			if (json["jest-junit"] !== undefined) {
 				return `Extraneous jest-unit config in ${file}`;
+			}
+		},
+	},
+	{
+		name: "npm-package-json-esm",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that we have a module field in the package iff we have a ESM build
+			// So that tools like webpack will pack up the right version.
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+			// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+			// that it has a ESM build.
+			const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+			const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+			const hasModuleOutput = json.module !== undefined;
+
+			if (hasBuildEsNext) {
+				if (!hasModuleOutput) {
+					return "Missing 'module' field in package.json for ESM build";
+				}
+			} else {
+				// If we don't have a separate esnext build, it's still ok to have the "module"
+				// field if it is the same as "main"
+				if (hasModuleOutput && json.main !== json.module) {
+					return "Missing ESM build script while package.json has 'module' field";
+				}
 			}
 		},
 	},

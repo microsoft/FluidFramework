@@ -147,11 +147,7 @@
 					"webpack"
 				],
 				"script": false
-			},
-			"webpack": [
-				"@fluid-experimental/devtools-core#tsc",
-				"@fluid-experimental/devtools-view#tsc"
-			]
+			}
 		}
 	},
 	"typeValidation": {
