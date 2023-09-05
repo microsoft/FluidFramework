@@ -24,7 +24,6 @@ import {
 	disableSweepLogKey,
 	UnreferencedStateTracker,
 	cloneGCData,
-	tagAsCodeArtifact,
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
@@ -281,7 +280,7 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
-						url: tagAsCodeArtifact(nodes[2]),
+						...tagCodeArtifacts({ url: nodes[2] }),
 					},
 				],
 				"inactive events not as expected",
@@ -368,29 +367,25 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[1] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[1], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[1] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[1], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: loadedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[2] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						...tagCodeArtifacts({ id: nodes[2] }),
-						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2], pkg: testPkgPath.join("/") }),
 						createContainerRuntimeVersion: pkgVersion,
 					},
 				);
@@ -404,9 +399,11 @@ describe("GC Telemetry Tracker", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							...tagCodeArtifacts({ id: nodes[2] }),
-							pkg: eventPkg,
-							fromId: tagAsCodeArtifact(nodes[0]),
+							...tagCodeArtifacts({
+								id: nodes[2],
+								fromId: nodes[0],
+								pkg: testPkgPath.join("/"),
+							}),
 						},
 					],
 					"revived event not as expected",
@@ -499,9 +496,11 @@ describe("GC Telemetry Tracker", () => {
 							{
 								eventName: revivedEventName,
 								timeout,
-								...tagCodeArtifacts({ id: nodes[2] }),
-								pkg: eventPkg,
-								fromId: tagAsCodeArtifact(nodes[1]),
+								...tagCodeArtifacts({
+									id: nodes[2],
+									fromId: nodes[1],
+									pkg: testPkgPath.join("/"),
+								}),
 							},
 						],
 						"revived event not as expected",
