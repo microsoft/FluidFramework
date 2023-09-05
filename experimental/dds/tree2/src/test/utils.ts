@@ -98,7 +98,6 @@ import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
 
 // Testing utilities
 

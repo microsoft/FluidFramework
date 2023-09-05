@@ -10,6 +10,7 @@ import {
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
+	TaggedChange,
 	tagRollbackInverse,
 	TreeSchemaIdentifier,
 } from "../../../core";
@@ -130,7 +131,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 						for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-							const change1 = tagChange(makeChange1(offset1, maxOffset), tag7);
+							const change1: TaggedChange<SF.Changeset<TestChange>> = tagChange(
+								makeChange1(offset1, maxOffset),
+								tag7,
+							);
 							const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
 							if (!SF.areRebasable(change1.change, change2.change)) {
 								continue;
@@ -171,7 +175,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 					const maxOffset = 4;
 					for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 						for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-							const change1 = tagChange(makeChange1(offset1, maxOffset), tag7);
+							const change1: TaggedChange<SF.Changeset<TestChange>> = tagChange(
+								makeChange1(offset1, maxOffset),
+								tag7,
+							);
 							const change2 = tagChange(makeChange2(offset2, maxOffset), tag5);
 							if (!SF.areRebasable(change1.change, change2.change)) {
 								continue;

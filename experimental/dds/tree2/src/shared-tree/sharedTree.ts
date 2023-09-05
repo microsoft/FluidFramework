@@ -118,7 +118,8 @@ export class SharedTree
 		this._events = createEmitter<ViewEvents>();
 		const idGenerator =
 			runtime.idCompressor !== undefined
-				? () => runtime.idCompressor?.generateCompressedId()
+				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				  () => runtime.idCompressor!.generateCompressedId()
 				: () => mintRevisionTag();
 		this.view = createSharedTreeView(idGenerator, {
 			branch: this.getLocalBranch(),

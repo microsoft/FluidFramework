@@ -26,7 +26,9 @@ function newCommit(
 	if (parent !== undefined) {
 		const path: GraphCommit<TestChange>[] = [];
 		const ancestor = findAncestor([parent, path]);
-		inputContext2.push(...[ancestor, ...path].map((c) => Number.parseInt(c.revision, 10)));
+		inputContext2.push(
+			...[ancestor, ...path].map((c) => Number.parseInt(c.revision as string, 10)),
+		);
 	}
 	return {
 		change: TestChange.mint(inputContext2, intention),

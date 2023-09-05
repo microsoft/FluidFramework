@@ -6,7 +6,12 @@
 import { Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
 import { isStableId } from "@fluidframework/container-runtime";
-import { Brand, brandedStringType, generateStableId } from "../../util";
+import {
+	OpSpaceCompressedId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/runtime-definitions";
+import { Brand, brandedNumberType, brandedStringType, generateStableId } from "../../util";
 import { ReadonlyRepairDataStore } from "../repair";
 
 /**
@@ -21,8 +26,12 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  * @alpha
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
-export type RevisionTag = any;
-export const RevisionTagSchema = Type.Union([Type.String(), Type.Number()]);
+export type RevisionTag = StableId | SessionSpaceCompressedId | OpSpaceCompressedId;
+export const RevisionTagSchema = Type.Union([
+	brandedStringType<StableId>(),
+	brandedNumberType<OpSpaceCompressedId>(),
+	brandedNumberType<SessionSpaceCompressedId>(),
+]);
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
@@ -62,14 +71,14 @@ export function assertIsRevisionTag(revision: string): RevisionTag {
 /**
  * @returns true iff the given string is a valid `RevisionTag`
  */
-export function isRevisionTag(revision: string): revision is RevisionTag {
+export function isRevisionTag(revision: string): revision is StableId {
 	return isStableId(revision);
 }
 
 /**
  * @returns a random, universally unique `RevisionTag`
  */
-export function mintRevisionTag(): RevisionTag {
+export function mintRevisionTag(): StableId {
 	return generateStableId();
 }
 

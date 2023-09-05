@@ -5,7 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
+import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	assertIsRevisionTag,
@@ -145,7 +145,7 @@ export class EditManager<
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
-		private readonly idGenerator: () => StableId,
+		private readonly idGenerator: (() => StableId) | (() => SessionSpaceCompressedId),
 	) {
 		super("EditManager");
 		this.trunkBase = {

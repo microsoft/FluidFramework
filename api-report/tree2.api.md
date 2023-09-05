@@ -10,6 +10,7 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
+import { OpSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
@@ -1609,7 +1610,7 @@ export interface RevisionMetadataSource {
 }
 
 // @alpha
-export type RevisionTag = StableId;
+export type RevisionTag = StableId | SessionSpaceCompressedId | OpSpaceCompressedId;
 
 // @alpha
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;

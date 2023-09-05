@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IIdCompressor, StableId } from "@fluidframework/runtime-definitions";
+import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
 import { fail } from "../../util";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
+import { GraphCommit, mintCommit } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -135,7 +135,7 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
-	idGenerator: () => StableId,
+	idGenerator: (() => StableId) | (() => SessionSpaceCompressedId),
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -147,7 +147,7 @@ export function rebaseBranch<TChange>(
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
-	idGenerator: () => StableId,
+	idGenerator: (() => StableId) | (() => SessionSpaceCompressedId),
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
@@ -313,7 +313,7 @@ export function rebaseChange<TChange>(
 	change: TChange,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
-	generateId: () => StableId,
+	generateId: (() => StableId) | (() => SessionSpaceCompressedId),
 ): TChange {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -351,7 +351,7 @@ function rebaseChangeOverChanges<TChange>(
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
-	idGenerator: () => StableId,
+	idGenerator: (() => StableId) | (() => SessionSpaceCompressedId),
 	repairData?: ReadonlyRepairDataStore,
 	cache?: boolean,
 ): TaggedChange<TChange> {

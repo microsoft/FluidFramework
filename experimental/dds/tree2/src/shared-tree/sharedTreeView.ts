@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/common-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
+import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -283,7 +283,7 @@ export interface ISharedTreeView extends AnchorLocator {
  * and functionality required to implement {@link ISharedTreeView}.
  */
 export function createSharedTreeView(
-	idGenerator: () => StableId,
+	idGenerator: (() => StableId) | (() => SessionSpaceCompressedId),
 	args?: {
 		branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 		changeFamily?: DefaultChangeFamily;

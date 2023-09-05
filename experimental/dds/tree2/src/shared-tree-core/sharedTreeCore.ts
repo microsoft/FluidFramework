@@ -15,6 +15,8 @@ import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 	IIdCompressor,
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -280,7 +282,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		const replacedIdCommit =
 			this.idCompressor !== undefined
-				? this.idCompressor.normalizeToOpSpace(commit.revision)
+				? this.idCompressor.normalizeToOpSpace(commit.revision as SessionSpaceCompressedId)
 				: commit.revision;
 
 		const message = this.messageCodec.encode({
@@ -298,7 +300,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const { commit, sessionId } = this.messageCodec.decode(message.contents);
 		const normalizedCommitRevision =
 			this.idCompressor !== undefined
-				? this.idCompressor.normalizeToSessionSpace(commit.revision, sessionId as any)
+				? this.idCompressor.normalizeToSessionSpace(
+						commit.revision as OpSpaceCompressedId,
+						sessionId as any,
+				  )
 				: commit.revision;
 
 		this.editManager.addSequencedChange(

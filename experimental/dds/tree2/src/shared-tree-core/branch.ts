@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IIdCompressor, StableId } from "@fluidframework/runtime-definitions";
+import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
 import {
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -12,7 +12,6 @@ import {
 	GraphCommit,
 	IRepairDataStoreProvider,
 	mintCommit,
-	mintRevisionTag,
 	RepairDataStore,
 	UndoRedoManager,
 	tagChange,
@@ -132,7 +131,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly idGenerator: () => StableId,
+		private readonly idGenerator: (() => StableId) | (() => SessionSpaceCompressedId),
 		public repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 	) {

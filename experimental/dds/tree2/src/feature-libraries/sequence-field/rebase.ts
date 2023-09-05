@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { StableId } from "@fluidframework/runtime-definitions";
 import { fail } from "../../util";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import {
@@ -211,7 +210,7 @@ function rebaseMarkList<TNodeChange>(
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: StableId): NoopMark<T> {
+function generateNoOpWithCellId<T>(mark: Mark<T>, revision?: RevisionTag): NoopMark<T> {
 	const length = mark.count;
 	const cellId = getInputCellId(mark, revision);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
