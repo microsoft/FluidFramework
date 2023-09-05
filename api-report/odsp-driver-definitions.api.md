@@ -217,6 +217,40 @@ export enum OdspErrorType {
 }
 
 // @public
+export const OdspErrorTypes: {
+    readonly outOfStorageError: "outOfStorageError";
+    readonly invalidFileNameError: "invalidFileNameError";
+    readonly snapshotTooBig: "snapshotTooBig";
+    readonly fetchTimeout: "fetchTimeout";
+    readonly fluidNotEnabled: "fluidNotEnabled";
+    readonly cannotCatchUp: "cannotCatchUp";
+    readonly serviceReadOnly: "serviceReadOnly";
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError"; /**
+    * SPO can occasionally return 403 for r/w operations on document when there is a fail over to another data center.
+    * So to preserve integrity of the data, the data becomes readonly.
+    */
+};
+
+// @public (undocumented)
+export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
+
+// @public
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
