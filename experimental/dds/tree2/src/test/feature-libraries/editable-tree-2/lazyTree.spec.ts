@@ -14,6 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
+	Any,
 	DefaultEditBuilder,
 	PrimitiveValue,
 	SchemaBuilder,
@@ -22,6 +23,7 @@ import {
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
+	typeNameSymbol,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/editableTreeContext";
@@ -37,6 +39,7 @@ import { forestWithContent } from "../../utils";
 import { TreeContent } from "../../../shared-tree";
 import { RestrictiveReadonlyRecord, brand } from "../../../util";
 import {
+	LazyField,
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
@@ -52,10 +55,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-
-const builder = new SchemaBuilder("lazyTree");
-const emptyStruct = builder.struct("empty", {});
-const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
+import { jsonSchema } from "../../../domains";
 
 function getReadonlyContext(forest: IEditableForest, schema: TypedSchemaCollection): Context {
 	// This will error if someone tries to call mutation methods on it
@@ -80,6 +80,10 @@ function collectPropertyNames(obj: object): Set<string> {
 
 describe("lazyTree", () => {
 	it("property names", () => {
+		const builder = new SchemaBuilder("lazyTree");
+		const emptyStruct = builder.struct("empty", {});
+		const testSchema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(emptyStruct));
+
 		const forest = forestWithContent({ schema: testSchema, initialTree: {} });
 		const context = getReadonlyContext(forest, testSchema);
 		const cursor = context.forest.allocateCursor();
@@ -158,15 +162,48 @@ describe("lazyTree", () => {
 		}
 	});
 
-	describe("enumerable own properties", () => {
-		it("provide access to full tree data", () => {
-			const context = contextWithContentReadonly({ schema: testSchema, initialTree: {} });
-
-			checkPropertyInvariants(context.root);
-			const viaJson = JSON.parse(JSON.stringify(context.root));
-			// assert.deepEqual(viaJson, {type:})
+	describe("struct", () => {
+		const structBuilder = new SchemaBuilder("boxing", {}, jsonSchema);
+		const emptyStruct = structBuilder.struct("empty", {});
+		const testStruct = structBuilder.struct("mono", {
+			willUnbox: SchemaBuilder.fieldOptional(emptyStruct),
+			notUnboxed: SchemaBuilder.fieldSequence(emptyStruct),
 		});
+		const schema = structBuilder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
+		it("boxing", () => {
+			const context = contextWithContentReadonly({
+				schema,
+				initialTree: {
+					[typeNameSymbol]: testStruct.name,
+					willUnbox: {},
+					notUnboxed: [],
+				},
+			});
+			const cursor = context.forest.allocateCursor();
+			assert.equal(
+				context.forest.tryMoveCursorToField(
+					{ fieldKey: rootFieldKey, parent: undefined },
+					cursor,
+				),
+				TreeNavigationResult.Ok,
+			);
+			cursor.enterNode(0);
+			const anchor = context.forest.anchors.track(cursor.getPath() ?? fail());
+			const struct = buildLazyStruct(
+				context,
+				testStruct,
+				cursor,
+				context.forest.anchors.locate(anchor) ?? fail(),
+				anchor,
+			);
+
+			assert.equal(struct.willUnbox, struct.boxedWillUnbox.content);
+			assert(struct.notUnboxed.isSameAs(struct.boxedNotUnboxed));
+		});
+	});
+
+	describe("enumerable own properties", () => {
 		describe("test trees", () => {
 			for (const testTree of testTrees) {
 				describe(testTree.name, () => {
@@ -191,6 +228,13 @@ describe("lazyTree", () => {
 						const viaJson = JSON.parse(JSON.stringify(context.root));
 						checkPropertyInvariants(context.root);
 						// assert.deepEqual(viaJson, {type:})
+					});
+
+					it("deepEquals self", () => {
+						const content = treeContentFromTestTree(testTree);
+						const context1 = contextWithContentReadonly(content);
+						const context2 = contextWithContentReadonly(content);
+						assert.deepEqual(context1.root, context2.root);
 					});
 				});
 			}
@@ -283,7 +327,11 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
 	visitIterableTree(root, (item) => {
 		if (!unboxable.has(Object.getPrototypeOf(item))) {
-			assert(primitivesAndValues.has(item) || visited.has(item));
+			if (!primitivesAndValues.has(item) && !visited.has(item)) {
+				// Fields don't have stable object identity, so they can fail the above test.
+				// Nothing else should fail it.
+				assert(item instanceof LazyField);
+			}
 		}
 		return undefined;
 	});

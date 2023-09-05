@@ -19,9 +19,9 @@ import {
 	rootFieldKey,
 	EmptyKey,
 	TreeSchemaIdentifier,
+	forEachField,
 } from "../../core";
 import { fail, getOrCreate } from "../../util";
-import { FieldKind } from "../modular-schema";
 import {
 	FieldSchema,
 	SchemaBuilder,
@@ -52,13 +52,8 @@ import {
 	UntypedField,
 	UntypedTree,
 } from "./editableTreeTypes";
-import { makeField } from "./lazyField";
-import {
-	LazyEntity,
-	makePrivatePropertyNotEnumerable,
-	makePropertyEnumerableOwn,
-	makePropertyNotEnumerable,
-} from "./lazyEntity";
+import { makeField, unboxedField } from "./lazyField";
+import { LazyEntity, makePropertyEnumerableOwn, makePropertyNotEnumerable } from "./lazyEntity";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -120,7 +115,11 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	 */
 	public readonly type: TreeSchemaIdentifier;
 
-	private readonly removeDeleteCallback: () => void;
+	/**
+	 * Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
+	 */
+	readonly #removeDeleteCallback: () => void;
+
 	public constructor(
 		context: Context,
 		schema: TSchema,
@@ -132,7 +131,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
 
 		anchorNode.slots.set(lazyTreeSlot, this);
-		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.#removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
@@ -140,7 +139,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		);
 
 		// Setup JS Object API:
-		makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
+		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
 		makePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 	}
@@ -167,7 +166,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(lazyTreeSlot);
-		this.removeDeleteCallback();
+		this.#removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
 	}
 
@@ -175,39 +174,8 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		return this.cursor.value;
 	}
 
-	public get currentIndex(): number {
-		return this.cursor.fieldIndex;
-	}
-
-	public lookupFieldKind(field: FieldKey): FieldKind {
-		return this.getFieldSchema(field).kind;
-	}
-
-	public getFieldSchema(field: FieldKey): FieldSchema {
-		return getFieldSchema(field, this.schema);
-	}
-
-	public has(field: FieldKey): boolean {
-		// Make fields present only if non-empty.
-		return this.fieldLength(field) !== 0;
-	}
-
-	// public unwrappedField(field: FieldKey): UnwrappedEditableField {
-	// 	const schema = this.getFieldSchema(field);
-	// 	return inCursorField(this.cursor, field, (cursor) =>
-	// 		unboxedField(this.context, schema, cursor),
-	// 	);
-	// }
-
-	public getField(fieldKey: FieldKey): UntypedField {
-		const schema = this.getFieldSchema(fieldKey);
-		return inCursorField(this.cursor, fieldKey, (cursor) =>
-			makeField(this.context, schema, cursor),
-		);
-	}
-
 	public tryGetField(fieldKey: FieldKey): UntypedField | undefined {
-		const schema = this.getFieldSchema(fieldKey);
+		const schema = getFieldSchema(fieldKey, this.schema);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
@@ -218,12 +186,8 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 	public [Symbol.iterator](): IterableIterator<UntypedField> {
 		return mapCursorFields(this.cursor, (cursor) =>
-			makeField(this.context, this.getFieldSchema(cursor.getFieldKey()), cursor),
+			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
-	}
-
-	private fieldLength(field: FieldKey): number {
-		return inCursorField(this.cursor, field, (cursor) => cursor.getFieldLength());
 	}
 
 	public get parentField(): { readonly parent: UntypedField; readonly index: number } {
@@ -326,7 +290,9 @@ export class LazyMap<TSchema extends MapSchema>
 	}
 
 	public get(key: FieldKey): TypedField<TSchema["mapFields"]> {
-		return this.getField(key) as TypedField<TSchema["mapFields"]>;
+		return inCursorField(this.cursor, key, (cursor) =>
+			makeField(this.context, this.schema.mapFields, cursor),
+		) as TypedField<TSchema["mapFields"]>;
 	}
 	public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 		const field = this.get(key);
@@ -351,14 +317,14 @@ export class LazyMap<TSchema extends MapSchema>
 	} {
 		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> =
 			Object.create(null);
-		for (const field of this) {
-			Object.defineProperty(record, field.key, {
-				// TODO: this needs to be unboxed!
-				value: field,
+
+		forEachField(this.cursor, (cursor) => {
+			Object.defineProperty(record, cursor.getFieldKey(), {
+				value: unboxedField(this.context, this.schema.mapFields, cursor),
 				configurable: true,
 				enumerable: true,
 			});
-		}
+		});
 		return record;
 	}
 }
@@ -390,7 +356,13 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	implements FieldNode<TSchema>
 {
 	public get content(): TypedField<TSchema["structFieldsObject"][""]> {
-		return this.getField(EmptyKey) as TypedField<TSchema["structFieldsObject"][""]>;
+		return inCursorField(this.cursor, EmptyKey, (cursor) =>
+			makeField(
+				this.context,
+				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				cursor,
+			),
+		) as TypedField<TSchema["structFieldsObject"][""]>;
 	}
 }
 
@@ -439,25 +411,32 @@ function buildStructClass<TSchema extends StructSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
-	for (const [key, _field] of schema.structFields) {
+	for (const [key, field] of schema.structFields) {
 		// TODO: custom field identifiers
 		ownPropertyMap[key] = {
 			enumerable: true,
-			get(this: CustomStruct) {
-				return this.getField(key);
+			get(this: CustomStruct): unknown {
+				return inCursorField(this.cursor, key, (cursor) =>
+					unboxedField(this.context, field, cursor),
+				);
 			},
 		};
 
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
-				return this.getField(key);
+				return inCursorField(this.cursor, key, (cursor) =>
+					makeField(this.context, field, cursor),
+				);
 			},
 		};
 
 		propertyDescriptorMap[`set${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
+				// return (content: NewFieldContent) => {
+				// 	this.getField(key).setContent(content);
+				// };
 				fail("TODO: implement or remove this API");
 			},
 		};

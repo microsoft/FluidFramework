@@ -133,6 +133,13 @@ export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<Untyp
 	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
 	[Symbol.iterator](): Iterator<UntypedTree>;
+
+	/**
+	 * Check if this field is the same as a different field.
+	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
+	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
+	 */
+	isSameAs(other: UntypedField): boolean;
 }
 
 // #region Node Kinds

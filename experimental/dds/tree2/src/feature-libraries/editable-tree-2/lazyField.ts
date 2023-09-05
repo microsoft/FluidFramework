@@ -97,7 +97,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		fieldAnchor: FieldAnchor,
 	) {
 		super(context, schema, cursor, fieldAnchor);
-		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
+		assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
 		this.key = cursor.getFieldKey();
 
 		makePropertyNotEnumerable(this, "key");
@@ -121,15 +121,10 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		return compareSets({ a: this.schema.types, b: schema.types });
 	}
 
-	/**
-	 * Check if this field is the same as a different field.
-	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
-	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
-	 */
-	private isSameAs(other: UntypedField): boolean {
+	public isSameAs(other: UntypedField): boolean {
 		assert(
 			other.context === this.context,
-			0x6b6 /* Content from different editable trees should not be used together */,
+			"Content from different editable trees should not be used together",
 		);
 		return this.key === other.key && this.parent === other.parent;
 	}
