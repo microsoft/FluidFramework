@@ -74,7 +74,6 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"c8": "^7.7.1",
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

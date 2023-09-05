@@ -38,7 +38,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha && npm run test:jest",
-		"test:coverage": "c8 npm run test",
+		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"test:mocha": "mocha  --recursive dist/test/mocha/**/*.spec.js --exit --project test/tsconfig.json",
 		"tsc": "tsc",

@@ -26,7 +26,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
 		"test": "mocha dist/test",
-		"test:coverage": "c8 npm run test",
+		"test:coverage": "c8 npm test",
 		"tsc": "tsc"
 	},
 	"c8": {
