@@ -10,7 +10,7 @@ import {
 	ITreeSubscriptionCursorState,
 } from "../../core";
 import { TreeStatus } from "../editable-tree";
-import { fail } from "../../util";
+import { fail, disposeSymbol } from "../../util";
 import { Context } from "./editableTreeContext";
 import { UntypedEntity } from "./editableTreeTypes";
 
@@ -55,7 +55,7 @@ export function makePrivatePropertyNotEnumerable(target: object, key: string | s
 export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	implements UntypedEntity<TSchema>
 {
-	private readonly lazyCursor: ITreeSubscriptionCursor;
+	readonly #lazyCursor: ITreeSubscriptionCursor;
 
 	protected constructor(
 		public readonly context: Context,
@@ -63,12 +63,11 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchor: TAnchor,
 	) {
-		this.lazyCursor = cursor.fork();
+		this.#lazyCursor = cursor.fork();
 		context.withCursors.add(this);
 		this.context.withAnchors.add(this);
 
 		// Setup JS Object API:
-		makePrivatePropertyNotEnumerable(this, "lazyCursor");
 		makePropertyNotEnumerable(this, "context");
 		makePropertyNotEnumerable(this, "schema");
 		makePropertyNotEnumerable(this, "anchor");
@@ -78,40 +77,40 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 
 	public abstract treeStatus(): TreeStatus;
 
-	public free(): void {
-		this.lazyCursor.free();
+	public [disposeSymbol](): void {
+		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
 		this.forgetAnchor(this.anchor);
 		this.context.withAnchors.delete(this);
 	}
 
 	public prepareForEdit(): void {
-		this.lazyCursor.clear();
+		this.#lazyCursor.clear();
 		this.context.withCursors.delete(this);
 	}
 
 	public isFreed(): boolean {
-		return this.lazyCursor.state === ITreeSubscriptionCursorState.Freed;
+		return this.#lazyCursor.state === ITreeSubscriptionCursorState.Freed;
 	}
 
 	public get cursor(): ITreeSubscriptionCursor {
-		if (this.lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
+		if (this.#lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			assert(
-				this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
+				this.#lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
 				"Unset cursor should be in cleared state",
 			);
 			assert(
 				this.anchor !== undefined,
 				0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
 			);
-			const result = this.tryMoveCursorToAnchor(this.anchor, this.lazyCursor);
+			const result = this.tryMoveCursorToAnchor(this.anchor, this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
 				0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
 			);
 			this.context.withCursors.add(this);
 		}
-		return this.lazyCursor;
+		return this.#lazyCursor;
 	}
 
 	protected abstract tryMoveCursorToAnchor(
@@ -124,3 +123,12 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	 */
 	protected abstract forgetAnchor(anchor: TAnchor): void;
 }
+
+/**
+ * Prevent Entities from inheriting members from Object.prototype including:
+ * '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', '__proto__',
+ * 'hasOwnProperty', 'isPrototypeOf', 'valueOf', 'propertyIsEnumerable', 'toLocaleString' and 'toString'.
+ *
+ * This opens up more options for field names on struct nodes.
+ */
+Object.setPrototypeOf(LazyEntity.prototype, null);

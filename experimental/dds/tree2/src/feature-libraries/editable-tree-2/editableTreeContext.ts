@@ -16,6 +16,7 @@ import { DefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TypedSchemaCollection } from "../typed-schema";
+import { disposeSymbol } from "../../util";
 import { UntypedField } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
 import { LazyEntity } from "./lazyEntity";
@@ -98,14 +99,11 @@ export class Context implements TreeContext {
 	 * to create new trees starting from the root.
 	 */
 	public clear(): void {
-		for (const target of this.withCursors) {
-			target.free();
-		}
 		for (const target of this.withAnchors) {
-			target.free();
+			target[disposeSymbol]();
 		}
-		assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
-		assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
+		assert(this.withCursors.size === 0, "free should remove all cursors");
+		assert(this.withAnchors.size === 0, "free should remove all anchors");
 	}
 
 	public get root(): UntypedField {

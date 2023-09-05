@@ -21,7 +21,7 @@ import {
 	TreeSchemaIdentifier,
 	forEachField,
 } from "../../core";
-import { fail, getOrCreate } from "../../util";
+import { disposeSymbol, fail, getOrCreate } from "../../util";
 import {
 	FieldSchema,
 	SchemaBuilder,
@@ -77,7 +77,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 
 function cleanupTree(anchor: AnchorNode): void {
 	const cached = anchor.slots.get(lazyTreeSlot) ?? fail("tree should only be cleaned up once");
-	cached.free();
+	cached[disposeSymbol]();
 }
 
 function buildSubclass(

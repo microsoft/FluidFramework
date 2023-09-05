@@ -27,7 +27,7 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
-import { compareSets, fail, oneFromSet } from "../../util";
+import { compareSets, disposeSymbol, fail, oneFromSet } from "../../util";
 import {
 	AllowedTypes,
 	FieldSchema,
@@ -74,7 +74,7 @@ export function makeField(
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
 		anchorNode.on("afterDelete", () => {
-			field.free();
+			field[disposeSymbol]();
 		});
 	}
 	return field;

@@ -380,3 +380,10 @@ export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 export interface Named<TName> {
 	readonly name: TName;
 }
+
+/**
+ * Placeholder for `Symbol.dispose`.
+ *
+ * Replace this with `Symbol.dispose` when it is available.
+ */
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");

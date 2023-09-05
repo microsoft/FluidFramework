@@ -105,36 +105,23 @@ describe("lazyTree", () => {
 		// TODO: move these constants for validation of struct field names into schema builder.
 		// TODO: adjust private/protected names used in implementation to follow some documentable pattern that can be banned more generally (ex: _ prefix).
 		const bannedNames = new Set([
-			"__defineGetter__",
-			"__defineSetter__",
-			"__lookupGetter__",
-			"__lookupSetter__",
-			"__proto__",
 			"anchor",
 			"anchorNode",
 			"constructor",
 			"context",
 			"cursor",
 			"forgetAnchor",
-			"free",
-			"hasOwnProperty",
 			"is",
 			"isFreed",
-			"isPrototypeOf",
-			"lazyCursor",
 			"on",
 			"parentField",
 			"prepareForEdit",
-			"propertyIsEnumerable",
 			"schema",
-			"toLocaleString",
-			"toString",
 			"treeStatus",
 			"tryGetField",
 			"tryMoveCursorToAnchor",
 			"type",
 			"value",
-			"valueOf",
 		]);
 		// Names starting with these must not be followed by an upper case letter
 		// TODO: add this to name validation in field names in schema builder.
