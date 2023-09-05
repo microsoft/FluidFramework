@@ -241,10 +241,7 @@ export const OdspErrorTypes: {
     readonly fileIsLocked: "fileIsLocked";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
-    readonly usageError: "usageError"; /**
-    * SPO can occasionally return 403 for r/w operations on document when there is a fail over to another data center.
-    * So to preserve integrity of the data, the data becomes readonly.
-    */
+    readonly usageError: "usageError";
 };
 
 // @public (undocumented)
