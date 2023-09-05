@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { assert, delay } from "@fluidframework/core-utils";
-import { LogLevel } from "@fluidframework/core-interfaces";
+import { LogLevels } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
@@ -371,7 +371,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					duration: performance.now() - stTime,
 				},
 				undefined,
-				LogLevel.verbose,
+				LogLevels.verbose,
 			);
 			this.firstVersionCall = false;
 

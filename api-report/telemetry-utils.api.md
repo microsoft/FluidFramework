@@ -22,6 +22,7 @@ import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
+import { LogLevels } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/core-interfaces';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -220,8 +221,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 // @public
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: LogLevel.verbose | LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: LogLevel.verbose | LogLevel.default): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevels.verbose | typeof LogLevels.default): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevels.verbose | typeof LogLevels.default): void;
 }
 
 // @public (undocumented)

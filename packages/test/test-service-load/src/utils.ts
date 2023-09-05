@@ -11,7 +11,7 @@ import {
 	OdspTestDriver,
 } from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, LogLevel, LogLevels } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
@@ -58,7 +58,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 			profile: string;
 			runId: number | undefined;
 		},
-		minLogLevel: LogLevel = LogLevel.default,
+		minLogLevel: LogLevel = LogLevels.default,
 	) {
 		const logger = await this.loggerP(minLogLevel);
 		return createChildLogger({
@@ -181,7 +181,7 @@ export async function initialize(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
 
-	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
+	const minLogLevel = random.pick([LogLevels.verbose, LogLevels.default]);
 	const logger = await createLogger(
 		{
 			driverType: testDriver.type,

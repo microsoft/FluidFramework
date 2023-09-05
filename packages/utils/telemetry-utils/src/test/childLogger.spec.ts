@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	LogLevel,
+	LogLevels,
 } from "@fluidframework/core-interfaces";
 import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger";
 import { MockLogger } from "../mockLogger";
@@ -192,15 +192,15 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 
-			minLogLevel: LogLevel.error,
+			minLogLevel: LogLevels.error,
 		};
 		const childLogger1 = createChildLogger({ logger });
 
-		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.error);
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevels.error);
 		assert(sent, "event should be sent");
 
 		sent = false;
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevels.default);
 		assert(!sent, "event should not be sent");
 	});
 
@@ -214,11 +214,11 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 
-			minLogLevel: LogLevel.verbose,
+			minLogLevel: LogLevels.verbose,
 		};
 		const childLogger1 = createChildLogger({ logger });
 
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevels.verbose);
 		assert(sent, "event should be sent");
 
 		sent = false;
@@ -242,7 +242,7 @@ describe("ChildLogger", () => {
 		assert(sent, "default event should be sent");
 
 		sent = false;
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevels.verbose);
 		assert(!sent, "event should not be sent");
 	});
 
@@ -255,19 +255,19 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
-			minLogLevel: LogLevel.default,
+			minLogLevel: LogLevels.default,
 		};
 		const multiSinkLogger = createMultiSinkLogger({
-			loggers: [logger1, new MockLogger(LogLevel.error)],
+			loggers: [logger1, new MockLogger(LogLevels.error)],
 		});
 		const childLogger1 = createChildLogger({
 			logger: multiSinkLogger,
 		});
 
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevels.verbose);
 		assert(!sent, "verbose event should not be sent");
 
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevels.default);
 		assert(sent, "verbose event should be sent");
 	});
 });
