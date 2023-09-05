@@ -4,8 +4,8 @@
  */
 
 import BTree from "sorted-btree";
-import { assert } from "@fluidframework/common-utils";
 import { SessionSpaceCompressedId, StableId } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	assertIsRevisionTag,

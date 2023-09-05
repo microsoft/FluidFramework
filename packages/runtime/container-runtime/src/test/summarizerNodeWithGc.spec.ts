@@ -415,8 +415,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
 			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
 
 			rootNode.startSummary(summaryRefSeq++, logger);
 			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
@@ -430,8 +430,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
 			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
 			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
 			assert.strictEqual(
@@ -453,8 +453,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 			rootNode.completeSummary("test-handle1", true /* validateSummary */);
 
 			let result = await rootNode.refreshLatestSummary("test-handle1", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
 
 			rootNode.startSummary(summaryRefSeq++, logger);
 			rootNode.updateUsedRoutes([""]);
@@ -468,8 +468,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
 			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
-			assert(result.latestSummaryUpdated === true, "should update");
-			assert(result.wasSummaryTracked === true, "should be tracked");
+			assert(result.isSummaryTracked, "should be tracked");
+			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
 			const leafNodeLatestSummary = (leafNode as SummarizerNodeWithGC).latestSummary;
 			assert.strictEqual(

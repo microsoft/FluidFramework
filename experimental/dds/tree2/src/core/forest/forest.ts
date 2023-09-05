@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository, FieldKey } from "../schema-stored";
@@ -46,8 +46,9 @@ export interface ForestEvents {
 }
 
 /**
- * Invalidates whenever `current` changes.
+ * Invalidates whenever the tree content changes.
  * For now (might change later) downloading new parts of the forest counts as a change.
+ * Not invalidated when schema changes.
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
  * @alpha
@@ -59,14 +60,6 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 	 * The new copy will not invalidate observers (dependents) of the old one.
 	 */
 	clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
-
-	/**
-	 * Schema used within this forest.
-	 * All data must conform to these schema.
-	 *
-	 * The root's schema is tracked under {@link rootFieldKey}.
-	 */
-	readonly schema: StoredSchemaRepository;
 
 	/**
 	 * Allocates a cursor in the "cleared" state.

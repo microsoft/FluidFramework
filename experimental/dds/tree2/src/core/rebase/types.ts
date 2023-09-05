@@ -4,7 +4,7 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import {
 	OpSpaceCompressedId,
