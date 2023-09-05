@@ -195,6 +195,7 @@ module.exports = {
 				["prettier", "prettier"],
 				["webpack", "webpack"],
 				["nyc", "nyc"],
+				["c8", "c8"],
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
