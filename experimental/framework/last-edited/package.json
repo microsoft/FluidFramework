@@ -31,7 +31,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"tsc": "tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
