@@ -85,7 +85,7 @@ importers:
       '@types/semver-utils': ^1.1.1
       '@types/sort-json': ^2.0.1
       async: ^3.2.4
-      c8: ^7.7.1
+      c8: ^7.14.0
       chai: ^4.3.7
       chai-arrays: ^2.2.0
       chalk: ^2.4.2
@@ -434,7 +434,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.53
       '@types/semver': ^7.5.0
-      c8: ^7.7.1
+      c8: ^7.14.0
       chai: ^4.3.7
       chalk: ^2.4.2
       concurrently: ^8.2.1
