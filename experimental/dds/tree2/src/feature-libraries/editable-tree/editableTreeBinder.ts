@@ -310,6 +310,8 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
 		new Map();
 	public constructor(protected readonly options: BinderOptions) {}
+	public abstract onDelete(path: UpPath, count: number): void;
+	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public abstract afterCreate(content: DetachedRangeUpPath): void;
 	public abstract beforeReplace(
 		oldContent: AttachedRangeUpPath,

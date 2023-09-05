@@ -170,9 +170,9 @@ function toDelta(change: TestChange): Delta.Modify {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
+							oldContent: { detachId: { minor: 42 } },
 							content: [
 								singleTextCursor({
 									type: brand("test"),

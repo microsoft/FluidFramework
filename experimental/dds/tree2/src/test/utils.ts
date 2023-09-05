@@ -444,8 +444,14 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 					}
 					break;
 				}
+				case Delta.MarkType.Restore: {
+					if (mark.newContent.detachId === undefined || mark.oldContent !== undefined) {
+						return true;
+					}
+					break;
+				}
 				case Delta.MarkType.Insert: {
-					if (mark.isTransient !== true) {
+					if (mark.detachId === undefined) {
 						return true;
 					}
 					break;
@@ -454,7 +460,6 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 				case Delta.MarkType.MoveIn:
 				case Delta.MarkType.Remove:
 					return true;
-					break;
 				default:
 					unreachableCase(type);
 			}

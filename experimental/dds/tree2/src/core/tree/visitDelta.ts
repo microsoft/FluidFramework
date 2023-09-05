@@ -274,7 +274,7 @@ function asReplace(
 	const type = mark.type;
 	switch (type) {
 		case Delta.MarkType.Remove: {
-			const { root } = config.treeIndex.getOrCreateEntry(mark.id);
+			const { root } = config.treeIndex.getOrCreateEntry(mark.detachId);
 			return {
 				count: mark.count,
 				oldContent: { fields: mark.fields, destination: root },

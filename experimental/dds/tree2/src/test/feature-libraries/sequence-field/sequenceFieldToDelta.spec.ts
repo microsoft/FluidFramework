@@ -66,6 +66,7 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 
 const childChange1 = TestChange.mint([0], 1);
 const childChange1Delta = TestChange.toDelta(childChange1);
+const detachId = { minor: 42 };
 
 describe("SequenceField - toDelta", () => {
 	it("empty mark list", () => {
@@ -150,6 +151,7 @@ describe("SequenceField - toDelta", () => {
 		const mark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 10,
+			detachId,
 		};
 		const expected: Delta.MarkList = [mark];
 		const actual = toDelta(changeset);
@@ -231,6 +233,7 @@ describe("SequenceField - toDelta", () => {
 		const del: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 10,
+			detachId: { major: "del10", minor: 0 },
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
@@ -242,7 +245,7 @@ describe("SequenceField - toDelta", () => {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Remove, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1, detachId },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -275,7 +278,7 @@ describe("SequenceField - toDelta", () => {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Remove, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1, detachId },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -299,11 +302,12 @@ describe("SequenceField - toDelta", () => {
 		const mark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 1,
+			detachId,
 			fields: new Map([
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Remove, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1, detachId: { minor: 43 } },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -332,7 +336,7 @@ describe("SequenceField - toDelta", () => {
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Remove, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1, detachId },
 						{
 							type: Delta.MarkType.Insert,
 							content: [

@@ -17,6 +17,12 @@ import {
 	clonePath,
 	rootFieldKey,
 	applyDelta,
+	AttachedRangeUpPath,
+	DetachedRangeUpPath,
+	ReplaceKind,
+	RangeUpPath,
+	PlaceUpPath,
+	DetachedPlaceUpPath,
 } from "../../core";
 import { brand } from "../../util";
 import { expectEqualPaths } from "../utils";
@@ -26,6 +32,7 @@ const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
 const fieldBaz: FieldKey = brand("baz");
 const node: JsonableTree = { type: brand("A"), value: "X" };
+const detachId = { minor: 42 };
 
 const path1 = makePath([fieldFoo, 5], [fieldBar, 4]);
 const path2 = makePath([fieldFoo, 3], [fieldBaz, 2]);
@@ -89,6 +96,7 @@ describe("AnchorSet", () => {
 		const deleteMark = {
 			type: Delta.MarkType.Remove,
 			count: 1,
+			detachId,
 		};
 
 		applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])), anchors);
@@ -104,6 +112,7 @@ describe("AnchorSet", () => {
 		const deleteMark = {
 			type: Delta.MarkType.Remove,
 			count: 1,
+			detachId,
 		};
 
 		applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])), anchors);
@@ -230,6 +239,7 @@ describe("AnchorSet", () => {
 		const deleteMark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 1,
+			detachId,
 		};
 
 		log.expect([]);
@@ -283,6 +293,7 @@ describe("AnchorSet", () => {
 		const deleteMark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 1,
+			detachId,
 		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
@@ -301,6 +312,35 @@ describe("AnchorSet", () => {
 				log.logger(
 					`visitSubtreeChange.onInsert-${String(path.parentField)}-${path.parentIndex}`,
 				)();
+			},
+			afterCreate(content: DetachedRangeUpPath): void {
+				log.logger(`visitSubtreeChange.afterCreate-${rangeToString(content)}`);
+			},
+			beforeReplace(
+				oldContent: AttachedRangeUpPath,
+				newContent: DetachedRangeUpPath,
+				kind: ReplaceKind,
+			): void {
+				log.logger(
+					`visitSubtreeChange.beforeReplace-old:${rangeToString(
+						oldContent,
+					)}-new:${rangeToString(newContent)}`,
+				);
+			},
+
+			afterReplace(
+				oldContent: DetachedRangeUpPath,
+				newContent: AttachedRangeUpPath,
+				kind: ReplaceKind,
+			): void {
+				log.logger(
+					`visitSubtreeChange.afterReplace-old:${rangeToString(
+						oldContent,
+					)}-new:${rangeToString(newContent)}`,
+				);
+			},
+			beforeDestroy(content: DetachedRangeUpPath): void {
+				log.logger(`visitSubtreeChange.beforeDestroy-${rangeToString(content)}`);
 			},
 		};
 		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
@@ -370,4 +410,12 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 		fields,
 	};
 	return makeDelta(modify, path.parent);
+}
+
+function rangeToString(range: RangeUpPath | DetachedRangeUpPath): string {
+	return `${range.field}[${range.start}, ${range.end}]`;
+}
+
+function placeToString(place: PlaceUpPath | DetachedPlaceUpPath): string {
+	return `${place.field}[${place.index}]`;
 }

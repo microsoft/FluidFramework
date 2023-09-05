@@ -72,6 +72,8 @@ const jsonDocumentSchema = new SchemaBuilder(
 	jsonSchema,
 ).intoDocumentSchema(SchemaBuilder.fieldSequence(...jsonRoot));
 
+const detachId = { minor: 42 };
+
 /**
  * Generic forest test suite
  */
@@ -328,7 +330,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			const firstNodeAnchor = cursor.buildAnchor();
 			cursor.clear();
 
-			const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
+			const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1, detachId };
 			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			applyDelta(delta, forest);
 			applyDelta(delta, forest.anchors);
@@ -411,7 +413,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			initializeForest(forest, content.map(singleTextCursor));
 
 			const clone = forest.clone(schema, forest.anchors);
-			const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
+			const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1, detachId };
 			const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 			applyDelta(delta, clone);
 
@@ -436,13 +438,17 @@ export function testForest(config: ForestTestConfiguration): void {
 					const cursor = forest.allocateCursor();
 					moveToDetachedField(forest, cursor);
 
-					const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
+					const mark: Delta.Remove = {
+						type: Delta.MarkType.Remove,
+						count: 1,
+						detachId,
+					};
 					const delta: Delta.Root = new Map([[rootFieldKey, [mark]]]);
 					assert.throws(() => applyDelta(delta, forest));
 				});
 			}
 
-			it("set fields", () => {
+			it("set fields as remove and insert", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
 				initializeForest(forest, [singleJsonCursor(nestedContent)]);
 
@@ -452,7 +458,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[
 							xField,
 							[
-								{ type: Delta.MarkType.Remove, count: 1 },
+								{ type: Delta.MarkType.Remove, count: 1, detachId },
 								{
 									type: Delta.MarkType.Insert,
 									content: [
@@ -477,12 +483,53 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.equal(reader.value, true);
 			});
 
-			it("delete", () => {
+			it("set fields as replace", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
+				initializeForest(forest, [singleJsonCursor(nestedContent)]);
+
+				const setField: Delta.Modify = {
+					type: Delta.MarkType.Modify,
+					fields: new Map([
+						[
+							xField,
+							[
+								{
+									type: Delta.MarkType.Insert,
+									content: [
+										singleTextCursor({
+											type: jsonBoolean.name,
+											value: true,
+										}),
+									],
+									oldContent: {
+										detachId,
+									},
+								},
+							],
+						],
+					]),
+				};
+				const delta: Delta.Root = new Map([[rootFieldKey, [setField]]]);
+				applyDelta(delta, forest);
+
+				const reader = forest.allocateCursor();
+				moveToDetachedField(forest, reader);
+				assert(reader.firstNode());
+				reader.enterField(xField);
+				assert.equal(reader.firstNode(), true);
+				assert.equal(reader.value, true);
+			});
+
+			it("remove", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 				const content: JsonCompatible[] = [1, 2];
 				initializeForest(forest, content.map(singleJsonCursor));
 
-				const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
+				const mark: Delta.Remove = {
+					type: Delta.MarkType.Remove,
+					count: 1,
+					detachId,
+				};
 				const delta: Delta.Root = new Map([[rootFieldKey, [0, mark]]]);
 				applyDelta(delta, forest);
 
@@ -505,7 +552,11 @@ export function testForest(config: ForestTestConfiguration): void {
 				cursor.clear();
 
 				const skip: Delta.Skip = 1;
-				const mark: Delta.Remove = { type: Delta.MarkType.Remove, count: 1 };
+				const mark: Delta.Remove = {
+					type: Delta.MarkType.Remove,
+					count: 1,
+					detachId,
+				};
 				const delta: Delta.Root = new Map([[rootFieldKey, [skip, mark]]]);
 				applyDelta(delta, forest);
 
@@ -557,7 +608,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const mark: Delta.Insert = {
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor({ x: 0 })],
-					isTransient: true,
+					detachId,
 					fields: new Map([[xField, [moveOut]]]),
 				};
 				const delta: Delta.Root = new Map([[rootFieldKey, [mark, moveIn]]]);
@@ -645,7 +696,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.equal(reader.nextNode(), false);
 			});
 
-			it("modify and delete", () => {
+			it("modify and remove", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
 				initializeForest(forest, [singleJsonCursor(nestedContent)]);
 
@@ -653,6 +704,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const mark: Delta.Remove = {
 					type: Delta.MarkType.Remove,
 					count: 1,
+					detachId,
 					fields: new Map([
 						[xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
 					]),
@@ -689,7 +741,11 @@ export function testForest(config: ForestTestConfiguration): void {
 										[
 											fooField,
 											[
-												{ type: Delta.MarkType.Remove, count: 1 },
+												{
+													type: Delta.MarkType.Remove,
+													count: 1,
+													detachId,
+												},
 												{
 													type: Delta.MarkType.Insert,
 													content: [singleJsonCursor(2)],
@@ -761,7 +817,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		});
 
 		describe("Does not leave an empty field", () => {
-			it("when deleting the last node in the field", () => {
+			it("when removing the last node in the field", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(jsonSchema));
 				const delta: Delta.Root = new Map([
 					[
@@ -776,6 +832,7 @@ export function testForest(config: ForestTestConfiguration): void {
 											{
 												type: Delta.MarkType.Remove,
 												count: 1,
+												detachId,
 											},
 										],
 									],

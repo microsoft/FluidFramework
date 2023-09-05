@@ -231,7 +231,7 @@ export interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
 	 * The ID assigned to the first node being removed.
 	 * Subsequent nodes should be assigned incrementing IDs.
 	 */
-	readonly id: DetachedNodeId;
+	readonly detachId: DetachedNodeId;
 }
 
 // /**

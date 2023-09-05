@@ -55,14 +55,17 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: ({ change }: TaggedChange<number>, deltaFromChild: ToDelta): Delta.MarkList => [
+	intoDelta: (
+		{ change, revision }: TaggedChange<number>,
+		deltaFromChild: ToDelta,
+		idAllocator,
+	): Delta.MarkList => [
 		{
 			type: Delta.MarkType.Modify,
 			fields: new Map([
 				[
 					brand("value"),
 					[
-						{ type: Delta.MarkType.Remove, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -73,6 +76,13 @@ export const counterHandle: FieldChangeHandler<number> = {
 									value: change,
 								}),
 							],
+							oldContent: {
+								detachId: {
+									major: revision,
+									// TODO: use idAllocator.mint() instead
+									minor: idAllocator(revision, brand(0), 1)[0].first,
+								},
+							},
 						},
 					],
 				],

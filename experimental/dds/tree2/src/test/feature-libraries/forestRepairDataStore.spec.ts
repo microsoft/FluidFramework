@@ -34,6 +34,8 @@ const root: UpPath = {
 	parentIndex: 0,
 };
 
+const detachId = { minor: 42 };
+
 describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
 		const forest = buildForest();
@@ -72,6 +74,7 @@ describe("ForestRepairDataStore", () => {
 									{
 										type: Delta.MarkType.Remove,
 										count: 2,
+										detachId,
 									},
 								],
 							],
@@ -95,6 +98,7 @@ describe("ForestRepairDataStore", () => {
 									{
 										type: Delta.MarkType.Remove,
 										count: 2,
+										detachId,
 									},
 								],
 							],

@@ -328,7 +328,7 @@ export function optionalFieldIntoDelta(
 	if (update === undefined) {
 		// The field is being cleared
 		if (!change.fieldChange.wasEmpty) {
-			return [{ type: Delta.MarkType.Remove, count: 1, id, ...hasOldFieldChanges }];
+			return [{ type: Delta.MarkType.Remove, count: 1, detachId: id, ...hasOldFieldChanges }];
 		}
 		return [];
 	} else {

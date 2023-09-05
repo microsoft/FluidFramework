@@ -94,7 +94,7 @@ function cellDeltaFromMark<TNodeChange>(
 					{
 						type: Delta.MarkType.Remove,
 						count: mark.count,
-						id: {
+						detachId: {
 							major: mark.revision ?? revision,
 							minor: mark.id,
 						},

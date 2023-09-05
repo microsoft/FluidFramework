@@ -13,8 +13,11 @@ import {
 	IEditableForest,
 	PathVisitor,
 	ProtoNodes,
+	DetachedRangeUpPath,
+	AttachedRangeUpPath,
+	ReplaceKind,
 } from "../../../core";
-import { brand } from "../../../util";
+import { brand, fail } from "../../../util";
 import { getField, on, singleTextCursor } from "../../../feature-libraries";
 import { IEmitter } from "../../../events";
 import {
@@ -72,6 +75,21 @@ describe("editable-tree: event subscription", () => {
 					assert.deepEqual(content[0].value, { zip: "33428" });
 					assert.deepEqual(path, node);
 					visitLog.push(path);
+				},
+				afterCreate(content: DetachedRangeUpPath): void {},
+				beforeReplace(
+					oldContent: AttachedRangeUpPath,
+					newContent: DetachedRangeUpPath,
+					kind: ReplaceKind,
+				): void {},
+
+				afterReplace(
+					oldContent: DetachedRangeUpPath,
+					newContent: AttachedRangeUpPath,
+					kind: ReplaceKind,
+				): void {},
+				beforeDestroy(content: DetachedRangeUpPath): void {
+					fail("should not be called");
 				},
 			};
 			return visitor;
