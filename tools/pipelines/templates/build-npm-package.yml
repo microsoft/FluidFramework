@@ -32,6 +32,8 @@ parameters:
   default:
   - ci:test
 
+# A list of directory to run the PublishTestREsults task on in separate steps.
+# Used to avoid the force merge limit of 100 result files.
 - name: testResultDirs
   type: object
   default:
