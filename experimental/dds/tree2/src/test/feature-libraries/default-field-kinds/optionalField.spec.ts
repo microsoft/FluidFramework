@@ -118,7 +118,7 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
 			id: brand(2),
 			newContent: {
 				revert: testTreeCursor("tree1"),
-				changeId: { revision: mintRevisionTag(), localId: brand(2) },
+				changeId: { revision: change2.revision, localId: brand(2) },
 			},
 			wasEmpty: false,
 		},
@@ -369,16 +369,19 @@ describe("optionalField", () => {
 		it("can be converted to a delta when restoring content", () => {
 			const expected: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Insert,
-					content: [testTreeCursor("tree1")],
+					type: Delta.MarkType.Restore,
+					count: 1,
+					newContent: {
+						restoreId: { major: change2.revision, minor: 2 },
+					},
 					oldContent: {
-						detachId: { major: tag, minor: 0 },
+						detachId: { major: revertChange2.revision, minor: 2 },
 					},
 				},
 			];
 
 			const actual = optionalFieldIntoDelta(revertChange2, (change) =>
-				deltaFromChild1(tagChange(change, tag)),
+				deltaFromChild1(tagChange(change, revertChange2.revision)),
 			);
 			assertMarkListEqual(actual, expected);
 		});
