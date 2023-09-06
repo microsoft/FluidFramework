@@ -56,10 +56,17 @@ See `IGCRuntimeOptions` in [containerRuntime.ts](../containerRuntime.ts) for mor
 
 In this phase, the GC algorithm identifies all Fluid objects that have been unreferenced for a specific amount of time (typically 30-40 days) and deletes them. Objects are only swept once the GC system is sure that they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it.
 
-GC sweep phase has not been enabled by default yet. A "soft" version of Sweep is also available, called "Tombstone".
+GC sweep phase has not been enabled by default yet. A "soft" version of Sweep called "Tombstone Mode" is enabled by default when Sweep is disabled.
 See the next section on safely enabling Sweep for details on how to use Tombstoning to validate your app's GC-readiness.
 
-## Early Adopter: GC Configuration
+## Early Adopters: GC Configuration
 
 GC Sweep is not yet enabled by default, and until that time early adopters have several configuration options available
 for how to enable and monitor GC. This is covered in detail [here](./gcEarlyAdoption.md).
+
+## DRAFT NOTES / TODOS
+
+Update the last 2 sections (Sweep Phase and Early Adopters) to have this info, and otherwise point to the other file
+
+-   How to enable Tombstone enforcement (the two settings)
+-   How to enable Sweep

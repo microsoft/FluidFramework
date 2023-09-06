@@ -103,7 +103,7 @@ Note: The Summarizer client will _never_ throw on usage or load of a Tombstoned 
 
 The following configuration is required for Sweep to be enabled for a given document:
 
--   GC Option `gcSweepGeneration` must be set
+-   GC Option `gcSweepGeneration` must be set, and the persisted value must match the current value in the code
 -   Each of these two Config Settings must be set to `true` in the session:
     -   `Fluid.GarbageCollection.Test.SweepDataStores`
     -   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
@@ -117,17 +117,27 @@ For Tombstone, if `gcTombstoneGeneration` is not set, Tombstone enforcement will
 For Sweep however, if `gcSweepGeneration` is not set, Tombstone enforcement will be **disabled**.
 
 This means that until the `gcSweepGeneration` GC Option is set, _no existing document will be eligible for Sweep, ever_.
+So all documents created since the most recent bump to the gcSweepGeneration will have Sweep enabled.
+Note that if `gcSweepGeneration` is set and matches, Tombstone Mode is off for the session and `gcTombstoneGeneration` is ignored.
 
 Lastly, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
 be eligible for Sweep as well. This was done for historical reasons due to circumstances during GC's development.
 
-### DRAFT NOTES
+## Advanced Configurations
 
--   Move all this to `gcAdvancedConfiguration.md` and put only these two things in the original file:
-    -   How to enable Tombstone enforcement (the two settings)
-    -   How to enable Sweep
+There are a handful of other configuration options/settings that can be used to tweak GC's behavior,
+mostly for testing. Please refer to the function [`generateGCConfigs` in gcConfigs.ts](.\gcConfigs.ts)
+for the full story.
 
-Questions
+Examples of available advanced configuration include:
 
--   What if Tombstone is also enabled - Sweep wins I assume?
--   If you bump GcTombstoneGeneration to 1 but GcSweepGeneration is at 0, what happens?
+-   Disabling GC permanently for new files
+-   Overriding GC Mark/Sweep enablement for this session:
+    -   Disabling running GC Mark and/or Sweep phases for this session
+    -   Forcing GC Mark and/or Sweep to run for this session even if otherwise it would be disabled
+    -   Disabling Tombstone Mode (don't even mark objects as Tombstones)
+-   Overriding Session Expiry for new files (or disabling it altogether, which will also disable Tombstone/Sweep)
+-   Overriding the Sweep Timeout, _independent of Session Expiry_, so use with care (for testing purposes only - data loss could occur)
+-   Running in "Test Mode", where objects are deleted as soon as they're unreferenced
+-   Force "Full GC" to run, which ignores incremental optimizations based on previously computed GC Data
+-   Treat InactiveObjects like Tombstones: throw an error on load (with the same back door to follow-up with a successful request)
