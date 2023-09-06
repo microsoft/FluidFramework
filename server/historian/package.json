@@ -87,7 +87,19 @@
 			"@types/node": "^18.17.1",
 			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.1"
+			"socket.io-parser": "^4.2.1",
+			"@fluidframework/gitresources": "^1.0.0",
+			"@fluidframework/protocol-base": "^1.0.0",
+			"@fluidframework/server-services-ordering-kafkanode": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-ordering-kafkanode",
+			"@fluidframework/server-services-ordering-rdkafka": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-ordering-rdkafka",
+			"@fluidframework/server-services-ordering-zookeeper": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-ordering-zookeeper",
+			"@fluidframework/server-services": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services",
+			"@fluidframework/server-services-client": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-client",
+			"@fluidframework/server-services-core": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-core",
+			"@fluidframework/server-services-shared": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-shared",
+			"@fluidframework/server-services-telemetry": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-telemetry",
+			"@fluidframework/server-services-utils": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/services-utils",
+			"@fluidframework/server-test-utils": "file:/Users/brand/Desktop/repos/FluidFrameworkCopy/server/routerlicious/packages/test-utils/"
 		}
 	}
 }

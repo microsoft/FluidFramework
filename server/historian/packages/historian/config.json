@@ -8,7 +8,7 @@
 	},
 	"riddler": "http://riddler:5000",
 	"requestSizeLimit": "1gb",
-	"ignoreEphemeralFlag": true,
+	"ignoreEphemeralFlag": false,
 	"redis": {
 		"host": "redis",
 		"port": 6379,
