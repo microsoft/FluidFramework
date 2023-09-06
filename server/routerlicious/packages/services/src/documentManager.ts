@@ -71,13 +71,16 @@ export class DocumentManager implements IDocumentManager {
 	): Promise<IDocumentStaticProperties> {
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
-		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
+		let staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
 			staticPropsKey,
 		);
 
-		// If there are no cached static document props, read the document
+		// If there are no cached static document props, read the document and re-obtain the cache results
 		if (!staticPropsStr) {
-			return this.readDocument(tenantId, documentId); // Also caches the static data of the read document
+			await this.readDocument(tenantId, documentId); // The static data from this document will be cached while reading it
+			staticPropsStr = await DocumentManager.documentStaticDataCache.get(
+				staticPropsKey,
+			);
 		}
 
 		// Return the static data, parsed into a JSON object
