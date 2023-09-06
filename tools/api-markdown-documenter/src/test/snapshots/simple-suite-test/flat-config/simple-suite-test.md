@@ -1027,7 +1027,7 @@ Here are some remarks about the namespace
 
 #### Example 1 {#testnamespace-example1}
 
-Example 1
+TypeScript Example
 
 ```typescript
 const foo = bar;
@@ -1035,7 +1035,7 @@ const foo = bar;
 
 #### Example 2 {#testnamespace-example2}
 
-Example 2
+JavaScript Example
 
 ```javascript
 const bar = foo
