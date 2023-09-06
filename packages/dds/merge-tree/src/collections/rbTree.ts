@@ -389,6 +389,25 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		// TODO: error on undefined key
 	}
 
+	public clear() {
+		// Clear the tree (remove all nodes)
+		this.clearNode(this.root);
+		this.root = undefined;
+	}
+
+	private clearNode(node: RBNode<TKey, TData> | undefined) {
+		if (!node) {
+			return;
+		}
+
+		this.clearNode(node.left);
+		this.clearNode(node.right);
+
+		// Remove the references for the current node
+		node.left = undefined;
+		node.right = undefined;
+	}
+
 	public removeExisting(key: TKey) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		if (!this.isRed(this.root!.left) && !this.isRed(this.root!.right)) {

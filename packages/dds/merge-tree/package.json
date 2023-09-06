@@ -109,6 +109,9 @@
 		"broken": {
 			"ClassDeclaration_Client": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_RedBlackTree": {
+				"forwardCompat": false
 			}
 		}
 	}

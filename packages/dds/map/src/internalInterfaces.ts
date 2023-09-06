@@ -131,6 +131,16 @@ export interface IMapClearLocalOpMetadata {
 	 * Local map contents prior to clearing it.
 	 */
 	previousMap?: Map<string, ILocalValue>;
+
+	/**
+	 * All existing keys have been ack'd
+	 */
+	previousAckedInsertedKeys?: string[];
+
+	/**
+	 * All pending message id's for unack'd set op's
+	 */
+	previousPendingSetOps?: Map<string, number[]>;
 }
 
 /**

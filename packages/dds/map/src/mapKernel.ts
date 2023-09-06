@@ -114,11 +114,15 @@ function createClearLocalOpMetadata(
 	op: IMapClearOperation,
 	pendingClearMessageId: number,
 	previousMap?: Map<string, ILocalValue>,
+	previousAckedInsertedKeys?: string[],
+	previousPendingSetOps?: Map<string, number[]>,
 ): IMapClearLocalOpMetadata {
 	const localMetadata: IMapClearLocalOpMetadata = {
 		type: "clear",
 		pendingMessageId: pendingClearMessageId,
 		previousMap,
+		previousAckedInsertedKeys,
+		previousPendingSetOps,
 	};
 	return localMetadata;
 }
@@ -427,7 +431,7 @@ export class MapKernel {
 			return previousValue !== undefined;
 		}
 
-		// Remove the key from ack'd insertions or all associated local pending set op's, it depends on 
+		// Remove the key from ack'd insertions or all associated local pending set op's, it depends on
 		// whether the key is already ack'd or not
 		let previousPos: number | number[];
 		if (this.ackedInsertedKeys.includes(key)) {
@@ -453,7 +457,9 @@ export class MapKernel {
 	 * Clear all data from the map.
 	 */
 	public clear(): void {
-		const copy = this.isAttached() ? new Map<string, ILocalValue>(this.data) : undefined;
+		const dataCopy = this.isAttached()
+			? new Map<string, ILocalValue>(this.entries())
+			: undefined;
 
 		// Clear the data locally first.
 		this.clearCore(true);
@@ -466,10 +472,19 @@ export class MapKernel {
 			return;
 		}
 
+		// Backup the pendingSetOps and ackedInsertedKeys
+		const ackedInsertedKeysCopy = Array.from(this.ackedInsertedKeys);
+		const pendingSetOpsCopy = new Map<string, number[]>(this.pendingSetOps);
+
+		// Clear the data structure used to maintain the data order information
+		this.ackedInsertedKeys.length = 0;
+		this.localInsertedKeys.clear();
+		this.pendingSetOps.clear();
+
 		const op: IMapClearOperation = {
 			type: "clear",
 		};
-		this.submitMapClearMessage(op, copy);
+		this.submitMapClearMessage(op, dataCopy, ackedInsertedKeysCopy, pendingSetOpsCopy);
 	}
 
 	/**
@@ -575,8 +590,23 @@ export class MapKernel {
 			if (localOpMetadata.previousMap === undefined) {
 				throw new Error("Cannot rollback without previous map");
 			}
+			// Rebuild the actual data
 			for (const [key, localValue] of localOpMetadata.previousMap.entries()) {
 				this.setCore(key, localValue, true);
+			}
+			// Rebuild the queue of ackedInsertKeys
+			if (localOpMetadata.previousAckedInsertedKeys !== undefined) {
+				for (const key of localOpMetadata.previousAckedInsertedKeys) {
+					this.ackedInsertedKeys.push(key);
+				}
+			}
+
+			// Rebuild the pendingSetOps and localInsertedKeys
+			if (localOpMetadata.previousPendingSetOps !== undefined) {
+				for (const [key, messageIds] of localOpMetadata.previousPendingSetOps) {
+					this.pendingSetOps.set(key, Array.from(messageIds));
+					this.localInsertedKeys.put(messageIds[0], key);
+				}
 			}
 
 			const lastPendingClearId = this.pendingClearMessageIds.pop();
@@ -587,7 +617,6 @@ export class MapKernel {
 				throw new Error("Rollback op does match last clear");
 			}
 		} else if (op.type === "delete" || op.type === "set") {
-
 			if (localOpMetadata.type === "add") {
 				this.deleteCore(op.key as string, true);
 
@@ -841,6 +870,9 @@ export class MapKernel {
 					);
 					return;
 				}
+				// Clear the current acked keys
+				this.ackedInsertedKeys.length = 0;
+
 				if (this.pendingKeys.size > 0) {
 					this.clearExceptPendingKeys();
 					return;
@@ -929,8 +961,16 @@ export class MapKernel {
 	private submitMapClearMessage(
 		op: IMapClearOperation,
 		previousMap?: Map<string, ILocalValue>,
+		previousAckedInsertedKeys?: string[],
+		previousPendingSetOps?: Map<string, number[]>,
 	): void {
-		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
+		const metadata = createClearLocalOpMetadata(
+			op,
+			this.getMapClearMessageId(),
+			previousMap,
+			previousAckedInsertedKeys,
+			previousPendingSetOps,
+		);
 		this.submitMessage(op, metadata);
 	}
 
