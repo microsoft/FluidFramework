@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^2.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': ^2.0.0-internal.6.2.0
+      '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/benchmark': ^2.1.0
