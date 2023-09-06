@@ -66,6 +66,7 @@ export const DriverErrorTypes: {
     readonly locationRedirection: "locationRedirection";
     readonly fluidInvalidSchema: "fluidInvalidSchema";
     readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";
