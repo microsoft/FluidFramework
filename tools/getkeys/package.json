@@ -14,6 +14,7 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
+		"clean": "rimraf --glob 'dist'",
 		"eslint": "eslint ./index.js",
 		"eslint:fix": "eslint ./index.js --fix",
 		"format": "npm run prettier:fix",
@@ -23,7 +24,8 @@
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node ./index.js",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"tsc": "tsc"
 	},
 	"dependencies": {
 		"@fluidframework/tool-utils": "^0.35.0",

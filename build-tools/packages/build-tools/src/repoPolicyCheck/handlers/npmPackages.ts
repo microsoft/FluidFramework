@@ -999,6 +999,17 @@ export const handlers: Handler[] = [
 					.map((i) => `\n\t${i}`)
 					.join("")}`;
 			}
+
+			const clean = scripts["clean"];
+			if (clean && clean.startsWith("rimraf ")) {
+				if (clean.includes('"')) {
+					return "Clean script using double quote instead of single quote";
+				}
+
+				if (!clean.includes("'")) {
+					return "Clean script rimraf argument should have single quotes";
+				}
+			}
 		},
 		resolver: (file, root) => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
