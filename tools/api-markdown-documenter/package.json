@@ -34,6 +34,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha dist/**/test/**/*.test.js --reporter-option maxDiffSize=100000",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:verbose": "npm run test:mocha:verbose",
 		"tsc": "tsc"
 	},
 	"c8": {
