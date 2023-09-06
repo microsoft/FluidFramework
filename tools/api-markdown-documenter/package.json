@@ -32,11 +32,11 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "c8 npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha dist/**/test/**/*.test.js --reporter-option maxDiffSize=100000",
 		"tsc": "tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -74,6 +74,7 @@
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.15.11",
 		"@types/unist": "^2.0.6",
+		"c8": "^7.7.1",
 		"chai": "^4.3.7",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -86,7 +87,6 @@
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^5.0.0",
 		"typescript": "~5.0.4"

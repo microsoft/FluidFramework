@@ -49,7 +49,7 @@
 		"tsc:fast": "fluid-build --root . --task tsc --worker",
 		"watch": "pnpm run -r --parallel tsc --watch"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [],

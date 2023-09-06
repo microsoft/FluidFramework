@@ -52,7 +52,7 @@
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=20s",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -133,6 +133,7 @@
 		"@types/nock": "^9.3.0",
 		"@types/node": "^16.18.38",
 		"@types/uuid": "^9.0.2",
+		"c8": "^7.7.1",
 		"eslint": "~8.6.0",
 		"eslint-import-resolver-typescript": "^3.5.5",
 		"eslint-plugin-import": "~2.25.4",
@@ -140,7 +141,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"nock": "^13.3.3",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
