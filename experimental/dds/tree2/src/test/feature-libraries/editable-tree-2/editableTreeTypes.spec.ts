@@ -128,12 +128,15 @@ describe("editableTreeTypes", () => {
 		const child: Recursive | undefined = struct.foo;
 		const data = struct.x + (struct.foo?.foo?.foo?.x ?? 0);
 		assert(child);
-		child.foo?.foo?.foo?.foo?.setX(5);
-		child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
+
+		// TODO: add shorthand setters
+		// child.foo?.foo?.foo?.foo?.setX(5);
+		// child.foo?.boxedFoo.content?.foo?.foo?.setFoo({ x: 5, foo: { x: 5, foo: undefined } });
 
 		struct.boxedFoo.setContent(undefined);
 		// Shorthand for the above.
-		struct.setFoo(undefined);
+		// TODO: add shorthand setters
+		// struct.setFoo(undefined);
 	}
 
 	it("schema is", () => {

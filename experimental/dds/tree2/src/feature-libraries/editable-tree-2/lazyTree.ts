@@ -37,11 +37,9 @@ import {
 } from "../typed-schema";
 import { TreeStatus, treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
-import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import { Context } from "./editableTreeContext";
 import {
 	FieldNode,
-	FlexibleFieldContent,
 	Leaf,
 	MapNode,
 	Struct,
@@ -304,19 +302,21 @@ export class LazyMap<TSchema extends MapSchema>
 			makeField(this.context, this.schema.mapFields, cursor),
 		) as TypedField<TSchema["mapFields"]>;
 	}
-	public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
-		const field = this.get(key);
-		if (field.is(SchemaBuilder.fieldOptional(...this.schema.mapFields.allowedTypes))) {
-			field.setContent(content);
-		} else {
-			assert(
-				field.is(SchemaBuilder.fieldSequence(...this.schema.mapFields.allowedTypes)),
-				"unexpected map field kind",
-			);
-			// TODO: fix merge semantics.
-			field.replaceRange(0, field.length, content as Iterable<ContextuallyTypedNodeData>);
-		}
-	}
+
+	// TODO: when appropriate add setter that delegates to field kind specific setter.
+	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
+	// 	const field = this.get(key);
+	// 	if (field.is(SchemaBuilder.fieldOptional(...this.schema.mapFields.allowedTypes))) {
+	// 		field.setContent(content);
+	// 	} else {
+	// 		assert(
+	// 			field.is(SchemaBuilder.fieldSequence(...this.schema.mapFields.allowedTypes)),
+	// 			"unexpected map field kind",
+	// 		);
+	// 		// TODO: fix merge semantics.
+	// 		field.replaceRange(0, field.length, content as Iterable<ContextuallyTypedNodeData>);
+	// 	}
+	// }
 
 	public [Symbol.iterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
 		return super[Symbol.iterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
@@ -414,7 +414,6 @@ function buildStructClass<TSchema extends StructSchema>(
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
 	for (const [key, field] of schema.structFields) {
-		// TODO: custom field identifiers
 		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
@@ -433,15 +432,15 @@ function buildStructClass<TSchema extends StructSchema>(
 			},
 		};
 
-		propertyDescriptorMap[`set${capitalize(key)}`] = {
-			enumerable: false,
-			get(this: CustomStruct) {
-				// return (content: NewFieldContent) => {
-				// 	this.getField(key).setContent(content);
-				// };
-				fail("TODO: implement or remove this API");
-			},
-		};
+		// TODO: add setters (methods and assignment) when compatible with FieldKind and TypeScript.
+		// propertyDescriptorMap[`set${capitalize(key)}`] = {
+		// 	enumerable: false,
+		// 	get(this: CustomStruct) {
+		// 		return (content: NewFieldContent) => {
+		// 			this.getField(key).setContent(content);
+		// 		};
+		// 	},
+		// };
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.

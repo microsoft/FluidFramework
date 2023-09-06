@@ -150,8 +150,9 @@ export interface UntypedField extends UntypedEntity<FieldSchema>, Iterable<Untyp
  */
 export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
 	get(key: FieldKey): TypedField<TSchema["mapFields"]>;
-	// TODO: maybe remove this since it can be done in terms of editing result from `get` which provides better control over merge semantics.
-	set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+
+	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
+	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	[Symbol.iterator](): Iterator<TypedField<TSchema["mapFields"]>>;
 
@@ -212,7 +213,7 @@ export type StructTyped<TSchema extends StructSchema> = Struct &
  * Properties to access a struct nodes fields. See {@link StructTyped}.
  *
  * @privateRemarks
- * TODO: custom field identifiers
+ * TODO: support custom field keys
  *
  * @alpha
  */
@@ -223,14 +224,14 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
 	} & {
 		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
 		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
-	} & /*
-	 * Setter methods (TODO: constrain `this`?)
-	 * TODO: maybe remove this since it can be done in terms of editing result from `boxed` which provides better control over merge semantics.
-	 */ {
-		readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
-			content: FlexibleFieldContent<TFields[key]>,
-		) => void;
 	};
+// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
+// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+// {
+// 	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
+// 		content: FlexibleFieldContent<TFields[key]>,
+// 	) => void;
+// };
 // This could be enabled to allow assignment via `=` in some cases.
 // & {
 // 	// Setter properties (when the type system permits)
