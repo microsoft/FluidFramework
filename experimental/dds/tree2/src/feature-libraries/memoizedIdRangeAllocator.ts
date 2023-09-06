@@ -11,7 +11,6 @@ import {
 	setInRangeMap,
 	Mutable,
 	brand,
-	generateStableId,
 } from "../util";
 
 /**
@@ -39,7 +38,7 @@ export interface MemoizedIdRangeAllocator {
 	 *
 	 * @param count - The number of IDs to allocate. Interpreted as 1 if undefined.
 	 */
-	mint(count?: number): IdRange[];
+	mint(count?: number): ChangesetLocalId;
 }
 
 /**
@@ -110,19 +109,11 @@ export const MemoizedIdRangeAllocator = {
 				}
 				return out;
 			},
-			mint(length?: number): IdRange[] {
-				let count = length ?? 1;
-				const out: IdRange[] = [];
-				const ranges = getOrAddEmptyToMap(rangeMap, generateStableId());
-				const currId = _nextId;
-				while (count > 0) {
-					const newId = _nextId;
-					_nextId += count;
-					setInRangeMap(ranges, currId, count, newId);
-					out.push({ first: brand(newId), count });
-					count = 0;
-				}
-				return out;
+			mint(length?: number): ChangesetLocalId {
+				const count = length ?? 1;
+				const out = _nextId;
+				_nextId += count;
+				return brand(out);
 			},
 		};
 	},

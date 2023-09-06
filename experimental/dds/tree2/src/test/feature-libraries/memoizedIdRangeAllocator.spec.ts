@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MemoizedIdRangeAllocator } from "../../feature-libraries";
-import { RevisionTag, mintRevisionTag } from "../../core";
+import { ChangesetLocalId, RevisionTag, mintRevisionTag } from "../../core";
 import { brand } from "../../util";
 
 const tag1: RevisionTag = mintRevisionTag();
@@ -75,10 +75,13 @@ describe("MemoizedIdRangeAllocator", () => {
 	it("can mint ID ranges with only a count", () => {
 		const allocator = MemoizedIdRangeAllocator.fromNextId(1);
 		const id1 = allocator.mint(1);
-		assert.deepEqual(id1, [{ first: 1, count: 1 }]);
+		const expectedId1: ChangesetLocalId = brand(1);
+		assert.deepEqual(id1, expectedId1);
 		const id234 = allocator.mint(3);
-		assert.deepEqual(id234, [{ first: 2, count: 3 }]);
+		const expectedId234: ChangesetLocalId = brand(2);
+		assert.deepEqual(id234, expectedId234);
 		const id5 = allocator.mint(1);
-		assert.deepEqual(id5, [{ first: 5, count: 1 }]);
+		const expectedId5: ChangesetLocalId = brand(5);
+		assert.deepEqual(id5, expectedId5);
 	});
 });

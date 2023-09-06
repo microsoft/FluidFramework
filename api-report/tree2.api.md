@@ -1305,7 +1305,7 @@ export type MatchPolicy = "subtree" | "path";
 // @alpha
 export interface MemoizedIdRangeAllocator {
     allocate(revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number): IdRange[];
-    mint(count?: number): IdRange[];
+    mint(count?: number): ChangesetLocalId;
 }
 
 // @alpha (undocumented)
