@@ -21,7 +21,7 @@ import {
 	TreeSchemaIdentifier,
 	forEachField,
 } from "../../core";
-import { disposeSymbol, fail, getOrCreate } from "../../util";
+import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import {
 	FieldSchema,
 	SchemaBuilder,
@@ -401,14 +401,6 @@ const cachedStructClasses = new WeakMap<
 		anchor: Anchor,
 	) => LazyStruct<StructSchema>
 >();
-
-function capitalize<S extends string>(s: S): Capitalize<S> {
-	if (s === "") {
-		return s as Capitalize<S>;
-	}
-
-	return (s[0].toUpperCase() + s.slice(1)) as Capitalize<S>;
-}
 
 function buildStructClass<TSchema extends StructSchema>(
 	schema: TSchema,

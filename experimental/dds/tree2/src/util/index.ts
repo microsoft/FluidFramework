@@ -74,6 +74,7 @@ export {
 	oneFromSet,
 	Named,
 	disposeSymbol,
+	capitalize,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

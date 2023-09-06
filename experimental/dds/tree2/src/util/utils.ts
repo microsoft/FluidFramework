@@ -387,3 +387,18 @@ export interface Named<TName> {
  * Replace this with `Symbol.dispose` when it is available.
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
+
+/**
+ * Capitalize a string.
+ */
+export function capitalize<S extends string>(s: S): Capitalize<S> {
+	// To avoid splitting characters which are made of multiple UTF-16 code units,
+	// use iteration instead of indexing to separate the first character.
+	const iterated = s[Symbol.iterator]().next();
+	if (iterated.done === true) {
+		// Empty string case.
+		return "" as Capitalize<S>;
+	}
+
+	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
+}
