@@ -4988,6 +4988,7 @@ importers:
       moment: ^2.21.0
       nock: ^13.3.3
       prettier: ~2.6.2
+      rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
       traverse: 0.6.6
@@ -5015,6 +5016,7 @@ importers:
       moment: 2.29.4
       nock: 13.3.3
       prettier: 2.6.2
+      rimraf: 4.4.1
       sinon: 7.5.0
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
