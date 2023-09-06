@@ -3,21 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored";
+import { brand } from "../../util";
+import { IdAllocator, idAllocatorFromMaxId } from "../../feature-libraries";
 import * as Delta from "./delta";
-import {
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
-	NodeIndex,
-	PlaceIndex,
-	Range,
-	RangeUpPath,
-} from "./pathTree";
+import { DetachedPlaceUpPath, DetachedRangeUpPath, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, TreeIndex } from "./treeIndex";
 import { ReplaceKind } from "./visitPath";
-import { IdAllocator, idAllocatorFromMaxId } from "../../feature-libraries";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
-import { brand } from "../../util";
 
 export function applyDelta(
 	delta: Delta.Root,

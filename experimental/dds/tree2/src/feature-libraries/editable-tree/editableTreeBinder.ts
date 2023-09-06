@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	AttachedRangeUpPath,
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	FieldKey,
@@ -15,7 +14,6 @@ import {
 	RangeUpPath,
 	ReplaceKind,
 	UpPath,
-	UpPathDefault,
 	topDownPath,
 } from "../../core";
 import { Events, ISubscribable } from "../../events";
@@ -314,24 +312,62 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
 		new Map();
 	public constructor(protected readonly options: BinderOptions) {}
-	public abstract afterCreate(content: DetachedRangeUpPath): void;
-	public abstract beforeDestroy(content: DetachedRangeUpPath): void;
-	public abstract beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void;
-	public abstract afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void;
-	public abstract beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void;
-	public abstract afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void;
-	public abstract beforeReplace(
+
+	// TODO: make these methods abstract and make AbstractPathVisitor implementations implement them
+	public afterCreate(content: DetachedRangeUpPath): void {}
+	public beforeDestroy(content: DetachedRangeUpPath): void {}
+	public beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {}
+	public afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
+		this.onInsert(
+			{
+				parent: destination.parent,
+				parentField: destination.field,
+				parentIndex: destination.start,
+			},
+			[],
+		);
+	}
+	public beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
+	public afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
+		this.onDelete(
+			{
+				parent: source.parent,
+				parentField: source.field,
+				parentIndex: source.index,
+			},
+			destination.end - destination.start,
+		);
+	}
+	public beforeReplace(
 		newContent: DetachedRangeUpPath,
 		oldContent: RangeUpPath,
 		oldContentDestination: DetachedPlaceUpPath,
 		kind: ReplaceKind,
-	): void;
-	public abstract afterReplace(
+	): void {}
+	public afterReplace(
 		newContentSource: DetachedPlaceUpPath,
 		newContent: RangeUpPath,
 		oldContent: DetachedRangeUpPath,
 		kind: ReplaceKind,
-	): void;
+	): void {
+		this.onDelete(
+			{
+				parent: newContent.parent,
+				parentField: newContent.field,
+				parentIndex: newContent.start,
+			},
+			oldContent.end - oldContent.start,
+		);
+		this.onInsert(
+			{
+				parent: newContent.parent,
+				parentField: newContent.field,
+				parentIndex: newContent.start,
+			},
+			[],
+		);
+	}
+
 	public abstract onDelete(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public registerListener(
@@ -503,25 +539,6 @@ class DirectPathVisitor extends AbstractPathVisitor {
 			type: BindingType.Insert,
 		});
 	}
-
-	public override afterCreate(content: DetachedRangeUpPath): void {}
-	public override beforeDestroy(content: DetachedRangeUpPath): void {}
-	public override beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {}
-	public override afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {}
-	public override beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
-	public override afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {}
-	public override beforeReplace(
-		newContent: DetachedRangeUpPath,
-		oldContent: RangeUpPath,
-		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
-	): void {}
-	public override afterReplace(
-		newContentSource: DetachedPlaceUpPath,
-		newContent: RangeUpPath,
-		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
-	): void {}
 }
 
 /**
@@ -548,25 +565,6 @@ class InvalidatingPathVisitor
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		this.processRegisteredPaths(path);
 	}
-
-	public override afterCreate(content: DetachedRangeUpPath): void {}
-	public override beforeDestroy(content: DetachedRangeUpPath): void {}
-	public override beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {}
-	public override afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {}
-	public override beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
-	public override afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {}
-	public override beforeReplace(
-		newContent: DetachedRangeUpPath,
-		oldContent: RangeUpPath,
-		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
-	): void {}
-	public override afterReplace(
-		newContentSource: DetachedPlaceUpPath,
-		newContent: RangeUpPath,
-		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
-	): void {}
 
 	private readonly listeners: Set<Listener> = new Set();
 
@@ -622,25 +620,6 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 			});
 		}
 	}
-
-	public override afterCreate(content: DetachedRangeUpPath): void {}
-	public override beforeDestroy(content: DetachedRangeUpPath): void {}
-	public override beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {}
-	public override afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {}
-	public override beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
-	public override afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {}
-	public override beforeReplace(
-		newContent: DetachedRangeUpPath,
-		oldContent: RangeUpPath,
-		oldContentDestination: DetachedPlaceUpPath,
-		kind: ReplaceKind,
-	): void {}
-	public override afterReplace(
-		newContentSource: DetachedPlaceUpPath,
-		newContent: RangeUpPath,
-		oldContent: DetachedRangeUpPath,
-		kind: ReplaceKind,
-	): void {}
 
 	public flush(): BufferingPathVisitor {
 		const sortedQueue: CallableBindingContext[] = nativeSort(

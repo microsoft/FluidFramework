@@ -97,7 +97,7 @@ describe("SequenceField - toDelta", () => {
 		assert.deepStrictEqual(actual, expected);
 	});
 
-	it("revive => insert", () => {
+	it("revive => restore", () => {
 		function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
 			assert.equal(revision, tag);
 			assert.equal(index, 0);
@@ -108,14 +108,17 @@ describe("SequenceField - toDelta", () => {
 		const actual = toDelta(changeset);
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.Insert,
-				content: contentCursor,
+				type: Delta.MarkType.Restore,
+				count: 1,
+				newContent: {
+					restoreId: { major: tag, minor: 0 },
+				},
 			},
 		];
 		assertMarkListEqual(actual, expected);
 	});
 
-	it("revive and modify => insert", () => {
+	it("revive and modify => restore and modify", () => {
 		const nestedChange: FieldChange = {
 			fieldKind: FieldKinds.sequence.identifier,
 			change: brand("Dummy Child Change"),
@@ -138,8 +141,11 @@ describe("SequenceField - toDelta", () => {
 		);
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.Insert,
-				content: contentCursor,
+				type: Delta.MarkType.Restore,
+				count: 1,
+				newContent: {
+					restoreId: { major: tag, minor: 0 },
+				},
 				fields: fieldChanges,
 			},
 		];
@@ -147,7 +153,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("delete", () => {
-		const changeset = Change.delete(0, 10);
+		const changeset = Change.delete(0, 10, brand(42));
 		const mark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 10,
@@ -233,7 +239,7 @@ describe("SequenceField - toDelta", () => {
 		const del: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 10,
-			detachId: { major: "del10", minor: 0 },
+			detachId: { minor: 0 },
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,

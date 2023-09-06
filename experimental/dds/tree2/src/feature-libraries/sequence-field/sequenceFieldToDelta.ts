@@ -70,8 +70,13 @@ function cellDeltaFromMark<TNodeChange>(
 					content: cursors,
 				};
 				if (mark.transientDetach !== undefined) {
+					const majorForTransient = mark.transientDetach.revision ?? revision;
+					const hasMajor: { major?: RevisionTag } = {};
+					if (majorForTransient !== undefined) {
+						hasMajor.major = majorForTransient;
+					}
 					insertMark.detachId = {
-						major: mark.transientDetach.revision ?? revision,
+						...hasMajor,
 						minor: mark.transientDetach.localId,
 					};
 				}
@@ -90,12 +95,17 @@ function cellDeltaFromMark<TNodeChange>(
 				return [mark.count];
 			}
 			case "Delete": {
+				const major = mark.revision ?? revision;
+				const hasMajor: { major?: RevisionTag } = {};
+				if (major !== undefined) {
+					hasMajor.major = major;
+				}
 				return [
 					{
 						type: Delta.MarkType.Remove,
 						count: mark.count,
 						detachId: {
-							major: mark.revision ?? revision,
+							...hasMajor,
 							minor: mark.id,
 						},
 					},
@@ -115,17 +125,27 @@ function cellDeltaFromMark<TNodeChange>(
 				assert(cellId !== undefined, "Effective revive must target an empty cell");
 				const hasTransience: { detachId?: Delta.DetachedNodeId } = {};
 				if (mark.transientDetach !== undefined) {
+					const majorForTransient = mark.transientDetach.revision ?? revision;
+					const hasMajorForTransient: { major?: RevisionTag } = {};
+					if (majorForTransient !== undefined) {
+						hasMajorForTransient.major = majorForTransient;
+					}
 					hasTransience.detachId = {
-						major: mark.transientDetach.revision ?? revision,
+						...hasMajorForTransient,
 						minor: mark.transientDetach.localId,
 					};
+				}
+				const major = cellId.revision ?? revision;
+				const hasMajor: { major?: RevisionTag } = {};
+				if (major !== undefined) {
+					hasMajor.major = major;
 				}
 				const restoreMark: Mutable<Delta.Restore> = {
 					type: Delta.MarkType.Restore,
 					count: mark.count,
 					newContent: {
 						restoreId: {
-							major: cellId.revision ?? revision,
+							...hasMajor,
 							minor: cellId.localId,
 						},
 						...hasTransience,

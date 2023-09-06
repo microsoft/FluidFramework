@@ -26,7 +26,7 @@ import {
 	PlaceUpPath,
 	RangeUpPath,
 } from "./pathTree";
-import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
+import { Value, EmptyKey } from "./types";
 import { PathVisitor, ReplaceKind } from "./visitPath";
 import { DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";

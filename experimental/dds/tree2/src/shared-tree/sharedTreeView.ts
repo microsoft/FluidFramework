@@ -55,6 +55,7 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
+import { announceVisitor } from "../core/tree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -440,7 +441,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 				const delta = this.changeFamily.intoDelta(change);
 				const combinedVisitor = combineVisitors([
 					this.forest.acquireVisitor(),
-					this.forest.anchors.acquireVisitor(),
+					announceVisitor(this.forest.anchors.acquireVisitor()),
 				]);
 				visitDelta(delta, combinedVisitor, this.removedTrees);
 				combinedVisitor.free();

@@ -252,7 +252,10 @@ function asReplaces(
 			}
 		}
 		case Delta.MarkType.Insert: {
-			if (mark.detachId === undefined || mark.oldContent !== undefined) {
+			if (
+				(mark.content.length > 0 && mark.detachId === undefined) ||
+				mark.oldContent !== undefined
+			) {
 				const newContentSource = ensureCreation(mark, config);
 				return makeArray(mark.content.length, (i) => {
 					const replace: Mutable<Replace> = {};
@@ -309,9 +312,11 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 	let fields: Delta.FieldMarks | undefined;
 	switch (mark.type) {
 		case Delta.MarkType.Insert: {
-			const root = ensureCreation(mark, config);
-			if (mark.fields !== undefined) {
-				config.rootTrees.set(root, mark.fields);
+			if (mark.content.length > 0) {
+				const root = ensureCreation(mark, config);
+				if (mark.fields !== undefined) {
+					config.rootTrees.set(root, mark.fields);
+				}
 			}
 			break;
 		}
@@ -339,16 +344,18 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 	let fields: Delta.FieldMarks | undefined;
 	switch (mark.type) {
 		case Delta.MarkType.Insert: {
-			const rootSource = ensureCreation(mark, config);
-			nodeId = mark.detachId;
-			fields = mark.fields;
-			if (mark.detachId !== undefined) {
-				const count = mark.content.length;
-				const { root: rootDestination } = config.treeIndex.getOrCreateEntry(
-					mark.detachId,
-					count,
-				);
-				setRootReplaces(count, config, rootDestination, rootSource);
+			if (mark.content.length > 0) {
+				const rootSource = ensureCreation(mark, config);
+				nodeId = mark.detachId;
+				fields = mark.fields;
+				if (mark.detachId !== undefined) {
+					const count = mark.content.length;
+					const { root: rootDestination } = config.treeIndex.getOrCreateEntry(
+						mark.detachId,
+						count,
+					);
+					setRootReplaces(count, config, rootDestination, rootSource);
+				}
 			}
 			break;
 		}
@@ -408,7 +415,7 @@ function setRootReplaces(
  * - Collects all root creations
  * - Collects all roots that need a first pass
  * - Executes detaches (bottom-up) provided they are not part of a replace
- *   (because we want to wait until we are sure content to attach is available as a root)
+ * (because we want to wait until we are sure content to attach is available as a root)
  */
 function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): void {
 	let index = 0;
