@@ -84,7 +84,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveIn":
 			case "ReturnTo": {
-				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
+				const ranges = idAllocator.allocate(mark.revision ?? revision, mark.id, mark.count);
 				return ranges.map(({ first, count }) => ({
 					type: Delta.MarkType.MoveIn,
 					moveId: brandOpaque<Delta.MoveId>(first),
@@ -113,7 +113,7 @@ function cellDeltaFromMark<TNodeChange>(
 			}
 			case "MoveOut":
 			case "ReturnFrom": {
-				const ranges = idAllocator(mark.revision ?? revision, mark.id, mark.count);
+				const ranges = idAllocator.allocate(mark.revision ?? revision, mark.id, mark.count);
 				return ranges.map(({ first, count }) => ({
 					type: Delta.MarkType.MoveOut,
 					moveId: brandOpaque<Delta.MoveId>(first),

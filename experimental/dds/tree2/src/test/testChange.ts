@@ -14,10 +14,11 @@ import {
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
+	RevisionTag,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { singleTextCursor } from "../feature-libraries";
+import { MemoizedIdRangeAllocator, ToDelta, singleTextCursor } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -162,8 +163,15 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.Modify {
+function toDelta(
+	{ change, revision }: TaggedChange<TestChange>,
+	idAllocator: MemoizedIdRangeAllocator,
+): Delta.Modify {
 	if (change.intentions.length > 0) {
+		const hasMajor: { major?: RevisionTag } = {};
+		if (revision !== undefined) {
+			hasMajor.major = revision;
+		}
 		return {
 			type: Delta.MarkType.Modify,
 			fields: new Map([
@@ -172,7 +180,7 @@ function toDelta(change: TestChange): Delta.Modify {
 					[
 						{
 							type: Delta.MarkType.Insert,
-							oldContent: { detachId: { minor: 42 } },
+							oldContent: { detachId: { ...hasMajor, minor: idAllocator.mint() } },
 							content: [
 								singleTextCursor({
 									type: brand("test"),

@@ -12,7 +12,14 @@ import {
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import {
+	ChangesetLocalId,
+	Delta,
+	TaggedChange,
+	makeAnonChange,
+	mintRevisionTag,
+	tagChange,
+} from "../../../core";
 import { TestChange } from "../../testChange";
 import {
 	assertMarkListEqual,
@@ -163,11 +170,16 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.MarkList {
+export function toDelta(
+	change: TestChangeset,
+	allocator: MemoizedIdRangeAllocator = MemoizedIdRangeAllocator.fromNextId(),
+	revision = mintRevisionTag(),
+): Delta.MarkList {
+	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
-		makeAnonChange(change),
-		TestChange.toDelta,
-		MemoizedIdRangeAllocator.fromNextId(),
+		tagChange(change, revision),
+		(childChange) => TestChange.toDelta(tagChange(childChange, revision), allocator),
+		allocator,
 	);
 }
 

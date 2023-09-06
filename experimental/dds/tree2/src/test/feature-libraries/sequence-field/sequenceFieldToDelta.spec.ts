@@ -26,7 +26,7 @@ import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { composeAnonChanges } from "./utils";
+import { composeAnonChanges, toDelta } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
@@ -46,15 +46,6 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
-function toDelta(change: TestChangeset): Delta.MarkList {
-	deepFreeze(change);
-	return SF.sequenceFieldToDelta(
-		makeAnonChange(change),
-		TestChange.toDelta,
-		MemoizedIdRangeAllocator.fromNextId(),
-	);
-}
-
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(
@@ -65,7 +56,10 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 }
 
 const childChange1 = TestChange.mint([0], 1);
-const childChange1Delta = TestChange.toDelta(childChange1);
+const childChange1Delta = TestChange.toDelta(
+	makeAnonChange(childChange1),
+	MemoizedIdRangeAllocator.fromNextId(),
+);
 const detachId = { minor: 42 };
 
 describe("SequenceField - toDelta", () => {

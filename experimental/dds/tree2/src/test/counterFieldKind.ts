@@ -79,8 +79,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 							oldContent: {
 								detachId: {
 									major: revision,
-									// TODO: use idAllocator.mint() instead
-									minor: idAllocator(revision, brand(0), 1)[0].first,
+									minor: idAllocator.mint(),
 								},
 							},
 						},

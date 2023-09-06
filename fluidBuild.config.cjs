@@ -143,6 +143,18 @@ module.exports = {
 				"packages/test/mocha-test-setup/package.json",
 				"examples/apps/attributable-map/package.json",
 			],
+			"npm-package-json-test-scripts-split": [
+				"server/",
+				"tools/",
+				"package.json",
+				"packages/test/test-service-load/package.json",
+			],
+			"npm-package-json-clean-script": [
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
+				"tools/markdown-magic",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
+				"tools/getkeys",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -189,6 +201,7 @@ module.exports = {
 				["prettier", "prettier"],
 				["webpack", "webpack"],
 				["nyc", "nyc"],
+				["c8", "c8"],
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],

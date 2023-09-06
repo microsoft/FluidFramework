@@ -1358,5 +1358,15 @@ export const shortCodeMap = {
 	"0x760": "Duplicate session in map.",
 	"0x761": "Failed to attempt to detect collisions.",
 	"0x762": "The only non-empty session must be the local session.",
-	"0x763": "Supplied ID is not within the cluster."
+	"0x763": "Supplied ID is not within the cluster.",
+	"0x764": "Running timer missing handler",
+	"0x765": "Handler executed without deferred",
+	"0x766": "proposalHandle should be available",
+	"0x767": "Must release existing visitor before acquiring another",
+	"0x768": "Multiple free calls for same visitor",
+	"0x769": "Unable to exit root node",
+	"0x76a": "Must release existing visitor before acquiring another",
+	"0x76b": "Multiple free calls for same visitor",
+	"0x76c": "Must release existing visitor before acquiring another",
+	"0x76d": "Multiple free calls for same visitor"
 };

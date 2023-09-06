@@ -562,7 +562,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	public acquireVisitor(): AnnouncedVisitor {
 		assert(
 			this.activeVisitor === undefined,
-			"Must release existing visitor before acquiring another",
+			0x767 /* Must release existing visitor before acquiring another */,
 		);
 
 		const visitor = {
@@ -793,6 +793,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.parentField !== undefined,
 					0x3ab /* Must be in a field to enter node */,
 				);
+
 				this.parent = {
 					parent: this.parent,
 					parentField: this.parentField,
@@ -822,7 +823,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
-				assert(parent !== undefined, "Unable to exit root node");
+				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
 			},

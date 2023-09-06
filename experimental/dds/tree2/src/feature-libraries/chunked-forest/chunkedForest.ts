@@ -92,10 +92,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
-			"Must release existing visitor before acquiring another",
+			0x76a /* Must release existing visitor before acquiring another */,
 		);
 		this.events.emit("beforeChange");
-		this.invalidateDependents();
 
 		const moves: Map<Delta.MoveId, DetachedField> = new Map();
 
@@ -116,7 +115,14 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
-			moveIn(index: number, toAttach: DetachedField): number {
+			moveIn(
+				index: number,
+				toAttach: DetachedField,
+				invalidateDependents: boolean = true,
+			): number {
+				if (invalidateDependents) {
+					this.forest.invalidateDependents();
+				}
 				const detachedKey = detachedFieldAsKey(toAttach);
 				const children = this.forest.roots.fields.get(detachedKey) ?? [];
 				this.forest.roots.fields.delete(detachedKey);
@@ -136,7 +142,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.mutableChunkStack.length = 0;
 				assert(
 					this.forest.activeVisitor !== undefined,
-					"Multiple free calls for same visitor",
+					0x76b /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");
@@ -155,12 +161,14 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.onMoveOut(index, count);
 			},
 			onInsert(index: number, content: Delta.ProtoNodes): void {
+				this.forest.invalidateDependents();
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				const field = this.forest.newDetachedField();
 				this.forest.roots.fields.set(detachedFieldAsKey(field), chunks);
-				this.moveIn(index, field);
+				this.moveIn(index, field, false);
 			},
 			onMoveOut(index: number, count: number, id?: Delta.MoveId): void {
+				this.forest.invalidateDependents();
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 				const newField = sourceField.splice(index, count);

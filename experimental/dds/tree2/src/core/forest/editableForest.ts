@@ -34,6 +34,7 @@ export interface IEditableForest extends IForestSubscription {
 
 	/**
 	 * @returns a visitor that can be used to mutate the forest.
+	 *
 	 * Mutating the forest does NOT update anchors.
 	 * The visitor must be released after use.
 	 * It is invalid to acquire a visitor without releasing the previous one.

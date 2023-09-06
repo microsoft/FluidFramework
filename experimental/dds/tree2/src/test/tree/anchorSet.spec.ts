@@ -17,14 +17,12 @@ import {
 	clonePath,
 	rootFieldKey,
 	announceDelta,
-	AttachedRangeUpPath,
 	DetachedRangeUpPath,
 	ReplaceKind,
 	RangeUpPath,
 	PlaceUpPath,
 	DetachedPlaceUpPath,
 	DeltaVisitor,
-	UpPathDefault,
 } from "../../core";
 import { brand } from "../../util";
 import { expectEqualPaths } from "../utils";
@@ -461,7 +459,7 @@ class UnorderedTestLogger {
 }
 
 function withVisitorInFoo(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void) {
-	let visitor = anchors.acquireVisitor();
+	const visitor = anchors.acquireVisitor();
 	visitor.enterField(fieldFoo);
 	action(visitor);
 	visitor.exitField(fieldFoo);
@@ -496,6 +494,7 @@ function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined)
 }
 function checkRemoved(path: UpPath | undefined) {
 	assert.notEqual(path, undefined);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	assert.equal(treeStatusFromPath(path!), TreeStatus.Removed);
 }
 
