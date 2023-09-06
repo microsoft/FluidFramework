@@ -59,6 +59,8 @@ as part of the Mark Phase when Sweep is disabled. In this mode, any object that 
 marked as a "Tombstone", which triggers certain logging events and/or behavior changes if/when that Tombstoned object is
 accessed by the application.
 
+Tombstone is intended for use by early adopters of GC and is documented in more detail [here](./gcEarlyAdoption.md).
+
 ## GC Configuration
 
 The default configuration for GC today is:
@@ -66,6 +68,7 @@ The default configuration for GC today is:
 -   GC Mark Phase is **enabled**, including Tombstone Mode
 -   Session Expiry is **enabled**
 -   GC Sweep Phase is **disabled**
+    -   Note: Once enabled, Sweep will only run for documents created from that point forward
 
 ### Techniques used for configuration
 
@@ -91,30 +94,17 @@ covered in the [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-confi
 
 ### Enabling Sweep Phase
 
-As explained above, Tombstone Mode can provide a "soft delete" experience to evaluate your app's GC-readiness
-without ultimately jeopardizing user's data.
-
-A full treatment of Tombstone and Sweep configuration can be found in
-[this companion document geared towards early adopters of GC](./gcEarlyAdoption.md).
-
-#### Enabling Tombstone Enforcement
-
-To enable Tombstone Enforcement - meaning, attempting to access a Tombstoned object will fail -
-set the following two Config Settings to `true`:
-
--   `Fluid.GarbageCollection.ThrowOnTombstoneLoad`
--   `Fluid.GarbageCollection.ThrowOnTombstoneUsage`
-
-#### Enabling Full Sweep
-
 To enable Sweep Phase for new documents, you must set the `gcSweepGeneration` GC Option to a number, e.g. 0 to start.
 The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#differences-between-gcsweepgeneration-and-gctombstonegeneration).
 Note that this will disabled Tombstone Mode.
 
-Additionally, you must set these two Config Settings to `true` in the session:
+Additionally, you must set these two Config Settings to `true` in the session to allow the nodes to be deleted:
 
 -   `Fluid.GarbageCollection.Test.SweepDataStores`
 -   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
+
+A full treatment of Tombstone and Sweep configuration can be found in
+[this companion document geared towards early adopters of GC](./gcEarlyAdoption.md).
 
 ### More Advanced Configuration
 
