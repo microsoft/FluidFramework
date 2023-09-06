@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';

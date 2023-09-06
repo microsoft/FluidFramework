@@ -81,7 +81,7 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  *
  * @remarks
  * To avoid collisions with assertShortCode tagging in Fluid Framework, this cannot be named "assert".
- * When a non constant message is not needed, use `assert` from `@fluidframework/common-utils`;
+ * When a non constant message is not needed, use `assert` from `@fluidframework/core-utils`;
  */
 export function assertWithMessage(condition: unknown, message?: string, notLogSafe = false): asserts condition {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

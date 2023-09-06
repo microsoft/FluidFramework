@@ -8,7 +8,7 @@ import {
 	createChildMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,

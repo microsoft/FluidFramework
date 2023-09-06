@@ -49,7 +49,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export const agentSchedulerId = "_scheduler";

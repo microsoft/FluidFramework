@@ -18,6 +18,7 @@ import { getRenderConfigurationWithDefaults } from "../configuration";
 describe("Document rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
+			apiItemName: "Foo",
 			children: [
 				new SectionNode(
 					[
