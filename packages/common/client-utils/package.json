@@ -29,7 +29,7 @@
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob _api-extractor-temp dist lib *.tsbuildinfo *.build.log",
+		"clean": "rimraf --glob _api-extractor-temp dist lib *.tsbuildinfo *.build.log nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",

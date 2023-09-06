@@ -974,4 +974,78 @@ export const handlers: Handler[] = [
 			}
 		},
 	},
+	{
+		name: "npm-package-json-clean-script",
+		match,
+		handler: (file, root) => {
+			// This rule enforces that we have a module field in the package iff we have a ESM build
+			// So that tools like webpack will pack up the right version.
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+
+			const missing = missingCleanDirectories(scripts);
+
+			if (missing.length !== 0) {
+				return `Clean script missing the following:${missing
+					.map((i) => `\n\t${i}`)
+					.join("")}`;
+			}
+		},
+		resolver: (file, root) => {
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const missing = missingCleanDirectories(json.scripts);
+				const clean = json.scripts["clean"] ?? "rimraf --glob";
+				if (missing.length === 0) {
+					return;
+				}
+				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+			});
+
+			return { resolved: true };
+		},
+	},
 ];
+
+function missingCleanDirectories(scripts: any) {
+	if (scripts.clean?.startsWith("pnpm")) {
+		return [];
+	}
+
+	const expectedClean: string[] = [];
+
+	if (scripts["tsc"]) {
+		expectedClean.push("dist");
+	}
+
+	// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+	// that it has a ESM build.
+	const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+	const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+	if (hasBuildEsNext) {
+		expectedClean.push("lib");
+	}
+
+	if (scripts["build"]?.startsWith("fluid-build")) {
+		expectedClean.push("*.tsbuildinfo");
+		expectedClean.push("*.build.log");
+	}
+
+	if (scripts["build:docs"]) {
+		expectedClean.push("_api-extractor-temp");
+	}
+
+	if (scripts["test"] && !scripts["test"].startsWith("echo")) {
+		expectedClean.push("nyc");
+	}
+	return expectedClean.filter((name) => !scripts.clean?.includes(name));
+}
