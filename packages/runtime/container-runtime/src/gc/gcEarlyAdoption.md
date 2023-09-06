@@ -18,14 +18,15 @@ There's a similar event logged long before an object is Tombstoned. Ater only 7 
 "Inactive", and FF will log if an Inactive object is loaded as well.
 The eventName for the Inactive log ends with `InactiveObject_Loaded`.
 
-### Configuring InactiveObject timeout
+## Getting earlier signals: Shortening the InactiveObject timeout
 
 The default timeout for an unreferenced object to become "Inactive" is 7 days. This is intended to be long enough such that
 it's very unlikely to hit a legitimate case where an object is revived within the same session it was deleted (e.g. delete then undo).
 Based on your application's user experience, you may choose to shorten this timeout to get an earlier signal (but beware of false positives).
 
-To override the default InactiveObject timeout, use either the `inactiveTimeoutMs` GC Option or the
-`Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs` Config Setting.
+To override the default InactiveObject timeout, use the `inactiveTimeoutMs` GC Option.
+There's also a Config Setting which can be used for testing (if the Config Provider allows overriding via localStorage/sessionStorage):
+`Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs`
 
 ## Enabling Tombstone Enforcement
 
@@ -49,7 +50,7 @@ To instruct FF to treat Tombstoned objects as if they are truly not present in t
 "Fluid.GarbageCollection.ThrowOnTombstoneUsage": true
 ```
 
-### In case of emergency: Setting the gcTombstoneGeneration
+### In case of emergency: Bumping the gcTombstoneGeneration
 
 GC includes a mechanism for Tombstone by which all new documents may be stamped with a "Generation" number,
 and if set then Tombstone is only enforceable for documents of the latest Generation. This number is specified
@@ -101,7 +102,7 @@ The following configuration is required for Sweep to be enabled for a given docu
 However, behavior differs in a few important ways.
 
 For Tombstone, if `gcTombstoneGeneration` is not set, Tombstone enforcement will be **enabled**.
-For Sweep however, if `gcSweepGeneration` is not set, Tombstone enforcement will be **disabled**.
+For Sweep however, if `gcSweepGeneration` is not set, Sweep enforcement will be **disabled**.
 
 This means that until the `gcSweepGeneration` GC Option is set, _no existing document will be eligible for Sweep, ever_.
 So all documents created since the most recent bump to the gcSweepGeneration will have Sweep enabled.

@@ -78,8 +78,8 @@ There are two ways to configure the Fluid Framework's GC behavior, referred to b
 
 Typically GC Options are used for more "official" and stable configuration, whereas Config Settings provide a mechanism
 for apps to override settings easily, e.g. by backing their `IConfigProviderBase` with a configuration/flighting service.
-Additionally, FF will fallback to reading from Local/Session Storage if the provider doesn't mention a particular
-Config Setting, making it convenient to override these while debugging.
+In cases where a behavior is controlled by both a Config Setting and GC Option, you may experiment at first using Config Settings
+and then later update the passed-in GC Options to finalize the configuration in your code.
 
 ### Disabling Mark Phase
 
