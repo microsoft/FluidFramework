@@ -165,6 +165,7 @@ describe("optionalField", () => {
 					newContent: { set: testTree("tree2") },
 					wasEmpty: true,
 				},
+				childChanges: [[{ revision: change2.revision, localId: brand(2) }, nodeChange1]],
 			};
 
 			assert.deepEqual(composed, change1And2);
@@ -206,7 +207,7 @@ describe("optionalField", () => {
 
 			const expected: OptionalChangeset = {
 				fieldChange: { id: brand(1), wasEmpty: false },
-				childChange: nodeChange2,
+				childChanges: [["self", nodeChange2]],
 			};
 
 			const repair: NodeReviver = (revision: RevisionTag, index: number, count: number) => {
@@ -228,6 +229,7 @@ describe("optionalField", () => {
 			);
 		});
 
+		//
 		describe("Rebasing", () => {
 			it("can be rebased", () => {
 				const childRebaser = (
@@ -248,8 +250,8 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase child change", () => {
-				const baseChange: OptionalChangeset = { childChange: nodeChange1 };
-				const changeToRebase: OptionalChangeset = { childChange: nodeChange2 };
+				const baseChange: OptionalChangeset = { childChanges: [["self", nodeChange1]] };
+				const changeToRebase: OptionalChangeset = { childChanges: [["self", nodeChange2]] };
 
 				const childRebaser = (
 					change: NodeChangeset | undefined,
@@ -260,7 +262,9 @@ describe("optionalField", () => {
 					return arbitraryChildChange;
 				};
 
-				const expected: OptionalChangeset = { childChange: arbitraryChildChange };
+				const expected: OptionalChangeset = {
+					childChanges: [["self", arbitraryChildChange]],
+				};
 
 				assert.deepEqual(
 					optionalChangeRebaser.rebase(

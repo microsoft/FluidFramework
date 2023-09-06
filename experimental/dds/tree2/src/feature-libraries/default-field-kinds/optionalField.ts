@@ -11,6 +11,7 @@ import {
 	ITreeCursorSynchronous,
 	tagChange,
 	ChangesetLocalId,
+	ChangeAtomId,
 } from "../../core";
 import { fail, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -34,21 +35,78 @@ import { populateChildModifications } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
+type ChangeId = ChangeAtomId | "self";
+
+interface IChildChangeMap<T> {
+	set(id: ChangeId, childChange: T): void;
+	get(id: ChangeId): T | undefined;
+	delete(id: ChangeId): boolean;
+	keys(): Iterable<ChangeId>;
+	values(): Iterable<T>;
+	entries(): Iterable<[ChangeId, T]>;
+	readonly size: number;
+}
+
+// TODO: better implementation which doesn't use JSON.stringify (double-nested map should be fine, maybe something else is conceptually nicer)
+class ChildChangeMap<T> implements IChildChangeMap<T> {
+	private readonly data = new Map<string, T>();
+	set(id: ChangeId, childChange: T): void {
+		this.data.set(JSON.stringify(id), childChange);
+	}
+
+	get(id: ChangeId): T | undefined {
+		return this.data.get(JSON.stringify(id));
+	}
+
+	delete(id: ChangeId): boolean {
+		return this.data.delete(JSON.stringify(id));
+	}
+
+	keys(): Iterable<ChangeId> {
+		return Array.from(this.data.keys(), (v) => JSON.parse(v));
+	}
+	values(): Iterable<T> {
+		return this.data.values();
+	}
+	entries(): Iterable<[ChangeId, T]> {
+		return Array.from(this.data.entries(), ([k, v]) => [JSON.parse(k), v]);
+	}
+	get size(): number {
+		return this.data.size;
+	}
+}
+
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
+		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
+		const addChildChange = (id: ChangeId, ...changes: TaggedChange<NodeChangeset>[]) => {
+			const existingChanges = perChildChanges.get(id);
+			if (existingChanges !== undefined) {
+				existingChanges.push(...changes);
+			} else {
+				perChildChanges.set(id, [...changes]);
+			}
+		};
+
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
-		const origNodeChange: TaggedChange<NodeChangeset>[] = [];
-		const newNodeChanges: TaggedChange<NodeChangeset>[] = [];
+		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		for (const { change, revision } of changes) {
-			if (change.deletedBy === undefined && change.childChange !== undefined) {
-				const taggedChange = tagChange(change.childChange, revision);
-				if (fieldChange === undefined) {
-					origNodeChange.push(taggedChange);
-				} else {
-					newNodeChanges.push(taggedChange);
+			const { childChanges } = change;
+			if (childChanges !== undefined) {
+				for (const [childId, childChange] of childChanges) {
+					const taggedChildChange = tagChange(childChange, revision);
+					if (childId === "self") {
+						// childChange refers to the node that existed at the start of `change`,
+						// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
+						// currentChildNodeChanges tracks (note that since we handle childChanges before fieldChange, this applies to
+						// if the current change does delete that node).
+						currentChildNodeChanges.push(taggedChildChange);
+					} else {
+						addChildChange(childId, taggedChildChange);
+					}
 				}
 			}
 
@@ -70,30 +128,49 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					delete fieldChange.newContent;
 				}
 
-				// The previous changes applied to a different value, so we discard them.
-				// TODO:AB#4622: Represent muted changes
-				newNodeChanges.length = 0;
+				// Node was changed by this revision: flush the current changes
+				if (currentChildNodeChanges.length > 0) {
+					addChildChange(
+						{ revision, localId: change.fieldChange.id },
+						...currentChildNodeChanges,
+					);
+					currentChildNodeChanges = [];
+				}
 
 				if (change.fieldChange.newContent?.changes !== undefined) {
-					newNodeChanges.push(tagChange(change.fieldChange.newContent.changes, revision));
+					currentChildNodeChanges.push(
+						tagChange(change.fieldChange.newContent.changes, revision),
+					);
 				}
 			}
 		}
 
-		const composed: OptionalChangeset = {};
-		if (fieldChange !== undefined) {
-			if (newNodeChanges.length > 0) {
+		if (currentChildNodeChanges.length > 0) {
+			if (fieldChange !== undefined) {
 				assert(
 					fieldChange.newContent !== undefined,
-					0x5c4 /* Shouldn't have new node changes if there is no new node */,
+					"after node must be defined to receive changes",
 				);
-				fieldChange.newContent.changes = composeChild(newNodeChanges);
+				fieldChange.newContent.changes =
+					currentChildNodeChanges.length === 1
+						? currentChildNodeChanges[0].change
+						: composeChild(currentChildNodeChanges);
+			} else {
+				addChildChange("self", ...currentChildNodeChanges);
 			}
+		}
+
+		const composed: OptionalChangeset = {};
+
+		if (fieldChange !== undefined) {
 			composed.fieldChange = fieldChange;
 		}
 
-		if (origNodeChange.length > 0) {
-			composed.childChange = composeChild(origNodeChange);
+		if (perChildChanges.size > 0) {
+			composed.childChanges = Array.from(perChildChanges.entries(), ([id, changes]) => [
+				id,
+				changes.length === 1 ? changes[0].change : composeChild(changes),
+			]);
 		}
 
 		return composed;
@@ -106,42 +183,52 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		invertChild: NodeChangeInverter,
 		reviver: NodeReviver,
 	): OptionalChangeset => {
-		const inverse: OptionalChangeset = {};
+		// Changes to the child that existed in this field before `change` was applied.
+		let originalChildChanges: NodeChangeset | undefined = undefined;
+		const inverseChildChanges = new ChildChangeMap<NodeChangeset>();
+		if (change.childChanges !== undefined) {
+			for (const [id, childChange] of change.childChanges) {
+				if (id === "self" && change.fieldChange !== undefined) {
+					originalChildChanges = invertChild(childChange, 0);
+				} else {
+					inverseChildChanges.set(
+						// TODO: It's a bit weird that we re-use the id here. It should conceivably be
+						// something like a rollback of that revision.
+						// Maybe we should operate solely in terms of ChangesetLocalId_s in the format? or something like that
+						id,
+						invertChild(childChange, 0),
+					);
+				}
+			}
+		}
 
-		const fieldChange = change.fieldChange;
+		const selfChanges = change.fieldChange?.newContent?.changes;
+		if (selfChanges !== undefined) {
+			inverseChildChanges.set("self", invertChild(selfChanges, 0));
+		}
+
+		const inverse: OptionalChangeset = {
+			childChanges:
+				inverseChildChanges.size > 0
+					? Array.from(inverseChildChanges.entries())
+					: undefined,
+		};
+
+		const { fieldChange } = change;
 		if (fieldChange !== undefined) {
+			// `change` replaces the node in the field
 			inverse.fieldChange = {
 				id: fieldChange.id,
 				wasEmpty: fieldChange.newContent === undefined,
 			};
-			if (fieldChange.newContent?.changes !== undefined) {
-				// The node inserted by change will be the node deleted by inverse
-				// Move the inverted changes to the child change field
-				inverse.childChange = invertChild(fieldChange.newContent.changes, 0);
-			}
 
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = {
 					revert: reviver(revision, 0, 1)[0],
 					changeId: { revision, localId: fieldChange.id },
+					changes: originalChildChanges,
 				};
-				if (change.childChange !== undefined) {
-					if (change.deletedBy === undefined) {
-						inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
-					} else {
-						// We currently drop the muted changes in the inverse.
-						// TODO: produce muted inverse changes so that a retroactive undo of revision
-						// `change.deletedBy` would be able to pick up and unmute those changes.
-					}
-				}
-			}
-		} else {
-			if (change.childChange !== undefined && change.deletedBy === undefined) {
-				inverse.childChange = invertChild(change.childChange, 0);
-			} else {
-				// Drop the muted changes if deletedBy is set to avoid
-				// applying muted changes on undo
 			}
 		}
 
@@ -162,183 +249,145 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		existenceState?: NodeExistenceState,
 		postbase: boolean = false,
 	): OptionalChangeset => {
-		if (postbase) {
-			const over = overTagged.change;
-			if (change.fieldChange !== undefined) {
-				if (over.fieldChange !== undefined) {
-					const wasEmpty = change.fieldChange.newContent === undefined;
-
-					// TODO: Handle rebasing child changes over `over.childChange`.
-					return {
-						...change,
-						fieldChange: { ...over.fieldChange, wasEmpty },
-					};
-				}
-
-				const rebasedChange = { ...change };
-				const overChildChange =
-					change.deletedBy === over.deletedBy ? over.childChange : undefined;
-				const rebasedChildChange = rebaseChild(change.childChange, overChildChange); // TODO: This should plumb postbase through
-				if (rebasedChildChange !== undefined) {
-					rebasedChange.childChange = rebasedChildChange;
-				} else {
-					delete rebasedChange.childChange;
-				}
-
-				return rebasedChange;
-			}
-
-			if (change.childChange !== undefined) {
-				if (over.fieldChange !== undefined) {
-					const overIntention = getIntention(
-						over.fieldChange.revision ?? overTagged.revision,
-						revisionMetadata,
-					);
-					if (change.deletedBy === undefined) {
-						// `change.childChange` refers to the node being deleted by `over`.
-						return {
-							childChange: rebaseChild(
-								change.childChange,
-								over.deletedBy === undefined ? undefined : over.childChange,
-								NodeExistenceState.Dead,
-							),
-							deletedBy: {
-								revision: overIntention,
-								localId: over.fieldChange.id,
-							},
-						};
-					} else if (over.fieldChange.newContent !== undefined) {
-						// Bug is in test: this case isn't hit because it assumes childChange can only make sense when field is non-empty
-						const overContent = over.fieldChange.newContent;
-						const rebasingOverRollback =
-							overIntention === change.deletedBy.revision &&
-							over.fieldChange.id === change.deletedBy.localId;
-						const rebasingOverUndo =
-							"revert" in overContent &&
-							overContent.changeId.revision === change.deletedBy.revision &&
-							overContent.changeId.localId === change.deletedBy.localId;
-						if (rebasingOverRollback || rebasingOverUndo) {
-							// Over is reviving the node that change.childChange is referring to.
-							// Rebase change.childChange and remove deletedBy
-							// because we revived the node that childChange refers to
-							return {
-								childChange: rebaseChild(
-									change.childChange,
-									overContent.changes,
-									NodeExistenceState.Alive,
-								),
-							};
-						}
-					}
-				}
-			}
-
-			{
-				const rebasedChange = { ...change };
-
-				let overChildChange: NodeChangeset | undefined;
-				if (change.deletedBy === undefined && over.deletedBy === undefined) {
-					overChildChange = over.childChange;
-				}
-
-				const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
-				if (rebasedChildChange !== undefined) {
-					rebasedChange.childChange = rebasedChildChange;
-				} else {
-					delete rebasedChange.childChange;
-				}
-
-				return rebasedChange;
-			}
-		}
-
 		const over = overTagged.change;
-		if (change.fieldChange !== undefined) {
-			if (over.fieldChange !== undefined) {
-				const wasEmpty = over.fieldChange.newContent === undefined;
 
-				// TODO: Handle rebasing child changes over `over.childChange`.
-				return {
-					...change,
-					fieldChange: { ...change.fieldChange, wasEmpty },
-				};
+		// TODO: Similar to invert, when `change` doesn't have a fieldChange with set, we need to detect
+		// when `over` has revived a node that has changes and move those changes to 'fieldChanges'
+		const perChildChanges = new ChildChangeMap<NodeChangeset>();
+		if (change.childChanges !== undefined) {
+			// TODO: (minor) early exits, better data structure choices, etc.
+			const overChildChanges = new ChildChangeMap<NodeChangeset>();
+			for (const [id, overChange] of over.childChanges ?? []) {
+				overChildChanges.set(id, overChange);
 			}
 
-			const rebasedChange = { ...change };
-			const overChildChange =
-				change.deletedBy === over.deletedBy ? over.childChange : undefined;
-			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
-			if (rebasedChildChange !== undefined) {
-				rebasedChange.childChange = rebasedChildChange;
-			} else {
-				delete rebasedChange.childChange;
-			}
-
-			return rebasedChange;
-		}
-
-		if (change.childChange !== undefined) {
+			// If we're rebasing over a fieldChange, track ChangeAtomId_s for cases where a previously existing
+			// node was restored. In that case, when we construct our child id changes, they may apply to 'self' rather than
+			// the pre-existing childId.
+			let restoredRollbackChangeId: ChangeAtomId | undefined;
+			let restoredUndoChangeId: ChangeAtomId | undefined;
 			if (over.fieldChange !== undefined) {
 				const overIntention = getIntention(
 					over.fieldChange.revision ?? overTagged.revision,
 					revisionMetadata,
 				);
-				if (change.deletedBy === undefined) {
-					// `change.childChange` refers to the node being deleted by `over`.
-					return {
-						childChange: rebaseChild(
-							change.childChange,
-							over.deletedBy === undefined ? undefined : over.childChange,
-							NodeExistenceState.Dead,
-						),
-						deletedBy: {
-							revision: overIntention,
-							localId: over.fieldChange.id,
-						},
-					};
-				} else if (over.fieldChange.newContent !== undefined) {
-					// Bug is in test: this case isn't hit because it assumes childChange can only make sense when field is non-empty
+
+				if (over.fieldChange.newContent !== undefined) {
 					const overContent = over.fieldChange.newContent;
-					const rebasingOverRollback =
-						overIntention === change.deletedBy.revision &&
-						over.fieldChange.id === change.deletedBy.localId;
-					const rebasingOverUndo =
-						"revert" in overContent &&
-						overContent.changeId.revision === change.deletedBy.revision &&
-						overContent.changeId.localId === change.deletedBy.localId;
-					if (rebasingOverRollback || rebasingOverUndo) {
-						// Over is reviving the node that change.childChange is referring to.
-						// Rebase change.childChange and remove deletedBy
-						// because we revived the node that childChange refers to
-						return {
-							childChange: rebaseChild(
-								change.childChange,
-								overContent.changes,
-								NodeExistenceState.Alive,
-							),
-						};
+					restoredRollbackChangeId = {
+						revision: overIntention,
+						localId: over.fieldChange.id,
+					};
+					if ("revert" in overContent) {
+						restoredUndoChangeId = overContent.changeId;
+					}
+				}
+			}
+
+			for (const [id, childChange] of change.childChanges) {
+				// TODO: NodeExistenceState needs to be double-checked for these cases.
+				// TODO: Consolidate these cases. Lots of duplication.
+				// Just a bit tricky to get right...
+				if (id === "self") {
+					const overChildChange = overChildChanges.get(id);
+					if (over.fieldChange !== undefined && change.fieldChange !== undefined) {
+						// `overChange` and `childChange` refer to conceptually different nodes: each replaced the field.
+						// No need to rebase.
+						perChildChanges.set(id, childChange);
+					} else if (over.fieldChange !== undefined && change.fieldChange === undefined) {
+						// `childChange` refers to the node existing in this field before rebasing, but
+						// that node was removed by `over`.
+						const rebasedChild = rebaseChild(
+							childChange,
+							overChildChange,
+							NodeExistenceState.Dead,
+						);
+						if (rebasedChild !== undefined) {
+							perChildChanges.set(
+								{
+									// TODO: Document this choice. This isn't really the revision that deleted the node, but
+									// the one that puts it back such that if we later ressurect it, the child changes will
+									// apply to it... this matches what the previous code/format did, but it's not well-documented
+									// why it's the right choice.
+									// See the "can rebase a node replacement and a dependent edit to the new node" test case.
+									// This might be making assumptions on sandwich rebasing a la rollback tags (which could be
+									// an obstacle for postbase)
+									revision: getIntention(
+										over.fieldChange?.revision ?? overTagged.revision,
+										revisionMetadata,
+									),
+									localId: over.fieldChange.id,
+								},
+								rebasedChild,
+							);
+						}
+					} else {
+						// `over` didn't remove the node (its fieldChange is undefined), and so `overChildChange`
+						// refers to the same node
+						const rebasedChild = rebaseChild(
+							childChange,
+							overChildChange,
+							NodeExistenceState.Alive,
+						);
+						if (rebasedChild !== undefined) {
+							perChildChanges.set(id, rebasedChild);
+						}
+					}
+				} else {
+					if (
+						(restoredRollbackChangeId !== undefined &&
+							areEqualChangeIds(id, restoredRollbackChangeId)) ||
+						(restoredUndoChangeId !== undefined &&
+							areEqualChangeIds(id, restoredUndoChangeId))
+					) {
+						// childChange refers to changes to node being revived by `over`.
+						const overChange = over.fieldChange?.newContent?.changes;
+						// TODO: confirm NodeExistenceState is reasonable
+						const rebasedChild = rebaseChild(
+							childChange,
+							overChange,
+							NodeExistenceState.Alive,
+						);
+						if (rebasedChild !== undefined) {
+							perChildChanges.set("self", rebasedChild);
+						}
+					} else {
+						// childChange refers to changes to node removed by some past revision. Rebase over any changes that
+						// `over` has to that same revision.
+						const overChange = overChildChanges.get(id);
+						// TODO: confirm NodeExistenceState is reasonable
+						const rebasedChild = rebaseChild(
+							childChange,
+							overChange,
+							NodeExistenceState.Dead,
+						);
+						if (rebasedChild !== undefined) {
+							perChildChanges.set(id, rebasedChild);
+						}
 					}
 				}
 			}
 		}
 
-		{
-			const rebasedChange = { ...change };
-
-			let overChildChange: NodeChangeset | undefined;
-			if (change.deletedBy === undefined && over.deletedBy === undefined) {
-				overChildChange = over.childChange;
-			}
-
-			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
-			if (rebasedChildChange !== undefined) {
-				rebasedChange.childChange = rebasedChildChange;
+		let fieldChange: OptionalFieldChange | undefined;
+		if (change.fieldChange !== undefined) {
+			if (over.fieldChange !== undefined) {
+				const wasEmpty = over.fieldChange.newContent === undefined;
+				fieldChange = { ...change.fieldChange, wasEmpty };
 			} else {
-				delete rebasedChange.childChange;
+				fieldChange = change.fieldChange;
 			}
-
-			return rebasedChange;
 		}
+
+		const rebased: OptionalChangeset = {};
+		if (fieldChange !== undefined) {
+			rebased.fieldChange = fieldChange;
+		}
+		if (perChildChanges.size > 0) {
+			rebased.childChanges = Array.from(perChildChanges.entries());
+		}
+
+		return rebased;
 	},
 
 	amendRebase: (
@@ -347,12 +396,25 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		rebaseChild: NodeChangeRebaser,
 		// TODO: should probably have postbase here too
 	) => {
-		const amendedChildChange = rebaseChild(change.childChange, overTagged.change.childChange);
 		const amended = { ...change };
-		if (amendedChildChange !== undefined) {
-			amended.childChange = amendedChildChange;
-		} else {
-			delete amended.childChange;
+		if (change.childChanges !== undefined) {
+			const overChildChanges = new ChildChangeMap<NodeChangeset>();
+			for (const [id, overChange] of overTagged?.change.childChanges ?? []) {
+				overChildChanges.set(id, overChange);
+			}
+
+			const childChanges: typeof change.childChanges = [];
+			for (const [id, childChange] of change.childChanges) {
+				// TODO: Maybe need an 'end' clause here.
+				// Prior impl is weird in that it doesn't seem to check that rebaseChild
+				// call is legit at all.
+				const rebasedChange = rebaseChild(childChange, overChildChanges.get(id));
+				if (rebasedChange !== undefined) {
+					childChanges.push([id, rebasedChange]);
+				}
+			}
+
+			amended.childChanges = childChanges;
 		}
 		return amended;
 	},
@@ -392,7 +454,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
-		return { childChange };
+		return { childChanges: [["self", childChange]] };
 	},
 };
 
@@ -438,20 +500,15 @@ function deltaForDelete(
 }
 
 export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
+	const [_, childChange] = change.childChanges?.find(([id]) => id === "self") ?? [];
 	if (change.fieldChange === undefined) {
-		if (change.deletedBy === undefined && change.childChange !== undefined) {
-			return [deltaFromChild(change.childChange)];
-		}
-		return [];
+		return childChange !== undefined ? [deltaFromChild(childChange)] : [];
 	}
 
-	const deleteDelta = deltaForDelete(
-		!change.fieldChange.wasEmpty,
-		change.deletedBy === undefined ? change.childChange : undefined,
-		deltaFromChild,
-	);
+	const deleteDelta = deltaForDelete(!change.fieldChange.wasEmpty, childChange, deltaFromChild);
 
 	const update = change.fieldChange?.newContent;
+	// TODO: make sense of this.
 	let content: ITreeCursorSynchronous | undefined;
 	if (update === undefined) {
 		content = undefined;
@@ -474,5 +531,13 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	intoDelta: ({ change }: TaggedChange<OptionalChangeset>, deltaFromChild: ToDelta) =>
 		optionalFieldIntoDelta(change, deltaFromChild),
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChange === undefined && change.fieldChange === undefined,
+		change.childChanges === undefined && change.fieldChange === undefined,
 };
+
+function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
+	if (typeof a === "string" || typeof b === "string") {
+		return a === b;
+	}
+
+	return a.revision === b.revision && a.localId === b.localId;
+}
