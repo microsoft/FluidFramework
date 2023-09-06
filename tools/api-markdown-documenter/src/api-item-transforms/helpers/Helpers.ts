@@ -17,13 +17,16 @@ import {
 	IResolveDeclarationReferenceResult,
 	TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { DocSection } from "@microsoft/tsdoc";
+import { DocNode, DocNodeKind, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { Heading } from "../../Heading";
 import {
 	AlertKind,
 	AlertNode,
 	DocumentationNode,
+	DocumentationNodeType,
+	DocumentationParentNode,
+	DocumentationParentNodeBase,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
@@ -49,10 +52,11 @@ import {
 	getSeeBlocks,
 	getThrowsBlocks,
 } from "../ApiItemUtilities";
-import { transformDocSection } from "../DocNodeTransforms";
+import { getPlainTextLines, transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
+import { Logger } from "../../Logging";
 
 /**
  * Generates a section for an API signature.
@@ -566,18 +570,67 @@ export function createExampleSection(
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(example.apiItem, config);
+	let exampleParagraph: ParagraphNode = transformDocSection(
+		example.content,
+		docNodeTransformOptions,
+	);
 
-	const headingTitle: string =
-		example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`;
+	const exampleTitle = extractTitleFromExampleSection(example.content);
 
+	const headingTitle =
+		exampleTitle ??
+		(example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`);
+
+	if (exampleTitle !== undefined) {
+		// Strip title line and resulting leading line breaks from paragraph
+		exampleParagraph.children;
+	}
+
+	// TODO: use title in ID?
 	const headingId = `${getQualifiedApiItemName(example.apiItem)}-example${
 		example.exampleNumber === undefined ? "" : example.exampleNumber
 	}`;
 
-	return wrapInSection([transformDocSection(example.content, docNodeTransformOptions)], {
+	return wrapInSection([], {
 		title: headingTitle,
 		id: headingId,
 	});
+}
+
+/**
+ * Hackery to strip the title (when present) from an example section.
+ *
+ * TODO: explain in more detail.
+ * Must be first line of **input**.
+ */
+function extractTitleFromExampleSection(sectionNode: DocSection): string | undefined {
+	// Drill down to find first leaf node. If it is plain text (and not a line break),
+	// use it as title.
+	let currentNode: DocNode = sectionNode;
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const children = currentNode.getChildNodes();
+		if (children.length === 0) {
+			return currentNode.kind === DocNodeKind.PlainText
+				? (children[0] as DocPlainText).text
+				: undefined;
+		}
+		currentNode = children[0];
+	}
+}
+
+/**
+ * TODO
+ *
+ * Title should always be first line of output.
+ * Easier to copy output node than input node.
+ */
+function stripTitleFromParagraph(
+	paragraphNode: ParagraphNode,
+	title: string,
+	logger?: Logger,
+): ParagraphNode {
+	// TODO
 }
 
 /**
