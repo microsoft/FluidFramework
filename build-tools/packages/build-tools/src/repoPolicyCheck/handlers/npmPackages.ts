@@ -992,10 +992,22 @@ export const handlers: Handler[] = [
 				return undefined;
 			}
 
+			// Ignore clean scripts that are root of the release group
+			const cleanScript = scripts.clean;
+			if (cleanScript) {
+				if (cleanScript.startsWith("pnpm")) {
+					return undefined;
+				}
+
+				if (!cleanScript.startsWith("rimraf --glob ")) {
+					return "'clean' script should start with 'rimraf --glob'";
+				}
+			}
+
 			const missing = missingCleanDirectories(scripts);
 
 			if (missing.length !== 0) {
-				return `Clean script missing the following:${missing
+				return `'clean' script missing the following:${missing
 					.map((i) => `\n\t${i}`)
 					.join("")}`;
 			}
@@ -1003,34 +1015,36 @@ export const handlers: Handler[] = [
 			const clean = scripts["clean"];
 			if (clean && clean.startsWith("rimraf ")) {
 				if (clean.includes('"')) {
-					return "Clean script using double quote instead of single quote";
+					return "'clean' script using double quotes instead of single quotes";
 				}
 
 				if (!clean.includes("'")) {
-					return "Clean script rimraf argument should have single quotes";
+					return "'clean' script rimraf argument should have single quotes";
 				}
 			}
 		},
 		resolver: (file, root) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
 				const clean = json.scripts["clean"] ?? "rimraf --glob";
+				if (clean.startsWith("rimraf --glob")) {
+					result.resolved = false;
+					result.message =
+						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
+				}
 				if (missing.length === 0) {
 					return;
 				}
 				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
 			});
 
-			return { resolved: true };
+			return result;
 		},
 	},
 ];
 
 function missingCleanDirectories(scripts: any) {
-	if (scripts.clean?.startsWith("pnpm")) {
-		return [];
-	}
-
 	const expectedClean: string[] = [];
 
 	if (scripts["tsc"]) {

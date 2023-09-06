@@ -14,7 +14,6 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"clean": "rimraf --glob 'dist'",
 		"eslint": "eslint ./index.js",
 		"eslint:fix": "eslint ./index.js --fix",
 		"format": "npm run prettier:fix",

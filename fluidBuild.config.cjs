@@ -149,7 +149,7 @@ module.exports = {
 				"package.json",
 				"packages/test/test-service-load/package.json",
 			],
-			"npm-package-json-clean-script": ["tools/markdown-magic"],
+			"npm-package-json-clean-script": ["tools/markdown-magic", "tools/getkeys"],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
