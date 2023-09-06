@@ -748,7 +748,7 @@ export function testForest(config: ForestTestConfiguration): void {
 												},
 												{
 													type: Delta.MarkType.Insert,
-													content: [singleJsonCursor(2)],
+													content: [singleJsonCursor(3)],
 												},
 											],
 										],
@@ -772,7 +772,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert(reader.firstNode());
 				reader.enterField(fooField);
 				assert(reader.firstNode());
-				assert.equal(reader.value, 2);
+				assert.equal(reader.value, 3);
 				reader.exitNode();
 				reader.exitField();
 				assert.equal(reader.nextNode(), true);

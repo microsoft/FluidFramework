@@ -300,15 +300,20 @@ function asReplaces(
 			return [];
 		}
 		case Delta.MarkType.MoveIn: {
-			const minor = extractFromOpaque(mark.moveId);
-			return makeArray(mark.count, (i) => {
-				const detachId = {
-					major: "move",
-					minor: minor + i,
-				};
-				const { root } = config.treeIndex.getOrCreateEntry(detachId);
-				return { newContent: { source: root } };
-			});
+			if (mark.detachId === undefined) {
+				const minor = extractFromOpaque(mark.moveId);
+				const fields = config.modsToMovedTrees.get(mark.moveId);
+				return makeArray(mark.count, (i) => {
+					const detachId = {
+						major: "move",
+						minor: minor + i,
+					};
+					const { root } = config.treeIndex.getOrCreateEntry(detachId);
+					return { newContent: { source: root, fields } };
+				});
+			} else {
+				return [];
+			}
 		}
 		case Delta.MarkType.Insert: {
 			if (mark.detachId === undefined || mark.oldContent !== undefined) {
