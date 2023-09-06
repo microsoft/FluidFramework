@@ -3735,7 +3735,7 @@ export class ContainerRuntime
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
-		assert(proposalHandle !== undefined, "proposalHandle should be available");
+		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
