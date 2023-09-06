@@ -36,7 +36,7 @@
 		"test": "concurrently npm:test:jest npm:test:mocha",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest",
-		"test:jest:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+		"test:jest:coverage": "jest --coverage --ci",
 		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
@@ -124,10 +124,6 @@
 				"library": "main"
 			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

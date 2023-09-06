@@ -12,6 +12,7 @@ import {
 	RevisionTag,
 	rootFieldKey,
 	UpPath,
+	applyDelta,
 } from "../../core";
 import { jsonNumber, jsonObject } from "../../domains";
 import {
@@ -80,7 +81,7 @@ describe("ForestRepairDataStore", () => {
 			],
 		]);
 		store.capture(delta1, revision1);
-		forest.applyDelta(delta1);
+		applyDelta(delta1, forest);
 		const delta2 = new Map([
 			[
 				rootFieldKey,

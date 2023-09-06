@@ -32,7 +32,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"start:client:test": "webpack serve --config webpack.test.js",
 		"test": "concurrently npm:test:mocha npm:test:jest",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "c8 npm test",
 		"test:end-to-end": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -44,7 +44,7 @@
 		"webpack": "webpack",
 		"webpack:dev": "webpack --env development"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -107,6 +107,7 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/sinon": "^7.0.13",
 		"@types/sinon-chrome": "^2.2.11",
+		"c8": "^7.7.1",
 		"chai": "^4.2.0",
 		"concurrently": "^8.2.1",
 		"copy-webpack-plugin": "^11.0.0",
@@ -125,7 +126,6 @@
 		"jsdom": "^16.7.0",
 		"jsdom-global": "^3.0.2",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"proxyquire": "^2.1.3",
 		"puppeteer": "^17.1.3",
@@ -147,16 +147,8 @@
 					"webpack"
 				],
 				"script": false
-			},
-			"webpack": [
-				"@fluid-experimental/devtools-core#tsc",
-				"@fluid-experimental/devtools-view#tsc"
-			]
+			}
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

@@ -143,6 +143,12 @@ module.exports = {
 				"packages/test/mocha-test-setup/package.json",
 				"examples/apps/attributable-map/package.json",
 			],
+			"npm-package-json-test-scripts-split": [
+				"server/",
+				"tools/",
+				"package.json",
+				"packages/test/test-service-load/package.json",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -189,6 +195,7 @@ module.exports = {
 				["prettier", "prettier"],
 				["webpack", "webpack"],
 				["nyc", "nyc"],
+				["c8", "c8"],
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
