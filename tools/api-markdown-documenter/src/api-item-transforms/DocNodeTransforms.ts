@@ -409,3 +409,23 @@ function filterNewlinesAdjacentToParagraphs(
 	}
 	return result;
 }
+
+/**
+ * Recurses the provided node's structure to pull out all of the leaf plain text nodes (in preserved order).
+ */
+export function getPlainTextLines(docNode: DocNode): string[] {
+	const stack: DocNode[] = [docNode];
+	const results: string[] = [];
+	while (stack.length > 0) {
+		// We check that the stack is non-empty immediately before popping.
+		// Value will never be nullish.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const currentNode = stack.pop()!;
+		if (currentNode.kind === DocNodeKind.PlainText) {
+			results.push((currentNode as DocPlainText).text);
+		} else {
+			stack.push(...docNode.getChildNodes());
+		}
+	}
+	return results;
+}
