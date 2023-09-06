@@ -143,10 +143,12 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			},
 			create(index: PlaceIndex, content: Delta.ProtoNodes): void {},
 			destroy(range: Range): void {},
+			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {},
+			detach(source: Range, destination: DetachedPlaceUpPath): void {},
 			replace(
-				newContentSource: DetachedRangeUpPath | undefined,
+				newContentSource: DetachedRangeUpPath,
 				oldContent: Range,
-				oldContentDestination: DetachedPlaceUpPath | undefined,
+				oldContentDestination: DetachedPlaceUpPath,
 				kind: ReplaceKind,
 			): void {},
 			onDelete(index: number, count: number): void {

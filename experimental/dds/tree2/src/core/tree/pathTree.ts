@@ -103,6 +103,7 @@ export interface PlaceUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 }
 
 export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRangeUpPath">;
+export type AttachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "AttachedRangeUpPath">;
 
 /**
  * Indicates the index of a node in a field.

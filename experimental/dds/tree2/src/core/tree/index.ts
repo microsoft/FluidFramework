@@ -42,6 +42,7 @@ export {
 	PlaceUpPath,
 	PlaceIndex,
 	NodeIndex,
+	AttachedPlaceUpPath,
 	DetachedPlaceUpPath,
 	AttachedRangeUpPath,
 	DetachedRangeUpPath,

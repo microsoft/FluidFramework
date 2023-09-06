@@ -74,12 +74,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor, treeIndex: 
 			const sourceField = treeIndex.toFieldKey(source);
 			const destinationField = treeIndex.toFieldKey(destination);
 			visitor.enterField(sourceField);
-			visitor.replace(
-				undefined,
-				{ start: 0, end: 1 },
-				brand({ field: destinationField, index: 0 }),
-				ReplaceKind.CellPerfect,
-			);
+			visitor.detach({ start: 0, end: 1 }, brand({ field: destinationField, index: 0 }));
 			visitor.exitField(sourceField);
 		}
 		for (const [root, modifications] of rootTreesAttachPass) {
@@ -102,17 +97,13 @@ export interface DeltaVisitor {
 	create(index: PlaceIndex, content: Delta.ProtoNodes): void;
 	destroy(range: DetachedRangeUpPath): void;
 
-	/**
-	 *
-	 * @param oldContentIndex
-	 * @param oldContentCount
-	 * @param oldContentDestination - Undefined when there is no prior content.
-	 * @param newContentSource - Undefined when there is no new content.
-	 */
+	attach(source: DetachedRangeUpPath, destination: PlaceIndex): void;
+	detach(source: Range, destination: DetachedPlaceUpPath): void;
+
 	replace(
-		newContentSource: DetachedRangeUpPath | undefined,
-		oldContent: Range, // range has size <=> oldContentDestination !== undefined
-		oldContentDestination: DetachedPlaceUpPath | undefined,
+		newContentSource: DetachedRangeUpPath,
+		oldContent: Range,
+		oldContentDestination: DetachedPlaceUpPath,
 		kind: ReplaceKind,
 	): void;
 
@@ -444,11 +435,9 @@ function detachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 							// This a simple detach
 							const oldRoot = oldContent.destination;
 							const field = config.treeIndex.toFieldKey(brand(oldRoot));
-							visitor.replace(
-								undefined,
+							visitor.detach(
 								{ start: index, end: index + 1 },
 								brand({ field, index: 0 }),
-								ReplaceKind.CellPerfect,
 							);
 						} else {
 							// This really is a replace.
@@ -493,11 +482,9 @@ function attachPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 							);
 						} else {
 							// This a simple attach
-							visitor.replace(
+							visitor.attach(
 								brand({ field: newContentField, start: 0, end: 1 }),
-								{ start: index, end: index },
-								undefined,
-								ReplaceKind.CellPerfect,
+								index,
 							);
 						}
 						visitModify(index, newContent.fields, visitor, config);

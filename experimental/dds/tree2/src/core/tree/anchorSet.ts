@@ -23,6 +23,8 @@ import {
 	UpPath,
 	Range,
 	AttachedRangeUpPath,
+	PlaceUpPath,
+	RangeUpPath,
 } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor, ReplaceKind } from "./visitPath";
@@ -594,105 +596,154 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				);
 				this.anchorSet.activeVisitor = undefined;
 			},
-			beforeReplace(
-				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentRange: Range,
-				oldContentDestination: DetachedPlaceUpPath | undefined,
-				kind: ReplaceKind,
-			): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
-				const oldContent: AttachedRangeUpPath = brand({
-					parent: this.parent,
-					field: this.parentField,
-					...oldContentRange,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeReplace(oldContent, newContentSource, kind);
-					}
-				}
-			},
-			afterReplace(
-				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentRange: Range,
-				oldContentDestination: DetachedPlaceUpPath | undefined,
-				kind: ReplaceKind,
-			): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
-				let oldContent: DetachedRangeUpPath | undefined;
-				if (oldContentDestination !== undefined) {
-					oldContent = brand({
-						field: oldContentDestination.field,
-						start: oldContentDestination.index,
-						end:
-							oldContentDestination.index +
-							oldContentRange.end -
-							oldContentRange.start,
-					});
-				}
-				let newContent: AttachedRangeUpPath | undefined;
-				if (newContentSource !== undefined) {
-					newContent = brand({
-						parent: this.parent,
-						field: this.parentField,
-						start: oldContentRange.start,
-						end: oldContentRange.start + newContentSource.end - newContentSource.start,
-					});
-				}
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterReplace(oldContent, newContent, kind);
-					}
-				}
-			},
-			replace(
-				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentRange: Range,
-				oldContentDestination: DetachedPlaceUpPath | undefined,
-			): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+			notifyChildrenChanging(): void {
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
 					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
-				if (oldContentDestination !== undefined) {
-					assert(
-						oldContentDestination !== undefined,
-						"Old content must be given a destination",
-					);
-					const source = {
-						parent: this.parent,
-						parentField: this.parentField,
-						parentIndex: oldContentRange.start,
-					};
-					const destination = {
-						parent: this.anchorSet.root,
-						parentField: oldContentDestination.field,
-						parentIndex: oldContentDestination.index,
-					};
-					this.anchorSet.moveChildren(
-						source,
-						destination,
-						oldContentRange.end - oldContentRange.start,
-					);
+			},
+			beforeAttach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				const destinationPath: PlaceUpPath = {
+					parent: this.parent,
+					field: this.parentField,
+					index: destination,
+				};
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.beforeAttach(source, destinationPath);
+					}
 				}
-				if (newContentSource !== undefined) {
-					const source = {
-						parent: this.anchorSet.root,
-						parentField: newContentSource.field,
-						parentIndex: newContentSource.start,
-					};
-					const destination = {
-						parent: this.parent,
-						parentField: this.parentField,
-						parentIndex: oldContentRange.start,
-					};
-					this.anchorSet.moveChildren(
-						source,
-						destination,
-						newContentSource.end - newContentSource.start,
-					);
+			},
+			afterAttach(source: DetachedPlaceUpPath, destination: Range): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				const destinationPath: RangeUpPath = {
+					parent: this.parent,
+					field: this.parentField,
+					...destination,
+				};
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.afterAttach(source, destinationPath);
+					}
 				}
+			},
+			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+				this.notifyChildrenChanging();
+				this.attachEdit(source, destination);
+			},
+			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				const sourcePath = {
+					parent: this.anchorSet.root,
+					parentField: source.field,
+					parentIndex: source.start,
+				};
+				const destinationPath = {
+					parent: this.parent,
+					parentField: this.parentField,
+					parentIndex: destination,
+				};
+				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
+			},
+			beforeDetach(source: Range, destination: DetachedPlaceUpPath): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				const sourcePath: RangeUpPath = {
+					parent: this.parent,
+					field: this.parentField,
+					...source,
+				};
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.beforeDetach(sourcePath, destination);
+					}
+				}
+			},
+			afterDetach(source: PlaceIndex, destination: DetachedRangeUpPath): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				const sourcePath: PlaceUpPath = {
+					parent: this.parent,
+					field: this.parentField,
+					index: source,
+				};
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.afterDetach(sourcePath, destination);
+					}
+				}
+			},
+			detach(source: Range, destination: DetachedPlaceUpPath): void {
+				this.notifyChildrenChanging();
+				this.detachEdit(source, destination);
+			},
+			detachEdit(source: Range, destination: DetachedPlaceUpPath): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to detach");
+				const sourcePath = {
+					parent: this.parent,
+					parentField: this.parentField,
+					parentIndex: source.start,
+				};
+				const destinationPath = {
+					parent: this.anchorSet.root,
+					parentField: destination.field,
+					parentIndex: destination.index,
+				};
+				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
+			},
+			beforeReplace(
+				newContent: DetachedRangeUpPath,
+				oldContent: Range,
+				oldContentDestination: DetachedPlaceUpPath,
+				kind: ReplaceKind,
+			): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				const oldContentPath: AttachedRangeUpPath = brand({
+					parent: this.parent,
+					field: this.parentField,
+					...oldContent,
+				});
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.beforeReplace(
+							newContent,
+							oldContentPath,
+							oldContentDestination,
+							kind,
+						);
+					}
+				}
+			},
+			afterReplace(
+				newContentSource: DetachedPlaceUpPath,
+				newContent: Range,
+				oldContent: DetachedRangeUpPath,
+				kind: ReplaceKind,
+			): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				const newContentPath: RangeUpPath = {
+					parent: this.parent,
+					field: this.parentField,
+					...newContent,
+				};
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.afterReplace(
+							newContentSource,
+							newContentPath,
+							oldContent,
+							kind,
+						);
+					}
+				}
+			},
+			replace(
+				newContentSource: DetachedRangeUpPath,
+				oldContentRange: Range,
+				oldContentDestination: DetachedPlaceUpPath,
+			): void {
+				this.notifyChildrenChanging();
+				this.detachEdit(oldContentRange, oldContentDestination);
+				this.attachEdit(newContentSource, oldContentRange.start);
 			},
 			destroy(range: DetachedRangeUpPath): void {
 				assert(this.parentField !== undefined, "Must be in a field to destroy");
@@ -725,16 +776,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					content.length,
 				);
 			},
-			afterCreate(start: PlaceIndex, content: Delta.ProtoNodes): void {
+			afterCreate(range: Range, content: Delta.ProtoNodes): void {
 				assert(this.parentField !== undefined, "Must be in a field to create");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						const range: DetachedRangeUpPath = brand({
+						const rangePath: DetachedRangeUpPath = brand({
 							field: this.parentField,
-							start,
-							end: start + content.length,
+							...range,
 						});
-						pathVisitor.afterCreate(range);
+						pathVisitor.afterCreate(rangePath);
 					}
 				}
 			},

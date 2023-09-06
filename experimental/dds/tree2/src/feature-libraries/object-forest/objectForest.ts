@@ -129,7 +129,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				this.forest.events.emit("afterChange");
 			},
 			destroy(range: Range): void {
-				this.replace(undefined, range, undefined);
+				this.detachEdit(range, undefined);
 			},
 			create(index: PlaceIndex, content: Delta.ProtoNodes): void {
 				this.forest.invalidateDependents();
@@ -140,56 +140,62 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				// TODO: this will fail for very large insertions due to argument limits.
 				destinationField.splice(index, 0, ...nodes);
 			},
-			replace(
-				newContentSource: DetachedRangeUpPath | undefined,
-				oldContentRange: Range,
-				oldContentDestination: DetachedPlaceUpPath | undefined,
-			): void {
+			attach(source: DetachedRangeUpPath, destination: PlaceIndex): void {
 				this.forest.invalidateDependents();
+				this.attachEdit(source, destination);
+			},
+			detach(source: Range, destination: DetachedPlaceUpPath): void {
+				this.forest.invalidateDependents();
+				this.detachEdit(source, destination);
+			},
+			attachEdit(source: DetachedRangeUpPath, destination: PlaceIndex): void {
 				const [parent, key] = cursor.getParent();
 				const currentField = getMapTreeField(parent, key, true);
-				assertValidIndex(oldContentRange.start, currentField, true);
-				assertValidIndex(oldContentRange.end, currentField, true);
-				assert(
-					oldContentRange.end >= oldContentRange.end,
-					"Range end must be >= its start",
-				);
-				let newContent: MapTree[] = [];
-				if (newContentSource !== undefined) {
-					const sourceField = getMapTreeField(
-						this.forest.roots,
-						newContentSource.field,
-						false,
-					);
-					assertValidIndex(newContentSource.start, sourceField, true);
-					assertValidIndex(newContentSource.end, sourceField, true);
-					assert(
-						newContentSource.start <= newContentSource.end,
-						0x371 /* detached range's end must be after its start */,
-					);
-					newContent = sourceField.splice(newContentSource.start, newContentSource.end);
-					if (sourceField.length === 0) {
-						this.forest.roots.fields.delete(newContentSource.field);
-					}
+				assertValidIndex(destination, currentField, true);
+				const sourceField = getMapTreeField(this.forest.roots, source.field, false);
+				assertValidIndex(source.start, sourceField, true);
+				assertValidIndex(source.end, sourceField, true);
+				assert(source.end >= source.start, "Range end must be >= its start");
+				const content = sourceField.splice(source.start, source.end - source.start);
+				if (sourceField.length === 0) {
+					parent.fields.delete(source.field);
 				}
-				const oldContent = currentField.splice(
-					oldContentRange.start,
-					oldContentRange.end - oldContentRange.start,
-					// TODO: this will fail for very large insertions due to argument limits.
-					...newContent,
-				);
+				// TODO: this will fail for very large insertions due to argument limits.
+				currentField.splice(destination, 0, ...content);
+			},
+			detachEdit(source: Range, destination: DetachedPlaceUpPath | undefined): void {
+				const [parent, key] = cursor.getParent();
+				const currentField = getMapTreeField(parent, key, true);
+				assertValidIndex(source.start, currentField, true);
+				assertValidIndex(source.end, currentField, true);
+				assert(source.end >= source.start, "Range end must be >= its start");
+				const content = currentField.splice(source.start, source.end - source.start);
 				if (currentField.length === 0) {
 					parent.fields.delete(key);
 				}
-				if (oldContent.length > 0 && oldContentDestination !== undefined) {
+				if (destination !== undefined) {
 					const destinationField = getMapTreeField(
 						this.forest.roots,
-						oldContentDestination.field,
+						destination.field,
 						true,
 					);
-					assertValidIndex(oldContentDestination.index, destinationField, true);
-					destinationField.splice(oldContentDestination.index, 0, ...oldContent);
+					assertValidIndex(destination.index, destinationField, true);
+					destinationField.splice(
+						destination.index,
+						0,
+						// TODO: this will fail for very large insertions due to argument limits.
+						...content,
+					);
 				}
+			},
+			replace(
+				newContentSource: DetachedRangeUpPath,
+				oldContentRange: Range,
+				oldContentDestination: DetachedPlaceUpPath,
+			): void {
+				this.forest.invalidateDependents();
+				this.detachEdit(oldContentRange, oldContentDestination);
+				this.attachEdit(newContentSource, oldContentRange.start);
 			},
 			enterNode(index: number): void {
 				this.cursor.enterNode(index);

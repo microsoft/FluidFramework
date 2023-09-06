@@ -16,6 +16,9 @@ import {
 	DetachedRangeUpPath,
 	AttachedRangeUpPath,
 	ReplaceKind,
+	DetachedPlaceUpPath,
+	PlaceUpPath,
+	RangeUpPath,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { getField, on, singleTextCursor } from "../../../feature-libraries";
@@ -77,20 +80,23 @@ describe("editable-tree: event subscription", () => {
 					visitLog.push(path);
 				},
 				afterCreate(content: DetachedRangeUpPath): void {},
+				beforeDestroy(content: DetachedRangeUpPath): void {},
+				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
+				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {},
+				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
+				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
 				beforeReplace(
-					oldContent: AttachedRangeUpPath,
 					newContent: DetachedRangeUpPath,
+					oldContent: RangeUpPath,
+					oldContentDestination: DetachedPlaceUpPath,
 					kind: ReplaceKind,
 				): void {},
-
 				afterReplace(
+					newContentSource: DetachedPlaceUpPath,
+					newContent: RangeUpPath,
 					oldContent: DetachedRangeUpPath,
-					newContent: AttachedRangeUpPath,
 					kind: ReplaceKind,
 				): void {},
-				beforeDestroy(content: DetachedRangeUpPath): void {
-					fail("should not be called");
-				},
 			};
 			return visitor;
 		});

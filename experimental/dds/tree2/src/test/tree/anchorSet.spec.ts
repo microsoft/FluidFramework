@@ -24,6 +24,7 @@ import {
 	PlaceUpPath,
 	DetachedPlaceUpPath,
 	DeltaVisitor,
+	UpPathDefault,
 } from "../../core";
 import { brand } from "../../util";
 import { expectEqualPaths } from "../utils";
@@ -326,7 +327,7 @@ describe("AnchorSet", () => {
 	});
 
 	it("triggers path visitor callbacks", () => {
-		const insertMark = {
+		const insertMark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
 			content: [node].map(singleTextCursor),
 		};
@@ -334,6 +335,11 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Remove,
 			count: 1,
 			detachId,
+		};
+		const replaceMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [node].map(singleTextCursor),
+			oldContent: { detachId: { minor: 42 } },
 		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
@@ -357,38 +363,80 @@ describe("AnchorSet", () => {
 				log.logger(`visitSubtreeChange.afterCreate-${rangeToString(content)}`)();
 			},
 			beforeReplace(
-				oldContent: AttachedRangeUpPath | undefined,
-				newContent: DetachedRangeUpPath | undefined,
+				newContent: DetachedRangeUpPath,
+				oldContent: RangeUpPath,
+				oldContentDestination: DetachedPlaceUpPath,
 				kind: ReplaceKind,
 			): void {
 				log.logger(
 					`visitSubtreeChange.beforeReplace-old:${rangeToString(
 						oldContent,
-					)}-new:${rangeToString(newContent)}`,
+					)}-new:${rangeToString(newContent)}-kind:${kind}`,
 				)();
 			},
 
 			afterReplace(
-				oldContent: DetachedRangeUpPath | undefined,
-				newContent: AttachedRangeUpPath | undefined,
+				newContentSource: DetachedPlaceUpPath,
+				newContent: RangeUpPath,
+				oldContent: DetachedRangeUpPath,
 				kind: ReplaceKind,
 			): void {
 				log.logger(
 					`visitSubtreeChange.afterReplace-old:${rangeToString(
 						oldContent,
-					)}-new:${rangeToString(newContent)}`,
+					)}-new:${rangeToString(newContent)}-kind:${kind}`,
 				)();
 			},
 			beforeDestroy(content: DetachedRangeUpPath): void {
 				log.logger(`visitSubtreeChange.beforeDestroy-${rangeToString(content)}`)();
 			},
+			beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {
+				log.logger(
+					`visitSubtreeChange.beforeAttach-src:${rangeToString(
+						source,
+					)}-dst:${placeToString(destination)}`,
+				)();
+			},
+			afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
+				log.logger(
+					`visitSubtreeChange.afterAttach-src:${placeToString(
+						source,
+					)}-dst:${rangeToString(destination)}`,
+				)();
+			},
+			beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {
+				log.logger(
+					`visitSubtreeChange.beforeDetach-src:${rangeToString(
+						source,
+					)}-dst:${placeToString(destination)}`,
+				)();
+			},
+			afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
+				log.logger(
+					`visitSubtreeChange.afterDetach-src:${placeToString(
+						source,
+					)}-dst:${rangeToString(destination)}`,
+				)();
+			},
 		};
 		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
 		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
-		log.expect([["visitSubtreeChange.onInsert-foo-4", 1]]);
+		log.expect([
+			["visitSubtreeChange.beforeAttach-src:Temp-0[0, 1]-dst:foo[4]", 1],
+			["visitSubtreeChange.afterAttach-src:Temp-0[0]-dst:foo[4, 5]", 1],
+		]);
+		log.clear();
+		announceDelta(makeDelta(replaceMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
+		log.expect([
+			["visitSubtreeChange.beforeReplace-old:foo[5, 6]-new:Temp-0[0, 1]-kind:0", 1],
+			["visitSubtreeChange.afterReplace-old:Temp-1[0, 1]-new:foo[5, 6]-kind:0", 1],
+		]);
 		log.clear();
 		announceDelta(makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
-		log.expect([["visitSubtreeChange.onDelete-foo-5-1", 1]]);
+		log.expect([
+			["visitSubtreeChange.beforeDetach-src:foo[5, 6]-dst:Temp-0[0]", 1],
+			["visitSubtreeChange.afterDetach-src:foo[5]-dst:Temp-0[0, 1]", 1],
+		]);
 		log.clear();
 		unsubscribePathVisitor();
 		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
@@ -464,9 +512,9 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	return makeDelta(modify, path.parent);
 }
 
-function rangeToString(range: RangeUpPath | DetachedRangeUpPath | undefined): string {
-	if (range === undefined) {
-		return "undefined";
-	}
+function rangeToString(range: RangeUpPath | DetachedRangeUpPath): string {
 	return `${range.field}[${range.start}, ${range.end}]`;
+}
+function placeToString(place: PlaceUpPath | DetachedPlaceUpPath): string {
+	return `${place.field}[${place.index}]`;
 }
