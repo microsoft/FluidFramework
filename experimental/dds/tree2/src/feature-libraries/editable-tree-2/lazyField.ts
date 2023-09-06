@@ -53,6 +53,7 @@ import {
 import { makeTree } from "./lazyTree";
 import {
 	LazyEntity,
+	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
@@ -142,7 +143,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	}
 
 	public get parent(): UntypedTree | undefined {
-		if (this.anchor.parent === undefined) {
+		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
 		}
 
@@ -209,7 +210,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		const fieldAnchor = this.anchor;
+		const fieldAnchor = this[anchorSymbol];
 		const parentAnchor = fieldAnchor.parent;
 		// If the parentAnchor is undefined it is a detached field.
 		if (parentAnchor === undefined) {

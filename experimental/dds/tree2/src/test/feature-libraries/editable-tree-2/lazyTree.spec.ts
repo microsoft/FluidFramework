@@ -103,10 +103,7 @@ describe("lazyTree", () => {
 		);
 
 		// TODO: move these constants for validation of struct field names into schema builder.
-		// TODO: adjust private/protected names used in implementation to follow some documentable pattern that can be banned more generally (ex: _ prefix).
 		const bannedNames = new Set([
-			"anchor",
-			"anchorNode",
 			"constructor",
 			"context",
 			"is",

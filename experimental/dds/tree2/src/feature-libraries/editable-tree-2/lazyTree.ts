@@ -59,7 +59,6 @@ import {
 	forgetAnchorSymbol,
 	isFreedSymbol,
 	makePropertyEnumerableOwn,
-	makePropertyNotEnumerable,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity";
 
@@ -128,14 +127,17 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	 */
 	readonly #removeDeleteCallback: () => void;
 
+	readonly #anchorNode: AnchorNode;
+
 	public constructor(
 		context: Context,
 		schema: TSchema,
 		cursor: ITreeSubscriptionCursor,
-		public readonly anchorNode: AnchorNode,
+		anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
 		super(context, schema, cursor, anchor);
+		this.#anchorNode = anchorNode;
 		assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
 
 		anchorNode.slots.set(lazyTreeSlot, this);
@@ -148,7 +150,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 		// Setup JS Object API:
 		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
-		makePropertyNotEnumerable(this, "anchorNode");
+		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 	}
 
@@ -173,7 +175,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
-		this.anchorNode.slots.delete(lazyTreeSlot);
+		this.#anchorNode.slots.delete(lazyTreeSlot);
 		this.#removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
 	}
@@ -200,16 +202,16 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 	public get parentField(): { readonly parent: UntypedField; readonly index: number } {
 		const cursor = this[cursorSymbol];
-		const index = this.anchorNode.parentIndex;
+		const index = this.#anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
-		const key = this.anchorNode.parentField;
+		const key = this.#anchorNode.parentField;
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
 		let fieldSchema: FieldSchema;
 
 		// Check if the current node is in a detached sequence.
-		if (this.anchorNode.parent === undefined) {
+		if (this.#anchorNode.parent === undefined) {
 			// Parent field is a detached sequence, and thus needs special handling for its schema.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (key === rootFieldKey) {
@@ -251,7 +253,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		const path = this.anchorNode;
+		const path = this.#anchorNode;
 		return treeStatusFromPath(path);
 	}
 
@@ -261,14 +263,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromChildrenChange = this.anchorNode.on(
+				const unsubscribeFromChildrenChange = this.#anchorNode.on(
 					"childrenChanging",
 					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
-				const unsubscribeFromSubtreeChange = this.anchorNode.on(
+				const unsubscribeFromSubtreeChange = this.#anchorNode.on(
 					"subtreeChanging",
 					(anchorNode: AnchorNode) => listener(anchorNode),
 				);

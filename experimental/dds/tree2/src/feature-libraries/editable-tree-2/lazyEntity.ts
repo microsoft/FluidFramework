@@ -54,6 +54,7 @@ export const isFreedSymbol = Symbol("isFreed");
 export const tryMoveCursorToAnchorSymbol = Symbol("tryMoveCursorToAnchor");
 export const forgetAnchorSymbol = Symbol("forgetAnchor");
 export const cursorSymbol = Symbol("cursor");
+export const anchorSymbol = Symbol("anchor");
 
 /**
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
@@ -62,13 +63,15 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	implements UntypedEntity<TSchema>
 {
 	readonly #lazyCursor: ITreeSubscriptionCursor;
+	public readonly [anchorSymbol]: TAnchor;
 
 	protected constructor(
 		public readonly context: Context,
 		public readonly schema: TSchema,
 		cursor: ITreeSubscriptionCursor,
-		public readonly anchor: TAnchor,
+		anchor: TAnchor,
 	) {
+		this[anchorSymbol] = anchor;
 		this.#lazyCursor = cursor.fork();
 		context.withCursors.add(this);
 		this.context.withAnchors.add(this);
@@ -76,7 +79,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		// Setup JS Object API:
 		makePropertyNotEnumerable(this, "context");
 		makePropertyNotEnumerable(this, "schema");
-		makePropertyNotEnumerable(this, "anchor");
+		makePropertyNotEnumerable(this, anchorSymbol);
 	}
 
 	public abstract [Symbol.iterator](): Iterator<UntypedEntity>;
@@ -86,7 +89,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
-		this[forgetAnchorSymbol](this.anchor);
+		this[forgetAnchorSymbol](this[anchorSymbol]);
 		this.context.withAnchors.delete(this);
 	}
 
@@ -106,10 +109,10 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 				"Unset cursor should be in cleared state",
 			);
 			assert(
-				this.anchor !== undefined,
+				this[anchorSymbol] !== undefined,
 				"EditableTree should have an anchor if it does not have a cursor",
 			);
-			const result = this[tryMoveCursorToAnchorSymbol](this.anchor, this.#lazyCursor);
+			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
 				"It is invalid to access an EditableTree node which no longer exists",
