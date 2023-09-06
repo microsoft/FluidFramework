@@ -75,7 +75,7 @@ export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor)
 	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	anchorNode.slots.set(editableTreeSlot, output);
-	anchorNode.on("afterDelete", cleanupTree);
+	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
@@ -107,7 +107,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		this.proxy = adaptWithProxy(this, nodeProxyHandler);
 		anchorNode.slots.set(editableTreeSlot, this.proxy);
-		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,

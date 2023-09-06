@@ -19,15 +19,16 @@ import { FieldKey } from "../schema-stored";
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
-	NodeIndex,
 	PlaceIndex,
 	UpPath,
 	Range,
+	AttachedRangeUpPath,
 } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, EmptyKey } from "./types";
 import { PathVisitor, ReplaceKind } from "./visitPath";
 import { DeltaVisitor } from "./visitDelta";
 import * as Delta from "./delta";
+import { AnnouncedVisitor } from "./visitorUtils";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -79,13 +80,13 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
 export interface AnchorEvents {
 	/**
 	 * When the anchor node will never get reused by its AnchorSet.
-	 * This means that the content it corresponds to has been deleted, and that if its undeleted it will be treated as a recreation.
+	 * This means that the content it corresponds to has been permanently destroyed.
 	 *
 	 * @remarks
 	 * When this happens depends entirely on how the anchorSet is used.
 	 * It's possible nodes removed from the tree will be kept indefinitely, and thus never trigger this event, or they may be discarded immediately.
 	 */
-	afterDelete(anchor: AnchorNode): void;
+	afterDestroy(anchor: AnchorNode): void;
 
 	/**
 	 * What children the node has is changing.
@@ -372,20 +373,11 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			const node = stack.pop()!;
 			assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
 			node.status = Status.Dangling;
-			node.events.emit("afterDelete", node);
+			node.events.emit("afterDestroy", node);
 			for (const children of node.children.values()) {
 				stack.push(...children);
 			}
 		}
-	}
-
-	private nextRange = 0;
-	private createEmptyDetachedField(): FieldKey {
-		const detached: DetachedField = brand(String(this.nextRange++));
-		const key = detachedFieldAsKey(detached);
-		assert(!this.root.children.has(key), 0x680 /* new range must not already exist */);
-		this.root.children.set(key, []);
-		return key;
 	}
 
 	/**
@@ -565,12 +557,11 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	/**
 	 * Updates the anchors according to the changes described in the given delta
 	 */
-	public acquireVisitor(): DeltaVisitor {
+	public acquireVisitor(): AnnouncedVisitor {
 		assert(
 			this.activeVisitor === undefined,
 			"Must release existing visitor before acquiring another",
 		);
-		const moveTable = new Map<Delta.MoveId, UpPath>();
 
 		const visitor = {
 			anchorSet: this,
@@ -603,59 +594,128 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				);
 				this.anchorSet.activeVisitor = undefined;
 			},
-			create(index: PlaceIndex, content: Delta.ProtoNodes): void {},
-			destroy(range: Range): void {},
-			replace(
+			beforeReplace(
 				newContentSource: DetachedRangeUpPath | undefined,
 				oldContentRange: Range,
 				oldContentDestination: DetachedPlaceUpPath | undefined,
 				kind: ReplaceKind,
-			): void {},
-			onDelete(start: number, count: number): void {
-				assert(this.parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
-				this.maybeWithNode(
-					(p) => {
-						p.events.emit("childrenChanging", p);
-					},
-					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
-				);
-				const upPath: UpPath = {
+			): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				const oldContent: AttachedRangeUpPath = brand({
 					parent: this.parent,
-					parentField: this.parentField,
-					parentIndex: start,
-				};
+					field: this.parentField,
+					...oldContentRange,
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						// pathVisitor.onDelete(upPath, count);
+						pathVisitor.beforeReplace(oldContent, newContentSource, kind);
 					}
 				}
-
-				this.anchorSet.removeChildren(
-					{
-						parent: this.parent,
-						parentField: this.parentField,
-						parentIndex: start,
-					},
-					count,
-				);
 			},
-			onInsert(start: number, content: Delta.ProtoNodes): void {
-				assert(this.parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
+			afterReplace(
+				newContentSource: DetachedRangeUpPath | undefined,
+				oldContentRange: Range,
+				oldContentDestination: DetachedPlaceUpPath | undefined,
+				kind: ReplaceKind,
+			): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				let oldContent: DetachedRangeUpPath | undefined;
+				if (oldContentDestination !== undefined) {
+					oldContent = brand({
+						field: oldContentDestination.field,
+						start: oldContentDestination.index,
+						end:
+							oldContentDestination.index +
+							oldContentRange.end -
+							oldContentRange.start,
+					});
+				}
+				let newContent: AttachedRangeUpPath | undefined;
+				if (newContentSource !== undefined) {
+					newContent = brand({
+						parent: this.parent,
+						field: this.parentField,
+						start: oldContentRange.start,
+						end: oldContentRange.start + newContentSource.end - newContentSource.start,
+					});
+				}
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.afterReplace(oldContent, newContent, kind);
+					}
+				}
+			},
+			replace(
+				newContentSource: DetachedRangeUpPath | undefined,
+				oldContentRange: Range,
+				oldContentDestination: DetachedPlaceUpPath | undefined,
+			): void {
+				assert(this.parentField !== undefined, "Must be in a field in order to replace");
 				this.maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
 					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
 				);
-				const upPath: UpPath = {
-					parent: this.parent,
-					parentField: this.parentField,
-					parentIndex: start,
-				};
+				if (oldContentDestination !== undefined) {
+					assert(
+						oldContentDestination !== undefined,
+						"Old content must be given a destination",
+					);
+					const source = {
+						parent: this.parent,
+						parentField: this.parentField,
+						parentIndex: oldContentRange.start,
+					};
+					const destination = {
+						parent: this.anchorSet.root,
+						parentField: oldContentDestination.field,
+						parentIndex: oldContentDestination.index,
+					};
+					this.anchorSet.moveChildren(
+						source,
+						destination,
+						oldContentRange.end - oldContentRange.start,
+					);
+				}
+				if (newContentSource !== undefined) {
+					const source = {
+						parent: this.anchorSet.root,
+						parentField: newContentSource.field,
+						parentIndex: newContentSource.start,
+					};
+					const destination = {
+						parent: this.parent,
+						parentField: this.parentField,
+						parentIndex: oldContentRange.start,
+					};
+					this.anchorSet.moveChildren(
+						source,
+						destination,
+						newContentSource.end - newContentSource.start,
+					);
+				}
+			},
+			destroy(range: DetachedRangeUpPath): void {
+				assert(this.parentField !== undefined, "Must be in a field to destroy");
+				const count = range.end - range.start;
+				this.anchorSet.removeChildren(
+					{
+						parent: this.parent,
+						parentField: this.parentField,
+						parentIndex: range.start,
+					},
+					count,
+				);
+			},
+			beforeDestroy(range: DetachedRangeUpPath): void {
+				assert(this.parentField !== undefined, "Must be in a field to destroy");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						// pathVisitor.onInsert(upPath, content);
+						pathVisitor.beforeDestroy(range);
 					}
 				}
-
+			},
+			create(start: PlaceIndex, content: Delta.ProtoNodes): void {
+				assert(this.parentField !== undefined, "Must be in a field to create");
 				this.anchorSet.offsetChildren(
 					{
 						parent: this.parent,
@@ -665,41 +725,18 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					content.length,
 				);
 			},
-			onMoveOut(start: number, count: number, id: Delta.MoveId): void {
-				assert(this.parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
-				this.maybeWithNode(
-					(p) => p.events.emit("childrenChanging", p),
-					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
-				);
-
-				const fieldKey = this.anchorSet.createEmptyDetachedField();
-				const source = {
-					parent: this.parent,
-					parentField: this.parentField,
-					parentIndex: start,
-				};
-				const destination = {
-					parent: this.anchorSet.root,
-					parentField: fieldKey,
-					parentIndex: 0,
-				};
-				this.anchorSet.moveChildren(source, destination, count);
-				moveTable.set(id, destination);
-			},
-			onMoveIn(start: number, count: number, id: Delta.MoveId): void {
-				assert(this.parentField !== undefined, 0x3aa /* Must be in a field to move in */);
-				this.maybeWithNode(
-					(p) => p.events.emit("childrenChanging", p),
-					() => this.anchorSet.events.emit("childrenChanging", this.anchorSet),
-				);
-				const sourcePath =
-					moveTable.get(id) ?? fail("Must visit a move in after its move out");
-				moveTable.delete(id);
-				this.anchorSet.moveChildren(
-					sourcePath,
-					{ parent: this.parent, parentField: this.parentField, parentIndex: start },
-					count,
-				);
+			afterCreate(start: PlaceIndex, content: Delta.ProtoNodes): void {
+				assert(this.parentField !== undefined, "Must be in a field to create");
+				for (const visitors of this.pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						const range: DetachedRangeUpPath = brand({
+							field: this.parentField,
+							start,
+							end: start + content.length,
+						});
+						pathVisitor.afterCreate(range);
+					}
+				}
 			},
 			enterNode(index: number): void {
 				assert(

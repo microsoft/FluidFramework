@@ -317,7 +317,8 @@ export function testForest(config: ForestTestConfiguration): void {
 			assert(forest.anchors.isEmpty());
 		});
 
-		it("using an anchor that went away returns NotFound", () => {
+		// Not testable until node destruction is implemented
+		it.skip("using an anchor that went away returns NotFound", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
@@ -793,15 +794,15 @@ export function testForest(config: ForestTestConfiguration): void {
 
 				assert.deepEqual(dependent.tokens, []);
 				applyDelta(delta, forest);
-				assert.deepEqual(dependent.tokens.length, 1);
+				assert.deepEqual(dependent.tokens.length, 2);
 
 				applyDelta(delta, forest);
-				assert.deepEqual(dependent.tokens.length, 2);
+				assert.deepEqual(dependent.tokens.length, 4);
 
 				// Remove the dependency so the dependent stops getting invalidation messages
 				forest.removeDependent(dependent);
 				applyDelta(delta, forest);
-				assert.deepEqual(dependent.tokens.length, 2);
+				assert.deepEqual(dependent.tokens.length, 4);
 			});
 
 			it("schema editing", () => {

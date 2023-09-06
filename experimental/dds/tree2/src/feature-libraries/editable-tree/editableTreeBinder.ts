@@ -495,26 +495,18 @@ class DirectPathVisitor extends AbstractPathVisitor {
 		});
 	}
 
-	public override afterCreate(content: DetachedRangeUpPath): void {
-		throw new Error("Method not implemented.");
-	}
+	public override afterCreate(content: DetachedRangeUpPath): void {}
 	public override beforeReplace(
 		oldContent: AttachedRangeUpPath,
 		newContent: DetachedRangeUpPath,
 		kind: ReplaceKind,
-	): void {
-		throw new Error("Method not implemented.");
-	}
+	): void {}
 	public override afterReplace(
 		oldContent: DetachedRangeUpPath,
 		newContent: AttachedRangeUpPath,
 		kind: ReplaceKind,
-	): void {
-		throw new Error("Method not implemented.");
-	}
-	public override beforeDestroy(content: DetachedRangeUpPath): void {
-		throw new Error("Method not implemented.");
-	}
+	): void {}
+	public override beforeDestroy(content: DetachedRangeUpPath): void {}
 }
 
 /**
@@ -542,26 +534,18 @@ class InvalidatingPathVisitor
 		this.processRegisteredPaths(path);
 	}
 
-	public override afterCreate(content: DetachedRangeUpPath): void {
-		throw new Error("Method not implemented.");
-	}
+	public override afterCreate(content: DetachedRangeUpPath): void {}
 	public override beforeReplace(
 		oldContent: AttachedRangeUpPath,
 		newContent: DetachedRangeUpPath,
 		kind: ReplaceKind,
-	): void {
-		throw new Error("Method not implemented.");
-	}
+	): void {}
 	public override afterReplace(
 		oldContent: DetachedRangeUpPath,
 		newContent: AttachedRangeUpPath,
 		kind: ReplaceKind,
-	): void {
-		throw new Error("Method not implemented.");
-	}
-	public override beforeDestroy(content: DetachedRangeUpPath): void {
-		throw new Error("Method not implemented.");
-	}
+	): void {}
+	public override beforeDestroy(content: DetachedRangeUpPath): void {}
 
 	private readonly listeners: Set<Listener> = new Set();
 
@@ -618,26 +602,18 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 		}
 	}
 
-	public override afterCreate(content: DetachedRangeUpPath): void {
-		throw new Error("Method not implemented.");
-	}
+	public override afterCreate(content: DetachedRangeUpPath): void {}
 	public override beforeReplace(
 		oldContent: AttachedRangeUpPath,
 		newContent: DetachedRangeUpPath,
 		kind: ReplaceKind,
-	): void {
-		throw new Error("Method not implemented.");
-	}
+	): void {}
 	public override afterReplace(
 		oldContent: DetachedRangeUpPath,
 		newContent: AttachedRangeUpPath,
 		kind: ReplaceKind,
-	): void {
-		throw new Error("Method not implemented.");
-	}
-	public override beforeDestroy(content: DetachedRangeUpPath): void {
-		throw new Error("Method not implemented.");
-	}
+	): void {}
+	public override beforeDestroy(content: DetachedRangeUpPath): void {}
 
 	public flush(): BufferingPathVisitor {
 		const sortedQueue: CallableBindingContext[] = nativeSort(

@@ -27,8 +27,8 @@ export interface PathVisitor {
 	 * @param kind - The kind of replacement that will occur.
 	 */
 	beforeReplace(
-		oldContent: AttachedRangeUpPath,
-		newContent: DetachedRangeUpPath,
+		oldContent: AttachedRangeUpPath | undefined,
+		newContent: DetachedRangeUpPath | undefined,
 		kind: ReplaceKind,
 	): void;
 
@@ -39,8 +39,8 @@ export interface PathVisitor {
 	 * @param kind - The kind of replacement that occurred.
 	 */
 	afterReplace(
-		oldContent: DetachedRangeUpPath,
-		newContent: AttachedRangeUpPath,
+		oldContent: DetachedRangeUpPath | undefined,
+		newContent: AttachedRangeUpPath | undefined,
 		kind: ReplaceKind,
 	): void;
 

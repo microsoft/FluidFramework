@@ -26,6 +26,21 @@ export function applyDelta(
 	visitor.free();
 }
 
+export function announceDelta(
+	delta: Delta.Root,
+	deltaProcessor: { acquireVisitor: () => AnnouncedVisitor },
+	treeIndex?: TreeIndex,
+): void {
+	const visitor = announceVisitor(deltaProcessor.acquireVisitor());
+	visitDelta(
+		delta,
+		visitor,
+		treeIndex ??
+			new TreeIndex("Temp", idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>),
+	);
+	visitor.free();
+}
+
 export function combineVisitors(visitors: readonly DeltaVisitor[]): DeltaVisitor {
 	return {
 		free: () => visitors.forEach((v) => v.free()),

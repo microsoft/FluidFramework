@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../../feature-libraries";
+import { TreeStatus, singleTextCursor } from "../../feature-libraries";
 import {
 	Anchor,
 	AnchorNode,
@@ -16,17 +16,19 @@ import {
 	UpPath,
 	clonePath,
 	rootFieldKey,
-	applyDelta,
+	announceDelta,
 	AttachedRangeUpPath,
 	DetachedRangeUpPath,
 	ReplaceKind,
 	RangeUpPath,
 	PlaceUpPath,
 	DetachedPlaceUpPath,
+	DeltaVisitor,
 } from "../../core";
 import { brand } from "../../util";
 import { expectEqualPaths } from "../utils";
 import { jsonString } from "../../domains";
+import { treeStatusFromPath } from "../../feature-libraries/editable-tree/utilities";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -69,7 +71,7 @@ describe("AnchorSet", () => {
 		};
 
 		const delta = new Map([[rootFieldKey, [1, moveOut, 1, moveIn]]]);
-		applyDelta(delta, anchors);
+		announceDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
 		checkEquality(anchors.locate(anchor1), makePath([rootFieldKey, 2]));
 		checkEquality(anchors.locate(anchor2), makePath([rootFieldKey, 1]));
@@ -84,22 +86,17 @@ describe("AnchorSet", () => {
 			content: [node, node].map(singleTextCursor),
 		};
 
-		applyDelta(makeDelta(insert, makePath([fieldFoo, 4])), anchors);
+		announceDelta(makeDelta(insert, makePath([fieldFoo, 4])), anchors);
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 6]));
 	});
 
-	it("can rebase over delete", () => {
+	it("can rebase over destroy", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
-		const deleteMark = {
-			type: Delta.MarkType.Remove,
-			count: 1,
-			detachId,
-		};
+		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 4, end: 5 })));
 
-		applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])), anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), path2);
 		assert.equal(anchors.locate(anchor3), undefined);
@@ -107,15 +104,27 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor3));
 	});
 
-	it("can rebase over delete of parent node", () => {
-		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+	it("can rebase over remove", () => {
+		const [anchors, anchor1, anchor2, anchor3] = setup();
 		const deleteMark = {
 			type: Delta.MarkType.Remove,
 			count: 1,
 			detachId,
 		};
 
-		applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])), anchors);
+		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])), anchors);
+		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
+		checkEquality(anchors.locate(anchor2), path2);
+		checkRemoved(anchors.locate(anchor3));
+		assert.doesNotThrow(() => anchors.forget(anchor3));
+		assert.throws(() => anchors.locate(anchor3));
+	});
+
+	it("can rebase over delete of parent node", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+
+		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 5, end: 6 })));
+
 		assert.equal(anchors.locate(anchor4), undefined);
 		assert.equal(anchors.locate(anchor1), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor4));
@@ -126,15 +135,47 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor1));
 
 		checkEquality(anchors.locate(anchor2), path2);
-		applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
+		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 3, end: 4 })));
 		checkEquality(anchors.locate(anchor2), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
+		withVisitorInFoo(anchors, (v) => v.destroy(brand({ field: fieldFoo, start: 3, end: 4 })));
 		checkEquality(anchors.locate(anchor3), undefined);
+		assert.doesNotThrow(() => anchors.forget(anchor3));
+		assert.throws(() => anchors.locate(anchor3));
+	});
+
+	it("can rebase over remove of parent node", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+		const deleteMark = {
+			type: Delta.MarkType.Remove,
+			count: 1,
+			detachId,
+		};
+
+		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])), anchors);
+		checkRemoved(anchors.locate(anchor4));
+		checkRemoved(anchors.locate(anchor1));
+		assert.doesNotThrow(() => anchors.forget(anchor4));
+		assert.doesNotThrow(() => anchors.forget(anchor1));
+		checkEquality(anchors.locate(anchor2), path2);
+		checkEquality(anchors.locate(anchor3), path3);
+		assert.throws(() => anchors.locate(anchor4));
+		assert.throws(() => anchors.locate(anchor1));
+
+		checkEquality(anchors.locate(anchor2), path2);
+		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
+		checkRemoved(anchors.locate(anchor2));
+		assert.doesNotThrow(() => anchors.forget(anchor2));
+		assert.throws(() => anchors.locate(anchor2));
+
+		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
+		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+		announceDelta(makeDelta(deleteMark, makePath([fieldFoo, 3])), anchors);
+		checkRemoved(anchors.locate(anchor3));
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
 	});
@@ -159,7 +200,7 @@ describe("AnchorSet", () => {
 		};
 
 		const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
-		applyDelta(delta, anchors);
+		announceDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
 		checkEquality(
 			anchors.locate(anchor2),
@@ -243,7 +284,7 @@ describe("AnchorSet", () => {
 		};
 
 		log.expect([]);
-		applyDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
+		announceDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
 
 		log.expect([
 			["root childrenChange", 1],
@@ -256,7 +297,7 @@ describe("AnchorSet", () => {
 
 		node0.on("childrenChanging", log.logger("childrenChange"));
 		node0.on("subtreeChanging", log.logger("subtreeChange"));
-		node0.on("afterDelete", log.logger("afterDelete"));
+		node0.on("afterDestroy", log.logger("afterDestroy"));
 
 		log.expect([]);
 
@@ -264,21 +305,20 @@ describe("AnchorSet", () => {
 			type: Delta.MarkType.Insert,
 			content: [singleTextCursor({ type: jsonString.name, value: "x" })],
 		};
-		applyDelta(new Map([[rootFieldKey, [deleteMark, insertMark]]]), anchors);
+		announceDelta(new Map([[rootFieldKey, [deleteMark, insertMark]]]), anchors);
 
 		log.expect([
-			["afterDelete", 1],
 			["root childrenChange", 2],
 			["root treeChange", 1],
 		]);
 		log.clear();
 
-		applyDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
+		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
 
 		log.expect([["root treeChange", 1]]);
 		log.clear();
 
-		applyDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
+		announceDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
@@ -297,7 +337,7 @@ describe("AnchorSet", () => {
 		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
-		applyDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])), anchors);
+		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])), anchors);
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 		const pathVisitor: PathVisitor = {
@@ -314,44 +354,44 @@ describe("AnchorSet", () => {
 				)();
 			},
 			afterCreate(content: DetachedRangeUpPath): void {
-				log.logger(`visitSubtreeChange.afterCreate-${rangeToString(content)}`);
+				log.logger(`visitSubtreeChange.afterCreate-${rangeToString(content)}`)();
 			},
 			beforeReplace(
-				oldContent: AttachedRangeUpPath,
-				newContent: DetachedRangeUpPath,
+				oldContent: AttachedRangeUpPath | undefined,
+				newContent: DetachedRangeUpPath | undefined,
 				kind: ReplaceKind,
 			): void {
 				log.logger(
 					`visitSubtreeChange.beforeReplace-old:${rangeToString(
 						oldContent,
 					)}-new:${rangeToString(newContent)}`,
-				);
+				)();
 			},
 
 			afterReplace(
-				oldContent: DetachedRangeUpPath,
-				newContent: AttachedRangeUpPath,
+				oldContent: DetachedRangeUpPath | undefined,
+				newContent: AttachedRangeUpPath | undefined,
 				kind: ReplaceKind,
 			): void {
 				log.logger(
 					`visitSubtreeChange.afterReplace-old:${rangeToString(
 						oldContent,
 					)}-new:${rangeToString(newContent)}`,
-				);
+				)();
 			},
 			beforeDestroy(content: DetachedRangeUpPath): void {
-				log.logger(`visitSubtreeChange.beforeDestroy-${rangeToString(content)}`);
+				log.logger(`visitSubtreeChange.beforeDestroy-${rangeToString(content)}`)();
 			},
 		};
 		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
-		applyDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
+		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
 		log.expect([["visitSubtreeChange.onInsert-foo-4", 1]]);
 		log.clear();
-		applyDelta(makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
+		announceDelta(makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])), anchors);
 		log.expect([["visitSubtreeChange.onDelete-foo-5-1", 1]]);
 		log.clear();
 		unsubscribePathVisitor();
-		applyDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
+		announceDelta(makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])), anchors);
 		log.expect([]);
 	});
 });
@@ -370,6 +410,14 @@ class UnorderedTestLogger {
 	public clear(): void {
 		this.logEntries.clear();
 	}
+}
+
+function withVisitorInFoo(anchors: AnchorSet, action: (visitor: DeltaVisitor) => void) {
+	let visitor = anchors.acquireVisitor();
+	visitor.enterField(fieldFoo);
+	action(visitor);
+	visitor.exitField(fieldFoo);
+	visitor.free();
 }
 
 function setup(): [AnchorSet, Anchor, Anchor, Anchor, Anchor] {
@@ -398,6 +446,10 @@ function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
+function checkRemoved(path: UpPath | undefined) {
+	assert.notEqual(path, undefined);
+	assert.equal(treeStatusFromPath(path!), TreeStatus.Removed);
+}
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	const fields: Delta.Root = new Map([[path.parentField, [path.parentIndex, mark]]]);
@@ -412,10 +464,9 @@ function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	return makeDelta(modify, path.parent);
 }
 
-function rangeToString(range: RangeUpPath | DetachedRangeUpPath): string {
+function rangeToString(range: RangeUpPath | DetachedRangeUpPath | undefined): string {
+	if (range === undefined) {
+		return "undefined";
+	}
 	return `${range.field}[${range.start}, ${range.end}]`;
-}
-
-function placeToString(place: PlaceUpPath | DetachedPlaceUpPath): string {
-	return `${place.field}[${place.index}]`;
 }
