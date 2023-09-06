@@ -257,7 +257,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 
 	const visited: Set<unknown> = new Set([root]);
 	const primitivesAndValues = new Map<PrimitiveValue | TreeValue, number>();
-	// TODO: add cycle handler to not error on fluid handles.
+	// TODO: add cycle handler to not error on Fluid handles.
 	visitOwnPropertiesRecursive(root, (parent, key, child): typeof Skip | undefined => {
 		assert(typeof child !== "function");
 		assert(typeof key !== "symbol");

@@ -78,7 +78,7 @@ export class Context implements TreeContext {
 		for (const target of this.withCursors) {
 			target[prepareForEditSymbol]();
 		}
-		assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
+		assert(this.withCursors.size === 0, "prepareForEdit should remove all cursors");
 	}
 
 	/**

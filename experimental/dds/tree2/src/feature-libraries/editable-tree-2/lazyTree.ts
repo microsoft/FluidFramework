@@ -201,11 +201,11 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	public get parentField(): { readonly parent: UntypedField; readonly index: number } {
 		const cursor = this[cursorSymbol];
 		const index = this.#anchorNode.parentIndex;
-		assert(cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
+		assert(cursor.fieldIndex === index, "mismatched indexes");
 		const key = this.#anchorNode.parentField;
 
 		cursor.exitNode();
-		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
+		assert(key === cursor.getFieldKey(), "mismatched keys");
 		let fieldSchema: FieldSchema;
 
 		// Check if the current node is in a detached sequence.
