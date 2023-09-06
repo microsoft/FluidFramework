@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-utils",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.7.0.0",
 	"description": "Collection of utility functions for Fluid drivers",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -98,6 +98,28 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_AuthorizationError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_FluidInvalidSchemaError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_GenericNetworkError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_LocationRedirectionError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_UsageError": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ThrottlingError": {
+				"backCompat": false
+			}
+		}
 	}
 }

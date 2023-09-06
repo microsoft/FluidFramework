@@ -136,10 +136,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
-			// TODO: adjust to not rely on caching (AB#5046)
-			options: { cache: true },
-		});
+		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		container = await createAndAttachContainer(
 			provider.defaultCodeDetails,
 			loader,
@@ -188,13 +185,15 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	});
 
 	it("can create data object using url with second id, having distinct value from default", async () => {
-		const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
-		assert(url, "dataStore2 url is undefined");
-		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, {
-			url,
-			// TODO: adjust this test to not rely on caching (AB#5046)
-			headers: { [LoaderHeader.cache]: true },
-		});
+		const containerUrl = await container.getAbsoluteUrl("");
+		assert(containerUrl, "url is undefined");
+		const container2 = await loader.resolve({ url: containerUrl });
+		container2.connect();
+
+		const testDataStore = await requestFluidObject<TestSharedDataObject2>(
+			container2,
+			dataStore2.handle.absolutePath,
+		);
 
 		dataStore1._root.set("color", "purple");
 		dataStore2._root.set("color", "pink");
@@ -212,8 +211,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	it("loaded container is paused using loader pause flags", async () => {
 		// load the container paused
 		const headers: IRequestHeader = {
-			// TODO: adjust this test to not rely on caching (AB#5046)
-			[LoaderHeader.cache]: false,
 			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
 		};
 		const url = await container.getAbsoluteUrl("");
@@ -247,51 +244,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		assert(
 			newDataStore2 instanceof TestSharedDataObject2,
 			"requestFromLoader returns the wrong type for object2",
-		);
-	});
-
-	// TODO: remove this test when caching is removed (AB#5046)
-	it("caches the loaded container across multiple requests as expected", async () => {
-		const url = await container.getAbsoluteUrl("");
-		assert(url, "url is undefined");
-		// load the containers paused
-		const headers: IRequestHeader = {
-			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
-			[LoaderHeader.cache]: true,
-		};
-		const container1 = await loader.resolve({ url, headers });
-		const container2 = await loader.resolve({ url, headers });
-
-		assert.strictEqual(
-			container1,
-			container2,
-			"container not cached across multiple loader requests",
-		);
-
-		// create a new data store using the original container
-		const newDataStore = await testSharedDataObjectFactory2.createInstance(
-			dataStore1._context.containerRuntime,
-		);
-		// this binds newDataStore to dataStore1
-		dataStore1._root.set("key", newDataStore.handle);
-
-		container1.connect();
-
-		// Flush all the ops
-		await provider.ensureSynchronized();
-
-		const sameDataStore1 = await requestFluidObject(container1, {
-			url: newDataStore.id,
-			headers: { wait: false }, // data store load default wait to true currently
-		});
-		const sameDataStore2 = await requestFluidObject(container2, {
-			url: newDataStore.id,
-			headers: { wait: false }, // data store load default wait to true currently
-		});
-		assert.strictEqual(
-			sameDataStore1,
-			sameDataStore2,
-			"same containers do not return same data store for same request",
 		);
 	});
 
@@ -340,6 +292,11 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	});
 
 	it("can handle requests with headers", async () => {
+		const containerUrl = await container.getAbsoluteUrl("");
+		assert(containerUrl, "url is undefined");
+		const container2 = await loader.resolve({ url: containerUrl });
+		container2.connect();
+
 		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
 			dataStore1._context.containerRuntime,
 		);
@@ -348,17 +305,12 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		// Flush all the ops
 		await provider.ensureSynchronized();
 
-		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
-		assert(url, "Container should return absolute url");
-
 		const headers = {
 			wait: false,
 			[RuntimeHeaders.viaHandle]: true,
-			// TODO: adjust this test to not rely on caching (AB#5046)
-			[LoaderHeader.cache]: true,
 		};
 		// Request to the newly created data store with headers.
-		const response = await loader.request({ url, headers });
+		const response = await container2.request({ url: dataStoreWithRequestHeaders.id, headers });
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");
 		assert.strictEqual(

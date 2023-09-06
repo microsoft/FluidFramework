@@ -10,6 +10,7 @@ import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definition
  */
 export enum OdspErrorType {
 	/**
+	 * @deprecated - This is deprecated in favour of DriverErrorType.outOfStorageError
 	 * Storage is out of space
 	 */
 	outOfStorageError = "outOfStorageError",
@@ -54,6 +55,11 @@ export enum OdspErrorType {
 	 * So to preserve integrity of the data, the data becomes readonly.
 	 */
 	serviceReadOnly = "serviceReadOnly",
+
+	/**
+	 * Due to organizational policies, you can't access server resources from the current network location.
+	 */
+	blockedIPAddress = "blockedIPAddress",
 }
 
 export interface IOdspErrorAugmentations {

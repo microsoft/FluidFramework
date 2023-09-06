@@ -22,17 +22,9 @@ import {
 	FlushMode,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
-	IDataStore,
 	IFluidDataStoreContextDetached,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-
-/**
- * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
- */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-	fluidDataStoreChannel?: { bindToContext?(): void };
-}
 
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
@@ -75,7 +67,7 @@ export interface IContainerRuntime
 	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
 	 * data store has been assigned the given alias.
 	 */
-	getAliasedDataStoreEntryPoint?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Creates detached data store context. Data store initialization is considered complete
