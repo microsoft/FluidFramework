@@ -3,21 +3,10 @@
 _For a technical overview of Garbage Collection, start with [GarbageCollection.md](./garbageCollection.md)_
 
 GC Sweep is not yet enabled by default, and until that time early adopters have several configuration options available
-for how to enable and monitor GC.
+for how to enable GC and monitor for any GC-impacting bugs that would need to be mitigated.
 
-## Techniques used for configuration
-
-There are two ways configuration can be injected into the Fluid Framework which are used for GC, referred to by name throughout this document:
-
-1.  **"GC Options"**: `ContainerRuntime.loadRuntime` takes an options value of type `IContainerRuntimeOptions`.
-    This type includes a sub-object `gcOptions`, for GC-specific options.
-2.  **"Config Settings"**: The `Loader`'s constructor takes in `ILoaderProps`, which includes `configProvider?: IConfigProviderBase`
-    This configProvider can be used to inject config settings.
-
-Typically GC Options are used for more "official" and stable configuration, whereas Config Settings provide a mechanism
-for apps to override settings easily, e.g. by backing their `IConfigProviderBase` with a configuration/flighting service.
-Additionally, FF will fallback to reading from Local/Session Storage if the provider doesn't mention a particular Config Setting,
-making it convenient to override these while debugging.
+Please refer to the section [Techniques Used for Configuration](./garbageCollection.md#techniques-used-for-configuration)
+before continuing, to ensure you're familiar with using "GC Options" and "Config Settings" for configuring GC.
 
 ## What's on by default
 
@@ -123,7 +112,7 @@ Note that if `gcSweepGeneration` is set and matches, Tombstone Mode is off for t
 Lastly, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
 be eligible for Sweep as well. This was done for historical reasons due to circumstances during GC's development.
 
-## Advanced Configurations
+## More Advanced Configurations
 
 There are a handful of other configuration options/settings that can be used to tweak GC's behavior,
 mostly for testing. Please refer to the function [`generateGCConfigs` in gcConfigs.ts](.\gcConfigs.ts)
@@ -136,7 +125,7 @@ Examples of available advanced configuration include:
     -   Disabling running GC Mark and/or Sweep phases for this session
     -   Forcing GC Mark and/or Sweep to run for this session even if otherwise it would be disabled
     -   Disabling Tombstone Mode (don't even mark objects as Tombstones)
--   Overriding Session Expiry for new files (or disabling it altogether, which will also disable Tombstone/Sweep)
+-   Overriding the default Session Expiry for new files (or disabling it altogether, which will also disable Tombstone/Sweep)
 -   Overriding the Sweep Timeout, _independent of Session Expiry_, so use with care (for testing purposes only - data loss could occur)
 -   Running in "Test Mode", where objects are deleted as soon as they're unreferenced
 -   Force "Full GC" to run, which ignores incremental optimizations based on previously computed GC Data

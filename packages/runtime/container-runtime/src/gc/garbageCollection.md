@@ -48,25 +48,75 @@ In this phase, the GC algorithm identifies all Fluid objects that are unreferenc
 
 Mark phase is enabled by default for a container. It is enabled during creation of the container runtime and remains enabled throughout its lifetime. Basically, this setting is persisted in the summary and cannot be changed.
 
-If you wish to disable this, set the `gcAllowed` option to `false` in `IGCRuntimeOptions`. These options are under `IContainerRuntimeOptions` and are passed to the container runtime during its creation. Note that this will disable GC permanently (including the sweep phase) for the container during its lifetime.
-
-See `IGCRuntimeOptions` in [containerRuntime.ts](../containerRuntime.ts) for more options to control GC behavior.
-
 ### Sweep phase
 
-In this phase, the GC algorithm identifies all Fluid objects that have been unreferenced for a specific amount of time (typically 30-40 days) and deletes them. Objects are only swept once the GC system is sure that they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it.
+In this phase, the GC algorithm identifies all Fluid objects that have been unreferenced for a specific amount of time (typically 30-40 days) and deletes them.
+Objects are only swept once the GC system is sure that they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it.
+The Fluid Runtime enforces a maximum session length (configurable) in order to guarantee an object is safe to delete after sufficient time has elapsed.
 
-GC sweep phase has not been enabled by default yet. A "soft" version of Sweep called "Tombstone Mode" is enabled by default when Sweep is disabled.
-See the next section on safely enabling Sweep for details on how to use Tombstoning to validate your app's GC-readiness.
+GC sweep phase has not been enabled by default yet. A "soft" version of Sweep called "Tombstone Mode" is enabled by default
+as part of the Mark Phase when Sweep is disabled. In this mode, any object that GC determines is ready to be deleted is
+marked as a "Tombstone", which triggers certain logging events and/or behavior changes if/when that Tombstoned object is
+accessed by the application.
 
-## Early Adopters: GC Configuration
+## GC Configuration
 
-GC Sweep is not yet enabled by default, and until that time early adopters have several configuration options available
-for how to enable and monitor GC. This is covered in detail [here](./gcEarlyAdoption.md).
+The default configuration for GC today is:
 
-## DRAFT NOTES / TODOS
+-   GC Mark Phase is **enabled**, including Tombstone Mode
+-   Session Expiry is **enabled**
+-   GC Sweep Phase is **disabled**
 
-Update the last 2 sections (Sweep Phase and Early Adopters) to have this info, and otherwise point to the other file
+### Techniques used for configuration
 
--   How to enable Tombstone enforcement (the two settings)
--   How to enable Sweep
+There are two ways to configure the Fluid Framework's GC behavior, referred to by name throughout these documents:
+
+1.  **"GC Options"**: `ContainerRuntime.loadRuntime` takes an options value of type `IContainerRuntimeOptions`.
+    This type includes a sub-object `gcOptions`, for GC-specific options.
+2.  **"Config Settings"**: The `Loader`'s constructor takes in `ILoaderProps`, which includes `configProvider?: IConfigProviderBase`
+    This configProvider can be used to inject config settings.
+
+Typically GC Options are used for more "official" and stable configuration, whereas Config Settings provide a mechanism
+for apps to override settings easily, e.g. by backing their `IConfigProviderBase` with a configuration/flighting service.
+Additionally, FF will fallback to reading from Local/Session Storage if the provider doesn't mention a particular
+Config Setting, making it convenient to override these while debugging.
+
+### Disabling Mark Phase
+
+If you wish to disable Mark Phase for newly-created documents, set the `gcAllowed` GC Option to `false`.
+Note that this will disable GC permanently (including the sweep phase) for the container during its lifetime.
+
+Mark Phase can also be disabled just for the session, among other behaviors,
+covered in the [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-configurations) docs.
+
+### Enabling Sweep Phase
+
+As explained above, Tombstone Mode can provide a "soft delete" experience to evaluate your app's GC-readiness
+without ultimately jeopardizing user's data.
+
+A full treatment of Tombstone and Sweep configuration can be found in
+[this companion document geared towards early adopters of GC](./gcEarlyAdoption.md).
+
+#### Enabling Tombstone Enforcement
+
+To enable Tombstone Enforcement - meaning, attempting to access a Tombstoned object will fail -
+set the following two Config Settings to `true`:
+
+-   `Fluid.GarbageCollection.ThrowOnTombstoneLoad`
+-   `Fluid.GarbageCollection.ThrowOnTombstoneUsage`
+
+#### Enabling Full Sweep
+
+To enable Sweep Phase for new documents, you must set the `gcSweepGeneration` GC Option to a number, e.g. 0 to start.
+The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#differences-between-gcsweepgeneration-and-gctombstonegeneration).
+Note that this will disabled Tombstone Mode.
+
+Additionally, you must set these two Config Settings to `true` in the session:
+
+-   `Fluid.GarbageCollection.Test.SweepDataStores`
+-   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
+
+### More Advanced Configuration
+
+For additional behaviors that can be configured (e.g. for testing), please see the
+[Advanced Configuration](./gcEarlyAdoption.md#more-advanced-configurations) docs.
