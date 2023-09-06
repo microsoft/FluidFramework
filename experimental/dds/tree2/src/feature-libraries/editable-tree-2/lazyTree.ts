@@ -53,7 +53,15 @@ import {
 	UntypedTree,
 } from "./editableTreeTypes";
 import { makeField, unboxedField } from "./lazyField";
-import { LazyEntity, makePropertyEnumerableOwn, makePropertyNotEnumerable } from "./lazyEntity";
+import {
+	LazyEntity,
+	cursorSymbol,
+	forgetAnchorSymbol,
+	isFreedSymbol,
+	makePropertyEnumerableOwn,
+	makePropertyNotEnumerable,
+	tryMoveCursorToAnchorSymbol,
+} from "./lazyEntity";
 
 const lazyTreeSlot = anchorSlot<LazyTree>();
 
@@ -154,14 +162,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		return (this.schema as TreeSchema) === schema;
 	}
 
-	protected tryMoveCursorToAnchor(
+	protected override [tryMoveCursorToAnchorSymbol](
 		anchor: Anchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
 	}
 
-	protected forgetAnchor(anchor: Anchor): void {
+	protected override [forgetAnchorSymbol](anchor: Anchor): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
@@ -171,12 +179,12 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	}
 
 	public get value(): Value {
-		return this.cursor.value;
+		return this[cursorSymbol].value;
 	}
 
 	public tryGetField(fieldKey: FieldKey): UntypedField | undefined {
 		const schema = getFieldSchema(fieldKey, this.schema);
-		return inCursorField(this.cursor, fieldKey, (cursor) => {
+		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
@@ -185,15 +193,15 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 	}
 
 	public [Symbol.iterator](): IterableIterator<UntypedField> {
-		return mapCursorFields(this.cursor, (cursor) =>
+		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
 		).values();
 	}
 
 	public get parentField(): { readonly parent: UntypedField; readonly index: number } {
-		const cursor = this.cursor;
+		const cursor = this[cursorSymbol];
 		const index = this.anchorNode.parentIndex;
-		assert(this.cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
+		assert(cursor.fieldIndex === index, 0x714 /* mismatched indexes */);
 		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
@@ -233,14 +241,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 			);
 		}
 
-		const proxifiedField = makeField(this.context, fieldSchema, this.cursor);
-		this.cursor.enterNode(index);
+		const proxifiedField = makeField(this.context, fieldSchema, cursor);
+		cursor.enterNode(index);
 
 		return { parent: proxifiedField, index };
 	}
 
 	public override treeStatus(): TreeStatus {
-		if (this.isFreed()) {
+		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
 		const path = this.anchorNode;
@@ -290,7 +298,7 @@ export class LazyMap<TSchema extends MapSchema>
 	}
 
 	public get(key: FieldKey): TypedField<TSchema["mapFields"]> {
-		return inCursorField(this.cursor, key, (cursor) =>
+		return inCursorField(this[cursorSymbol], key, (cursor) =>
 			makeField(this.context, this.schema.mapFields, cursor),
 		) as TypedField<TSchema["mapFields"]>;
 	}
@@ -318,7 +326,7 @@ export class LazyMap<TSchema extends MapSchema>
 		const record: Record<FieldKey, UnboxField<TSchema["mapFields"]> | undefined> =
 			Object.create(null);
 
-		forEachField(this.cursor, (cursor) => {
+		forEachField(this[cursorSymbol], (cursor) => {
 			Object.defineProperty(record, cursor.getFieldKey(), {
 				value: unboxedField(this.context, this.schema.mapFields, cursor),
 				configurable: true,
@@ -356,7 +364,7 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	implements FieldNode<TSchema>
 {
 	public get content(): TypedField<TSchema["structFieldsObject"][""]> {
-		return inCursorField(this.cursor, EmptyKey, (cursor) =>
+		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			makeField(
 				this.context,
 				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
@@ -416,7 +424,7 @@ function buildStructClass<TSchema extends StructSchema>(
 		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
-				return inCursorField(this.cursor, key, (cursor) =>
+				return inCursorField(this[cursorSymbol], key, (cursor) =>
 					unboxedField(this.context, field, cursor),
 				);
 			},
@@ -425,7 +433,7 @@ function buildStructClass<TSchema extends StructSchema>(
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
-				return inCursorField(this.cursor, key, (cursor) =>
+				return inCursorField(this[cursorSymbol], key, (cursor) =>
 					makeField(this.context, field, cursor),
 				);
 			},

@@ -51,7 +51,15 @@ import {
 	ValueField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
-import { LazyEntity, makePropertyEnumerableOwn, makePropertyNotEnumerable } from "./lazyEntity";
+import {
+	LazyEntity,
+	cursorSymbol,
+	forgetAnchorSymbol,
+	isFreedSymbol,
+	makePropertyEnumerableOwn,
+	makePropertyNotEnumerable,
+	tryMoveCursorToAnchorSymbol,
+} from "./lazyEntity";
 
 export function makeField(
 	context: Context,
@@ -138,37 +146,37 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 			return undefined;
 		}
 
-		const cursor = this.cursor;
+		const cursor = this[cursorSymbol];
 		cursor.exitField();
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
 
-	protected tryMoveCursorToAnchor(
+	protected override [tryMoveCursorToAnchorSymbol](
 		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.forest.tryMoveCursorToField(anchor, cursor);
 	}
 
-	protected forgetAnchor(anchor: FieldAnchor): void {
+	protected override [forgetAnchorSymbol](anchor: FieldAnchor): void {
 		if (anchor.parent === undefined) return;
 		this.context.forest.anchors.forget(anchor.parent);
 	}
 
 	public get length(): number {
-		return this.cursor.getFieldLength();
+		return this[cursorSymbol].getFieldLength();
 	}
 
 	public at(index: number): UnboxNodeUnion<TTypes> {
-		return inCursorNode(this.cursor, index, (cursor) =>
+		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
 	}
 
 	public boxedAt(index: number): TypedNodeUnion<TTypes> {
-		return inCursorNode(this.cursor, index, (cursor) =>
+		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			makeTree(this.context, cursor),
 		) as TypedNodeUnion<TTypes>;
 	}
@@ -176,7 +184,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	public map<U>(
 		callbackfn: (value: UnboxNodeUnion<TTypes>, index: number, array: this) => U,
 	): U[] {
-		return mapCursorField(this.cursor, (cursor) =>
+		return mapCursorField(this[cursorSymbol], (cursor) =>
 			callbackfn(unboxedUnion(this.context, this.schema, cursor), cursor.fieldIndex, this),
 		);
 	}
@@ -184,7 +192,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	public mapBoxed<U>(
 		callbackfn: (value: TypedNodeUnion<TTypes>, index: number, array: this) => U,
 	): U[] {
-		return mapCursorField(this.cursor, (cursor) =>
+		return mapCursorField(this[cursorSymbol], (cursor) =>
 			callbackfn(
 				makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
 				cursor.fieldIndex,
@@ -198,7 +206,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	}
 
 	public treeStatus(): TreeStatus {
-		if (this.isFreed()) {
+		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
 		const fieldAnchor = this.anchor;
@@ -217,7 +225,7 @@ export abstract class LazyField<TKind extends FieldKindTypes, TTypes extends All
 	}
 
 	public getFieldPath(): FieldUpPath {
-		return this.cursor.getFieldPath();
+		return this[cursorSymbol].getFieldPath();
 	}
 }
 
@@ -237,7 +245,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	private sequenceEditor(): SequenceFieldEditBuilder {
-		const fieldPath = this.cursor.getFieldPath();
+		const fieldPath = this[cursorSymbol].getFieldPath();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
 		return fieldEditor;
 	}
@@ -275,7 +283,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	private valueFieldEditor(): ValueFieldEditBuilder {
-		const fieldPath = this.cursor.getFieldPath();
+		const fieldPath = this[cursorSymbol].getFieldPath();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
 		return fieldEditor;
 	}
@@ -307,7 +315,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	private optionalEditor(): OptionalFieldEditBuilder {
-		const fieldPath = this.cursor.getFieldPath();
+		const fieldPath = this[cursorSymbol].getFieldPath();
 		const fieldEditor = this.context.editor.optionalField(fieldPath);
 		return fieldEditor;
 	}

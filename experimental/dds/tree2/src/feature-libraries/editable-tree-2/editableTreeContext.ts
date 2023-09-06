@@ -19,7 +19,7 @@ import { TypedSchemaCollection } from "../typed-schema";
 import { disposeSymbol } from "../../util";
 import { UntypedField } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
-import { LazyEntity } from "./lazyEntity";
+import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -76,7 +76,7 @@ export class Context implements TreeContext {
 	 */
 	private prepareForEdit(): void {
 		for (const target of this.withCursors) {
-			target.prepareForEdit();
+			target[prepareForEditSymbol]();
 		}
 		assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
 	}

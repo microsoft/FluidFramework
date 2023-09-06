@@ -49,6 +49,12 @@ export function makePrivatePropertyNotEnumerable(target: object, key: string | s
 	Object.defineProperty(target, key, { enumerable: false });
 }
 
+export const prepareForEditSymbol = Symbol("prepareForEdit");
+export const isFreedSymbol = Symbol("isFreed");
+export const tryMoveCursorToAnchorSymbol = Symbol("tryMoveCursorToAnchor");
+export const forgetAnchorSymbol = Symbol("forgetAnchor");
+export const cursorSymbol = Symbol("cursor");
+
 /**
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
@@ -80,20 +86,20 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
-		this.forgetAnchor(this.anchor);
+		this[forgetAnchorSymbol](this.anchor);
 		this.context.withAnchors.delete(this);
 	}
 
-	public prepareForEdit(): void {
+	public [prepareForEditSymbol](): void {
 		this.#lazyCursor.clear();
 		this.context.withCursors.delete(this);
 	}
 
-	public isFreed(): boolean {
+	public [isFreedSymbol](): boolean {
 		return this.#lazyCursor.state === ITreeSubscriptionCursorState.Freed;
 	}
 
-	public get cursor(): ITreeSubscriptionCursor {
+	public get [cursorSymbol](): ITreeSubscriptionCursor {
 		if (this.#lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			assert(
 				this.#lazyCursor.state === ITreeSubscriptionCursorState.Cleared,
@@ -101,19 +107,19 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 			);
 			assert(
 				this.anchor !== undefined,
-				0x3c3 /* EditableTree should have an anchor if it does not have a cursor */,
+				"EditableTree should have an anchor if it does not have a cursor",
 			);
-			const result = this.tryMoveCursorToAnchor(this.anchor, this.#lazyCursor);
+			const result = this[tryMoveCursorToAnchorSymbol](this.anchor, this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
-				0x3c4 /* It is invalid to access an EditableTree node which no longer exists */,
+				"It is invalid to access an EditableTree node which no longer exists",
 			);
 			this.context.withCursors.add(this);
 		}
 		return this.#lazyCursor;
 	}
 
-	protected abstract tryMoveCursorToAnchor(
+	protected abstract [tryMoveCursorToAnchorSymbol](
 		anchor: TAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
@@ -121,7 +127,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	/**
 	 * Called when disposing of this target, iff it has an anchor.
 	 */
-	protected abstract forgetAnchor(anchor: TAnchor): void;
+	protected abstract [forgetAnchorSymbol](anchor: TAnchor): void;
 }
 
 /**

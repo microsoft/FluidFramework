@@ -61,25 +61,24 @@ Despite this tree API primarily being a TypeScript API, and TypeScript types hav
 
 For example, TypeScript assumes all members of interfaces are `enumerable` and `own` when using the [Object spread](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax) operator.
 Typescript also assumes all non-method members of class are `enumerable` and `own`, but allows assigning the class to an interface where it will start treating the methods as `enumerable` and `own` despite it being the same object.
-This compile time behavior often does not match what happens at runtime, so users of TypeScript are likely to run into issues despite their code compile just fine if they rely on Object spread, or make assumptions about what properties are `enumerable` or `own`.
+This compile time behavior often does not match what happens at runtime, so users of TypeScript are likely to run into issues despite their code compiling just fine if they rely on Object spread, or make assumptions about what properties are `enumerable` or `own`.
 
 Many existing libraries users of tree are likely to work with will also make assumptions about `enumerable` or `own`.
 
-So in addition to the TypeScript types, as separate decision needs to be made about what guarantees this library will make about `enumerable` and `own` properties.
+So in addition to the TypeScript types, a separate decision needs to be made about what guarantees this library will make about `enumerable` and `own` properties.
 
 This library guarantees then when traversing from a root `UntypedEntity` via `enumerable` `own` properties:
 
 -   All callable members are `inherited` (not `own`) or not `enumerable` and thus work like class methods. Note that TypeScript's type checking will get this wrong due to the API using interfaces.
 -   When starting at a root node or fields, there ie exactly one way to traverse to (or past in some unboxed cases) every node and field under it via only enumerable own properties.
 -   Every leaf node's value within the tree will be reachable, either from its node, it as its node (in the unboxed case). Note that values are assumed to be immutable, and if multiple leaves hold structurally identical objects as values they may or may not be shared and this difference is not considered significant. TODO: determine how node's assert.deepEqual compares these cases.
--   Every node traversed has an unambiguous type, either from implied by its position and parent's schema (for unboxed cases) and/or from an `enumerable` `own` property containing the schema's identifier.
+-   Every node traversed has an unambiguous type, either implied by its position and parent's schema (for unboxed cases) and/or from an `enumerable` `own` property containing the schema's identifier.
 -   No cycles will be encountered, with the exception of any `FluidHandle` stored as part of serializable values on `LeafNode`s.
 -   Content outside of the tree, such as its schema objects and context, will not be reachable.
--   No symbols will be encountered as keys. This ensures that the traversal can use the APIs which only support strings (like `Object.entries`) and get the same result as if using APIs which also support symbols (like `object spread).
+-   No symbols will be encountered as keys. This ensures that the traversal can use the APIs which only support strings (like `Object.entries`) and get the same result as if using APIs which also support symbols (like `object spread`).
 
 Note that if using `for...in`, be sure to filter out `inherited` properties.
 
 ## Status
 
-Minimal and unfinished.
-In particular the "JavaScript object focused use" need work.
+Mostly implemented, but lacking a lot of tests.
