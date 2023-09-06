@@ -65,7 +65,7 @@ export class Context implements TreeContext {
 		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
-			this.forest.on("beforeDelta", () => {
+			this.forest.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
