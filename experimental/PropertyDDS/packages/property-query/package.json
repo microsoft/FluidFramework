@@ -13,7 +13,7 @@
 	"main": "src/index.js",
 	"types": "src/index.d.ts",
 	"scripts": {
-		"clean": "rimraf --glob nyc",
+		"clean": "rimraf --glob 'nyc'",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier",

@@ -24,7 +24,7 @@
 		"ci:build": "npm run download && npm run build",
 		"ci:linkcheck": "start-server-and-test ci:start http://localhost:1313 linkcheck:full",
 		"ci:start": "http-server ./public --port 1313 --silent",
-		"clean": "rimraf public content/docs/apis _api-extractor-temp",
+		"clean": "rimraf 'public' 'content/docs/apis' '_api-extractor-temp'",
 		"download": "npm run download:api && npm run build:api",
 		"download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
 		"format": "npm run prettier:fix",
