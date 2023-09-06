@@ -114,6 +114,51 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			existing?: boolean | undefined,
 			ctor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
 		): Promise<ContainerRuntime> {
+			return this.loadRuntime({
+				context,
+				registryEntries,
+				existing: existing ?? false,
+				requestHandler,
+				runtimeOptions,
+				containerScope,
+				containerRuntimeCtor: ctor,
+			});
+		}
+
+		public static async loadRuntime(
+			params: {
+				context: IContainerContext;
+				registryEntries: NamedFluidDataStoreRegistryEntries;
+				existing: boolean;
+				runtimeOptions?: IContainerRuntimeOptions;
+				containerScope?: FluidObject;
+				containerRuntimeCtor?: typeof ContainerRuntime;
+			} & (
+				| {
+						requestHandler?: (
+							request: IRequest,
+							runtime: IContainerRuntime,
+						) => Promise<IResponse>;
+						initializeEntryPoint?: undefined;
+				  }
+				| {
+						requestHandler?: undefined;
+						initializeEntryPoint: (
+							containerRuntime: IContainerRuntime,
+						) => Promise<FluidObject>;
+				  }
+			),
+		) {
+			const {
+				context,
+				registryEntries,
+				existing,
+				requestHandler,
+				runtimeOptions = {},
+				containerScope = {},
+				containerRuntimeCtor = ContainerRuntime,
+			} = params;
+
 			const runtimeAttributor = (
 				containerScope as FluidObject<IProvideRuntimeAttributor> | undefined
 			)?.IRuntimeAttributor;
@@ -142,15 +187,15 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				(context.options.attribution ??= {}).track = true;
 			}
 
-			const runtime = (await Base.load(
+			const runtime = (await Base.loadRuntime({
 				context,
 				registryEntries,
 				requestHandler,
 				runtimeOptions,
 				containerScope,
 				existing,
-				ctor,
-			)) as ContainerRuntimeWithAttributor;
+				containerRuntimeCtor,
+			})) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
 			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
