@@ -94,10 +94,6 @@ describe("entryPoint compat", () => {
 			provider = getTestObjectProvider();
 		});
 
-		it("something", () => {
-			// have unit test in containerRuntime.spec.ts to verify you can use both load and loadRuntime
-		});
-
 		it("request pattern works", async () => {
 			const container = await createRequestOnlyContainer();
 			const requestResult = await container.request({ url: "/" });
