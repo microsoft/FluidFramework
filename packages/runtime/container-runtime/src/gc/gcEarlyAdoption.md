@@ -55,7 +55,7 @@ use this Config Setting:
 
 GC includes a mechanism for Tombstone by which all new documents may be stamped with a "Generation" number,
 and if set then Tombstone is only enforceable for documents of the latest Generation. This number is specified
-via the `gcTombstoneGeneration` GC Option.
+via the `gcTombstoneGeneration` GC Option, and will not change over the lifetime of a given document.
 
 In case a bug is released that is found to cause GC errors, a bump to the gcTombstoneGeneration can be incuded
 with the fix, which will prevent any user pain for those potentially affected documents that were exposed to the bug.
@@ -88,7 +88,7 @@ To be very clear once again - This path uses deprecated APIs (`resolveHandle`) a
 Even with `ThrowOnTombstoneLoad` set to true, changes to a Tombstoned object will be allowed (this is required for the
 advanced recovery options to work).
 
-To instruct FF to treat Tombstoned objects as if they are truly not present in the Container,
+To instruct FF to treat Tombstoned objects as if they are truly not present in the document,
 use this Config Setting:
 
 ```ts
@@ -101,16 +101,33 @@ Note: The Summarizer client will _never_ throw on usage or load of a Tombstoned 
 
 ## Enabling Sweep
 
+The following configuration is required for Sweep to be enabled for a given document:
+
+-   GC Option `gcSweepGeneration` must be set
+-   Each of these two Config Settings must be set to `true` in the session:
+    -   `Fluid.GarbageCollection.Test.SweepDataStores`
+    -   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
+
+### Differences between gcSweepGeneration and gcTombstoneGeneration
+
+`gcSweepGeneration` is persisted and immutable in the document, just like `gcTombstoneGeneration`.
+However, behavior differs in a few important ways.
+
+For Tombstone, if `gcTombstoneGeneration` is not set, Tombstone enforcement will be **enabled**.
+For Sweep however, if `gcSweepGeneration` is not set, Tombstone enforcement will be **disabled**.
+
+This means that until the `gcSweepGeneration` GC Option is set, _no existing document will be eligible for Sweep, ever_.
+
+Lastly, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
+be eligible for Sweep as well. This was done for historical reasons due to circumstances during GC's development.
+
 ### DRAFT NOTES
 
--   Enabling Sweep
-    -   GcSweepGeneration must be set
-    -   Some options must be set (I have that task to change the defaults)
-    -   What if Tombstone is also enabled - Sweep wins I assume?
--   Move all this to `gcAdvancedConfiguration.md` and put only these two things in this file:
+-   Move all this to `gcAdvancedConfiguration.md` and put only these two things in the original file:
     -   How to enable Tombstone enforcement (the two settings)
     -   How to enable Sweep
 
 Questions
 
+-   What if Tombstone is also enabled - Sweep wins I assume?
 -   If you bump GcTombstoneGeneration to 1 but GcSweepGeneration is at 0, what happens?
