@@ -122,6 +122,9 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				runtimeOptions,
 				containerScope,
 				containerRuntimeCtor: ctor,
+				provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+					throw new Error("TODO: what's the correct thing to return?");
+				},
 			});
 		}
 
@@ -133,6 +136,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				runtimeOptions?: IContainerRuntimeOptions;
 				containerScope?: FluidObject;
 				containerRuntimeCtor?: typeof ContainerRuntime;
+				provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 			} & (
 				| {
 						requestHandler?: (
@@ -157,6 +161,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				runtimeOptions = {},
 				containerScope = {},
 				containerRuntimeCtor = ContainerRuntime,
+				provideEntryPoint,
 			} = params;
 
 			const runtimeAttributor = (
@@ -195,6 +200,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				containerScope,
 				existing,
 				containerRuntimeCtor,
+				provideEntryPoint,
 			})) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 

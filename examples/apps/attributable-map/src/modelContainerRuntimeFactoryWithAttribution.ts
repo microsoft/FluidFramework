@@ -50,15 +50,18 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		const attributor = createRuntimeAttributor();
 		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
 
-		const runtime = await containerRuntimeWithAttribution.load(
+		const runtime = await containerRuntimeWithAttribution.loadRuntime({
 			context,
-			this.registryEntries,
+			registryEntries: this.registryEntries,
 			// eslint-disable-next-line import/no-deprecated
-			makeModelRequestHandler(this.createModel.bind(this)),
-			this.runtimeOptions,
-			scope, // scope
+			requestHandler: makeModelRequestHandler(this.createModel.bind(this)),
+			runtimeOptions: this.runtimeOptions,
+			containerScope: scope,
 			existing,
-		);
+			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				throw new Error("TODO: what's the correct thing to return?");
+			},
+		});
 
 		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);
