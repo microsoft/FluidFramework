@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/server-services-core";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as Redis from "ioredis";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { RedisCache } from "./redis";
 
 /**
@@ -27,38 +26,26 @@ export class DocumentManager implements IDocumentManager {
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
 	) {
+		// If a redis cache does not yet exist, create one to populate the static field
 		if (!DocumentManager.documentStaticDataCache) {
-			// const config: nconf.Provider = nconf
-			// 	.argv()
-			// 	.env({ separator: "__", parseValues: true })
-			// 	.file(path.join(__dirname, "../../routerlicious/config/config.json"))
-			// 	.use("memory");
-			// Lumberjack.info(`Config: ${JSON.stringify(config)}`);
+			// TODO: Possibly grab this from a config
 			const redisConfig: Redis.RedisOptions = {
 				host: "redis",
 				port: 6379,
-				// tls: {
-				// 	servername: "redis",
-				// },
-				// connectTimeout: 10000,
-				// maxRetriesPerRequest: 20,
-				// enableAutoPipelining: false,
-				// enableOfflineQueue: true,
 			};
-			// config.get("redis");
-			Lumberjack.info(`redis config: ${JSON.stringify(redisConfig)}`);
 			const redisClient = new Redis.default(redisConfig);
 			DocumentManager.documentStaticDataCache = new RedisCache(redisClient);
 		}
 	}
 
 	public async readDocument(tenantId: string, documentId: string): Promise<IDocument> {
+		// Retrieve the document
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
-		Lumberjack.info(`Document: ${JSON.stringify(document)}`);
 
+		// Extract the static properties from the document
 		const staticProps: IDocumentStaticProperties = {
 			version: document.version,
 			createTime: document.createTime,
@@ -67,14 +54,14 @@ export class DocumentManager implements IDocumentManager {
 			isEphemeralContainer: document.isEphemeralContainer,
 		};
 
-		// const staticProps: IDocumentStaticProperties = document;
-		Lumberjack.info(`Static doc: ${JSON.stringify(staticProps)}`);
+		// Cache the static properties of the document
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
-		Lumberjack.info(`Setting key ${staticPropsKey} to ${JSON.stringify(staticProps)}`);
 		await DocumentManager.documentStaticDataCache.set(
 			staticPropsKey,
 			JSON.stringify(staticProps),
 		);
+
+		// Return the original document that was retrieved
 		return document;
 	}
 
@@ -82,23 +69,21 @@ export class DocumentManager implements IDocumentManager {
 		tenantId: string,
 		documentId: string,
 	): Promise<IDocumentStaticProperties> {
+		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
-		Lumberjack.info("### Attempting to read document from cached ###");
 		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
 			staticPropsKey,
 		);
-		Lumberjack.info(`### Read document from cached ${staticPropsStr} ###`);
 
-		// If there are no cached static data, read the document (will automatically cache the data)
+		// If there are no cached static document props, read the document
 		if (!staticPropsStr) {
-			Lumberjack.info("### Reading document from cosmosDB ###");
-			return this.readDocument(tenantId, documentId);
+			return this.readDocument(tenantId, documentId); // Also caches the static data of the read document
 		}
+
+		// Return the static data, parsed into a JSON object
 		const staticProps: IDocumentStaticProperties = JSON.parse(
 			staticPropsStr,
 		) as IDocumentStaticProperties;
-
-		Lumberjack.info("### Reading document from cached ###");
 		return staticProps;
 	}
 
@@ -125,6 +110,12 @@ export class DocumentManager implements IDocumentManager {
 		return restWrapper;
 	}
 
+	/**
+	 * Creates a cache key to retreive static data from a document
+	 *
+	 * @param documentId - ID of the document to create an access key for
+	 * @returns - A cache key to access static data for [documentId]
+	 */
 	private static getDocumentStaticDataKeyHeader(documentId: string) {
 		return `staticData:${documentId}`;
 	}
