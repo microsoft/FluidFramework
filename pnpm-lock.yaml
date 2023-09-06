@@ -9572,11 +9572,13 @@ importers:
       mocha: ^10.2.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
+      source-map-support: ^0.5.21
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       mocha: 10.2.0
+      source-map-support: 0.5.21
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
