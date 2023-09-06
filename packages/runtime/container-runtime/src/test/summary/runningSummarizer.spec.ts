@@ -71,7 +71,7 @@ describe("Runtime", () => {
 			let stopCall: number;
 			let runCount: number;
 			let fullTreeRunCount: number;
-			let refreshLatestAckRunCount: number;
+			let downloadLatestStateAndCloseRunCount: number;
 			let clock: sinon.SinonFakeTimers;
 			let mockLogger: MockLogger;
 			let settings = {};
@@ -217,7 +217,7 @@ describe("Runtime", () => {
 			function assertRunCounts(
 				expectedTotalRunCount: number,
 				expectedFullTreeRunCount: number,
-				expectedRefreshLatestAckRunCount: number,
+				expectedDownloadLatestStateAndCloseRunCount: number,
 				errorMessage?: string,
 				expectedStopCount = 0,
 			) {
@@ -233,9 +233,9 @@ describe("Runtime", () => {
 					`${errorPrefix}unexpected fullTree count`,
 				);
 				assert.strictEqual(
-					refreshLatestAckRunCount,
-					expectedRefreshLatestAckRunCount,
-					`${errorPrefix}unexpected refreshLatestAck count`,
+					downloadLatestStateAndCloseRunCount,
+					expectedDownloadLatestStateAndCloseRunCount,
+					`${errorPrefix}unexpected downloadLatestStateAndClose count`,
 				);
 				assert.strictEqual(
 					stopCall,
@@ -290,12 +290,12 @@ describe("Runtime", () => {
 						runCount++;
 						heuristicData.recordAttempt(lastRefSeq);
 
-						const { fullTree = false, refreshLatestAck = false } = options;
+						const { fullTree = false, downloadLatestStateAndClose = false } = options;
 						if (fullTree) {
 							fullTreeRunCount++;
 						}
-						if (refreshLatestAck) {
-							refreshLatestAckRunCount++;
+						if (downloadLatestStateAndClose) {
+							downloadLatestStateAndCloseRunCount++;
 						}
 						return submitSummaryCallback();
 					},
@@ -327,7 +327,7 @@ describe("Runtime", () => {
 				runCount = 0;
 				stopCall = 0;
 				fullTreeRunCount = 0;
-				refreshLatestAckRunCount = 0;
+				downloadLatestStateAndCloseRunCount = 0;
 				lastRefSeq = 0;
 				lastClientSeq = -1000; // negative/decrement for test
 				lastSummarySeq = 0; // negative/decrement for test
@@ -623,7 +623,7 @@ describe("Runtime", () => {
 
 					// should run with refresh after first nack
 					await emitNack();
-					assertRunCounts(2, 0, 1, "retry1 should be refreshLatestAck");
+					assertRunCounts(2, 0, 1, "retry1 should be downloadLatestStateAndClose");
 					const retryProps2 = {
 						summarizeCount: 1,
 						summaryAttemptsPerPhase: 1,
@@ -1333,11 +1333,11 @@ describe("Runtime", () => {
 
 				it("Should fail an on-demand summary if stopping", async () => {
 					summarizer.waitStop(true).catch(() => {});
-					const [refreshLatestAck, fullTree] = [true, true];
+					const [downloadLatestStateAndClose, fullTree] = [true, true];
 					const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
 					const result2 = summarizer.summarizeOnDemand({
 						reason: "test2",
-						refreshLatestAck,
+						downloadLatestStateAndClose,
 					});
 					const result3 = summarizer.summarizeOnDemand({
 						reason: "test3",
@@ -1345,7 +1345,7 @@ describe("Runtime", () => {
 					});
 					const result4 = summarizer.summarizeOnDemand({
 						reason: "test4",
-						refreshLatestAck,
+						downloadLatestStateAndClose,
 						fullTree,
 					});
 
@@ -1375,11 +1375,11 @@ describe("Runtime", () => {
 
 				it("Should fail an on-demand summary if disposed", async () => {
 					summarizer.dispose();
-					const [refreshLatestAck, fullTree] = [true, true];
+					const [downloadLatestStateAndClose, fullTree] = [true, true];
 					const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
 					const result2 = summarizer.summarizeOnDemand({
 						reason: "test2",
-						refreshLatestAck,
+						downloadLatestStateAndClose,
 					});
 					const result3 = summarizer.summarizeOnDemand({
 						reason: "test3",
@@ -1387,7 +1387,7 @@ describe("Runtime", () => {
 					});
 					const result4 = summarizer.summarizeOnDemand({
 						reason: "test4",
-						refreshLatestAck,
+						downloadLatestStateAndClose,
 						fullTree,
 					});
 
