@@ -1,5 +1,13 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.6.3.0
+
+### Minor Changes
+
+-   Decouple Forest and Schema. ([#17139](https://github.com/microsoft/FluidFramework/issues/17139)) [c6b69f5c19](https://github.com/microsoft/FluidFramework/commits/c6b69f5c1957ceda7bebe6a31a570b49505e298b)
+
+    Forest no longer exports the schema, nor invalidates when schema changes.
+
 ## 2.0.0-internal.6.2.0
 
 ### Minor Changes
