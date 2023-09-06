@@ -264,7 +264,7 @@ export class SameContainerMigrator
 			await this.loadMigration();
 		};
 
-		if (!this.connected) {
+		if (!this.currentModel.connected()) {
 			this.currentModel.once("connected", () => {
 				this.ensureMigration();
 			});
