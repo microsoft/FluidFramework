@@ -118,5 +118,5 @@ Additionally, you must set these two Config Settings to `true` in the session:
 
 ### More Advanced Configuration
 
-For additional behaviors that can be configured (e.g. for testing), please see the
+For additional behaviors that can be configured (e.g. for testing), please see these
 [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-configurations) docs.

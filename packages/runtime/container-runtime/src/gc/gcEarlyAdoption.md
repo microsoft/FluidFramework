@@ -10,7 +10,7 @@ before continuing, to ensure you're familiar with using "GC Options" and "Config
 
 ## What's on by default
 
-GC Mark Phase is enabled by default, as explained above. This includes marking objects that are ready to be deleted as **Tombstones**.
+GC Mark Phase is enabled by default, which includes marking objects that are ready to be deleted as Tombstones.
 FF will log an informational event if/when a Tombstoned object is loaded - a scenario that would represent data loss if Sweep were enabled.
 The eventName for the Tombstone log ends with `GC_Tombstone_DataStore_Requested`.
 
@@ -33,11 +33,20 @@ By default, GC is marking objects as Tombstoned, but merely logging if they're u
 You can enable enforcement of Tombstone objects to simulate real Sweep while having the peace of mind
 that the data is not yet deleted from the user's file, and can be recovered.
 
-To cause the Fluid Framework to fail when loading a Tombstoned object (via `handle.get()` as described above),
-use this Config Setting:
+The first step is to prevent the Fluid Framework from loading a Tombstoned object (via `handle.get()` as described previously),
+by using this Config Setting:
 
 ```ts
 "Fluid.GarbageCollection.ThrowOnTombstoneLoad": true
+```
+
+Now, even with `Fluid.GarbageCollection.ThrowOnTombstoneLoad` set to true, changes to a Tombstoned object will be allowed.
+This is required for the advanced recovery options to work, explained [below](#advanced-back-door-recovering-and-reviving-tombstoned-objects).
+
+To instruct FF to treat Tombstoned objects as if they are truly not present in the document, use this Config Setting:
+
+```ts
+"Fluid.GarbageCollection.ThrowOnTombstoneUsage": true
 ```
 
 ### In case of emergency: Setting the gcTombstoneGeneration
@@ -64,6 +73,7 @@ mitigation - those documents will never be exposed to GC Tombstone or Sweep.
 
 If there's a particular codepath in your application where objects being loaded may be Tombstoned,
 you may use this advanced "back door" to recover them and then properly reference them, thus restoring the document.
+For this to work, you must disable the `Fluid.GarbageCollection.ThrowOnTombstoneUsage` Config Setting.
 
 When a Tombstoned object (via `handle.get()`) fails to load, the 404 response error object has an `underlyingResponseHeaders` with the
 `isTombstoned` flag set to true: i.e. `error.underlyingResponseHeaders?.isTombstoned === true`. In this case,
@@ -71,18 +81,6 @@ you may turn around and use `IContainerRuntime.resolveHandle` with `allowTombsto
 the object again - this time it will succeed.
 
 To be very clear once again - This path uses deprecated APIs (`resolveHandle`) and comes with no guarantees of support.
-
-### Full Tombstone mode
-
-Even with `ThrowOnTombstoneLoad` set to true, changes to a Tombstoned object will be allowed (this is required for the
-advanced recovery options to work).
-
-To instruct FF to treat Tombstoned objects as if they are truly not present in the document,
-use this Config Setting:
-
-```ts
-"Fluid.GarbageCollection.ThrowOnTombstoneUsage": true
-```
 
 ### Tombstones and the Summarizer Client
 
