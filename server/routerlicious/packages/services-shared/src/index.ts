@@ -27,6 +27,8 @@ export {
 	RequestListener,
 	SocketIoWebServerFactory,
 	WebServer,
+	SocketIoClusterWebServerFactory,
+	ClusterWebServerFactory,
 } from "./webServer";
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";

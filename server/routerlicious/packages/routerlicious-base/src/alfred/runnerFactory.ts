@@ -4,6 +4,7 @@
  */
 
 import * as os from "os";
+import cluster from "cluster";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -81,8 +82,6 @@ export class OrdererManager implements core.IOrdererManager {
 }
 
 export class AlfredResources implements core.IResources {
-	public webServerFactory: core.IWebServerFactory;
-
 	constructor(
 		public config: Provider,
 		public producer: core.IProducer,
@@ -113,16 +112,19 @@ export class AlfredResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
+		public webServerFactory?: core.IWebServerFactory,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("alfred:socketIo");
-		this.webServerFactory = new services.SocketIoWebServerFactory(
-			this.redisConfig,
-			socketIoAdapterConfig,
-			httpServerConfig,
-			socketIoConfig,
-		);
+		this.webServerFactory =
+			this.webServerFactory ??
+			new services.SocketIoWebServerFactory(
+				this.redisConfig,
+				socketIoAdapterConfig,
+				httpServerConfig,
+				socketIoConfig,
+			);
 	}
 
 	public async dispose(): Promise<void> {
@@ -470,7 +472,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
 		// Therefore, default clients will ignore server's 16kb message size limit.
 		const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
-		const address = `${await utils.getHostIp()}:4000`;
 
 		// This cache will be used to store connection counts for logging connectionCount metrics.
 		let redisCache: core.ICache;
@@ -502,6 +503,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 
+		const address = `${await utils.getHostIp()}:4000`;
 		const nodeFactory = new LocalNodeFactory(
 			os.hostname(),
 			address,
@@ -513,7 +515,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			deliCheckpointService,
 			scribeCheckpointService,
 			60000,
-			() => new NodeWebSocketServer(4000),
+			() => new NodeWebSocketServer(cluster.isPrimary ? 4000 : 0),
 			maxSendMessageSize,
 			winston,
 		);
@@ -567,6 +569,19 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 
+		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+		const socketIoConfig = config.get("alfred:socketIo");
+		const useCluster = config.get("alfred:useCluster");
+		const webServerFactory = useCluster
+			? new services.SocketIoClusterWebServerFactory(
+					redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+			  )
+			: undefined;
+
 		return new AlfredResources(
 			config,
 			producer,
@@ -597,6 +612,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
+			webServerFactory,
 		);
 	}
 }

@@ -1049,6 +1049,7 @@ importers:
       '@fluidframework/server-services-shared-previous': npm:@fluidframework/server-services-shared@0.1040.1000
       '@fluidframework/server-services-telemetry': workspace:~
       '@socket.io/redis-adapter': ^7.2.0
+      '@socket.io/sticky': ^1.0.4
       '@types/body-parser': ^1.19.2
       '@types/debug': ^4.1.5
       '@types/lodash': ^4.14.118
@@ -1089,6 +1090,7 @@ importers:
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@socket.io/redis-adapter': 7.2.0
+      '@socket.io/sticky': 1.0.4
       body-parser: 1.20.2
       debug: 4.3.4
       events: 3.3.0
@@ -5869,6 +5871,10 @@ packages:
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
       - supports-color
+
+  /@socket.io/sticky/1.0.4:
+    resolution: {integrity: sha512-VuauT5CJLvzYtKIgouFSQ8rUaygseR+zRutnwh6ZA2QYcXx+8g52EoJ8V2SLxfo+Tfs3ELUDy08oEXxlWNrxaw==}
+    dev: false
 
   /@szmarczak/http-timer/1.1.2:
     resolution: {integrity: sha512-XIB2XbzHTN6ieIjfIMV9hlVcfPU26s2vafYWQcZHWXHOxiaRZYEDKEwdl129Zyg50+foYV2jCgtrqSA6qNuNSA==}
