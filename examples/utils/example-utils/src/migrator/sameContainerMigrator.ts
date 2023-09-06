@@ -267,14 +267,14 @@ export class SameContainerMigrator
 		if (!this.connected) {
 			this.currentModel.once("connected", () => {
 				this.ensureMigration();
-				return;
 			});
+			return;
 		}
 		if (this.currentModel.migrationTool.migrationState !== "readyForMigration") {
 			this.currentModel.migrationTool.once("readyForMigration", () => {
 				this.ensureMigration();
-				return;
 			});
+			return;
 		}
 
 		overseeStages()
