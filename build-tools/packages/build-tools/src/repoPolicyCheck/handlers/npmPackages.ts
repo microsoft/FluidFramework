@@ -978,8 +978,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-clean-script",
 		match,
 		handler: (file, root) => {
-			// This rule enforces that we have a module field in the package iff we have a ESM build
-			// So that tools like webpack will pack up the right version.
+			// This rule enforces the "clean" script will delete all the build and test output
 			let json;
 
 			try {
