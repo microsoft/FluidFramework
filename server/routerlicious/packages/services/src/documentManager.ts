@@ -78,7 +78,9 @@ export class DocumentManager implements IDocumentManager {
 		// If there are no cached static document props, read the document and re-obtain the cache results
 		if (!staticPropsStr) {
 			await this.readDocument(tenantId, documentId); // The static data from this document will be cached while reading it
-			staticPropsStr = await DocumentManager.documentStaticDataCache.get(staticPropsKey);
+			staticPropsStr = await DocumentManager.documentStaticDataCache.get(
+				staticPropsKey,
+			);
 		}
 
 		// Return the static data, parsed into a JSON object

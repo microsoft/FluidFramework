@@ -25,22 +25,18 @@ COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
 
-# COPY packages/historian/package.json packages/historian/
-# COPY packages/historian-base/package.json packages/historian-base/
-
-# COPY packages/historian-base/ packages/historian-base/
-# COPY packages/historian/ packages/historian/
-COPY ./ ./
+COPY packages/historian/package.json packages/historian/
+COPY packages/historian-base/package.json packages/historian-base/
 
 RUN corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-# RUN pnpm install --unsafe-perm
+RUN pnpm install --unsafe-perm
 
 COPY . .
-# RUN npm run build
+RUN npm run build
 
 # Build that actually runs
 FROM base AS runner

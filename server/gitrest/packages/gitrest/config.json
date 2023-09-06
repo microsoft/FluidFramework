@@ -25,13 +25,13 @@
 		"ephemeralfilesystem": {
 			"name": "redisFs"
 		},
-		"persistLatestFullSummary": true,
-		"repoPerDocEnabled": true,
+		"persistLatestFullSummary": false,
+		"repoPerDocEnabled": false,
 		"enableRepositoryManagerMetrics": false,
 		"apiMetricsSamplingPeriod": 100,
-		"enableLowIoWrite": true,
-		"enableOptimizedInitialSummary": true,
-		"enableSlimGitInit": true,
+		"enableLowIoWrite": false,
+		"enableOptimizedInitialSummary": false,
+		"enableSlimGitInit": false,
 		"enableRedisFsMetrics": true,
 		"redisApiMetricsSamplingPeriod": 0,
 		"enforceStrictPersistedFullSummaryReads": false

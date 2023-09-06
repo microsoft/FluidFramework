@@ -10,13 +10,7 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import {
-	IStorageNameRetriever,
-	IRevokedTokenChecker,
-	ITenantManager,
-	IDocumentManager,
-} from "@fluidframework/server-services-core";
-import { TenantManager, DocumentManager } from "@fluidframework/server-services";
+import { IStorageNameRetriever, IRevokedTokenChecker } from "@fluidframework/server-services-core";
 import {
 	ICache,
 	ITenantService,
@@ -130,39 +124,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	let isEphemeral = cache ? isEphemeralContainer : false;
 	if (!ignoreEphemeralFlag) {
 		if (isEphemeralContainer !== undefined) {
-			Lumberjack.info("setting isephemeral cache");
-			await cache?.set(`isEphemeralContainer:${documentId}`, isEphemeralContainer);
-			Lumberjack.info("set isephemeral cache");
+			await cache?.set(`isEphemeral:${documentId}`, isEphemeralContainer);
 		} else {
-			isEphemeral = await cache?.get(`isEphemeralContainer:${documentId}`);
-
-			if (isEphemeral === null || isEphemeral === undefined) {
-				const tenantManager: ITenantManager = new TenantManager(
-					"http://riddler:5000",
-					undefined /* internalHistorianUrl */,
-				);
-				Lumberjack.info("Creating doc manager");
-				const documentManager: IDocumentManager = new DocumentManager(
-					"http://alfred:3000",
-					tenantManager,
-				);
-				Lumberjack.info("Created doc manager");
-				const staticDocData = await documentManager.readStaticData(tenantId, documentId);
-				isEphemeral = staticDocData.isEphemeralContainer;
-			}
-			// const documentKeyRetriever: IDocumentKeyRetriever = new DocumentKeyRetriever(
-			// 	cache,
-			// 	documentManager,
-			// 	true,
-			// );
-			// isEphemeral = await documentKeyRetriever.getKeyRedisFallback(
-			// 	"isEphemeralContainer",
-			// 	tenantId,
-			// 	documentId,
-			// 	true,
-			// );
-			Lumberjack.info(`Doc is ephemeral? ${isEphemeral}`);
-			// isEphemeral = await cache?.get(`isEphemeral:${documentId}`);
+			isEphemeral = await cache?.get(`isEphemeral:${documentId}`);
 			// Todo: If isEphemeral is still undefined fetch the value from database
 		}
 	}
