@@ -992,13 +992,14 @@ export const handlers: Handler[] = [
 				return undefined;
 			}
 
-			// Ignore clean scripts that are root of the release group
 			const cleanScript = scripts.clean;
 			if (cleanScript) {
+				// Ignore clean scripts that are root of the release group
 				if (cleanScript.startsWith("pnpm")) {
 					return undefined;
 				}
 
+				// Enforce clean script prefix
 				if (!cleanScript.startsWith("rimraf --glob ")) {
 					return "'clean' script should start with 'rimraf --glob'";
 				}
