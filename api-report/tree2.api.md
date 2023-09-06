@@ -1303,7 +1303,11 @@ const MarkType: {
 export type MatchPolicy = "subtree" | "path";
 
 // @alpha
-export type MemoizedIdRangeAllocator = (revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number) => IdRange[];
+export interface MemoizedIdRangeAllocator {
+    allocate(revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number): IdRange[];
+    mint(count?: number): IdRange[];
+    nextId: number;
+}
 
 // @alpha (undocumented)
 export const MemoizedIdRangeAllocator: {
