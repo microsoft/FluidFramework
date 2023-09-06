@@ -21,10 +21,6 @@ import {
  */
 export interface MemoizedIdRangeAllocator {
 	/**
-	 * The next ID to allocate.
-	 */
-	nextId: number;
-	/**
 	 * A unique ID allocator that returns the output ID for the same input ID.
 	 *
 	 * "The same" here includes cases where a prior call allocated a range of IDs that partially or fully overlap with the
@@ -39,7 +35,7 @@ export interface MemoizedIdRangeAllocator {
 		count?: number,
 	): IdRange[];
 	/**
-	 * Allocates a new range of IDs starting from the nextId.
+	 * Allocates a new range of IDs.
 	 *
 	 * @param count - The number of IDs to allocate. Interpreted as 1 if undefined.
 	 */
@@ -60,8 +56,8 @@ export interface IdRange {
 export const MemoizedIdRangeAllocator = {
 	fromNextId(nextId: number = 0): MemoizedIdRangeAllocator {
 		const rangeMap: Map<RevisionTag | undefined, RangeMap<number>> = new Map();
+		let _nextId = nextId;
 		return {
-			nextId,
 			allocate(
 				key: string | number | undefined,
 				startId: number,
@@ -74,8 +70,8 @@ export const MemoizedIdRangeAllocator = {
 				while (count > 0) {
 					const firstRange = getFirstFromRangeMap(ranges, currId, count);
 					if (firstRange === undefined) {
-						const newId = this.nextId;
-						this.nextId += count;
+						const newId = _nextId;
+						_nextId += count;
 						setInRangeMap(ranges, currId, count, newId);
 						out.push({ first: brand(newId), count });
 						count = 0;
@@ -86,9 +82,9 @@ export const MemoizedIdRangeAllocator = {
 						};
 						if (currId < firstRange.start) {
 							const countToAdd = firstRange.start - currId;
-							setInRangeMap(ranges, currId, countToAdd, this.nextId);
-							out.push({ first: brand(this.nextId), count: countToAdd });
-							this.nextId += countToAdd;
+							setInRangeMap(ranges, currId, countToAdd, _nextId);
+							out.push({ first: brand(_nextId), count: countToAdd });
+							_nextId += countToAdd;
 							currId += countToAdd;
 							count -= countToAdd;
 						} else if (firstRange.start < currId) {
@@ -100,10 +96,10 @@ export const MemoizedIdRangeAllocator = {
 							idRange.count = count;
 						} else if (
 							idRange.count < count &&
-							firstRange.value + firstRange.length === this.nextId
+							firstRange.value + firstRange.length === _nextId
 						) {
 							// The existing range can be extended
-							this.nextId += count - idRange.count;
+							_nextId += count - idRange.count;
 							firstRange.length = count;
 							idRange.count = count;
 						}
@@ -118,10 +114,10 @@ export const MemoizedIdRangeAllocator = {
 				let count = length ?? 1;
 				const out: IdRange[] = [];
 				const ranges = getOrAddEmptyToMap(rangeMap, generateStableId());
-				const currId = this.nextId;
+				const currId = _nextId;
 				while (count > 0) {
-					const newId = this.nextId;
-					this.nextId += count;
+					const newId = _nextId;
+					_nextId += count;
 					setInRangeMap(ranges, currId, count, newId);
 					out.push({ first: brand(newId), count });
 					count = 0;

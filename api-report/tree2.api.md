@@ -1306,7 +1306,6 @@ export type MatchPolicy = "subtree" | "path";
 export interface MemoizedIdRangeAllocator {
     allocate(revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number): IdRange[];
     mint(count?: number): IdRange[];
-    nextId: number;
 }
 
 // @alpha (undocumented)
