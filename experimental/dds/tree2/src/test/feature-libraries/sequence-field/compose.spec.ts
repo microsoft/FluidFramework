@@ -160,7 +160,7 @@ describe("SequenceField - Compose", () => {
 		};
 		const changes = TestChange.mint([], 42);
 		const insert = Mark.insert(1, brand(0), { transientDetach });
-		const revive = Mark.revive(11, transientDetach, { changes });
+		const revive = Mark.revive(1, transientDetach, { changes });
 		const expected = Mark.insert(1, brand(0), { changes });
 		const actual = compose([makeAnonChange([insert]), makeAnonChange([revive])], revInfos);
 		assert.deepEqual(actual, [expected]);
