@@ -1537,18 +1537,15 @@ export class Container
 			this.client.details.type === summarizerClientType,
 		);
 
-		// Ideally we always connect as "read" by default.
-		// Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
-		// We should not rely on it by (one of them will address the issue, but we need to address both)
-		// 1) switching create new flow to one where we create file by posting snapshot
-		// 2) Fixing quorum workflows (have retry logic)
-		// That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
-		// connections to same file) in two ways:
-		// A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
-		// B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+		// Except in cases where it has stashed ops or requested by feature gate, the document will connect in "read" mode
+		const mode =
+			this.mc.config.getBoolean("Fluid.Loader.ForceWriteConnection") === true ||
+			(pendingLocalState?.savedOps.length ?? 0) > 0
+				? "write"
+				: "read";
 		const connectionArgs: IConnectionArgs = {
 			reason: { text: "DocumentOpen" },
-			mode: "write",
+			mode,
 			fetchOpsFromStorage: false,
 		};
 
