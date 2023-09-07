@@ -402,14 +402,16 @@ character "b", what happens when we insert text on either side of it? In the
 below diagrams, we represent an interval by putting a caret directly underneath
 the characters it contains.
 
-##### Original string:
+#### Example
+
+##### Original string
 
 ```typescript
 abc
  ^
 ```
 
-##### No stickiness:
+##### No stickiness
 
 ```typescript
 aXbYc
@@ -418,21 +420,21 @@ aXbYc
 
 The interval does not expand to include the newly inserted characters `X` and `Y`.
 
-##### Start stickiness:
+##### Start stickiness
 
 ```typescript
 aXbYc
  ^^
 ```
 
-##### End stickiness:
+##### End stickiness
 
 ```typescript
 aXbYc
   ^^
 ```
 
-##### Full stickiness:
+##### Full stickiness
 
 ```typescript
 aXbYc
