@@ -107,7 +107,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 	 *
 	 * @param anchor - The anchor to register the listener on
 	 * @param eventType - The {@link BindingType} to listen for.
-	 * @param eventTrees - The {@link BindTree}s to filter on.
+	 * @param eventTrees - The {@link BindPolicy}s to filter on.
 	 * @param listener - The listener to register
 	 */
 	register<K extends keyof Events<B>>(
@@ -316,7 +316,7 @@ type CallTree = BindTree<CallTree> & { listeners: Set<Listener>; matchPolicy?: M
 
 /**
  * A generic implementation of a {@link PathVisitor} enabling the registration of listeners
- * categorized by {@link BindingContextType} and {@link BindTree}.
+ * categorized by {@link BindingContextType} and {@link BindPolicy}.
  */
 abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
@@ -339,7 +339,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 					index: tree.index,
 					listeners: new Set(),
 					children: new Map(),
-					matchPolicy: policy.matchPolicy ?? "path",
+					matchPolicy: policy.matchPolicy,
 				};
 				assert(contextRoots !== undefined, 0x6da /* expected contextRoots to be defined */);
 				contextRoots.set(tree.field, newRoot);
