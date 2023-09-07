@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	RangeMap,
 	brand,
@@ -97,15 +97,25 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 	}
 }
 
+export function applyDelta(
+	delta: Delta.Root,
+	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
+): void {
+	const visitor = deltaProcessor.acquireVisitor();
+	visitDelta(delta, visitor);
+	visitor.free();
+}
+/**
+ * Visitor for changes in a delta.
+ * Must be freed after use.
+ * @alpha
+ */
 export interface DeltaVisitor {
+	free(): void;
 	onDelete(index: number, count: number): void;
 	onInsert(index: number, content: Delta.ProtoNodes): void;
 	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
 	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-	// TODO: better align this with ITreeCursor:
-	// maybe rename its up and down to enter / exit? Maybe Also)?
-	// Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
-	// this visitor?
 	enterNode(index: number): void;
 	exitNode(index: number): void;
 	enterField(key: FieldKey): void;

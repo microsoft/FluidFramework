@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-constellation-view",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -19,7 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
 		"build:esnext": "tsc",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -48,7 +48,7 @@
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.23.0",
+		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/test-tools": "^0.2.158186",
 		"@types/expect-puppeteer": "2.2.1",
@@ -58,7 +58,6 @@
 		"@types/puppeteer": "1.3.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
@@ -99,10 +98,6 @@
 				"@fluid-example/multiview-slider-coordinate-view#build:esnext"
 			]
 		}
-	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,

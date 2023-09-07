@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
@@ -34,7 +35,7 @@ export interface IDecoder<TDecoded, TEncoded> {
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
-	 * @returns - Whether the data matches a schema.
+	 * @returns Whether the data matches a schema.
 	 */
 	check(data: unknown): data is Static<Schema>;
 }
@@ -47,7 +48,7 @@ export interface JsonValidator {
 	/**
 	 * Compiles the provided JSON schema into a validator for that schema.
 	 * @param schema - A valid draft 6 JSON schema
-	 * @remarks - Fluid handles--which have circular property references--are used in various places in the persisted
+	 * @remarks Fluid handles--which have circular property references--are used in various places in the persisted
 	 * format. Handles should only be contained in sections of data which are validated against the empty schema `{}`
 	 * (see https://datatracker.ietf.org/doc/html/draft-wright-json-schema-01#section-4.4).
 	 *
@@ -74,7 +75,7 @@ export interface ICodecOptions {
 
 /**
  * @alpha
- * @remarks - `TEncoded` should always be valid Json (i.e. not contain functions), but due to Typescript's handling
+ * @remarks `TEncoded` should always be valid Json (i.e. not contain functions), but due to Typescript's handling
  * of index signatures and `JsonCompatibleReadOnly`'s index signature in the Json object case, specifying this as a
  * type-system level constraint makes code that uses this interface more difficult to write.
  */
@@ -85,7 +86,7 @@ export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
 }
 
 /**
- * @remarks - TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
+ * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
  * @alpha
  */
 export interface IBinaryCodec<TDecoded>
@@ -96,7 +97,7 @@ export interface IBinaryCodec<TDecoded>
  * Contains knowledge of how to encode some in-memory type into JSON and binary formats,
  * as well as how to decode those representations.
  *
- * @remarks - Codecs are typically used in shared-tree to convert data into some persisted format.
+ * @remarks Codecs are typically used in shared-tree to convert data into some persisted format.
  * For this common use case, any format for encoding that was ever actually used needs to
  * be supported for decoding in all future code versions.
  *
@@ -130,16 +131,16 @@ export interface IMultiFormatCodec<
  */
 export interface ICodecFamily<TDecoded> {
 	/**
-	 * @returns - a codec that can be used to encode and decode data in the specified format.
+	 * @returns a codec that can be used to encode and decode data in the specified format.
 	 * @throws - if the format version is not supported by this family.
-	 * @remarks - Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
+	 * @remarks Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
 	 * This ensures that applications can diagnose compatibility issues.
 	 */
 	resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 
 	/**
-	 * @returns - an iterable of all format versions supported by this family.
+	 * @returns an iterable of all format versions supported by this family.
 	 */
 	getSupportedFormats(): Iterable<number>;
 }
@@ -239,7 +240,7 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * This type of encoding is only appropriate if the persisted type (which should be defined in a persisted format file)
  * happens to be convenient for in-memory usage as well.
  *
- * @remarks - Beware that this API can cause accidental extraneous data in the persisted format.
+ * @remarks Beware that this API can cause accidental extraneous data in the persisted format.
  * Consider the following example:
  * ```typescript
  * interface MyPersistedType {

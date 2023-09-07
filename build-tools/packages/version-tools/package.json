@@ -30,7 +30,7 @@
 		"build:readme": "fluid-readme generate readme",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"oclif.manifest.json\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' 'oclif.manifest.json' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
 		"clean:manifest": "rimraf --glob \"oclif.manifest.json\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -40,12 +40,12 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\" --unhandled-rejections=strict",
+		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "nyc npm run test:mocha:report",
+		"test:report": "c8 npm run test:mocha:report",
 		"tsc": "tsc"
 	},
-	"nyc": {
+	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
@@ -86,8 +86,9 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.53",
 		"@types/semver": "^7.5.0",
+		"c8": "^7.14.0",
 		"chai": "^4.3.7",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
@@ -98,7 +99,6 @@
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
-		"nyc": "^15.1.0",
 		"oclif": "^3.9.1",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.1",

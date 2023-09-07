@@ -27,11 +27,14 @@ variables:
 - name: testPackage
   value: "@fluid-internal/test-end-to-end-tests"
   readonly: true
+- name: toolAbsolutePath
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
 
 lockBehavior: sequential
 stages:
   # end-to-end tests local server
-  - stage:
+  - stage: e2e_local_server
     displayName: e2e - local server
     dependsOn: []
     jobs:
@@ -46,7 +49,7 @@ stages:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests tinylicious
-  - stage:
+  - stage: e2e_tinylicious
     displayName: e2e - tinylicious
     dependsOn: []
     jobs:
@@ -75,7 +78,7 @@ stages:
             publishLocation: 'pipeline'
 
   # end-to-end tests routerlicious
-  - stage:
+  - stage: e2e_routerlicious
     displayName: e2e - routerlicious
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -106,7 +109,7 @@ stages:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests frs
-  - stage:
+  - stage: e2e_frs
     displayName: e2e - frs
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -137,7 +140,7 @@ stages:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests odsp
-  - stage:
+  - stage: e2e_odsp
     displayName:  e2e - odsp
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
@@ -168,3 +171,41 @@ stages:
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+  
+  # Capture per-pipeline stage results
+  - stage: runAfterAll
+    displayName: Retrieve and upload E2E per-pipeline-stage stats to Kusto
+    condition: always()
+    dependsOn:
+      - e2e_local_server
+      - e2e_tinylicious
+      - e2e_routerlicious
+      - e2e_frs
+      - e2e_odsp
+
+    jobs:
+      - template: templates/include-test-perf-benchmarks.yml
+        parameters:
+            testWorkspace: ${{ variables.testWorkspace }}
+            poolBuild: Small
+            customSteps:
+
+            - task: Bash@3
+              displayName: Retrieve buildId results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(toolAbsolutePath)
+                script: |
+                  echo "creating output folder"
+                  mkdir -p ${{ variables.testWorkspace }}/timingOutput
+                  echo "Executing curl command ..."
+                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
+                  curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+                  pwd;
+                  ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+                  cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+              env:
+                BUILD_ID: $(Build.BuildId)
+                ADO_API_TOKEN: $(System.AccessToken)
+                PIPELINE: 'EndToEndTests'

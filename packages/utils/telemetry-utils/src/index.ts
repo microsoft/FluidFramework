@@ -77,4 +77,5 @@ export {
 	ITelemetryLoggerExt,
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";

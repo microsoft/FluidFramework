@@ -138,10 +138,12 @@ export type Value = undefined | TreeValue;
 
 /**
  * The fields required by a node in a tree.
- * @alpha
- * @privateRemarks - A forked version of this type is used in `persistedTreeTextFormat.ts`.
+ *
+ * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
  * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
  * See persistedTreeTextFormat's module documentation for more details.
+ *
+ * @alpha
  */
 export interface NodeData {
 	/**

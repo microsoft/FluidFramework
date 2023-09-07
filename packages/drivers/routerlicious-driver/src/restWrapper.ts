@@ -9,7 +9,8 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
 import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
 	CorrelationIdHeaderName,
@@ -53,9 +54,9 @@ export interface IR11sResponse<T> {
 }
 
 /**
- * A utility function to create a r11s response without any additional props as we might not have them always.
- * @param content - response which is equivalent to content.
- * @returns - a r11s response without any extra props.
+ * A utility function to create a Routerlicious response without any additional props as we might not have them always.
+ * @param content - Response which is equivalent to content.
+ * @returns A Routerlicious response without any extra props.
  */
 export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
 	return {

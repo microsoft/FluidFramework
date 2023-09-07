@@ -24,6 +24,7 @@ export {
 	RootField,
 	ChildCollection,
 	ChildLocation,
+	DeltaVisitor,
 	FieldMapObject,
 	NodeData,
 	GenericTreeNode,
@@ -279,6 +280,7 @@ export {
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
+	ForestType,
 } from "./shared-tree";
 
 export type {

@@ -16,10 +16,10 @@ import {
 	IPromiseTimer,
 	IPromiseTimerResult,
 	Timer,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/core-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IAckSummaryResult,
 	INackSummaryResult,
@@ -277,7 +277,7 @@ export class SummaryGenerator {
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
 			const category =
-				cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError
+				cancellationToken.cancelled || error?.errorType === DriverErrorTypes.offlineError
 					? "generic"
 					: "error";
 

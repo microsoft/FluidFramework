@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query-service",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"private": true,
 	"description": "Moira service",
 	"homepage": "https://fluidframework.com",
@@ -19,10 +19,10 @@
 	],
 	"scripts": {
 		"coverage": "run-s -c init:default coverage:all term",
-		"coverage:all": "nyc mocha",
+		"coverage:all": "c8 mocha",
 		"coverage:basic": "RANDOMIZE_FILE_ORDER=1 nyc --report-dir coverage/basic mocha --opts test/basic/mocha.opts",
-		"coverage:db": "nyc --report-dir coverage/db mocha --opts test/db/mocha.opts",
-		"coverage:endtoend": "nyc --report-dir coverage/endtoend mocha --opts test/endtoend/mocha.opts",
+		"coverage:db": "c8 --report-dir coverage/db mocha --opts test/db/mocha.opts",
+		"coverage:endtoend": "c8 --report-dir coverage/endtoend mocha --opts test/endtoend/mocha.opts",
 		"mocha": "mocha",
 		"mocha:basic": "mocha --opts test/basic/mocha.opts",
 		"mocha:db": "mocha --opts test/db/mocha.opts",
@@ -34,10 +34,13 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"start": "node server.js",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"test:coverage": "c8 npm test",
+		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"clean": "rimraf --glob 'nyc'"
 	},
-	"nyc": {
+	"c8": {
+		"report-dir": "nyc/report",
 		"reporter": [
 			"lcov",
 			"json",
@@ -74,13 +77,15 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/property-dds": "workspace:~",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^1.0.0",
+		"@fluidframework/server-local-server": "^1.0.1",
 		"@fluidframework/test-utils": "workspace:~",
 		"aws-sdk": "2.547.0",
+		"c8": "^7.7.1",
 		"chai": "^4.2.0",
 		"chai-as-promised": "7.1.1",
 		"cross-env": "^7.0.3",
@@ -99,7 +104,6 @@
 		"mochawesome": "3.1.2",
 		"moment": "^2.21.0",
 		"npm-run-all": "4.1.5",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"promisify": "0.0.3",
 		"request": "^2.88.0",

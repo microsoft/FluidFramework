@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 import {
@@ -228,7 +228,7 @@ export type JsonCompatibleReadOnly =
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
- * @remarks - TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
  * of alternatives.
  *
  * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
@@ -288,11 +288,11 @@ let deterministicStableIdCount: number | undefined;
  * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
  * Used to make test logic that uses {@link generateStableId} deterministic.
  *
- * @remarks
- * Only use this function for testing purposes.
+ * @remarks Only use this function for testing purposes.
  *
  * @example
- * ```ts
+ *
+ * ```typescript
  * function f() {
  *    const id = generateStableId();
  *    ...
