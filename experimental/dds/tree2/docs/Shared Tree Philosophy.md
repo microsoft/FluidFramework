@@ -19,20 +19,20 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
 -   Avoid common pitfalls of collaborative software.
 
     Collaboration often introduces subtle requirements, especially around compatibility, updates, offline use, error cases, persistance and concurrency.
-    Picking the right design patterns (above) as well has explicitly drawing attention to particular details in the API design, documentation and examples all need to work together to holistically guide developers into creating experiences that collaborate correctly.
+    Picking the right design patterns (above) as well as explicitly drawing attention to particular details in the API design, documentation and examples all need to work together to holistically guide developers into creating experiences that collaborate correctly.
     Additionally, the resulting experiences need to be maintainable, including easy authoring of new features and reviewing of changes for possible collaboration issues.
     For code authors, it should be easy to find the right way to do something, and know it will be robust.
-    For code reviews, it should be obvious in review, only looking at the part of the code change, if it might introduce a collaboration related issue (such as unexpected merge behavior, issues collaborating with previous or future versions of the app, inability to open old document etc.).
+    For code reviews, it should be obvious in review, only looking at the changed code, if it might introduce a collaboration related issue (such as unexpected merge behavior, issues collaborating with previous or future versions of the app, inability to open old document, etc.).
     This needs to be true, even for a novice users of shared tree without experience writing collaborative experiences.
 
     One way this is achieved is to ensure work and requirements specific to collaboration support will be easy to discover when relevant and easy learn about and handle when needed.
-    For example, if adding a new editing operation, it should be obvious how to ensure a the required application invariants hold—even across merges—, and what the implications are for deployment and cross version collaboration.
+    For example, if adding a new editing operation, it should be obvious how to ensure the required application invariants hold—even across merges—, and what the implications are for deployment and cross version collaboration.
 
--   Generalizes investments into improved user experiences across many different application.
+-   Generalize investments into improved user experiences across many different application.
 
     As much as possible, shared tree should serve as a framework for sharing generalized collaborative logic, and a good default library of such logic.
     For example merge resolution strategies, compatibility adapters, debug tools, common schema etc, can be generalized for easy use by all users of Shared Tree.
-    Users of shared tree can start by authoring their own specialized version of any of these (if needed), and then consider generalizing them as either independent libraries or contributing upstream.
+    Users of shared tree can start by authoring their own specialized version of any of these (if needed), and then consider generalizing them as either independent libraries or upstream contributions.
 
 Another way to describe these goals is that Shared Tree needs to be able to be **adopted with confidence**.
 Once adopted, it must be **easily learnable** and **productive** for developers new to collaborative application while being **flexible** in what it supports and produce **robust** and **high quality** collaborative experiences.
@@ -43,7 +43,7 @@ These internal requirements mostly follow from the above flexibility requirement
 
 # Implications of these Goals
 
-Commonly desired collaboration features easy for applications to support, but when supporting them requires extra work, can be explicitly oped out of or differed to a future version.
+Commonly desired collaboration features should be easy for applications to support, but when supporting them requires extra work, they can be explicitly opted out of or deferred to a future version.
 
 This include features like:
 
@@ -55,12 +55,12 @@ This include features like:
 -   scaling to large datasets.
 -   services to accelerate some operations (like summarization, search etc).
 
-Shared Trees approach to doing all this while being extensible and maintainable relies in modularity and versioning is covered below.
+Shared Tree's approach to doing all this while being extensible and maintainable relies on modularity and versioning, and is covered below.
 
 # A Design For Extensibility and Compatibility with Versioning
 
 Shared tree is a collaborative data-structure allowing cross version collaboration as well as support for loading all old formats.
-Thus imposes some very strict compatibility requirements which make changes to its implementation and functionality difficult.
+This imposes some very strict compatibility requirements that can make changing its implementation and functionality difficult.
 
 This puts a large tension between maintainability and extensibility.
 This leads to a design that is focused on optimizing for extensibility while minimizing the difficult of maintaining compatibility across these extensions.
