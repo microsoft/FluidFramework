@@ -71,7 +71,6 @@ declare function get_old_InterfaceDeclaration_IRouterliciousDriverPolicies():
 declare function use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
     use: TypeOnly<current.IRouterliciousDriverPolicies>);
 use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRouterliciousDriverPolicies());
 
 /*
