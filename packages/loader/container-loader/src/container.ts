@@ -1539,8 +1539,8 @@ export class Container
 
 		const connectionArgs: IConnectionArgs = {
 			reason: { text: "DocumentOpen" },
-			// Except in cases where it has a pending local state, the document will connect in "read" mode
-			mode: pendingLocalState !== undefined ? "write" : "read",
+			// Except in cases where it has stashed ops, the document will connect in "read" mode
+			mode: (pendingLocalState?.savedOps.length ?? 0) > 0 ? "write" : "read",
 			fetchOpsFromStorage: false,
 		};
 
