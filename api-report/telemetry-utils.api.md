@@ -23,6 +23,8 @@ import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
+import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public (undocumented)
@@ -349,7 +351,7 @@ export class SampledTelemetryHelper implements IDisposable {
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public
-export function tagCodeArtifacts<T extends Record<string, TelemetryEventPropertyType>>(values: T): {
+export function tagCodeArtifacts<T extends Record<string, TelemetryBaseEventPropertyType>>(values: T): {
     [P in keyof T]: {
         value: Exclude<T[P], undefined>;
         tag: TelemetryDataTag.CodeArtifact;
@@ -357,7 +359,7 @@ export function tagCodeArtifacts<T extends Record<string, TelemetryEventProperty
 };
 
 // @public (undocumented)
-export function tagCodeArtifacts<T extends TelemetryEventPropertyType, V extends Record<string, () => T>>(values: V): {
+export function tagCodeArtifacts<T extends TelemetryBaseEventPropertyType, V extends Record<string, () => T>>(values: V): {
     [P in keyof V]: (() => {
         value: Exclude<T, undefined>;
         tag: TelemetryDataTag.CodeArtifact;

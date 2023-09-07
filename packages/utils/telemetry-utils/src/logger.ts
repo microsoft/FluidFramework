@@ -14,6 +14,7 @@ import {
 	LogLevel,
 	Tagged,
 	ITelemetryBaseProperties,
+	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
@@ -784,7 +785,7 @@ function convertToBasePropertyTypeUntagged(
 
 export const tagData = <
 	T extends TelemetryDataTag,
-	U extends TelemetryEventPropertyType,
+	U extends TelemetryBaseEventPropertyType,
 	V extends Record<string, U | (() => U)>,
 >(
 	tag: T,
@@ -831,9 +832,9 @@ export const tagData = <
 
 /**
  * Helper functions to tag telemetry properties as CodeArtifacts. These functions support properties of type
- * TelemetryEventPropertyType as well as getters that return TelemetryEventPropertyType.
+ * TelemetryBaseEventPropertyType as well as getters that return TelemetryBaseEventPropertyType.
  */
-export function tagCodeArtifacts<T extends Record<string, TelemetryEventPropertyType>>(
+export function tagCodeArtifacts<T extends Record<string, TelemetryBaseEventPropertyType>>(
 	values: T,
 ): {
 	[P in keyof T]:
@@ -844,7 +845,7 @@ export function tagCodeArtifacts<T extends Record<string, TelemetryEventProperty
 		| (T[P] extends undefined ? undefined : never);
 };
 export function tagCodeArtifacts<
-	T extends TelemetryEventPropertyType,
+	T extends TelemetryBaseEventPropertyType,
 	V extends Record<string, () => T>,
 >(
 	values: V,
@@ -857,7 +858,7 @@ export function tagCodeArtifacts<
 		| (V[P] extends undefined ? undefined : never);
 };
 export function tagCodeArtifacts<
-	T extends TelemetryEventPropertyType,
+	T extends TelemetryBaseEventPropertyType,
 	V extends Record<string, T | (() => T)>,
 >(
 	values: V,

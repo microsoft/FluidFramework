@@ -77,7 +77,7 @@ describe("tagCodeArtifacts", () => {
 		assert.deepStrictEqual(taggedData, expected, "undefined not tagged as expected");
 	});
 
-	it("tagCodeArtifacts with TelemetryEventPropertyType", () => {
+	it("tagCodeArtifacts with TelemetryBaseEventPropertyType", () => {
 		const taggedData = tagCodeArtifacts({
 			string: "foo",
 			number: 0,
@@ -101,11 +101,11 @@ describe("tagCodeArtifacts", () => {
 		assert.deepStrictEqual(
 			taggedData,
 			expected,
-			"TelemetryEventPropertyType not tagged as expected",
+			"TelemetryBaseEventPropertyType not tagged as expected",
 		);
 	});
 
-	it("tagCodeArtifacts with TelemetryEventPropertyType getters", () => {
+	it("tagCodeArtifacts with TelemetryBaseEventPropertyType getters", () => {
 		const taggedData = tagCodeArtifacts({
 			string: () => "foo",
 			number: () => 0,
