@@ -347,7 +347,7 @@ describe("SharedTree", () => {
 			provider.processMessages();
 
 			// Validate insertion
-			validateRootField(tree1, [value]);
+			validateRootField(tree2, [value]);
 
 			// Delete node
 			remove(tree1, 0, 1);
