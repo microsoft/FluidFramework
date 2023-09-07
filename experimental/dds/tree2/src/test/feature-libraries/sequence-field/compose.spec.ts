@@ -11,13 +11,13 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 	tagRollbackInverse,
+	ChangesetLocalId,
+	ChangeAtomId,
 } from "../../../core";
-import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
+import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ChangeAtomId } from "../../../feature-libraries/modular-schema";
 import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 import { compose, composeNoVerify, shallowCompose } from "./utils";
 
@@ -806,6 +806,24 @@ describe("SequenceField - Compose", () => {
 		);
 		const actual = shallowCompose([return1, return2]);
 		assert.deepEqual(actual, []);
+	});
+
+	it("modify ○ return", () => {
+		const changes = TestChange.mint([], 42);
+		const modify = tagChange(Change.modify(3, changes), tag3);
+		const ret = tagChange(Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }), tag4);
+		const actual = shallowCompose([modify, ret]);
+		const expected = [
+			Mark.returnTo(
+				2,
+				{ revision: tag4, localId: brand(0) },
+				{ revision: tag1, localId: brand(0) },
+			),
+			{ count: 3 },
+			Mark.returnFrom(1, brand(0), { revision: tag4, changes }),
+			Mark.returnFrom(1, brand(1), { revision: tag4 }),
+		];
+		assert.deepEqual(actual, expected);
 	});
 
 	it("move ○ move (forward)", () => {

@@ -16,13 +16,14 @@ import {
 	StableNodeKey,
 	nodeKeyFieldKey,
 	setField,
+	SchemaAware,
 } from "../../../feature-libraries";
-import { ISharedTreeView, createSharedTreeView } from "../../../shared-tree";
-import { brand, compareSets } from "../../../util";
-import { SummarizeType, TestTreeProvider, initializeTestTree } from "../../utils";
+import { ISharedTreeView } from "../../../shared-tree";
+import { brand } from "../../../util";
+import { SummarizeType, TestTreeProvider, initializeTestTree, viewWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
-const builder = new SchemaBuilder("node key index tests", nodeKeySchema);
+const builder = new SchemaBuilder("node key index tests", {}, nodeKeySchema);
 const nodeSchema = builder.structRecursive("node", {
 	...nodeKeyField,
 	child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
@@ -40,8 +41,16 @@ function contextualizeKey(
 }
 
 describe("Node Key Index", () => {
-	function createView(): ISharedTreeView {
-		return createSharedTreeView({ nodeKeyManager: createMockNodeKeyManager() });
+	function createView(
+		initialTree: SchemaAware.TypedField<
+			typeof nodeSchemaData.rootFieldSchema,
+			SchemaAware.ApiMode.Simple
+		>,
+	): ISharedTreeView {
+		return viewWithContent(
+			{ initialTree, schema: nodeSchemaData },
+			{ nodeKeyManager: createMockNodeKeyManager() },
+		);
 	}
 
 	function assertIds(tree: ISharedTreeView, ids: LocalNodeKey[]): void {
@@ -52,92 +61,71 @@ describe("Node Key Index", () => {
 			assert(node !== undefined);
 			assert.equal(node[localNodeKeySymbol], id);
 		}
-		assert(compareSets({ a: new Set(tree.nodeKey.map.keys()), b: new Set(ids) }));
+		assert.deepEqual(new Set(tree.nodeKey.map.keys()), new Set(ids));
 	}
 
 	it("can look up a node that was inserted", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				child: undefined,
-				...contextualizeKey(view, key),
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			child: undefined,
+			...contextualizeKey(view, key),
 		});
-		assertIds(typedView, [key]);
+		assertIds(view, [key]);
 	});
 
 	it("can look up multiple nodes that were inserted at once", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const keys = [view.nodeKey.generate(), view.nodeKey.generate(), view.nodeKey.generate()];
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, keys[0]),
+		view.setContent({
+			...contextualizeKey(view, keys[0]),
+			child: {
+				...contextualizeKey(view, keys[1]),
 				child: {
-					...contextualizeKey(view, keys[1]),
-					child: {
-						...contextualizeKey(view, keys[2]),
-						child: undefined,
-					},
+					...contextualizeKey(view, keys[2]),
+					child: undefined,
 				},
 			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
 		});
-		assertIds(typedView, keys);
+		assertIds(view, keys);
 	});
 
 	it("can look up multiple nodes that were inserted over time", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const keyA = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, keyA),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			...contextualizeKey(view, keyA),
+			child: undefined,
 		});
 
-		const node = typedView.nodeKey.map.get(keyA);
+		const node = view.nodeKey.map.get(keyA);
 		assert(node !== undefined);
-		const keyB = typedView.nodeKey.generate();
-		node[setField](brand("child"), { ...contextualizeKey(typedView, keyB) });
-		assertIds(typedView, [keyA, keyB]);
+		const keyB = view.nodeKey.generate();
+		node[setField](brand("child"), { ...contextualizeKey(view, keyB) });
+		assertIds(view, [keyA, keyB]);
 	});
 
 	it("forgets about nodes that are deleted", () => {
-		const view = createView();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, view.nodeKey.generate()),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		const view = createView(undefined);
+		view.setContent({
+			...contextualizeKey(view, view.nodeKey.generate()),
+			child: undefined,
 		});
-
-		typedView.setContent(undefined);
-		assertIds(typedView, []);
+		view.setContent(undefined);
+		assertIds(view, []);
 	});
 
 	it("fails if multiple nodes have the same key", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
 		assert.throws(
 			() =>
-				view.schematize({
-					initialTree: {
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: {
 						...contextualizeKey(view, key),
-						child: {
-							...contextualizeKey(view, key),
-							child: undefined,
-						},
+						child: undefined,
 					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
 				}),
 			(e: Error) => validateAssertionError(e, "Encountered duplicate node key"),
 		);
@@ -167,7 +155,7 @@ describe("Node Key Index", () => {
 		assert.throws(
 			() =>
 				initializeTestTree(
-					createView(),
+					createView(undefined),
 					{
 						type: nodeSchema.name,
 						fields: {
@@ -182,17 +170,15 @@ describe("Node Key Index", () => {
 	});
 
 	it("errors on nodes which should have keys, but do not", () => {
-		const view = createView();
+		const view = createView(undefined);
 		assert.throws(
 			() =>
-				view.schematize({
-					// @ts-expect-error Wrong type
-					initialTree: {
+				view.setContent(
+					// Wrong type: should need ts-expect-error once strongly typed.
+					{
 						child: undefined,
 					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
-				}),
+				),
 			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
@@ -208,7 +194,8 @@ describe("Node Key Index", () => {
 		);
 		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
 
-		const view = createView();
+		// TODO: avoid double initialization
+		const view = createView(undefined);
 		initializeTestTree(
 			view,
 			{
@@ -226,7 +213,7 @@ describe("Node Key Index", () => {
 	});
 
 	it("is synchronized after each batch update", () => {
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
 		let expectedIds: LocalNodeKey[] = [key];
 		let batches = 0;
@@ -235,24 +222,20 @@ describe("Node Key Index", () => {
 			batches += 1;
 		});
 
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, key),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			...contextualizeKey(view, key),
+			child: undefined,
 		});
 
 		expectedIds = [];
-		typedView.setContent(undefined);
+		view.setContent(undefined);
 		assert.equal(batches, 2);
 	});
 
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global node key field on the node
-		const builder2 = new SchemaBuilder("node key index test", nodeKeySchema);
+		const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
 		const nodeSchemaNoKey = builder2.structRecursive("node", {
 			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
 		});
@@ -260,67 +243,55 @@ describe("Node Key Index", () => {
 			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
 		);
 
-		const view = createView();
+		const view = createView(undefined);
 		const key = view.nodeKey.generate();
-		const typedView = view.schematize({
-			initialTree: {
-				...contextualizeKey(view, key),
-				child: undefined,
-			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
+		view.setContent({
+			...contextualizeKey(view, key),
+			child: undefined,
 		});
-		assertIds(typedView, [key]);
-		typedView.storedSchema.update(nodeSchemaDataNoKey);
-		assertIds(typedView, []);
-		typedView.storedSchema.update(nodeSchemaData);
-		assertIds(typedView, [key]);
+		assertIds(view, [key]);
+		view.storedSchema.update(nodeSchemaDataNoKey);
+		assertIds(view, []);
+		view.storedSchema.update(nodeSchemaData);
+		assertIds(view, [key]);
 	});
 
 	function describeForkingTests(prefork: boolean): void {
 		function getView(): ISharedTreeView {
-			const view = createView();
+			const view = createView(undefined);
 			return prefork ? view.fork() : view;
 		}
 		describe(`forking from ${prefork ? "a fork" : "the root"}`, () => {
 			it("does not mutate the base when mutating a fork", () => {
 				const view = getView();
 				const key = view.nodeKey.generate();
-				const typedView = view.schematize({
-					initialTree: {
-						...contextualizeKey(view, key),
-						child: undefined,
-					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: undefined,
 				});
 
-				const fork = typedView.fork();
+				const fork = view.fork();
 				fork.setContent(undefined);
-				assertIds(typedView, [key]);
+				assertIds(view, [key]);
 				assertIds(fork, []);
-				typedView.merge(fork);
-				assertIds(typedView, []);
+				view.merge(fork);
+				assertIds(view, []);
 			});
 
 			it("does not mutate the fork when mutating a base", () => {
 				const view = getView();
 				const key = view.nodeKey.generate();
-				const typedView = view.schematize({
-					initialTree: {
-						...contextualizeKey(view, key),
-						child: undefined,
-					},
-					schema: nodeSchemaData,
-					allowedSchemaModifications: AllowedUpdateType.None,
+				view.setContent({
+					...contextualizeKey(view, key),
+					child: undefined,
 				});
 
-				const fork = typedView.fork();
-				typedView.setContent(undefined);
-				assertIds(typedView, []);
+				const fork = view.fork();
+				view.setContent(undefined);
+				assertIds(view, []);
 				assertIds(fork, [key]);
-				typedView.merge(fork);
-				assertIds(typedView, []);
+				view.merge(fork);
+				assertIds(view, []);
 			});
 		});
 	}

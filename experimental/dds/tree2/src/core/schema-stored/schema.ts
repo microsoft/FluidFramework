@@ -205,18 +205,6 @@ export interface TreeStoredSchema {
 }
 
 /**
- * @alpha
- */
-export interface Named<TName> {
-	readonly name: TName;
-}
-
-/**
- * @alpha
- */
-export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
-
-/**
  * View of schema data that can be stored in a document.
  *
  * Note: the owner of this may modify it over time:

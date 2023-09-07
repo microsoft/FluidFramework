@@ -5,17 +5,16 @@
 
 import { EventEmitter } from "events";
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IAudience,
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
-	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

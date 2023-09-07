@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/request-handler",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "A simple request handling library for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,8 +32,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
@@ -60,9 +59,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~"
 	},
@@ -70,16 +69,14 @@
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.0.0-internal.6.0.0",
+		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.0.0-internal.6.1.1",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"@types/random-js": "^1.0.31",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
@@ -90,7 +87,6 @@
 		"moment": "^2.21.0",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
-		"random-js": "^1.0.8",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
 	},

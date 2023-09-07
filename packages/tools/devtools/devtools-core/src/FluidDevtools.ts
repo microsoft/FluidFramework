@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
 import { IContainerDevtools } from "./IContainerDevtools";
@@ -20,7 +20,7 @@ import {
 	postMessagesToWindow,
 } from "./messaging";
 import { IFluidDevtools } from "./IFluidDevtools";
-import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
+import { DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { ContainerKey } from "./CommonInterfaces";
 import { pkgVersion as devtoolsVersion } from "./packageVersion";
@@ -339,14 +339,14 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
 	 */
 	public dispose(): void {
 		if (this.disposed) {
@@ -380,7 +380,9 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+			telemetry: this.logger !== undefined,
+			// Completed but disabled until we finish the story for unsampled telemetry that powers this feature
+			opLatencyTelemetry: false,
 		};
 	}
 }

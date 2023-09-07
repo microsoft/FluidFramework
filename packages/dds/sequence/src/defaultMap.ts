@@ -11,7 +11,8 @@ import {
 	parseHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { makeSerializable, ValueTypeLocalValue } from "./localValues";
 import {
 	ISerializableValue,

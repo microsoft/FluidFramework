@@ -24,7 +24,11 @@
 
 	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
 	"cSpell.words": [
+		"boop",
+		"contoso",
+		"denormalized",
 		"endregion",
+		"fluidframework",
 		"handlecache",
 		"handletable",
 		"injective",
@@ -35,7 +39,9 @@
 		"nonfinite",
 		"pseudorandomly",
 		"Routerlicious",
+		"runtimes",
 		"snapshotlegacy",
+		"snapshotting",
 		"testconsumer",
 		"Tinylicious",
 		"tombstoned",
@@ -43,6 +49,7 @@
 		"unacked",
 		"unaugmented",
 		"undoprovider",
+		"unsequenced",
 	],
 
 	// Enable prettier as default formatter, and disable rules that disagree with it

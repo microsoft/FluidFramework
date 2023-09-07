@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/data-object-base",
-	"version": "2.0.0-internal.6.1.0",
+	"version": "2.0.0-internal.6.3.0",
 	"description": "Data object base for synchronously and lazily loaded object scenarios",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,29 +39,8 @@
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
-	"nyc": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
-	},
 	"dependencies": {
-		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/common-utils": "^1.1.1",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -78,16 +57,12 @@
 		"@fluid-tools/build-cli": "^0.22.0",
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
-		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.6.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.6.1.1",
+		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
-		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"

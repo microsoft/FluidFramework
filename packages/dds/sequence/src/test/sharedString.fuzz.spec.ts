@@ -125,11 +125,7 @@ describe("SharedString no reconnect fuzz testing", () => {
 	});
 });
 
-/**
- * Disabled as all tests are failing due to eventual consistency issues.
- * ADO:5083 to deal with the failures.
- */
-describe.skip("SharedString fuzz testing with rebased batches", () => {
+describe("SharedString fuzz testing with rebased batches", () => {
 	const noReconnectWithRebaseModel = {
 		...baseModel,
 		workloadName: "SharedString with rebasing",

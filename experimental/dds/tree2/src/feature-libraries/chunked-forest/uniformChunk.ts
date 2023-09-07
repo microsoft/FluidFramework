@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { compareArrays } from "@fluidframework/core-utils";
+import { assert, compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,

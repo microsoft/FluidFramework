@@ -16,7 +16,6 @@ import { ICodecOptions, noopValidator } from "../codec";
 import {
 	InMemoryStoredSchemaRepository,
 	Anchor,
-	AnchorSet,
 	AnchorNode,
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
@@ -41,15 +40,19 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	buildChunkedForest,
+	makeTreeChunker,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
+	ISharedTreeBranchView,
 	ISharedTreeView,
-	SharedTreeView,
+	ITransaction,
 	ViewEvents,
 	createSharedTreeView,
+	schematizeView,
 } from "./sharedTreeView";
 
 /**
@@ -84,9 +87,12 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		const options = { jsonValidator: noopValidator, ...optionsParam };
-		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema, new AnchorSet());
+		const options = { ...defaultSharedTreeOptions, ...optionsParam };
+		const schema = new InMemoryStoredSchemaRepository();
+		const forest =
+			options.forest === ForestType.Optimized
+				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
+				: buildForest();
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
@@ -98,7 +104,6 @@ export class SharedTree
 		super(
 			[schemaSummarizer, forestSummarizer],
 			changeFamily,
-			forest.anchors,
 			repairProvider,
 			options,
 			id,
@@ -111,6 +116,9 @@ export class SharedTree
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
+			// TODO:
+			// This passes in a version of schema thats not wrapped with the editor.
+			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
 			repairProvider,
@@ -129,6 +137,11 @@ export class SharedTree
 	}
 
 	public get storedSchema(): StoredSchemaRepository {
+		// TODO:
+		// Schema editing on the view should be the same as editing it here.
+		// However, currently editing schema on views doesn't send ops because schema editing is a hack and not properly implemented.
+		// When this is fixed, this assert should start passing:
+		// assert(this.schema === this.view.storedSchema, "mismatched schema");
 		return this.schema;
 	}
 
@@ -153,30 +166,34 @@ export class SharedTree
 	}
 
 	public schematize<TRoot extends FieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
+		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
+		// TODO:
+		// This should work, but schema editing on views doesn't send ops.
+		// return this.view.schematize(config);
+		// For now, use this as a workaround:
 		return schematizeView(this, config);
 	}
 
-	public get transaction(): SharedTreeView["transaction"] {
+	public get transaction(): ITransaction {
 		return this.view.transaction;
 	}
 
-	public get nodeKey(): SharedTreeView["nodeKey"] {
+	public get nodeKey(): ISharedTreeView["nodeKey"] {
 		return this.view.nodeKey;
 	}
 
-	public fork(): SharedTreeView {
+	public fork(): ISharedTreeBranchView {
 		return this.view.fork();
 	}
 
-	public merge(view: SharedTreeView): void;
-	public merge(view: SharedTreeView, disposeView: boolean): void;
-	public merge(view: SharedTreeView, disposeView = true): void {
+	public merge(view: ISharedTreeBranchView): void;
+	public merge(view: ISharedTreeBranchView, disposeView: boolean): void;
+	public merge(view: ISharedTreeBranchView, disposeView = true): void {
 		this.view.merge(view, disposeView);
 	}
 
-	public rebase(fork: SharedTreeView): void {
+	public rebase(fork: ISharedTreeBranchView): void {
 		fork.rebaseOnto(this.view);
 	}
 
@@ -198,7 +215,7 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if (!this.schema.tryHandleOp(message)) {
+		if (!this.schema.tryHandleOp(message.contents)) {
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
@@ -209,6 +226,12 @@ export class SharedTree
 	): void {
 		if (!this.schema.tryResubmitOp(content)) {
 			super.reSubmitCore(content, localOpMetadata);
+		}
+	}
+
+	protected override applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		if (!this.schema.tryApplyStashedOp(content)) {
+			return super.applyStashedOp(content);
 		}
 	}
 
@@ -224,7 +247,32 @@ export class SharedTree
 /**
  * @alpha
  */
-export interface SharedTreeOptions extends Partial<ICodecOptions> {}
+export interface SharedTreeOptions extends Partial<ICodecOptions> {
+	/**
+	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 */
+	forest?: ForestType;
+}
+
+/**
+ * Used to distinguish between different forest types.
+ * @alpha
+ */
+export enum ForestType {
+	/**
+	 * The "ObjectForest" forest type.
+	 */
+	Reference = 0,
+	/**
+	 * The "ChunkedForest" forest type.
+	 */
+	Optimized = 1,
+}
+
+export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
+	jsonValidator: noopValidator,
+	forest: ForestType.Reference,
+};
 
 /**
  * A channel factory that creates {@link ISharedTree}s.

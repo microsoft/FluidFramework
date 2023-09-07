@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ITreeCursor } from "../../core";
-import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
+import { ChangesetLocalId, ITreeCursor } from "../../core";
+import { FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	CellId,
@@ -57,7 +57,7 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", count: 1, changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, { count: 1, changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],

@@ -6,7 +6,7 @@
 import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISharedTree, ISharedTreeView } from "../../../shared-tree";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
@@ -28,7 +28,7 @@ import {
 import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import { brand } from "../../../util";
 
-const builder = new SchemaBuilder("node key index benchmarks", nodeKeySchema);
+const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
 const nodeSchema = builder.structRecursive("node", {
 	child: SchemaBuilder.fieldRecursive(
 		FieldKinds.optional,

@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
-import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { LazyPromise, Timer } from "@fluidframework/core-utils";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
 	IGarbageCollectionData,
@@ -14,17 +12,23 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
-import { RuntimeHeaders } from "../containerRuntime";
-import { RefreshSummaryResult } from "../summary";
+import {
+	AllowInactiveRequestHeaderKey,
+	InactiveResponseHeaderKey,
+	RuntimeHeaders,
+} from "../containerRuntime";
+import { ClientSessionExpiredError } from "../error";
+import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	GCNodeType,
@@ -838,45 +842,15 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
-	 * is downloaded and should be used to update the state.
+	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
-		const latestSnapshotData = await this.summaryStateTracker.refreshLatestSummary(
-			proposalHandle,
-			result,
-			readAndParseBlob,
-		);
-
-		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
-		// this snapshot data.
-		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
-			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
-			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-			if (currentReferenceTimestampMs === undefined) {
-				throw DataProcessingError.create(
-					"No reference timestamp when updating GC state from snapshot",
-					"refreshLatestSummary",
-					undefined,
-					{
-						proposalHandle,
-						summaryRefSeq: result.summaryRefSeq,
-						gcConfigs: JSON.stringify(this.configs),
-					},
-				);
-			}
-			this.updateStateFromSnapshotData(latestSnapshotData, currentReferenceTimestampMs);
-		}
+	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive, log an error.
-	 * @param nodePath - The id of the node that changed.
+	 * @param nodePath - The path of the node that changed.
 	 * @param reason - Whether the node was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
 	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
@@ -893,6 +867,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
+		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
 			id: nodePath,
 			usageType: reason,
@@ -904,6 +879,29 @@ export class GarbageCollector implements IGarbageCollector {
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
+
+		// Unless this is a Loaded event, we're done after telemetry tracking
+		if (reason !== "Loaded") {
+			return;
+		}
+
+		// We may throw when loading an Inactive object, depending on these preconditions
+		const shouldThrowOnInactiveLoad =
+			!this.isSummarizerClient &&
+			this.configs.throwOnInactiveLoad === true &&
+			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
+		const state = this.unreferencedNodesState.get(nodePath)?.state;
+
+		if (shouldThrowOnInactiveLoad && state === "Inactive") {
+			const request: IRequest = { url: nodePath };
+			const error = responseToException(
+				createResponseError(404, "Object is inactive", request, {
+					[InactiveResponseHeaderKey]: true,
+				}),
+				request,
+			);
+			throw error;
+		}
 	}
 
 	/**

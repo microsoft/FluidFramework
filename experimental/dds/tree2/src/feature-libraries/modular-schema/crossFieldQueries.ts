@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
+import { assert } from "@fluidframework/core-utils";
+import { ChangesetLocalId, RevisionTag } from "../../core";
 import {
 	RangeEntry,
 	RangeMap,
@@ -14,7 +14,6 @@ import {
 	setInRangeMap,
 } from "../../util";
 import { IdAllocator } from "./fieldChangeHandler";
-import { ChangesetLocalId } from "./modularChangeTypes";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;

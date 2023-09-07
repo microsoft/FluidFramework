@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	fail,
 	FieldKinds,
@@ -327,7 +327,11 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder", builtinLibrary);
+	const builder = new SchemaBuilder(
+		"PropertyDDS to SharedTree schema builder",
+		{},
+		builtinLibrary,
+	);
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 

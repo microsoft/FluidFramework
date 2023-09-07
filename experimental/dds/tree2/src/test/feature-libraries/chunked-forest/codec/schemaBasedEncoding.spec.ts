@@ -32,7 +32,6 @@ import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/co
 import { assertChunkCursorEquals, fieldCursorFromJsonableTrees } from "../fieldCursorTestUtilities";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
-import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 import {
 	hasOptionalField,
 	library,
@@ -41,7 +40,8 @@ import {
 	numericMap,
 	recursiveType,
 	testTrees,
-} from "./testTrees";
+} from "../../../testTrees";
+import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -227,7 +227,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
-		for (const { name, schema, treeFactory, schemaData } of testTrees) {
+		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
 				const tree = treeFactory();
 				// Check with checkFieldEncode

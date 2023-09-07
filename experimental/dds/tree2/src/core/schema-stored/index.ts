@@ -11,8 +11,6 @@ export {
 	TreeSchemaIdentifierSchema,
 	FieldKey,
 	FieldKeySchema,
-	NamedTreeSchema,
-	Named,
 	TreeTypeSet,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
@@ -27,5 +25,6 @@ export {
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
+	cloneSchemaData,
 } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

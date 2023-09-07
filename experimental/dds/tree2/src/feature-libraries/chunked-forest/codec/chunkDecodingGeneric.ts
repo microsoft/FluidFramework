@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { BrandedType } from "../../../util";
 import { TreeChunk } from "../chunk";
 import { EncodedChunkGeneric, IdentifierOrIndex } from "./formatGeneric";
@@ -27,7 +27,10 @@ export function decode<TEncodedShape extends object, TCache>(
 	const decoders = chunk.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
 	const stream = { data: chunk.data, offset: 0 };
 	const result = rootDecoder.decode(decoders, stream);
-	assert(stream.offset === stream.data.length, "expected decode to consume full stream");
+	assert(
+		stream.offset === stream.data.length,
+		0x73a /* expected decode to consume full stream */,
+	);
 	return result;
 }
 
@@ -63,7 +66,7 @@ export function readStreamIdentifier<T extends string & BrandedType<string, stri
 	const content = readStream(stream);
 	assert(
 		typeof content === "number" || typeof content === "string",
-		"content to be a number or string",
+		0x73b /* content to be a number or string */,
 	);
 	return cache.identifier(content);
 }

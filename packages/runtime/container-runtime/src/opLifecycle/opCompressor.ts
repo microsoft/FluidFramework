@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { compress } from "lz4js";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "../containerRuntime";

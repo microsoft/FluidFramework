@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
@@ -108,6 +109,7 @@ export interface OdspErrorResponse {
 
 /** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
 
@@ -191,6 +193,7 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.genericNetworkError,
 				driverProps,
 			);
@@ -229,6 +232,7 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.fileNotFoundOrAccessDeniedError,
 				driverProps,
 			);
@@ -236,6 +240,7 @@ export function createOdspNetworkError(
 		case 406:
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.unsupportedClientProtocolVersion,
 				driverProps,
 			);
@@ -250,6 +255,7 @@ export function createOdspNetworkError(
 			// This indicates that the file/container has been modified externally.
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.fileOverwrittenInStorage,
 				driverProps,
 			);
@@ -259,6 +265,7 @@ export function createOdspNetworkError(
 			// Resubmitting same payload is not going to help, so this is non-recoverable failure!
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.genericNetworkError,
 				driverProps,
 			);
@@ -280,6 +287,7 @@ export function createOdspNetworkError(
 			) {
 				error = new NonRetryableError(
 					errorMessage,
+					// eslint-disable-next-line import/no-deprecated
 					DriverErrorType.fileIsLocked,
 					driverProps,
 				);
@@ -288,6 +296,7 @@ export function createOdspNetworkError(
 		case 500:
 			error = new RetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.genericNetworkError,
 				driverProps,
 			);
@@ -306,6 +315,7 @@ export function createOdspNetworkError(
 			// Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.incorrectServerResponse,
 				driverProps,
 			);

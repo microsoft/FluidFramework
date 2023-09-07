@@ -4,27 +4,35 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IEventProvider } from "@fluidframework/common-definitions";
-import { ITelemetryProperties, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import {
+	IThrottlingWarning,
+	IEventProvider,
+	ITelemetryProperties,
+	ITelemetryErrorEvent,
+} from "@fluidframework/core-interfaces";
 import {
 	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
-	IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	normalizeError,
 	logIfFalse,
 	safeRaiseEvent,
 	isFluidError,
 	ITelemetryLoggerExt,
+	DataCorruptionError,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorType,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -34,13 +42,7 @@ import {
 	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
-import {
-	ThrottlingWarning,
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-	DataProcessingError,
-	UsageError,
-} from "@fluidframework/container-utils";
+
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
@@ -49,6 +51,7 @@ import {
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { OnlyValidTermValue } from "./protocol";
+import { ThrottlingWarning } from "./error";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -940,7 +943,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							// pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
 							"Found two messages with the same sequenceNumber but different payloads. Likely to be a " +
 								"service issue",
-							DriverErrorType.fileOverwrittenInStorage,
+							DriverErrorTypes.fileOverwrittenInStorage,
 							{
 								clientId: this.connectionManager.clientId,
 								sequenceNumber: message.sequenceNumber,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	LocalDocumentServiceFactory,
@@ -60,6 +60,10 @@ export function getDocumentServiceFactory(
 						? options.enableWholeSummaryUpload
 						: undefined,
 				enableDiscovery: options.mode === "r11s" && options.discoveryEndpoint !== undefined,
+				isEphemeralContainer:
+					options.mode === "r11s" || options.mode === "docker"
+						? options.isEphemeralContainer
+						: false,
 			});
 
 		case "spo":

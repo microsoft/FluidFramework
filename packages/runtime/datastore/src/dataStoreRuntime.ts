@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	DataProcessingError,
 	ITelemetryLoggerExt,
 	generateStack,
 	LoggingError,
@@ -11,6 +13,7 @@ import {
 	raiseConnectedEvent,
 	createChildMonitoringContext,
 	tagCodeArtifacts,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -19,15 +22,13 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IAudience,
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
-import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,

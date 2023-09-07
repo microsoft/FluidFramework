@@ -25,14 +25,14 @@ describe("kafka-service", () => {
 			 * Helper function that invokes a checkpoint assuming it will fail
 			 */
 			async function verifyCheckpointError(queuedMessage: IQueuedMessage) {
-				await checkpointManager.checkpoint(queuedMessage).then(
-					() => {
+				await checkpointManager
+					.checkpoint(queuedMessage)
+					.then(() => {
 						assert.ok(false, "Should have resulted in rejection");
-					},
-					(error) => {
+					})
+					.catch((error) => {
 						assert.ok(true);
-					},
-				);
+					});
 			}
 
 			it("Should be able to checkpoint at the desired position", async () => {

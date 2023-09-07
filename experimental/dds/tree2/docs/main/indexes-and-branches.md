@@ -8,7 +8,7 @@ To avoid needing an abstraction to storing the actual underlying document conten
 In database terms this means that we use [covering indexes](https://en.wikipedia.org/wiki/Database_index#Covering_index) to answer all queries.
 Concretely this is done by [shared-tree](../../src/shared-tree/README.md) providing a `ForestIndex` which is is a covering index (stores the actual data from each tree node), optimized for retrieving (and editing) parts of subtrees by path.
 Schema data is similarly handled by `SchemaIndex`.
-In the future we will have more index implementations, which can provide functionality like accelerating look of of nodes (in `ForestIndex`) by identifiers, text search etc.
+In the future we will have more index implementations, which can provide functionality like accelerating lookup of nodes (in `ForestIndex`) by identifiers, text search etc.
 
 Indexes are updated when the Fluid document (contents of the Shared Tree) is edited, and are persisted in Fluid summaries.
 
@@ -32,13 +32,13 @@ From the perspective of a single Fluid client, there can be several relevant bra
 -   The local branch: the sequenced branch, plus any local edits (ops for them have not yet been sequenced).
 
     In our `git` metaphor this is a feature branch in the local repository.
-    Every time `main` changes, it is rebased onto the new state of `main`
-    It is merged into main by making pull requests one commit at a time which are always merged using rebase.
+    Every time `main` changes, the feature branch is rebased onto the new state of `main` by making pull requests one
+    commit at a time which are always merged using rebase.
 
 -   The working copy: the local branch, plus the current state of an in progress transaction.
     If async transactions are supported with snapshot isolation, the version of the local branch that the transaction branches off from might not always be the latest.
 
-    In our `git` metaphor, this lines up with git's working copy, while the "local branch" in checked out.
+    In our `git` metaphor, this lines up with git's working copy, while the "local branch" is checked out.
     The in progress transaction aligns with the uncommitted changes.
 
 -   Remote branches: branches which replicate what remote clients had in their local branches when an op was sent.
@@ -51,7 +51,7 @@ From the perspective of a single Fluid client, there can be several relevant bra
 -   Long lived branches: branches explicitly created by the user that can live separately from the "main" branch for long periods of time.
 
     In our `git` metaphor this represents feature branches (eventually might be merged) or release branches (likely never merged).
-    They can be used to experiment with a copy of the document, work offline for expended periods while preserving history when merging,
+    They can be used to experiment with a copy of the document, work offline for extended periods while preserving history when merging,
     or just as a way to have a user-controlled snapshot.
 
     Currently shared-tree does not use or support this type of branches, but forward looking designs should consider them.

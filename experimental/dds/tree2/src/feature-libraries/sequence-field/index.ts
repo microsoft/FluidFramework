@@ -9,13 +9,11 @@ export {
 	Changeset,
 	Delete,
 	Detach,
-	HasChanges,
 	HasMoveId,
 	HasRevisionTag,
 	Insert,
 	Mark,
 	MarkList,
-	Modify,
 	MoveIn,
 	MoveOut,
 	NodeChangeType,
@@ -32,6 +30,7 @@ export {
 	CellId,
 	HasMarkFields,
 	HasLineage,
+	IdRange,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -55,6 +54,7 @@ export {
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
+	cloneMark,
 } from "./utils";
 export {
 	isMoveMark,
