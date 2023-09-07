@@ -289,6 +289,8 @@ export function wrapErrorAndLog<T extends LoggingError>(
  *
  * There have been reports of certain JS environments where overwriting stack will throw.
  * If that happens, this adds the given stack as the telemetry property "stack2"
+ *
+ * @internal
  */
 export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void {
 	try {
