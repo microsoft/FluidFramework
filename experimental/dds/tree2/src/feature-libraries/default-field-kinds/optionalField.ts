@@ -8,7 +8,6 @@ import {
 	Delta,
 	ITreeCursor,
 	TaggedChange,
-	ITreeCursorSynchronous,
 	tagChange,
 	ChangesetLocalId,
 	JsonableTree,
@@ -24,7 +23,6 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	NodeReviver,
 	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
@@ -32,7 +30,6 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 } from "../modular-schema";
-import { populateChildModifications } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
@@ -106,7 +103,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 	): OptionalChangeset => {
 		const inverse: OptionalChangeset = {};
 
@@ -125,8 +121,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = {
-					revert: reviver(revision, 0, 1)[0],
-					changeId: { revision, localId: fieldChange.id },
+					revert: { revision, localId: fieldChange.id },
 				};
 				if (change.childChange !== undefined) {
 					if (change.deletedBy === undefined) {
@@ -211,8 +206,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						over.fieldChange.id === change.deletedBy.localId;
 					const rebasingOverUndo =
 						"revert" in overContent &&
-						overContent.changeId.revision === change.deletedBy.revision &&
-						overContent.changeId.localId === change.deletedBy.localId;
+						overContent.revert.revision === change.deletedBy.revision &&
+						overContent.revert.localId === change.deletedBy.localId;
 					if (rebasingOverRollback || rebasingOverUndo) {
 						// Over is reviving the node that change.childChange is referring to.
 						// Rebase change.childChange and remove deletedBy
@@ -357,7 +352,7 @@ export function optionalFieldIntoDelta(
 				},
 			];
 		} else {
-			const changeId = (update as { changeId: ChangeAtomId }).changeId;
+			const changeId = (update as { revert: ChangeAtomId }).revert;
 			const restoreId = {
 				major: changeId.revision,
 				minor: changeId.localId,

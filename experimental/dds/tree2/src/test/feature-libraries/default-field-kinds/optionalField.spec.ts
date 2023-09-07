@@ -117,8 +117,7 @@ const revertChange2: TaggedChange<OptionalChangeset> = tagChange(
 		fieldChange: {
 			id: brand(2),
 			newContent: {
-				revert: testTreeCursor("tree1"),
-				changeId: { revision: change2.revision, localId: brand(2) },
+				revert: { revision: change2.revision, localId: brand(2) },
 			},
 			wasEmpty: false,
 		},
