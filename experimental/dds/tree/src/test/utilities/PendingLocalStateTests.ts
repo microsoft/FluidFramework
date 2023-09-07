@@ -162,6 +162,9 @@ export function runPendingLocalStateTests(
 			const { testObjectProvider, tree: tree0 } = await setUpLocalServerTestSharedTree({
 				id: documentId,
 				writeFormat: WriteFormat.v0_0_2,
+				featureGates: {
+					'Fluid.Loader.ForceWriteConnection': true,
+				},
 			});
 
 			// 2. A second client joins
