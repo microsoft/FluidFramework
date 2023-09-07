@@ -14,6 +14,7 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IModelLoader } from "./interfaces";
@@ -36,6 +37,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 	public constructor(
 		private readonly codeLoader: ICodeDetailsLoader,
 		private readonly logger?: ITelemetryBaseLogger,
+		private readonly configProvider?: IConfigProviderBase,
 	) {}
 
 	public async supportsVersion(version: string): Promise<boolean> {
@@ -49,6 +51,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
+			configProvider: this.configProvider,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
 		});
 		return modelLoader.createDetached(version);

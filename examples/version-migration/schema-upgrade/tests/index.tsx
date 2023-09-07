@@ -17,6 +17,7 @@ import type { IInventoryListAppModel } from "../src/modelInterfaces";
 import { DebugView, InventoryListAppView } from "../src/view";
 import { inventoryListDataTransformationCallback } from "../src/dataTransform";
 import { DemoCodeLoader } from "../src/demoCodeLoader";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -43,8 +44,13 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
 	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
 		new DemoCodeLoader(testMode),
+		undefined, // logger
+		configProvider({ "Fluid.Loader.ForceWriteConnection": true }),
 	);
 	let id: string;
 	let model: IMigratableModel;
