@@ -1511,7 +1511,7 @@ export class Container
 
 	private connectToDeltaStream(args: IConnectionArgs) {
 		// All agents need "write" access, including summarizer.
-		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
+		if (!this._canReconnect) {
 			args.mode = "write";
 		}
 
