@@ -823,7 +823,7 @@ function runUnitTestScenario(
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
-						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
+						manager.changeFamily.intoDelta(manager.localBranch.getHead()),
 						asDelta([seq]),
 					);
 					break;

@@ -20,6 +20,7 @@ import {
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
 	IForestSubscription,
+	makeAnonChange,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -99,7 +100,7 @@ export class SharedTree
 		const repairProvider = new ForestRepairDataStoreProvider(
 			forest,
 			schema,
-			(change: ModularChangeset) => changeFamily.intoDelta(change),
+			(change: ModularChangeset) => changeFamily.intoDelta(makeAnonChange(change)),
 		);
 		super(
 			[schemaSummarizer, forestSummarizer],

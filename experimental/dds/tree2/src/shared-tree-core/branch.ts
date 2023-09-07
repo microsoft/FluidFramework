@@ -19,6 +19,7 @@ import {
 	LocalCommitSource,
 	rebaseBranch,
 	RevisionTag,
+	makeAnonChange,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
 import { TransactionStack } from "./transactionStack";
@@ -39,15 +40,15 @@ import { TransactionStack } from "./transactionStack";
  * transaction completes and all pending commits are replaced with a single squash commit.
  */
 export type SharedTreeBranchChange<TChange> =
-	| { type: "append"; change: TChange; newCommits: GraphCommit<TChange>[] }
+	| { type: "append"; change: TaggedChange<TChange>; newCommits: GraphCommit<TChange>[] }
 	| {
 			type: "remove";
-			change: TChange | undefined;
+			change: TaggedChange<TChange> | undefined;
 			removedCommits: GraphCommit<TChange>[];
 	  }
 	| {
 			type: "replace";
-			change: TChange | undefined;
+			change: TaggedChange<TChange> | undefined;
 			removedCommits: GraphCommit<TChange>[];
 			newCommits: GraphCommit<TChange>[];
 	  };
@@ -190,7 +191,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.emit("revertible", undoRedoType);
 		}
 
-		this.emit("change", { type: "append", change, newCommits: [this.head] });
+		this.emit("change", {
+			type: "append",
+			change: tagChange(change, revision),
+			newCommits: [this.head],
+		});
 		return [change, this.head];
 	}
 
@@ -319,7 +324,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		this.emit("change", {
 			type: "remove",
-			change,
+			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: commits,
 		});
 		return [change, commits];
@@ -461,7 +466,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const newCommits = targetCommits.concat(sourceCommits);
 		this.emit("change", {
 			type: "replace",
-			change,
+			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: deletedSourceCommits,
 			newCommits,
 		});
@@ -516,7 +521,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		this.emit("change", {
 			type: "append",
-			change,
+			change: makeAnonChange(change),
 			newCommits: sourceCommits,
 		});
 		return [change, sourceCommits];

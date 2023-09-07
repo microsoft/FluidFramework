@@ -21,6 +21,7 @@ import {
 	visitDelta,
 	TreeIndex,
 	ForestRootId,
+	makeAnonChange,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -304,7 +305,7 @@ export function createSharedTreeView(args?: {
 	const repairDataStoreProvider =
 		args?.repairProvider ??
 		new ForestRepairDataStoreProvider(forest, schema, (change) =>
-			changeFamily.intoDelta(change),
+			changeFamily.intoDelta(makeAnonChange(change)),
 		);
 	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
@@ -386,7 +387,9 @@ class Transaction implements ITransaction {
 
 	public start(): void {
 		this.branch.startTransaction(
-			new ForestRepairDataStore(this.forest, (change) => this.changeFamily.intoDelta(change)),
+			new ForestRepairDataStore(this.forest, (change) =>
+				this.changeFamily.intoDelta(makeAnonChange(change)),
+			),
 		);
 		this.branch.editor.enterTransaction();
 	}
@@ -500,7 +503,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
 			forest,
 			storedSchema,
-			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
+			(change: ModularChangeset) => this.changeFamily.intoDelta(makeAnonChange(change)),
 		);
 		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(

@@ -711,14 +711,14 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public intoDelta(change: ModularChangeset): Delta.Root {
+	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
+		return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 	}
 
 	/**

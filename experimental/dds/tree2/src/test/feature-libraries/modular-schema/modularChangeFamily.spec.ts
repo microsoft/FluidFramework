@@ -618,7 +618,7 @@ describe("ModularChangeFamily", () => {
 				[fieldB, valueDelta2],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			assertDeltaEqual(family.intoDelta(makeAnonChange(rootChange1a)), expectedDelta);
 		});
 	});
 
