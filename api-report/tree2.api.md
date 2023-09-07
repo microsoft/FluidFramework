@@ -71,7 +71,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
-    applyDelta(delta: Delta.Root): void;
+    acquireVisitor(): DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
     internalizePath(originalPath: UpPath): UpPath;
@@ -429,6 +429,28 @@ declare namespace Delta {
 export { Delta }
 
 // @alpha
+export interface DeltaVisitor {
+    // (undocumented)
+    enterField(key: FieldKey): void;
+    // (undocumented)
+    enterNode(index: number): void;
+    // (undocumented)
+    exitField(key: FieldKey): void;
+    // (undocumented)
+    exitNode(index: number): void;
+    // (undocumented)
+    free(): void;
+    // (undocumented)
+    onDelete(index: number, count: number): void;
+    // (undocumented)
+    onInsert(index: number, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    onMoveIn(index: number, count: number, id: Delta.MoveId): void;
+    // (undocumented)
+    onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+}
+
+// @alpha
 export interface Dependee extends NamedComputation {
     registerDependent(dependent: Dependent): boolean;
     removeDependent(dependent: Dependent): void;
@@ -747,8 +769,8 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @alpha
 export interface ForestEvents {
-    afterDelta(delta: Delta.Root): void;
-    beforeDelta(delta: Delta.Root): void;
+    afterChange(): void;
+    beforeChange(): void;
 }
 
 // @alpha
@@ -849,8 +871,9 @@ export interface IdRange {
 
 // @alpha
 export interface IEditableForest extends IForestSubscription {
+    // (undocumented)
+    acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
-    applyDelta(delta: Delta.Root): void;
 }
 
 // @alpha
@@ -1303,7 +1326,10 @@ const MarkType: {
 export type MatchPolicy = "subtree" | "path";
 
 // @alpha
-export type MemoizedIdRangeAllocator = (revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number) => IdRange[];
+export interface MemoizedIdRangeAllocator {
+    allocate(revision: RevisionTag | undefined, startId: ChangesetLocalId, count?: number): IdRange[];
+    mint(count?: number): ChangesetLocalId;
+}
 
 // @alpha (undocumented)
 export const MemoizedIdRangeAllocator: {

@@ -1,5 +1,13 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.6.3.0
+
+### Minor Changes
+
+-   deprecate compareStarts and compareEnds on IIntervalHelpers ([#17127](https://github.com/microsoft/FluidFramework/issues/17127)) [a830eca757](https://github.com/microsoft/FluidFramework/commits/a830eca7571cfb230abe5b9443ba5c5fc44671e0)
+
+    these functions will be removed in a future version. use the methods IInterval.compareStart and IInterval.compareEnd respectively instead
+
 ## 2.0.0-internal.6.2.0
 
 ### Minor Changes

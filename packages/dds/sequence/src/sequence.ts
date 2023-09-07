@@ -489,6 +489,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @returns An iterable object that enumerates the IntervalCollection labels.
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * const iter = this.getIntervalCollectionKeys();
 	 * for (key of iter)

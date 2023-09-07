@@ -58,6 +58,7 @@ export interface IEventProvider<TEvent extends IEvent> {
  * Allows an interface to extend interfaces that already extend an {@link IEventProvider}.
  *
  * @example
+ *
  * ``` typescript
  * interface AEvents extends IEvent{
  *  (event: "a-event",listener: (a: number)=>void);
@@ -73,6 +74,7 @@ export interface IEventProvider<TEvent extends IEvent> {
  *  b: boolean;
  * };
  * ```
+ *
  * interface B will now extend interface A and its events
  *
  */

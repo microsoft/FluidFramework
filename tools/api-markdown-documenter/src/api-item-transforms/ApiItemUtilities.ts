@@ -213,7 +213,9 @@ export function getLinkUrlForApiItem(
 /**
  * Gets the unscoped version of the provided package's name.
  *
- * @example For the package `@foo/bar`, this would return `bar`.
+ * @example
+ *
+ * For the package `@foo/bar`, this would return `bar`.
  */
 export function getUnscopedPackageName(apiPackage: ApiPackage): string {
 	return PackageName.getUnscopedName(apiPackage.displayName);
