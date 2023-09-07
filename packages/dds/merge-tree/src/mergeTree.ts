@@ -10,6 +10,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
+import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
 	LocalClientId,
