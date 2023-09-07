@@ -69,6 +69,10 @@ export class SameContainerMigrator
 	 */
 	private _preparedDetachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
 
+	private _exportedData: unknown | undefined;
+
+	private _transformedData: unknown | undefined;
+
 	public constructor(
 		private readonly modelLoader: IModelLoader<ISameContainerMigratableModel>,
 		initialMigratable: ISameContainerMigratableModel,
@@ -127,22 +131,21 @@ export class SameContainerMigrator
 				this.pausedModel.container.deltaManager.lastSequenceNumber === acceptedSeqNum,
 				"paused model should be at accepted sequence number",
 			);
-			const exportedData = await this.pausedModel.exportData();
+			this._exportedData = await this.pausedModel.exportData();
 
 			// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 			// exported data into a format that the new model can import?  If we can determine it early, then
 			// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
 			// ModelLoaders.
-			let transformedData: unknown;
-			if (migratedModel.supportsDataFormat(exportedData)) {
+			if (migratedModel.supportsDataFormat(this._exportedData)) {
 				// If the migrated model already supports the data format, go ahead with the migration.
-				transformedData = exportedData;
+				this._transformedData = this._exportedData;
 			} else if (this.dataTransformationCallback !== undefined) {
 				// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 				// a format that we can import.
 				try {
-					transformedData = await this.dataTransformationCallback(
-						exportedData,
+					this._transformedData = await this.dataTransformationCallback(
+						this._exportedData,
 						migratedModel.version,
 					);
 				} catch {
@@ -158,7 +161,7 @@ export class SameContainerMigrator
 				this._migrationP = undefined;
 				return;
 			}
-			await migratedModel.importData(transformedData);
+			await migratedModel.importData(this._transformedData);
 
 			// Store the detached model for later use and retry scenarios
 			this._preparedDetachedModel = detachedModel;
