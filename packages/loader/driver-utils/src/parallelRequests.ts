@@ -405,7 +405,7 @@ const waitForOnline = async (): Promise<void> => {
  * @param logger - logger object to use to log progress & errors
  * @param signal - cancelation signal
  * @param scenarioName - reason for fetching ops
- * @returns an object with resulting ops and cancellation / partial result flags
+ * @returns An object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,

@@ -727,7 +727,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * This function identifies nodes that were referenced since the last run.
 	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
 	 *
-	 * @returns a list of all nodes referenced from the last local summary until now.
+	 * @returns A list of all nodes referenced from the last local summary until now.
 	 */
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
