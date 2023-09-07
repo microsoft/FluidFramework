@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -372,9 +372,9 @@ export class TestTreeProviderLite {
 				id: "test",
 			});
 			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
-			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
 			t.push(tree);
@@ -609,16 +609,23 @@ export function viewWithContent(
 	},
 ): ISharedTreeView {
 	const forest = forestWithContent(content);
-	const view = createSharedTreeView({ ...args, forest, schema: forest.schema });
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
 	return view;
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
-	const schema = new InMemoryStoredSchemaRepository(content.schema);
-	const forest = buildForest(schema);
+	const forest = buildForest();
 	initializeForest(
 		forest,
-		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
+		normalizeNewFieldContent(
+			{ schema: content.schema },
+			content.schema.rootFieldSchema,
+			content.initialTree,
+		),
 	);
 	return forest;
 }

@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -37,7 +37,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/node": "^14.18.0",
-		"concurrently": "^6.2.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",

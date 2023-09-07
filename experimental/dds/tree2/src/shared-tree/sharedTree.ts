@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository, AnchorSet } from "../core";
+import { InMemoryStoredSchemaRepository } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -117,8 +117,8 @@ export class SharedTree
 		const schema = new InMemoryStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
-				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), new AnchorSet())
-				: buildForest(schema, new AnchorSet());
+				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
+				: buildForest();
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);

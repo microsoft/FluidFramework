@@ -4,8 +4,9 @@
  */
 
 import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
-import { delay, performance } from "@fluidframework/common-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { performance } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
 import { pkgVersion } from "./packageVersion";
 import { NonRetryableError } from ".";
@@ -87,7 +88,7 @@ export async function runWithRetry<T>(
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
-					DriverErrorType.genericError,
+					DriverErrorTypes.genericError,
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,

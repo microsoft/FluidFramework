@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -17,6 +17,7 @@ import {
 	UndoRedoManager,
 	LocalCommitSource,
 	schemaDataIsEmpty,
+	applyDelta,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -268,7 +269,7 @@ export function createSharedTreeView(args?: {
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
-	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
+	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
 	const repairDataStoreProvider =
@@ -291,6 +292,7 @@ export function createSharedTreeView(args?: {
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
 	const context = getEditableTreeContext(
 		forest,
+		schema,
 		branch.editor,
 		nodeKeyManager,
 		brand(nodeKeyFieldKey),
@@ -408,8 +410,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
-				this.forest.anchors.applyDelta(delta);
-				this.forest.applyDelta(delta);
+				applyDelta(delta, this.forest.anchors);
+				applyDelta(delta, this.forest);
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
 			}
@@ -466,6 +468,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		const branch = this.branch.fork(repairDataStoreProvider);
 		const context = getEditableTreeContext(
 			forest,
+			storedSchema,
 			branch.editor,
 			this.nodeKeyManager,
 			this.nodeKeyIndex.fieldKey,

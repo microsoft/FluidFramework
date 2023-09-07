@@ -27,8 +27,8 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, delay, Trace, TypedEventEmitter } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, delay, LazyPromise } from "@fluidframework/core-utils";
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -154,6 +154,7 @@ import {
 	IEnqueueSummarizeOptions,
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
+	IBaseSummarizeResult,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -583,6 +584,11 @@ const defaultCompressionConfig = {
 
 const defaultChunkSizeInBytes = 204800;
 
+/** The default time to wait for pending ops to be processed during summarization */
+export const defaultPendingOpsWaitTimeoutMs = 1000;
+/** The default time to delay a summarization retry attempt when there are pending ops */
+export const defaultPendingOpsRetryDelayMs = 1000;
+
 /**
  * Instead of refreshing from latest because we do not have 100% confidence in the state
  * of the current system, we should close the summarizer and let it recover.
@@ -719,30 +725,16 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(
-		params: {
-			context: IContainerContext;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			existing: boolean;
-			runtimeOptions?: IContainerRuntimeOptions;
-			containerScope?: FluidObject;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-		} & (
-			| {
-					requestHandler?: (
-						request: IRequest,
-						runtime: IContainerRuntime,
-					) => Promise<IResponse>;
-					initializeEntryPoint?: undefined;
-			  }
-			| {
-					requestHandler?: undefined;
-					initializeEntryPoint: (
-						containerRuntime: IContainerRuntime,
-					) => Promise<FluidObject>;
-			  }
-		),
-	): Promise<ContainerRuntime> {
+	public static async loadRuntime(params: {
+		context: IContainerContext;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		existing: boolean;
+		runtimeOptions?: IContainerRuntimeOptions;
+		containerScope?: FluidObject;
+		containerRuntimeCtor?: typeof ContainerRuntime;
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -1549,8 +1541,7 @@ export class ContainerRuntime
 		);
 		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 		this.validateSummaryBeforeUpload =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.ValidateSummaryBeforeUpload") ??
-			false;
+			this.mc.config.getBoolean("Fluid.Summarizer.ValidateSummaryBeforeUpload") ?? false;
 
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
@@ -2961,6 +2952,50 @@ export class ContainerRuntime
 			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
 		}
 
+		// If there are pending (unacked ops), the summary will not be eventual consistent and it may even be
+		// incorrect. So, wait for the container to be saved with a timeout. If the container is not saved
+		// within the timeout, check if it should be failed or can continue.
+		if (this.validateSummaryBeforeUpload && this.hasPendingMessages()) {
+			const countBefore = this.pendingMessagesCount;
+			// The timeout for waiting for pending ops can be overridden via configurations.
+			const pendingOpsTimeout =
+				this.mc.config.getNumber("Fluid.Summarizer.waitForPendingOpsTimeoutMs") ??
+				defaultPendingOpsWaitTimeoutMs;
+			await new Promise<void>((resolve, reject) => {
+				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
+				this.once("saved", () => {
+					clearTimeout(timeoutId);
+					resolve();
+				});
+				this.once("dispose", () => {
+					clearTimeout(timeoutId);
+					reject(new Error("Runtime is disposed while summarizing"));
+				});
+			});
+
+			// Log that there are pending ops while summarizing. This will help us gather data on how often this
+			// happens, whether we attempted to wait for these ops to be acked and what was the result.
+			summaryNumberLogger.sendTelemetryEvent({
+				eventName: "PendingOpsWhileSummarizing",
+				saved: this.hasPendingMessages() ? false : true,
+				timeout: pendingOpsTimeout,
+				countBefore,
+				countAfter: this.pendingMessagesCount,
+			});
+
+			// There could still be pending ops. Check if summary should fail or continue.
+			const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
+				summaryNumberLogger,
+				this.deltaManager.lastSequenceNumber,
+				this.deltaManager.minimumSequenceNumber,
+				finalAttempt,
+				true /* beforeSummaryGeneration */,
+			);
+			if (pendingMessagesFailResult !== undefined) {
+				return pendingMessagesFailResult;
+			}
+		}
+
 		const shouldPauseInboundSignal =
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
@@ -3070,47 +3105,15 @@ export class ContainerRuntime
 					};
 				}
 
-				// If there are pending messages, the summary has more data than at the summaryRefSeqNum.
-				if (this.hasPendingMessages()) {
-					// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
-					// This is a fallback to make progress in documents where there are consistently pending ops in
-					// the summarizer.
-					if (
-						finalAttempt &&
-						this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
-					) {
-						const error = DataProcessingError.create(
-							"Pending ops during summarization",
-							"submitSummary",
-							undefined,
-							{ pendingMessages: this.pendingMessagesCount },
-						);
-						summaryNumberLogger.sendErrorEvent(
-							{
-								eventName: "SkipFailingIncorrectSummary",
-								referenceSequenceNumber: summaryRefSeqNum,
-								minimumSequenceNumber,
-							},
-							error,
-						);
-					} else {
-						// Default retry delay is 1 second. This can be overridden via config so that we can adjust it
-						// based on telemetry while we decide on a stable number.
-						const retryDelayMs =
-							this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
-							1000;
-						const error = new RetriableSummaryError(
-							"PendingMessagesInSummary",
-							retryDelayMs / 1000,
-							{ count: this.pendingMessagesCount },
-						);
-						return {
-							stage: "base",
-							referenceSequenceNumber: summaryRefSeqNum,
-							minimumSequenceNumber,
-							error,
-						};
-					}
+				const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
+					summaryNumberLogger,
+					summaryRefSeqNum,
+					minimumSequenceNumber,
+					finalAttempt,
+					false /* beforeSummaryGeneration */,
+				);
+				if (pendingMessagesFailResult !== undefined) {
+					return pendingMessagesFailResult;
 				}
 			}
 
@@ -3249,6 +3252,72 @@ export class ContainerRuntime
 			if (shouldPauseInboundSignal) {
 				this.deltaManager.inboundSignal.resume();
 			}
+		}
+	}
+
+	/**
+	 * This helper is called during summarization. If there are pending ops, it will return a failed summarize result
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * @param logger - The logger to be used for sending telemetry.
+	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
+	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
+	 * @param finalAttempt - Whether this is the final summary attempt.
+	 * @param beforeSummaryGeneration - Whether this is called before summary generation or after.
+	 * @returns failed summarize result (IBaseSummarizeResult) if summary should be failed, undefined otherwise.
+	 */
+	private async shouldFailSummaryOnPendingOps(
+		logger: ITelemetryLoggerExt,
+		referenceSequenceNumber: number,
+		minimumSequenceNumber: number,
+		finalAttempt: boolean,
+		beforeSummaryGeneration: boolean,
+	): Promise<IBaseSummarizeResult | undefined> {
+		if (!this.hasPendingMessages()) {
+			return;
+		}
+
+		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
+		// This is a fallback to make progress in documents where there are consistently pending ops in
+		// the summarizer.
+		if (
+			finalAttempt &&
+			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
+		) {
+			const error = DataProcessingError.create(
+				"Pending ops during summarization",
+				"submitSummary",
+				undefined,
+				{ pendingMessages: this.pendingMessagesCount },
+			);
+			logger.sendErrorEvent(
+				{
+					eventName: "SkipFailingIncorrectSummary",
+					referenceSequenceNumber,
+					minimumSequenceNumber,
+					beforeGenerate: beforeSummaryGeneration,
+				},
+				error,
+			);
+		} else {
+			// The retry delay when there are pending ops can be overridden via config so that we can adjust it
+			// based on telemetry while we decide on a stable number.
+			const retryDelayMs =
+				this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
+				defaultPendingOpsRetryDelayMs;
+			const error = new RetriableSummaryError(
+				"PendingOpsWhileSummarizing",
+				retryDelayMs / 1000,
+				{
+					count: this.pendingMessagesCount,
+					beforeGenerate: beforeSummaryGeneration,
+				},
+			);
+			return {
+				stage: "base",
+				referenceSequenceNumber,
+				minimumSequenceNumber,
+				error,
+			};
 		}
 	}
 
@@ -3651,6 +3720,8 @@ export class ContainerRuntime
 	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
+		// proposalHandle is always passed from RunningSummarizer.
+		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
@@ -3658,12 +3729,12 @@ export class ContainerRuntime
 		);
 
 		/**
-		 * When refreshing a summary ack, this check indicates a new ack of a summary that was newer than the
+		 * When refreshing a summary ack, this check indicates a new ack of a summary that is newer than the
 		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
 		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
-		if (result.latestSummaryUpdated && !result.wasSummaryTracked) {
+		if (!result.isSummaryTracked && result.isSummaryNewer) {
 			const fetchResult = await this.fetchSnapshotFromStorage(
 				summaryLogger,
 				{

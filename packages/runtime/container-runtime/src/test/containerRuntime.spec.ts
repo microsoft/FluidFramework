@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { createSandbox } from "sinon";
+import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
 import {
 	AttachState,
 	ContainerErrorType,
@@ -12,14 +12,20 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISummaryTree,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
 	FlushModeExperimental,
+	ISummaryTreeWithStats,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,
+	createChildLogger,
 	IConfigProviderBase,
 	isFluidError,
 	isILoggingError,
@@ -35,15 +41,18 @@ import {
 	FluidObject,
 	IGenericError,
 } from "@fluidframework/core-interfaces";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntime,
 	ContainerRuntimeMessage,
+	defaultPendingOpsWaitTimeoutMs,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
 import { IPendingMessageNew, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
+import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";
 
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -52,30 +61,69 @@ describe("Runtime", () => {
 
 	let submittedOps: any[] = [];
 	let opFakeSequenceNumber = 1;
+	let clock: SinonFakeTimers;
+
+	before(() => {
+		clock = useFakeTimers();
+	});
 
 	beforeEach(() => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
 	});
 
+	afterEach(() => {
+		clock.reset();
+	});
+
+	after(() => {
+		clock.restore();
+	});
+
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
 		logger = new MockLogger(),
-	): Partial<IContainerContext> => ({
-		attachState: AttachState.Attached,
-		deltaManager: new MockDeltaManager(),
-		quorum: new MockQuorumClients(),
-		taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
-		clientDetails: { capabilities: { interactive: true } },
-		closeFn: (_error?: ICriticalContainerError): void => {},
-		updateDirtyContainerState: (_dirty: boolean) => {},
-		getLoadedFromVersion: () => undefined,
-		submitFn: (_type: MessageType, contents: any, _batch: boolean, appData?: any) => {
-			submittedOps.push(contents);
-			return opFakeSequenceNumber++;
-		},
-		clientId: "fakeClientId",
-	});
+	): Partial<IContainerContext> => {
+		const mockClientId = "mockClientId";
+
+		// Mock the storage layer so "submitSummary" works.
+		const mockStorage: Partial<IDocumentStorageService> = {
+			uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
+				return "fakeHandle";
+			},
+		};
+		const mockContext = {
+			attachState: AttachState.Attached,
+			deltaManager: new MockDeltaManager(),
+			quorum: new MockQuorumClients(),
+			taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
+			clientDetails: { capabilities: { interactive: true } },
+			closeFn: (_error?: ICriticalContainerError): void => {},
+			updateDirtyContainerState: (_dirty: boolean) => {},
+			getLoadedFromVersion: () => undefined,
+			submitFn: (_type: MessageType, contents: any, _batch: boolean, appData?: any) => {
+				submittedOps.push(contents);
+				return opFakeSequenceNumber++;
+			},
+			clientId: mockClientId,
+			connected: true,
+			storage: mockStorage as IDocumentStorageService,
+		};
+
+		// Update the delta manager's last message which is used for validation during summarization.
+		mockContext.deltaManager.lastMessage = {
+			clientId: mockClientId,
+			type: MessageType.Operation,
+			sequenceNumber: 0,
+			timestamp: Date.now(),
+			minimumSequenceNumber: 0,
+			referenceSequenceNumber: 0,
+			clientSequenceNumber: 0,
+			contents: undefined,
+			term: undefined,
+		};
+		return mockContext;
+	};
 
 	describe("Container Runtime", () => {
 		describe("flushMode setting", () => {
@@ -1247,6 +1295,75 @@ describe("Runtime", () => {
 					"entryPoint does not match expected object",
 				);
 			});
+
+			// TODO: Remove this test in internal.7.0 when initializeEntryPoint becomes required AB#4992
+			it("loadRuntime only passed requestHandlers", async () => {
+				const myResponse: IResponse = {
+					mimeType: "fluid/object",
+					value: "hello!",
+					status: 200,
+				};
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					requestHandler: async (req, ctrRuntime) => myResponse,
+					existing: false,
+					registryEntries: [],
+				});
+
+				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				assert.deepEqual(
+					responseFromRequestMethod,
+					myResponse,
+					"request method in runtime did not return the expected object",
+				);
+
+				// The entryPoint should use the request handler we passed in the runtime's constructor
+				assert(containerRuntime.getEntryPoint !== undefined);
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				assert.notStrictEqual(
+					actualEntryPoint,
+					undefined,
+					"entryPoint was not the expected object",
+				);
+			});
+
+			it("loadRuntime accepts both requestHandlers and entryPoint", async () => {
+				const myResponse: IResponse = {
+					mimeType: "fluid/object",
+					value: "hello!",
+					status: 200,
+				};
+				const myEntryPoint: FluidObject = {
+					myProp: "myValue",
+				};
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					requestHandler: async (req, ctrRuntime) => myResponse,
+					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					existing: false,
+					registryEntries: [],
+				});
+
+				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				assert.deepEqual(
+					responseFromRequestMethod,
+					myResponse,
+					"request method in runtime did not return the expected object",
+				);
+
+				// The entryPoint should come from the provided initialization function.
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
+				assert.deepEqual(
+					actualEntryPoint,
+					myEntryPoint,
+					"entryPoint does not match expected object",
+				);
+			});
 		});
 
 		describe("Op content modification", () => {
@@ -1461,6 +1578,173 @@ describe("Runtime", () => {
 					{
 						eventName: "ContainerRuntime:FlushModeFallback",
 						category: "error",
+					},
+				]);
+			});
+		});
+
+		describe("Summarization", () => {
+			let containerRuntime: ContainerRuntime;
+
+			async function yieldEventLoop(): Promise<void> {
+				const yieldP = new Promise<void>((resolve) => {
+					setTimeout(resolve);
+				});
+				clock.tick(1);
+				await yieldP;
+			}
+
+			beforeEach(async () => {
+				const settings = {};
+				settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext(settings) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+				});
+			});
+
+			it("summary is submitted successfully", async () => {
+				const summarizeResult = await containerRuntime.submitSummary({
+					summaryLogger: createChildLogger(),
+					cancellationToken: neverCancelledSummaryToken,
+				});
+				assert(summarizeResult.stage === "submit", "Summary did not succeed");
+			});
+
+			it("summary fails if summary token is canceled", async () => {
+				const cancelledSummaryToken: ISummaryCancellationToken = {
+					cancelled: true,
+					waitCancelled: new Promise(() => {}),
+				};
+				const summarizeResult = await containerRuntime.submitSummary({
+					summaryLogger: createChildLogger(),
+					cancellationToken: cancelledSummaryToken,
+				});
+				assert(summarizeResult.stage === "base", "Summary did not fail");
+				assert.strictEqual(
+					summarizeResult.error,
+					"disconnected",
+					"Summary was not canceled",
+				);
+			});
+
+			it("summary fails before generate if there are pending ops", async () => {
+				// Submit an op and yield for it to be flushed from outbox to pending state manager.
+				containerRuntime.submitDataStoreOp("fakeId", "fakeContents");
+				await yieldEventLoop();
+
+				const summarizeResultP = containerRuntime.submitSummary({
+					summaryLogger: createChildLogger(),
+					cancellationToken: neverCancelledSummaryToken,
+				});
+
+				// Advance the clock by the time that container runtime would wait for pending ops to be processed.
+				clock.tick(defaultPendingOpsWaitTimeoutMs);
+				const summarizeResult = await summarizeResultP;
+				assert(summarizeResult.stage === "base", "Summary did not fail");
+				assert.strictEqual(
+					summarizeResult.error.message,
+					"PendingOpsWhileSummarizing",
+					"Summary did not fail with the right error",
+				);
+				assert.strictEqual(
+					summarizeResult.error.beforeGenerate,
+					true,
+					"It should have failed before generating summary",
+				);
+			});
+
+			it("summary fails after generate if there are pending ops", async () => {
+				// Patch the summarize function to submit messages during it. This way there will be pending
+				// messages after generating the summary.
+				const patch = (fn: (...args) => Promise<ISummaryTreeWithStats>) => {
+					const boundFn = fn.bind(containerRuntime);
+					return async (...args: any[]) => {
+						// Submit an op and yield for it to be flushed from outbox to pending state manager.
+						containerRuntime.submitDataStoreOp("fakeId", "fakeContents");
+						await yieldEventLoop();
+						return boundFn(...args);
+					};
+				};
+				containerRuntime.summarize = patch(containerRuntime.summarize);
+
+				const summarizeResult = await containerRuntime.submitSummary({
+					summaryLogger: createChildLogger(),
+					cancellationToken: neverCancelledSummaryToken,
+				});
+				assert(summarizeResult.stage === "base", "Summary did not fail");
+				assert.strictEqual(
+					summarizeResult.error.message,
+					"PendingOpsWhileSummarizing",
+					"Summary did not fail with the right error",
+				);
+				assert.strictEqual(
+					summarizeResult.error.beforeGenerate,
+					false,
+					"It should have failed after generating summary",
+				);
+			});
+
+			it("summary passes if pending ops are processed during pending op processing timeout", async () => {
+				// Create a container runtime type where the submit method is public. This makes it easier to test
+				// submission and processing of ops. The other option is to send data store or alias ops whose
+				// processing requires creation of data store context and runtime as well.
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: ContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+				const containerRuntimeWithSubmit =
+					containerRuntime as unknown as ContainerRuntimeWithSubmit;
+				// Submit a rejoin op and yield for it to be flushed from outbox to pending state manager.
+				containerRuntimeWithSubmit.submit(
+					{
+						type: ContainerMessageType.Rejoin,
+						contents: "something",
+					},
+					undefined,
+					undefined,
+				);
+				await yieldEventLoop();
+
+				// Create a mock logger to validate that pending ops event is generated with correct params.
+				const mockLogger = new MockLogger();
+				const summaryLogger = createChildLogger({ logger: mockLogger });
+				const summarizeResultP = containerRuntime.submitSummary({
+					summaryLogger,
+					cancellationToken: neverCancelledSummaryToken,
+				});
+
+				// Advance the clock by 1 ms less than the time waited for pending ops to be processed. This will allow
+				// summarization to proceed far enough to wait for pending ops.
+				clock.tick(defaultPendingOpsWaitTimeoutMs - 1);
+				// Process the rejoin op so that there are no pending ops.
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: "fakeClientId",
+						sequenceNumber: 0,
+						contents: {
+							type: ContainerMessageType.Rejoin,
+							contents: "something",
+						},
+					} as any as ISequencedDocumentMessage,
+					true /* local */,
+				);
+				// Advance the clock by the remaining time so that pending ops wait is completed.
+				clock.tick(1);
+
+				const summarizeResult = await summarizeResultP;
+				assert(summarizeResult.stage === "submit", "Summary did not succeed");
+				mockLogger.assertMatch([
+					{
+						eventName: "PendingOpsWhileSummarizing",
+						countBefore: 1,
+						countAfter: 0,
+						saved: true,
 					},
 				]);
 			});

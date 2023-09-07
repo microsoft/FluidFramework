@@ -169,14 +169,16 @@ export class TscTask extends LeafTask {
 		const tscUtils = this.getTscUtils();
 		// Patch relative path based on the file directory where the config comes from
 		const configOptions = tscUtils.filterIncrementalOptions(
-			tscUtils.convertToOptionsWithAbsolutePath(
+			tscUtils.convertOptionPaths(
 				options.options,
 				path.dirname(configFileFullPath),
+				path.resolve,
 			),
 		);
-		const tsBuildInfoOptions = tscUtils.convertToOptionsWithAbsolutePath(
+		const tsBuildInfoOptions = tscUtils.convertOptionPaths(
 			tsBuildInfo.program.options,
 			tsBuildInfoFileDirectory,
+			path.resolve,
 		);
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
@@ -212,9 +214,10 @@ export class TscTask extends LeafTask {
 			}
 
 			// Fix up relative path from the command line based on the package directory
-			const commandOptions = tscUtils.convertToOptionsWithAbsolutePath(
+			const commandOptions = tscUtils.convertOptionPaths(
 				parsedCommand.options,
 				this.node.pkg.directory,
+				path.resolve,
 			);
 
 			// Parse the config file relative to the config file directory
@@ -351,11 +354,16 @@ export class TscTask extends LeafTask {
 					const tsBuildInfo = JSON.parse(
 						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
 					);
-					if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
+					if (
+						tsBuildInfo.program &&
+						tsBuildInfo.program.fileNames &&
+						tsBuildInfo.program.fileInfos &&
+						tsBuildInfo.program.options
+					) {
 						this._tsBuildInfo = tsBuildInfo;
 					} else {
 						verbose(
-							`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`,
+							`${this.node.pkg.nameColored}: Invalid format ${tsBuildInfoFileFullPath}`,
 						);
 					}
 				} catch {
@@ -372,6 +380,36 @@ export class TscTask extends LeafTask {
 
 	protected async markExecDone() {
 		this._tsBuildInfo = undefined;
+
+		const config = this.readTsConfig();
+		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+		const configFileFullPath = this.configFileFullPath;
+
+		// If there are no input, tsc doesn't update the build info file.  Do it manually so we use it for
+		// incremental build
+		if (tsBuildInfoFileFullPath && configFileFullPath && config?.fileNames.length === 0) {
+			const tscUtils = this.getTscUtils();
+			// Patch relative path based on the file directory where the config comes from
+			const options = tscUtils.filterIncrementalOptions(
+				tscUtils.convertOptionPaths(
+					config.options,
+					path.dirname(tsBuildInfoFileFullPath),
+					path.relative,
+				),
+			);
+			const dir = path.dirname(tsBuildInfoFileFullPath);
+			if (!existsSync(dir)) {
+				await fs.promises.mkdir(dir, { recursive: true });
+			}
+			await fs.promises.writeFile(
+				tsBuildInfoFileFullPath,
+				JSON.stringify({
+					program: { fileNames: [], fileInfos: [], options },
+					version: tscUtils.tsLib.version,
+				}),
+				"utf8",
+			);
+		}
 	}
 
 	protected get useWorker() {

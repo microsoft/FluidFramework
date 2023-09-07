@@ -10,7 +10,6 @@ import {
 	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
@@ -18,6 +17,7 @@ import {
 	rootFieldKey,
 	TaggedChange,
 	UpPath,
+	applyDelta,
 } from "../../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../../domains";
 import {
@@ -108,8 +108,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
-	const schema = new InMemoryStoredSchemaRepository();
-	const forest = buildForest(schema);
+	const forest = buildForest();
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
@@ -120,7 +119,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		changes.push({ revision: currentRevision, change });
 		const delta = defaultChangeFamily.intoDelta(change);
 		deltas.push(delta);
-		forest.applyDelta(delta);
+		applyDelta(delta, forest);
 		currentRevision = mintRevisionTag();
 	});
 	return {

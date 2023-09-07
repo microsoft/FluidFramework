@@ -5,7 +5,8 @@
 
 import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,

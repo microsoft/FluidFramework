@@ -124,7 +124,7 @@ function accessEmitters(forest: IEditableForest, ...steps: [PathStep, ...PathSte
 
 function retrieveAddressNode() {
 	const forest = setupForest(fullSchemaData, personData);
-	const context = getReadonlyEditableTreeContext(forest);
+	const context = getReadonlyEditableTreeContext(forest, fullSchemaData);
 	const root = context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
 	return { address, forest };

@@ -9,10 +9,10 @@ import {
 	FieldKey,
 	mintRevisionTag,
 	initializeForest,
-	InMemoryStoredSchemaRepository,
 	RevisionTag,
 	rootFieldKey,
 	UpPath,
+	applyDelta,
 } from "../../core";
 import { jsonNumber, jsonObject } from "../../domains";
 import {
@@ -36,8 +36,7 @@ const root: UpPath = {
 
 describe("ForestRepairDataStore", () => {
 	it("Captures deleted nodes", () => {
-		const schema = new InMemoryStoredSchemaRepository();
-		const forest = buildForest(schema);
+		const forest = buildForest();
 		const store = new ForestRepairDataStore(forest, mockIntoDelta);
 		const capture1 = [
 			{ type: jsonNumber.name, value: 1 },
@@ -82,7 +81,7 @@ describe("ForestRepairDataStore", () => {
 			],
 		]);
 		store.capture(delta1, revision1);
-		forest.applyDelta(delta1);
+		applyDelta(delta1, forest);
 		const delta2 = new Map([
 			[
 				rootFieldKey,
