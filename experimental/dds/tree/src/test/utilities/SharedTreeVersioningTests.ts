@@ -398,6 +398,7 @@ export function runSharedTreeVersioningTests(
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_1_1,
 				testObjectProvider,
+				// To be removed ADO:5464
 				featureGates: {
 					'Fluid.Loader.ForceWriteConnection': true,
 				},
@@ -490,6 +491,7 @@ export function runSharedTreeVersioningTests(
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_1_1,
 				testObjectProvider,
+				// To be removed ADO:5464
 				featureGates: {
 					'Fluid.Loader.ForceWriteConnection': true,
 				},

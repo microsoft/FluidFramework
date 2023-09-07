@@ -50,6 +50,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
 		new DemoCodeLoader(testMode),
 		undefined, // logger
+		// To be removed ADO:5465
 		configProvider({ "Fluid.Loader.ForceWriteConnection": true }),
 	);
 	let id: string;
