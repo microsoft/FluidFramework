@@ -607,7 +607,7 @@ function getSlideToSegment(
 /**
  * Returns the position to slide a reference to if a slide is required.
  * @param segoff - The segment and offset to slide from
- * @returns - segment and offset to slide the reference to
+ * @returns segment and offset to slide the reference to
  * @internal
  */
 export function getSlideToSegoff(
@@ -921,13 +921,17 @@ export class MergeTree {
 	 * preference. Relative order between references that slide backward and those
 	 * that slide forward is not preserved, even in the case when they slide to
 	 * the same segment.
-	 * @remarks -
+	 *
+	 * @remarks
+	 *
 	 * 1. Preserving the order of the references is a useful property for reference-based undo/redo
 	 * (see revertibles.ts).
+	 *
 	 * 2. For use cases which necessitate eventual consistency across clients,
 	 * this method should only be called with segments for which the current client sequence number is
 	 * max(remove segment sequence number, add reference sequence number).
 	 * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
+	 *
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
