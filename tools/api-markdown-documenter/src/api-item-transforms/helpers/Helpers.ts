@@ -581,6 +581,7 @@ export function createExampleSection(
 	// This information is not provided to us directly, so instead we will walk the content tree
 	// and see if the first leaf node is plain text. If it is, we will use that as the title (header).
 	// If not (undefined), we will use the default heading scheme.
+	// Reference: <https://tsdoc.org/pages/tags/example/>
 	const exampleTitle = extractTitleFromExampleSection(example.content);
 
 	const headingTitle =
