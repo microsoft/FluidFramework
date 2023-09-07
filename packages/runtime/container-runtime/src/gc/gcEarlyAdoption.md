@@ -89,12 +89,14 @@ Note: The Summarizer client will _never_ throw on usage or load of a Tombstoned 
 
 ## Enabling Sweep
 
-The following configuration is required for Sweep to be enabled for a given document:
+To enable Sweep for the first time, set this GC Option:
 
--   GC Option `gcSweepGeneration` must be set, and the persisted value must match the current value in the code
--   Each of these two Config Settings must be set to `true` in the session:
-    -   `Fluid.GarbageCollection.Test.SweepDataStores`
-    -   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
+```ts
+gcSweepGeneration: 0
+```
+
+The exception would be if you ever bumped `gcTombstoneGeneration` - in that case, set `gcSweepGeneration` to `1` or higher.
+This will enable Sweep for any document with matching `gcSweepGeneration` (and if `0`, any document with `gcTombstoneGeneration: 0` too).
 
 ### Differences between gcSweepGeneration and gcTombstoneGeneration
 
@@ -114,8 +116,8 @@ be eligible for Sweep as well. This was done for historical reasons due to circu
 ## More Advanced Configurations
 
 There are a handful of other configuration options/settings that can be used to tweak GC's behavior,
-mostly for testing. Please refer to the function [`generateGCConfigs` in gcConfigs.ts](.\gcConfigs.ts)
-for the full story.
+mostly for testing. Please refer to the function [`generateGCConfigs` in gcConfigs.ts](./gcConfigs.ts) and the
+[setting/option names listed in gcDefinitions.ts](./gcDefinitions.ts) for the full story.
 
 Examples of available advanced configuration include:
 
@@ -124,6 +126,7 @@ Examples of available advanced configuration include:
     -   Disabling running GC Mark and/or Sweep phases for this session
     -   Forcing GC Mark and/or Sweep to run for this session even if otherwise it would be disabled
     -   Disabling Tombstone Mode (don't even mark objects as Tombstones)
+    -   Disabling the deletion of either DataStores or AttachmentBlobs independent of one another (when Sweep is enabled)
 -   Overriding the default Session Expiry for new files (or disabling it altogether, which will also disable Tombstone/Sweep)
 -   Overriding the Sweep Timeout, _independent of Session Expiry_, so use with care (for testing purposes only - data loss could occur)
 -   Running in "Test Mode", where objects are deleted as soon as they're unreferenced

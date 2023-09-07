@@ -98,11 +98,6 @@ To enable Sweep Phase for new documents, you must set the `gcSweepGeneration` GC
 The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#differences-between-gcsweepgeneration-and-gctombstonegeneration).
 Note that this will disabled Tombstone Mode.
 
-Additionally, you must set these two Config Settings to `true` in the session to allow the nodes to be deleted:
-
--   `Fluid.GarbageCollection.Test.SweepDataStores`
--   `Fluid.GarbageCollection.Test.SweepAttachmentBlobs`
-
 A full treatment of Tombstone and Sweep configuration can be found in
 [this companion document geared towards early adopters of GC](./gcEarlyAdoption.md).
 

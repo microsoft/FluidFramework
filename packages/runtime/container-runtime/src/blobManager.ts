@@ -759,7 +759,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) !== true) {
+		if (this.mc.config.getBoolean(sweepAttachmentBlobsKey) === false) {
 			return [];
 		}
 
