@@ -134,6 +134,7 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * Fluid object so that it can create a shared object for each.
  *
  * @example
+ *
  * The following will create a Fluid object that creates and loads a SharedString and SharedDirectory.
  * It will add SparseMatrix to the data store's factory so that it can be created later.
  *

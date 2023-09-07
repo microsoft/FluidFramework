@@ -317,6 +317,7 @@ export type HookFunction = () => void | Promise<unknown>;
  * Note that this approach is slightly misleading in the data it measures: if this library chooses a cycle size of 10k,
  * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
  * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
+ *
  * @example
  *
  * ```typescript

@@ -317,6 +317,7 @@ export class DirectoryFactory implements IChannelFactory {
  * {@inheritDoc ISharedDirectory}
  *
  * @example
+ *
  * ```typescript
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");

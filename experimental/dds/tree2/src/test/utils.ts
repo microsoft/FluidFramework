@@ -203,7 +203,8 @@ export class TestTreeProvider {
 	 * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 *
 	 * @example
-	 * ```ts
+	 *
+	 * ```typescript
 	 * const provider = await TestTreeProvider.create(2);
 	 * assert(provider.trees[0].isAttached());
 	 * assert(provider.trees[1].isAttached());
@@ -350,7 +351,8 @@ export class TestTreeProviderLite {
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 *
 	 * @example
-	 * ```ts
+	 *
+	 * ```typescript
 	 * const provider = new TestTreeProviderLite(2);
 	 * assert(provider.trees[0].isAttached());
 	 * assert(provider.trees[1].isAttached());

@@ -119,8 +119,11 @@ function getSaveInfo(
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
  *
+ * @remarks
+ *
  * Typical DDSes will parameterize this with their SharedObject factory and a serializable set
  * of operations corresponding to valid edits in the DDS's public API.
+ *
  * @example
  * A simplified SharedString data structure exposing the APIs `insertAt(index, contentString)` and `removeRange(start, end)`
  * might represent their API with the following operations:
@@ -332,11 +335,14 @@ export interface DDSFuzzSuiteOptions {
 
 	/**
 	 * Runs only the provided seeds.
+	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * // Runs only seed 42 for the given model.
 	 * createDDSFuzzSuite(model, { only: [42] });
 	 * ```
+	 *
 	 * @remarks
 	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}.
 	 */
@@ -344,11 +350,14 @@ export interface DDSFuzzSuiteOptions {
 
 	/**
 	 * Skips the provided seeds.
+	 *
 	 * @example
+	 *
 	 * ```typescript
 	 * // Skips seed 42 for the given model.
 	 * createDDSFuzzSuite(model, { skip: [42] });
 	 * ```
+	 *
 	 * @remarks
 	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link createDDSFuzzSuite.skip}.
 	 */
@@ -1055,7 +1064,9 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 
 /**
  * Runs only the provided seeds.
+ *
  * @example
+ *
  * ```typescript
  * // Runs only seed 42 for the given model.
  * createDDSFuzzSuite.only(42)(model);
@@ -1074,7 +1085,9 @@ createDDSFuzzSuite.only =
 
 /**
  * Skips the provided seeds.
+ *
  * @example
+ *
  * ```typescript
  * // Skips seed 42 for the given model.
  * createDDSFuzzSuite.skip(42)(model);

@@ -2076,7 +2076,9 @@ export namespace Utils {
 	 * The final ChangeSet will only include the paths in question starting from the root of
 	 * the ChangeSet.
 	 *
-	 * @example Given the following change set:
+	 * @example
+	 *
+	 * Given the following change set:
 	 *
 	 * ```json
 	 * 'insert': {
@@ -2383,7 +2385,9 @@ export namespace Utils {
 	 * The final ChangeSet will exclude the paths in question starting from the root of
 	 * the ChangeSet.
 	 *
-	 * @example Given the following change set:
+	 * @example
+	 *
+	 * Given the following change set:
 	 *
 	 * ```json
 	 * 'insert': {
