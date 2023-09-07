@@ -519,7 +519,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	 * @param before - set of instructions to run before running the action.
 	 * @param action - action to perform.
 	 * @param after - set of instructions to run after running the action.
-	 * @returns - result of action.
+	 * @returns result of action.
 	 */
 	private async lockedSummaryAction<T>(
 		before: () => void,

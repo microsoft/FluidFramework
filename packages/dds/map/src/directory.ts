@@ -753,7 +753,7 @@ export class SharedDirectory
 	/**
 	 * This checks if there is pending delete op for local delete for a any subdir in the relative path.
 	 * @param relativePath - path of sub directory.
-	 * @returns - true if there is pending delete.
+	 * @returns `true` if there is pending delete, `false` otherwise.
 	 */
 	private isSubDirectoryDeletePending(relativePath: string): boolean {
 		const absolutePath = this.makeAbsolute(relativePath);
@@ -1352,7 +1352,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * This checks if there is pending delete op for local delete for a given child subdirectory.
 	 * @param subDirName - directory name.
-	 * @returns - true if there is pending delete.
+	 * @returns true if there is pending delete.
 	 */
 	public isSubDirectoryDeletePending(subDirName: string): boolean {
 		if (this.pendingDeleteSubDirectoriesTracker.has(subDirName)) {
@@ -2351,7 +2351,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param seq - Sequence number at which this directory is created
 	 * @param clientId - Id of client which created this directory.
-	 * @returns - True if is newly created, false if it already existed.
+	 * @returns True if is newly created, false if it already existed.
 	 */
 	private createSubDirectoryCore(
 		subdirName: string,

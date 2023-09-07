@@ -108,7 +108,7 @@ export interface IEmitter<E extends Events<E>> {
 	 * For the majority of use-cases it is recommended to use the standard {@link IEmitter.emit} functionality.
 	 * @param eventName - the name of the event to fire
 	 * @param args - the arguments passed to the event listener functions
-	 * @returns - An array of the return values of each listener, preserving the order listeners were called.
+	 * @returns An array of the return values of each listener, preserving the order listeners were called.
 	 */
 	emitAndCollect<K extends keyof Events<E>>(
 		eventName: K,

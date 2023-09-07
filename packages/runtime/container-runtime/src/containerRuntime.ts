@@ -2434,8 +2434,8 @@ export class ContainerRuntime
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
 	 * @param alias - The alias for the data store.
-	 * @returns - The data store's entry point (IFluidHandle) if it exists and is aliased. Returns undefined if no
-	 * data store has been assigned the given alias.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
 	 */
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
@@ -2797,7 +2797,7 @@ export class ContainerRuntime
 	/**
 	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
-	 * @returns - The routes of nodes that were deleted.
+	 * @returns The routes of nodes that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[] {
 		const { dataStoreRoutes, blobManagerRoutes } =
@@ -2868,7 +2868,7 @@ export class ContainerRuntime
 	/**
 	 * From a given list of routes, separate and return routes that belong to blob manager and data stores.
 	 * @param routes - A list of routes that can belong to data stores or blob manager.
-	 * @returns - Two route lists - One that contains routes for blob manager and another one that contains routes
+	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
 	 * for data stores.
 	 */
 	private getDataStoreAndBlobManagerRoutes(routes: string[]) {

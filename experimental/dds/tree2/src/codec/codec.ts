@@ -35,7 +35,7 @@ export interface IDecoder<TDecoded, TEncoded> {
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
-	 * @returns - Whether the data matches a schema.
+	 * @returns Whether the data matches a schema.
 	 */
 	check(data: unknown): data is Static<Schema>;
 }
@@ -131,7 +131,7 @@ export interface IMultiFormatCodec<
  */
 export interface ICodecFamily<TDecoded> {
 	/**
-	 * @returns - a codec that can be used to encode and decode data in the specified format.
+	 * @returns a codec that can be used to encode and decode data in the specified format.
 	 * @throws - if the format version is not supported by this family.
 	 * @remarks Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
 	 * logged properties or directly using some logger) when a format version is requested that is not supported.
@@ -140,7 +140,7 @@ export interface ICodecFamily<TDecoded> {
 	resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 
 	/**
-	 * @returns - an iterable of all format versions supported by this family.
+	 * @returns an iterable of all format versions supported by this family.
 	 */
 	getSupportedFormats(): Iterable<number>;
 }

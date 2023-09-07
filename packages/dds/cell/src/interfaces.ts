@@ -80,7 +80,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 	/**
 	 * Retrieves the cell value.
 	 *
-	 * @returns - the value of the cell
+	 * @returns The value of the cell
 	 */
 	get(): Serializable<T> | undefined;
 
@@ -94,7 +94,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 	/**
 	 * Checks whether cell is empty or not.
 	 *
-	 * @returns - `true` if the value of cell is `undefined`, `false` otherwise
+	 * @returns `true` if the value of cell is `undefined`, `false` otherwise
 	 */
 	empty(): boolean;
 

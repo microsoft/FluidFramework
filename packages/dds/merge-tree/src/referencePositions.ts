@@ -56,7 +56,7 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
  */
 export interface ReferencePosition {
 	/**
-	 * @returns - Properties associated with this reference
+	 * @returns Properties associated with this reference
 	 */
 	properties?: PropertySet;
 

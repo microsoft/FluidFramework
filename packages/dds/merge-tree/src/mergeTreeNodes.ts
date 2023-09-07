@@ -208,7 +208,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 *
 	 * @param segmentGroup - Pending segment group associated with this op.
 	 * @param opArgs - Information about the op that was acked
-	 * @returns - true if the op modifies the segment, otherwise false.
+	 * @returns `true` if the op modifies the segment, otherwise `false`.
 	 * The only current false case is overlapping remove, where a segment is removed
 	 * by a previously sequenced operation before the current operation is acked.
 	 * @throws - error if the segment state doesn't match segment group or op.

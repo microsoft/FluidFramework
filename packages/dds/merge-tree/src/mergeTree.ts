@@ -607,7 +607,7 @@ function getSlideToSegment(
 /**
  * Returns the position to slide a reference to if a slide is required.
  * @param segoff - The segment and offset to slide from
- * @returns - segment and offset to slide the reference to
+ * @returns segment and offset to slide the reference to
  * @internal
  */
 export function getSlideToSegoff(
