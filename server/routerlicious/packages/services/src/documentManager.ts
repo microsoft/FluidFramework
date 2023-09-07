@@ -26,9 +26,13 @@ export class DocumentManager implements IDocumentManager {
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
 	) {
+		// TODO: Eventually replace the static documentStaticDataCache field with a passed in value, to not have to initialize it here
+		// This can be done once the unified RedisCache/ICache implementation is made, the issue right now is that different RedisCache objects
+		// could be passed in, which would mean different headers and therefore multiple static document caches could exist at once.
+		// The unified RedisCache implementation will have more flexibility around headers, which will help fix this issue.
+
 		// If a redis cache does not yet exist, create one to populate the static field
 		if (!DocumentManager.documentStaticDataCache) {
-			// TODO: Possibly grab this from a config
 			const redisConfig: Redis.RedisOptions = {
 				host: "redis",
 				port: 6379,
