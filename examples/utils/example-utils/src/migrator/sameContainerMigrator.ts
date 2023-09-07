@@ -79,7 +79,14 @@ export class SameContainerMigrator
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
 		this._currentModel.migrationTool.setContainerRef(this._currentModel.container);
-		this.ensureMigration();
+		this.monitorMigration()
+			.then(() => {
+				console.log("done!");
+			})
+			.catch((e) => {
+				// TODO: error handling/retry
+				console.error(e);
+			});
 	}
 
 	private readonly prepareMigration = async () => {
@@ -250,40 +257,25 @@ export class SameContainerMigrator
 		await this._migratedLoadP;
 	};
 
-	private readonly ensureMigration = () => {
-		const overseeStages = async () => {
-			if (this._preparedDetachedModel === undefined) {
-				console.log("Preparing...");
-				await this.prepareMigration();
-			}
-
-			console.log("Completing...");
-			await this.completeMigration();
-
-			console.log("Loading...");
-			await this.loadMigration();
-		};
-
+	private readonly monitorMigration = async () => {
 		if (!this.currentModel.connected()) {
-			this.currentModel.once("connected", () => {
-				this.ensureMigration();
-			});
-			return;
+			await new Promise<void>((resolve) => this.currentModel.once("connected", resolve));
 		}
 		if (this.currentModel.migrationTool.migrationState !== "readyForMigration") {
-			this.currentModel.migrationTool.once("readyForMigration", () => {
-				this.ensureMigration();
-			});
-			return;
+			await new Promise<void>((resolve) =>
+				this.currentModel.migrationTool.once("readyForMigration", resolve),
+			);
 		}
 
-		overseeStages()
-			.then(() => {
-				console.log("done!");
-			})
-			.catch((e) => {
-				// TODO: error handling/retry
-				console.error(e);
-			});
+		if (this._preparedDetachedModel === undefined) {
+			console.log("Preparing...");
+			await this.prepareMigration();
+		}
+
+		console.log("Completing...");
+		await this.completeMigration();
+
+		console.log("Loading...");
+		await this.loadMigration();
 	};
 }
