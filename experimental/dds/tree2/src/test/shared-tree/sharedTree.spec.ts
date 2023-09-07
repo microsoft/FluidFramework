@@ -685,7 +685,6 @@ describe("SharedTree", () => {
 			insert(tree1, 0, "tree1");
 			provider.processMessages();
 
-			// TODO: older versions of this test expected the revers order here, but its unclear why.
 			validateRootField(tree1, ["tree1", "tree2"]);
 
 			// Make a remote edit
@@ -1962,7 +1961,7 @@ function getTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
 }
 
 /**
- * Reads all values in a tree set by {@link insertFirstNode} in the order they were added.
+ * Reads all values in a tree set by {@link insertFirstNode} in the order they were added (which is the reverse of the tree order).
  */
 function getTestValues({ forest }: ISharedTreeView): TreeValue[] {
 	const readCursor = forest.allocateCursor();
