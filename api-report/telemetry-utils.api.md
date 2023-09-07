@@ -348,17 +348,30 @@ export class SampledTelemetryHelper implements IDisposable {
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
-// @public (undocumented)
-export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyTypeExt>>(values: T) => { [P in keyof T]: {
+// @public
+export function tagCodeArtifacts<T extends Record<string, TelemetryEventPropertyType>>(values: T): {
+    [P in keyof T]: {
         value: Exclude<T[P], undefined>;
         tag: TelemetryDataTag.CodeArtifact;
-    } | (T[P] extends undefined ? undefined : never); };
+    } | (T[P] extends undefined ? undefined : never);
+};
 
 // @public (undocumented)
-export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyTypeExt>>(tag: T, values: V) => { [P in keyof V]: {
-        value: Exclude<V[P], undefined>;
+export function tagCodeArtifacts<T extends TelemetryEventPropertyType, V extends Record<string, () => T>>(values: V): {
+    [P in keyof V]: (() => {
+        value: Exclude<T, undefined>;
+        tag: TelemetryDataTag.CodeArtifact;
+    }) | (V[P] extends undefined ? undefined : never);
+};
+
+// @public (undocumented)
+export const tagData: <T extends TelemetryDataTag, U extends TelemetryEventPropertyType, V extends Record<string, U | (() => U)>>(tag: T, values: V) => { [P in keyof V]: {
+        value: Exclude<U, undefined>;
         tag: T;
-    } | (V[P] extends undefined ? undefined : never); };
+    } | (() => {
+        value: Exclude<U, undefined>;
+        tag: T;
+    }) | (V[P] extends undefined ? undefined : never); };
 
 // @public @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {

@@ -784,16 +784,21 @@ function convertToBasePropertyTypeUntagged(
 
 export const tagData = <
 	T extends TelemetryDataTag,
-	V extends Record<string, TelemetryEventPropertyTypeExt>,
+	U extends TelemetryEventPropertyType,
+	V extends Record<string, U | (() => U)>,
 >(
 	tag: T,
 	values: V,
 ): {
 	[P in keyof V]:
 		| {
-				value: Exclude<V[P], undefined>;
+				value: Exclude<U, undefined>;
 				tag: T;
 		  }
+		| (() => {
+				value: Exclude<U, undefined>;
+				tag: T;
+		  })
 		| (V[P] extends undefined ? undefined : never);
 } =>
 	(Object.entries(values) as [keyof V, V[keyof V]][])
@@ -801,15 +806,33 @@ export const tagData = <
 		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce<{
 			[P in keyof V]:
-				| (V[P] extends undefined ? undefined : never)
-				| { value: Exclude<V[P], undefined>; tag: T };
+				| {
+						value: Exclude<U, undefined>;
+						tag: T;
+				  }
+				| (() => {
+						value: Exclude<U, undefined>;
+						tag: T;
+				  })
+				| (V[P] extends undefined ? undefined : never);
 		}>((pv, cv) => {
-			pv[cv[0]] = { tag, value: cv[1] };
+			if (typeof cv[1] === "function") {
+				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+				pv[cv[0]] = () => {
+					return { tag, value: (cv[1] as () => Exclude<U, undefined>)() };
+				};
+			} else {
+				pv[cv[0]] = { tag, value: cv[1] as Exclude<U, undefined> };
+			}
 			return pv;
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 		}, {} as any);
 
-export const tagCodeArtifacts = <T extends Record<string, TelemetryEventPropertyTypeExt>>(
+/**
+ * Helper functions to tag telemetry properties as CodeArtifacts. These functions support properties of type
+ * TelemetryEventPropertyType as well as getters that return TelemetryEventPropertyType.
+ */
+export function tagCodeArtifacts<T extends Record<string, TelemetryEventPropertyType>>(
 	values: T,
 ): {
 	[P in keyof T]:
@@ -818,4 +841,36 @@ export const tagCodeArtifacts = <T extends Record<string, TelemetryEventProperty
 				tag: TelemetryDataTag.CodeArtifact;
 		  }
 		| (T[P] extends undefined ? undefined : never);
-} => tagData(TelemetryDataTag.CodeArtifact, values);
+};
+export function tagCodeArtifacts<
+	T extends TelemetryEventPropertyType,
+	V extends Record<string, () => T>,
+>(
+	values: V,
+): {
+	[P in keyof V]:
+		| (() => {
+				value: Exclude<T, undefined>;
+				tag: TelemetryDataTag.CodeArtifact;
+		  })
+		| (V[P] extends undefined ? undefined : never);
+};
+export function tagCodeArtifacts<
+	T extends TelemetryEventPropertyType,
+	V extends Record<string, T | (() => T)>,
+>(
+	values: V,
+): {
+	[P in keyof V]:
+		| {
+				value: Exclude<T, undefined>;
+				tag: TelemetryDataTag.CodeArtifact;
+		  }
+		| (() => {
+				value: Exclude<T, undefined>;
+				tag: TelemetryDataTag.CodeArtifact;
+		  })
+		| (V[P] extends undefined ? undefined : never);
+} {
+	return tagData(TelemetryDataTag.CodeArtifact, values);
+}
