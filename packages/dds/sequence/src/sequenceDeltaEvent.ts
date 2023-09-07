@@ -147,7 +147,7 @@ export interface ISequenceDeltaRange<
 > {
 	/**
 	 * The type of operation that changed this range.
-	 * @remarks - Consuming code should typically compare this to the enum values defined in
+	 * @remarks Consuming code should typically compare this to the enum values defined in
 	 * `MergeTreeDeltaOperationTypes`.
 	 */
 	operation: TOperation;
@@ -163,7 +163,7 @@ export interface ISequenceDeltaRange<
 	 * Deltas object which contains all modified properties with their previous values.
 	 * Since `undefined` doesn't survive a round-trip through JSON serialization, the old value being absent
 	 * is instead encoded with `null`.
-	 * @remarks - This object is motivated by undo/redo scenarios, and provides a convenient "inverse op" to apply to
+	 * @remarks This object is motivated by undo/redo scenarios, and provides a convenient "inverse op" to apply to
 	 * undo a property change.
 	 * @example - If a segment initially had properties `{ foo: "1", bar: 2 }` and it was annotated with
 	 * `{ foo: 3, baz: 5 }`, the corresponding event would have a `propertyDeltas` of `{ foo: "1", baz: null }`.

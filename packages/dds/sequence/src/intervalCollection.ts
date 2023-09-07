@@ -612,7 +612,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * All intervals which are part of this collection will be added to the index, and the index will automatically
 	 * be updated when this collection updates due to local or remote changes.
 	 *
-	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * @remarks After attaching an index to an interval collection, applications should typically store this
 	 * index somewhere in their in-memory data model for future reference and querying.
 	 */
 	attachIndex(index: IntervalIndex<TInterval>): void;
@@ -637,7 +637,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param props - properties of the interval
 	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
 	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
+	 * @remarks See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
 	 */
 	add(

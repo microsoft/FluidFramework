@@ -147,10 +147,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	 *
 	 * @alpha
 	 *
-	 * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
+	 * @remarks There are plans to make the shape of the data stored extensible in a couple ways:
 	 *
 	 * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
 	 * content but keeping the old attribution information).
+	 *
 	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
 	 * or only attribute certain property modifications, etc.)
 	 */

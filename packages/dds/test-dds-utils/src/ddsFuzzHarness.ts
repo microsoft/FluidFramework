@@ -233,14 +233,14 @@ export interface DDSFuzzSuiteOptions {
 	 *
 	 * This option is useful for testing eventual consistency bugs related to summarization.
 	 *
-	 * @remarks - Even without enabling this option, DDS fuzz models can generate {@link AddClient}
+	 * @remarks Even without enabling this option, DDS fuzz models can generate {@link AddClient}
 	 * operations with whatever strategy is appropriate.
 	 * This is useful for nudging test cases towards a particular pattern of clients joining.
 	 */
 	clientJoinOptions?: {
 		/**
 		 * The maximum number of clients that will ever be added to the test.
-		 * @remarks - Due to current mock limitations, clients will only ever be added to the collaboration session,
+		 * @remarks Due to current mock limitations, clients will only ever be added to the collaboration session,
 		 * not removed.
 		 * Adding an excessive number of clients may cause performance issues.
 		 */
@@ -718,7 +718,7 @@ const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clien
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
  * and {@link DDSFuzzTestState.channel}.
  *
- * @remarks - This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
+ * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
