@@ -171,8 +171,14 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			// temporary workaround to disable message batching until the message batch size issue is resolved
 			// resolution progress is tracked by the Feature 465 work item in AzDO
 			runtimeOptions: { flushMode: FlushMode.Immediate },
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
+			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
+					rootDataStoreId,
+				);
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
 			},
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;

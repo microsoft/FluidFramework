@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { DirectoryFactory } from "@fluidframework/map";
 import { SharedStringFactory } from "@fluidframework/sequence";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}
@@ -22,8 +23,12 @@ export function apisToBundle() {
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
 		registryEntries: [["BundleTestDo", Promise.resolve(defaultFactory)]],
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
+		initializeEntryPoint: async (runtime: IContainerRuntime) => {
+			const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			return entryPoint.get();
 		},
 	});
 }

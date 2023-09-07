@@ -11,10 +11,14 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return (await runtime.getAliasedDataStoreEntryPoint?.("default"))!.get();
+	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new UsageError("default dataStore must exist");
+	}
+	return entryPoint.get();
 };
 
 export const createTestContainerRuntimeFactoryWithDefaultDataStore = (

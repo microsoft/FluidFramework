@@ -18,9 +18,9 @@ describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
 	let sharedObjectRegistry: ISharedObjectRegistry;
 	const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
-		new FluidDataStoreRuntime(context, registry, /* existing */ false, () => {
-			throw new Error("TODO");
-		});
+		new FluidDataStoreRuntime(context, registry, /* existing */ false, async () => ({
+			myProp: "myValue",
+		}));
 
 	beforeEach(() => {
 		dataStoreContext = new MockFluidDataStoreContext();

@@ -49,8 +49,14 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 			requestHandlers: [
 				mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
 			],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
+			initializeEntryPoint: async (containerRuntime: IContainerRuntime) => {
+				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
+					dataStoreId,
+				);
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
 			},
 		});
 	}
