@@ -395,14 +395,14 @@ the characters it contains.
 
 ##### Original string:
 
-```
+```typescript
 abc
  ^
 ```
 
 ##### No stickiness:
 
-```
+```typescript
 aXbYc
   ^
 ```
@@ -411,21 +411,21 @@ The interval does not expand to include the newly inserted characters `X` and `Y
 
 ##### Start stickiness:
 
-```
+```typescript
 aXbYc
  ^^
 ```
 
 ##### End stickiness:
 
-```
+```typescript
 aXbYc
   ^^
 ```
 
 ##### Full stickiness:
 
-```
+```typescript
 aXbYc
  ^^^
 ```
@@ -476,7 +476,7 @@ string.removeRange(1, 2);
 The start point of the interval will slide to the position immediately before
 "C", and the same will be true.
 
-```
+```typescript
 {start} - A[- C -]D - {end}
 ```
 
@@ -489,7 +489,7 @@ string.insertText(1, "EFG");
 
 With the string now being,
 
-```
+```typescript
 {start} - A[- E - F - G - C -]D - {end}
 ```
 <!-- This line ends the content that is copied to the sequences.md README -->
