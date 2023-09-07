@@ -98,7 +98,6 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
-	postbase: boolean = false,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
@@ -114,7 +113,6 @@ function rebase(
 		moveEffects,
 		metadata,
 		undefined,
-		postbase,
 	);
 }
 
@@ -125,18 +123,6 @@ function rebaseTagged(
 	let currChange = change;
 	for (const base of baseChanges) {
 		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
-	}
-
-	return currChange;
-}
-
-function postbaseTagged(
-	change: TaggedChange<OptionalChangeset>,
-	...baseChanges: TaggedChange<OptionalChangeset>[]
-): TaggedChange<OptionalChangeset> {
-	let currChange = change;
-	for (const base of baseChanges) {
-		currChange = tagChange(rebase(currChange.change, base, true), currChange.revision);
 	}
 
 	return currChange;
@@ -272,86 +258,6 @@ describe("OptionalField - Rebaser Axioms", () => {
 				const delta = toDelta(actual);
 				assert.equal(isDeltaVisible(delta), false);
 			});
-		}
-	});
-
-	/**
-say B, C, D are local edits, A is trunk edit that comes in that doesn't require rebasing.
-
-B' = rebase(B, A)
-A1 = postbase(A, B)
-C' = rebase(C, A1)
-
-so we end up with:
-rebase(B, A) and rebase(C, postbase(A, B))
-rebase(B, A)
-rebase(C, postbase(A, B))
-rebase(D, postbase(postbase(A, B), C))
-etc
-
-Now say A is a trunk edit that comes in with reference rev T, and B, C, D are subsequent child edits from other clients that were sequenced before A and after T.
-We construct the actual edit we put on the trunk by:
-
-A' = rebase(rebase(rebase(A, B), C), D)
-
-Let's name the intermediate edits:
-
-A_T := A
-A_B := rebase(A_T, B)
-A_C := rebase(A_B, C)
-A_D := rebase(A_C, D)
-in general, bit after "_" is the context for that edit. rebase(X, Y) is only valid if X and Y share a context.
-
-Now consider case where A1, A2 are local edits and we're sequencing A2 with trunk B, C, A1_C.
-
-At this point in time, we'll have computed the following at minimum:
-
-T----B----C----A1_C
-|    |
-|    |---A1_B
-|
-|---A1----A2
-
-Consider what the client submitting edits A1/A2 has done.
-
-T
-|
-|---A1---A2
-
-then
-
-T----B
-     |
-	 |---A1_B---rebase(A2, postbase(B, A1))
-
-then
-
-T----B----C
-          |
-		  |---A1_C---rebase(rebase(A2, postbase(B, A1)), postbase(C, A1_B))
-
-then
-
-T----B----C----A1_C
-               |
-			   |---rebase(rebase(A2, postbase(B, A1)), postbase(C, A1_B))
-
-Key assumption with postbase: An edit which can be applied to the context [B, A1_B] can also be applied to the context [A1, B^A1]
-So rather than compute A2 by rebase sandwich, we can postbase B over A1 
-	 */
-	describe.skip("postbase", () => {
-		for (const [name1, untaggedChange1] of testChanges) {
-			for (const [name2, untaggedChange2] of testChanges) {
-				const title = `${name2} ○ (${name1} ↷ ${name2}) === ${name1} ○ (${name2} ↷' ${name1})`;
-
-				it(title, () => {
-					const change1 = tagChange(untaggedChange1, tag6);
-					const change2 = tagChange(untaggedChange2, tag3);
-					const lhs = compose([change2, rebaseTagged(change1, change2)]);
-					const rhs = compose([change1, postbaseTagged(change2, change1)]); // TODO: Tagging is weird here.
-					assert.deepEqual(toDelta(lhs), toDelta(rhs));
-				});
-			}
 		}
 	});
 });

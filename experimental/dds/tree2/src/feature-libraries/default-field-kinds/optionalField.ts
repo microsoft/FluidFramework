@@ -50,28 +50,29 @@ interface IChildChangeMap<T> {
 // TODO: better implementation which doesn't use JSON.stringify (double-nested map should be fine, maybe something else is conceptually nicer)
 class ChildChangeMap<T> implements IChildChangeMap<T> {
 	private readonly data = new Map<string, T>();
-	set(id: ChangeId, childChange: T): void {
+	public set(id: ChangeId, childChange: T): void {
 		this.data.set(JSON.stringify(id), childChange);
 	}
 
-	get(id: ChangeId): T | undefined {
+	public get(id: ChangeId): T | undefined {
 		return this.data.get(JSON.stringify(id));
 	}
 
-	delete(id: ChangeId): boolean {
+	public delete(id: ChangeId): boolean {
 		return this.data.delete(JSON.stringify(id));
 	}
 
-	keys(): Iterable<ChangeId> {
+	public keys(): Iterable<ChangeId> {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return Array.from(this.data.keys(), (v) => JSON.parse(v));
 	}
-	values(): Iterable<T> {
+	public values(): Iterable<T> {
 		return this.data.values();
 	}
-	entries(): Iterable<[ChangeId, T]> {
+	public entries(): Iterable<[ChangeId, T]> {
 		return Array.from(this.data.entries(), ([k, v]) => [JSON.parse(k), v]);
 	}
-	get size(): number {
+	public get size(): number {
 		return this.data.size;
 	}
 }
@@ -82,12 +83,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
-		const addChildChange = (id: ChangeId, ...changes: TaggedChange<NodeChangeset>[]) => {
+		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
 			const existingChanges = perChildChanges.get(id);
 			if (existingChanges !== undefined) {
-				existingChanges.push(...changes);
+				existingChanges.push(...changeList);
 			} else {
-				perChildChanges.set(id, [...changes]);
+				perChildChanges.set(id, [...changeList]);
 			}
 		};
 
@@ -167,9 +168,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		if (perChildChanges.size > 0) {
-			composed.childChanges = Array.from(perChildChanges.entries(), ([id, changes]) => [
+			composed.childChanges = Array.from(perChildChanges.entries(), ([id, changeList]) => [
 				id,
-				changes.length === 1 ? changes[0].change : composeChild(changes),
+				changeList.length === 1 ? changeList[0].change : composeChild(changeList),
 			]);
 		}
 
@@ -184,7 +185,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		reviver: NodeReviver,
 	): OptionalChangeset => {
 		// Changes to the child that existed in this field before `change` was applied.
-		let originalChildChanges: NodeChangeset | undefined = undefined;
+		let originalChildChanges: NodeChangeset | undefined;
 		const inverseChildChanges = new ChildChangeMap<NodeChangeset>();
 		if (change.childChanges !== undefined) {
 			for (const [id, childChange] of change.childChanges) {
@@ -239,7 +240,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	// last-write wins
 	rebase: (
-		// TODO: Tagging here isn't doable when postbase is true.
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
@@ -247,7 +247,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
-		postbase: boolean = false,
 	): OptionalChangeset => {
 		const over = overTagged.change;
 
@@ -394,7 +393,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
-		// TODO: should probably have postbase here too
 	) => {
 		const amended = { ...change };
 		if (change.childChanges !== undefined) {
