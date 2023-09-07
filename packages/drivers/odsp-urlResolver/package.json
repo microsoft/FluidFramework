@@ -47,7 +47,7 @@
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.0.0-internal.6.1.1",
+		"@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.0.0-internal.6.3.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"cross-env": "^7.0.3",
