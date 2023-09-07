@@ -16,7 +16,6 @@ import {
 	FieldEditor,
 	FieldKind,
 	Multiplicity,
-	ToDelta,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
@@ -55,11 +54,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (
-		{ change, revision }: TaggedChange<number>,
-		deltaFromChild: ToDelta,
-		idAllocator,
-	): Delta.MarkList => [
+	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.MarkList => [
 		{
 			type: Delta.MarkType.Modify,
 			fields: new Map([
@@ -79,7 +74,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 							oldContent: {
 								detachId: {
 									major: revision,
-									minor: idAllocator.mint(),
+									minor: 424242,
 								},
 							},
 						},

@@ -15,9 +15,9 @@ import {
 import {
 	ChangesetLocalId,
 	Delta,
+	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
-	mintRevisionTag,
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
@@ -170,7 +170,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision = mintRevisionTag()): Delta.MarkList {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.MarkList {
 	deepFreeze(change);
 	const allocator = MemoizedIdRangeAllocator.fromNextId();
 	return SF.sequenceFieldToDelta(

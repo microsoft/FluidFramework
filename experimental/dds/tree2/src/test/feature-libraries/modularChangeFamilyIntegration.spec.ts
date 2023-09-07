@@ -52,6 +52,8 @@ describe("ModularChangeFamily integration", () => {
 		it("delete over cross-field move", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			editor.enterTransaction();
 			editor.move(
 				{ parent: undefined, field: fieldA },
 				1,
@@ -59,8 +61,16 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldB },
 				2,
 			);
+			editor.exitTransaction();
+
+			editor.enterTransaction();
 			editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+			editor.exitTransaction();
+
+			editor.enterTransaction();
 			editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
+			editor.exitTransaction();
+
 			const [move, remove, expected] = getChanges();
 			const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
 			const rebasedDelta = normalizeDelta(family.intoDelta(rebased));

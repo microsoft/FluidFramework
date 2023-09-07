@@ -91,7 +91,7 @@ const tag2: RevisionTag = mintRevisionTag();
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
 
-const detachId = { minor: 42 };
+const detachId = { major: undefined, minor: 424242 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -588,25 +588,21 @@ describe("ModularChangeFamily", () => {
 		it("fieldChanges", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Remove,
-					count: 1,
-					detachId,
-				},
-				{
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor(1)],
+					oldContent: {
+						detachId,
+					},
 				},
 			];
 
 			const valueDelta2: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Remove,
-					count: 1,
-					detachId,
-				},
-				{
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor(2)],
+					oldContent: {
+						detachId,
+					},
 				},
 			];
 
