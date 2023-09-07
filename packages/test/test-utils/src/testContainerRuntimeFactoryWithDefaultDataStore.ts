@@ -5,11 +5,17 @@
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+
+const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return (await runtime.getAliasedDataStoreEntryPoint?.("default"))!.get();
+};
 
 export const createTestContainerRuntimeFactoryWithDefaultDataStore = (
 	Base: typeof ContainerRuntimeFactoryWithDefaultDataStore = ContainerRuntimeFactoryWithDefaultDataStore,
@@ -32,9 +38,7 @@ export const createTestContainerRuntimeFactoryWithDefaultDataStore = (
 		}) {
 			super({
 				...props,
-				initializeEntryPoint: () => {
-					throw new Error("TODO");
-				},
+				initializeEntryPoint: getDefaultFluidObject,
 			});
 		}
 	} as typeof TestContainerRuntimeFactoryWithDefaultDataStore;
@@ -57,9 +61,7 @@ export class TestContainerRuntimeFactoryWithDefaultDataStore extends ContainerRu
 	}) {
 		super({
 			...props,
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
+			initializeEntryPoint: getDefaultFluidObject,
 		});
 	}
 }

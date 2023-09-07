@@ -77,6 +77,10 @@ describe("Runtime", () => {
 		clientId: "fakeClientId",
 	});
 
+	const mockInitializeEntryPoint = async () => ({
+		myProp: "myValue",
+	});
+
 	describe("Container Runtime", () => {
 		describe("flushMode setting", () => {
 			it("Default flush mode", async () => {
@@ -85,9 +89,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
@@ -101,9 +103,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
 					},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
@@ -117,9 +117,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
 					},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -220,9 +218,7 @@ describe("Runtime", () => {
 								},
 								flushMode,
 							},
-							initializeEntryPoint: () => {
-								throw new Error("TODO");
-							},
+							initializeEntryPoint: mockInitializeEntryPoint,
 						});
 						containerErrors.length = 0;
 						submittedOpsMetdata.length = 0;
@@ -577,9 +573,7 @@ describe("Runtime", () => {
 								},
 								flushMode,
 							},
-							initializeEntryPoint: () => {
-								throw new Error("TODO");
-							},
+							initializeEntryPoint: mockInitializeEntryPoint,
 						});
 						containerErrors.length = 0;
 					});
@@ -642,9 +636,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: undefined,
 					containerScope: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
@@ -659,9 +651,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -676,9 +666,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -693,9 +681,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
@@ -781,9 +767,7 @@ describe("Runtime", () => {
 							},
 						},
 					},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 			});
 
@@ -1016,9 +1000,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 			});
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
@@ -1097,9 +1079,7 @@ describe("Runtime", () => {
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 			});
 
@@ -1295,9 +1275,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions: {},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
@@ -1386,9 +1364,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 
 				mockLogger.assertMatchAny([
@@ -1416,9 +1392,7 @@ describe("Runtime", () => {
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 
 				mockLogger.assertMatchAny([
@@ -1477,9 +1451,7 @@ describe("Runtime", () => {
 						runtimeOptions: {
 							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 						},
-						initializeEntryPoint: () => {
-							throw new Error("TODO");
-						},
+						initializeEntryPoint: mockInitializeEntryPoint,
 					});
 
 					assert.equal(runtime.flushMode, FlushMode.TurnBased);
@@ -1502,9 +1474,7 @@ describe("Runtime", () => {
 					runtimeOptions: {
 						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 					},
-					initializeEntryPoint: () => {
-						throw new Error("TODO");
-					},
+					initializeEntryPoint: mockInitializeEntryPoint,
 				});
 
 				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
