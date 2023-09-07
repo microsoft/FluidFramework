@@ -2,7 +2,17 @@
 
 The goal of the shared tree project is empower developers to create and maintain better collaborative experiences.
 
-To best achieve this goal we plan to deliver a set of libraries that enable developers unfamiliar with the challenges specific to collaborative applications to:
+To best achieve this goal we plan to deliver a set of libraries that enable developers to:
+
+-   Productively create and maintain collaborative experiences.
+
+    Doing this "productively" means ensuring that developers will be directed into using patterns that work well for collaborative applications,
+    and ensuring that useful supporting libraries are in place to make this a good experience.
+
+-   Easily learn how to use the libraries without relying on prior experience with collaboration tools.
+
+    Using the libraries should teach what is needed when its needed rather than requiring collaboration specific knowledge or experience as a prerequisite.
+    The learning curve should be fast enough to be productive on day one, both for maintaining existing experiences or authoring new ones.
 
 -   Adopt Shared Tree without concern for having to migrate to another solution due to hitting limitations.
 
@@ -10,11 +20,6 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
     This includes compatibility between different application or version of an applications, scalability, availability, merge quality etc.
     More concretely, if faced with a new application collaboration requirement, it should be practical to either build it on top of shared tree or extend shared tree to support it.
     Doing this should not require major reworking of either the application or shared tree implementations, not require extending it in a way that the upstream shared tree would not be willing to maintain.
-
--   Productively create and maintain collaborative experiences.
-
-    Doing this "productively" means ensuring that a developer new to collaboration will be directed into using patterns that work well for collaborative applications,
-    and ensuring that useful supporting libraries are in place to make this a good experience.
 
 -   Avoid common pitfalls of collaborative software.
 
