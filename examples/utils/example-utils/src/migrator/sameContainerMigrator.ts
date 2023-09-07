@@ -91,15 +91,7 @@ export class SameContainerMigrator
 
 	private readonly prepareMigration = async () => {
 		if (this._migrationPrepareP !== undefined) {
-			return;
-		}
-
-		if (this._migrationPrepareP !== undefined) {
-			throw new Error("Cannot prepare migration, we are currently migrating");
-		}
-
-		if (this._migratedLoadP !== undefined) {
-			throw new Error("Cannot prepare migration, we are currently trying to load");
+			throw new Error("Already preparing migration");
 		}
 
 		const prepare = async () => {
@@ -170,7 +162,6 @@ export class SameContainerMigrator
 
 			// Store the detached model for later use and retry scenarios
 			this._preparedDetachedModel = detachedModel;
-			this._migrationPrepareP = undefined;
 		};
 
 		this._migrationPrepareP = prepare();
@@ -179,15 +170,7 @@ export class SameContainerMigrator
 
 	private readonly completeMigration = async () => {
 		if (this._migrationP !== undefined) {
-			return;
-		}
-
-		if (this._migrationPrepareP !== undefined) {
-			throw new Error("Cannot perform migration before migration is prepared");
-		}
-
-		if (this._migratedLoadP !== undefined) {
-			throw new Error("Cannot perform migration, we are currently trying to load");
+			throw new Error("Migration already in progress");
 		}
 
 		const complete = async () => {
@@ -204,7 +187,6 @@ export class SameContainerMigrator
 					this._currentModel.migrationTool.once("migrated", resolve);
 				});
 			}
-			this._migrationP = undefined;
 		};
 
 		this._migrationP = complete();
@@ -213,15 +195,7 @@ export class SameContainerMigrator
 
 	private readonly loadMigration = async () => {
 		if (this._migratedLoadP !== undefined) {
-			return;
-		}
-
-		if (this._migrationPrepareP !== undefined) {
-			throw new Error("Cannot start loading the migrated before migration is prepared");
-		}
-
-		if (this._migrationP !== undefined) {
-			throw new Error("Cannot start loading the migrated before migration is complete");
+			throw new Error("Load already in progress");
 		}
 
 		const migratable = this._currentModel;
@@ -247,6 +221,8 @@ export class SameContainerMigrator
 			this._currentModel = migrated;
 			this._currentModelId = migratedId;
 			this.emit("migrated", migrated, migratedId);
+			this._migrationPrepareP = undefined;
+			this._migrationP = undefined;
 			this._migratedLoadP = undefined;
 
 			// Reset retry values
