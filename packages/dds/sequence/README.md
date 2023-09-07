@@ -503,6 +503,7 @@ With the string now being,
 ```typescript
 {start} - A[- E - F - G - C -]D - {end}
 ```
+
 <!-- This line ends the content that is copied to the sequences.md README -->
 
 ## SharedString
@@ -579,6 +580,7 @@ For further reading on attribution, see the [@fluid-experimental/attributor READ
 There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 
 <!-- This line begins the content that is copied to the string.md README -->
+
 ### Examples
 
 -   Rich Text Editor Implementations
@@ -594,6 +596,8 @@ There are plans to make attribution policies more flexible, for example tracking
 -   Plain Text Editor Implementations
     -   [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeTextArea.tsx)
     -   [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
+
 <!-- This line ends the content that is copied to the string.md README -->
+
 [sharedmap]: https://fluidframework.com/docs/data-structures/map/
 [sharedstring]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts
