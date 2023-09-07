@@ -14,17 +14,13 @@ Here are some remarks about the namespace
 
 ### Examples {#testnamespace-examples}
 
-#### Example 1 {#testnamespace-example1}
-
-TypeScript Example
+#### TypeScript Example {#testnamespace-example1}
 
 ```typescript
 const foo = bar;
 ```
 
-#### Example 2 {#testnamespace-example2}
-
-JavaScript Example
+#### JavaScript Example {#testnamespace-example2}
 
 ```javascript
 const bar = foo

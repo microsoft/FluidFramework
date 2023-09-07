@@ -17,7 +17,7 @@ import {
 	IResolveDeclarationReferenceResult,
 	TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { DocNode, DocNodeKind, DocPlainText, DocSection } from "@microsoft/tsdoc";
+import { DocNode, DocNodeContainer, DocNodeKind, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { Heading } from "../../Heading";
 import {
@@ -26,7 +26,6 @@ import {
 	DocumentationNode,
 	DocumentationNodeType,
 	DocumentationParentNode,
-	DocumentationParentNodeBase,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
@@ -38,6 +37,7 @@ import {
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain";
+import { Logger } from "../../Logging";
 import { injectSeparator } from "../../utilities";
 import {
 	ApiFunctionLike,
@@ -52,11 +52,10 @@ import {
 	getSeeBlocks,
 	getThrowsBlocks,
 } from "../ApiItemUtilities";
-import { getPlainTextLines, transformDocSection } from "../DocNodeTransforms";
+import { transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "../Utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
-import { Logger } from "../../Logging";
 
 /**
  * Generates a section for an API signature.
@@ -569,21 +568,33 @@ export function createExampleSection(
 	example: DocExampleProperties,
 	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode {
+	const { logger } = config;
+
 	const docNodeTransformOptions = getDocNodeTransformationOptions(example.apiItem, config);
-	let exampleParagraph: ParagraphNode = transformDocSection(
+	let exampleParagraph: DocumentationParentNode = transformDocSection(
 		example.content,
 		docNodeTransformOptions,
 	);
 
+	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
+	// that line is expected to be treated as the title.
+	// This information is not provided to us directly, so instead we will walk the content tree
+	// and see if the first leaf node is plain text. If it is, we will use that as the title (header).
+	// If not (undefined), we will use the default heading scheme.
 	const exampleTitle = extractTitleFromExampleSection(example.content);
 
 	const headingTitle =
 		exampleTitle ??
 		(example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`);
 
+	// If our example contained a title line, we need to strip that content out of the body.
+	// Unfortunately, the input `DocNode` types do not make it easy to mutate / copy trees.
+	// Instead, we will adjust the output we generated via the above transformation logic.
 	if (exampleTitle !== undefined) {
-		// Strip title line and resulting leading line breaks from paragraph
-		exampleParagraph.children;
+		logger?.verbose(
+			`Found example comment with title "${exampleTitle}". Adjusting output to adhere to TSDoc spec...`,
+		);
+		exampleParagraph = stripTitleFromParagraph(exampleParagraph, exampleTitle, logger);
 	}
 
 	// TODO: use title in ID?
@@ -591,7 +602,7 @@ export function createExampleSection(
 		example.exampleNumber === undefined ? "" : example.exampleNumber
 	}`;
 
-	return wrapInSection([], {
+	return wrapInSection([exampleParagraph], {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -609,11 +620,14 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
 	let currentNode: DocNode = sectionNode;
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		const children = currentNode.getChildNodes();
-		if (children.length === 0) {
-			return currentNode.kind === DocNodeKind.PlainText
-				? (children[0] as DocPlainText).text
-				: undefined;
+		const children = (currentNode as Partial<DocNodeContainer>).nodes;
+
+		if (children === undefined || children.length === 0) {
+			if (currentNode.kind === DocNodeKind.PlainText) {
+				return (currentNode as DocPlainText).text.trim();
+			}
+
+			return undefined;
 		}
 		currentNode = children[0];
 	}
@@ -626,11 +640,77 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  * Easier to copy output node than input node.
  */
 function stripTitleFromParagraph(
-	paragraphNode: ParagraphNode,
+	node: DocumentationParentNode,
 	title: string,
-	logger?: Logger,
-): ParagraphNode {
-	// TODO
+	logger: Logger | undefined,
+): DocumentationParentNode {
+	// Verify title matches text of first plain text in output.
+	// This is an expected invariant. If this is not the case, then something has gone wrong.
+	// Note: if we ever allow consumers to provide custom DocNode transformations, this invariant will likely
+	// disappear, and this code will need to be updated to function differently.
+	// Reference: <https://tsdoc.org/pages/tags/example/>
+	const children = node.children;
+	if (children.length === 0) {
+		logger?.error(
+			"Transformed example paragraph begins with empty parent node. This is unexpected and indicates a bug.",
+		);
+		return node;
+	}
+
+	const firstChild = children[0];
+	if (firstChild.isParent) {
+		const newFirstChild = stripTitleFromParagraph(
+			firstChild as DocumentationParentNode,
+			title,
+			logger,
+		);
+
+		const newChildren: DocumentationNode[] = [newFirstChild, ...children.slice(1)];
+
+		return {
+			...node,
+			children: newChildren,
+			hasChildren: newChildren.length > 0,
+		};
+	}
+
+	if (firstChild.isLiteral) {
+		if (firstChild.type === DocumentationNodeType.PlainText) {
+			const text = (firstChild as PlainTextNode).text;
+			if (text === title) {
+				// Remove from children, and remove any trailing line breaks
+				const newChildren = children.slice(1);
+				while (
+					newChildren.length > 0 &&
+					newChildren[0].type === DocumentationNodeType.LineBreak
+				) {
+					newChildren.shift();
+				}
+				return {
+					...node,
+					children: newChildren,
+					hasChildren: newChildren.length > 0,
+				};
+			} else {
+				logger?.error(
+					"Transformed example paragraph does not begin with expected title. This is unexpected and indicates a bug.",
+					`Expected: "${title}".`,
+					`Found: "${text}".`,
+				);
+				return node;
+			}
+		} else {
+			logger?.error(
+				"Transformed example paragraph does not begin with plain text. This is unexpected and indicates a bug.",
+			);
+			return node;
+		}
+	}
+
+	logger?.error(
+		"Transformed example paragraph begins with a non-literal, non-parent node. This is unexpected and indicates a bug.",
+	);
+	return node;
 }
 
 /**
