@@ -496,10 +496,11 @@ export function createDeprecationNoticeSection(
  * Renders a section containing any {@link https://tsdoc.org/pages/tags/example/ | @example} documentation of the
  * provided API item if it has any.
  *
- * @remarks Displayed as 1 or more headings (1 for each example), with the example contents under them.
- * If there is more than 1 example comment, each example will be parented under a numbered heading under
- * an "Examples" heading.
- * If there is only 1 example comment, that comment will be rendered under a single "Example" heading.
+ * @remarks
+ *
+ * Each example will be displayed under its own heading. See {@link createExampleSection} for more details.
+ *
+ * If there is only 1 example comment, all example headings will be parented under a top level "Examples" heading.
  *
  * @param apiItem - The API item whose `@example` documentation will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
@@ -523,8 +524,9 @@ export function createExamplesSection(
 
 	const exampleSections: SectionNode[] = [];
 	for (const [i, exampleBlock] of exampleBlocks.entries()) {
+		const exampleNumber = i + 1; // i is 0-based, but we want our example numbers to be 1-based.
 		exampleSections.push(
-			createExampleSection({ apiItem, content: exampleBlock, exampleNumber: i + 1 }, config),
+			createExampleSection({ apiItem, content: exampleBlock, exampleNumber }, config),
 		);
 	}
 
@@ -549,8 +551,10 @@ export interface DocExampleProperties {
 	content: DocSection;
 
 	/**
-	 * Example number. Used to disambiguate multiple `@example` comment headings numerically.
+	 * Example number. Used to disambiguate multiple `@example` comment headings numerically when there is more than 1.
 	 * If not specified, example heading will not be labeled with a number.
+	 *
+	 * @remarks The example number will not be displayed if the example has a title.
 	 */
 	exampleNumber?: number;
 }
@@ -558,11 +562,55 @@ export interface DocExampleProperties {
 /**
  * Renders a section containing a single {@link https://tsdoc.org/pages/tags/example/ | @example} documentation comment.
  *
- * @remarks Displayed as a heading with the example comment under it.
+ * @remarks
  *
- * @param example - The example to render.
+ * Displayed as a heading with the example body under it.
+ *
+ * Per the `TSDoc` spec linked above, the example heading is generated as follows:
+ *
+ * If the `@example` content has text on the first line (the same line as the `@example` tag), that text content is
+ * treated as the example's "title", used in the heading text (and is not included in the content body).
+ *
+ * Otherwise, the heading is generated as "Example[ \<{@link DocExampleProperties.exampleNumber}\>]".
+ *
+ * @example Example comment with title "Foo"
+ *
+ * An example comment with title "Foo" (regardless of `exampleNumber` value) will produce something like the following
+ * (expressed in Markdown, heading levels will vary):
+ *
+ * ```markdown
+ * # Example: Foo
+ *
+ * ...
+ * ```
+ *
+ * @example Example comment without title, no `exampleNumber` provided
+ *
+ * An example comment without a title line, and with no `exampleNumber` value provided will generate content like
+ * the following (expressed in Markdown, heading levels will vary):
+ *
+ * ```markdown
+ * # Example
+ *
+ * ...
+ * ```
+ *
+ * @example With no title and {@link DocExampleProperties.exampleNumber} provided
+ *
+ * An example comment without a title line, and `exampleNumber` value of `2` will generate content like
+ * the following (expressed in Markdown, heading levels will vary):
+ *
+ * ```markdown
+ * # Example 2
+ *
+ * ...
+ * ```
+ *
+ * @param example - The example comment to render.
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @returns The rendered {@link SectionNode}.
  */
 export function createExampleSection(
 	example: DocExampleProperties,
@@ -585,8 +633,11 @@ export function createExampleSection(
 	const exampleTitle = extractTitleFromExampleSection(example.content);
 
 	const headingTitle =
-		exampleTitle ??
-		(example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`);
+		exampleTitle !== undefined
+			? `Example: ${exampleTitle}`
+			: example.exampleNumber === undefined
+			? "Example"
+			: `Example ${example.exampleNumber}`;
 
 	// If our example contained a title line, we need to strip that content out of the body.
 	// Unfortunately, the input `DocNode` types are all class based, and do not expose their constructors, so it is
