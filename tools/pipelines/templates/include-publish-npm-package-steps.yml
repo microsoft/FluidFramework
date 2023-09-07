@@ -50,6 +50,7 @@ steps:
           echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
           echo Deleting @fluid-internal packages except fluid-internal-client-utils package
