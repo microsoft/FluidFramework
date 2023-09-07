@@ -13,11 +13,11 @@ import {
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import type { IInventoryListAppModel } from "../src/modelInterfaces";
 import { DebugView, InventoryListAppView } from "../src/view";
 import { inventoryListDataTransformationCallback } from "../src/dataTransform";
 import { DemoCodeLoader } from "../src/demoCodeLoader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

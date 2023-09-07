@@ -63,6 +63,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
 			logger: this.logger,
+			configProvider: this.configProvider,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(documentId),
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
@@ -72,6 +73,7 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(id),
 			codeLoader: this.codeLoader,
+			configProvider: this.configProvider,
 			generateCreateNewRequest: () => createLocalResolverCreateNewRequest(id),
 		});
 		return modelLoader.loadExistingPaused(`${window.location.origin}/${id}`, sequenceNumber);
