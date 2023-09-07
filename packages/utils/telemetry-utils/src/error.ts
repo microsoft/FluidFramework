@@ -7,7 +7,7 @@ import {
 	FluidErrorTypes,
 	IGenericError,
 	IErrorBase,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	IUsageError,
 } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -35,7 +35,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	 */
 	// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	constructor(message: string, public readonly error?: any, props?: ITelemetryProperties) {
+	constructor(message: string, public readonly error?: any, props?: ITelemetryBaseProperties) {
 		// Don't try to log the inner error
 		super(message, props, new Set(["error"]));
 	}
@@ -47,7 +47,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
 	readonly errorType = FluidErrorTypes.usageError;
 
-	constructor(message: string, props?: ITelemetryProperties) {
+	constructor(message: string, props?: ITelemetryBaseProperties) {
 		super(message, { ...props, usageError: true });
 	}
 }
@@ -60,7 +60,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 	readonly errorType = FluidErrorTypes.dataCorruptionError;
 	readonly canRetry = false;
 
-	constructor(message: string, props: ITelemetryProperties) {
+	constructor(message: string, props: ITelemetryBaseProperties) {
 		super(message, { ...props, dataProcessingError: 1 });
 	}
 }
@@ -82,8 +82,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 
 	public readonly canRetry = false;
 
-	private constructor(errorMessage: string) {
-		super(errorMessage);
+	private constructor(errorMessage: string, props?: ITelemetryBaseProperties) {
+		super(errorMessage, props);
 	}
 
 	/**
@@ -93,7 +93,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		errorMessage: string,
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
-		props: ITelemetryProperties = {},
+		props: ITelemetryBaseProperties = {},
 	): IFluidErrorBase {
 		const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 			errorMessage,
