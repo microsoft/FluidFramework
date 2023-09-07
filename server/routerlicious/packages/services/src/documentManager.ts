@@ -26,7 +26,7 @@ export class DocumentManager implements IDocumentManager {
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
 	) {
-		// TODO: Eventually replace the static documentStaticDataCache field with a passed in value, to not have to initialize it here
+		// TODO: Eventually replace the static documentStaticDataCache field with a passed in optional value, to not have to initialize it here
 		// This can be done once the unified RedisCache/ICache implementation is made, the issue right now is that different RedisCache objects
 		// could be passed in, which would mean different headers and therefore multiple static document caches could exist at once.
 		// The unified RedisCache implementation will have more flexibility around headers, which will help fix this issue.
@@ -48,15 +48,7 @@ export class DocumentManager implements IDocumentManager {
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
-
-		// Extract the static properties from the document
-		const staticProps: IDocumentStaticProperties = {
-			version: document.version,
-			createTime: document.createTime,
-			documentId: document.documentId,
-			tenantId: document.tenantId,
-			isEphemeralContainer: document.isEphemeralContainer,
-		};
+		const staticProps: IDocumentStaticProperties = DocumentManager.getStaticProperties(document);
 
 		// Cache the static properties of the document
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
@@ -79,10 +71,10 @@ export class DocumentManager implements IDocumentManager {
 			staticPropsKey,
 		);
 
-		// If there are no cached static document props, read the document and re-obtain the cache results
+		// If there are no cached static document props, read the document and return its static properties
 		if (!staticPropsStr) {
-			await this.readDocument(tenantId, documentId); // The static data from this document will be cached while reading it
-			staticPropsStr = await DocumentManager.documentStaticDataCache.get(staticPropsKey);
+			const document: IDocument = await this.readDocument(tenantId, documentId);
+			return DocumentManager.getStaticProperties(document); 
 		}
 
 		// Return the static data, parsed into a JSON object
@@ -121,7 +113,23 @@ export class DocumentManager implements IDocumentManager {
 	 * @param documentId - ID of the document to create an access key for
 	 * @returns - A cache key to access static data for [documentId]
 	 */
-	private static getDocumentStaticDataKeyHeader(documentId: string) {
+	private static getDocumentStaticDataKeyHeader(documentId: string): string {
 		return `staticData:${documentId}`;
+	}
+
+	/**
+	 * Extracts the static properties from an IDocument
+	 * 
+	 * @param document - Document to get properties from
+	 * @returns - The static properties of [document]
+	 */
+	private static getStaticProperties(document: IDocument): IDocumentStaticProperties {
+		return {
+			version: document.version,
+			createTime: document.createTime,
+			documentId: document.documentId,
+			tenantId: document.tenantId,
+			isEphemeralContainer: document.isEphemeralContainer,
+		};
 	}
 }
