@@ -816,13 +816,14 @@ export const tagData = <
 				  })
 				| (V[P] extends undefined ? undefined : never);
 		}>((pv, cv) => {
-			if (typeof cv[1] === "function") {
+			const [key, value] = cv;
+			if (typeof value === "function") {
 				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				pv[cv[0]] = () => {
-					return { tag, value: (cv[1] as () => Exclude<U, undefined>)() };
+				pv[key] = () => {
+					return { tag, value: (value as () => Exclude<U, undefined>)() };
 				};
 			} else {
-				pv[cv[0]] = { tag, value: cv[1] as Exclude<U, undefined> };
+				pv[key] = { tag, value: value as Exclude<U, undefined> };
 			}
 			return pv;
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
