@@ -373,9 +373,6 @@ export function runSharedTreeVersioningTests(
 		it('converts IDs correctly after upgrading from 0.0.2', async () => {
 			const { testObjectProvider, tree: tree1 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
-				featureGates: {
-					'Fluid.Loader.ForceWriteConnection': true,
-				},
 			});
 
 			const idCount = 10;
@@ -401,6 +398,9 @@ export function runSharedTreeVersioningTests(
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_1_1,
 				testObjectProvider,
+				featureGates: {
+					'Fluid.Loader.ForceWriteConnection': true,
+				},
 			});
 
 			await testObjectProvider.ensureSynchronized();
@@ -477,9 +477,6 @@ export function runSharedTreeVersioningTests(
 		it('attributes all pre-upgrade IDs to the nil UUID after upgrading from 0.0.2', async () => {
 			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
-				featureGates: {
-					'Fluid.Loader.ForceWriteConnection': true,
-				},
 			});
 
 			const attributionId = tree.attributionId;
@@ -493,6 +490,9 @@ export function runSharedTreeVersioningTests(
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_1_1,
 				testObjectProvider,
+				featureGates: {
+					'Fluid.Loader.ForceWriteConnection': true,
+				},
 			});
 
 			await testObjectProvider.ensureSynchronized();
