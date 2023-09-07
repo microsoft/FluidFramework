@@ -46,6 +46,7 @@ export class ForestRepairDataStore<TChange> implements RepairDataStore<TChange> 
 	}
 
 	public capture(change: TChange, revision: RevisionTag): void {
+		return;
 		/**
 		 * Cursor used to traverse the forest and build fetch the repair data.
 		 * Note that the cursor is implicitly captured by the functions below, which have requirements for the cursor.
@@ -207,6 +208,7 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 	}
 
 	public applyChange(change: TChange): void {
+		return;
 		if (this.frozenForest === undefined) {
 			applyDelta(this.intoDelta(change), this.forest);
 		}
