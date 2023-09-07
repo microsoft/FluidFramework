@@ -18,7 +18,7 @@ import {
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { MemoizedIdRangeAllocator, ToDelta, singleTextCursor } from "../feature-libraries";
+import { singleTextCursor } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -163,10 +163,7 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(
-	{ change, revision }: TaggedChange<TestChange>,
-	idAllocator: MemoizedIdRangeAllocator,
-): Delta.Modify {
+function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.Modify {
 	if (change.intentions.length > 0) {
 		const hasMajor: { major?: RevisionTag } = {};
 		if (revision !== undefined) {
@@ -180,7 +177,7 @@ function toDelta(
 					[
 						{
 							type: Delta.MarkType.Insert,
-							oldContent: { detachId: { ...hasMajor, minor: idAllocator.mint() } },
+							oldContent: { detachId: { ...hasMajor, minor: 424242 } },
 							content: [
 								singleTextCursor({
 									type: brand("test"),

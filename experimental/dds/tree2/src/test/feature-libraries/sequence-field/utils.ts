@@ -170,15 +170,12 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(
-	change: TestChangeset,
-	allocator: MemoizedIdRangeAllocator = MemoizedIdRangeAllocator.fromNextId(),
-	revision = mintRevisionTag(),
-): Delta.MarkList {
+export function toDelta(change: TestChangeset, revision = mintRevisionTag()): Delta.MarkList {
 	deepFreeze(change);
+	const allocator = MemoizedIdRangeAllocator.fromNextId();
 	return SF.sequenceFieldToDelta(
 		tagChange(change, revision),
-		(childChange) => TestChange.toDelta(tagChange(childChange, revision), allocator),
+		(childChange) => TestChange.toDelta(tagChange(childChange, revision)),
 		allocator,
 	);
 }

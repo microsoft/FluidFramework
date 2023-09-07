@@ -13,6 +13,7 @@ import {
 	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
+	tagChange,
 } from "../../../core";
 import {
 	FieldChange,
@@ -56,11 +57,8 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 }
 
 const childChange1 = TestChange.mint([0], 1);
-const childChange1Delta = TestChange.toDelta(
-	makeAnonChange(childChange1),
-	MemoizedIdRangeAllocator.fromNextId(),
-);
-const detachId = { minor: 42 };
+const childChange1Delta = TestChange.toDelta(tagChange(childChange1, tag));
+const detachId = { major: tag, minor: 42 };
 
 describe("SequenceField - toDelta", () => {
 	it("empty mark list", () => {
@@ -69,7 +67,7 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("child change", () => {
-		const actual = toDelta(Change.modify(0, childChange1));
+		const actual = toDelta(Change.modify(0, childChange1), tag);
 		const expected: Delta.MarkList = [childChange1Delta];
 		assert.deepEqual(actual, expected);
 	});
@@ -154,7 +152,7 @@ describe("SequenceField - toDelta", () => {
 			detachId,
 		};
 		const expected: Delta.MarkList = [mark];
-		const actual = toDelta(changeset);
+		const actual = toDelta(changeset, tag);
 		assert.deepStrictEqual(actual, expected);
 	});
 
@@ -225,42 +223,24 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("multiple changes", () => {
-		const changeset = composeAnonChanges([
-			Change.delete(0, 10),
-			Change.insert(3, 1),
-			Change.modify(5, childChange1),
-		]);
+		const changeset: TestChangeset = [
+			Mark.delete(10, brand(42)),
+			{ count: 3 },
+			Mark.insert(1, brand(52)),
+			{ count: 1 },
+			Mark.modify(childChange1),
+		];
 		const del: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 10,
-			detachId: { minor: 0 },
+			detachId,
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
 			content: contentCursor,
 		};
-		const modify: Delta.Modify = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: "1",
-								}),
-							],
-						},
-					],
-				],
-			]),
-		};
-		const expected: Delta.MarkList = [del, 3, ins, 1, modify];
-		const actual = toDelta(changeset);
+		const expected: Delta.MarkList = [del, 3, ins, 1, childChange1Delta];
+		const actual = toDelta(changeset, tag);
 		assert.deepStrictEqual(actual, expected);
 	});
 
@@ -274,55 +254,23 @@ describe("SequenceField - toDelta", () => {
 					value: 0,
 				}),
 			],
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: "1",
-								}),
-							],
-						},
-					],
-				],
-			]),
+			fields: childChange1Delta.fields,
 		};
 		const expected: Delta.MarkList = [mark];
-		const actual = toDelta(changeset);
+		const actual = toDelta(changeset, tag);
 		assertMarkListEqual(actual, expected);
 	});
 
 	it("modify and delete => delete", () => {
-		const changeset = [Mark.delete(1, brand(0), { changes: childChange1 })];
+		const changeset = [Mark.delete(1, brand(42), { changes: childChange1 })];
 		const mark: Delta.Remove = {
 			type: Delta.MarkType.Remove,
 			count: 1,
 			detachId,
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId: { minor: 43 } },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: "1",
-								}),
-							],
-						},
-					],
-				],
-			]),
+			fields: childChange1Delta.fields,
 		};
 		const expected: Delta.MarkList = [mark];
-		const actual = toDelta(changeset);
+		const actual = toDelta(changeset, tag);
 		assertMarkListEqual(actual, expected);
 	});
 
@@ -332,26 +280,10 @@ describe("SequenceField - toDelta", () => {
 			type: Delta.MarkType.MoveOut,
 			moveId: deltaMoveId,
 			count: 1,
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: "1",
-								}),
-							],
-						},
-					],
-				],
-			]),
+			fields: childChange1Delta.fields,
 		};
 		const expected: Delta.MarkList = [mark];
-		const actual = toDelta(changeset);
+		const actual = toDelta(changeset, tag);
 		assertMarkListEqual(actual, expected);
 	});
 
@@ -421,7 +353,7 @@ describe("SequenceField - toDelta", () => {
 				Mark.revive(fakeRepairData(tag, 0, 1)),
 				Mark.revive(fakeRepairData(tag, 1, 1), undefined, { changes: childChange1 }),
 			];
-			const actual = toDelta(changeset);
+			const actual = toDelta(changeset, tag);
 			const expected: Delta.MarkList = [1, childChange1Delta];
 			assertMarkListEqual(actual, expected);
 		});

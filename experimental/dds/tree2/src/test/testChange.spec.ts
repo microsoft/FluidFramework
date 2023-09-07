@@ -59,9 +59,8 @@ describe("TestChange", () => {
 
 	it("can be represented as a delta", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
-		const allocator = MemoizedIdRangeAllocator.fromNextId();
 		const tag = mintRevisionTag();
-		const delta = TestChange.toDelta(tagChange(change1, tag), allocator);
+		const delta = TestChange.toDelta(tagChange(change1, tag));
 		const fooField: FieldKey = brand("foo");
 		const expected = {
 			type: Delta.MarkType.Modify,
@@ -77,7 +76,7 @@ describe("TestChange", () => {
 									value: "2|3",
 								}),
 							],
-							oldContent: { detachId: { major: tag, minor: 0 } },
+							oldContent: { detachId: { major: tag, minor: 424242 } },
 						},
 					],
 				],
@@ -85,12 +84,9 @@ describe("TestChange", () => {
 		};
 
 		assert.deepEqual(delta, expected);
-		assert.deepEqual(
-			TestChange.toDelta(makeAnonChange(TestChange.mint([0, 1], [])), allocator),
-			{
-				type: Delta.MarkType.Modify,
-			},
-		);
+		assert.deepEqual(TestChange.toDelta(makeAnonChange(TestChange.mint([0, 1], []))), {
+			type: Delta.MarkType.Modify,
+		});
 	});
 
 	it("can be encoded in JSON", () => {
