@@ -49,7 +49,7 @@ export class DocumentManager implements IDocumentManager {
 			`/documents/${tenantId}/${documentId}`,
 		);
 		const staticProps: IDocumentStaticProperties =
-			DocumentManager.getStaticProperties(document);
+			DocumentManager.getStaticPropsFromDoc(document);
 
 		// Cache the static properties of the document
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
@@ -75,7 +75,7 @@ export class DocumentManager implements IDocumentManager {
 		// If there are no cached static document props, read the document and return its static properties
 		if (!staticPropsStr) {
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return DocumentManager.getStaticProperties(document);
+			return DocumentManager.getStaticPropsFromDoc(document);
 		}
 
 		// Return the static data, parsed into a JSON object
@@ -124,7 +124,7 @@ export class DocumentManager implements IDocumentManager {
 	 * @param document - Document to get properties from
 	 * @returns - The static properties of [document]
 	 */
-	private static getStaticProperties(document: IDocument): IDocumentStaticProperties {
+	private static getStaticPropsFromDoc(document: IDocument): IDocumentStaticProperties {
 		return {
 			version: document.version,
 			createTime: document.createTime,
