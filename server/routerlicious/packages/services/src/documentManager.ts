@@ -52,7 +52,7 @@ export class DocumentManager implements IDocumentManager {
 			DocumentManager.getStaticPropsFromDoc(document);
 
 		// Cache the static properties of the document
-		const staticPropsKey: string = DocumentManager.getDocumentStaticKeyHeader(documentId);
+		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		await DocumentManager.documentStaticDataCache.set(
 			staticPropsKey,
 			JSON.stringify(staticProps),
@@ -67,7 +67,7 @@ export class DocumentManager implements IDocumentManager {
 		documentId: string,
 	): Promise<IDocumentStaticProperties> {
 		// Retrieve cached static document props
-		const staticPropsKey: string = DocumentManager.getDocumentStaticKeyHeader(documentId);
+		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
 			staticPropsKey,
 		);
@@ -114,7 +114,7 @@ export class DocumentManager implements IDocumentManager {
 	 * @param documentId - ID of the document to create an access key for
 	 * @returns - A cache key to access static data for [documentId]
 	 */
-	private static getDocumentStaticKeyHeader(documentId: string): string {
+	private static getDocumentStaticKey(documentId: string): string {
 		return `staticData:${documentId}`;
 	}
 
