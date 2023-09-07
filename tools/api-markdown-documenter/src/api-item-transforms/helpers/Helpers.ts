@@ -589,7 +589,8 @@ export function createExampleSection(
 		(example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`);
 
 	// If our example contained a title line, we need to strip that content out of the body.
-	// Unfortunately, the input `DocNode` types do not make it easy to mutate / copy trees.
+	// Unfortunately, the input `DocNode` types are all class based, and do not expose their constructors, so it is
+	// difficult to mutate or make surgical copies of their trees.
 	// Instead, we will adjust the output we generated via the above transformation logic.
 	if (exampleTitle !== undefined) {
 		logger?.verbose(
@@ -610,10 +611,18 @@ export function createExampleSection(
 }
 
 /**
- * Hackery to strip the title (when present) from an example section.
+ * Scans the input tree to see if the first leaf node is plain text. If it is, returns it. Otherwise, returns undefined.
  *
- * TODO: explain in more detail.
- * Must be first line of **input**.
+ * @remarks
+ *
+ * Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
+ * that line is expected to be treated as the title.
+ *
+ * This information is not provided to us directly, so instead we will walk the content tree
+ * and see if the first leaf node is plain text. If it is, we will use that as the title (header).
+ * If not (undefined), we will use the default heading scheme.
+ *
+ * Reference: {@link https://tsdoc.org/pages/tags/example/}
  */
 function extractTitleFromExampleSection(sectionNode: DocSection): string | undefined {
 	// Drill down to find first leaf node. If it is plain text (and not a line break),
@@ -635,10 +644,21 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
 }
 
 /**
- * TODO
+ * Scans the input tree for the first leaf. We expect it to be a plain text node, whose text is the specified `title`.
+ * If it is, we will make a copy of the input tree which omits that node and any subsequent line break nodes, and
+ * return that copy.
  *
- * Title should always be first line of output.
- * Easier to copy output node than input node.
+ * @remarks
+ *
+ * See {@link createExampleSection} for a more complete description of why this is needed.
+ *
+ * In short, we need to strip out the "title" line of the example in some cases.
+ * But making edits to the input "DocNode" trees is difficult.
+ * Instead, we will validate our assumptions about the generated output tree, and strip off the title if everything
+ * is as we expect.
+ *
+ * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
+ * rather than making a copy.
  */
 function stripTitleFromParagraph(
 	node: DocumentationParentNode,
