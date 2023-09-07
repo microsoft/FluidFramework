@@ -84,7 +84,7 @@
 		"@fluidframework/build-common": "^2.0.0",
 		"@fluidframework/build-tools": "^0.22.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.6.1.1",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.0.0-internal.6.3.1",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -106,10 +106,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_Client": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

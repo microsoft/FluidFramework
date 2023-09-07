@@ -40,6 +40,54 @@ use_old_TypeAliasDeclaration_ConfigTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DataCorruptionError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_DataCorruptionError():
+    TypeOnly<old.DataCorruptionError>;
+declare function use_current_ClassDeclaration_DataCorruptionError(
+    use: TypeOnly<current.DataCorruptionError>);
+use_current_ClassDeclaration_DataCorruptionError(
+    get_old_ClassDeclaration_DataCorruptionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DataCorruptionError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_DataCorruptionError():
+    TypeOnly<current.DataCorruptionError>;
+declare function use_old_ClassDeclaration_DataCorruptionError(
+    use: TypeOnly<old.DataCorruptionError>);
+use_old_ClassDeclaration_DataCorruptionError(
+    get_current_ClassDeclaration_DataCorruptionError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DataProcessingError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_DataProcessingError():
+    TypeOnly<old.DataProcessingError>;
+declare function use_current_ClassDeclaration_DataProcessingError(
+    use: TypeOnly<current.DataProcessingError>);
+use_current_ClassDeclaration_DataProcessingError(
+    get_old_ClassDeclaration_DataProcessingError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DataProcessingError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_DataProcessingError():
+    TypeOnly<current.DataProcessingError>;
+declare function use_old_ClassDeclaration_DataProcessingError(
+    use: TypeOnly<old.DataProcessingError>);
+use_old_ClassDeclaration_DataProcessingError(
+    get_current_ClassDeclaration_DataProcessingError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_EventEmitterWithErrorHandling": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_EventEmitterWithErrorHandling():
@@ -60,6 +108,30 @@ declare function use_old_ClassDeclaration_EventEmitterWithErrorHandling(
     use: TypeOnly<old.EventEmitterWithErrorHandling>);
 use_old_ClassDeclaration_EventEmitterWithErrorHandling(
     get_current_ClassDeclaration_EventEmitterWithErrorHandling());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_GenericError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_GenericError():
+    TypeOnly<old.GenericError>;
+declare function use_current_ClassDeclaration_GenericError(
+    use: TypeOnly<current.GenericError>);
+use_current_ClassDeclaration_GenericError(
+    get_old_ClassDeclaration_GenericError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_GenericError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_GenericError():
+    TypeOnly<current.GenericError>;
+declare function use_old_ClassDeclaration_GenericError(
+    use: TypeOnly<old.GenericError>);
+use_old_ClassDeclaration_GenericError(
+    get_current_ClassDeclaration_GenericError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -592,6 +664,30 @@ use_old_EnumDeclaration_TelemetryDataTag(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
+    TypeOnly<old.TelemetryEventCategory>;
+declare function use_current_TypeAliasDeclaration_TelemetryEventCategory(
+    use: TypeOnly<current.TelemetryEventCategory>);
+use_current_TypeAliasDeclaration_TelemetryEventCategory(
+    get_old_TypeAliasDeclaration_TelemetryEventCategory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TelemetryEventCategory": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_TelemetryEventCategory():
+    TypeOnly<current.TelemetryEventCategory>;
+declare function use_old_TypeAliasDeclaration_TelemetryEventCategory(
+    use: TypeOnly<old.TelemetryEventCategory>);
+use_old_TypeAliasDeclaration_TelemetryEventCategory(
+    get_current_TypeAliasDeclaration_TelemetryEventCategory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyTypeExt():
@@ -684,6 +780,30 @@ declare function use_old_ClassDeclaration_ThresholdCounter(
     use: TypeOnly<old.ThresholdCounter>);
 use_old_ClassDeclaration_ThresholdCounter(
     get_current_ClassDeclaration_ThresholdCounter());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_UsageError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_UsageError():
+    TypeOnly<old.UsageError>;
+declare function use_current_ClassDeclaration_UsageError(
+    use: TypeOnly<current.UsageError>);
+use_current_ClassDeclaration_UsageError(
+    get_old_ClassDeclaration_UsageError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_UsageError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_UsageError():
+    TypeOnly<current.UsageError>;
+declare function use_old_ClassDeclaration_UsageError(
+    use: TypeOnly<old.UsageError>);
+use_old_ClassDeclaration_UsageError(
+    get_current_ClassDeclaration_UsageError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -852,6 +972,30 @@ declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     use: TypeOnly<typeof old.extractLogSafeErrorProperties>);
 use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     get_current_FunctionDeclaration_extractLogSafeErrorProperties());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_extractSafePropertiesFromMessage": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_extractSafePropertiesFromMessage():
+    TypeOnly<typeof old.extractSafePropertiesFromMessage>;
+declare function use_current_VariableDeclaration_extractSafePropertiesFromMessage(
+    use: TypeOnly<typeof current.extractSafePropertiesFromMessage>);
+use_current_VariableDeclaration_extractSafePropertiesFromMessage(
+    get_old_VariableDeclaration_extractSafePropertiesFromMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_extractSafePropertiesFromMessage": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_extractSafePropertiesFromMessage():
+    TypeOnly<typeof current.extractSafePropertiesFromMessage>;
+declare function use_old_VariableDeclaration_extractSafePropertiesFromMessage(
+    use: TypeOnly<typeof old.extractSafePropertiesFromMessage>);
+use_old_VariableDeclaration_extractSafePropertiesFromMessage(
+    get_current_VariableDeclaration_extractSafePropertiesFromMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
