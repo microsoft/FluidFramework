@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	DataProcessingError,
 	ITelemetryLoggerExt,
@@ -21,14 +22,13 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IAudience,
 	IDeltaManager,
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -522,17 +522,6 @@ export class FluidDataStoreRuntime
 	 * This function is called when a handle to this data store is added to a visible DDS.
 	 */
 	public attachGraph() {
-		this.makeVisibleAndAttachGraph();
-	}
-
-	/**
-	 * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
-	 * Binds this runtime to the container
-	 * This includes the following:
-	 * 1. Sending an Attach op that includes all existing state
-	 * 2. Attaching the graph if the data store becomes attached.
-	 */
-	public bindToContext() {
 		this.makeVisibleAndAttachGraph();
 	}
 

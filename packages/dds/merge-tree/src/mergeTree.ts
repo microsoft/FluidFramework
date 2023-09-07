@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
@@ -1386,7 +1386,7 @@ export class MergeTree {
 					if (marker !== undefined) {
 						assert(
 							marker.isLeaf() && Marker.is(marker),
-							"Object returned is not a valid marker",
+							0x751 /* Object returned is not a valid marker */,
 						);
 						foundMarker = marker;
 					}

@@ -6,7 +6,7 @@
 
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
-import { Deferred } from '@fluidframework/common-utils';
+import { Deferred } from '@fluidframework/core-utils';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -48,7 +48,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
 export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
@@ -142,7 +142,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, start?: number, end?: number): TInterval | undefined;
+    change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
     changeProperties(id: string, props: PropertySet): any;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
@@ -175,9 +175,9 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 // @public @sealed (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-    // (undocumented)
+    // @deprecated (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     compareStarts?(a: TInterval, b: TInterval): number;
     // (undocumented)
     create(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
@@ -224,7 +224,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     getProperties(): PropertySet;
     // @internal
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval | undefined;
+    modify(label: string, start?: SequencePlace, end?: SequencePlace, op?: ISequencedDocumentMessage): Interval | undefined;
     // (undocumented)
     overlaps(b: Interval): boolean;
     properties: PropertySet;

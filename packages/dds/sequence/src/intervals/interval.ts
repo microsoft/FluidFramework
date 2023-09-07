@@ -11,7 +11,7 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { SequencePlace } from "../intervalCollection";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
@@ -186,9 +186,21 @@ export class Interval implements ISerializableInterval {
 	 * {@inheritDoc IInterval.modify}
 	 * @internal
 	 */
-	public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
-		const startPos = start ?? this.start;
-		const endPos = end ?? this.end;
+	public modify(
+		label: string,
+		start?: SequencePlace,
+		end?: SequencePlace,
+		op?: ISequencedDocumentMessage,
+	) {
+		if (typeof start === "string" || typeof end === "string") {
+			throw new UsageError(
+				"The start and end positions of a plain interval may not be on the special endpoint segments.",
+			);
+		}
+
+		const startPos = typeof start === "number" ? start : start?.pos ?? this.start;
+		const endPos = typeof end === "number" ? end : end?.pos ?? this.end;
+
 		if (this.start === startPos && this.end === endPos) {
 			// Return undefined to indicate that no change is necessary.
 			return;

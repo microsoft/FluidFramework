@@ -217,7 +217,7 @@ It therefore seems preferable to allow the repair data encoding to be applicatio
 and only convert it to a concrete application-agnostic encoding when it needs to be sent over the wire
 (e.g., in summaries).
 This also allows for the repair data to be encoded as an opaque token that only the application code can match to document data.
-This opaque token encoding simplifies clarifies the contract around repair data:
+This opaque token encoding simplifies the contract around repair data:
 the token can be cheaply copied and it does not allow for the repair data to be read or mutated.
 
 ### Deleting Revived Data
@@ -259,7 +259,7 @@ Interestingly, #2 is not possible if we follow the [Abstract Repair Data](#abstr
 While the [three contexts](#three-contexts) in which repair data exists operate independently,
 it is interesting to consider how repair data effectively flows between them:
 
--   Repair data from a successful transaction is dropped along with the transaction's repair data store
+-   Repair data from a successful transaction is dropped along with the transaction's repair data store.
     Equivalent repair data is added to the local branch's repair store.
 -   Repair data from a local edit that gets rebased is dropped from the local branch's repair store.
     Repair data from the rebased version of that local edit is added to the local branch's repair store.

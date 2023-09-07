@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { compare } from "semver";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,

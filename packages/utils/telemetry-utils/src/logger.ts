@@ -10,12 +10,12 @@ import {
 	ITelemetryGenericEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
-	TelemetryEventPropertyType,
-	ITaggedTelemetryPropertyType,
-	TelemetryEventCategory,
+	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
+	Tagged,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IsomorphicPerformance, performance } from "@fluidframework/common-utils";
+import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
 import {
 	isILoggingError,
@@ -24,13 +24,12 @@ import {
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging";
 import {
-	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";
 
 export interface Memory {
@@ -55,7 +54,7 @@ export enum TelemetryDataTag {
 	UserData = "UserData",
 }
 
-export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
@@ -160,7 +159,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
@@ -225,7 +224,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel: LogLevel.verbose | LogLevel.default = LogLevel.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		const perfEvent = {
 			...event,
@@ -424,7 +423,11 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
-	private shouldFilterOutEvent(event: ITelemetryPropertiesExt, logLevel?: LogLevel): boolean {
+	public get minLogLevel(): LogLevel | undefined {
+		return this.baseLogger.minLogLevel;
+	}
+
+	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
 		const eventLogLevel = logLevel ?? LogLevel.default;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
 		// Filter out in case event log level is below what is wanted in config.
@@ -469,6 +472,9 @@ export function createMultiSinkLogger(props: {
  */
 export class MultiSinkLogger extends TelemetryLogger {
 	protected loggers: ITelemetryBaseLogger[];
+	// This is minimum of minLlogLevel of all loggers.
+	private _minLogLevelOfAllLoggers: LogLevel;
+
 	/**
 	 * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
 	 * @param namespace - Telemetry event name prefix to add to all events
@@ -500,6 +506,22 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
+		this._minLogLevelOfAllLoggers = LogLevel.default;
+		this.calculateMinLogLevel();
+	}
+
+	public get minLogLevel(): LogLevel {
+		return this._minLogLevelOfAllLoggers;
+	}
+
+	private calculateMinLogLevel(): void {
+		if (this.loggers.length > 0) {
+			const logLevels: LogLevel[] = [];
+			for (const logger of this.loggers) {
+				logLevels.push(logger.minLogLevel ?? LogLevel.default);
+			}
+			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
+		}
 	}
 
 	/**
@@ -509,6 +531,8 @@ export class MultiSinkLogger extends TelemetryLogger {
 	public addLogger(logger?: ITelemetryBaseLogger): void {
 		if (logger !== undefined && logger !== null) {
 			this.loggers.push(logger);
+			// Update in case the logLevel of added logger is less than the current.
+			this.calculateMinLogLevel();
 		}
 	}
 
@@ -720,15 +744,15 @@ function convertToBaseEvent({
 /**
  * Takes in value, and does one of 4 things.
  * if value is of primitive type - returns the original value.
- * If the value is an array of primitives - returns a stringified version of the array.
- * If the value is an object of type ITaggedTelemetryPropertyType - returns the object
+ * If the value is a flat array or object - returns a stringified version of the array/object.
+ * If the value is an object of type Tagged<TelemetryEventPropertyType> - returns the object
  * with its values recursively converted to base property Type.
  * If none of these cases are reached - returns an error string
  * @param x - value passed in to convert to a base property type
  */
 export function convertToBasePropertyType(
-	x: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt,
-): TelemetryEventPropertyType | ITaggedTelemetryPropertyType {
+	x: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>,
+): TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType> {
 	return isTaggedTelemetryPropertyValue(x)
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),

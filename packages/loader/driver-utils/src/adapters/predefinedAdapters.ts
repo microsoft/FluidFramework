@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	DocumentServiceFactoryCompressionAdapter,
@@ -47,7 +47,9 @@ export function applyStorageCompression(
  */
 function applyStorageCompressionInternal(
 	constructor: new (
+		// eslint-disable-next-line @typescript-eslint/no-shadow
 		documentServiceFactory: IDocumentServiceFactory,
+		// eslint-disable-next-line @typescript-eslint/no-shadow
 		config: ICompressionStorageConfig,
 	) => IDocumentServiceFactory,
 	documentServiceFactory: IDocumentServiceFactory,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 import {
@@ -42,9 +42,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
 
-export function clone<T>(original: T): T {
-	return structuredClone(original);
-}
+export const clone = structuredClone;
 
 /**
  * @alpha

@@ -9,7 +9,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { IsoBuffer } from '@fluidframework/common-utils';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
@@ -71,7 +71,7 @@ export type AnchorsCompare = CompareFunction<UpPath>;
 
 // @alpha @sealed
 export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
-    applyDelta(delta: Delta.Root): void;
+    acquireVisitor(): DeltaVisitor;
     // (undocumented)
     forget(anchor: Anchor): void;
     internalizePath(originalPath: UpPath): UpPath;
@@ -429,6 +429,28 @@ declare namespace Delta {
 export { Delta }
 
 // @alpha
+export interface DeltaVisitor {
+    // (undocumented)
+    enterField(key: FieldKey): void;
+    // (undocumented)
+    enterNode(index: number): void;
+    // (undocumented)
+    exitField(key: FieldKey): void;
+    // (undocumented)
+    exitNode(index: number): void;
+    // (undocumented)
+    free(): void;
+    // (undocumented)
+    onDelete(index: number, count: number): void;
+    // (undocumented)
+    onInsert(index: number, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    onMoveIn(index: number, count: number, id: Delta.MoveId): void;
+    // (undocumented)
+    onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+}
+
+// @alpha
 export interface Dependee extends NamedComputation {
     registerDependent(dependent: Dependent): boolean;
     removeDependent(dependent: Dependent): void;
@@ -747,12 +769,18 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 
 // @alpha
 export interface ForestEvents {
-    afterDelta(delta: Delta.Root): void;
-    beforeDelta(delta: Delta.Root): void;
+    afterChange(): void;
+    beforeChange(): void;
 }
 
 // @alpha
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
+
+// @alpha
+export enum ForestType {
+    Optimized = 1,
+    Reference = 0
+}
 
 // @alpha
 export interface FullSchemaPolicy {
@@ -843,8 +871,9 @@ export interface IdRange {
 
 // @alpha
 export interface IEditableForest extends IForestSubscription {
+    // (undocumented)
+    acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
-    applyDelta(delta: Delta.Root): void;
 }
 
 // @alpha
@@ -864,7 +893,6 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     readonly isEmpty: boolean;
-    readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
@@ -1757,6 +1785,7 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
+    forest?: ForestType;
 }
 
 // @alpha

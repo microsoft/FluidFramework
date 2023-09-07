@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -22,6 +23,7 @@ import {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
+	// eslint-disable-next-line import/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 	ISharedDirectory,
@@ -88,6 +90,7 @@ export interface IDirectorySetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -215,6 +218,7 @@ export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	storage?: { [key: string]: ISerializableValue };
 
 	/**
@@ -735,6 +739,7 @@ export class SharedDirectory
 	private makeLocal(
 		key: string,
 		absolutePath: string,
+		// eslint-disable-next-line import/no-deprecated
 		serializable: ISerializableValue,
 	): ILocalValue {
 		assert(
@@ -960,6 +965,7 @@ export class SharedDirectory
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
 				}
+				// eslint-disable-next-line import/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
 					value: value.value && (JSON.parse(value.value) as object),

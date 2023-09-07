@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import { Mark } from "./format";

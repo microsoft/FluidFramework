@@ -17,8 +17,8 @@ import {
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -735,11 +735,6 @@ export abstract class FluidDataStoreContext
 			this.channel.visibilityState === VisibilityState.LocallyVisible,
 			0x590 /* Channel must be locally visible */,
 		);
-		this.makeLocallyVisibleFn();
-	}
-
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
-	public bindToContext() {
 		this.makeLocallyVisibleFn();
 	}
 

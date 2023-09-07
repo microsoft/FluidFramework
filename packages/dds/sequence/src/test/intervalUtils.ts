@@ -58,6 +58,12 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 			const otherInterval = collection2.getIntervalById(intervalId);
 			assert(otherInterval);
 			assert.equal(
+				interval.startSide,
+				otherInterval.startSide,
+				"interval start side not equal",
+			);
+			assert.equal(interval.endSide, otherInterval.endSide, "interval end side not equal");
+			assert.equal(
 				interval.stickiness,
 				otherInterval.stickiness,
 				"interval stickiness not equal",

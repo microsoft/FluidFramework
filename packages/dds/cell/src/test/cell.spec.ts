@@ -26,9 +26,9 @@ function createConnectedCell(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -51,7 +51,7 @@ function createCellForReconnection(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -132,22 +132,22 @@ describe("Cell", () => {
 				// Load a new SharedCell in connected state from the snapshot of the first one.
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = MockSharedObjectServices.createFromSummary(
 					cell1.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const cell2 = new SharedCell("cell2", dataStoreRuntime2, CellFactory.Attributes);
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
 				dataStoreRuntime1.local = false;
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				cell1.connect(services1);
@@ -157,7 +157,7 @@ describe("Cell", () => {
 				assert.equal(cell2.get(), value, "The second cell does not have the key");
 
 				// Set a new value in the second SharedCell.
-				const newValue = "newvalue";
+				const newValue = "newValue";
 				cell2.set(newValue);
 
 				// Process the message.
@@ -170,7 +170,7 @@ describe("Cell", () => {
 		});
 
 		describe("Attributor", () => {
-			it("should retrive proper attribution in detached state", async () => {
+			it("should retrieve proper attribution in detached state", async () => {
 				// overwrite the cell with attribution tracking enabled
 				const options: ICellOptions = { attribution: { track: true } };
 				cell = createDetachedCell("cell", options);
@@ -305,7 +305,7 @@ describe("Cell", () => {
 				cell2 = createConnectedCell("cell2", containerRuntimeFactory, options);
 			});
 
-			it("Retrive proper attribution information in connected state", () => {
+			it("Retrieve proper attribution information in connected state", () => {
 				const value1 = "value1";
 				const value2 = "value2";
 				cell1.set(value1);
@@ -364,7 +364,7 @@ describe("Cell", () => {
 				);
 			});
 
-			it("Retrive proper attribution information after summarization/loading", async () => {
+			it("Retrieve proper attribution information after summarization/loading", async () => {
 				const value1 = "value1";
 				const value2 = "value2";
 				cell1.set(value1);

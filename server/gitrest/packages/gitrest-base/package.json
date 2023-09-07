@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/gitrest-base",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Git REST API base components",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,8 +25,29 @@
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
-		"test": "nyc --all -x dist/test/**/* mocha dist/test",
+		"test": "mocha dist/test",
+		"test:coverage": "c8 npm test",
 		"tsc": "tsc"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.ts",
+			"dist/test/**/*.js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.ts",
+			"dist/**/*.js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
@@ -50,7 +71,6 @@
 		"json-stringify-safe": "^5.0.1",
 		"memfs": "^3.4.12",
 		"nconf": "^0.11.4",
-		"nodegit": "^0.27.0",
 		"object-sizeof": "^1.6.3",
 		"prettier": "~2.6.2",
 		"split": "^1.0.0",
@@ -69,18 +89,17 @@
 		"@types/lorem-ipsum": "^1.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^16.18.16",
-		"@types/nodegit": "^0.27.3",
+		"@types/node": "^18.17.1",
 		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
-		"concurrently": "^7.5.0",
+		"c8": "^7.7.1",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.1.0",
-		"nyc": "^15.1.0",
 		"rimraf": "^3.0.2",
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",
