@@ -7,7 +7,8 @@ import {
 	generateStack,
 	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
-	LoggingError,
+	normalizeError,
+	overwriteStack,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
@@ -323,7 +324,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 										retrievedSnapshot = await networkSnapshotP;
 										method = "network";
 									}
-								} catch (err: any) {
+								} catch (err: unknown) {
 									// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
 									// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
 									// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
@@ -331,12 +332,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 									// Regenerating the stack at this level provides more information for logged errors.
 									// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
 									// get similar quality stacks with less hand-crafted code.
-									if (err instanceof LoggingError) {
-										const originalStack = err.stack;
-										err.addTelemetryProperties({ originalStack });
-										err.stack = generateStack();
-									}
-									throw err;
+									const innerStack = (err as Error).stack;
+									const normalizedError = normalizeError(err);
+									normalizedError.addTelemetryProperties({ innerStack });
+
+									const newStack = `<<STACK TRUNCATED: see innerStack property>> \n${generateStack()}`;
+									overwriteStack(normalizedError, newStack);
+
+									throw normalizedError;
 								}
 							}
 						} else {
