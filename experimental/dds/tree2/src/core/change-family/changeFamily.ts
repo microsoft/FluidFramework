@@ -7,6 +7,9 @@ import { ICodecFamily } from "../../codec";
 import { ChangeRebaser } from "../rebase";
 import { Delta } from "../tree";
 
+/**
+ * @beta
+ */
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
 

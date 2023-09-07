@@ -37,6 +37,7 @@ import { ViewEvents } from "./sharedTreeView";
  * a temporary intermediate schema is used so the initial empty state is not out of schema.
  *
  * Since this makes multiple changes, callers may want to wrap it in a transaction.
+ * @beta
  */
 export function initializeContent(
 	storedSchema: StoredSchemaRepository,
