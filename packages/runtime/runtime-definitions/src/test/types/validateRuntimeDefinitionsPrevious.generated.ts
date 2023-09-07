@@ -88,18 +88,6 @@ use_old_TypeAliasDeclaration_AttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_CompressedId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_CompressedId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CreateChildSummarizerNodeFn():
@@ -192,18 +180,6 @@ declare function use_old_InterfaceDeclaration_DetachedAttributionKey(
     use: TypeOnly<old.DetachedAttributionKey>);
 use_old_InterfaceDeclaration_DetachedAttributionKey(
     get_current_InterfaceDeclaration_DetachedAttributionKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_FinalCompressedId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_FinalCompressedId": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -467,7 +443,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -492,7 +467,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -685,7 +659,6 @@ declare function get_current_InterfaceDeclaration_IIdCompressor():
 declare function use_old_InterfaceDeclaration_IIdCompressor(
     use: TypeOnly<old.IIdCompressor>);
 use_old_InterfaceDeclaration_IIdCompressor(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIdCompressor());
 
 /*
@@ -710,7 +683,6 @@ declare function get_current_InterfaceDeclaration_IIdCompressorCore():
 declare function use_old_InterfaceDeclaration_IIdCompressorCore(
     use: TypeOnly<old.IIdCompressorCore>);
 use_old_InterfaceDeclaration_IIdCompressorCore(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IIdCompressorCore());
 
 /*
@@ -1035,7 +1007,6 @@ declare function get_old_InterfaceDeclaration_IdCreationRange():
 declare function use_current_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<current.IdCreationRange>);
 use_current_InterfaceDeclaration_IdCreationRange(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IdCreationRange());
 
 /*
@@ -1048,56 +1019,7 @@ declare function get_current_InterfaceDeclaration_IdCreationRange():
 declare function use_old_InterfaceDeclaration_IdCreationRange(
     use: TypeOnly<old.IdCreationRange>);
 use_old_InterfaceDeclaration_IdCreationRange(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IdCreationRange());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IdCreationRange.HasOverrides": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IdCreationRange.HasOverrides": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRange.Ids": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRange.Ids": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRange.Override": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRange.Override": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRange.Overrides": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IdCreationRange.Overrides": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1109,7 +1031,6 @@ declare function get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState():
 declare function use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
     use: TypeOnly<current.IdCreationRangeWithStashedState>);
 use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
@@ -1122,7 +1043,6 @@ declare function get_current_TypeAliasDeclaration_IdCreationRangeWithStashedStat
 declare function use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
     use: TypeOnly<old.IdCreationRangeWithStashedState>);
 use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
@@ -1172,18 +1092,6 @@ declare function use_old_InterfaceDeclaration_LocalAttributionKey(
     use: TypeOnly<old.LocalAttributionKey>);
 use_old_InterfaceDeclaration_LocalAttributionKey(
     get_current_InterfaceDeclaration_LocalAttributionKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_LocalCompressedId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_LocalCompressedId": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1279,116 +1187,79 @@ declare function get_current_TypeAliasDeclaration_OpSpaceCompressedId():
 declare function use_old_TypeAliasDeclaration_OpSpaceCompressedId(
     use: TypeOnly<old.OpSpaceCompressedId>);
 use_old_TypeAliasDeclaration_OpSpaceCompressedId(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_OpSpaceCompressedId());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedCluster": {"forwardCompat": false}
+* "TypeAliasDeclaration_SerializedIdCompressor": {"forwardCompat": false}
 */
+declare function get_old_TypeAliasDeclaration_SerializedIdCompressor():
+    TypeOnly<old.SerializedIdCompressor>;
+declare function use_current_TypeAliasDeclaration_SerializedIdCompressor(
+    use: TypeOnly<current.SerializedIdCompressor>);
+use_current_TypeAliasDeclaration_SerializedIdCompressor(
+    get_old_TypeAliasDeclaration_SerializedIdCompressor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedCluster": {"backCompat": false}
+* "TypeAliasDeclaration_SerializedIdCompressor": {"backCompat": false}
 */
+declare function get_current_TypeAliasDeclaration_SerializedIdCompressor():
+    TypeOnly<current.SerializedIdCompressor>;
+declare function use_old_TypeAliasDeclaration_SerializedIdCompressor(
+    use: TypeOnly<old.SerializedIdCompressor>);
+use_old_TypeAliasDeclaration_SerializedIdCompressor(
+    get_current_TypeAliasDeclaration_SerializedIdCompressor());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedClusterOverrides": {"forwardCompat": false}
+* "TypeAliasDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
 */
+declare function get_old_TypeAliasDeclaration_SerializedIdCompressorWithNoSession():
+    TypeOnly<old.SerializedIdCompressorWithNoSession>;
+declare function use_current_TypeAliasDeclaration_SerializedIdCompressorWithNoSession(
+    use: TypeOnly<current.SerializedIdCompressorWithNoSession>);
+use_current_TypeAliasDeclaration_SerializedIdCompressorWithNoSession(
+    get_old_TypeAliasDeclaration_SerializedIdCompressorWithNoSession());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedClusterOverrides": {"backCompat": false}
+* "TypeAliasDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
 */
+declare function get_current_TypeAliasDeclaration_SerializedIdCompressorWithNoSession():
+    TypeOnly<current.SerializedIdCompressorWithNoSession>;
+declare function use_old_TypeAliasDeclaration_SerializedIdCompressorWithNoSession(
+    use: TypeOnly<old.SerializedIdCompressorWithNoSession>);
+use_old_TypeAliasDeclaration_SerializedIdCompressorWithNoSession(
+    get_current_TypeAliasDeclaration_SerializedIdCompressorWithNoSession());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedIdCompressor": {"forwardCompat": false}
+* "TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
 */
+declare function get_old_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession():
+    TypeOnly<old.SerializedIdCompressorWithOngoingSession>;
+declare function use_current_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession(
+    use: TypeOnly<current.SerializedIdCompressorWithOngoingSession>);
+use_current_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession(
+    get_old_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedIdCompressor": {"backCompat": false}
+* "TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
 */
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedLocalOverrides": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedLocalOverrides": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedLocalState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedLocalState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedSessionData": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedSessionData": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedSessionIdNormalizer": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SerializedSessionIdNormalizer": {"backCompat": false}
-*/
+declare function get_current_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession():
+    TypeOnly<current.SerializedIdCompressorWithOngoingSession>;
+declare function use_old_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession(
+    use: TypeOnly<old.SerializedIdCompressorWithOngoingSession>);
+use_old_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession(
+    get_current_TypeAliasDeclaration_SerializedIdCompressorWithOngoingSession());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1412,7 +1283,6 @@ declare function get_current_TypeAliasDeclaration_SessionId():
 declare function use_old_TypeAliasDeclaration_SessionId(
     use: TypeOnly<old.SessionId>);
 use_old_TypeAliasDeclaration_SessionId(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SessionId());
 
 /*
@@ -1437,20 +1307,7 @@ declare function get_current_TypeAliasDeclaration_SessionSpaceCompressedId():
 declare function use_old_TypeAliasDeclaration_SessionSpaceCompressedId(
     use: TypeOnly<old.SessionSpaceCompressedId>);
 use_old_TypeAliasDeclaration_SessionSpaceCompressedId(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SessionSpaceCompressedId());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SessionUnique": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_SessionUnique": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1474,7 +1331,6 @@ declare function get_current_TypeAliasDeclaration_StableId():
 declare function use_old_TypeAliasDeclaration_StableId(
     use: TypeOnly<old.StableId>);
 use_old_TypeAliasDeclaration_StableId(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_StableId());
 
 /*
@@ -1500,42 +1356,6 @@ declare function use_old_TypeAliasDeclaration_SummarizeInternalFn(
     use: TypeOnly<old.SummarizeInternalFn>);
 use_old_TypeAliasDeclaration_SummarizeInternalFn(
     get_current_TypeAliasDeclaration_SummarizeInternalFn());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_UnackedLocalId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_UnackedLocalId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_UuidString": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_UuidString": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_VersionedSerializedIdCompressor": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1728,6 +1548,30 @@ declare function use_old_VariableDeclaration_gcTreeKey(
     use: TypeOnly<typeof old.gcTreeKey>);
 use_old_VariableDeclaration_gcTreeKey(
     get_current_VariableDeclaration_gcTreeKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_initialClusterCapacity": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_initialClusterCapacity():
+    TypeOnly<typeof old.initialClusterCapacity>;
+declare function use_current_VariableDeclaration_initialClusterCapacity(
+    use: TypeOnly<typeof current.initialClusterCapacity>);
+use_current_VariableDeclaration_initialClusterCapacity(
+    get_old_VariableDeclaration_initialClusterCapacity());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_initialClusterCapacity": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_initialClusterCapacity():
+    TypeOnly<typeof current.initialClusterCapacity>;
+declare function use_old_VariableDeclaration_initialClusterCapacity(
+    use: TypeOnly<typeof old.initialClusterCapacity>);
+use_old_VariableDeclaration_initialClusterCapacity(
+    get_current_VariableDeclaration_initialClusterCapacity());
 
 /*
 * Validate forward compat by using old type in place of current type
