@@ -46,11 +46,25 @@ export class SameContainerMigrator
 		return this._currentModel.connected();
 	}
 
-	// Retry values
+	/**
+	 * Accepted version from the migration tool. This is stored for retry scenarios.
+	 */
 	private _acceptedVersion: string | undefined;
+	/**
+	 * Detached model that is not yet ready to attach. This is stored for retry scenarios.
+	 */
 	private _detachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
+	/**
+	 * Migrated model used to import transformed data. This is stored for retry scenarios.
+	 */
 	private _migratedModel: ISameContainerMigratableModel | undefined;
+	/**
+	 * Exported data from the paused v1 container. This is stored for retry scenarios.
+	 */
 	private _exportedData: unknown | undefined;
+	/**
+	 * Transformed v1 data ready to be imported into the migrated model. This is stored for retry scenarios.
+	 */
 	private _transformedData: unknown | undefined;
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
