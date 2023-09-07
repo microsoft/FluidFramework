@@ -20,6 +20,7 @@ import {
 	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
+	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
@@ -135,19 +136,25 @@ export function create(
 		},
 	);
 
-	router.post("/broadcast-signal", (req, res) => {
-		try {
-			const tenantId = req.body?.tenantId;
-			const documentId = req.body?.documentId;
-			const signalContent = req.body?.singalContent;
-			const signalRoom: IRoom = { tenantId, documentId };
-			const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-			collaborationSessionEventEmitter.emit("broadcast-signal", payload);
-			res.status(200).send("Triggering debug signal from tinylicious");
-		} catch (error) {
-			res.status(500).send(error);
-		}
-	});
+	router.post(
+		"/:tenantId/:id/broadcast-signal",
+		validateRequestParams("tenantId", "id"),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config),
+		async (request, response) => {
+			const tenantId = getParam(request.params, "tenantId");
+			const documentId = getParam(request.params, "id");
+			const signalContent = getParam(request.body, "singalContent");
+			try {
+				const signalRoom: IRoom = { tenantId, documentId };
+				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+				collaborationSessionEventEmitter.emit("broadcast-signal", payload);
+				response.status(200).send("OK");
+			} catch (error) {
+				response.status(500).send(error);
+			}
+		},
+	);
 
 	return router;
 }
