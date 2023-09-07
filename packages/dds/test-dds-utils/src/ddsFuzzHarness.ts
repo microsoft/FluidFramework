@@ -391,7 +391,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 
 /**
  * Mixes in functionality to add new clients to a DDS fuzz model.
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinNewClient<
@@ -448,7 +448,7 @@ export function mixinNewClient<
 
 /**
  * Mixes in functionality to disconnect and reconnect clients in a DDS fuzz model.
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinReconnect<
@@ -498,7 +498,7 @@ export function mixinReconnect<
 
 /**
  * Mixes in functionality to generate an 'attach' op, which
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinAttach<
@@ -579,7 +579,7 @@ export function mixinAttach<
  * Mixes in functionality to rebase in-flight batches in a DDS fuzz model. A batch is rebased by
  * resending it to the datastores before being sent over the wire.
  *
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinRebase<
@@ -627,7 +627,7 @@ export function mixinRebase<
 
 /**
  * Mixes in functionality to generate ops which synchronize all clients and assert the resulting state is consistent.
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinSynchronization<
@@ -719,7 +719,7 @@ const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clien
  * and {@link DDSFuzzTestState.channel}.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinClientSelection<
@@ -851,7 +851,7 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
 
 /**
  * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
- * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export async function runTestForSeed<
