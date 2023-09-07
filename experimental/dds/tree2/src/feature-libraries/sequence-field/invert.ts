@@ -130,7 +130,6 @@ function invertMark<TNodeChange>(
 								revision: mark.transientDetach.revision ?? revision,
 								localId: mark.transientDetach.localId,
 							},
-							content: reviver(revision, inputIndex, mark.content.length),
 							count: mark.content.length,
 							inverseOf: mark.revision ?? revision,
 							transientDetach: {
@@ -161,7 +160,6 @@ function invertMark<TNodeChange>(
 							revision: markRevision,
 							localId: mark.id,
 						},
-						content: reviver(inverseRevision, inputIndex, mark.count),
 						count: mark.count,
 						inverseOf: inverseRevision,
 					},
@@ -192,7 +190,6 @@ function invertMark<TNodeChange>(
 									revision: mark.transientDetach.revision ?? revision,
 									localId: mark.transientDetach.localId,
 								},
-								content: reviver(revision, inputIndex, mark.count),
 								count: mark.count,
 								inverseOf: mark.revision ?? revision,
 								transientDetach: {

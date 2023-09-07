@@ -118,9 +118,7 @@ describe("SequenceField - toDelta", () => {
 		const changes = {
 			fieldChanges: new Map([[fooField, nestedChange]]),
 		};
-		const changeset = [
-			Mark.revive(contentCursor, { revision: tag, localId: brand(0) }, { changes }),
-		];
+		const changeset = [Mark.revive(1, { revision: tag, localId: brand(0) }, { changes })];
 		const fieldChanges = new Map([[fooField, [{ type: Delta.MarkType.Insert, content: [] }]]]);
 		const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
 			assert.deepEqual(child, changes);
@@ -350,8 +348,8 @@ describe("SequenceField - toDelta", () => {
 
 		it("redundant revive", () => {
 			const changeset = [
-				Mark.revive(fakeRepairData(tag, 0, 1)),
-				Mark.revive(fakeRepairData(tag, 1, 1), undefined, { changes: childChange1 }),
+				Mark.revive(1),
+				Mark.revive(1, undefined, { changes: childChange1 }),
 			];
 			const actual = toDelta(changeset, tag);
 			const expected: Delta.MarkList = [1, childChange1Delta];
@@ -360,13 +358,9 @@ describe("SequenceField - toDelta", () => {
 
 		it("blocked revive", () => {
 			const changeset = [
+				Mark.revive(1, { revision: tag2, localId: brand(0) }, { inverseOf: tag1 }),
 				Mark.revive(
-					fakeRepairData(tag, 0, 1),
-					{ revision: tag2, localId: brand(0) },
-					{ inverseOf: tag1 },
-				),
-				Mark.revive(
-					fakeRepairData(tag, 1, 1),
+					1,
 					{ revision: tag2, localId: brand(1) },
 					{ inverseOf: tag1, changes: childChange1 },
 				),

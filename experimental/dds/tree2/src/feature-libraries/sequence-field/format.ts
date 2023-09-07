@@ -290,19 +290,10 @@ export interface Revive<TNodeChange = NodeChangeType>
 		HasRevisionTag,
 		CanBeTransient {
 	type: "Revive";
-	content: ITreeCursorSynchronous[];
 }
 export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
-		[
-			HasReattachFields(tNodeChange),
-			HasRevisionTag,
-			CanBeTransient,
-			Type.Object({
-				type: Type.Literal("Revive"),
-				content: Type.Array(ProtoNode),
-			}),
-		],
+		[HasReattachFields(tNodeChange), HasRevisionTag, CanBeTransient],
 		noAdditionalProps,
 	);
 
