@@ -12,7 +12,7 @@ import {
 	Weights,
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
+import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
 import {
 	CursorLocationType,
@@ -75,7 +75,7 @@ export const makeFieldEditGenerator = (
 	function fieldEditGenerator(state: FuzzTestState): FieldEditTypes {
 		const tree = state.channel;
 		// generate edit for that specific tree
-		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
+		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree.view, state.random);
 		assert(fieldPath.parent !== undefined);
 
 		switch (fieldKey) {
@@ -208,7 +208,7 @@ export const makeEditGenerator = (
 				delete: passedOpWeights.delete,
 			}),
 			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
-			({ channel }) => containsAtLeastOneNode(channel),
+			({ channel }) => containsAtLeastOneNode(channel.view),
 		],
 	]);
 
@@ -236,8 +236,8 @@ export const makeTransactionEditGenerator = (
 
 	const transactionBoundaryType = createWeightedGenerator<FuzzTransactionType, FuzzTestState>([
 		[start, passedOpWeights.start],
-		[commit, passedOpWeights.commit, ({ channel }) => transactionsInProgress(channel)],
-		[abort, passedOpWeights.abort, ({ channel }) => transactionsInProgress(channel)],
+		[commit, passedOpWeights.commit, ({ channel }) => transactionsInProgress(channel.view)],
+		[abort, passedOpWeights.abort, ({ channel }) => transactionsInProgress(channel.view)],
 	]);
 
 	return (state) => {
@@ -352,7 +352,7 @@ export interface FieldPathWithCount {
  * Once the move 'stop' is picked, the fieldPath of the most recent valid cursor location is returned
  * TODO: provide the statistical properties of this function.
  */
-function getExistingFieldPath(tree: ISharedTree, random: IRandom): FieldPathWithCount {
+function getExistingFieldPath(tree: ISharedTreeView, random: IRandom): FieldPathWithCount {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	const firstNode = cursor.firstNode();
@@ -432,7 +432,7 @@ function getExistingFieldPath(tree: ISharedTree, random: IRandom): FieldPathWith
 	};
 }
 
-function containsAtLeastOneNode(tree: ISharedTree): boolean {
+function containsAtLeastOneNode(tree: ISharedTreeView): boolean {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	const firstNode = cursor.firstNode();
@@ -440,6 +440,6 @@ function containsAtLeastOneNode(tree: ISharedTree): boolean {
 	return firstNode;
 }
 
-function transactionsInProgress(tree: ISharedTree) {
+function transactionsInProgress(tree: ISharedTreeView) {
 	return tree.transaction.inProgress();
 }
