@@ -11,6 +11,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -85,13 +86,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		enableRuntimeIdCompressor: true,
 	};
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		runtimeOptions,
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 
 	let containerRuntime: ContainerRuntime;
@@ -183,14 +184,10 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider, apis) => {
 		// Create a container without the runtime option to enable the compressor.
 		// The first container should set a metadata property that automatically should
 		// enable it for any other container runtimes that are created.
-		const runtimeFactoryWithoutCompressorEnabled =
-			new ContainerRuntimeFactoryWithDefaultDataStore({
-				defaultFactory,
-				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				initializeEntryPoint: () => {
-					throw new Error("TODO");
-				},
-			});
+		const runtimeFactoryWithoutCompressorEnabled = new runtimeFactoryCtor({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		});
 
 		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
 		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");

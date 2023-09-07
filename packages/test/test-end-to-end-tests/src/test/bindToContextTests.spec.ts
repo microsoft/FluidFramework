@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
 	ITestDataObject,
@@ -139,16 +142,16 @@ describeFullCompat("bindToContext tests", (getTestObjectProvider, apis) => {
 	});
 
 	it("Requesting data store during before outer data store completes initialization", async () => {
-		const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const factoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+		);
+		const containerRuntimeFactory = new factoryCtor({
 			defaultFactory: outerDataObjectFactory,
 			registryEntries: [
 				[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 				[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 			],
 			requestHandlers: [innerRequestHandler],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		const loader = provider.createLoader([
@@ -164,16 +167,16 @@ describeFullCompat("bindToContext tests", (getTestObjectProvider, apis) => {
 	});
 
 	it("Requesting data store during before outer data store (non-root) completes initialization", async () => {
-		const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const factoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+		);
+		const containerRuntimeFactory = new factoryCtor({
 			defaultFactory: innerDataObjectFactory,
 			registryEntries: [
 				[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 				[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 			],
 			requestHandlers: [innerRequestHandler],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		const loader = provider.createLoader([

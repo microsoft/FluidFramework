@@ -9,16 +9,16 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import {
+	TestContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-internal/test-version-utils";
 import {
 	ConfigTypes,
@@ -94,7 +94,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
 	}
-	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
+	private readonly runtimeFactory: TestContainerRuntimeFactoryWithDefaultDataStore;
 
 	public get mainContainer(): IContainer | undefined {
 		return this._mainContainer;
@@ -175,15 +175,12 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 			[SharedMatrix.getFactory(), SharedString.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		this.runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
 			],
 			runtimeOptions,
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 
 		assertDocumentTypeInfo(this.props.documentTypeInfo, this.props.documentType);

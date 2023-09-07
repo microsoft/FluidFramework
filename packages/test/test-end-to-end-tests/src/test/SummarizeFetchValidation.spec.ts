@@ -20,6 +20,7 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 	createSummarizerFromFactory,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -81,14 +82,14 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 const containerRuntimeFactoryWithDefaultDataStore =
 	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
 
-const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore({
+const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	containerRuntimeFactoryWithDefaultDataStore,
+);
+const runtimeFactory = new runtimeFactoryCtor({
 	defaultFactory: dataStoreFactory1,
 	registryEntries: registryStoreEntries,
 	requestHandlers: [innerRequestHandler],
 	runtimeOptions,
-	initializeEntryPoint: () => {
-		throw new Error("TODO");
-	},
 });
 
 async function createSummarizer(

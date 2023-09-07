@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -22,6 +21,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
+	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -71,13 +71,10 @@ describe("Logging Last Connection Mode ", () => {
 
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			requestHandlers: [innerRequestHandler],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 
 		const urlResolver = new LocalResolver();

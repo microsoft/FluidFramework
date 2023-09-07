@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
@@ -22,6 +21,7 @@ import {
 	createDocumentId,
 	LoaderContainerTracker,
 	ITestObjectProvider,
+	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -116,12 +116,9 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	async function createContainer(): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: testDataObjectFactory,
 			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
@@ -143,12 +140,9 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		defaultFactory: IFluidDataStoreFactory,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],
@@ -164,12 +158,9 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	}
 
 	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: testDataObjectFactory,
 			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const loader = createLoader(
 			[[provider.defaultCodeDetails, runtimeFactory]],

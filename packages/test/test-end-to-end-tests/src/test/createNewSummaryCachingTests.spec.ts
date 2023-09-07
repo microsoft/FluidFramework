@@ -4,7 +4,10 @@
  */
 
 import assert from "assert";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import {
@@ -50,13 +53,13 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 			gcAllowed: true,
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		runtimeOptions,
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 
 	let mockLogger: MockLogger;

@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -23,6 +19,7 @@ import {
 	createSummarizerFromFactory,
 	mockConfigProvider,
 	timeoutAwait,
+	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -188,13 +185,10 @@ const createContainer = async (
 			summaryConfigOverrides,
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: rootDataObjectFactory,
 		registryEntries: registryStoreEntries,
 		runtimeOptions,
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 	return provider.createContainer(runtimeFactory, {
 		logger,

@@ -29,6 +29,7 @@ import {
 	TestFluidObjectFactory,
 	wrapDocumentServiceFactory,
 	waitForContainerConnection,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
@@ -195,14 +196,14 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 	const logger = createChildLogger();
 

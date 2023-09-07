@@ -8,7 +8,11 @@ import { parse } from "url";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
-import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	createAndAttachContainer,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -123,7 +127,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory: testSharedDataObjectFactory1,
 		registryEntries: [
 			[testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
@@ -131,9 +138,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 			[testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
 		],
 		requestHandlers: [innerRequestHandler],
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 
 	beforeEach(async () => {

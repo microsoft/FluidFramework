@@ -17,7 +17,10 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
@@ -58,14 +61,14 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 
 	let mainContainer: IContainer;

@@ -12,6 +12,7 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import {
 	describeInstallVersions,
@@ -59,7 +60,10 @@ describeInstallVersions(
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore_Old({
+		const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore_Old,
+		);
+		const oldRuntimeFactory = new runtimeFactoryCtor({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			requestHandlers: [innerRequestHandler],
@@ -72,9 +76,6 @@ describeInstallVersions(
 				gcOptions: {
 					gcAllowed: true,
 				},
-			},
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
 			},
 		});
 

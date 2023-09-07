@@ -93,6 +93,9 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
 };
 
 // @public (undocumented)
+export const createTestContainerRuntimeFactoryWithDefaultDataStore: (Base?: typeof ContainerRuntimeFactoryWithDefaultDataStore) => typeof TestContainerRuntimeFactoryWithDefaultDataStore;
+
+// @public (undocumented)
 export enum DataObjectFactoryType {
     // (undocumented)
     Primed = 0,
@@ -254,6 +257,17 @@ export const TestContainerRuntimeFactory: {
         hasInitialized(_runtime: IContainerRuntime): Promise<void>;
     };
 };
+
+// @public (undocumented)
+export class TestContainerRuntimeFactoryWithDefaultDataStore extends ContainerRuntimeFactoryWithDefaultDataStore {
+    constructor(props: {
+        defaultFactory: IFluidDataStoreFactory;
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        dependencyContainer?: any;
+        requestHandlers?: RuntimeRequestHandler[];
+        runtimeOptions?: IContainerRuntimeOptions;
+    });
+}
 
 // @public
 export class TestFluidObject implements ITestFluidObject {

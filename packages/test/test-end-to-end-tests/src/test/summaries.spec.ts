@@ -28,6 +28,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	createSummarizer,
+	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -350,12 +351,9 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			]);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory: dataStoreFactory1,
 				registryEntries: registryStoreEntries,
-				initializeEntryPoint: () => {
-					throw new Error("TODO");
-				},
 			});
 
 			// Create a container for the first client.

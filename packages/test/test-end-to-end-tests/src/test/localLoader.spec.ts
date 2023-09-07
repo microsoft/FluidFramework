@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-	IDataObjectProps,
-} from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
@@ -26,6 +21,7 @@ import {
 	LoaderContainerTracker,
 	ITestObjectProvider,
 	waitForContainerConnection,
+	TestContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
@@ -118,13 +114,10 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 	): Promise<IContainer> {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			requestHandlers: [innerRequestHandler],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
@@ -148,13 +141,10 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 	): Promise<IContainer> {
 		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		const runtimeFactory = new TestContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			requestHandlers: [inner],
-			initializeEntryPoint: () => {
-				throw new Error("TODO");
-			},
 		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],

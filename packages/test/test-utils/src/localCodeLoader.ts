@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
 	IProvideRuntimeFactory,
 	IFluidModule,
@@ -21,6 +20,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { TestContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 export type SupportedExportInterfaces = Partial<
 	IProvideRuntimeFactory &
@@ -71,16 +71,13 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
-							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore({
+							IRuntimeFactory: new TestContainerRuntimeFactoryWithDefaultDataStore({
 								defaultFactory,
 								registryEntries: [
 									[defaultFactory.type, Promise.resolve(defaultFactory)],
 								],
 								requestHandlers: [innerRequestHandler],
 								runtimeOptions,
-								initializeEntryPoint: () => {
-									throw new Error("TODO");
-								},
 							}),
 						},
 					};

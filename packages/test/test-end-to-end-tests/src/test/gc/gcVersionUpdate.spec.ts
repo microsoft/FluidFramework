@@ -19,6 +19,7 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	createSummarizerFromFactory,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -58,14 +59,14 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	const defaultRuntimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const defaultRuntimeFactory = new defaultRuntimeFactoryCtor({
 		defaultFactory,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 
 	let mainContainer: IContainer;

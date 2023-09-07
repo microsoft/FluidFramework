@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
+	createTestContainerRuntimeFactoryWithDefaultDataStore,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -31,7 +32,10 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 		requestHandlers: [innerRequestHandler],
@@ -40,9 +44,6 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
 			},
-		},
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
 		},
 	});
 
