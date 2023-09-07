@@ -3449,6 +3449,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/server-local-server': ^1.0.1
       '@fluidframework/task-manager': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/view-adapters': workspace:~
       '@microsoft/api-extractor': ^7.34.4
@@ -3481,6 +3482,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server': 1.0.1
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
+      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       uuid: 9.0.0
