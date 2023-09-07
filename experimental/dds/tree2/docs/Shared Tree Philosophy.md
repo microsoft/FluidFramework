@@ -14,13 +14,6 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
     Using the libraries should teach what is needed when its needed rather than requiring collaboration specific knowledge or experience as a prerequisite.
     The learning curve should be fast enough to be productive on day one, both for maintaining existing experiences or authoring new ones.
 
--   Adopt Shared Tree without concern for having to migrate to another solution due to hitting limitations.
-
-    This means that if a developer wants to make a change that interacts with collaboration, the fact that their application is powered by shared tree will not be a limiting factor on what can be achieved.
-    This includes compatibility between different application or version of an applications, scalability, availability, merge quality etc.
-    More concretely, if faced with a new application collaboration requirement, it should be practical to either build it on top of shared tree or extend shared tree to support it.
-    Doing this should not require major reworking of either the application or shared tree implementations, not require extending it in a way that the upstream shared tree would not be willing to maintain.
-
 -   Avoid common pitfalls of collaborative software.
 
     Collaboration often introduces subtle requirements, especially around compatibility, updates, offline use, error cases, persistance and concurrency.
@@ -32,6 +25,13 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
 
     One way this is achieved is to ensure work and requirements specific to collaboration support will be easy to discover when relevant and easy learn about and handle when needed.
     For example, if adding a new editing operation, it should be obvious how to ensure the required application invariants hold—even across merges—, and what the implications are for deployment and cross version collaboration.
+
+-   Adopt Shared Tree without concern for having to migrate to another solution due to hitting limitations.
+
+    This means that if a developer wants to make a change that interacts with collaboration, the fact that their application is powered by shared tree will not be a limiting factor on what can be achieved.
+    This includes compatibility between different application or version of an applications, scalability, availability, merge quality etc.
+    More concretely, if faced with a new application collaboration requirement, it should be practical to either build it on top of shared tree or extend shared tree to support it.
+    Doing this should not require major reworking of either the application or shared tree implementations, not require extending it in a way that the upstream shared tree would not be willing to maintain.
 
 -   Generalize investments into improved user experiences across many different application.
 
