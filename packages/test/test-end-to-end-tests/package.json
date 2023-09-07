@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-end-to-end-tests",
-	"version": "2.0.0-internal.6.3.0",
+	"version": "2.0.0-internal.6.4.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -118,7 +118,6 @@
 		"mocha": "^10.2.0",
 		"semver": "^7.5.3",
 		"sinon": "^7.4.2",
-		"source-map-support": "^0.5.16",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "^1.0.0",
 		"url": "^0.11.0",

@@ -35,10 +35,10 @@
  * Using `Jsonable` (with no type parameters) or `Jsonable<any>` is just a type alias for `any`
  * and should not be used if type safety is desired.
  *
- * @example
- * Typical usage:
- * ```ts
- *      function foo<T>(value: Jsonable<T>) { ... }
+ * @example Typical usage
+ *
+ * ```typescript
+ * function foo<T>(value: Jsonable<T>) { ... }
  * ```
  */
 export type Jsonable<T = any, TReplaced = void> = T extends
