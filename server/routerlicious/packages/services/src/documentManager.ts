@@ -48,7 +48,8 @@ export class DocumentManager implements IDocumentManager {
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
-		const staticProps: IDocumentStaticProperties = DocumentManager.getStaticProperties(document);
+		const staticProps: IDocumentStaticProperties =
+			DocumentManager.getStaticProperties(document);
 
 		// Cache the static properties of the document
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
@@ -67,14 +68,14 @@ export class DocumentManager implements IDocumentManager {
 	): Promise<IDocumentStaticProperties> {
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticDataKeyHeader(documentId);
-		let staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
+		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
 			staticPropsKey,
 		);
 
 		// If there are no cached static document props, read the document and return its static properties
 		if (!staticPropsStr) {
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return DocumentManager.getStaticProperties(document); 
+			return DocumentManager.getStaticProperties(document);
 		}
 
 		// Return the static data, parsed into a JSON object
@@ -119,7 +120,7 @@ export class DocumentManager implements IDocumentManager {
 
 	/**
 	 * Extracts the static properties from an IDocument
-	 * 
+	 *
 	 * @param document - Document to get properties from
 	 * @returns - The static properties of [document]
 	 */
