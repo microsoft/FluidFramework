@@ -19,6 +19,7 @@ import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider"
 import { mockConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
+import { createTestContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
 
 const summarizerClientType = "summarizer";
 
@@ -85,16 +86,16 @@ export async function createSummarizerFromFactory(
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new containerRuntimeFactoryType({
+	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		containerRuntimeFactoryType,
+	);
+	const runtimeFactory = new runtimeFactoryCtor({
 		defaultFactory: dataStoreFactory,
 		registryEntries: registryEntries ?? [
 			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
 		],
 		requestHandlers: [innerRequestHandler],
 		runtimeOptions: { summaryOptions: defaultSummaryOptions },
-		initializeEntryPoint: () => {
-			throw new Error("TODO");
-		},
 	});
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
