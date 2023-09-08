@@ -32,20 +32,20 @@ describeFullCompat("Audience correctness", (getTestObjectProvider, apis) => {
 	);
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
-	);
-	const runtimeFactory = new runtimeFactoryCtor({
-		defaultFactory: dataObjectFactory,
-		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		requestHandlers: [innerRequestHandler],
-		// Disable summaries so the summarizer client doesn't interfere with the audience
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: { state: "disabled" },
+		{
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			requestHandlers: [innerRequestHandler],
+			// Disable summaries so the summarizer client doesn't interfere with the audience
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: { state: "disabled" },
+				},
 			},
 		},
-	});
+	);
 
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);

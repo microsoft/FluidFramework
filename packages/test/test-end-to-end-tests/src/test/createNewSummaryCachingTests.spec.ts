@@ -53,14 +53,14 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider, apis) => {
 			gcAllowed: true,
 		},
 	};
-	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			runtimeOptions,
+		},
 	);
-	const runtimeFactory = new runtimeFactoryCtor({
-		defaultFactory: dataObjectFactory,
-		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		runtimeOptions,
-	});
 
 	let mockLogger: MockLogger;
 

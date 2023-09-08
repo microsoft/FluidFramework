@@ -59,15 +59,15 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const defaultRuntimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const defaultRuntimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions,
+		},
 	);
-	const defaultRuntimeFactory = new defaultRuntimeFactoryCtor({
-		defaultFactory,
-		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-		requestHandlers: [innerRequestHandler],
-		runtimeOptions,
-	});
 
 	let mainContainer: IContainer;
 	let dataStore1Id: string;

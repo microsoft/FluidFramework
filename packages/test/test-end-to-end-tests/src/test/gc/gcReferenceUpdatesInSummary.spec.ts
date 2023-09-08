@@ -89,14 +89,14 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 		},
 		gcOptions: { gcAllowed: true },
 	};
-	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			runtimeOptions,
+		},
 	);
-	const runtimeFactory = new runtimeFactoryCtor({
-		defaultFactory,
-		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-		runtimeOptions,
-	});
 
 	let containerRuntime: ContainerRuntime;
 	let mainDataStore: TestDataObject;

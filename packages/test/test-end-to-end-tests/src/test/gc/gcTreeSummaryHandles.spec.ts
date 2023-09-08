@@ -196,15 +196,15 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions,
+		},
 	);
-	const runtimeFactory = new runtimeFactoryCtor({
-		defaultFactory,
-		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-		requestHandlers: [innerRequestHandler],
-		runtimeOptions,
-	});
 	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.

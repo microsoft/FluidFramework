@@ -60,24 +60,24 @@ describeInstallVersions(
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+		const oldRuntimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore_Old,
-		);
-		const oldRuntimeFactory = new runtimeFactoryCtor({
-			defaultFactory,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
-			runtimeOptions: {
-				// Chunking did not work with FlushMode.TurnBased,
-				// as it was breaking batching semantics. So we need
-				// to force the container to flush the ops as soon as
-				// they are produced.
-				flushMode: FlushMode.Immediate,
-				gcOptions: {
-					gcAllowed: true,
+			{
+				defaultFactory,
+				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+				requestHandlers: [innerRequestHandler],
+				runtimeOptions: {
+					// Chunking did not work with FlushMode.TurnBased,
+					// as it was breaking batching semantics. So we need
+					// to force the container to flush the ops as soon as
+					// they are produced.
+					flushMode: FlushMode.Immediate,
+					gcOptions: {
+						gcAllowed: true,
+					},
 				},
 			},
-		});
+		);
 
 		return provider.createContainer(oldRuntimeFactory);
 	};

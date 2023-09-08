@@ -23,29 +23,39 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 
 export const createTestContainerRuntimeFactoryWithDefaultDataStore = (
 	Base: typeof ContainerRuntimeFactoryWithDefaultDataStore = ContainerRuntimeFactoryWithDefaultDataStore,
-) =>
-	class Factory extends Base {
-		/**
-		 * Constructor
-		 * @param defaultFactory -
-		 * @param registryEntries -
-		 * @param dependencyContainer - deprecated, will be removed in a future release
-		 * @param requestHandlers -
-		 * @param runtimeOptions -
-		 */
-		constructor(props: {
-			defaultFactory: IFluidDataStoreFactory;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			dependencyContainer?: any;
-			requestHandlers?: RuntimeRequestHandler[];
-			runtimeOptions?: IContainerRuntimeOptions;
-		}) {
-			super({
-				...props,
-				initializeEntryPoint: getDefaultFluidObject,
-			});
-		}
-	} as typeof TestContainerRuntimeFactoryWithDefaultDataStore;
+	ctorArgs: {
+		defaultFactory: IFluidDataStoreFactory;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		dependencyContainer?: any;
+		requestHandlers?: RuntimeRequestHandler[];
+		runtimeOptions?: IContainerRuntimeOptions;
+	},
+): TestContainerRuntimeFactoryWithDefaultDataStore => {
+	try {
+		return new Base({
+			...ctorArgs,
+			initializeEntryPoint: getDefaultFluidObject,
+		});
+	} catch (err) {
+		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older ContainerRuntimeFactoryWithDefaultDataStore's
+		const {
+			defaultFactory,
+			registryEntries,
+			dependencyContainer,
+			requestHandlers,
+			runtimeOptions,
+		} = ctorArgs;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return new (Base as any)(
+			defaultFactory,
+			registryEntries,
+			dependencyContainer,
+			requestHandlers,
+			runtimeOptions,
+			getDefaultFluidObject,
+		);
+	}
+};
 
 export class TestContainerRuntimeFactoryWithDefaultDataStore extends ContainerRuntimeFactoryWithDefaultDataStore {
 	/**

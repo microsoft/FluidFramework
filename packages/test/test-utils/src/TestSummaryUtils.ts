@@ -86,17 +86,17 @@ export async function createSummarizerFromFactory(
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
+		{
+			defaultFactory: dataStoreFactory,
+			registryEntries: registryEntries ?? [
+				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+			],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions: { summaryOptions: defaultSummaryOptions },
+		},
 	);
-	const runtimeFactory = new runtimeFactoryCtor({
-		defaultFactory: dataStoreFactory,
-		registryEntries: registryEntries ?? [
-			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
-		],
-		requestHandlers: [innerRequestHandler],
-		runtimeOptions: { summaryOptions: defaultSummaryOptions },
-	});
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
 		configProvider,

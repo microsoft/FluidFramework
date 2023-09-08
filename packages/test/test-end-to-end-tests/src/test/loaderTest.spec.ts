@@ -127,18 +127,21 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
-	const runtimeFactoryCtor = createTestContainerRuntimeFactoryWithDefaultDataStore(
+	const runtimeFactory = createTestContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory: testSharedDataObjectFactory1,
+			registryEntries: [
+				[testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
+				[testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
+				[
+					testFactoryWithRequestHeaders.type,
+					Promise.resolve(testFactoryWithRequestHeaders),
+				],
+			],
+			requestHandlers: [innerRequestHandler],
+		},
 	);
-	const runtimeFactory = new runtimeFactoryCtor({
-		defaultFactory: testSharedDataObjectFactory1,
-		registryEntries: [
-			[testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
-			[testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
-			[testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
-		],
-		requestHandlers: [innerRequestHandler],
-	});
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();

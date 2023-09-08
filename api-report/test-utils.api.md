@@ -93,7 +93,13 @@ export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof Co
 };
 
 // @public (undocumented)
-export const createTestContainerRuntimeFactoryWithDefaultDataStore: (Base?: typeof ContainerRuntimeFactoryWithDefaultDataStore) => typeof TestContainerRuntimeFactoryWithDefaultDataStore;
+export const createTestContainerRuntimeFactoryWithDefaultDataStore: (Base: typeof ContainerRuntimeFactoryWithDefaultDataStore | undefined, ctorArgs: {
+    defaultFactory: IFluidDataStoreFactory;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    dependencyContainer?: any;
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
+}) => TestContainerRuntimeFactoryWithDefaultDataStore;
 
 // @public (undocumented)
 export enum DataObjectFactoryType {
