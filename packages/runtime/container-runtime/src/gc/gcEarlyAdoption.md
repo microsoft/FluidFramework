@@ -92,7 +92,7 @@ Note: The Summarizer client will _never_ throw on usage or load of a Tombstoned 
 To enable Sweep for the first time, set this GC Option:
 
 ```ts
-gcSweepGeneration: 0
+gcSweepGeneration: 0;
 ```
 
 The exception would be if you ever bumped `gcTombstoneGeneration` - in that case, set `gcSweepGeneration` to `1` or higher.
