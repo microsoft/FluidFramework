@@ -226,46 +226,51 @@ export function validateField(
 	// }
 }
 
-function validateStructFieldName(
+/**
+ * Reserved field names to avoid collisions with the API.
+ */
+export const bannedFieldNames = new Set([
+	"constructor",
+	"context",
+	"is",
+	"on",
+	"parentField",
+	"schema",
+	"treeStatus",
+	"tryGetField",
+	"type",
+	"value",
+]);
+
+/**
+ * Field names starting with these must not be followed by an upper case letter
+ */
+export const fieldApiPrefixes = new Set(["set", "boxed"]);
+
+export function validateStructFieldName(
 	name: string,
 	describeField: () => string,
 	errors: string[],
 ): void {
-	const bannedNames = new Set([
-		"constructor",
-		"context",
-		"is",
-		"on",
-		"parentField",
-		"schema",
-		"treeStatus",
-		"tryGetField",
-		"type",
-		"value",
-	]);
-	// Names starting with these must not be followed by an upper case letter
-	// TODO: add this to name validation in field names in schema builder.
-	const prefixes = new Set(["set", "boxed"]);
-
 	// TODO: support custom field keys.
 	const suggestion =
 		"Pick a different field name to avoid property name collisions in the tree API. In the future, it will be possible to pick a separate field name for use in identifiers in the the API (to fix errors like this one) while keeping the field key (used everywhere else, including in persisted data) for compatibility but this is not implemented yet.";
 
-	if (bannedNames.has(name)) {
+	if (bannedFieldNames.has(name)) {
 		errors.push(
 			`${describeField()} uses one of the banned field names (${[
-				...bannedNames,
+				...bannedFieldNames,
 			]}). ${suggestion}`,
 		);
 	}
 
-	for (const prefix of prefixes) {
+	for (const prefix of fieldApiPrefixes) {
 		if (name.startsWith(prefix)) {
 			const afterPrefix = name.slice(prefix.length);
 			if (afterPrefix === capitalize(afterPrefix)) {
 				errors.push(
 					`${describeField()} has name that starts with one of the banned prefixes (${[
-						...prefixes,
+						...fieldApiPrefixes,
 					]}) followed by something other than a lowercase letter. ${suggestion}`,
 				);
 			}

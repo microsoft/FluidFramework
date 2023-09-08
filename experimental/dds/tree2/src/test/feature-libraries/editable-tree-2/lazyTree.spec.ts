@@ -28,6 +28,9 @@ import {
 	UntypedField2 as UntypedField,
 	UntypedTree2 as UntypedTree,
 	Skip,
+	bannedFieldNames,
+	fieldApiPrefixes,
+	validateStructFieldName,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -99,34 +102,24 @@ describe("lazyTree", () => {
 			anchor,
 		);
 
-		// TODO: move these constants for validation of struct field names into schema builder.
-		const bannedNames = new Set([
-			"constructor",
-			"context",
-			"is",
-			"on",
-			"parentField",
-			"schema",
-			"treeStatus",
-			"tryGetField",
-			"type",
-			"value",
-		]);
-		// Names starting with these must not be followed by an upper case letter
-		// TODO: add this to name validation in field names in schema builder.
-		const prefixes = new Set(["set", "boxed"]);
-
 		const existingProperties = collectPropertyNames(struct);
 
 		// Ensure all existing properties are banned as field names:
-		assert.deepEqual(bannedNames, new Set(existingProperties));
+		// Note that this currently also ensure that there are no names that are unnecessary banned:
+		// this restriction may need to be relaxed in the future to reserve names so they can be used in the API later as a non breaking change.
+		assert.deepEqual(bannedFieldNames, new Set(existingProperties));
 
 		for (const name of existingProperties) {
-			for (const prefix of prefixes) {
+			for (const prefix of fieldApiPrefixes) {
 				// Ensure properties won't collide with prefixed field name based properties.
 				// This could be less strict.
 				assert(!name.startsWith(prefix));
 			}
+
+			const errors: string[] = [];
+			// Confirm validateStructFieldName rejects all used names:
+			validateStructFieldName(name, () => "test", errors);
+			assert(errors.length > 0);
 		}
 	});
 

@@ -157,6 +157,9 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
+	bannedFieldNames,
+	fieldApiPrefixes,
+	validateStructFieldName,
 } from "./typed-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
