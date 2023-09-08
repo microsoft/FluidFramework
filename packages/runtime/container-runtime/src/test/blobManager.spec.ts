@@ -840,7 +840,6 @@ describe("BlobManager", () => {
 		}
 
 		beforeEach(() => {
-			injectedSettings[noSweepAttachmentBlobsKey] = true;
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 
@@ -885,6 +884,28 @@ describe("BlobManager", () => {
 				},
 				"Deleted blob2 fetch should have failed",
 			);
+		});
+
+		it("noSweepAttachmentBlobs true - DOESN'T delete unused blobs ", async () => {
+			injectedSettings[noSweepAttachmentBlobsKey] = true;
+
+			await runtime.attach();
+			await runtime.connect();
+
+			const blob1 = await createBlobAndGetIds("blob1");
+			const blob2 = await createBlobAndGetIds("blob2");
+
+			// Delete blob1's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
+			assert(redirectTable.has(blob1.localId));
+			assert(redirectTable.has(blob1.storageId));
+
+			// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
+			assert(redirectTable.has(blob2.localId));
+			assert(redirectTable.has(blob2.storageId));
 		});
 
 		it("deletes unused blobs", async () => {
