@@ -22,6 +22,8 @@ import { RedisCache } from "./redis";
  */
 export class DocumentManager implements IDocumentManager {
 	private static documentStaticDataCache: ICache;
+	/** True if the cache was initialized by setStaticProperty. Becomes false if the cache is overwritten by readDocument. */
+	private static staticCacheInitializedManually: boolean;
 
 	constructor(
 		private readonly internalAlfredUrl: string,
@@ -41,6 +43,9 @@ export class DocumentManager implements IDocumentManager {
 			const redisClient = new Redis.default(redisConfig);
 			DocumentManager.documentStaticDataCache = new RedisCache(redisClient);
 		}
+		if (!DocumentManager.staticCacheInitializedManually) {
+			DocumentManager.staticCacheInitializedManually = false;
+		}
 	}
 
 	public async readDocument(tenantId: string, documentId: string): Promise<IDocument> {
@@ -49,10 +54,14 @@ export class DocumentManager implements IDocumentManager {
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
+		if (!document) {
+			return undefined;
+		}
 		const staticProps: IDocumentStaticProperties =
 			DocumentManager.getStaticPropsFromDoc(document);
 
 		// Cache the static properties of the document
+		DocumentManager.staticCacheInitializedManually = false;
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		await DocumentManager.documentStaticDataCache.set(
 			staticPropsKey,
@@ -63,31 +72,66 @@ export class DocumentManager implements IDocumentManager {
 		return document;
 	}
 
-	public async readStaticData(
+	public async readStaticProperty<T>(
 		tenantId: string,
 		documentId: string,
-	): Promise<IDocumentStaticProperties> {
+		propName: string,
+	): Promise<T | undefined> {
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
 			staticPropsKey,
 		);
+		const staticProps: IDocumentStaticProperties = JSON.parse(
+			staticPropsStr,
+		) as IDocumentStaticProperties;
 
-		// If there are no cached static document props, read the document and return its static properties
-		if (!staticPropsStr) {
+		// If there are no cached static document props, or we need to overwrite an manually initialized cache,
+		// read the document and return its static properties
+		const overwriteManualCache: boolean =
+			DocumentManager.staticCacheInitializedManually && staticProps[propName] === undefined;
+		if (!staticPropsStr || overwriteManualCache) {
 			Lumberjack.info(
 				"Falling back to database after attempting to read cached static document data. ",
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return DocumentManager.getStaticPropsFromDoc(document);
+			return document?.[propName] as T | undefined;
 		}
 
 		// Return the static data, parsed into a JSON object
-		const staticProps: IDocumentStaticProperties = JSON.parse(
-			staticPropsStr,
-		) as IDocumentStaticProperties;
-		return staticProps;
+		return staticProps[propName] as T | undefined;
+	}
+
+	public async setStaticProperty<T>(
+		documentId: string,
+		propName: string,
+		propValue: T,
+	): Promise<void> {
+		// Retrieve the current static cache
+		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
+		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
+			staticPropsKey,
+		);
+		let staticProps: IDocumentStaticProperties;
+
+		if (!staticPropsStr) {
+			// If the static properties do not exist, create a new empty object
+			staticProps = DocumentManager.createEmptyStaticProps();
+			DocumentManager.staticCacheInitializedManually = true;
+			Lumberjack.info(`Empty Static Props: ${JSON.stringify(staticProps)}`);
+		} else {
+			// Otherwise, use the existing static props
+			staticProps = JSON.parse(staticPropsStr);
+		}
+
+		// Modify the specified property, and set the new value in the cache
+		staticProps[propName] = propValue;
+		Lumberjack.info(`Static Props: ${JSON.stringify(staticProps)}`);
+		await DocumentManager.documentStaticDataCache.set(
+			staticPropsKey,
+			JSON.stringify(staticProps),
+		);
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
@@ -137,6 +181,22 @@ export class DocumentManager implements IDocumentManager {
 			tenantId: document.tenantId,
 			storageName: document.storageName,
 			isEphemeralContainer: document.isEphemeralContainer,
+		};
+	}
+
+	/**
+	 * Creates an empty IDocumentStaticProperties object
+	 *
+	 * @returns - an empty IDocumentStaticProperties object
+	 */
+	private static createEmptyStaticProps(): IDocumentStaticProperties {
+		return {
+			version: undefined,
+			createTime: undefined,
+			documentId: undefined,
+			tenantId: undefined,
+			storageName: undefined,
+			isEphemeralContainer: undefined,
 		};
 	}
 }
