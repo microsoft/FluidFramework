@@ -3910,9 +3910,10 @@ export class ContainerRuntime
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
-				const pendingAttachmentBlobs = await this.blobManager.getPendingBlobs(
-					waitBlobsToAttach,
-				);
+				const pendingAttachmentBlobs = waitBlobsToAttach
+					? await this.blobManager.attachAndGetPendingBlobs()
+					: undefined;
+				await new Promise<void>((resolve) => setTimeout(resolve, 0));
 				const pending = this.pendingStateManager.getLocalState();
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
 					return; // no pending state to save
