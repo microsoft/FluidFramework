@@ -13,35 +13,25 @@ import {
 	ICache,
 } from "@fluidframework/server-services-core";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
-import * as Redis from "ioredis";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import { RedisCache } from "./redis";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
  */
 export class DocumentManager implements IDocumentManager {
-	private static documentStaticDataCache: ICache;
+	// private static documentStaticDataCache: ICache;
 	/** True if the cache was initialized by setStaticProperty. Becomes false if the cache is overwritten by readDocument. */
 	private static staticCacheInitializedManually: boolean;
 
 	constructor(
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
+		private readonly documentStaticDataCache?: ICache,
 	) {
-		// TODO: Eventually replace the static documentStaticDataCache field with a passed in optional value, to not have to initialize it here
-		// This can be done once the unified RedisCache/ICache implementation is made, the issue right now is that different RedisCache objects
-		// could be passed in, which would mean different headers and therefore multiple static document caches could exist at once.
-		// The unified RedisCache implementation will have more flexibility around headers, which will help fix this issue.
-
-		// If a redis cache does not yet exist, create one to populate the static field
-		if (!DocumentManager.documentStaticDataCache) {
-			const redisConfig: Redis.RedisOptions = {
-				host: "redis",
-				port: 6379,
-			};
-			const redisClient = new Redis.default(redisConfig);
-			DocumentManager.documentStaticDataCache = new RedisCache(redisClient);
+		if (!this.documentStaticDataCache) {
+			Lumberjack.info(
+				"DocumentManager static data cache is undefined, cache will not be used.",
+			);
 		}
 		if (!DocumentManager.staticCacheInitializedManually) {
 			DocumentManager.staticCacheInitializedManually = false;
@@ -60,13 +50,12 @@ export class DocumentManager implements IDocumentManager {
 		const staticProps: IDocumentStaticProperties =
 			DocumentManager.getStaticPropsFromDoc(document);
 
-		// Cache the static properties of the document
-		DocumentManager.staticCacheInitializedManually = false;
-		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		await DocumentManager.documentStaticDataCache.set(
-			staticPropsKey,
-			JSON.stringify(staticProps),
-		);
+		if (this.documentStaticDataCache) {
+			// Cache the static properties of the document
+			DocumentManager.staticCacheInitializedManually = false;
+			const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
+			await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
+		}
 
 		// Return the original document that was retrieved
 		return document;
@@ -77,11 +66,15 @@ export class DocumentManager implements IDocumentManager {
 		documentId: string,
 		propName: K,
 	): Promise<IDocumentStaticProperties[K] | undefined> {
+		// If the cache is undefined, just read the document normally
+		if (!this.documentStaticDataCache) {
+			const document: IDocument = await this.readDocument(tenantId, documentId);
+			return document?.[propName] as IDocumentStaticProperties[K] | undefined;
+		}
+
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
-			staticPropsKey,
-		);
+		const staticPropsStr: string = await this.documentStaticDataCache.get(staticPropsKey);
 		const staticProps: IDocumentStaticProperties = JSON.parse(
 			staticPropsStr,
 		) as IDocumentStaticProperties;
@@ -89,7 +82,7 @@ export class DocumentManager implements IDocumentManager {
 		// If there are no cached static document props, or we need to overwrite an manually initialized cache,
 		// read the document and return its static properties
 		const overwriteManualCache: boolean =
-			DocumentManager.staticCacheInitializedManually && staticProps[propName] === undefined;
+			DocumentManager.staticCacheInitializedManually && staticProps?.[propName] === undefined;
 		if (!staticPropsStr || overwriteManualCache) {
 			Lumberjack.info(
 				"Falling back to database after attempting to read cached static document data. ",
@@ -108,11 +101,17 @@ export class DocumentManager implements IDocumentManager {
 		propName: K,
 		propValue: IDocumentStaticProperties[K],
 	): Promise<void> {
+		// If the cache is undefined, do nothing, because there are no cached static properties to change
+		if (!this.documentStaticDataCache) {
+			Lumberjack.error(
+				"Cannot set document static property because the DocumentManager cache is undefined",
+			);
+			return;
+		}
+
 		// Retrieve the current static cache
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
-			staticPropsKey,
-		);
+		const staticPropsStr: string = await this.documentStaticDataCache.get(staticPropsKey);
 		let staticProps: IDocumentStaticProperties;
 
 		if (!staticPropsStr) {
@@ -126,15 +125,20 @@ export class DocumentManager implements IDocumentManager {
 
 		// Modify the specified property, and set the new value in the cache
 		staticProps[propName] = propValue;
-		await DocumentManager.documentStaticDataCache.set(
-			staticPropsKey,
-			JSON.stringify(staticProps),
-		);
+		await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
 	}
 
 	public async purgeStaticCache(documentId: string): Promise<void> {
+		// If the cache is undefined, do nothing, because there are no cached static properties to purge
+		if (!this.documentStaticDataCache) {
+			Lumberjack.error(
+				"Cannot set document static property because the DocumentManager cache is undefined",
+			);
+			return;
+		}
+
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
-		await DocumentManager.documentStaticDataCache.delete(staticPropsKey);
+		await this.documentStaticDataCache.delete(staticPropsKey);
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
