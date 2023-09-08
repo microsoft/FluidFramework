@@ -424,16 +424,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		);
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("Deleted data stores in summary", () => {
+	describe("Deleted data stores in summary", () => {
 		/**
 		 * Validates that the given data store state is correct in the summary.
 		 * e.g. if expectDelete is true::
