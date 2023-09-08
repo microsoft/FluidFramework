@@ -7,5 +7,9 @@
 		"reportFileName": "experimental-<unscopedPackageName>.api.md",
 		"reportFolder": "<projectFolder>/../../../api-report/",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
+	},
+	"dtsRollup": {
+		"enabled": true,
+		"alphaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-alpha.d.ts"
 	}
 }
