@@ -48,7 +48,7 @@ import {
 	UnboxNodeUnion,
 	UntypedField,
 	UntypedTree,
-	ValueField,
+	RequiredField,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -270,7 +270,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 export class LazyValueField<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.value, TTypes>
-	implements ValueField<TTypes>
+	implements RequiredField<TTypes>
 {
 	public constructor(
 		context: Context,

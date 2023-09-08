@@ -24,6 +24,10 @@ import {
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
 	typeNameSymbol,
+	UntypedEntity,
+	UntypedField2 as UntypedField,
+	UntypedTree2 as UntypedTree,
+	Skip,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
@@ -45,15 +49,8 @@ import {
 	LazyValueField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-
-import {
-	visitIterableTree,
-	UntypedEntity,
-	UntypedField,
-	UntypedTree,
-	Skip,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree-2";
+// eslint-disable-next-line import/no-internal-modules
+import { visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { jsonSchema } from "../../../domains";
 

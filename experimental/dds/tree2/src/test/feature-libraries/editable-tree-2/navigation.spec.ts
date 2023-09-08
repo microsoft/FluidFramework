@@ -10,10 +10,9 @@ import {
 } from "../../../feature-libraries/editable-tree-2/navigation";
 
 import {
-	UntypedField,
-	UntypedTree,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree-2";
+	UntypedField2 as UntypedField,
+	UntypedTree2 as UntypedTree,
+} from "../../../feature-libraries";
 import { FieldUpPath, UpPath } from "../../../core";
 
 /**

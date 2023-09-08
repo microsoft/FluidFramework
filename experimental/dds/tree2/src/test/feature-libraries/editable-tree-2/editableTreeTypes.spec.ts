@@ -20,11 +20,14 @@ import {
 	Sequence,
 	TypedNode,
 	UntypedField,
-	ValueField,
+	RequiredField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { jsonSequenceRootSchema } from "../../utils";
+import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
+import { EmptyKey } from "../../../core";
 import {
+	FieldKinds,
 	Any,
 	FieldNodeSchema,
 	LeafSchema,
@@ -35,11 +38,7 @@ import {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/typed-schema";
-import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
-import { EmptyKey } from "../../../core";
-import { FieldKinds } from "../../../feature-libraries";
+} from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
 	/**
@@ -112,7 +111,7 @@ describe("editableTreeTypes", () => {
 			mixed.polymorphic;
 
 		// Fully boxed, including the value field.
-		const boxedPolymorphic: ValueField<[typeof jsonNumber, typeof jsonString]> =
+		const boxedPolymorphic: RequiredField<[typeof jsonNumber, typeof jsonString]> =
 			mixed.boxedPolymorphic;
 
 		const optionalLeaf: number | undefined = mixed.optionalLeaf;

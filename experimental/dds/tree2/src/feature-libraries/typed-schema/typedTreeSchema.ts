@@ -94,15 +94,27 @@ export class TreeSchema<
 	}
 }
 
+/**
+ * @alpha
+ */
 export type MapSchema = TreeSchema & MapSchemaSpecification;
+/**
+ * @alpha
+ */
 export type LeafSchema = TreeSchema & LeafSchemaSpecification;
 
 // TODO: this includes FieldNodeSchema when it shouldn't
+/**
+ * @alpha
+ */
 export type StructSchema = TreeSchema & {
 	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
 };
 // TODO: Split TreeSchema into union of node schema interface types, and make FieldNodeSchema not subset of StructSchema
 // Then replace bellow type checks with instance of tests.
+/**
+ * @alpha
+ */
 export type FieldNodeSchema = StructSchema & {
 	structFieldsObject: { [""]: FieldSchema };
 };
