@@ -1062,7 +1062,10 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeView {
+export interface ISharedTree extends ISharedObject {
+    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
+    // @deprecated
+    readonly view: ISharedTreeView;
 }
 
 // @alpha
@@ -1089,6 +1092,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;

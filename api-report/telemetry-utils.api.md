@@ -51,7 +51,7 @@ export function createMultiSinkLogger(props: {
 
 // @public
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(message: string, props: ITelemetryProperties);
+    constructor(message: string, props: ITelemetryBaseProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
@@ -62,7 +62,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     // (undocumented)
     readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryBaseProperties): IFluidErrorBase;
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
@@ -108,7 +108,7 @@ export function generateStack(): string | undefined;
 
 // @public
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-    constructor(message: string, error?: any, props?: ITelemetryProperties);
+    constructor(message: string, error?: any, props?: ITelemetryBaseProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
@@ -309,6 +309,9 @@ export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotati
 // @public
 export function numberFromString(str: string | null | undefined): string | number | undefined;
 
+// @internal
+export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void;
+
 // @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean);
@@ -406,7 +409,7 @@ export class ThresholdCounter {
 
 // @public
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-    constructor(message: string, props?: ITelemetryProperties);
+    constructor(message: string, props?: ITelemetryBaseProperties);
     // (undocumented)
     readonly errorType: "usageError";
 }

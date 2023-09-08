@@ -8,7 +8,9 @@
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
- * @example "Canvas Container"
+ * @example
+ *
+ * "Canvas Container"
  *
  * @public
  */

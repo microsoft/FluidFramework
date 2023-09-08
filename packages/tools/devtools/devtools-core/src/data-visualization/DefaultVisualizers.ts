@@ -243,7 +243,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 
-	const contextRoot = sharedTree.context.root;
+	const contextRoot = sharedTree.view.context.root;
 	const children: Record<string, VisualChildNode> = {};
 
 	const iterateNodes = async (field: UntypedField): Promise<void> => {
