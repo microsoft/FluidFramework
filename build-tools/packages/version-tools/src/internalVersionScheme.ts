@@ -41,16 +41,15 @@ export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
  * Fluid internal version strings *always* include the string "internal" in the first position of the pre-release
  * section.
  *
- * In the following example, the public version is `a.b.c`, while the internal version is `x.y.z`.
- *
  * @example
  *
- * a.b.c-internal.x.y.z
+ * Public version `a.b.c` and internal version `x.y.z` yields `a.b.c-internal.x.y.z`.
  *
  * @param internalVersion - A version in the Fluid internal version scheme.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
  * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ *
  * @returns A tuple of [publicVersion, internalVersion, prereleaseIdentifier]
  */
 export function fromInternalScheme(
@@ -107,13 +106,14 @@ export function fromInternalScheme(
  *
  * @example
  *
- * a.b.c-internal.x.y.z
+ * Public version `a.b.c` and internal version `x.y.z` yields `a.b.c-internal.x.y.z`.
  *
  * @param publicVersion - The public version.
  * @param version - The internal version.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param prereleaseIdentifier - The prerelease indentifier to use in the Fluid internal version. Defaults to
  * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ *
  * @returns A version in the Fluid internal version scheme.
  */
 export function toInternalScheme(

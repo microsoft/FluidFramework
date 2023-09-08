@@ -22,7 +22,7 @@
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "npm run build:commonjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -32,7 +32,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
+		"test:mocha": "mocha --recursive dist/test --timeout 15000",
 		"tsc": "tsc"
 	},
 	"dependencies": {
@@ -84,7 +84,7 @@
 		"@types/rimraf": "^2.0.5",
 		"@types/semver": "^7.5.0",
 		"@types/shelljs": "^0.8.12",
-		"concurrently": "^7.6.0",
+		"concurrently": "^8.2.1",
 		"eslint": "~8.6.0",
 		"mocha": "^10.2.0",
 		"prettier": "~2.6.2"

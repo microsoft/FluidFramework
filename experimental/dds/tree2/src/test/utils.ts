@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -39,15 +39,18 @@ import {
 	TreeContent,
 	ViewEvents,
 	createSharedTreeView,
+	SharedTree,
+	InitializeAndSchematizeConfiguration,
 } from "../shared-tree";
 import {
+	Any,
 	buildForest,
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultSchemaPolicy,
 	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
+	makeSchemaCodec,
 	mapFieldMarks,
 	mapMarkList,
 	mapTreeFromCursor,
@@ -91,6 +94,8 @@ import {
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
+	AllowedUpdateType,
+	IEditableForest,
 } from "../core";
 import { JsonCompatible, Named, brand, makeArray } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -183,11 +188,11 @@ export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
 
 	private readonly provider: ITestObjectProvider;
-	private readonly _trees: ISharedTree[] = [];
+	private readonly _trees: SharedTree[] = [];
 	private readonly _containers: IContainer[] = [];
 	private readonly summarizer?: ISummarizer;
 
-	public get trees(): readonly ISharedTree[] {
+	public get trees(): readonly SharedTree[] {
 		return this._trees;
 	}
 
@@ -203,7 +208,8 @@ export class TestTreeProvider {
 	 * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 *
 	 * @example
-	 * ```ts
+	 *
+	 * ```typescript
 	 * const provider = await TestTreeProvider.create(2);
 	 * assert(provider.trees[0].isAttached());
 	 * assert(provider.trees[1].isAttached());
@@ -243,9 +249,7 @@ export class TestTreeProvider {
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
 			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-			const firstTree = await dataObject.getSharedObject<ISharedTree>(
-				TestTreeProvider.treeId,
-			);
+			const firstTree = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -270,7 +274,7 @@ export class TestTreeProvider {
 	 * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
 	 * _i_ is the index of the tree in order of creation.
 	 */
-	public async createTree(): Promise<ISharedTree> {
+	public async createTree(): Promise<SharedTree> {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
@@ -288,7 +292,7 @@ export class TestTreeProvider {
 
 		this._containers.push(container);
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-		return (this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(
+		return (this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(
 			TestTreeProvider.treeId,
 		));
 	}
@@ -313,7 +317,7 @@ export class TestTreeProvider {
 
 	private constructor(
 		provider: ITestObjectProvider,
-		firstTreeParams?: [IContainer, ISharedTree, ISummarizer],
+		firstTreeParams?: [IContainer, SharedTree, ISummarizer],
 	) {
 		this.provider = provider;
 		if (firstTreeParams !== undefined) {
@@ -342,7 +346,7 @@ export class TestTreeProvider {
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory = new MockContainerRuntimeFactory();
-	public readonly trees: readonly ISharedTree[];
+	public readonly trees: readonly SharedTree[];
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -350,7 +354,8 @@ export class TestTreeProviderLite {
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 *
 	 * @example
-	 * ```ts
+	 *
+	 * ```typescript
 	 * const provider = new TestTreeProviderLite(2);
 	 * assert(provider.trees[0].isAttached());
 	 * assert(provider.trees[1].isAttached());
@@ -362,16 +367,16 @@ export class TestTreeProviderLite {
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: ISharedTree[] = [];
+		const t: SharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
 			});
-			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
-			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
+			this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
 			t.push(tree);
@@ -490,8 +495,8 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
-		private readonly onCreate: (tree: ISharedTree) => void,
-		private readonly onLoad?: (tree: ISharedTree) => void,
+		private readonly onCreate: (tree: SharedTree) => void,
+		private readonly onLoad?: (tree: SharedTree) => void,
 	) {
 		super({ jsonValidator: typeboxValidator });
 	}
@@ -502,13 +507,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = await super.load(runtime, id, services, channelAttributes);
+		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
 		this.onLoad?.(tree);
 		return tree;
 	}
 
 	public override create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = super.create(runtime, id);
+		const tree = super.create(runtime, id) as SharedTree;
 		this.onCreate(tree);
 		return tree;
 	}
@@ -568,8 +573,32 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 	assert.deepEqual(actual, expected);
 }
 
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
+
 export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
+	validateViewConsistency(treeA.view, treeB.view);
+}
+
+function contentToJsonableTree(content: TreeContent): JsonableTree[] {
+	return normalizeNewFieldContent(
+		content,
+		content.schema.rootFieldSchema,
+		content.initialTree,
+	).map(jsonableTreeFromCursor);
+}
+
+export function validateTreeContent(tree: ISharedTreeView, content: TreeContent): void {
+	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
+	assert.deepEqual(schemaCodec.encode(tree.storedSchema), schemaCodec.encode(content.schema));
+}
+
+export function validateViewConsistency(treeA: ISharedTreeView, treeB: ISharedTreeView): void {
 	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
+	assert.deepEqual(
+		schemaCodec.encode(treeA.storedSchema),
+		schemaCodec.encode(treeB.storedSchema),
+	);
 }
 
 export function viewWithContent(
@@ -581,14 +610,26 @@ export function viewWithContent(
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 	},
 ): ISharedTreeView {
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, content.schema);
-	const forest = buildForest(schema);
+	const forest = forestWithContent(content);
+	const view = createSharedTreeView({
+		...args,
+		forest,
+		schema: new InMemoryStoredSchemaRepository(content.schema),
+	});
+	return view;
+}
+
+export function forestWithContent(content: TreeContent): IEditableForest {
+	const forest = buildForest();
 	initializeForest(
 		forest,
-		normalizeNewFieldContent({ schema }, schema.rootFieldSchema, content.initialTree),
+		normalizeNewFieldContent(
+			{ schema: content.schema },
+			content.schema.rootFieldSchema,
+			content.initialTree,
+		),
 	);
-	const view = createSharedTreeView({ ...args, forest, schema });
-	return view;
+	return forest;
 }
 
 const jsonSequenceRootField = SchemaBuilder.fieldSequence(...jsonRoot);
@@ -767,7 +808,7 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  *
  * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
  *
- * @privateRemarks - It is generally not valid to compare the decoded formats with assert.deepEqual,
+ * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
  * they require assert.deepEqual to be a valid comparison.
  * This can be problematic for some cases (for example edits containing cursors).
@@ -884,3 +925,33 @@ export function namedTreeSchema(
 		...treeSchema({ ...data }),
 	};
 }
+
+/**
+ * Document Schema which is not correct.
+ * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
+ * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
+ * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
+ *
+ * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
+ */
+// TODO: remove all usages of this.
+export const wrongSchema = new SchemaBuilder("Wrong Schema", {
+	rejectEmpty: false,
+}).intoDocumentSchema(SchemaBuilder.fieldSequence(Any));
+
+/**
+ * Schematize config Schema which is not correct.
+ * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
+ * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
+ * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
+ *
+ * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
+ */
+// TODO: remove all usages of this.
+export const wrongSchemaConfig: InitializeAndSchematizeConfiguration<
+	typeof wrongSchema.rootFieldSchema
+> = {
+	schema: wrongSchema,
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: [],
+};

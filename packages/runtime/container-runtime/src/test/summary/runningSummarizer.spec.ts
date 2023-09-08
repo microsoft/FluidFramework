@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -768,7 +769,7 @@ describe("Runtime", () => {
 
 			describe("Summarization attempts with retry", () => {
 				beforeEach(async () => {
-					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+					settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 					shouldDeferGenerateSummary = false;
 					deferGenerateSummary = undefined;
 				});
@@ -1860,7 +1861,7 @@ describe("Runtime", () => {
 
 				beforeEach(async () => {
 					// Currently, summarize events are only logged with this feature.
-					settings["Fluid.Summarizer.TryDynamicRetries"] = true;
+					settings["Fluid.Summarizer.UseDynamicRetries"] = true;
 				});
 
 				it("should emit summarize event with success result", async () => {

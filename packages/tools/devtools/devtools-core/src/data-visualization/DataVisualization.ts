@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDisposable,
 	IEvent,
@@ -243,7 +243,7 @@ export class DataVisualizerGraph
 	/**
 	 * Applies an edit to a Fluid object.
 	 * @param edit - is a Edit object that describes an edit to a Fluid object.
-	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
+	 * @returns A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
 	public async applyEdit(edit: SharedObjectEdit): Promise<void> {
 		return this.visualizerNodes.get(edit.fluidObjectId)?.applyEdit(edit);
@@ -441,7 +441,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	/**
 	 * Edits a {@link @fluidframework/shared-object-base#ISharedObject}
 	 * @param edit - Describes an edit to a Fluid object.
-	 * @returns - A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
+	 * @returns A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
 	 */
 	public async applyEdit(edit: Edit): Promise<void> {
 		return this.editSharedObject(this.sharedObject, edit);

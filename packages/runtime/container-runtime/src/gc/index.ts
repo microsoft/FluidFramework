@@ -38,12 +38,10 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	getGCDataFromSnapshot,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
-	tagAsCodeArtifact,
 } from "./gcHelpers";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {

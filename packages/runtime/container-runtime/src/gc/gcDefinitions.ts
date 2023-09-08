@@ -17,7 +17,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	RefreshSummaryResult,
+	IRefreshSummaryResult,
 } from "../summary";
 
 export type GCVersion = number;
@@ -49,7 +49,7 @@ export const runGCKey = "Fluid.GarbageCollection.RunGC";
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Feature gate key to expire a session after a set period of time.
+// Feature gate key to expire a session after a set period of time. Defaults to true.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
@@ -228,11 +228,7 @@ export interface IGarbageCollector {
 	/** Returns the GC details generated from the base snapshot. */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void>;
+	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
 	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
 	nodeUpdated(
 		nodePath: string,

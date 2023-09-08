@@ -4,10 +4,9 @@
  */
 
 import BTree from "sorted-btree";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
-	AnchorSet,
 	assertIsRevisionTag,
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -139,14 +138,12 @@ export class EditManager<
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param repairDataStoreProvider - used for undoing/redoing the local branch
-	 * @param anchors - an optional set of anchors to be rebased by the local branch when it changes
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
-		anchors?: AnchorSet,
 	) {
 		super("EditManager");
 		this.trunkBase = {
@@ -167,7 +164,6 @@ export class EditManager<
 			changeFamily,
 			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
-			anchors,
 		);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have

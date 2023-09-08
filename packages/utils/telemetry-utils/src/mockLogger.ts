@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes";
 import { createChildLogger } from "./logger";
 
@@ -14,6 +18,8 @@ import { createChildLogger } from "./logger";
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
+
+	constructor(public readonly minLogLevel?: LogLevel) {}
 
 	clear(): void {
 		this.events = [];
