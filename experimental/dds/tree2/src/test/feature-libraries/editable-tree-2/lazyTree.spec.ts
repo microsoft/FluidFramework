@@ -236,7 +236,6 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 			const value = item.value;
 			treeValues.set(value, (treeValues.get(value) ?? 0) + 1);
 		}
-		return undefined;
 	});
 
 	// TODO: generic typed traverse first, collect leaves use in asserts.
@@ -255,7 +254,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 	const visited: Set<unknown> = new Set([root]);
 	const primitivesAndValues = new Map<PrimitiveValue | TreeValue, number>();
 	// TODO: add cycle handler to not error on Fluid handles.
-	visitOwnPropertiesRecursive(root, (parent, key, child): typeof Skip | undefined => {
+	visitOwnPropertiesRecursive(root, (parent, key, child): Skip | void => {
 		assert(typeof child !== "function");
 		assert(typeof key !== "symbol");
 
@@ -301,7 +300,6 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 				assert(item instanceof LazyField);
 			}
 		}
-		return undefined;
 	});
 
 	assert.deepEqual(primitivesAndValues, treeValues);
@@ -309,7 +307,7 @@ function checkPropertyInvariants(root: UntypedEntity): void {
 
 function visitOwnPropertiesRecursive(
 	root: unknown,
-	visitor: (parent: object, key: string | symbol, data: unknown) => undefined | typeof Skip,
+	visitor: (parent: object, key: string | symbol, data: unknown) => void | Skip,
 	cycleHandler: (item: object) => void = () => fail("cycle"),
 	stack: Set<unknown> = new Set(),
 ): void {

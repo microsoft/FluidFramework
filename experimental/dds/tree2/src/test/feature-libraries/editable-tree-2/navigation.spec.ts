@@ -20,7 +20,7 @@ import { FieldUpPath, UpPath } from "../../../core";
  */
 function visitIterableTree2<T extends Iterable<T>>(
 	root: T,
-	visitor: (item: T) => typeof Skip | undefined,
+	visitor: (item: T) => Skip | undefined,
 ): void {
 	const queue = [root];
 	let next: T | undefined;
@@ -38,7 +38,7 @@ function visitIterableTree2<T extends Iterable<T>>(
  */
 function visitIterableTreeRecursive<T extends Iterable<T>>(
 	root: T,
-	visitor: (item: T) => typeof Skip | undefined,
+	visitor: (item: T) => Skip | undefined,
 ): void {
 	if (visitor(root) !== Skip) {
 		for (const child of root) {

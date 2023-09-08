@@ -4,6 +4,7 @@
  */
 
 export const Skip = Symbol("Skip");
+export type Skip = typeof Skip;
 
 /**
  * Visit iterable tree.
@@ -13,7 +14,7 @@ export const Skip = Symbol("Skip");
  */
 export function visitIterableTree<T extends Iterable<T>>(
 	root: T,
-	visitor: (item: T) => typeof Skip | undefined,
+	visitor: (item: T) => Skip | void,
 ): void {
 	const queue: Iterable<T>[] = [[root]];
 	let next: Iterable<T> | undefined;
@@ -36,7 +37,7 @@ export function visitIterableTree<T extends Iterable<T>>(
 export function visitIterableTreeWithState<T extends Iterable<T>, StatePassedDown>(
 	root: T,
 	initial: StatePassedDown,
-	visitor: (item: T, fromAbove: StatePassedDown) => typeof Skip | StatePassedDown,
+	visitor: (item: T, fromAbove: StatePassedDown) => Skip | StatePassedDown,
 ): void {
 	const queue: [StatePassedDown, Iterable<T>][] = [[initial, root]];
 	let next: [StatePassedDown, Iterable<T>] | undefined;
@@ -61,8 +62,8 @@ export function visitIterableTreeWithState<T extends Iterable<T>, StatePassedDow
  */
 export function visitBipartiteIterableTree<A extends Iterable<B>, B extends Iterable<A>>(
 	root: A,
-	visitorA: (item: A) => typeof Skip | undefined,
-	visitorB: (item: B) => typeof Skip | undefined,
+	visitorA: (item: A) => Skip | undefined,
+	visitorB: (item: B) => Skip | undefined,
 ) {
 	const queueA = [root];
 	let nextA: A | undefined;
@@ -101,8 +102,8 @@ export function visitBipartiteIterableTreeWithState<
 >(
 	root: A,
 	fromAbove: StateA,
-	visitorA: (item: A, fromAbove: StateA) => typeof Skip | StateB,
-	visitorB: (item: B, fromAbove: StateB) => typeof Skip | StateA,
+	visitorA: (item: A, fromAbove: StateA) => Skip | StateB,
+	visitorB: (item: B, fromAbove: StateB) => Skip | StateA,
 ) {
 	const queueA: [A, StateA][] = [[root, fromAbove]];
 	let next: [A, StateA] | undefined;
