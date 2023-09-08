@@ -68,7 +68,7 @@ export interface SessionEndEventsListenerRequest extends EventsListenerRequest {
 		 */
 		type: "session-end";
 		/**
-		 * The url of the fluid container whose session has ended.
+		 * The url of the Fluid container whose session has ended.
 		 */
 		containerUrl: string;
 		/**
@@ -280,8 +280,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * An 'events' endpoint that can be called by Fluid services.
 	 *
-	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables a the fluid service to notify this service
-	 * that a particular fluid session has ended which in turn causes this service to unregister any related webhooks to the respective fluid session.
+	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
+	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
 	 */
 	expressApp.post("/events-listener", (request: EventsListenerRequest, result) => {
 		const eventType = request.body?.type;
