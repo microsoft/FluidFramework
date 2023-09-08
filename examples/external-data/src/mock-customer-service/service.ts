@@ -71,10 +71,6 @@ export interface SessionEndEventsListenerRequest extends EventsListenerRequest {
 		 * The url of the Fluid container whose session has ended.
 		 */
 		containerUrl: string;
-		/**
-		 * The external task list id that the container was subscribed to change notifications for.
-		 */
-		externalTaskListId: string;
 	};
 }
 
@@ -295,12 +291,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			const containerUrl = typedRequest.body?.containerUrl;
 			if (containerUrl === undefined || typeof containerUrl !== "string") {
 				const errorMessage = `Missing or malformed containerUrl: ${containerUrl}`;
-				result.status(400).json({ message: errorMessage });
-				return;
-			}
-			const externalTaskListId = typedRequest.body?.externalTaskListId;
-			if (externalTaskListId === undefined || typeof externalTaskListId !== "string") {
-				const errorMessage = `Missing or malformed externalTaskListIdValue: ${externalTaskListId}`;
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
