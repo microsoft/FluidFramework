@@ -91,9 +91,9 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			} catch (error: any) {
 				assert.fail("Should succeed");
 			}
-			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({notifyImminentClosure: true})) as
-				| IPendingRuntimeState
-				| undefined;
+			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			})) as IPendingRuntimeState | undefined;
 			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 		});
 
@@ -126,7 +126,9 @@ describeNoCompat("blob handle isAttached", (getTestObjectProvider) => {
 			const dataStore1 = await requestFluidObject<ITestFluidObject>(container, "default");
 			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
-			const pendingStateP: any = (runtimeOf(dataStore1).getPendingLocalState({notifyImminentClosure: true}));
+			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
+				notifyImminentClosure: true,
+			});
 			map.set("key", blob);
 			const pendingState = await pendingStateP;
 			assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
