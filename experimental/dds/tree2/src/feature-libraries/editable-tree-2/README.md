@@ -70,8 +70,8 @@ So in addition to the TypeScript types, a separate decision needs to be made abo
 This library guarantees then when traversing from a root `UntypedEntity` via `enumerable` `own` properties:
 
 -   All callable members are `inherited` (not `own`) or not `enumerable` and thus work like class methods. Note that TypeScript's type checking will get this wrong due to the API using interfaces.
--   When starting at a root node or fields, there ie exactly one way to traverse to (or past in some unboxed cases) every node and field under it via only enumerable own properties.
--   Every leaf node's value within the tree will be reachable, either from its node, it as its node (in the unboxed case). Note that values are assumed to be immutable, and if multiple leaves hold structurally identical objects as values they may or may not be shared and this difference is not considered significant. TODO: determine how node's assert.deepEqual compares these cases.
+-   When starting at a root node or fields, there is exactly one way to traverse to (or past in some unboxed cases) every node and field under it via only `enumerable` `own` properties.
+-   Every leaf node's value within the tree will be reachable, either from its node, or as its node (in the unboxed case). Note that values are assumed to be immutable, and if multiple leaves hold structurally identical objects as values they may or may not be shared and this difference is not considered significant. TODO: determine how node's assert.deepEqual compares these cases.
 -   Every node traversed has an unambiguous type, either implied by its position and parent's schema (for unboxed cases) and/or from an `enumerable` `own` property containing the schema's identifier.
 -   No cycles will be encountered, with the exception of any `FluidHandle` stored as part of serializable values on `LeafNode`s.
 -   Content outside of the tree, such as its schema objects and context, will not be reachable.

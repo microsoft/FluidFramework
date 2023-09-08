@@ -42,7 +42,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 /**
  * Implementation of `EditableTreeContext`.
  *
- * An editor is required to edit the EditableTrees.
+ * @remarks An editor is required to edit the EditableTrees.
  */
 export class Context implements TreeContext {
 	public readonly withCursors: Set<LazyEntity> = new Set();
