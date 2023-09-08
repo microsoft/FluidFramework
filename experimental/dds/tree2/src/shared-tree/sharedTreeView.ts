@@ -20,10 +20,10 @@ import {
 	combineVisitors,
 	visitDelta,
 	TreeIndex,
-	ForestRootId,
 	moveToDetachedField,
 	mapCursorField,
 	announceVisitor,
+	makeTreeIndex,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
@@ -44,11 +44,9 @@ import {
 	LocalNodeKey,
 	nodeKeyFieldKey,
 	FieldSchema,
-	idAllocatorFromMaxId,
-	IdAllocator,
 	jsonableTreeFromCursor,
 } from "../feature-libraries";
-import { SharedTreeBranch } from "../shared-tree-core";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
 import {
@@ -426,15 +424,10 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			HasListeners<ViewEvents>,
 		removedTrees?: TreeIndex,
 	) {
-		this.removedTrees =
-			removedTrees ??
-			new TreeIndex(
-				"removed",
-				idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>,
-			);
-		branch.on("change", ({ change }) => {
-			if (change !== undefined) {
-				const delta = this.changeFamily.intoDelta(change);
+		this.removedTrees = removedTrees ?? makeTreeIndex();
+		branch.on("change", (event) => {
+			if (event.change !== undefined) {
+				const delta = this.changeFamily.intoDelta(event.change);
 				const combinedVisitor = combineVisitors([
 					this.forest.acquireVisitor(),
 					announceVisitor(this.forest.anchors.acquireVisitor()),
@@ -443,6 +436,12 @@ export class SharedTreeView implements ISharedTreeBranchView {
 				combinedVisitor.free();
 				this.nodeKeyIndex.scanKeys(this.context);
 				this.events.emit("afterBatch");
+			}
+			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
+				const transactionRevision = event.newCommits[0].revision;
+				for (const transactionStep of event.removedCommits) {
+					this.removedTrees.updateMajor(transactionStep.revision, transactionRevision);
+				}
 			}
 		});
 		branch.on("revertible", (type) => {

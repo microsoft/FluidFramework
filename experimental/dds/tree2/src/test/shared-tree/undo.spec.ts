@@ -250,6 +250,21 @@ describe("Undo and redo", () => {
 		tree2.redo();
 		expectJsonTree(tree2, ["A", "B", "C"]);
 	});
+
+	it("can undo/redo a transaction", () => {
+		const tree = makeTreeFromJson(["A", "B"]);
+
+		tree.transaction.start();
+		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+		tree.editor.sequenceField(rootField).delete(0, 1);
+		tree.transaction.commit();
+
+		expectJsonTree(tree, ["B", "C"]);
+		tree.undo();
+		expectJsonTree(tree, ["A", "B"]);
+		tree.redo();
+		expectJsonTree(tree, ["B", "C"]);
+	});
 });
 
 // TODO: Dedupe with the helpers in editing.spec.ts
