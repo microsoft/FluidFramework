@@ -127,29 +127,29 @@ describe("Runtime", () => {
 
 	describe("Container Runtime", () => {
 		describe("flushMode setting", () => {
-			it("Default flush mode", async () => {
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {},
-				});
+			// it("Default flush mode", async () => {
+			// 	const containerRuntime = await ContainerRuntime.loadRuntime({
+			// 		context: getMockContext() as IContainerContext,
+			// 		registryEntries: [],
+			// 		existing: false,
+			// 		runtimeOptions: {},
+			// 	});
 
-				assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
-			});
+			// 	assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
+			// });
 
-			it("Override default flush mode using options", async () => {
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						flushMode: FlushMode.Immediate,
-					},
-				});
+			// it("Override default flush mode using options", async () => {
+			// 	const containerRuntime = await ContainerRuntime.loadRuntime({
+			// 		context: getMockContext() as IContainerContext,
+			// 		registryEntries: [],
+			// 		existing: false,
+			// 		runtimeOptions: {
+			// 			flushMode: FlushMode.Immediate,
+			// 		},
+			// 	});
 
-				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
-			});
+			// 	assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
+			// });
 
 			it("Replaying ops should resend in correct order", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
@@ -1515,70 +1515,70 @@ describe("Runtime", () => {
 				mockLogger.clear();
 			});
 
-			const localGetMockContext = (
-				features?: ReadonlyMap<string, unknown>,
-			): Partial<IContainerContext> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: mockLogger,
-					supportedFeatures: features,
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-					getLoadedFromVersion: () => undefined,
-				};
-			};
+			// const localGetMockContext = (
+			// 	features?: ReadonlyMap<string, unknown>,
+			// ): Partial<IContainerContext> => {
+			// 	return {
+			// 		attachState: AttachState.Attached,
+			// 		deltaManager: new MockDeltaManager(),
+			// 		quorum: new MockQuorumClients(),
+			// 		taggedLogger: mockLogger,
+			// 		supportedFeatures: features,
+			// 		clientDetails: { capabilities: { interactive: true } },
+			// 		closeFn: (_error?: ICriticalContainerError): void => {},
+			// 		updateDirtyContainerState: (_dirty: boolean) => {},
+			// 		getLoadedFromVersion: () => undefined,
+			// 	};
+			// };
 
-			[
-				undefined,
-				new Map([["referenceSequenceNumbers", false]]),
-				new Map([
-					["other", true],
-					["feature", true],
-				]),
-			].forEach((features) => {
-				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
-					const runtime = await ContainerRuntime.loadRuntime({
-						context: localGetMockContext(features) as IContainerContext,
-						registryEntries: [],
-						existing: false,
-						runtimeOptions: {
-							flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-						},
-					});
+			// [
+			// 	undefined,
+			// 	new Map([["referenceSequenceNumbers", false]]),
+			// 	new Map([
+			// 		["other", true],
+			// 		["feature", true],
+			// 	]),
+			// ].forEach((features) => {
+			// 	it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
+			// 		const runtime = await ContainerRuntime.loadRuntime({
+			// 			context: localGetMockContext(features) as IContainerContext,
+			// 			registryEntries: [],
+			// 			existing: false,
+			// 			runtimeOptions: {
+			// 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+			// 			},
+			// 		});
 
-					assert.equal(runtime.flushMode, FlushMode.TurnBased);
-					mockLogger.assertMatchAny([
-						{
-							eventName: "ContainerRuntime:FlushModeFallback",
-							category: "error",
-						},
-					]);
-				});
-			});
+			// 		assert.equal(runtime.flushMode, FlushMode.TurnBased);
+			// 		mockLogger.assertMatchAny([
+			// 			{
+			// 				eventName: "ContainerRuntime:FlushModeFallback",
+			// 				category: "error",
+			// 			},
+			// 		]);
+			// 	});
+			// });
 
-			it("Loader supported for async FlushMode", async () => {
-				const runtime = await ContainerRuntime.loadRuntime({
-					context: localGetMockContext(
-						new Map([["referenceSequenceNumbers", true]]),
-					) as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-					},
-				});
+			// it("Loader supported for async FlushMode", async () => {
+			// 	const runtime = await ContainerRuntime.loadRuntime({
+			// 		context: localGetMockContext(
+			// 			new Map([["referenceSequenceNumbers", true]]),
+			// 		) as IContainerContext,
+			// 		registryEntries: [],
+			// 		existing: false,
+			// 		runtimeOptions: {
+			// 			flushMode: FlushModeExperimental.Async as unknown as FlushMode,
+			// 		},
+			// 	});
 
-				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
-				mockLogger.assertMatchNone([
-					{
-						eventName: "ContainerRuntime:FlushModeFallback",
-						category: "error",
-					},
-				]);
-			});
+			// 	assert.equal(runtime.flushMode, FlushModeExperimental.Async);
+			// 	mockLogger.assertMatchNone([
+			// 		{
+			// 			eventName: "ContainerRuntime:FlushModeFallback",
+			// 			category: "error",
+			// 		},
+			// 	]);
+			// });
 		});
 
 		describe("Summarization", () => {

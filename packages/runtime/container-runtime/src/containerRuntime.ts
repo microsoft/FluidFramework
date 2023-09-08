@@ -933,10 +933,6 @@ export class ContainerRuntime
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
-	public get flushMode(): FlushMode {
-		return this._flushMode;
-	}
-
 	public get scope(): FluidObject {
 		return this.containerScope;
 	}
@@ -2414,7 +2410,7 @@ export class ContainerRuntime
 		}
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
-		if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
+		if (this._flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
 			this.flush();
 		}
 		return result;
@@ -2503,7 +2499,7 @@ export class ContainerRuntime
 	 * Are we in the middle of batching ops together?
 	 */
 	private currentlyBatching() {
-		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
+		return this._flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -3509,7 +3505,7 @@ export class ContainerRuntime
 			}
 		};
 
-		switch (this.flushMode) {
+		switch (this._flushMode) {
 			case FlushMode.TurnBased:
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
 				// batch at the end of the turn

@@ -19,7 +19,6 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	FlushMode,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IFluidDataStoreContextDetached,
@@ -46,7 +45,6 @@ export interface IContainerRuntime
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
-	readonly flushMode: FlushMode;
 	readonly scope: FluidObject;
 	/**
 	 * Indicates the attachment state of the container to a host service.
