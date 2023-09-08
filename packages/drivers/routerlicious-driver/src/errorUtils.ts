@@ -26,7 +26,7 @@ export const RouterliciousErrorTypes = {
 	...DriverErrorTypes,
 
 	/**
-	 * TODO
+	 * SSL Certificate Error.
 	 */
 	sslCertError: "sslCertError",
 } as const;
@@ -45,6 +45,9 @@ export enum RouterliciousErrorType {
 	 */
 	fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
 
+	/**
+	 * SSL Certificate Error.
+	 */
 	sslCertError = "sslCertError",
 }
 

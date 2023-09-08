@@ -75,7 +75,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 // @public @deprecated
 export enum RouterliciousErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    // (undocumented)
     sslCertError = "sslCertError"
 }
 
