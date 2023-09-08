@@ -281,7 +281,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.Allow
 >;
 
 /**
- * Field this stores a sequence of children.
+ * Field that stores a sequence of children.
  *
  * @remarks
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
@@ -328,7 +328,7 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 }
 
 /**
- * Field this stores exactly one child.
+ * Field that stores exactly one child.
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
