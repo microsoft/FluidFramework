@@ -26,7 +26,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -106,7 +106,6 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
-		"source-map-support": "^0.5.16",
 		"typedoc": "^0.12.0",
 		"typescript": "~4.5.5",
 		"webpack": "^5.82.0"

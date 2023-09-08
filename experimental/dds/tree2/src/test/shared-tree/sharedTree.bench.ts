@@ -330,9 +330,10 @@ describe("SharedTree benchmarks", () => {
 
 						// Setup
 						const provider = new TestTreeProviderLite();
+						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree, i, "test");
+							insert(tree.view, i, "test");
 						}
 
 						// Measure
@@ -370,7 +371,7 @@ describe("SharedTree benchmarks", () => {
 						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
 							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
 								const peer = provider.trees[iPeer];
-								insert(peer, 0, `p${iPeer}c${iCommit}`);
+								insert(peer.view, 0, `p${iPeer}c${iCommit}`);
 							}
 						}
 

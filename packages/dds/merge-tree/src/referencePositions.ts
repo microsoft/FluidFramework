@@ -75,7 +75,9 @@ export interface ReferencePosition {
 
 	/**
 	 * Gets the offset for this reference position within its associated segment.
+	 *
 	 * @example
+	 *
 	 * If a merge-tree has 3 leaf segments ["hello", " ", "world"] and a ReferencePosition refers to the "l"
 	 * in "world", that reference's offset would be 3 as "l" is the character at index 3 within "world".
 	 */

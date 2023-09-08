@@ -28,6 +28,7 @@ import {
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
  *
  * @example
+ *
  * A configuration like the following:
  *
  * ```typescript
@@ -51,6 +52,7 @@ export type DocumentBoundaries = ApiMemberKind[];
  * not specified.
  *
  * @example
+ *
  * A configuration like the following:
  *
  * ```typescript
@@ -127,7 +129,6 @@ export interface DocumentationSuiteOptions {
 	 * @example
 	 *
 	 * We are given a class API item "Bar" in package "Foo", and this returns "foo".
-	 *
 	 * The final file name in this case might be something like "foo-bar-class".
 	 *
 	 * @param apiItem - The API item for which the pre-modification file name is being generated.

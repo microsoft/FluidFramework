@@ -288,11 +288,11 @@ let deterministicStableIdCount: number | undefined;
  * Runs `f` with {@link generateStableId} altered to return sequential StableIds starting as a fixed seed.
  * Used to make test logic that uses {@link generateStableId} deterministic.
  *
- * @remarks
- * Only use this function for testing purposes.
+ * @remarks Only use this function for testing purposes.
  *
  * @example
- * ```ts
+ *
+ * ```typescript
  * function f() {
  *    const id = generateStableId();
  *    ...

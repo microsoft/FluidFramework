@@ -725,30 +725,16 @@ export class ContainerRuntime
 	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(
-		params: {
-			context: IContainerContext;
-			registryEntries: NamedFluidDataStoreRegistryEntries;
-			existing: boolean;
-			runtimeOptions?: IContainerRuntimeOptions;
-			containerScope?: FluidObject;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-		} & (
-			| {
-					requestHandler?: (
-						request: IRequest,
-						runtime: IContainerRuntime,
-					) => Promise<IResponse>;
-					initializeEntryPoint?: undefined;
-			  }
-			| {
-					requestHandler?: undefined;
-					initializeEntryPoint: (
-						containerRuntime: IContainerRuntime,
-					) => Promise<FluidObject>;
-			  }
-		),
-	): Promise<ContainerRuntime> {
+	public static async loadRuntime(params: {
+		context: IContainerContext;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		existing: boolean;
+		runtimeOptions?: IContainerRuntimeOptions;
+		containerScope?: FluidObject;
+		containerRuntimeCtor?: typeof ContainerRuntime;
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+	}): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -920,17 +906,6 @@ export class ContainerRuntime
 
 	public get storage(): IDocumentStorageService {
 		return this._storage;
-	}
-
-	/** @deprecated - The functionality is no longer exposed publicly */
-	public get reSubmitFn() {
-		return (
-			type: ContainerMessageType,
-			contents: any,
-			localOpMetadata: unknown,
-			opMetadata: Record<string, unknown> | undefined,
-		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
-		// Note: compatDetails is not included in this deprecated API
 	}
 
 	private readonly submitFn: (
@@ -3730,7 +3705,7 @@ export class ContainerRuntime
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
-		assert(proposalHandle !== undefined, "proposalHandle should be available");
+		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,

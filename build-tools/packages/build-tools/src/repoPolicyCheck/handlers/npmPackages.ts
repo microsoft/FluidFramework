@@ -974,4 +974,103 @@ export const handlers: Handler[] = [
 			}
 		},
 	},
+	{
+		name: "npm-package-json-clean-script",
+		match,
+		handler: (file, root) => {
+			// This rule enforces the "clean" script will delete all the build and test output
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const scripts = json.scripts;
+			if (scripts === undefined) {
+				return undefined;
+			}
+
+			const cleanScript = scripts.clean;
+			if (cleanScript) {
+				// Ignore clean scripts that are root of the release group
+				if (cleanScript.startsWith("pnpm")) {
+					return undefined;
+				}
+
+				// Enforce clean script prefix
+				if (!cleanScript.startsWith("rimraf --glob ")) {
+					return "'clean' script should start with 'rimraf --glob'";
+				}
+			}
+
+			const missing = missingCleanDirectories(scripts);
+
+			if (missing.length !== 0) {
+				return `'clean' script missing the following:${missing
+					.map((i) => `\n\t${i}`)
+					.join("")}`;
+			}
+
+			const clean = scripts["clean"];
+			if (clean && clean.startsWith("rimraf ")) {
+				if (clean.includes('"')) {
+					return "'clean' script using double quotes instead of single quotes";
+				}
+
+				if (!clean.includes("'")) {
+					return "'clean' script rimraf argument should have single quotes";
+				}
+			}
+		},
+		resolver: (file, root) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const missing = missingCleanDirectories(json.scripts);
+				const clean = json.scripts["clean"] ?? "rimraf --glob";
+				if (clean.startsWith("rimraf --glob")) {
+					result.resolved = false;
+					result.message =
+						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
+				}
+				if (missing.length === 0) {
+					return;
+				}
+				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+			});
+
+			return result;
+		},
+	},
 ];
+
+function missingCleanDirectories(scripts: any) {
+	const expectedClean: string[] = [];
+
+	if (scripts["tsc"]) {
+		expectedClean.push("dist");
+	}
+
+	// Using the heuristic that our package use "build:esnext" or "tsc:esnext" to indicate
+	// that it has a ESM build.
+	const esnextScriptsNames = ["build:esnext", "tsc:esnext"];
+	const hasBuildEsNext = esnextScriptsNames.some((name) => scripts[name] !== undefined);
+	if (hasBuildEsNext) {
+		expectedClean.push("lib");
+	}
+
+	if (scripts["build"]?.startsWith("fluid-build")) {
+		expectedClean.push("*.tsbuildinfo");
+		expectedClean.push("*.build.log");
+	}
+
+	if (scripts["build:docs"]) {
+		expectedClean.push("_api-extractor-temp");
+	}
+
+	if (scripts["test"] && !scripts["test"].startsWith("echo")) {
+		expectedClean.push("nyc");
+	}
+	return expectedClean.filter((name) => !scripts.clean?.includes(name));
+}

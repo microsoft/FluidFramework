@@ -40,6 +40,7 @@ const SchemaValidatorError = {
 	 * Your property template should include a typeid attribute.
 	 *
 	 * @example
+	 *
 	 *```json
 	 * {
 	 *  "typeid": "my.example:point2d-1.0.0",
@@ -58,7 +59,9 @@ const SchemaValidatorError = {
 	 *
 	 * Typeid should contain a template version number.
 	 *
-	 * @example “typeid: my.example:point2d-1.0.0”
+	 * @example
+	 *
+	 * “typeid: my.example:point2d-1.0.0”
 	 */
 	MISSING_VERSION: "SV-005: Missing template version in 'typeid' attribute: ",
 
@@ -413,6 +416,7 @@ const PropertyError = {
 	 * Workspace.get and Property.get take in an id (string or number) or an array of ids.
 	 *
 	 * @example
+	 *
 	 * ```typescript
 	 *.get(‘position’).get(‘x’) or .get([‘property’, ‘x’])
 	 * ```
@@ -870,12 +874,14 @@ const PropertyError = {
 	 * The token DEREFERENCE_TOKEN should only be used with .get when the in_ids passed to .get is an array.
 	 * the DEREFERENCE_TOKEN should follow a path to a reference.
 	 *
-	 * @example Valid:
+	 * @example Valid
+	 *
 	 * ```typescript
 	 * myProp.get(['myReference', TOKENS.DEREFERENCE_TOKEN])
 	 * ```
 	 *
-	 * @example Not valid:
+	 * @example Not valid
+	 *
 	 * ```typescript
 	 * myProp.get('myReference').get(TOKENS.DEREFERENCE_TOKEN)
 	 * ```
@@ -1072,6 +1078,7 @@ const PropertyFactoryError = {
 	 * When using ‘inherits’ in your property template, it must be a string or an array.
 	 *
 	 * @example
+	 *
 	 * ```json
 	 * {
 	 * typeid:'my.example:point2d-1.0.0',
@@ -1267,6 +1274,7 @@ const PropertyFactoryError = {
 	 * You need a ‘typeid’ field in your template schema.
 	 *
 	 * @example
+	 *
 	 * ```json
 	 * {
 	 *   ‘typeid’: 'autodesk.test:set.set-1.0.0',
@@ -1296,6 +1304,7 @@ const PropertyFactoryError = {
 	 * Each entry in your enum property array must have an id.
 	 *
 	 * @example
+	 *
 	 * ```json
 	 * {
 	 *   "typeid": "Adsk.Core:Units.Metric-1.0.0",
@@ -1317,6 +1326,7 @@ const PropertyFactoryError = {
 	 * Each entry in your enum property must have a value that is a number.
 	 *
 	 * @example
+	 *
 	 * ```json
 	 * {
 	 *   "typeid": "Adsk.Core:Units.Metric-1.0.0",
