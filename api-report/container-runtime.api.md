@@ -203,8 +203,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // @deprecated
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
-    // @deprecated (undocumented)
-    get reSubmitFn(): (type: ContainerMessageType, contents: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)
     get scope(): FluidObject;
     // (undocumented)
@@ -396,8 +394,6 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
-    // @deprecated (undocumented)
-    sweepAllowed?: boolean;
 }
 
 // @public

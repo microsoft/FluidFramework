@@ -10,7 +10,6 @@ import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
-import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -39,7 +38,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getAliasedDataStoreEntryPoint?(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
+    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     // @deprecated
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     readonly isDirty: boolean;
@@ -61,14 +60,6 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
-}
-
-// @public @deprecated (undocumented)
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-    // (undocumented)
-    fluidDataStoreChannel?: {
-        bindToContext?(): void;
-    };
 }
 
 // (No @packageDocumentation comment for this package)

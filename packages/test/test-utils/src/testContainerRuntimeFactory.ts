@@ -52,8 +52,7 @@ export const createTestContainerRuntimeFactory = (
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 			// Validate we can load root data stores.
 			// We should be able to load any data store that was created in initializeFirstTime!
-			await (runtime.getAliasedDataStoreEntryPoint?.("default") ??
-				runtime.getRootDataStore("default"));
+			await runtime.getAliasedDataStoreEntryPoint("default");
 		}
 
 		async preInitialize(
