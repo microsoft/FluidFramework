@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { assertValidIndex } from "../../../util";
 import { FieldKey, TreeSchemaIdentifier, Value } from "../../../core";
 import { TreeChunk } from "../chunk";

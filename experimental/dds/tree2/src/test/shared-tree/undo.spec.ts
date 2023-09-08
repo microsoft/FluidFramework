@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { singleTextCursor } from "../../feature-libraries";
-import { jsonString } from "../../domains";
+import { jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath } from "../../core";
 import { ISharedTreeView } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
@@ -141,6 +141,27 @@ describe("Undo and redo", () => {
 			expectJsonTree(view, editedState);
 		});
 	}
+
+	it("can undo before and after rebasing a branch", () => {
+		const tree1 = makeTreeFromJson([0, 0, 0]);
+		const tree2 = tree1.fork();
+
+		tree1.editor
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.insert(3, singleJsonCursor(1));
+		tree2.editor
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.insert(0, singleJsonCursor(2));
+		tree2.editor
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.insert(0, singleJsonCursor(3));
+		tree2.undo();
+		expectJsonTree(tree2, [2, 0, 0, 0]);
+		tree2.rebaseOnto(tree1);
+		expectJsonTree(tree2, [2, 0, 0, 0, 1]);
+		tree2.undo();
+		expectJsonTree(tree2, [0, 0, 0, 1]);
+	});
 
 	// TODO move these tests to `testCases` as the bugs are resolved
 	describe.skip("tests that are being skipped due to bugs", () => {

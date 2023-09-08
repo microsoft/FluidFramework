@@ -16,7 +16,6 @@ import {
 	IsomorphicGitManagerFactory,
 	IStorageDirectoryConfig,
 	NodeFsManagerFactory,
-	NodegitRepositoryManagerFactory,
 	RedisFsManagerFactory,
 } from "./utils";
 export class GitrestResources implements core.IResources {
@@ -95,7 +94,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		const storageDirectoryConfig: IStorageDirectoryConfig = config.get(
 			"storageDir",
 		) as IStorageDirectoryConfig;
-		const gitLibrary: string | undefined = config.get("git:lib:name") ?? "nodegit";
+		const gitLibrary: string | undefined = config.get("git:lib:name") ?? "isomporphic-git";
 		const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
 		const enableRepositoryManagerMetrics: boolean =
 			config.get("git:enableRepositoryManagerMetrics") ?? false;
@@ -104,16 +103,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		);
 		const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
 
-		if (!gitLibrary || gitLibrary === "nodegit") {
-			return new NodegitRepositoryManagerFactory(
-				storageDirectoryConfig,
-				fileSystemManagerFactories.defaultFileSystemManagerFactory,
-				externalStorageManager,
-				repoPerDocEnabled,
-				enableRepositoryManagerMetrics,
-				apiMetricsSamplingPeriod,
-			);
-		} else if (gitLibrary === "isomorphic-git") {
+		if (gitLibrary === "isomorphic-git") {
 			return new IsomorphicGitManagerFactory(
 				storageDirectoryConfig,
 				fileSystemManagerFactories,

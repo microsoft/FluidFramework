@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { IIntegerRange } from "./base";
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTree } from "./mergeTree";
@@ -44,7 +45,9 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 		end: number | undefined,
 		refSeq: number,
 		clientId: number,
+		// eslint-disable-next-line import/no-deprecated
 	): IIntegerRange {
+		// eslint-disable-next-line import/no-deprecated
 		const range: IIntegerRange = {
 			end: end ?? this.mergeTree.getLength(refSeq, clientId),
 			start: start ?? 0,

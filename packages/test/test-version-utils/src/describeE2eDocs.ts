@@ -13,9 +13,16 @@ import {
 } from "@fluidframework/test-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList } from "./compatConfig.js";
-import { getVersionedTestObjectProvider } from "./compatUtils.js";
-import { baseVersion } from "./baseVersion.js";
+import { testBaseVersion } from "./baseVersion.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
+import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import {
+	getDataRuntimeApi,
+	getLoaderApi,
+	getContainerRuntimeApi,
+	getDriverApi,
+	CompatApis,
+} from "./testApi.js";
 
 /*
  * Types of documents to be used during the performance runs.
@@ -283,22 +290,30 @@ function createE2EDocCompatSuite(
 				describe(name, function () {
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
+					const dataRuntimeApi = getDataRuntimeApi(
+						testBaseVersion(config.dataRuntime),
+						config.dataRuntime,
+					);
+					const apis: CompatApis = {
+						containerRuntime: getContainerRuntimeApi(
+							testBaseVersion(config.containerRuntime),
+							config.containerRuntime,
+						),
+						dataRuntime: dataRuntimeApi,
+						dds: dataRuntimeApi.dds,
+						driver: getDriverApi(testBaseVersion(config.driver), config.driver),
+						loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
+					};
+
 					before(async function () {
 						try {
-							provider = await getVersionedTestObjectProvider(
-								baseVersion,
-								config.loader,
-								{
-									type: driver,
-									version: config.driver,
-									config: {
-										r11s: { r11sEndpointName },
-										odsp: { tenantIndex },
-									},
+							provider = await getVersionedTestObjectProviderFromApis(apis, {
+								type: driver,
+								config: {
+									r11s: { r11sEndpointName },
+									odsp: { tenantIndex },
 								},
-								config.containerRuntime,
-								config.dataRuntime,
-							);
+							});
 						} catch (error) {
 							const logger = createChildLogger({
 								logger: getTestLogger?.(),

@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, Deferred, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
@@ -27,7 +28,7 @@ type WorkingState = "working" | "done" | "canceled";
  * @param payloadSize - batch size
  * @param logger - logger to use
  * @param requestCallback - callback to request batches
- * @returns - Queue that can be used to retrieve data
+ * @returns Queue that can be used to retrieve data
  */
 export class ParallelRequests<T> {
 	private latestRequested: number;
@@ -404,7 +405,7 @@ const waitForOnline = async (): Promise<void> => {
  * @param logger - logger object to use to log progress & errors
  * @param signal - cancelation signal
  * @param scenarioName - reason for fetching ops
- * @returns - an object with resulting ops and cancellation / partial result flags
+ * @returns An object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
@@ -529,7 +530,7 @@ async function getSingleOpBatch(
  * @param logger - Logger to log progress and errors
  * @param signal - Cancelation signal
  * @param scenarioName - Reason for fetching ops
- * @returns - Messages fetched
+ * @returns Messages fetched
  */
 export function requestOps(
 	get: (

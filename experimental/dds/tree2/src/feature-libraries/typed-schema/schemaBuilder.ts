@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { requireAssignableTo, RestrictiveReadonlyRecord } from "../../util";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
@@ -331,6 +331,7 @@ export class SchemaBuilder {
 	 */
 	public static fieldRecursive<
 		Kind extends FieldKindTypes,
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 		T extends FlexList<RecursiveTreeSchema>,
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
 		return new FieldSchema(kind, allowedTypes);
