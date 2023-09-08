@@ -280,8 +280,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * An 'events' endpoint that can be called by Fluid services.
 	 *
-	 * For the 'session-end' event: If, after unregistering the given url, there are any task ids that has an outstanding webhook registered using this services internal
-	 * '/external-data-webhook' endpoint but has no respective active client sessions mapped to it anymore, then that webhook will be deregistered.
+	 * For the 'session-end' event {@link SessionEndEventsListenerRequest}: If, after unregistering the given client url, there are any task ids that have an outstanding
+	 * webhook registered using this services internal '/external-data-webhook' endpoint but has no respective active client sessions mapped to it anymore,
+	 * then that webhook will be deregistered.
 	 *
 	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
 	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
