@@ -400,7 +400,7 @@ export function runSharedTreeVersioningTests(
 				testObjectProvider,
 				// To be removed ADO:5464
 				featureGates: {
-					'Fluid.Loader.ForceWriteConnection': true,
+					'Fluid.Container.ForceWriteConnection': true,
 				},
 			});
 
@@ -493,7 +493,7 @@ export function runSharedTreeVersioningTests(
 				testObjectProvider,
 				// To be removed ADO:5464
 				featureGates: {
-					'Fluid.Loader.ForceWriteConnection': true,
+					'Fluid.Container.ForceWriteConnection': true,
 				},
 			});
 

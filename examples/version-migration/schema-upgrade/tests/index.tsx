@@ -51,7 +51,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		new DemoCodeLoader(testMode),
 		undefined, // logger
 		// To be removed ADO:5465
-		configProvider({ "Fluid.Loader.ForceWriteConnection": true }),
+		configProvider({ "Fluid.Container.ForceWriteConnection": true }),
 	);
 	let id: string;
 	let model: IMigratableModel;

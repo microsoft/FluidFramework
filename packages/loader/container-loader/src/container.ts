@@ -1537,9 +1537,9 @@ export class Container
 			this.client.details.type === summarizerClientType,
 		);
 
-		// Except in cases where it has stashed ops or requested by feature gate, the document will connect in "read" mode
+		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
 		const mode =
-			this.mc.config.getBoolean("Fluid.Loader.ForceWriteConnection") === true ||
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
 			(pendingLocalState?.savedOps.length ?? 0) > 0
 				? "write"
 				: "read";
