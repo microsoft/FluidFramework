@@ -243,8 +243,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 				// 3a. Webhook exists but the provided subscriber is not subscribed with the webhook.
 				const resultMessage =
 					"Provided subscriberUrl does not have a webhook registered for the given externalTaskListId";
-				result.status(200).json({ message: resultMessage });
 				console.info(formatLogMessage(resultMessage));
+				result.status(200).json({ message: resultMessage });
 			} else {
 				// 3b. Webhook exists and the provided subcriber is currently subscribed to it.
 				webhook.removeSubscriber(subscriberUrl);

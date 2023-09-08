@@ -280,6 +280,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * An 'events' endpoint that can be called by Fluid services.
 	 *
+	 * For the 'session-end' event: If, after unregistering the given url, there are any task ids that has an outstanding webhook registered using this services internal
+	 * '/external-data-webhook' endpoint but has no respective active client sessions mapped to it anymore, then that webhook will be deregistered.
+	 *
 	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables the Fluid service to notify this service
 	 * that a particular Fluid session has ended which in turn causes this service to unregister any related webhooks to the respective Fluid session.
 	 */
@@ -301,28 +304,33 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			// TODO: Support unregistering multiple task list id's from a container on session end.
-			fetch(externalDataServiceWebhookUnregistrationUrl, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					// External data service will call our webhook echoer to notify our subscribers of the data changes.
-					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
-				}),
-			}).catch((error) => {
-				console.error(
-					formatLogMessage(
-						`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
-					),
-					error,
-				);
-				throw error;
-			});
-
-			clientManager.removeClientTaskListRegistration(containerUrl, externalTaskListId);
+			// Removes the mapping of the given container URL from all task id's
+			const emptyTaskListRegistrationIds =
+				clientManager.removeAllClientTaskListRegistrations(containerUrl);
+			// If there are any task list id's that no longer have any active client sessions mapped to them
+			// then we should deregister our webhook for that task list id.
+			for (const emptyExternalTaskListId of emptyTaskListRegistrationIds) {
+				fetch(externalDataServiceWebhookUnregistrationUrl, {
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						// External data service will call our webhook echoer to notify our subscribers of the data changes.
+						url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${emptyExternalTaskListId}`,
+						emptyExternalTaskListId,
+					}),
+				}).catch((error) => {
+					console.error(
+						formatLogMessage(
+							`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
+						),
+						error,
+					);
+					throw error;
+				});
+			}
 		} else {
 			const errorMessage = `Unexpected event type; ${eventType}`;
 			console.error(formatLogMessage(`Unexpected event type; ${eventType}`));
