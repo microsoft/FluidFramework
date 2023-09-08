@@ -4,7 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Brand, NestedMap, brand, fail, setInNestedMap, tryGetFromNestedMap } from "../../util";
+import {
+	Brand,
+	NestedMap,
+	brand,
+	deleteFromNestedMap,
+	fail,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 
@@ -31,6 +39,7 @@ export class TreeIndex {
 	public constructor(
 		private readonly name: string,
 		private readonly rootIdAllocator: (count: number) => ForestRootId,
+		private readonly tag: number = Math.random(),
 	) {}
 
 	public *entries(): Generator<Entry & { id: Delta.DetachedNodeId }> {
@@ -54,7 +63,9 @@ export class TreeIndex {
 	 * Returns undefined if no such id is known to the index.
 	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): Entry | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+		const entry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+		console.log(this.tag, "tryGetEntry", id.major, id.minor, entry);
+		return entry;
 	}
 
 	/**
@@ -75,6 +86,12 @@ export class TreeIndex {
 		return this.tryGetEntry(nodeId) ?? this.createEntry(nodeId);
 	}
 
+	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
+		console.log(this.tag, "deleteEntry", nodeId.major, nodeId.minor);
+		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
+		assert(found, "Unable to delete unknown entry");
+	}
+
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
@@ -84,6 +101,7 @@ export class TreeIndex {
 		const entry = { field, root };
 
 		if (nodeId !== undefined) {
+			console.log(this.tag, "createEntry", nodeId.major, nodeId.minor, entry);
 			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, entry);
 		}
 		return entry;

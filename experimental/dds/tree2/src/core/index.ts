@@ -68,6 +68,7 @@ export {
 	announceVisitor,
 	announceDelta,
 	applyDelta,
+	makeTreeIndex,
 	setGenericTreeField,
 	DeltaVisitor,
 	PathVisitor,
