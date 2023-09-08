@@ -79,7 +79,7 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 			this.skip();
 		}
 
-		settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
+		settings["Fluid.GarbageCollection.NoSweepDataStores"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;

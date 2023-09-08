@@ -30,7 +30,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
-import { sweepAttachmentBlobsKey } from "../gc";
+import { noSweepAttachmentBlobsKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -840,7 +840,7 @@ describe("BlobManager", () => {
 		}
 
 		beforeEach(() => {
-			injectedSettings[sweepAttachmentBlobsKey] = true;
+			injectedSettings[noSweepAttachmentBlobsKey] = true;
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 
