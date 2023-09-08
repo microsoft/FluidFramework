@@ -6,7 +6,7 @@
 		"extractorMessageReporting": {
 			// TODO: promote this to an error and fix violations
 			"ae-missing-release-tag": {
-				"logLevel": "warning",
+				"logLevel": "none",
 				"addToApiReportFile": false
 			}
 		}
