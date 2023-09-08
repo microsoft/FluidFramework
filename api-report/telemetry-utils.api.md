@@ -309,7 +309,7 @@ export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotati
 // @public
 export function numberFromString(str: string | null | undefined): string | number | undefined;
 
-// @public
+// @internal
 export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void;
 
 // @public
