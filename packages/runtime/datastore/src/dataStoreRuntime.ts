@@ -185,7 +185,7 @@ export class FluidDataStoreRuntime
 		return this._disposed;
 	}
 
-	private readonly contexts = new Map<string, IChannelContext>();
+	protected readonly contexts = new Map<string, IChannelContext>();
 	private readonly pendingAttach = new Set<string>();
 
 	private readonly deferredAttached = new Deferred<void>();
@@ -242,7 +242,7 @@ export class FluidDataStoreRuntime
 	 */
 	public constructor(
 		private readonly dataStoreContext: IFluidDataStoreContext,
-		private readonly sharedObjectRegistry: ISharedObjectRegistry,
+		protected readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
@@ -440,9 +440,23 @@ export class FluidDataStoreRuntime
 
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
 		this.notBoundedChannelContextSet.add(id);
-		const context = new LocalChannelContext(
+		const context = this.createLocalChannelContext(id, type, this.sharedObjectRegistry);
+		this.contexts.set(id, context);
+
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+
+		return context.channel;
+	}
+
+	protected createLocalChannelContext(
+		id: string,
+		type: string,
+		sharedObjectRegistry: ISharedObjectRegistry,
+	) {
+		return new LocalChannelContext(
 			id,
-			this.sharedObjectRegistry,
+			sharedObjectRegistry,
 			type,
 			this,
 			this.dataStoreContext,
@@ -453,12 +467,6 @@ export class FluidDataStoreRuntime
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
-		this.contexts.set(id, context);
-
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
-
-		return context.channel;
 	}
 
 	/**
@@ -1090,7 +1098,7 @@ export class FluidDataStoreRuntime
 		});
 	}
 
-	private verifyNotClosed() {
+	protected verifyNotClosed() {
 		if (this._disposed) {
 			throw new LoggingError("Runtime is closed");
 		}

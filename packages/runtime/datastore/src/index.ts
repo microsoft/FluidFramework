@@ -11,3 +11,4 @@ export {
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime";
+export { MigratorFluidDataStoreRuntime } from "./migratorDataStoreRuntime";
