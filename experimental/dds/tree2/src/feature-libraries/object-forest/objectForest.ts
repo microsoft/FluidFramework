@@ -157,7 +157,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				assert(source.end >= source.start, "Range end must be >= its start");
 				const content = sourceField.splice(source.start, source.end - source.start);
 				if (sourceField.length === 0) {
-					parent.fields.delete(source.field);
+					this.forest.roots.fields.delete(source.field);
 				}
 				// TODO: this will fail for very large insertions due to argument limits.
 				currentField.splice(destination, 0, ...content);
