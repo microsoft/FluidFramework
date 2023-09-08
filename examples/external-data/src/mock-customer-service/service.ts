@@ -44,6 +44,41 @@ function echoExternalDataWebhookToFluid(
 }
 
 /**
+ * Expected shape of the request that is handled by the
+ * /events-listener endpoint
+ */
+export interface EventsListenerRequest extends express.Request {
+	body: {
+		/**
+		 * The type of the event.
+		 * Different event types expect different request parameters and produce different effects.
+		 */
+		type: string;
+	};
+}
+
+/**
+ * Expected shape of the "session-end" event request that is handled by the
+ * /events-listener endpoint
+ */
+export interface SessionEndEventsListenerRequest extends EventsListenerRequest {
+	body: {
+		/**
+		 * The type of the event
+		 */
+		type: "session-end";
+		/**
+		 * The url of the fluid container whose session has ended.
+		 */
+		containerUrl: string;
+		/**
+		 * The external task list id that the container was subscribed to change notifications for.
+		 */
+		externalTaskListId: string;
+	};
+}
+
+/**
  * {@link initializeCustomerService} input properties.
  */
 export interface ServiceProps {
@@ -62,7 +97,14 @@ export interface ServiceProps {
 	 * any time the external data service communicates them.
 	 */
 	externalDataServiceWebhookRegistrationUrl: string;
-
+	/**
+	 * URL of the endpoint used to unregister webhooks from the external data service.
+	 *
+	 * @remarks
+	 *
+	 * This endpoint will unregister a given webhook from the external data service so that it will no longer receive data change notifications.
+	 */
+	externalDataServiceWebhookUnregistrationUrl: string;
 	/**
 	 * URL of the Fluid Service to notify when external data notification comes in.
 	 *
@@ -79,7 +121,12 @@ export interface ServiceProps {
  * Initializes the mock customer service.
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
-	const { port, externalDataServiceWebhookRegistrationUrl, fluidServiceUrl } = props;
+	const {
+		port,
+		externalDataServiceWebhookRegistrationUrl,
+		externalDataServiceWebhookUnregistrationUrl,
+		fluidServiceUrl,
+	} = props;
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -207,6 +254,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				body: JSON.stringify({
 					// External data service will call our webhook echoer to notify our subscribers of the data changes.
 					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+					externalTaskListId,
 				}),
 			}).catch((error) => {
 				console.error(
@@ -225,6 +273,60 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
 			),
 		);
+
+		result.send();
+	});
+
+	/**
+	 * An 'events' endpoint that can be called by Fluid services.
+	 * Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables a the fluid service to notify this service
+	 * that a particular fluid session has ended which in turn causes this service to unregister any related webhooks to the respective fluid session.
+	 */
+	expressApp.post("/events-listener", (request: EventsListenerRequest, result) => {
+		const eventType = request.body?.type;
+
+		if (eventType === "session-end") {
+			const typedRequest = request as SessionEndEventsListenerRequest;
+			const containerUrl = typedRequest.body?.containerUrl;
+			if (containerUrl === undefined || typeof containerUrl !== "string") {
+				const errorMessage = `Missing or malformed containerUrl: ${containerUrl}`;
+				result.status(400).json({ message: errorMessage });
+				return;
+			}
+			const externalTaskListId = typedRequest.body?.externalTaskListId;
+			if (externalTaskListId === undefined || typeof externalTaskListId !== "string") {
+				const errorMessage = `Missing or malformed externalTaskListIdValue: ${externalTaskListId}`;
+				result.status(400).json({ message: errorMessage });
+				return;
+			}
+
+			// TODO: Support unregistering multiple task list id's from a container on session end.
+			fetch(externalDataServiceWebhookUnregistrationUrl, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					// External data service will call our webhook echoer to notify our subscribers of the data changes.
+					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+				}),
+			}).catch((error) => {
+				console.error(
+					formatLogMessage(
+						`Un-registering for data update notifications webhook with the external data service failed due to an error.`,
+					),
+					error,
+				);
+				throw error;
+			});
+
+			clientManager.removeClientTaskListRegistration(containerUrl, externalTaskListId);
+		} else {
+			const errorMessage = `Unexpected event type; ${eventType}`;
+			console.error(formatLogMessage(`Unexpected event type; ${eventType}`));
+			result.status(400).json({ errorMessage });
+		}
 
 		result.send();
 	});

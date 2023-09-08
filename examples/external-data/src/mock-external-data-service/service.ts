@@ -51,7 +51,7 @@ export interface RegisterWebhookRequest extends express.Request {
 		 */
 		url: string;
 		/**
-		 * The id of the task list to subscribe to change notifications for
+		 * The ID of the task list to subscribe to change notifications for
 		 */
 		externalTaskListId: string;
 	};
@@ -68,7 +68,7 @@ export interface UnregisterWebhookRequest extends express.Request {
 		 */
 		url: string;
 		/**
-		 * The id of the task list to unsubscribe to change notifications for
+		 * The ID of the task list to unsubscribe to change notifications for
 		 */
 		externalTaskListId: string;
 	};
@@ -192,7 +192,11 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			);
 		} catch (error) {
 			if (error instanceof ApiError) {
-				console.warn(formatLogMessage(error.message));
+				if (error.code >= 500) {
+					console.error(formatLogMessage(error.message));
+				} else {
+					console.warn(formatLogMessage(error.message));
+				}
 				result.status(error.code).json({ message: error.message });
 			} else {
 				console.error(error);
