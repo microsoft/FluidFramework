@@ -300,21 +300,26 @@ export type ReadOnlyInfo =
 	  }
 	| {
 			readonly readonly: true;
+
 			/**
-			 * read-only because forceReadOnly() was called
+			 * Read-only because `forceReadOnly()` was called.
 			 */
 			readonly forced: boolean;
+
 			/**
-			 * read-only because client does not have write permissions for document
+			 * Read-only because client does not have write permissions for document.
 			 */
 			readonly permissions: boolean | undefined;
+
 			/**
-			 * read-only with no delta stream connection
+			 * Read-only with no delta stream connection.
 			 */
 			readonly storageOnly: boolean;
+
 			/**
-			 * extra info on why connection to delta stream is not possible. This info might be provided
-			 * if storageOnly is set to true
+			 * Extra info on why connection to delta stream is not possible.
+			 *
+			 * @remarks This info might be provided if {@link ReadOnlyInfo.storageOnly} is set to `true`.
 			 */
 			readonly storageOnlyReason?: string;
 	  };
