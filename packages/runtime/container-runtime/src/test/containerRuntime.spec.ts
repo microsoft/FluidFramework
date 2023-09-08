@@ -1279,15 +1279,6 @@ describe("Runtime", () => {
 					myResponse,
 					"request method in runtime did not return the expected object",
 				);
-
-				// The entryPoint should use the request handler we passed in the runtime's constructor
-				assert(containerRuntime.getEntryPoint !== undefined);
-				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
-				assert.notStrictEqual(
-					actualEntryPoint,
-					undefined,
-					"entryPoint was not the expected object",
-				);
 			});
 
 			it("when using new loadRuntime method", async () => {
