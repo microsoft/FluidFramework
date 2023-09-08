@@ -343,7 +343,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends UntypedField
 }
 
 /**
- * Field this stores zero or one child.
+ * Field that stores zero or one child.
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the OptionalField itself will be skipped over and its content will be returned directly.
