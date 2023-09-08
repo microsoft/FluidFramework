@@ -94,6 +94,10 @@ export class TreeSchema<
 	}
 }
 
+// TODO: TreeSchema should be a union of the more specific schema type below, rather than containing all the info for all of them.
+// When this change is made, FieldNodeSchema should be properly separated from StructSchema,
+// and the bellow type checks could be done with instanceof tests.
+
 /**
  * @alpha
  */
@@ -103,17 +107,19 @@ export type MapSchema = TreeSchema & MapSchemaSpecification;
  */
 export type LeafSchema = TreeSchema & LeafSchemaSpecification;
 
-// TODO: this includes FieldNodeSchema when it shouldn't
 /**
+ * TODO: this includes FieldNodeSchema when it shouldn't
  * @alpha
  */
 export type StructSchema = TreeSchema & {
 	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
 };
-// TODO: Split TreeSchema into union of node schema interface types, and make FieldNodeSchema not subset of StructSchema
-// Then replace bellow type checks with instance of tests.
+
 /**
  * @alpha
+ *
+ * This is the subset of StructSchema that uses {@link EmptyKey} so the the old (editable-tree 1) API unboxes it.
+ * TODO: Once that API is removed, this can be cleaned up and properly separated from StructSchema
  */
 export type FieldNodeSchema = StructSchema & {
 	structFieldsObject: { [""]: FieldSchema };
