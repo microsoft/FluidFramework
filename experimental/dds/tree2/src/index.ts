@@ -62,8 +62,6 @@ export {
 	RevisionTag,
 	ChangesetLocalId,
 	TaggedChange,
-	RepairDataStore,
-	ReadonlyRepairDataStore,
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,

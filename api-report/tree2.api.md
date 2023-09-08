@@ -1626,12 +1626,6 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 }
 
 // @alpha
-export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
-    // (undocumented)
-    getNodes(revision: TRevisionTag, path: UpPath | undefined, key: FieldKey, index: number, count: number): TTree[];
-}
-
-// @alpha
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha
@@ -1649,11 +1643,6 @@ interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly detachId: DetachedNodeId;
     // (undocumented)
     readonly type: typeof MarkType.Remove;
-}
-
-// @alpha
-export interface RepairDataStore<TChange, TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
-    capture(change: TChange, revision: TRevisionTag): void;
 }
 
 // @alpha

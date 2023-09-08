@@ -38,7 +38,6 @@ import {
 } from "../../../core";
 import { jsonObject } from "../../../domains";
 import {
-	ForestRepairDataStore,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	singleTextCursor,
@@ -111,64 +110,6 @@ describe("ChunkedForest", () => {
 				factory: (schema) => buildChunkedForest(chunker(schema)),
 				skipCursorErrorCheck: true,
 			});
-
-			it("doesn't copy data when capturing and restoring repair data", () => {
-				const initialState: JsonableTree = { type: jsonObject.name };
-				const schema = new InMemoryStoredSchemaRepository(jsonSequenceRootSchema);
-				const forest = buildChunkedForest(chunker(schema));
-				const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
-
-				// Insert chunk into forest
-				{
-					const chunkCursor = chunk.cursor();
-					chunkCursor.firstNode();
-					initializeForest(forest, [chunkCursor]);
-					assert(chunk.isShared());
-					chunk.referenceRemoved(); // chunkCursor
-				}
-				// forest should hold the only ref to chunk.
-				assert(!chunk.isShared());
-				compareForest(forest, [initialState]);
-
-				const repairStore = new ForestRepairDataStore(forest, mockIntoDelta);
-				const delta: Delta.Root = new Map([
-					[
-						rootFieldKey,
-						[{ type: Delta.MarkType.Remove, count: 1, detachId: { minor: 42 } }],
-					],
-				]);
-
-				const revision = mintRevisionTag();
-				// Capture reference to content before delete.
-				repairStore.capture(delta, revision);
-				// Captured reference owns a ref count making it shared.
-				assert(chunk.isShared());
-				// Delete from forest, removing the forest's ref, making chunk not shared again.
-				applyDelta(delta, forest);
-				assert(!chunk.isShared());
-				compareForest(forest, []);
-
-				// Confirm the data from the repair store is chunk
-				const data = repairStore.getNodes(revision, undefined, rootFieldKey, 0, 1);
-				const chunk2 = tryGetChunk(data[0]);
-				assert(chunk === chunk2);
-
-				// Put it back in the forest, which adds a ref again
-				initializeForest(forest, data);
-				assert(
-					chunk.isShared(),
-					"chunk should be shared after storing as repair data and reinserting",
-				);
-				compareForest(forest, [initialState]);
-			});
 		});
 	}
 });
-
-function compareForest(forest: IForestSubscription, expected: JsonableTree[]): void {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	assert.deepEqual(actual, expected);
-}

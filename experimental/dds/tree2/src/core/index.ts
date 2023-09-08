@@ -179,6 +179,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
-
 export { UndoRedoManager, LocalCommitSource } from "./undo";

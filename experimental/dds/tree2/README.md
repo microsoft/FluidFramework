@@ -326,8 +326,6 @@ flowchart
             schema-view
             forest-->schema-stored
             rebase-->tree
-            change-family-->repair
-            rebase-->repair
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
             dependency-tracking

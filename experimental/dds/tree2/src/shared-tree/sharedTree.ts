@@ -20,7 +20,6 @@ import {
 	AnchorSetRootEvents,
 	StoredSchemaRepository,
 	IForestSubscription,
-	makeAnonChange,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -33,12 +32,10 @@ import {
 	UnwrappedEditableField,
 	DefaultChangeset,
 	buildForest,
-	ForestRepairDataStoreProvider,
 	SchemaEditor,
 	NodeKeyIndex,
 	createNodeKeyManager,
 	NewFieldContent,
-	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
 	buildChunkedForest,
@@ -97,15 +94,9 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const changeFamily = new DefaultChangeFamily(options);
-		const repairProvider = new ForestRepairDataStoreProvider(
-			forest,
-			schema,
-			(change: ModularChangeset) => changeFamily.intoDelta(makeAnonChange(change)),
-		);
 		super(
 			[schemaSummarizer, forestSummarizer],
 			changeFamily,
-			repairProvider,
 			options,
 			id,
 			runtime,
@@ -122,7 +113,6 @@ export class SharedTree
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
-			repairProvider,
 			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
 			nodeKeyIndex: this.nodeKeyIndex,
 			events: this._events,

@@ -21,7 +21,6 @@ import {
 	visitDelta,
 	TreeIndex,
 	ForestRootId,
-	makeAnonChange,
 	moveToDetachedField,
 	mapCursorField,
 	announceVisitor,
@@ -38,14 +37,11 @@ import {
 	buildForest,
 	DefaultChangeFamily,
 	getEditableTreeContext,
-	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
 	NewFieldContent,
 	NodeKeyManager,
 	createNodeKeyManager,
 	LocalNodeKey,
-	ForestRepairDataStore,
-	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
 	idAllocatorFromMaxId,
@@ -296,7 +292,6 @@ export function createSharedTreeView(args?: {
 	changeFamily?: DefaultChangeFamily;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
-	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	nodeKeyManager?: NodeKeyManager;
 	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
@@ -305,11 +300,6 @@ export function createSharedTreeView(args?: {
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
-	const repairDataStoreProvider =
-		args?.repairProvider ??
-		new ForestRepairDataStoreProvider(forest, schema, (change) =>
-			changeFamily.intoDelta(makeAnonChange(change)),
-		);
 	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
 		args?.branch ??
@@ -319,7 +309,6 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			changeFamily,
-			repairDataStoreProvider,
 			undoRedoManager,
 		);
 	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
@@ -333,7 +322,7 @@ export function createSharedTreeView(args?: {
 	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(brand(nodeKeyFieldKey));
 	const events = args?.events ?? createEmitter();
 
-	const transaction = new Transaction(branch, changeFamily, forest);
+	const transaction = new Transaction(branch);
 
 	return new SharedTreeView(
 		transaction,
@@ -384,16 +373,10 @@ export interface ITransaction {
 class Transaction implements ITransaction {
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
-		private readonly forest: IEditableForest,
 	) {}
 
 	public start(): void {
-		this.branch.startTransaction(
-			new ForestRepairDataStore(this.forest, (change) =>
-				this.changeFamily.intoDelta(makeAnonChange(change)),
-			),
-		);
+		this.branch.startTransaction();
 		this.branch.editor.enterTransaction();
 	}
 	public commit(): TransactionResult.Commit {
@@ -513,12 +496,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		// TODO: ensure editing this clone of the schema does the right thing.
 		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
-		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
-			forest,
-			storedSchema,
-			(change: ModularChangeset) => this.changeFamily.intoDelta(makeAnonChange(change)),
-		);
-		const branch = this.branch.fork(repairDataStoreProvider);
+		const branch = this.branch.fork();
 		const context = getEditableTreeContext(
 			forest,
 			storedSchema,
@@ -526,7 +504,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			this.nodeKeyManager,
 			this.nodeKeyIndex.fieldKey,
 		);
-		const transaction = new Transaction(branch, this.changeFamily, forest);
+		const transaction = new Transaction(branch);
 		return new SharedTreeView(
 			transaction,
 			branch,

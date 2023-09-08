@@ -45,7 +45,6 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	ForestRepairDataStoreProvider,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
@@ -74,10 +73,6 @@ import {
 	compareUpPaths,
 	UpPath,
 	clonePath,
-	RepairDataStore,
-	ITreeCursorSynchronous,
-	FieldKey,
-	IRepairDataStoreProvider,
 	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
@@ -580,7 +575,6 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 export function viewWithContent(
 	content: TreeContent,
 	args?: {
-		repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyIndex?: NodeKeyIndex;
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
@@ -713,53 +707,7 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 	assert.equal(path.field, expectedPath.field);
 }
 
-export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
-	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
-
-	public capture(change: TChange, revision: RevisionTag): void {
-		const existing = this.capturedData.get(revision);
-
-		if (existing === undefined) {
-			this.capturedData.set(revision, [revision]);
-		} else {
-			existing.push(revision);
-		}
-	}
-
-	public getNodes(
-		revision: RevisionTag,
-		path: UpPath | undefined,
-		key: FieldKey,
-		index: number,
-		count: number,
-	): ITreeCursorSynchronous[] {
-		return makeArray(count, () => singleTextCursor({ type: brand("MockRevivedNode") }));
-	}
-
-	public getValue(revision: RevisionTag, path: UpPath): Value {
-		return brand("MockRevivedValue");
-	}
-}
-
 export const mockIntoDelta = (delta: Delta.Root) => delta;
-
-export class MockRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
-	public freeze(): void {
-		// Noop
-	}
-
-	public applyChange(change: TChange): void {
-		// Noop
-	}
-
-	public createRepairData(): MockRepairDataStore<TChange> {
-		return new MockRepairDataStore();
-	}
-
-	public clone(): IRepairDataStoreProvider<TChange> {
-		return new MockRepairDataStoreProvider();
-	}
-}
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
 	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
