@@ -22,7 +22,7 @@ export declare class Buffer extends Uint8Array {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export const IsoBuffer = Buffer;
 
