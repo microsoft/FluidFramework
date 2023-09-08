@@ -312,14 +312,12 @@ export abstract class FluidDataStoreContext
 			logger: this.logger,
 			namespace: "FluidDataStoreContext",
 			properties: {
-				all: {
-					...tagCodeArtifacts({
-						fluidDataStoreId: this.id,
-						// The package name is a getter because `this.pkg` may not be initialized during construction.
-						// For data stores loaded from summary, it is initialized during data store realization.
-						fullPackageName: () => this.pkg?.join("/"),
-					}),
-				},
+				all: tagCodeArtifacts({
+					fluidDataStoreId: this.id,
+					// The package name is a getter because `this.pkg` may not be initialized during construction.
+					// For data stores loaded from summary, it is initialized during data store realization.
+					fullPackageName: () => this.pkg?.join("/"),
+				}),
 			},
 		});
 		this.thresholdOpsCounter = new ThresholdCounter(
