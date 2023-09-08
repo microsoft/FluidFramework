@@ -449,9 +449,10 @@ function setRootReplaces(
 	source: ForestRootId,
 	sourceNodeId?: Delta.DetachedNodeId,
 ) {
-	// It's possible for a detached node to be transiently revived such that it ends up back in the same detached field
-	// Making such a transfer wouldn't just be inefficient, it would lead to to mistakenly think we have moved all content
-	// out of the source field, and would lead us to delete the tree index entry for that source field.
+	// It's possible for a detached node to be revived transiently such that it ends up back in the same detached field.
+	// Making such a transfer wouldn't just be inefficient, it would lead us to mistakenly think we have moved all content
+	// out of the source detached field, and would lead us to delete the tree index entry for that source detached field.
+	// This would effectively result in the tree index missing an entry for the detached field.
 	if (source !== destination) {
 		for (let i = 0; i < count; i += 1) {
 			config.rootTransfers.set(brand(source + i), {
