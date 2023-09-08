@@ -279,7 +279,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 
 	/**
 	 * An 'events' endpoint that can be called by Fluid services.
-	 * Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables a the fluid service to notify this service
+	 *
+	 * @remarks Currently, the only supported request type is 'session-end' {@link SessionEndEventsListenerRequest} which enables a the fluid service to notify this service
 	 * that a particular fluid session has ended which in turn causes this service to unregister any related webhooks to the respective fluid session.
 	 */
 	expressApp.post("/events-listener", (request: EventsListenerRequest, result) => {
