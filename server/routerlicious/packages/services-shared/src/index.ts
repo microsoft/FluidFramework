@@ -23,6 +23,7 @@ export { DocumentStorage } from "./storage";
 export {
 	BasicWebServerFactory,
 	HttpServer,
+	IClusterConfig,
 	IHttpServerConfig,
 	RequestListener,
 	SocketIoWebServerFactory,

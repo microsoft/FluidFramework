@@ -32,6 +32,7 @@ export {
 	handleResponse,
 	HttpServer,
 	IsEphemeralContainer,
+	IClusterConfig,
 	IHttpServerConfig,
 	ISocketIoRedisConnection,
 	ISocketIoRedisOptions,

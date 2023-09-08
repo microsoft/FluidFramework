@@ -44,7 +44,12 @@ export class RiddlerResources implements IResources {
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
+		const clusterConfig: Partial<services.IClusterConfig> | undefined =
+			config.get("riddler:clusterConfig");
+		const useCluster = config.get("riddler:useCluster");
+		this.webServerFactory = useCluster
+			? new services.ClusterWebServerFactory(httpServerConfig, clusterConfig)
+			: new services.BasicWebServerFactory(httpServerConfig);
 	}
 
 	public async dispose(): Promise<void> {

@@ -129,8 +129,7 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_AlfredResources": {
-				"forwardCompat": false,
-				"backCompat": false
+				"forwardCompat": false
 			},
 			"ClassDeclaration_RiddlerResources": {
 				"forwardCompat": false

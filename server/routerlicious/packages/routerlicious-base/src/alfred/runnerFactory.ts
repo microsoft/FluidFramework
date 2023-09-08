@@ -82,6 +82,8 @@ export class OrdererManager implements core.IOrdererManager {
 }
 
 export class AlfredResources implements core.IResources {
+	public webServerFactory: core.IWebServerFactory;
+
 	constructor(
 		public config: Provider,
 		public producer: core.IProducer,
@@ -112,19 +114,27 @@ export class AlfredResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public webServerFactory?: core.IWebServerFactory,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("alfred:socketIo");
-		this.webServerFactory =
-			this.webServerFactory ??
-			new services.SocketIoWebServerFactory(
-				this.redisConfig,
-				socketIoAdapterConfig,
-				httpServerConfig,
-				socketIoConfig,
-			);
+		const clusterConfig: Partial<services.IClusterConfig> | undefined =
+			config.get("alfred:clusterConfig");
+		const useCluster = config.get("alfred:useCluster");
+		this.webServerFactory = useCluster
+			? new services.SocketIoClusterWebServerFactory(
+					redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+					clusterConfig,
+			  )
+			: new services.SocketIoWebServerFactory(
+					this.redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+			  );
 	}
 
 	public async dispose(): Promise<void> {
@@ -569,19 +579,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 
-		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
-		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const socketIoConfig = config.get("alfred:socketIo");
-		const useCluster = config.get("alfred:useCluster");
-		const webServerFactory = useCluster
-			? new services.SocketIoClusterWebServerFactory(
-					redisConfig,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-			  )
-			: undefined;
-
 		return new AlfredResources(
 			config,
 			producer,
@@ -612,7 +609,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
-			webServerFactory,
 		);
 	}
 }

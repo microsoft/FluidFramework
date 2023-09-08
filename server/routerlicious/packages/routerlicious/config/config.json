@@ -120,6 +120,9 @@
 		"getDeltasRequestMaxOpsRange": 2000,
 		"useCluster": false
 	},
+	"riddler": {
+		"useCluster": false
+	},
 	"client": {
 		"type": "browser",
 		"permission": []
