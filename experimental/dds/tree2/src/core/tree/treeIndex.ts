@@ -54,8 +54,14 @@ export class TreeIndex {
 
 	public *entries(): Generator<Entry & { id: Delta.DetachedNodeId }> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
-			for (const [minor, entry] of innerMap) {
-				yield { id: { major, minor }, ...entry };
+			if (major !== undefined) {
+				for (const [minor, entry] of innerMap) {
+					yield { id: { major, minor }, ...entry };
+				}
+			} else {
+				for (const [minor, entry] of innerMap) {
+					yield { id: { minor }, ...entry };
+				}
 			}
 		}
 	}
