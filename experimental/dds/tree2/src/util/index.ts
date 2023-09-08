@@ -23,6 +23,7 @@ export {
 	getOrDefaultInNestedMap,
 	NestedMap,
 	SizedNestedMap,
+	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,

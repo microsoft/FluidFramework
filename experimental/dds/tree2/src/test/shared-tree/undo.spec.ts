@@ -90,7 +90,7 @@ const testCases: {
 			other.editor
 				.valueField({ parent: rootPath, field: brand("child") })
 				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
-			actedOn.editor.sequenceField({ parent: undefined, field: rootFieldKey }).delete(0, 1);
+			actedOn.editor.sequenceField(rootField).delete(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
@@ -210,21 +210,45 @@ describe("Undo and redo", () => {
 		const tree1 = makeTreeFromJson([0, 0, 0]);
 		const tree2 = tree1.fork();
 
-		tree1.editor
-			.sequenceField({ parent: undefined, field: rootFieldKey })
-			.insert(3, singleJsonCursor(1));
-		tree2.editor
-			.sequenceField({ parent: undefined, field: rootFieldKey })
-			.insert(0, singleJsonCursor(2));
-		tree2.editor
-			.sequenceField({ parent: undefined, field: rootFieldKey })
-			.insert(0, singleJsonCursor(3));
+		tree1.editor.sequenceField(rootField).insert(3, singleJsonCursor(1));
+		tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(2));
+		tree2.editor.sequenceField(rootField).insert(0, singleJsonCursor(3));
 		tree2.undo();
 		expectJsonTree(tree2, [2, 0, 0, 0]);
 		tree2.rebaseOnto(tree1);
 		expectJsonTree(tree2, [2, 0, 0, 0, 1]);
 		tree2.undo();
 		expectJsonTree(tree2, [0, 0, 0, 1]);
+	});
+
+	it("can undo after forking a branch", () => {
+		const tree1 = makeTreeFromJson(["A", "B", "C"]);
+
+		tree1.editor.sequenceField(rootField).delete(0, 1);
+		tree1.editor.sequenceField(rootField).delete(1, 1);
+
+		const tree2 = tree1.fork();
+		expectJsonTree(tree2, ["B"]);
+		tree2.undo();
+		expectJsonTree(tree2, ["B", "C"]);
+		tree2.undo();
+		expectJsonTree(tree2, ["A", "B", "C"]);
+	});
+
+	it("can redo after forking a branch", () => {
+		const tree1 = makeTreeFromJson(["B"]);
+
+		tree1.editor.sequenceField(rootField).insert(0, singleJsonCursor("A"));
+		tree1.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+		tree1.undo();
+		tree1.undo();
+
+		const tree2 = tree1.fork();
+		expectJsonTree(tree2, ["B"]);
+		tree2.redo();
+		expectJsonTree(tree2, ["A", "B"]);
+		tree2.redo();
+		expectJsonTree(tree2, ["A", "B", "C"]);
 	});
 });
 
@@ -238,12 +262,12 @@ describe("Undo and redo", () => {
  * @param value - The value of the inserted node.
  */
 function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	const field = tree.editor.sequenceField(rootField);
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	const field = tree.editor.sequenceField(rootField);
 	field.delete(index, count);
 }

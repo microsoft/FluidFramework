@@ -38,6 +38,19 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 }
 
 /**
+ * Copies over all entries from the source map into the destination map.
+ *
+ * @alpha
+ */
+export function populateNestedMap<Key1, Key2, Value>(
+	source: NestedMap<Key1, Key2, Value>,
+	destination: NestedMap<Key1, Key2, Value>,
+): void {
+	for (const [key1, innerMap] of source) {
+		destination.set(key1, new Map(innerMap));
+	}
+}
+/**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
  *

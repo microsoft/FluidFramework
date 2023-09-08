@@ -10,6 +10,7 @@ import {
 	brand,
 	deleteFromNestedMap,
 	fail,
+	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
@@ -41,6 +42,12 @@ export class TreeIndex {
 		private readonly rootIdAllocator: (count: number) => ForestRootId,
 		private readonly tag: number = Math.random(),
 	) {}
+
+	public clone(): TreeIndex {
+		const clone = new TreeIndex(this.name, this.rootIdAllocator);
+		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
+		return clone;
+	}
 
 	public *entries(): Generator<Entry & { id: Delta.DetachedNodeId }> {
 		for (const [major, innerMap] of this.detachedNodeToField) {

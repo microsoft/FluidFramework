@@ -424,7 +424,14 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
+		removedTrees?: TreeIndex,
 	) {
+		this.removedTrees =
+			removedTrees ??
+			new TreeIndex(
+				"removed",
+				idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>,
+			);
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
 				const delta = this.changeFamily.intoDelta(change);
@@ -453,10 +460,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		}
 	}
 
-	private readonly removedTrees = new TreeIndex(
-		"removed",
-		idAllocatorFromMaxId() as unknown as IdAllocator<ForestRootId>,
-	);
+	private readonly removedTrees: TreeIndex;
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
 		return this.forest.anchors;
@@ -515,6 +519,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			this.nodeKeyManager,
 			this.nodeKeyIndex.clone(context),
 			createEmitter(),
+			this.removedTrees.clone(),
 		);
 	}
 
