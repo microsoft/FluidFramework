@@ -15,37 +15,55 @@ const rootPath: UpPath = {
 	parentIndex: 0,
 };
 
+const rootField = {
+	parent: undefined,
+	field: rootFieldKey,
+};
+
 const testCases: {
 	name: string;
 	edit: (undoRedoBranch: ISharedTreeView, otherBranch: ISharedTreeView) => void;
+	undoCount?: number;
 	initialState: JsonCompatible[];
 	editedState: JsonCompatible[];
 	parentUndoState?: JsonCompatible[];
 	forkUndoState?: JsonCompatible[];
 }[] = [
 	{
-		name: "the insert of a node",
-		edit: (undoRedoBranch) => {
-			insert(undoRedoBranch, 1, "x");
+		name: "inserts",
+		edit: (actedOn) => {
+			insert(actedOn, 0, "x");
+			insert(actedOn, 2, "y");
 		},
+		undoCount: 2,
 		initialState: ["A"],
-		editedState: ["A", "x"],
+		editedState: ["x", "A", "y"],
+	},
+	{
+		name: "rebased inserts",
+		edit: (actedOn, other) => {
+			insert(other, 1, "y");
+			insert(actedOn, 0, "x");
+			insert(actedOn, 3, "z");
+		},
+		undoCount: 2,
+		initialState: ["A", "B"],
+		editedState: ["x", "A", "y", "B", "z"],
+		forkUndoState: ["A", "y", "B"],
+		parentUndoState: ["x", "A", "B"],
 	},
 	{
 		name: "the delete of a node",
-		edit: (undoRedoBranch) => {
-			remove(undoRedoBranch, 0, 2);
+		edit: (actedOn) => {
+			remove(actedOn, 0, 2);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["C", "D"],
 	},
 	{
 		name: "the move of a node",
-		edit: (undoRedoBranch) => {
-			const field = undoRedoBranch.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
+		edit: (actedOn) => {
+			const field = actedOn.editor.sequenceField(rootField);
 			field.move(0, 2, 2);
 		},
 		initialState: ["A", "B", "C", "D"],
@@ -53,9 +71,9 @@ const testCases: {
 	},
 	{
 		name: "a move that has been rebased",
-		edit: (undoRedoBranch, otherBranch) => {
-			insert(otherBranch, 1, "x");
-			const field = undoRedoBranch.editor.sequenceField({
+		edit: (actedOn, other) => {
+			insert(other, 1, "x");
+			const field = actedOn.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKey,
 			});
@@ -67,22 +85,12 @@ const testCases: {
 		parentUndoState: ["A", "C", "D", "B"],
 	},
 	{
-		name: "an insert from a fork on its parent",
-		edit: (undoRedoBranch, otherBranch) => {
-			insert(undoRedoBranch, 1, "x");
-		},
-		initialState: ["A", "B", "C", "D"],
-		editedState: ["A", "x", "B", "C", "D"],
-	},
-	{
 		name: "a delete of content that is concurrently edited",
-		edit: (undoRedoBranch, otherBranch) => {
-			otherBranch.editor
+		edit: (actedOn, other) => {
+			other.editor
 				.valueField({ parent: rootPath, field: brand("child") })
 				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
-			undoRedoBranch.editor
-				.sequenceField({ parent: undefined, field: rootFieldKey })
-				.delete(0, 1);
+			actedOn.editor.sequenceField({ parent: undefined, field: rootFieldKey }).delete(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
@@ -96,47 +104,103 @@ describe("Undo and redo", () => {
 	for (const {
 		name,
 		edit,
+		undoCount,
 		initialState,
 		editedState,
 		parentUndoState,
 		forkUndoState,
 	} of testCases) {
-		itView(`${name} from a fork`, initialState, (view) => {
+		const count = undoCount ?? 1;
+		it(`${name} (act on fork undo on fork)`, () => {
+			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
-			// Perform the edits where the last edit is the one to undo
 			edit(fork, view);
 
 			fork.rebaseOnto(view);
 			expectJsonTree(fork, editedState);
 
-			fork.undo();
+			for (let i = 0; i < count; i++) {
+				fork.undo();
+			}
 
 			fork.rebaseOnto(view);
 			expectJsonTree(fork, forkUndoState ?? initialState);
 
-			fork.redo();
+			for (let i = 0; i < count; i++) {
+				fork.redo();
+			}
 
 			fork.rebaseOnto(view);
 			expectJsonTree(fork, editedState);
 		});
 
-		itView(`${name} from the parent branch`, initialState, (view) => {
+		it(`${name} (act on view undo on fork)`, () => {
+			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
-			// Perform the edits where the last edit is the one to undo
+			edit(view, fork);
+
+			fork.rebaseOnto(view);
+			expectJsonTree(fork, editedState);
+
+			for (let i = 0; i < count; i++) {
+				fork.undo();
+			}
+
+			fork.rebaseOnto(view);
+			expectJsonTree(fork, parentUndoState ?? initialState);
+
+			for (let i = 0; i < count; i++) {
+				fork.redo();
+			}
+
+			fork.rebaseOnto(view);
+			expectJsonTree(fork, editedState);
+		});
+
+		it(`${name} (act on view undo on view)`, () => {
+			const view = makeTreeFromJson(initialState);
+			const fork = view.fork();
+
 			edit(view, fork);
 
 			view.merge(fork, false);
 			expectJsonTree(view, editedState);
 
-			view.undo();
+			for (let i = 0; i < count; i++) {
+				view.undo();
+			}
 
 			view.merge(fork, false);
 			expectJsonTree(view, parentUndoState ?? initialState);
 
-			view.redo();
+			for (let i = 0; i < count; i++) {
+				view.redo();
+			}
+			view.merge(fork);
+			expectJsonTree(view, editedState);
+		});
 
+		it(`${name} (act on fork undo on view)`, () => {
+			const view = makeTreeFromJson(initialState);
+			const fork = view.fork();
+
+			edit(fork, view);
+
+			view.merge(fork, false);
+			expectJsonTree(view, editedState);
+
+			for (let i = 0; i < count; i++) {
+				view.undo();
+			}
+
+			view.merge(fork, false);
+			expectJsonTree(view, forkUndoState ?? initialState);
+
+			for (let i = 0; i < count; i++) {
+				view.redo();
+			}
 			view.merge(fork);
 			expectJsonTree(view, editedState);
 		});
@@ -162,87 +226,6 @@ describe("Undo and redo", () => {
 		tree2.undo();
 		expectJsonTree(tree2, [0, 0, 0, 1]);
 	});
-
-	// TODO move these tests to `testCases` as the bugs are resolved
-	describe.skip("tests that are being skipped due to bugs", () => {
-		// TODO: See bug 4104
-		itView("the move of a node on a fork", ["A", "B", "C", "D"], (view) => {
-			const fork2 = view.fork();
-
-			const field = fork2.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.move(0, 2, 2);
-
-			expectJsonTree(fork2, ["C", "D", "A", "B"]);
-
-			view.merge(fork2);
-
-			expectJsonTree(view, ["C", "D", "A", "B"]);
-
-			fork2.undo();
-			view.merge(fork2);
-
-			expectJsonTree(view, ["A", "B", "C", "D"]);
-		});
-
-		// TODO: unskip when undo can handle rebasing
-		itView("the insert of two separate nodes", ["A", "B", "C", "D"], (view) => {
-			const addX = view.fork();
-			const addY = view.fork();
-
-			insert(addX, 1, "x");
-			insert(addY, 3, "y");
-
-			view.merge(addX);
-			view.merge(addY);
-
-			expectJsonTree(view, ["A", "x", "B", "C", "y", "D"]);
-
-			addX.undo();
-			addY.undo();
-			view.merge(addX);
-			view.merge(addY);
-
-			expectJsonTree(view, ["A", "B", "C", "D"]);
-		});
-
-		// TODO: unskip when undo can handle rebasing
-		itView("an insert from a parent branch on its fork", ["A", "B", "C", "D"], (view) => {
-			const fork = view.fork();
-
-			insert(view, 1, "x");
-			expectJsonTree(view, ["A", "x", "B", "C", "D"]);
-
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, ["A", "x", "B", "C", "D"]);
-
-			fork.undo();
-			expectJsonTree(fork, ["A", "B", "C", "D"]);
-
-			view.merge(fork);
-			expectJsonTree(view, ["A", "B", "C", "D"]);
-		});
-
-		// TODO: unskip this test once the bug that causes rebasing the undo commit to be empty is fixed.
-		itView(
-			"an insert that needs to be rebased over an insert on the base branch",
-			["A", "B", "C", "D"],
-			(view) => {
-				const fork = view.fork();
-
-				insert(view, 1, "x");
-				insert(fork, 3, "y");
-				view.merge(fork);
-
-				fork.undo();
-				view.merge(fork);
-
-				expectJsonTree(view, ["A", "x", "B", "C", "D"]);
-			},
-		);
-	});
 });
 
 // TODO: Dedupe with the helpers in editing.spec.ts
@@ -263,25 +246,4 @@ function insert(tree: ISharedTreeView, index: number, ...values: string[]): void
 function remove(tree: ISharedTreeView, index: number, count: number): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
-}
-
-/**
- * Runs the given test function as two tests,
- * one where `view` is the root SharedTree view and the other where `view` is a fork.
- * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
- */
-function itView(
-	title: string,
-	initialData: JsonCompatible[],
-	fn: (view: ISharedTreeView) => void,
-): void {
-	it(`${title} (root view)`, () => {
-		const view = makeTreeFromJson(initialData);
-		fn(view);
-	});
-
-	it(`${title} (forked view)`, () => {
-		const view = makeTreeFromJson(initialData);
-		fn(view.fork());
-	});
 }
