@@ -309,6 +309,9 @@ export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotati
 // @public
 export function numberFromString(str: string | null | undefined): string | number | undefined;
 
+// @internal
+export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void;
+
 // @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean);
