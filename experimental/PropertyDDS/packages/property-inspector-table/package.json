@@ -100,7 +100,6 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
 		"source-map-loader": "^2.0.0",
-		"source-map-support": "^0.5.16",
 		"svg-sprite-loader": "^6.0.11",
 		"svgo": "^1.1.1",
 		"svgo-loader": "^2.1.0",

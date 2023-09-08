@@ -3127,7 +3127,6 @@ importers:
       react-dom: ^17.0.1
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
-      source-map-support: ^0.5.16
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
       ts-node: ^10.9.1
@@ -3187,7 +3186,6 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
-      source-map-support: 0.5.21
       style-loader: 1.3.0_webpack@5.83.0
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       ts-node: 10.9.1_vy4ah4eawmaxtqslmps6irc47e
@@ -4426,7 +4424,6 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
-      source-map-support: ^0.5.16
       typedoc: ^0.12.0
       typescript: ~4.5.5
       underscore: ^1.13.6
@@ -4472,7 +4469,6 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
-      source-map-support: 0.5.21
       typedoc: 0.12.0
       typescript: 4.5.5
       webpack: 5.83.0
@@ -4774,7 +4770,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^7.4.2
       source-map-loader: ^2.0.0
-      source-map-support: ^0.5.16
       svg-sprite-loader: ^6.0.11
       svgo: ^1.1.1
       svgo-loader: ^2.1.0
@@ -4845,7 +4840,6 @@ importers:
       rimraf: 4.4.1
       sinon: 7.5.0
       source-map-loader: 2.0.2_webpack@5.83.0
-      source-map-support: 0.5.21
       svg-sprite-loader: 6.0.11
       svgo: 1.3.2
       svgo-loader: 2.2.2_svgo@1.3.2
@@ -4936,7 +4930,6 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
-      source-map-support: ^0.5.16
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -4960,7 +4953,6 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.83.0
-      source-map-support: 0.5.21
       ts-jest: 29.1.1_dvaf5zpxucc7ezp6i74on5bko4
       ts-loader: 9.4.2_hcl6ts7uxfbhh3j3zbefwug5my
       typescript: 4.5.5
@@ -5601,7 +5593,6 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sorted-btree: ^1.8.0
-      source-map-support: ^0.5.16
       typescript: ~4.5.5
       uuid: ^9.0.0
     dependencies:
@@ -5654,7 +5645,6 @@ importers:
       moment: 2.29.4
       prettier: 2.6.2
       rimraf: 4.4.1
-      source-map-support: 0.5.21
       typescript: 4.5.5
 
   experimental/framework/data-objects:
@@ -5813,7 +5803,6 @@ importers:
       react: ^17.0.1
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      source-map-support: ^0.5.16
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/tree2': link:../../dds/tree2
@@ -5842,7 +5831,6 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 7.5.0
-      source-map-support: 0.5.21
       typescript: 4.5.5
 
   packages/common/client-utils:
@@ -6031,7 +6019,6 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      source-map-support: ^0.5.16
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/benchmark': 0.47.0
@@ -6056,7 +6043,6 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.1
       sinon: 7.5.0
-      source-map-support: 0.5.21
       typescript: 4.5.5
 
   packages/common/driver-definitions:
@@ -6390,7 +6376,6 @@ importers:
       moment: ^2.21.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      source-map-support: ^0.5.16
       ts-node: ^10.9.1
       tslib: ^1.10.0
       typescript: ~4.5.5
@@ -6436,7 +6421,6 @@ importers:
       moment: 2.29.4
       prettier: 2.6.2
       rimraf: 4.4.1
-      source-map-support: 0.5.21
       ts-node: 10.9.1_vy4ah4eawmaxtqslmps6irc47e
       typescript: 4.5.5
       uuid: 9.0.0
@@ -6478,7 +6462,6 @@ importers:
       moment: ^2.21.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      source-map-support: ^0.5.16
       typescript: ~4.5.5
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6517,7 +6500,6 @@ importers:
       moment: 2.29.4
       prettier: 2.6.2
       rimraf: 4.4.1
-      source-map-support: 0.5.21
       typescript: 4.5.5
 
   packages/dds/ordered-collection:
@@ -9527,11 +9509,13 @@ importers:
       mocha: ^10.2.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
+      source-map-support: ^0.5.21
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       mocha: 10.2.0
+      source-map-support: 0.5.21
     devDependencies:
       '@fluid-tools/build-cli': 0.22.0_@types+node@16.18.38
       '@fluidframework/build-common': 2.0.0
@@ -9877,7 +9861,6 @@ importers:
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^7.4.2
-      source-map-support: ^0.5.16
       start-server-and-test: ^1.11.7
       tinylicious: ^1.0.0
       typescript: ~4.5.5
@@ -9929,7 +9912,6 @@ importers:
       mocha: 10.2.0
       semver: 7.5.3
       sinon: 7.5.0
-      source-map-support: 0.5.21
       start-server-and-test: 1.15.5
       tinylicious: 1.0.0
       url: 0.11.0

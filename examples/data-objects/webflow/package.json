@@ -122,7 +122,6 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"source-map-loader": "^2.0.0",
-		"source-map-support": "^0.5.16",
 		"style-loader": "^1.0.0",
 		"ts-loader": "^9.3.0",
 		"ts-node": "^10.9.1",
