@@ -98,7 +98,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.GarbageCollection.NoSweepAttachmentBlobs"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
