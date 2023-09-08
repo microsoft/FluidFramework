@@ -54,13 +54,13 @@ There are four main usage modes for this API:
 
 ## Javascript Object API: `enumerable` and `own` properties
 
-See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Enumerability_and_ownership_of_properties for context.
-Note that `enumerable` has nothing to do with iterable: Iterable is not relevant to this section.
+See [Mozilla's Enumerability and ownership of properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Enumerability_and_ownership_of_properties) for context.
+Note that `enumerable` has nothing to do with TypeScript's `Iterable` interface or JavaScript's `Symbol.iterator` and the related `for...of` loops: all of those are irrelevant to this section.
 
 Despite this tree API primarily being a TypeScript API, and TypeScript types having no way to indicate if members are `enumerable` or `own`, these details matter, even to TypeScript users.
 
 For example, TypeScript assumes all members of interfaces are `enumerable` and `own` when using the [Object spread](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax) operator.
-Typescript also assumes all non-method members of classes are `enumerable` and `own`, but allows assigning the class to an interface where it will start treating the methods as `enumerable` and `own` despite it being the same object.
+TypeScript also assumes all non-method members of classes are `enumerable` and `own`, but allows assigning the class to an interface where it will start treating the methods as `enumerable` and `own` despite it being the same object.
 This compile time behavior often does not match what happens at runtime, so users of TypeScript are likely to run into issues despite their code compiling just fine if they rely on Object spread, or make assumptions about what properties are `enumerable` or `own`.
 
 Many existing libraries users of tree are likely to work with will also make assumptions about `enumerable` or `own`.
@@ -78,6 +78,7 @@ This library guarantees that when traversing from a root `UntypedEntity` via `en
 -   No symbols will be encountered as keys. This ensures that the traversal can use the APIs which only support strings (like `Object.entries`) and get the same result as if using APIs which also support symbols (like `object spread`).
 
 Note that if using `for...in`, be sure to filter out `inherited` properties.
+Using [Object.entries](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries) or similar [alternatives that omit inherited and non enumerable properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Enumerability_and_ownership_of_properties#traversing_object_properties) will usually be simpler.
 
 ## Status
 
