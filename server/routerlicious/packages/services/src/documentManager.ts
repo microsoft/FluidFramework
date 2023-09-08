@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as Redis from "ioredis";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { RedisCache } from "./redis";
 
 /**
@@ -74,6 +75,10 @@ export class DocumentManager implements IDocumentManager {
 
 		// If there are no cached static document props, read the document and return its static properties
 		if (!staticPropsStr) {
+			Lumberjack.info(
+				"Falling back to database after attempting to read cached static document data. ",
+				getLumberBaseProperties(documentId, tenantId),
+			);
 			const document: IDocument = await this.readDocument(tenantId, documentId);
 			return DocumentManager.getStaticPropsFromDoc(document);
 		}
@@ -130,6 +135,7 @@ export class DocumentManager implements IDocumentManager {
 			createTime: document.createTime,
 			documentId: document.documentId,
 			tenantId: document.tenantId,
+			storageName: document.storageName,
 			isEphemeralContainer: document.isEphemeralContainer,
 		};
 	}

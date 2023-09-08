@@ -24,6 +24,7 @@ export interface IDocumentStaticProperties {
 	createTime: number;
 	documentId: string;
 	tenantId: string;
+	storageName?: string;
 	isEphemeralContainer?: boolean;
 }
 
