@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocument } from "./document";
+import { IDocument, IDocumentStaticProperties } from "./document";
 
 export interface IDocumentManager {
 	/**
@@ -24,7 +24,11 @@ export interface IDocumentManager {
 	 * @param propName - The static property to be read
 	 * @returns - The value of the property [propName]
 	 */
-	readStaticProperty<T>(tenantId: string, documentId: string, propName: string): Promise<T>;
+	readStaticProperty<K extends keyof IDocumentStaticProperties>(
+		tenantId: string,
+		documentId: string,
+		propName: K,
+	): Promise<IDocumentStaticProperties[K] | undefined>;
 
 	/**
 	 * Modifies a static property for a specific document. If a different property is read after modification
@@ -33,5 +37,9 @@ export interface IDocumentManager {
 	 * @param propName - The static property to be modified
 	 * @param propValue - The new value for the static property
 	 */
-	setStaticProperty<T>(documentId: string, propName: string, propValue: T): Promise<void>;
+	setStaticProperty<K extends keyof IDocumentStaticProperties>(
+		documentId: string,
+		propName: K,
+		propValue: IDocumentStaticProperties[K],
+	): Promise<void>;
 }

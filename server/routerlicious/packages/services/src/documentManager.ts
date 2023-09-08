@@ -72,11 +72,11 @@ export class DocumentManager implements IDocumentManager {
 		return document;
 	}
 
-	public async readStaticProperty<T>(
+	public async readStaticProperty<K extends keyof IDocumentStaticProperties>(
 		tenantId: string,
 		documentId: string,
-		propName: string,
-	): Promise<T | undefined> {
+		propName: K,
+	): Promise<IDocumentStaticProperties[K] | undefined> {
 		// Retrieve cached static document props
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		const staticPropsStr: string = await DocumentManager.documentStaticDataCache.get(
@@ -96,17 +96,17 @@ export class DocumentManager implements IDocumentManager {
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			const document: IDocument = await this.readDocument(tenantId, documentId);
-			return document?.[propName] as T | undefined;
+			return document?.[propName] as IDocumentStaticProperties[K] | undefined;
 		}
 
 		// Return the static data, parsed into a JSON object
-		return staticProps[propName] as T | undefined;
+		return staticProps[propName];
 	}
 
-	public async setStaticProperty<T>(
+	public async setStaticProperty<K extends keyof IDocumentStaticProperties>(
 		documentId: string,
-		propName: string,
-		propValue: T,
+		propName: K,
+		propValue: IDocumentStaticProperties[K],
 	): Promise<void> {
 		// Retrieve the current static cache
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
@@ -119,7 +119,6 @@ export class DocumentManager implements IDocumentManager {
 			// If the static properties do not exist, create a new empty object
 			staticProps = DocumentManager.createEmptyStaticProps();
 			DocumentManager.staticCacheInitializedManually = true;
-			Lumberjack.info(`Empty Static Props: ${JSON.stringify(staticProps)}`);
 		} else {
 			// Otherwise, use the existing static props
 			staticProps = JSON.parse(staticPropsStr);
@@ -127,7 +126,6 @@ export class DocumentManager implements IDocumentManager {
 
 		// Modify the specified property, and set the new value in the cache
 		staticProps[propName] = propValue;
-		Lumberjack.info(`Static Props: ${JSON.stringify(staticProps)}`);
 		await DocumentManager.documentStaticDataCache.set(
 			staticPropsKey,
 			JSON.stringify(staticProps),
