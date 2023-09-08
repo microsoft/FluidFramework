@@ -41,7 +41,7 @@ module.exports = (env) => {
 					template: "./src/index.html",
 				}),
 				new webpack.ProvidePlugin({
-      		process: 'process/browser',
+      				process: 'process/browser',
     			}),
 			],
 		},
