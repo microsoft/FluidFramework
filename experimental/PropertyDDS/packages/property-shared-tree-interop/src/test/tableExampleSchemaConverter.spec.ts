@@ -17,7 +17,7 @@ import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaCon
 const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
 
 function registerPropertySchemas() {
-	// TODO: add support for custom field keys (that differ from the API name), then enable this case tto test them.
+	// TODO: add support for custom field keys (that differ from the API name), then enable this case to test them.
 	// PropertyFactory.register({
 	// 	typeid: "Test:BannedNames",
 	// 	properties: [
