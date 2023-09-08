@@ -95,10 +95,21 @@ To enable Sweep for the first time, set this GC Option:
 gcSweepGeneration: 0;
 ```
 
-The exception would be if you ever bumped `gcTombstoneGeneration` - in that case, set `gcSweepGeneration` to `1` or higher.
-This will enable Sweep for any document with matching `gcSweepGeneration` (and if `0`, any document with `gcTombstoneGeneration: 0` too).
+This will enable sweep for all documents moving forward _as well as_ any documents created with `gcTombstoneGeneration: 0`
+(this is a special case in the code).
 
-### Differences between gcSweepGeneration and gcTombstoneGeneration
+### A caveat...
+
+If you used `gcTombstoneGeneration` **and ever bumped it**, you should skip 0 here to avoid enabling Sweep for old / at-risk documents:
+
+```ts
+gcSweepGeneration: 1;
+```
+
+Remember, you can always bump `gcSweepGeneration` to disable Sweep for all existing documents and start fresh,
+in case a major bug is discovered and fixed.
+
+### More about gcSweepGeneration and gcTombstoneGeneration
 
 `gcSweepGeneration` is persisted and immutable in the document, just like `gcTombstoneGeneration`.
 However, behavior differs in a few important ways.
@@ -110,7 +121,7 @@ This means that until the `gcSweepGeneration` GC Option is set, _no existing doc
 So all documents created since the most recent bump to the gcSweepGeneration will have Sweep enabled.
 Note that if `gcSweepGeneration` is set and matches, Tombstone Mode is off for the session and `gcTombstoneGeneration` is ignored.
 
-Lastly, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
+And as mentioned above, there is a special case when `gcSweepGeneration === 0`: Any document with `gcTombstoneGeneration: 0` will
 be eligible for Sweep as well. This was done for historical reasons due to circumstances during GC's development.
 
 ## More Advanced Configurations

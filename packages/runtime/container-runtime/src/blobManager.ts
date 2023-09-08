@@ -40,7 +40,7 @@ import {
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
 	sendGCUnexpectedUsageEvent,
-	noSweepAttachmentBlobsKey,
+	disableAttachmentBlobSweepKey,
 	throwOnTombstoneLoadKey,
 } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
@@ -763,7 +763,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
 		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(noSweepAttachmentBlobsKey) === true) {
+		if (this.mc.config.getBoolean(disableAttachmentBlobSweepKey) === true) {
 			return [];
 		}
 

@@ -30,7 +30,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
-import { noSweepAttachmentBlobsKey } from "../gc";
+import { disableAttachmentBlobSweepKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -887,7 +887,7 @@ describe("BlobManager", () => {
 		});
 
 		it("noSweepAttachmentBlobs true - DOESN'T delete unused blobs ", async () => {
-			injectedSettings[noSweepAttachmentBlobsKey] = true;
+			injectedSettings[disableAttachmentBlobSweepKey] = true;
 
 			await runtime.attach();
 			await runtime.connect();

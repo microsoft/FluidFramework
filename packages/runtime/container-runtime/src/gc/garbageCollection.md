@@ -95,7 +95,7 @@ covered in the [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-confi
 ### Enabling Sweep Phase
 
 To enable Sweep Phase for new documents, you must set the `gcSweepGeneration` GC Option to a number, e.g. 0 to start.
-The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#differences-between-gcsweepgeneration-and-gctombstonegeneration).
+The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#more-about-gcsweepgeneration-and-gctombstonegeneration).
 Note that this will disabled Tombstone Mode.
 
 A full treatment of Tombstone and Sweep configuration can be found in

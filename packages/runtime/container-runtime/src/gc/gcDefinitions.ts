@@ -61,10 +61,10 @@ export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstone
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV3Key = "Fluid.GarbageCollection.GCVersionUpgradeToV3";
-/** Config key to enable GC sweep for datastores. */
-export const noSweepDatastoresKey = "Fluid.GarbageCollection.NoSweepDataStores";
-/** Config key to enable GC sweep for attachment blobs. */
-export const noSweepAttachmentBlobsKey = "Fluid.GarbageCollection.NoSweepAttachmentBlobs";
+/** Config key to disable GC sweep for datastores. */
+export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
+/** Config key to disable GC sweep for attachment blobs. */
+export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
