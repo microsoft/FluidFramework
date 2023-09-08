@@ -41,6 +41,9 @@ import {
 	ModularChangeset,
 	nodeKeyFieldKey,
 	FieldSchema,
+	TypedSchemaCollection,
+	getTreeContext,
+	TypedField,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -249,6 +252,13 @@ export interface ISharedTreeView extends AnchorLocator {
 	schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
+
+	/**
+	 * Get a typed view of the tree content using the editable-tree-2 API.
+	 */
+	editableTree2<TRoot extends FieldSchema>(
+		viewSchema: TypedSchemaCollection<TRoot>,
+	): TypedField<TRoot>;
 }
 
 /**
@@ -449,6 +459,19 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	): ISharedTreeView {
 		schematizeView(this, config, this.storedSchema);
 		return this;
+	}
+
+	public editableTree2<TRoot extends FieldSchema>(
+		viewSchema: TypedSchemaCollection<TRoot>,
+	): TypedField<TRoot> {
+		const context = getTreeContext(
+			viewSchema,
+			this.forest,
+			this.branch.editor,
+			this.nodeKeyManager,
+			this.nodeKeyIndex.fieldKey,
+		);
+		return context.root as TypedField<TRoot>;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {

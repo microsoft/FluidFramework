@@ -122,6 +122,9 @@ export type StructSchema = TreeSchema & {
  * TODO: Once that API is removed, this can be cleaned up and properly separated from StructSchema
  */
 export type FieldNodeSchema = StructSchema & {
+	/**
+	 * The field this node wraps is placed under the {@link EmptyKey}.
+	 */
 	structFieldsObject: { [""]: FieldSchema };
 };
 
