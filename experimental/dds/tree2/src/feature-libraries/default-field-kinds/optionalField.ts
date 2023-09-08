@@ -12,6 +12,7 @@ import {
 	tagChange,
 	ChangesetLocalId,
 	ChangeAtomId,
+	RevisionTag,
 } from "../../core";
 import { fail, Mutable } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -47,33 +48,85 @@ interface IChildChangeMap<T> {
 	readonly size: number;
 }
 
-// TODO: better implementation which doesn't use JSON.stringify (double-nested map should be fine, maybe something else is conceptually nicer)
 class ChildChangeMap<T> implements IChildChangeMap<T> {
-	private readonly data = new Map<string, T>();
+	private readonly data = new Map<ChangesetLocalId | "self", Map<RevisionTag | undefined, T>>();
 	public set(id: ChangeId, childChange: T): void {
-		this.data.set(JSON.stringify(id), childChange);
+		if (id === "self") {
+			const nestedMap = this.data.get(id);
+			if (nestedMap === undefined) {
+				const newMap = new Map();
+				newMap.set(undefined, childChange);
+				this.data.set(id, newMap);
+			} else {
+				nestedMap.set(undefined, childChange);
+			}
+		} else {
+			const nestedMap = this.data.get(id.localId);
+			if (nestedMap === undefined) {
+				const newMap = new Map();
+				newMap.set(id.revision, childChange);
+				this.data.set(id.localId, newMap);
+			} else {
+				nestedMap.set(id.revision, childChange);
+			}
+		}
 	}
 
 	public get(id: ChangeId): T | undefined {
-		return this.data.get(JSON.stringify(id));
+		return id === "self"
+			? this.data.get(id)?.get(undefined)
+			: this.data.get(id.localId)?.get(id.revision);
 	}
 
 	public delete(id: ChangeId): boolean {
-		return this.data.delete(JSON.stringify(id));
+		if (id === "self") {
+			return this.data.delete("self");
+		} else {
+			const map = this.data.get(id.localId);
+			if (map === undefined) {
+				return false;
+			}
+			return map.delete(id.revision);
+		}
 	}
 
 	public keys(): Iterable<ChangeId> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return Array.from(this.data.keys(), (v) => JSON.parse(v));
+		const changeIds: ChangeId[] = [];
+		for (const [localId, nestedMap] of this.data) {
+			if (localId === "self") {
+				changeIds.push("self");
+			} else {
+				for (const [revisionTag, _] of nestedMap) {
+					changeIds.push({ localId, revision: revisionTag });
+				}
+			}
+		}
+
+		return changeIds;
 	}
 	public values(): Iterable<T> {
-		return this.data.values();
+		return Array.from(this.data.values()).flatMap((map) => Array.from(map.values()));
 	}
 	public entries(): Iterable<[ChangeId, T]> {
-		return Array.from(this.data.entries(), ([k, v]) => [JSON.parse(k), v]);
+		const entries: [ChangeId, T][] = [];
+		for (const changeId of this.keys()) {
+			if (changeId === "self") {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				entries.push(["self", this.data.get("self")!.get(undefined)!]);
+			} else {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				entries.push([changeId, this.data.get(changeId.localId)!.get(changeId.revision)!]);
+			}
+		}
+
+		return entries;
 	}
 	public get size(): number {
-		return this.data.size;
+		let sum = 0;
+		for (const [_, map] of this.data) {
+			sum += map.size;
+		}
+		return sum;
 	}
 }
 
