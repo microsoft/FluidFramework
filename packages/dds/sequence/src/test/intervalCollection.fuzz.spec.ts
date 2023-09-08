@@ -109,14 +109,23 @@ export function makeOperationGenerator(
 		};
 	}
 
+	function sides(state: ClientOpState, range: RangeSpec): { startSide: Side; endSide: Side } {
+		const startSide = state.random.pick([Side.Before, Side.After]);
+		const endSide =
+			range.start === range.end && startSide === Side.Before
+				? Side.Before
+				: state.random.pick([Side.Before, Side.After]);
+		return { startSide, endSide };
+	}
+
 	async function addInterval(state: ClientOpState): Promise<AddInterval> {
+		const range = inclusiveRange(state);
 		return {
 			type: "addInterval",
-			...inclusiveRange(state),
+			...range,
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
-			startSide: state.random.pick([Side.Before, Side.After]),
-			endSide: state.random.pick([Side.Before, Side.After]),
+			...sides(state, range),
 		};
 	}
 
@@ -128,13 +137,11 @@ export function makeOperationGenerator(
 	}
 
 	async function changeInterval(state: ClientOpState): Promise<ChangeInterval> {
-		const { start, end } = inclusiveRange(state);
+		const range = inclusiveRange(state);
 		return {
 			type: "changeInterval",
-			start,
-			end,
-			startSide: state.random.pick([Side.Before, Side.After]),
-			endSide: state.random.pick([Side.Before, Side.After]),
+			...range,
+			...sides(state, range),
 			...interval(state),
 		};
 	}
@@ -252,15 +259,15 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 32 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
+		// AB#4477: Seed 22 is the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
 		// The other failing seeds were added when updates of the msn on reconnects
 		// were introduced to skip seeds due to a bug in a sequence DDS causing a `0x54e` error to occur.
 		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			1, 2, 8, 9, 12, 14, 17, 21, 27, 32, 36, 43, 44, 46, 47, 48, 51, 55, 70, 72, 73, 80, 82,
-			84, 88, 89, 92, 95, 99,
+			2, 4, 9, 14, 16, 18, 22, 27, 29, 31, 32, 35, 43, 44, 45, 46, 48, 52, 53, 56, 58, 59, 60,
+			63, 69, 76, 80, 83, 85, 87, 88, 92, 95,
 		],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
@@ -292,7 +299,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [92],
+		skip: [],
 		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
 		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
 		detachedStartOptions: {

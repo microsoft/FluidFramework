@@ -18,7 +18,7 @@ import {
 	MockStorage,
 	MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, Side } from "../intervalCollection";
@@ -1960,6 +1960,42 @@ describe("SharedString interval collections", () => {
 			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+		});
+
+		it("can't add an interval with zero width range and none stickiness", () => {
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			assert.throws(
+				() => {
+					collection.add(
+						{ pos: 1, side: Side.Before },
+						{ pos: 1, side: Side.After },
+						IntervalType.SlideOnRemove,
+						undefined,
+					);
+				},
+				UsageError,
+				"Should not be able to add stickiness reversed interval",
+			);
+			assertIntervals(sharedString, collection, []);
+		});
+
+		it("can't change an interval to zero width range and none stickiness", () => {
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			const interval = collection.add(0, 1, IntervalType.SlideOnRemove);
+			assert.throws(
+				() => {
+					collection.change(
+						interval.getIntervalId(),
+						{ pos: 1, side: Side.Before },
+						{ pos: 1, side: Side.After },
+					);
+				},
+				UsageError,
+				"Should not be able to change stickiness reversed interval",
+			);
+			assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
 		});
 	});
 });

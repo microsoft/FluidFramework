@@ -5,6 +5,7 @@
 
 import { fail, strict as assert } from "assert";
 import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -111,6 +112,17 @@ describe("SharedString interval collection event spec", () => {
 				assert.equal(local, false);
 				assert.equal((op?.contents as { type?: unknown }).type, "act");
 			}
+		});
+
+		it("is not emitted on failed add of reversed interval", () => {
+			assert.throws(
+				() => {
+					collection.add(1, 0, IntervalType.SlideOnRemove);
+				},
+				UsageError,
+				"Should not be able to add reversed interval",
+			);
+			assert.equal(eventLog.length, 0);
 		});
 	});
 
@@ -230,6 +242,18 @@ describe("SharedString interval collection event spec", () => {
 			collection.changeProperties(intervalId, { foo: "bar" });
 			assert.equal(eventLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 0);
+		});
+
+		it("is not emitted on failed change to reversed interval", () => {
+			const interval = collection.add(0, 1, IntervalType.SlideOnRemove);
+			assert.throws(
+				() => {
+					collection.change(interval.getIntervalId(), 1, 0);
+				},
+				UsageError,
+				"Should not be able to change to reversed interval",
+			);
 			assert.equal(eventLog.length, 0);
 		});
 
