@@ -6,6 +6,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require('webpack');
 
 module.exports = (env) => {
 	const isProduction = env?.production;
@@ -39,6 +40,9 @@ module.exports = (env) => {
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",
 				}),
+				new webpack.ProvidePlugin({
+      		process: 'process/browser',
+    			}),
 			],
 		},
 		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
