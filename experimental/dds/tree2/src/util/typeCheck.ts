@@ -74,6 +74,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: MakeNominal;
  * ```
@@ -86,6 +87,7 @@ export interface MakeNominal {}
  * Constrain generic type parameters to Contravariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Contravariant<T>;
  * ```
@@ -100,6 +102,7 @@ export interface Contravariant<T> {
  * Constrain generic type parameters to Covariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
@@ -118,6 +121,7 @@ export interface Covariant<T> {
  * other.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Bivariant<T>;
  * ```
@@ -135,6 +139,7 @@ export interface Bivariant<T> {
  * Constrain generic type parameters to Invariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Invariant<T>;
  * ```

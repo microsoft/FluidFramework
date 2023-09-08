@@ -561,7 +561,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
-			"Must release existing visitor before acquiring another",
+			0x767 /* Must release existing visitor before acquiring another */,
 		);
 		const moveTable = new Map<Delta.MoveId, UpPath>();
 
@@ -592,7 +592,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			free() {
 				assert(
 					this.anchorSet.activeVisitor !== undefined,
-					"Multiple free calls for same visitor",
+					0x768 /* Multiple free calls for same visitor */,
 				);
 				this.anchorSet.activeVisitor = undefined;
 			},
@@ -720,7 +720,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
-				assert(parent !== undefined, "Unable to exit root node");
+				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
 			},

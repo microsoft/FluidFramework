@@ -182,6 +182,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	 * Returns an object with all the nested values contained in this property.
 	 *
 	 * @example
+	 *
 	 * ```javascript
 	 * {
 	 *   'firstString': {

@@ -87,7 +87,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
-			"Must release existing visitor before acquiring another",
+			0x76a /* Must release existing visitor before acquiring another */,
 		);
 		this.events.emit("beforeChange");
 
@@ -137,7 +137,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				this.mutableChunkStack.length = 0;
 				assert(
 					this.forest.activeVisitor !== undefined,
-					"Multiple free calls for same visitor",
+					0x76b /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
 				this.forest.events.emit("afterChange");

@@ -23,7 +23,7 @@
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob \"dist\" \"lib\" \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp'",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -38,7 +38,8 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/test-driver-definitions": "workspace:~",
-		"mocha": "^10.2.0"
+		"mocha": "^10.2.0",
+		"source-map-support": "^0.5.21"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.22.0",
