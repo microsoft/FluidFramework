@@ -913,17 +913,6 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
-	/** @deprecated - The functionality is no longer exposed publicly */
-	public get reSubmitFn() {
-		return (
-			type: ContainerMessageType,
-			contents: any,
-			localOpMetadata: unknown,
-			opMetadata: Record<string, unknown> | undefined,
-		) => this.reSubmitCore({ type, contents }, localOpMetadata, opMetadata);
-		// Note: compatDetails is not included in this deprecated API
-	}
-
 	private readonly submitFn: (
 		type: MessageType,
 		contents: any,
