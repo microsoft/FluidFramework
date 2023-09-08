@@ -305,7 +305,6 @@ describe("mock-customer-service", () => {
 					body: JSON.stringify({
 						type: "session-end",
 						containerUrl,
-						externalTaskListId,
 					}),
 				},
 			);
