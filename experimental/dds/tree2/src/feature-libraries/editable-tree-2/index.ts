@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { UntypedField, UntypedTree, UntypedEntity } from "./editableTreeTypes";
+export { UntypedField, UntypedTree, UntypedEntity, TypedField } from "./editableTreeTypes";
 
 export {
 	visitBipartiteIterableTree,
@@ -12,3 +12,5 @@ export {
 	visitIterableTree,
 	visitIterableTreeWithState,
 } from "./navigation";
+
+export { getTreeContext, TreeContext } from "./context";

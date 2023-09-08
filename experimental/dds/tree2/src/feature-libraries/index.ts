@@ -211,6 +211,8 @@ export {
 	treeStatus,
 } from "./untypedTree";
 
+export { getTreeContext, TypedField } from "./editable-tree-2";
+
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };

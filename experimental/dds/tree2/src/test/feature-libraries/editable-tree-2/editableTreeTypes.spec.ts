@@ -104,7 +104,7 @@ describe("editableTreeTypes", () => {
 	 */
 	function boxingExample(mixed: Mixed): void {
 		const leaf: number = mixed.leaf;
-		const leafBoxed: TypedNode<typeof jsonNumber> = mixed.boxedLeaf.content;
+		const leafBoxed: TypedNode<typeof jsonNumber> = mixed.boxedLeaf.boxedContent;
 
 		// Current policy is to box polymorphic values so they can be checked for type with `is`.
 		// Note that this still unboxes the value field.
@@ -117,7 +117,7 @@ describe("editableTreeTypes", () => {
 
 		const optionalLeaf: number | undefined = mixed.optionalLeaf;
 		const boxedOptionalLeaf: TypedNode<typeof jsonNumber> | undefined =
-			mixed.boxedOptionalLeaf.content;
+			mixed.boxedOptionalLeaf.boxedContent;
 		const sequence: Sequence<[typeof jsonNumber]> = mixed.sequence;
 
 		const child: number = sequence.at(0);

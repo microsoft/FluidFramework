@@ -136,7 +136,7 @@ export class Context implements TreeContext {
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
-export function getEditableTreeContext(
+export function getTreeContext(
 	schema: TypedSchemaCollection,
 	forest: IEditableForest,
 	editor: DefaultEditBuilder,

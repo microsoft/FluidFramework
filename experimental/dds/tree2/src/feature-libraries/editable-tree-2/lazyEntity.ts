@@ -11,7 +11,7 @@ import {
 } from "../../core";
 import { TreeStatus } from "../editable-tree";
 import { fail, disposeSymbol } from "../../util";
-import { Context } from "./editableTreeContext";
+import { Context } from "./context";
 import { UntypedEntity } from "./editableTreeTypes";
 
 export function makePropertyEnumerableOwn<T extends object>(

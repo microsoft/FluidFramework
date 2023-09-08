@@ -20,7 +20,7 @@ import {
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKindTypes, FieldKinds } from "../default-field-kinds";
 import { TreeStatus } from "../editable-tree";
-import { TreeContext } from "./editableTreeContext";
+import { TreeContext } from "./context";
 
 /**
  * Part of a tree.
@@ -172,7 +172,8 @@ export interface MapNode<TSchema extends MapSchema> extends UntypedTree {
  * @alpha
  */
 export interface FieldNode<TSchema extends FieldNodeSchema> extends UntypedTree {
-	readonly content: TypedField<TSchema["structFieldsObject"][""]>;
+	readonly content: UnboxField<TSchema["structFieldsObject"][""]>;
+	readonly boxedContent: TypedField<TSchema["structFieldsObject"][""]>;
 }
 
 /**
@@ -292,12 +293,14 @@ export interface Sequence<TTypes extends AllowedTypes> extends UntypedField {
 }
 
 export interface ValueField<TTypes extends AllowedTypes> extends UntypedField {
-	readonly content: TypedNodeUnion<TTypes>;
+	readonly content: UnboxNodeUnion<TTypes>;
+	readonly boxedContent: TypedNodeUnion<TTypes>;
 	setContent(content: FlexibleNodeContent<TTypes>): void;
 }
 
 export interface OptionalField<TTypes extends AllowedTypes> extends UntypedField {
-	readonly content?: TypedNodeUnion<TTypes>;
+	readonly content?: UnboxNodeUnion<TTypes>;
+	readonly boxedContent?: TypedNodeUnion<TTypes>;
 	setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
 }
 

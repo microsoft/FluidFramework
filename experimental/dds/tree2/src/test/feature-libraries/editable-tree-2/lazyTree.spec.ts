@@ -26,7 +26,7 @@ import {
 	typeNameSymbol,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { Context } from "../../../feature-libraries/editable-tree-2/editableTreeContext";
+import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import {
 	FieldKey,
 	IEditableForest,

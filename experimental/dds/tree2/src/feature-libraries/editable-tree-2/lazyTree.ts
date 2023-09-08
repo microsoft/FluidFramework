@@ -37,7 +37,7 @@ import {
 } from "../typed-schema";
 import { TreeStatus, treeStatusFromPath } from "../editable-tree";
 import { EditableTreeEvents } from "../untypedTree";
-import { Context } from "./editableTreeContext";
+import { Context } from "./context";
 import {
 	FieldNode,
 	Leaf,
@@ -365,7 +365,17 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	extends LazyTree<TSchema>
 	implements FieldNode<TSchema>
 {
-	public get content(): TypedField<TSchema["structFieldsObject"][""]> {
+	public get content(): UnboxField<TSchema["structFieldsObject"][""]> {
+		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
+			unboxedField(
+				this.context,
+				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				cursor,
+			),
+		) as UnboxField<TSchema["structFieldsObject"][""]>;
+	}
+
+	public get boxedContent(): TypedField<TSchema["structFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			makeField(
 				this.context,

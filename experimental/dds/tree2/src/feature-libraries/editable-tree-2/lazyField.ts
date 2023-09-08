@@ -36,7 +36,7 @@ import {
 	schemaIsLeaf,
 } from "../typed-schema";
 import { TreeStatus, treeStatusFromPath } from "../editable-tree";
-import { Context } from "./editableTreeContext";
+import { Context } from "./context";
 import {
 	FlexibleNodeContent,
 	OptionalField,
@@ -289,9 +289,14 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): TypedNodeUnion<TTypes> {
+	public get content(): UnboxNodeUnion<TTypes> {
 		return this.at(0);
 	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> {
+		return this.boxedAt(0);
+	}
+
 	public setContent(newContent: FlexibleNodeContent<TTypes>): void {
 		const content = this.normalizeNewContent(newContent);
 		const fieldEditor = this.valueFieldEditor();
@@ -321,8 +326,12 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): TypedNodeUnion<TTypes> | undefined {
+	public get content(): UnboxNodeUnion<TTypes> | undefined {
 		return this.length === 0 ? undefined : this.at(0);
+	}
+
+	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
+		return this.length === 0 ? undefined : this.boxedAt(0);
 	}
 
 	public setContent(newContent: FlexibleNodeContent<TTypes> | undefined): void {
