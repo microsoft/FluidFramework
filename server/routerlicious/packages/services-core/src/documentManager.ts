@@ -31,7 +31,7 @@ export interface IDocumentManager {
 	): Promise<IDocumentStaticProperties[K] | undefined>;
 
 	/**
-	 * Modifies a static property for a specific document. If a different property is read after modification
+	 * Modifies a static property for a specific document.
 	 *
 	 * @param documentId - The document ID for the document to be modified
 	 * @param propName - The static property to be modified
@@ -42,4 +42,11 @@ export interface IDocumentManager {
 		propName: K,
 		propValue: IDocumentStaticProperties[K],
 	): Promise<void>;
+
+	/**
+	 * Deletes the static cache for the specified document
+	 *
+	 * @param documentId - Document to delete from static cache
+	 */
+	purgeStaticCache(documentId: string): Promise<void>;
 }

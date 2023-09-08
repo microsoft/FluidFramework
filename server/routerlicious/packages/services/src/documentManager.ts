@@ -132,6 +132,11 @@ export class DocumentManager implements IDocumentManager {
 		);
 	}
 
+	public async purgeStaticCache(documentId: string): Promise<void> {
+		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
+		await DocumentManager.documentStaticDataCache.delete(staticPropsKey);
+	}
+
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
 		const key = await this.tenantManager.getKey(tenantId);
 		const getDefaultHeaders = () => {
