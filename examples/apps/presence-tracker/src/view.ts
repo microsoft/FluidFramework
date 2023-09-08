@@ -18,20 +18,20 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 
 	const onFocusChanged = () => {
 		const currentUser = focusTracker.audience.getMyself()?.userName;
-    	const focusPresences = focusTracker.getFocusPresences();
-		
+		const focusPresences = focusTracker.getFocusPresences();
+
 		focusDiv.innerHTML = `
             Current user: ${currentUser}</br>
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
 
 		const existingMessageDiv = document.getElementById("message-div");
-	
+
 		if (existingMessageDiv) {
 			wrapperDiv.removeChild(existingMessageDiv);
 		}
 
-		if (currentUser !== undefined &&  focusPresences.get(currentUser) === false) {
+		if (currentUser !== undefined && focusPresences.get(currentUser) === false) {
 			const messageDiv = document.createElement("div");
 			messageDiv.id = "message-div";
 			messageDiv.textContent = "Click to focus";
@@ -40,9 +40,9 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 			messageDiv.style.right = "10px";
 			messageDiv.style.color = "red";
 			messageDiv.style.fontWeight = "bold";
-			messageDiv.style.fontSize = "18px"; 
+			messageDiv.style.fontSize = "18px";
 			messageDiv.style.border = "2px solid red";
-			messageDiv.style.padding = "10px";  
+			messageDiv.style.padding = "10px";
 			wrapperDiv.appendChild(messageDiv);
 		}
 	};
