@@ -1,4 +1,14 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../configs/api-extractor-base.json"
+	"extends": "../../configs/api-extractor-base.json",
+
+	"messages": {
+		"extractorMessageReporting": {
+			// TODO: promote this to an error and fix violations
+			"ae-missing-release-tag": {
+				"logLevel": "warning",
+				"addToApiReportFile": false
+			}
+		}
+	}
 }
