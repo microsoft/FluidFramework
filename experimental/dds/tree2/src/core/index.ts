@@ -65,6 +65,7 @@ export {
 	keyAsDetachedField,
 	visitDelta,
 	combineVisitors,
+	announceVisitor,
 	announceDelta,
 	applyDelta,
 	setGenericTreeField,

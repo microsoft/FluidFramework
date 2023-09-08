@@ -285,7 +285,7 @@ function asReplaces(
 				return makeArray(mark.count, (i) => {
 					const replace: Mutable<Replace> = {};
 					if (mark.newContent.detachId === undefined) {
-						const { root: restoredRoot } = config.treeIndex.getOrCreateEntry(
+						const { root: restoredRoot } = config.treeIndex.getEntry(
 							offsetDetachId(mark.newContent.restoreId, i),
 						);
 						const newContent = { source: restoredRoot, fields: mark.fields };
