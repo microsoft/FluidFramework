@@ -13,7 +13,6 @@ import {
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import type { IInventoryListAppModel } from "../src/modelInterfaces";
 import { DebugView, InventoryListAppView } from "../src/view";
 import { inventoryListDataTransformationCallback } from "../src/dataTransform";
@@ -44,14 +43,8 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-		getRawConfig: (name: string): ConfigTypes => settings[name],
-	});
 	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
 		new DemoCodeLoader(testMode),
-		undefined, // logger
-		// To be removed ADO:5465
-		configProvider({ "Fluid.Container.ForceWriteConnection": true }),
 	);
 	let id: string;
 	let model: IMigratableModel;

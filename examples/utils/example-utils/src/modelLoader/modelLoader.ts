@@ -62,7 +62,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	public constructor(
 		props: Pick<
 			ILoaderProps,
-			"urlResolver" | "documentServiceFactory" | "codeLoader" | "logger" | "configProvider"
+			"urlResolver" | "documentServiceFactory" | "codeLoader" | "logger"
 		> & {
 			generateCreateNewRequest: () => IRequest;
 		},
@@ -72,7 +72,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			documentServiceFactory: props.documentServiceFactory,
 			codeLoader: props.codeLoader,
 			logger: props.logger,
-			configProvider: props.configProvider,
 		});
 		this.generateCreateNewRequest = props.generateCreateNewRequest;
 	}

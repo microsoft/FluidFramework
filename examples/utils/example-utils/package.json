@@ -52,7 +52,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/server-local-server": "^1.0.1",
 		"@fluidframework/task-manager": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
 		"uuid": "^9.0.0"
